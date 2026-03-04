@@ -142,6 +142,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
 
   sync: {
+    vaultPassword: (password: string | null) => {
+      return ipcRenderer.invoke("vault:password-response", password);
+    },
     exportData: () => {
       return ipcRenderer.invoke("sync:export-data");
     },

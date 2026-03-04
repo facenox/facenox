@@ -52,9 +52,9 @@
 
 ### Why Suri?
 
-| **Local First** | **Privacy by Default** | **Remote Sync** |
+| **Local First** | **Privacy by Default** | **Encrypted Backups** |
 |:---|:---|:---|
-| AI runs 100% on local hardware. Recognition takes ~15ms because there's no server round-trip. | No biometric data leaves the device unless Sync is enabled. Everything is encrypted at rest. | Backup logs and view reports from any device. End-to-end encryption (E2EE) prevents biometric data from reaching the cloud. |
+| AI runs 100% on local hardware. Recognition takes ~15ms because there's no server round-trip. | Face images are **never saved or uploaded**. The AI instantly converts faces into unreadable numbers. | Export encrypted `.suri` files (AES-256). Biometric data requires the user password to restore. |
 
 <div align="center">
   <br/>

@@ -10,25 +10,21 @@ When a face is detected, the AI converts it into a "vector" (a string of numbers
 Even if someone stole the hardware, they couldn't reconstruct a face from those numbers.
 
 
-## 2. Data Location
-Suri uses a local-first approach with optional cloud synchronization.
+## 2. Secure Encrypted Backups (.suri Vaults)
+Suri allows users to export their entire system state, including biometric data, into a portable archive. To ensure compliance and security:
 
-### A. Biometric Data (Face Embeddings)
-*   **Location**: Strictly on the **Local Device**.
-*   **Sync**: If Cloud Sync is enabled, this data is **End-to-End Encrypted (E2EE)** before leaving the device.
-*   **The Guarantee**: The Cloud Provider receives only a blob of encrypted text. Decryption by the service provider is impossible. The Web Dashboard cannot display it. It is useless to anyone but the owner.
+* **End-to-End Encryption (E2EE)**: Backups are saved as `.suri` files. These are not plain text or standard JSON. The entire payload is encrypted client-side using **AES-256-GCM**.
+* **Encryption Algorithm**: Backups are encrypted using **AES-256-GCM**.
+* **Key Derivation**: The encryption key is derived locally from a user-provided password using PBKDF2-HMAC-SHA256 with 480,000 iterations.
+* **Local Processing**: The encryption happens entirely on the local device. The application does not and cannot read the `.suri` file without the user's password.
+* **Security Responsibility**: Because the backup is encrypted locally, the security of the biometric data relies entirely on the strength of the user's chosen password.
 
-### B. Attendance Logs (Names & Times)
-*   **Location**: Synced to the Cloud in a **Readable Format**.
-*   **Why?**: This allows the Web Dashboard to display charts, "Who is Present" lists, and export reports from anywhere.
-*   **Access**: This data is protected by login credentials, but is *technically visible* to the database engine for query execution.
 
-## 3. Data Sovereignty
-*   **Offline First**: Suri works 100% offline using a local [SQLite](https://www.sqlite.org/index.html) database. Sync is optional.
-*   **Data Transparency**: In development, persistent data is stored in the project's root `/data` folder. In production, it follows OS standards (e.g., `%LOCALAPPDATA%` on Windows).
-*   **No Telemetry**: App usage metrics and button interactions are not tracked.
-*   **Encryption Keys**: Encryption is derived from the Master Password. If lost, biometric backups are unrecoverable. Password reset is impossible.
-
+## 3. Data Sovereignty & Offline-First
+*   **Offline First**: Suri works 100% offline using a local [SQLite](https://www.sqlite.org/index.html) database.
+*   **Data Transparency**: In development, persistent data is stored in the project's root `/data` folder. In production, it follows OS standards (e.g., `%APPDATA%` on Windows).
+*   **No Telemetry**: App usage metrics and button interactions are not tracked or transmitted.
+*   **No Password Recovery**: Encryption keys are derived entirely from the vault password. If a user loses their `.suri` vault password, the biometric backup is permanently unrecoverable by design.
 
 ## 4. Compliance & Open Source
 *   **GDPR / CCPA**: The user is the data controller. The service acts as the processor (only if Sync is on). Data deletion is available via a single click.

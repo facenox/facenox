@@ -140,8 +140,8 @@ button { flex: 1; padding: 8px; border-radius: 6px; font-size: 12px; font-weight
   const input = document.getElementById('pw');
   const btnConfirm = document.getElementById('btnConfirm');
   const btnCancel = document.getElementById('btnCancel');
-  function doConfirm() { window.electronAPI.invoke('vault:password-response', input.value); }
-  function doCancel() { window.electronAPI.invoke('vault:password-response', null); }
+  function doConfirm() { window.electronAPI.sync.vaultPassword(input.value); }
+  function doCancel() { window.electronAPI.sync.vaultPassword(null); }
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doConfirm(); if (e.key === 'Escape') doCancel(); });
   btnConfirm.addEventListener('click', doConfirm);
   btnCancel.addEventListener('click', doCancel);
