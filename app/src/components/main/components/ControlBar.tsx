@@ -9,7 +9,6 @@ interface ControlBarProps {
   startCamera: () => void;
   stopCamera: () => void;
   hasSelectedGroup: boolean;
-  requestGroupSelection: () => void;
   lateTrackingEnabled?: boolean;
   classStartTime?: string;
   onStartTimeChange?: (newTime: string) => void;
@@ -23,34 +22,57 @@ export function ControlBar({
   startCamera,
   stopCamera,
   hasSelectedGroup,
-  requestGroupSelection,
   lateTrackingEnabled = false,
   classStartTime = "08:00",
   onStartTimeChange,
 }: ControlBarProps) {
-  const isCameraSelected =
-    !!selectedCamera &&
-    selectedCamera.trim() !== "" &&
-    cameraDevices.some((device) => device.deviceId === selectedCamera);
   const hasCameraDevices = cameraDevices.length > 0;
-  const canStartTracking =
-    (isCameraSelected || hasCameraDevices) && !isStreaming && hasSelectedGroup;
-
-  const isButtonEnabled = isStreaming || canStartTracking;
 
   const handlePrimaryAction = () => {
     if (isStreaming) {
       stopCamera();
-      return;
+    } else {
+      startCamera();
+    }
+  };
+
+  const getButtonState = () => {
+    if (isStreaming) {
+      return {
+        label: "Stop Tracking",
+        className:
+          "bg-red-500/20 border border-red-400/40 text-red-200 hover:bg-red-500/30",
+        tooltip: "Stop tracking attendance",
+        enabled: true,
+      };
     }
 
     if (!hasSelectedGroup) {
-      requestGroupSelection();
-      return;
+      return {
+        label: "Start Tracking",
+        className:
+          "bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white",
+        tooltip: "Create or select a group to start tracking",
+        enabled: true,
+      };
     }
 
-    startCamera();
+    const cyanStyle =
+      "bg-cyan-500/20 border border-cyan-400/40 text-cyan-100 hover:bg-cyan-500/30 shadow-lg shadow-cyan-500/10";
+
+    const standardTooltip = hasCameraDevices
+      ? "Start tracking attendance"
+      : "No camera detected";
+
+    return {
+      label: "Start Tracking",
+      className: cyanStyle,
+      tooltip: standardTooltip,
+      enabled: hasCameraDevices,
+    };
   };
+
+  const buttonState = getButtonState();
 
   return (
     <div>
@@ -93,31 +115,13 @@ export function ControlBar({
               />
             )}
 
-          <Tooltip
-            content={
-              isStreaming
-                ? "Stop tracking attendance"
-                : !hasSelectedGroup
-                  ? "Create or select a group to start tracking"
-                  : !hasCameraDevices
-                    ? "No camera detected"
-                    : !isCameraSelected
-                      ? "Select a camera or use the first available"
-                      : "Start tracking attendance"
-            }
-          >
+          <Tooltip content={buttonState.tooltip}>
             <button
               onClick={handlePrimaryAction}
-              disabled={!isButtonEnabled}
-              className={`min-w-[140px] py-3 rounded-lg font-semibold text-sm transition-all duration-200 ease-in-out flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                isStreaming
-                  ? "bg-red-500/20 border border-red-400/40 text-red-200 hover:bg-red-500/30"
-                  : canStartTracking
-                    ? "bg-cyan-500/20 border border-cyan-400/40 text-cyan-100 hover:bg-cyan-500/30 shadow-lg shadow-cyan-500/10"
-                    : "bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-              }`}
+              disabled={!buttonState.enabled}
+              className={`min-w-[140px] py-3 rounded-lg font-semibold text-sm transition-all duration-200 ease-in-out flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${buttonState.className}`}
             >
-              {isStreaming ? "Stop Tracking" : "Start Tracking"}
+              {buttonState.label}
             </button>
           </Tooltip>
         </div>

@@ -34,7 +34,6 @@ import { GroupManagementModal } from "@/components/main/components/GroupManageme
 import { DeleteConfirmationModal } from "@/components/main/components/DeleteConfirmationModal";
 import { CooldownOverlay } from "@/components/main/components/CooldownOverlay";
 import type { DetectionResult } from "@/components/main/types";
-import { colorClasses } from "@/constants/colors";
 import { soundEffects } from "@/services/SoundEffectsService";
 
 export default function Main() {
@@ -475,40 +474,50 @@ export default function Main() {
 
   return (
     <div className="h-full bg-black text-white flex flex-col overflow-hidden">
-      {warning && (
-        <div
-          className={`mx-4 mt-3 ${colorClasses.warningBg} border ${colorClasses.warningBorder} p-3 rounded-lg flex items-start justify-between gap-4`}
-        >
-          <div className="text-sm leading-relaxed">
-            <span className={`${colorClasses.warning} font-semibold`}>
-              Warning:
-            </span>{" "}
-            <span className="text-white/80">{warning}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setWarning(null)}
-            className="text-white/60 hover:text-white/90 transition-colors"
-            aria-label="Dismiss warning"
-          >
-            <i className="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      )}
+      {/* Floating Alert System */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-xl px-4 pointer-events-none">
+        <AnimatePresence>
+          {warning && (
+            <div className="pointer-events-auto mb-3 bg-amber-500/10 backdrop-blur-md border border-amber-500/20 p-4 rounded-xl text-amber-200/90 shadow-2xl flex items-start gap-3">
+              <i className="fa-solid fa-triangle-exclamation mt-0.5 text-amber-400"></i>
+              <div className="flex-1 text-sm leading-relaxed">
+                <span className="font-semibold text-amber-400 mr-1.5 whitespace-nowrap">
+                  Warning:
+                </span>
+                {warning}
+              </div>
+              <button
+                type="button"
+                onClick={() => setWarning(null)}
+                className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all shadow-sm"
+                aria-label="Dismiss warning"
+              >
+                <i className="fa-solid fa-xmark text-xs"></i>
+              </button>
+            </div>
+          )}
 
-      {error && (
-        <div className="mx-4 mt-3 bg-red-900/60 border border-red-600/70 p-3 rounded-lg text-red-100 flex items-start justify-between gap-4">
-          <div className="text-sm leading-relaxed">{error}</div>
-          <button
-            type="button"
-            onClick={() => setError(null)}
-            className="text-red-100/70 hover:text-red-100 transition-colors"
-            aria-label="Dismiss error"
-          >
-            <i className="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      )}
+          {error && (
+            <div className="pointer-events-auto bg-red-500/10 backdrop-blur-md border border-red-500/20 p-4 rounded-xl text-red-100/90 shadow-2xl flex items-start gap-3">
+              <i className="fa-solid fa-circle-xmark mt-0.5 text-red-500"></i>
+              <div className="flex-1 text-sm leading-relaxed">
+                <span className="font-semibold text-red-500 mr-1.5 whitespace-nowrap">
+                  Error:
+                </span>
+                {error}
+              </div>
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all shadow-sm"
+                aria-label="Dismiss error"
+              >
+                <i className="fa-solid fa-xmark text-xs"></i>
+              </button>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <div className="flex-1 flex min-h-0">
         <div className="flex-1 flex flex-col min-h-0">
@@ -543,7 +552,6 @@ export default function Main() {
             startCamera={startCameraGuarded}
             stopCamera={stopCamera}
             hasSelectedGroup={Boolean(currentGroup)}
-            requestGroupSelection={requestGroupSelection}
             lateTrackingEnabled={
               (currentGroup?.settings as { late_threshold_enabled?: boolean })
                 ?.late_threshold_enabled ?? false

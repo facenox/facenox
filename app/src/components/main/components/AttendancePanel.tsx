@@ -518,15 +518,28 @@ export const AttendancePanel = memo(function AttendancePanel({
                 <div className="text-white/40 text-xs text-center">
                   No members in this group yet
                 </div>
-                {handleOpenSettingsForRegistration && (
-                  <button
-                    onClick={handleOpenSettingsForRegistration}
-                    className="px-4 py-2 text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 hover:text-white transition-colors flex items-center gap-2"
-                  >
-                    <i className="fa-solid fa-user-plus text-xs"></i>
-                    Add Member
-                  </button>
-                )}
+                <button
+                  onClick={handleOpenSettingsForRegistration}
+                  className="px-4 py-2 text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 hover:text-white transition-colors flex items-center gap-2"
+                >
+                  <i className="fa-solid fa-user-plus text-xs"></i>
+                  Add Member
+                </button>
+              </div>
+            </div>
+          ) : !groupMembers.some((m) => m.has_face_data) ? (
+            <div className="flex-1 flex items-center justify-center min-h-0">
+              <div className="flex flex-col items-center justify-center space-y-3 p-4 text-center">
+                <div className="text-white/40 text-xs">
+                  No face biometric data registered yet.
+                </div>
+                <button
+                  onClick={handleOpenSettingsForRegistration}
+                  className="px-4 py-2 text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 hover:text-white transition-colors flex items-center gap-2"
+                >
+                  <i className="fa-solid fa-user-plus text-xs"></i>
+                  Register Face
+                </button>
               </div>
             </div>
           ) : (
