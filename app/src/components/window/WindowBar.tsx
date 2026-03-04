@@ -57,13 +57,12 @@ export default function WindowBar() {
           className="w-8 h-8 object-contain opacity-90 -ml-3 mr-1"
         />
 
-        <div className="flex items-center space-x-2">
-          <span className="text-white font-semibold text-[13px] tracking-wide">
+        <div className="flex items-center gap-4">
+          <span className="text-white font-black text-[13px] tracking-tight">
             Suri
           </span>
-          <span className="w-1 h-3 border-r border-white/10"></span>
-          <span className="text-[11px] font-medium tracking-wide bg-gradient-to-r from-white/60 to-white/40 bg-clip-text text-transparent">
-            AI-powered Attendance Tracker
+          <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/30">
+            AI Attendance Tracker
           </span>
         </div>
       </div>

@@ -16,27 +16,24 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/johnraivenolazo/suri">
+  <a href="https://github.com/SuriAI/suri">
     <img src="app/public/icons/suri_mark_logo_round_c.png" alt="Logo" width="100" height="100">
   </a>
 
   <h1 style="font-size: 4rem; margin-bottom: 0; border-bottom: none;">Suri</h1>
-  <p style="font-size: 1.5rem; font-style: italic; margin-top: 0; margin-bottom: 1rem; color: #888;">[su-rì] • verb (Tagalog)</p>
-  <p style="font-size: 1.2rem; line-height: 1.6;">
-    To analyze; examine.<br />
-  </p>
+  <p style="font-size: 1rem; font-style: italic; margin-top: 0.5rem; margin-bottom: 1.5rem; color: #666; letter-spacing: 0.1em; text-transform: uppercase; font-weight: bold;">AI Attendance Tracker</p>
 
   <p align="center">
-      A Real-Time, Privacy-Centric AI Attendance System.
+    A precision-built, privacy-centric attendance system.
     <br />
-    <a href="docs/FEATURES.md"><strong>Explore the Features »</strong></a>
+    <a href="docs/FEATURES.md"><strong>Explore Features »</strong></a>
     <br />
     <br />
-    <a href="docs/INSTALLATION.md">Installation Guide</a>
+    <a href="docs/INSTALLATION.md">Setup Guide</a>
     &middot;
-    <a href="https://github.com/johnraivenolazo/suri/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+    <a href="https://github.com/SuriAI/suri/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     &middot;
-    <a href="https://github.com/johnraivenolazo/suri/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    <a href="https://github.com/SuriAI/suri/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
   </p>
 </div>
 
@@ -158,15 +155,15 @@ This project relies on open source software. See [Third Party Licenses](THIRD_PA
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[contributors-shield]: https://img.shields.io/github/contributors/johnraivenolazo/suri.svg?style=for-the-badge&color=000000
-[contributors-url]: https://github.com/johnraivenolazo/suri/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/johnraivenolazo/suri.svg?style=for-the-badge&color=000000
-[forks-url]: https://github.com/johnraivenolazo/suri/network/members
-[stars-shield]: https://img.shields.io/github/stars/johnraivenolazo/suri.svg?style=for-the-badge&color=000000
-[stars-url]: https://github.com/johnraivenolazo/suri/stargazers
-[issues-shield]: https://img.shields.io/github/issues/johnraivenolazo/suri.svg?style=for-the-badge&color=000000
-[issues-url]: https://github.com/johnraivenolazo/suri/issues
-[license-shield]: https://img.shields.io/github/license/johnraivenolazo/suri.svg?style=for-the-badge&color=000000
+[contributors-shield]: https://img.shields.io/github/contributors/SuriAI/suri.svg?style=for-the-badge&color=000000
+[contributors-url]: https://github.com/SuriAI/suri/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/SuriAI/suri.svg?style=for-the-badge&color=000000
+[forks-url]: https://github.com/SuriAI/suri/network/members
+[stars-shield]: https://img.shields.io/github/stars/SuriAI/suri.svg?style=for-the-badge&color=000000
+[stars-url]: https://github.com/SuriAI/suri/stargazers
+[issues-shield]: https://img.shields.io/github/issues/SuriAI/suri.svg?style=for-the-badge&color=000000
+[issues-url]: https://github.com/SuriAI/suri/issues
+[license-shield]: https://img.shields.io/github/license/SuriAI/suri.svg?style=for-the-badge&color=000000
 [license-url]: LICENSE
 
 [Electron.js]: https://img.shields.io/badge/Electron-2B2E3A?style=for-the-badge&logo=electron&logoColor=9FEAF9

@@ -131,91 +131,78 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
 
   if (updateInfo?.hasUpdate) {
     return (
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 mr-1">
-          <span className="text-xs text-emerald-400 font-medium whitespace-nowrap">
-            v{updateInfo.latestVersion} available
+      <div className="flex flex-col items-end gap-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-emerald-400 font-bold tracking-wide">
+            Update available (v{updateInfo.latestVersion})
           </span>
-          {lastChecked && (
-            <>
-              <span className="text-white/10 text-[10px]">·</span>
-              <span className="text-[10px] text-white/30 whitespace-nowrap">
-                Last checked: {formatLastChecked(lastChecked)}
-              </span>
-            </>
-          )}
+          <button
+            onClick={onDownload}
+            className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all border border-emerald-500/20 active:scale-95"
+          >
+            Download
+          </button>
         </div>
-
-        <button
-          onClick={onCheck}
-          disabled={isChecking}
-          title={isChecking ? "Checking..." : "Check for updates"}
-          className="w-8 h-8 flex items-center justify-center !bg-transparent hover:!bg-transparent !border-0 !p-0 text-white/50 hover:text-white transition-colors disabled:opacity-50 focus-visible:outline-1 focus-visible:outline-white/20 rounded"
-        >
-          {isChecking ? (
-            <i className="fa-solid fa-spinner animate-spin" />
-          ) : (
-            <i className="fa-solid fa-arrows-rotate" />
-          )}
-        </button>
-
-        <button
-          onClick={onDownload}
-          className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-medium transition-colors border border-emerald-500/20"
-        >
-          Download
-        </button>
+        {lastChecked && (
+          <span className="text-[10px] text-white/20 whitespace-nowrap">
+            Last checked: {formatLastChecked(lastChecked)}
+          </span>
+        )}
       </div>
     );
   }
 
   if (updateInfo?.error) {
     return (
-      <div className="flex items-center gap-3">
-        <span className="text-xs text-red-400/60 whitespace-nowrap">
-          Update check failed
-        </span>
-        <button
-          onClick={onCheck}
-          disabled={isChecking}
-          className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-medium transition-colors border border-white/5"
-        >
-          Retry
-        </button>
+      <div className="flex flex-col items-end gap-1.5">
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-red-400/50 whitespace-nowrap">
+            Update check failed
+          </span>
+          <button
+            onClick={onCheck}
+            disabled={isChecking}
+            className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-medium transition-colors border border-white/5"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2 mr-1">
-        <span className="text-xs text-white/60 font-medium">
-          {updateInfo && !updateInfo.hasUpdate ? "Up to date" : "Not checked"}
-        </span>
-        {lastChecked && (
-          <>
-            <span className="text-white/10 text-[10px]">·</span>
-            <span className="text-[10px] text-white/30 whitespace-nowrap">
-              Last checked: {formatLastChecked(lastChecked)}
-            </span>
-          </>
+    <div className="flex flex-col items-end gap-1.5">
+      <div className="flex items-center gap-3">
+        {showSuccess && (
+          <span className="text-xs text-emerald-500/60 font-medium">
+            Up to date
+          </span>
         )}
+        <button
+          onClick={onCheck}
+          disabled={isChecking}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+            isChecking
+              ? "bg-white/5 text-white/30 border-white/5"
+              : "bg-transparent hover:bg-white/5 text-white/50 hover:text-white border-transparent hover:border-white/10"
+          } disabled:opacity-50`}
+        >
+          {isChecking ? (
+            <div className="flex items-center gap-2">
+              <i className="fa-solid fa-spinner animate-spin text-[10px]" />
+              <span>Checking...</span>
+            </div>
+          ) : (
+            "Check for updates"
+          )}
+        </button>
       </div>
-      <button
-        onClick={onCheck}
-        disabled={isChecking || showSuccess}
-        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-          showSuccess
-            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-            : "bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border-white/5"
-        } disabled:opacity-50`}
-      >
-        {isChecking
-          ? "Checking..."
-          : showSuccess
-            ? "Up to date"
-            : "Check for updates"}
-      </button>
+      {lastChecked && !isChecking && (
+        <span className="text-[10px] text-white/20 whitespace-nowrap">
+          Last checked: {formatLastChecked(lastChecked)}
+        </span>
+      )}
     </div>
   );
 };
@@ -295,31 +282,36 @@ export const About: React.FC = () => {
   const openLink = (url: string) => () => updaterService.openReleasePage(url);
 
   return (
-    <div className="relative h-full">
+    <div className="relative h-full overflow-y-auto custom-scroll">
       {showPrivacyModal && (
         <PrivacyModal onClose={() => setShowPrivacyModal(false)} />
       )}
 
-      <div className="p-10 h-full flex flex-col">
-        <div className="flex-1 space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
+      <div className="p-10 h-full flex flex-col items-center max-w-lg mx-auto text-center">
+        <div className="w-full flex-1 space-y-12">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-black text-white tracking-[-0.04em]">
               Suri
             </h1>
-            <p className="text-sm text-white/40 mt-1">
-              AI-powered attendance tracker
+            <p className="text-sm text-white/30 font-medium tracking-widest uppercase">
+              AI Attendance Tracker
             </p>
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-white/5">
-              <span className="text-xs text-white/50">Version</span>
-              <span className="text-xs font-mono text-white/50">
+
+          <div className="space-y-1 w-full text-left">
+            <div className="flex items-center justify-between py-3 border-b border-white/5">
+              <span className="text-[11px] uppercase tracking-widest font-bold text-white/20">
+                Version
+              </span>
+              <span className="text-xs font-mono text-white/40">
                 {version || "—"}
               </span>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-white/5">
-              <span className="text-xs text-white/50">Updates</span>
+            <div className="flex items-center justify-between py-3 border-b border-white/5">
+              <span className="text-[11px] uppercase tracking-widest font-bold text-white/20">
+                Updates
+              </span>
               <UpdateStatus
                 updateInfo={updateInfo}
                 isChecking={isChecking}
@@ -330,60 +322,68 @@ export const About: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-white/5">
-              <span className="text-xs text-white/50">License</span>
+            <div className="flex items-center justify-between py-3 border-b border-white/5">
+              <span className="text-[11px] uppercase tracking-widest font-bold text-white/20">
+                License
+              </span>
               <button
                 onClick={openLink("https://www.gnu.org/licenses/agpl-3.0.html")}
-                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-medium transition-colors border border-white/5"
+                className="px-3 py-1.5 rounded-lg bg-transparent hover:bg-white/5 text-white/40 hover:text-white/90 text-xs font-medium transition-all border border-transparent hover:border-white/10 active:scale-95"
               >
-                View License
+                View GNU AGPL v3
               </button>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-white/5">
-              <span className="text-xs text-white/50">Source code</span>
+            <div className="flex items-center justify-between py-3 border-b border-white/5">
+              <span className="text-[11px] uppercase tracking-widest font-bold text-white/20">
+                Source code
+              </span>
               <button
                 onClick={openLink("https://github.com/suriAI/suri")}
-                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-medium transition-colors border border-white/5"
+                className="px-3 py-1.5 rounded-lg bg-transparent hover:bg-white/5 text-white/40 hover:text-white/90 text-xs font-medium transition-all border border-transparent hover:border-white/10 active:scale-95"
               >
-                View Source
+                View Repository
               </button>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-white/5">
-              <span className="text-xs text-white/50">Privacy & data</span>
+            <div className="flex items-center justify-between py-3 border-b border-white/5">
+              <span className="text-[11px] uppercase tracking-widest font-bold text-white/20">
+                Privacy & Data
+              </span>
               <button
                 onClick={() => setShowPrivacyModal(true)}
-                className="px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-xs font-medium transition-colors border border-cyan-500/20 flex items-center gap-1"
+                className="px-3 py-1.5 rounded-lg bg-transparent hover:bg-cyan-500/10 text-white/40 hover:text-cyan-400 text-xs font-medium transition-all border border-transparent hover:border-cyan-500/20 active:scale-95"
               >
-                Read more
-                <i className="fa-solid fa-arrow-right text-[9px]"></i>
+                Read Policy
               </button>
             </div>
           </div>
         </div>
-        <div className="pt-6 pb-6 mt-auto flex items-center justify-between border-t border-white/5">
-          <div className="flex items-center gap-3">
+
+        <div className="pt-12 pb-4 mt-auto border-t border-white/5 w-full">
+          <div className="flex items-center justify-center gap-6 mb-6">
             <button
               onClick={openLink("https://github.com/suriAI/suri/releases")}
-              className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs font-medium transition-colors border border-white/5"
+              className="text-[11px] uppercase tracking-[0.15em] font-bold text-white/20 hover:text-white/60 transition-colors"
             >
               Releases
             </button>
             <button
               onClick={openLink("https://github.com/suriAI/suri/issues")}
-              className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs font-medium transition-colors border border-white/5"
+              className="text-[11px] uppercase tracking-[0.15em] font-bold text-white/20 hover:text-white/60 transition-colors"
             >
-              Report issue
+              Support
             </button>
             <button
               onClick={openLink("https://github.com/suriAI/suri#readme")}
-              className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs font-medium transition-colors border border-white/5"
+              className="text-[11px] uppercase tracking-[0.15em] font-bold text-white/20 hover:text-white/60 transition-colors"
             >
-              Documentation
+              Docs
             </button>
           </div>
-          <p className="text-xs text-white/30 font-medium">© 2026 Suri</p>
+          <p className="text-[10px] text-white/5 font-black uppercase tracking-[0.3em]">
+            © 2026 Suri
+          </p>
         </div>
       </div>
     </div>
