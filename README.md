@@ -40,7 +40,7 @@
 <br />
 
 <!-- INTRO -->
-**Suri** is an offline-first attendance solution designed for speed and data privacy. By executing the entire AI pipeline locally, Suri eliminates network latency and keeps biometric data strictly under local control.
+**Suri** is an offline-first attendance tool built for speed and privacy. By executing the entire AI pipeline locally, Suri provides zero network latency and keeps biometric data strictly under local control.
 
 <div align="center">
   <br />
@@ -85,7 +85,7 @@ Dig into the specifics:
 ## Tech Stack
 
 <p align="center">
-  Suri uses a modern, high-performance stack to deliver a native experience.
+  Suri is built with a focused stack for low-latency desktop performance.
 </p>
 
 <div align="center">
@@ -120,7 +120,7 @@ Visit the [issues page](https://github.com/johnraivenolazo/suri/issues) to submi
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Suri is open source because tools like this should be accessible to everyone. If you want to help make it better, pull requests are always welcome.
+Suri is open source. If you want to help make it better, pull requests are welcome.
 
 1. Fork the project
 2. Create a branch (`git checkout -b feature/AmazingFeature`)
@@ -144,9 +144,9 @@ This project relies on open source software. See [Third Party Licenses](THIRD_PA
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-*   [FastAPI](https://fastapi.tiangolo.com/) - Powering the low-latency local API.
-*   [ONNX Runtime](https://onnxruntime.ai/) - Enabling high-performance edge inference.
-*   [Electron](https://www.electronjs.org/) - Providing the native desktop experience.
+*   [FastAPI](https://fastapi.tiangolo.com/) - High-performance local API framework.
+*   [ONNX Runtime](https://onnxruntime.ai/) - Local edge inference engine.
+*   [Electron](https://www.electronjs.org/) - Native desktop runtime.
 *   [React](https://react.dev/) - Modern UI state management.
 *   [OpenCV](https://opencv.org/) - The backbone for real-time image processing.
 

@@ -1,12 +1,12 @@
 # System Architecture
 
-Suri is a **Hybrid Desktop Application**. It combines the raw power of a local executable with the connectivity of a modern SaaS.
+Suri is a **Hybrid Desktop Application**. It combines local execution with cloud-based connectivity for reporting.
 
 ## The "Hybrid" Diagram
 
 ```mermaid
 graph TD
-    subgraph Local [Local Machine (The Powerhouse)]
+    subgraph Local [Local Machine]
         UI[React Frontend] <-->|IPC| Main[Electron Main]
         Main <-->|WebSockets| AI[Python AI Engine]
         AI <-->|SQLAlchemy| SQLite[(Local DB)]
@@ -19,7 +19,7 @@ graph TD
         Main --> SyncEngine
     end
 
-    subgraph Cloud [Secure Cloud (The Bridge)]
+    subgraph Cloud [Cloud Infrastructure]
         Auth[Cloud Auth Provider]
         Postgres[(Managed Postgres DB)]
     end

@@ -1,6 +1,6 @@
 # Privacy & Data Sovereignty
 
-Privacy is a baseline requirement, not a feature. Trust is not required—the [Project Architecture](ARCHITECTURE.md) guarantees it. Suri is fully compliant with the [Data Privacy Act of 2012](https://privacy.gov.ph/data-privacy-act/), [GDPR](https://gdpr.eu/what-is-gdpr/), and [CCPA](https://oag.ca.gov/privacy/ccpa).
+Suri is a local-first system where privacy is enforced at the architectural level. It follows the [Data Privacy Act of 2012](https://privacy.gov.ph/data-privacy-act/), [GDPR](https://gdpr.eu/what-is-gdpr/), and [CCPA](https://oag.ca.gov/privacy/ccpa).
 
 ## 1. Zero-Image Storage
 **Face images are never stored.**
@@ -10,8 +10,8 @@ When a face is detected, the AI converts it into a "vector" (a string of numbers
 Even if someone stole the hardware, they couldn't reconstruct a face from those numbers.
 
 
-## 2. Where Data Lives (The "Split-Brain" Model)
-A hybrid approach balances **Security** and **Convenience**.
+## 2. Data Location
+Suri uses a local-first approach with optional cloud synchronization.
 
 ### A. Biometric Data (Face Embeddings)
 *   **Location**: Strictly on the **Local Device**.
