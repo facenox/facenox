@@ -97,8 +97,8 @@ export function StartTimeChip({
               : isOpen
                 ? "bg-black/80 border border-cyan-500/50 shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)]"
                 : outdated
-                  ? "bg-amber-900/20 border-none text-amber-200 hover:bg-amber-900/30 hover:border-amber-500/50"
-                  : "bg-black/40 backdrop-blur-md border border-white/10 hover:bg-white/[0.07] hover:border-white/20 text-white/90"
+                  ? "bg-amber-900/20 border border-amber-500/30 text-amber-200 hover:bg-amber-900/30 hover:border-amber-500/50"
+                  : "bg-transparent border border-transparent hover:bg-white/5 hover:border-white/10 text-white/90"
           }`}
         >
           <div className="flex items-baseline gap-1">

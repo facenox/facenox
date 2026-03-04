@@ -173,9 +173,9 @@ export function Reports({
                 action={
                   onAddMember
                     ? {
-                      label: "Add Member",
-                      onClick: onAddMember,
-                    }
+                        label: "Add Member",
+                        onClick: onAddMember,
+                      }
                     : undefined
                 }
               />
