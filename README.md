@@ -21,7 +21,7 @@
   </a>
 
   <h1 style="font-size: 4rem; margin-bottom: 0; border-bottom: none;">Suri</h1>
-  <p align="center" style="font-size: 1rem; margin-top: 0.5rem; color: #666; font-weight: bold;">LOCAL AI ATTENDANCE</p>
+  <p align="center" style="font-size: 1rem; margin-top: 0.5rem; color: #666; font-weight: bold;">AI ATTENDANCE TRACKER</p>
 
   <p align="center">
     Offline-first. Privacy-centric. Local AI.
@@ -58,7 +58,7 @@
 
 <div align="center">
   <br/>
-  <a href="docs/FEATURES.md">Explore Features →</a>
+  <a href="docs/FEATURES.md">Explore Features</a>
   <br/>
 </div>
 

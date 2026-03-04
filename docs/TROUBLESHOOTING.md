@@ -1,6 +1,6 @@
 # Troubleshooting & Diagnostics
 
-While Suri is engineered for resilience, local environments can vary. This guide covers common issues and their resolutions.
+This guide covers common issues and their resolutions.
 
 ## Common Error Codes
 
