@@ -24,7 +24,7 @@
   <p style="font-size: 1rem; font-style: italic; margin-top: 0.5rem; margin-bottom: 1.5rem; color: #666; letter-spacing: 0.1em; text-transform: uppercase; font-weight: bold;">AI Attendance Tracker</p>
 
   <p align="center">
-    A precision-built, privacy-centric attendance system.
+    Offline-first. Privacy-centric. Local AI.
     <br />
     <a href="docs/FEATURES.md"><strong>Explore Features »</strong></a>
     <br />
