@@ -40,7 +40,7 @@
 <br />
 
 <!-- INTRO -->
-**Suri** is a desktop application for real-time face recognition-based attendance tracking using AI. It executes the entire AI pipeline locally to eliminate network latency and keep biometric data on-device.
+**Suri** is a desktop application for real-time face recognition-based attendance tracking using AI. It executes the entire AI pipeline locally to eliminate network latency and keep sensitive biometric data private.
 
 <div align="center">
   <br />
@@ -50,7 +50,7 @@
 
 | **Local First** | **Privacy by Default** | **Encrypted Vaults** |
 |:---|:---|:---|
-| AI runs on local hardware. No server round-trips. | Face images are never saved. Faces are converted to mathematical embeddings. | AES-256-GCM encrypted `.suri` vaults. Password required for restoration. |
+| AI runs on your device. No server or cloud involved. | Face images are never saved. Faces are converted to mathematical embeddings. | AES-256-GCM encrypted. Password required for backup and restoration. |
 
 <div align="center">
   <br/>
