@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { backendService, attendanceManager } from "@/services";
 import { useDialog } from "@/components/shared";
-import { useGroupStore, useGroupUIStore } from "@/components/group/stores";
+import { useGroupStore } from "@/components/group/stores";
 import type { GroupSection } from "@/components/group";
 import type {
   QuickSettings,
@@ -68,15 +68,6 @@ export const useSettings = ({
   const storeMembers = useGroupStore((state) => state.members);
   const fetchGroups = useGroupStore((state) => state.fetchGroups);
   const fetchGroupDetails = useGroupStore((state) => state.fetchGroupDetails);
-  const registrationSource = useGroupUIStore(
-    (state) => state.lastRegistrationSource,
-  );
-  const registrationMode = useGroupUIStore(
-    (state) => state.lastRegistrationMode,
-  );
-  const setRegistrationState = useGroupUIStore(
-    (state) => state.setRegistrationState,
-  );
 
   const toggleQuickSetting = (key: keyof QuickSettings) => {
     const newSettings = { ...quickSettings, [key]: !quickSettings[key] };
@@ -403,9 +394,6 @@ export const useSettings = ({
     addMemberHandler,
     isGroupExpanded,
     setIsGroupExpanded,
-    registrationSource,
-    registrationMode,
-    setRegistrationState,
     toggleQuickSetting,
     updateAudioSetting,
     updateAttendanceSetting,

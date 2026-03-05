@@ -21,10 +21,6 @@ function GroupPanelComponent({
   onGroupsChanged,
   isEmbedded = false,
   triggerCreateGroup = 0,
-  onRegistrationSourceChange,
-  registrationSource,
-  onRegistrationModeChange,
-  registrationMode,
   deselectMemberTrigger,
   onHasSelectedMemberChange,
   onDaysTrackedChange,
@@ -120,10 +116,6 @@ function GroupPanelComponent({
         <div className="h-full overflow-hidden">
           <GroupContent
             onMembersChange={handleMembersChange}
-            onRegistrationSourceChange={onRegistrationSourceChange}
-            registrationSource={registrationSource}
-            onRegistrationModeChange={onRegistrationModeChange}
-            registrationMode={registrationMode}
             deselectMemberTrigger={deselectMemberTrigger}
             onHasSelectedMemberChange={onHasSelectedMemberChange}
             onDaysTrackedChange={onDaysTrackedChange}
@@ -170,10 +162,6 @@ function GroupPanelComponent({
       <main className="flex-1 flex flex-col overflow-hidden bg-black h-full relative">
         <GroupContent
           onMembersChange={handleMembersChange}
-          onRegistrationSourceChange={onRegistrationSourceChange}
-          registrationSource={registrationSource}
-          onRegistrationModeChange={onRegistrationModeChange}
-          registrationMode={registrationMode}
           deselectMemberTrigger={deselectMemberTrigger}
           onHasSelectedMemberChange={onHasSelectedMemberChange}
           onDaysTrackedChange={onDaysTrackedChange}

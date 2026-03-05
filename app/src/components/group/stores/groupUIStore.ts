@@ -42,15 +42,14 @@ interface GroupUIState {
   openEditGroup: () => void;
   closeEditGroup: () => void;
 
-  // Reset
-  reset: () => void;
-
   // Audit 5.0 Deep Linking
   jumpToRegistration: (memberId: string, source?: "upload" | "camera") => void;
   setRegistrationState: (
     source: "upload" | "camera" | null,
     mode: "single" | "bulk" | "queue" | null,
   ) => void;
+  handleRegistrationBack: () => void;
+  resetRegistration: () => void;
 }
 
 const initialState = {
@@ -119,7 +118,7 @@ export const useGroupUIStore = create<GroupUIState>((set, get) => ({
 
   reset: () => set(initialState),
 
-  jumpToRegistration: (memberId, source = "camera") => {
+  jumpToRegistration: (memberId: string, source: "upload" | "camera" = "camera") => {
     set({
       activeSection: "registration",
       preSelectedMemberId: memberId,
@@ -139,6 +138,21 @@ export const useGroupUIStore = create<GroupUIState>((set, get) => ({
         lastRegistrationMode: mode,
       })
       .catch(console.error);
+  },
+
+  handleRegistrationBack: () => {
+    const { lastRegistrationSource, lastRegistrationMode } = get();
+    if (lastRegistrationMode) {
+      get().setRegistrationState(lastRegistrationSource, null);
+    } else if (lastRegistrationSource) {
+      get().setRegistrationState(null, null);
+    }
+    set({ preSelectedMemberId: null });
+  },
+
+  resetRegistration: () => {
+    get().setRegistrationState(null, null);
+    set({ preSelectedMemberId: null });
   },
 }));
 

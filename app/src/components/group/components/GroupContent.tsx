@@ -18,11 +18,6 @@ interface GroupContentProps {
     exportCSV: () => void;
     print: () => void;
   }) => void;
-  // Controlled registration props
-  onRegistrationSourceChange?: (source: "upload" | "camera" | null) => void;
-  registrationSource?: "upload" | "camera" | null;
-  onRegistrationModeChange?: (mode: "single" | "bulk" | "queue" | null) => void;
-  registrationMode?: "single" | "bulk" | "queue" | null;
 }
 
 function GroupContentComponent({
@@ -31,10 +26,6 @@ function GroupContentComponent({
   onHasSelectedMemberChange,
   onDaysTrackedChange,
   onExportHandlersReady,
-  onRegistrationSourceChange,
-  registrationSource,
-  onRegistrationModeChange,
-  registrationMode,
 }: GroupContentProps) {
   const selectedGroup = useGroupStore((state) => state.selectedGroup);
   const groupsLength = useGroupStore((state) => state.groups.length);
@@ -121,11 +112,6 @@ function GroupContentComponent({
             deselectMemberTrigger={deselectMemberTrigger}
             onHasSelectedMemberChange={onHasSelectedMemberChange}
             onAddMember={openAddMember}
-            // Pass controlled props
-            registrationSource={registrationSource}
-            onRegistrationSourceChange={onRegistrationSourceChange}
-            registrationMode={registrationMode}
-            onRegistrationModeChange={onRegistrationModeChange}
           />
         )}
       </motion.div>

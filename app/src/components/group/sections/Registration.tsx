@@ -14,11 +14,6 @@ interface RegistrationProps {
   deselectMemberTrigger?: number;
   onHasSelectedMemberChange?: (hasSelectedMember: boolean) => void;
   onAddMember?: () => void;
-  // Controlled state props
-  registrationSource?: "upload" | "camera" | null;
-  onRegistrationSourceChange?: (source: "upload" | "camera" | null) => void;
-  registrationMode?: "single" | "bulk" | "queue" | null;
-  onRegistrationModeChange?: (mode: "single" | "bulk" | "queue" | null) => void;
 }
 
 type SourceType = "upload" | "camera" | null;
@@ -31,90 +26,19 @@ export function Registration({
   deselectMemberTrigger,
   onHasSelectedMemberChange,
   onAddMember,
-  registrationSource,
-  onRegistrationSourceChange,
-  registrationMode,
-  onRegistrationModeChange,
 }: RegistrationProps) {
-  const storeSource = useGroupUIStore((state) => state.lastRegistrationSource);
-  const storeMode = useGroupUIStore((state) => state.lastRegistrationMode);
+  const source = useGroupUIStore((state) => state.lastRegistrationSource);
+  const mode = useGroupUIStore((state) => state.lastRegistrationMode);
   const preSelectedId = useGroupUIStore((state) => state.preSelectedMemberId);
   const setRegistrationState = useGroupUIStore(
     (state) => state.setRegistrationState,
   );
+  const handleBack = useGroupUIStore((state) => state.handleRegistrationBack);
+  const resetRegistration = useGroupUIStore((state) => state.resetRegistration);
 
-  const source =
-    registrationSource !== undefined ? registrationSource : storeSource;
-  const mode = registrationMode !== undefined ? registrationMode : storeMode;
 
-  useEffect(() => {
-    if (preSelectedId && !source && !mode) {
-      if (onRegistrationSourceChange && onRegistrationModeChange) {
-        onRegistrationSourceChange("camera");
-        onRegistrationModeChange("single");
-      } else {
-        setRegistrationState("camera", "single");
-      }
-    }
-  }, [
-    preSelectedId,
-    source,
-    mode,
-    setRegistrationState,
-    onRegistrationSourceChange,
-    onRegistrationModeChange,
-  ]);
 
-  const handleSourceChange = useCallback(
-    (newSource: SourceType) => {
-      if (onRegistrationSourceChange) {
-        onRegistrationSourceChange(newSource);
-      } else {
-        setRegistrationState(newSource, mode);
-      }
-    },
-    [mode, setRegistrationState, onRegistrationSourceChange],
-  );
 
-  const handleModeChange = useCallback(
-    (newMode: RegistrationMode) => {
-      if (onRegistrationModeChange) {
-        onRegistrationModeChange(newMode);
-      } else {
-        setRegistrationState(source, newMode);
-      }
-    },
-    [source, setRegistrationState, onRegistrationModeChange],
-  );
-
-  const handleBack = useCallback(() => {
-    if (mode) {
-      if (onRegistrationModeChange) onRegistrationModeChange(null);
-      else setRegistrationState(source, null);
-    } else if (source) {
-      if (onRegistrationSourceChange) onRegistrationSourceChange(null);
-      else setRegistrationState(null, null);
-    }
-
-    useGroupUIStore.setState({ preSelectedMemberId: null });
-  }, [
-    mode,
-    source,
-    setRegistrationState,
-    onRegistrationSourceChange,
-    onRegistrationModeChange,
-  ]);
-
-  const handleFullReset = useCallback(() => {
-    if (onRegistrationModeChange) onRegistrationModeChange(null);
-    if (onRegistrationSourceChange) onRegistrationSourceChange(null);
-    setRegistrationState(null, null);
-    useGroupUIStore.setState({ preSelectedMemberId: null });
-  }, [
-    onRegistrationModeChange,
-    onRegistrationSourceChange,
-    setRegistrationState,
-  ]);
 
   const animationProps = {
     initial: { opacity: 0, scale: 0.995 },
@@ -133,7 +57,7 @@ export function Registration({
             group={group}
             members={members}
             onRefresh={onRefresh}
-            onClose={handleFullReset}
+            onClose={resetRegistration}
           />
         </motion.div>
       ) : mode === "queue" && source === "camera" ? (
@@ -142,7 +66,7 @@ export function Registration({
             group={group}
             members={members}
             onRefresh={onRefresh}
-            onClose={handleFullReset}
+            onClose={resetRegistration}
           />
         </motion.div>
       ) : mode === "single" && source ? (
@@ -163,9 +87,9 @@ export function Registration({
             action={
               onAddMember
                 ? {
-                    label: "Add Member",
-                    onClick: onAddMember,
-                  }
+                  label: "Add Member",
+                  onClick: onAddMember,
+                }
                 : undefined
             }
           />
@@ -188,7 +112,7 @@ export function Registration({
                 </p>
               </div>
 
-              {(source || mode) && (
+              {source && (
                 <button
                   onClick={handleBack}
                   className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/30 hover:bg-cyan-500/5 text-white/40 hover:text-cyan-400 transition-all duration-300"
@@ -203,7 +127,7 @@ export function Registration({
 
             <div className="grid grid-cols-2 gap-6">
               <button
-                onClick={() => handleSourceChange("camera")}
+                onClick={() => setRegistrationState("camera", null)}
                 className="group relative flex flex-col items-center gap-6 p-10 rounded-[2.5rem] border border-white/5 bg-white/5 hover:border-cyan-500/30 hover:bg-cyan-500/3 transition-all duration-300"
               >
                 <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(34,211,238,0.15)] transition-all duration-500">
@@ -220,7 +144,7 @@ export function Registration({
               </button>
 
               <button
-                onClick={() => handleSourceChange("upload")}
+                onClick={() => setRegistrationState("upload", null)}
                 className="group relative flex flex-col items-center gap-6 p-10 rounded-[2.5rem] border border-white/5 bg-white/5 hover:border-cyan-500/30 hover:bg-cyan-500/3 transition-all duration-300"
               >
                 <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(34,211,238,0.15)] transition-all duration-500">
@@ -259,7 +183,7 @@ export function Registration({
 
             <div className="grid gap-4">
               <button
-                onClick={() => handleModeChange("single")}
+                onClick={() => setRegistrationState(source, "single")}
                 className="group p-6 rounded-4xl border border-white/5 bg-white/5 hover:border-cyan-500/30 hover:bg-cyan-500/3 transition-all duration-300 flex items-center gap-6"
               >
                 <div className="w-14 h-14 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-cyan-500/10 transition-colors">
@@ -277,7 +201,7 @@ export function Registration({
 
               {source === "upload" && (
                 <button
-                  onClick={() => handleModeChange("bulk")}
+                  onClick={() => setRegistrationState(source, "bulk")}
                   className="group p-6 rounded-4xl border border-white/5 bg-white/5 hover:border-cyan-500/30 hover:bg-cyan-500/3 transition-all duration-300 flex items-center gap-6"
                 >
                   <div className="w-14 h-14 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-cyan-500/10 transition-colors">
@@ -296,7 +220,7 @@ export function Registration({
 
               {source === "camera" && (
                 <button
-                  onClick={() => handleModeChange("queue")}
+                  onClick={() => setRegistrationState(source, "queue")}
                   className="group p-6 rounded-4xl border border-white/5 bg-white/5 hover:border-cyan-500/30 hover:bg-cyan-500/3 transition-all duration-300 flex items-center gap-6"
                 >
                   <div className="w-14 h-14 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-cyan-500/10 transition-colors">

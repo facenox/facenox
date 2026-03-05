@@ -8,6 +8,7 @@ import { About } from "@/components/settings/sections/About";
 import { CloudSync } from "@/components/settings/sections/CloudSync";
 import { GroupPanel, type GroupSection } from "@/components/group";
 import { useGroupModals } from "@/components/group/hooks";
+import { useGroupUIStore } from "@/components/group/stores";
 import type {
   QuickSettings,
   AttendanceSettings,
@@ -22,12 +23,6 @@ interface ContentPanelProps {
   setGroupInitialSection: (section: GroupSection) => void;
   validInitialGroup: AttendanceGroup | null;
   triggerCreateGroup: number;
-  registrationSource: "upload" | "camera" | null;
-  registrationMode: "single" | "bulk" | "queue" | null;
-  setRegistrationState: (
-    source: "upload" | "camera" | null,
-    mode: "single" | "bulk" | "queue" | null,
-  ) => void;
   deselectMemberTrigger: number;
   setDeselectMemberTrigger: (trigger: number) => void;
   setHasSelectedMember: (hasSelected: boolean) => void;
@@ -68,9 +63,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   setGroupInitialSection,
   validInitialGroup,
   triggerCreateGroup,
-  registrationSource,
-  registrationMode,
-  setRegistrationState,
   deselectMemberTrigger,
   setDeselectMemberTrigger,
   setHasSelectedMember,
@@ -99,6 +91,15 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   groupSections,
 }) => {
   const { openEditGroup } = useGroupModals();
+  const registrationSource = useGroupUIStore(
+    (state) => state.lastRegistrationSource,
+  );
+  const registrationMode = useGroupUIStore(
+    (state) => state.lastRegistrationMode,
+  );
+  const handleRegistrationBack = useGroupUIStore(
+    (state) => state.handleRegistrationBack,
+  );
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[#090909]">
       {/* Section Header */}
@@ -115,7 +116,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 <span className="text-xl font-semibold text-white">
                   {groupInitialSection
                     ? groupSections.find((s) => s.id === groupInitialSection)
-                        ?.label
+                      ?.label
                     : "Overview"}
                 </span>
               </div>
@@ -198,11 +199,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                       setDeselectMemberTrigger(Date.now());
                       return;
                     }
-                    if (registrationMode) {
-                      setRegistrationState(registrationSource, null);
-                    } else if (registrationSource) {
-                      setRegistrationState(null, null);
-                    }
+                    handleRegistrationBack();
                   }}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/5 text-white/40 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest"
                 >
@@ -233,14 +230,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   initialSection={groupInitialSection}
                   initialGroup={validInitialGroup}
                   triggerCreateGroup={triggerCreateGroup}
-                  onRegistrationSourceChange={(s) =>
-                    setRegistrationState(s, s ? registrationMode : null)
-                  }
-                  registrationSource={registrationSource}
-                  onRegistrationModeChange={(m) =>
-                    setRegistrationState(registrationSource, m)
-                  }
-                  registrationMode={registrationMode}
                   deselectMemberTrigger={deselectMemberTrigger}
                   onHasSelectedMemberChange={setHasSelectedMember}
                   onExportHandlersReady={handleExportHandlersReady}
