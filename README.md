@@ -48,7 +48,7 @@
   <br />
 </div>
 
-| **Local First** | **Privacy by Default** | **Encrypted Vaults** |
+| **Local First** | **Privacy by Default** | **Encrypted** |
 |:---|:---|:---|
 | AI runs on your device. No server or cloud involved. | Face images are never saved. Faces are converted to mathematical embeddings. | AES-256-GCM encrypted. Password required for backup and restoration. |
 
@@ -74,9 +74,6 @@ Dig into the specifics:
 - [**Troubleshooting**](docs/TROUBLESHOOTING.md) - Quick fixes and diagnostic codes.
 - [**Privacy & Security**](docs/PRIVACY.md) - How we handle biometric data and encryption.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 <!-- TECH STACK -->
 ## Tech Stack
 
@@ -87,9 +84,6 @@ Dig into the specifics:
 <div align="center">
     <img src="https://skillicons.dev/icons?i=electron,react,vite,tailwindcss,python,fastapi,sqlite,opencv&theme=dark" />
 </div>
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 <!-- ROADMAP -->
 ## Roadmap
@@ -110,9 +104,6 @@ Dig into the specifics:
 
 Visit the [issues page](https://github.com/johnraivenolazo/suri/issues) to submit feature requests.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 <!-- CONTRIBUTING -->
 ## Contributing
 
@@ -124,18 +115,12 @@ Suri is open source. If you want to help make it better, pull requests are welco
 4. Push it to your fork (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 <!-- LICENSE -->
 ## License
 
 Distributed under the **AGPL-3.0 License**. See `LICENSE` for more information.
 
 This project relies on open source software. See [Third Party Licenses](THIRD_PARTY_LICENSES.md) for details.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
