@@ -6,6 +6,7 @@
   "beforePack": "scripts/before-pack.mjs",
   "win": {
     "target": "nsis",
+    "artifactName": "Suri-Setup-v${version}.${ext}",
     "extraResources": [
       {
         "from": "../server/dist/server.exe",
@@ -24,7 +25,8 @@
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
     "deleteAppDataOnUninstall": false,
-    "runAfterFinish": true
+    "runAfterFinish": true,
+    "artifactName": "Suri-Setup-v${version}.${ext}"
   },
   "linux": {
     "target": "AppImage",
