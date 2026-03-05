@@ -145,8 +145,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
     exportData: (password: string) => {
       return ipcRenderer.invoke("sync:export-data", password);
     },
-    importData: (password: string, overwrite: boolean = false) => {
-      return ipcRenderer.invoke("sync:import-data", password, overwrite);
+    pickImportFile: () => {
+      return ipcRenderer.invoke("sync:pick-import-file");
+    },
+    importData: (
+      password: string,
+      filePath: string,
+      overwrite: boolean = false,
+    ) => {
+      return ipcRenderer.invoke("sync:import-data", password, filePath, overwrite);
     },
     restartManager: () => {
       return ipcRenderer.invoke("sync:restart-manager");

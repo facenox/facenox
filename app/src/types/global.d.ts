@@ -9,7 +9,7 @@ import type {
   DatabaseClearResponse,
 } from "@/types/recognition";
 
-export {};
+export { };
 
 export interface UpdateInfo {
   currentVersion: string;
@@ -175,8 +175,14 @@ declare global {
       filePath?: string;
       error?: string;
     }>;
+    pickImportFile: () => Promise<{
+      canceled: boolean;
+      filePath?: string;
+      error?: string;
+    }>;
     importData: (
       password: string,
+      filePath: string,
       overwrite?: boolean,
     ) => Promise<{
       success: boolean;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Settings } from "@/components/settings";
 import { attendanceManager, BackendService } from "@/services";
 import {
@@ -109,6 +109,8 @@ export default function Main() {
   const {
     error,
     setError,
+    success,
+    setSuccess,
     warning,
     setWarning,
     showSettings,
@@ -475,10 +477,42 @@ export default function Main() {
   return (
     <div className="h-full bg-black text-white flex flex-col overflow-hidden">
       {/* Floating Alert System */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-xl px-4 pointer-events-none">
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-xl px-4 pointer-events-none">
         <AnimatePresence>
+          {success && (
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="pointer-events-auto mb-3 bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 p-4 rounded-xl text-emerald-100/90 shadow-2xl flex items-start gap-3"
+            >
+              <i className="fa-solid fa-circle-check mt-0.5 text-emerald-500"></i>
+              <div className="flex-1 text-sm leading-relaxed">
+                <span className="font-semibold text-emerald-500 mr-1.5 whitespace-nowrap">
+                  Success:
+                </span>
+                {success}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSuccess(null)}
+                className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all shadow-sm"
+                aria-label="Dismiss success"
+              >
+                <i className="fa-solid fa-xmark text-xs"></i>
+              </button>
+            </motion.div>
+          )}
+
           {warning && (
-            <div className="pointer-events-auto mb-3 bg-amber-500/10 backdrop-blur-md border border-amber-500/20 p-4 rounded-xl text-amber-200/90 shadow-2xl flex items-start gap-3">
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="pointer-events-auto mb-3 bg-amber-500/10 backdrop-blur-md border border-amber-500/20 p-4 rounded-xl text-amber-200/90 shadow-2xl flex items-start gap-3"
+            >
               <i className="fa-solid fa-triangle-exclamation mt-0.5 text-amber-400"></i>
               <div className="flex-1 text-sm leading-relaxed">
                 <span className="font-semibold text-amber-400 mr-1.5 whitespace-nowrap">
@@ -494,11 +528,17 @@ export default function Main() {
               >
                 <i className="fa-solid fa-xmark text-xs"></i>
               </button>
-            </div>
+            </motion.div>
           )}
 
           {error && (
-            <div className="pointer-events-auto bg-red-500/10 backdrop-blur-md border border-red-500/20 p-4 rounded-xl text-red-100/90 shadow-2xl flex items-start gap-3">
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="pointer-events-auto bg-red-500/10 backdrop-blur-md border border-red-500/20 p-4 rounded-xl text-red-100/90 shadow-2xl flex items-start gap-3"
+            >
               <i className="fa-solid fa-circle-xmark mt-0.5 text-red-500"></i>
               <div className="flex-1 text-sm leading-relaxed">
                 <span className="font-semibold text-red-500 mr-1.5 whitespace-nowrap">
@@ -514,7 +554,7 @@ export default function Main() {
               >
                 <i className="fa-solid fa-xmark text-xs"></i>
               </button>
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>

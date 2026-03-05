@@ -89,6 +89,29 @@ export function registerSyncHandlers() {
     return true;
   });
 
+  ipcMain.handle("sync:pick-import-file", async () => {
+    try {
+      const { canceled, filePaths } = await dialog.showOpenDialog({
+        title: "Open Suri Vault",
+        filters: [{ name: "Suri Vault", extensions: ["suri"] }],
+        properties: ["openFile"],
+        buttonLabel: "Open Vault",
+      });
+
+      if (canceled || filePaths.length === 0) {
+        return { canceled: true };
+      }
+
+      return { canceled: false, filePath: filePaths[0] };
+    } catch (error) {
+      console.error("[Vault] Picking file failed:", error);
+      return {
+        canceled: true,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
   ipcMain.handle("sync:export-data", async (_event, password?: string) => {
     try {
       if (!password) {
@@ -136,25 +159,23 @@ export function registerSyncHandlers() {
 
   ipcMain.handle(
     "sync:import-data",
-    async (_event, password?: string, overwrite: boolean = false) => {
+    async (
+      _event,
+      password?: string,
+      filePath?: string,
+      overwrite: boolean = false,
+    ) => {
       try {
         if (!password) {
           throw new Error("Password is required to restore vault.");
         }
 
-        // 1. Open file dialog (only .suri files)
-        const { canceled, filePaths } = await dialog.showOpenDialog({
-          title: "Open Suri Vault",
-          filters: [{ name: "Suri Vault", extensions: ["suri"] }],
-          properties: ["openFile"],
-          buttonLabel: "Open Vault",
-        });
-
-        if (canceled || filePaths.length === 0)
-          return { success: false, canceled: true };
+        if (!filePath) {
+          throw new Error("File path is required to restore vault.");
+        }
 
         // 3. Read encrypted file and decrypt
-        const encryptedBlob = await fs.readFile(filePaths[0]);
+        const encryptedBlob = await fs.readFile(filePath);
         let plaintext: Buffer;
         try {
           plaintext = decryptVault(encryptedBlob, password);

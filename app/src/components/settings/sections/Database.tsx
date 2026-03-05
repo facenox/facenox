@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import type { SettingsOverview } from "@/components/settings/types";
 import type { AttendanceGroup } from "@/types/recognition";
 import { useDatabaseManagement } from "@/components/settings/sections/hooks/useDatabaseManagement";
@@ -7,12 +6,11 @@ import { DatabaseStats } from "@/components/settings/sections/components/Databas
 import { GroupEntry } from "@/components/settings/sections/components/GroupEntry";
 import { useDialog } from "@/components/shared";
 import { Modal } from "@/components/common/Modal";
+import { useUIStore } from "@/components/main/stores";
 
 type BackupStatus =
   | { type: "idle" }
-  | { type: "loading"; action: "export" | "import" }
-  | { type: "success"; message: string }
-  | { type: "error"; message: string };
+  | { type: "loading"; action: "export" | "import" };
 
 interface DatabaseProps {
   systemData: SettingsOverview;
@@ -55,12 +53,15 @@ export function Database({
     totalMembers,
   } = useDatabaseManagement(groups, onGroupsChanged, dialog);
 
+  const { setError, setSuccess } = useUIStore();
+
   const [status, setStatus] = useState<BackupStatus>({ type: "idle" });
   const [passwordModal, setPasswordModal] = useState<{
     isOpen: boolean;
     action: "export" | "import";
     overwrite?: boolean;
   }>({ isOpen: false, action: "export" });
+  const [importFilePath, setImportFilePath] = useState<string | null>(null);
   const [passwordInput, setPasswordInput] = useState("");
 
   const handleExport = async (password: string) => {
@@ -72,29 +73,26 @@ export function Database({
         return;
       }
       if (result.success) {
-        setStatus({
-          type: "success",
-          message: `Backup saved to: ${result.filePath}`,
-        });
+        setSuccess(`Backup saved to: ${result.filePath}`);
+        setStatus({ type: "idle" });
       } else {
-        setStatus({
-          type: "error",
-          message: result.error ?? "Failed to create backup.",
-        });
+        setError(result.error ?? "Failed to create backup.");
+        setStatus({ type: "idle" });
       }
     } catch (err) {
-      setStatus({
-        type: "error",
-        message: err instanceof Error ? err.message : "Backup failed.",
-      });
+      setError(err instanceof Error ? err.message : "Backup failed.");
+      setStatus({ type: "idle" });
     }
   };
 
   const handleImport = async (password: string, overwriteAttr = false) => {
+    if (!importFilePath) return;
+
     setStatus({ type: "loading", action: "import" });
     try {
       const result = await window.electronAPI.sync.importData(
         password,
+        importFilePath,
         overwriteAttr,
       );
       if (result.canceled) {
@@ -102,22 +100,33 @@ export function Database({
         return;
       }
       if (result.success) {
-        setStatus({
-          type: "success",
-          message: result.message ?? "Restore complete.",
-        });
+        setSuccess(result.message ?? "Restore complete.");
+        setStatus({ type: "idle" });
+        setImportFilePath(null);
         if (onGroupsChanged) onGroupsChanged();
       } else {
-        setStatus({
-          type: "error",
-          message: result.error ?? "Failed to restore data.",
-        });
+        setError(result.error ?? "Failed to restore data.");
+        setStatus({ type: "idle" });
       }
     } catch (err) {
-      setStatus({
-        type: "error",
-        message: err instanceof Error ? err.message : "Restore failed.",
+      setError(err instanceof Error ? err.message : "Restore failed.");
+      setStatus({ type: "idle" });
+    }
+  };
+
+  const startImportFlow = async () => {
+    try {
+      const result = await window.electronAPI.sync.pickImportFile();
+      if (result.canceled || !result.filePath) return;
+
+      setImportFilePath(result.filePath);
+      setPasswordModal({
+        isOpen: true,
+        action: "import",
+        overwrite: false,
       });
+    } catch (err) {
+      setError("Failed to open file picker.");
     }
   };
 
@@ -184,13 +193,7 @@ export function Database({
           </div>
           <div className="px-5 py-4">
             <button
-              onClick={() =>
-                setPasswordModal({
-                  isOpen: true,
-                  action: "import",
-                  overwrite: false,
-                })
-              }
+              onClick={startImportFlow}
               disabled={isBackingUp}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 text-cyan-400 text-[10px] font-semibold transition-all disabled:opacity-40"
             >
@@ -227,7 +230,7 @@ export function Database({
           <p className="text-[11px] text-white/50 leading-relaxed">
             {passwordModal.action === "export"
               ? "Choose a strong password to encrypt your vault. You will need this password to restore your data later."
-              : "Enter the password used to encrypt this vault file to decrypt and restore your data."}
+              : `Enter the password used to encrypt ${importFilePath?.split(/[\\/]/).pop() || "this vault"} to decrypt and restore your data.`}
           </p>
           <div className="space-y-1.5">
             <label className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">
@@ -283,79 +286,6 @@ export function Database({
           </div>
         </div>
       </Modal>
-
-      {/* Backup Status Message */}
-      <AnimatePresence>
-        {status.type !== "idle" && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98, y: -10 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className={`relative flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border backdrop-blur-md overflow-hidden ${
-              status.type === "loading"
-                ? "bg-white/[0.03] border-white/10 text-white/70 shadow-lg"
-                : status.type === "success"
-                  ? "bg-emerald-500/[0.05] border-emerald-500/20 text-emerald-100 shadow-[0_0_30px_-5px_rgba(16,185,129,0.15)]"
-                  : "bg-rose-500/[0.05] border-rose-500/20 text-rose-100 shadow-[0_0_30px_-5px_rgba(244,63,94,0.15)]"
-            }`}
-          >
-            {/* Animated background glow */}
-            {status.type === "success" && (
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/[0.03] to-emerald-500/0 w-[200%] animate-[shimmer_3s_infinite]" />
-            )}
-            {status.type === "error" && (
-              <div className="absolute inset-0 bg-gradient-to-r from-rose-500/0 via-rose-500/[0.03] to-rose-500/0 w-[200%] animate-[shimmer_3s_infinite]" />
-            )}
-
-            <div className="flex items-start gap-3 relative z-10 w-full">
-              <div
-                className={`flex-shrink-0 mt-0.5 flex items-center justify-center w-5 h-5 rounded-full ${
-                  status.type === "loading"
-                    ? "bg-white/10 text-white/70"
-                    : status.type === "success"
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : "bg-rose-500/20 text-rose-400"
-                }`}
-              >
-                {status.type === "loading" ? (
-                  <i className="fa-solid fa-circle-notch fa-spin text-[10px]" />
-                ) : status.type === "success" ? (
-                  <i className="fa-solid fa-check text-[10px]" />
-                ) : (
-                  <i className="fa-solid fa-exclamation text-[10px]" />
-                )}
-              </div>
-
-              <div className="flex flex-col min-w-0 pr-6">
-                <span className="text-[11px] font-semibold text-white/90 tracking-wide uppercase mb-0.5">
-                  {status.type === "loading"
-                    ? "Processing"
-                    : status.type === "success"
-                      ? "Success"
-                      : "Error"}
-                </span>
-                <span className="text-[11px] font-medium leading-relaxed opacity-80 break-words">
-                  {"message" in status ? status.message : ""}
-                </span>
-              </div>
-            </div>
-
-            {status.type !== "loading" && (
-              <button
-                onClick={() => setStatus({ type: "idle" })}
-                className={`absolute top-1/2 -translate-y-1/2 right-3 w-6 h-6 flex items-center justify-center rounded-full transition-all z-10 ${
-                  status.type === "success"
-                    ? "text-emerald-400/50 hover:text-emerald-400 hover:bg-emerald-500/10"
-                    : "text-rose-400/50 hover:text-rose-400 hover:bg-rose-500/10"
-                }`}
-              >
-                <i className="fa-solid fa-xmark text-[11px]" />
-              </button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Search */}
       <div className="relative group/search max-w-sm mx-auto">

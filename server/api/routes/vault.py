@@ -289,7 +289,7 @@ async def import_vault(
 
         return SuccessResponse(
             message=(
-                f"Vault import complete: {imported_groups} groups, "
+                f"{imported_groups} groups, "
                 f"{imported_members} members, {imported_records} records, "
                 f"{imported_sessions} sessions, {imported_biometrics} biometric "
                 f"profiles restored. {skipped} items skipped."
@@ -297,5 +297,5 @@ async def import_vault(
         )
 
     except Exception as e:
-        logger.error(f"[Vault] Import failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Vault import failed: {e}")
+        logger.error(f"Import failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Import failed: {e}")

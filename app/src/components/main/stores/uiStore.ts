@@ -7,6 +7,9 @@ interface UIState {
   // Error state
   error: string | null;
 
+  // Success state
+  success: string | null;
+
   // Warning state (non-blocking)
   warning: string | null;
 
@@ -29,6 +32,7 @@ interface UIState {
 
   // Actions
   setError: (error: string | null) => void;
+  setSuccess: (success: string | null) => void;
   setWarning: (warning: string | null) => void;
   setShowSettings: (show: boolean) => void;
   setGroupInitialSection: (section: GroupSection | undefined) => void;
@@ -67,6 +71,7 @@ const loadInitialSettings = async () => {
 export const useUIStore = create<UIState>((set) => ({
   // Initial state
   error: null,
+  success: null,
   warning: null,
   showSettings: false,
   groupInitialSection: undefined,
@@ -91,6 +96,7 @@ export const useUIStore = create<UIState>((set) => ({
 
   // Actions
   setError: (error) => set({ error }),
+  setSuccess: (success) => set({ success }),
   setWarning: (warning) => set({ warning }),
   setShowSettings: (show) => set({ showSettings: show }),
   setGroupInitialSection: (section) => set({ groupInitialSection: section }),
