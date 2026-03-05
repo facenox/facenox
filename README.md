@@ -40,17 +40,13 @@
 <br />
 
 <!-- INTRO -->
-**Suri** is an offline attendance tool. It executes the entire AI pipeline locally to eliminate network latency and keep biometric data on-device.
+**Suri** is a desktop application for real-time face recognition-based attendance tracking using AI. It executes the entire AI pipeline locally to eliminate network latency and keep biometric data on-device.
 
 <div align="center">
   <br />
   <img src="app/public/assets/banner.png" alt="Suri Application Screenshot" width="100%" />
   <br />
 </div>
-
----
-
-### Why Suri?
 
 | **Local First** | **Privacy by Default** | **Encrypted Vaults** |
 |:---|:---|:---|
