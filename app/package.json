@@ -2,6 +2,7 @@
   "name": "suri",
   "private": true,
   "version": "1.0.0-beta.1",
+  "description": "Real-time AI attendance tracker with face recognition.",
   "author": "SURI",
   "main": "out/main/main.js",
   "scripts": {
