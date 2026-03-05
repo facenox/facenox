@@ -125,7 +125,7 @@ export function Database({
         action: "import",
         overwrite: false,
       });
-    } catch (err) {
+    } catch {
       setError("Failed to open file picker.");
     }
   };
@@ -144,8 +144,8 @@ export function Database({
       {/* Backup & Restore Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Create Backup */}
-        <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/[0.06]">
+        <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden flex flex-col h-full">
+          <div className="px-5 py-4 border-b border-white/[0.06] flex-1">
             <div className="flex items-center gap-2 mb-1">
               <i className="fa-solid fa-download text-cyan-400 text-xs" />
               <h4 className="text-xs font-semibold text-white">
@@ -158,7 +158,7 @@ export function Database({
               members, history, and biometric profiles.
             </p>
           </div>
-          <div className="px-5 py-4">
+          <div className="px-5 py-4 mt-auto">
             <button
               onClick={() =>
                 setPasswordModal({ isOpen: true, action: "export" })
@@ -177,8 +177,8 @@ export function Database({
         </div>
 
         {/* Restore Backup */}
-        <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/[0.06]">
+        <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden flex flex-col h-full">
+          <div className="px-5 py-4 border-b border-white/[0.06] flex-1">
             <div className="flex items-center gap-2 mb-1">
               <i className="fa-solid fa-upload text-cyan-400 text-xs" />
               <h4 className="text-xs font-semibold text-white">
@@ -191,7 +191,7 @@ export function Database({
               file. Requires the original password.
             </p>
           </div>
-          <div className="px-5 py-4">
+          <div className="px-5 py-4 mt-auto">
             <button
               onClick={startImportFlow}
               disabled={isBackingUp}
@@ -309,15 +309,16 @@ export function Database({
         )}
       </div>
 
-      {/* Groups with Members */}
+      {/* Groups with Members List */}
       <div
-        className={`space-y-1 ${filteredData.length === 0 ? "h-24" : "h-auto"}`}
+        className={`space-y-2 pb-4 ${filteredData.length === 0 ? "h-32" : "h-auto"}`}
       >
         {filteredData.length === 0 ? (
-          <div className="text-center py-8 text-white/40">
-            <div className="text-xs">No results found</div>
+          <div className="flex flex-col items-center justify-center py-12 text-white/20 bg-white/[0.02] rounded-2xl border border-dashed border-white/5">
+            <i className="fa-solid fa-ghost text-2xl mb-3 opacity-50" />
+            <div className="text-[11px] font-medium">No results found</div>
             {groups.length === 0 && (
-              <div className="text-[10px] mt-1 italic text-white/20">
+              <div className="text-[10px] mt-1 italic">
                 Create a group to begin managing members.
               </div>
             )}

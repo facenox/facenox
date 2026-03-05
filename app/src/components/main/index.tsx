@@ -141,6 +141,26 @@ export default function Main() {
     audioSettings.recognitionSoundUrl,
   ]);
 
+  // Auto-dismiss success alerts after 5 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, setSuccess]);
+
+  // Auto-dismiss warning alerts after 8 seconds
+  useEffect(() => {
+    if (warning) {
+      const timer = setTimeout(() => {
+        setWarning(null);
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [warning, setWarning]);
+
   const currentRecognitionResults =
     rawCurrentRecognitionResults instanceof Map
       ? rawCurrentRecognitionResults
@@ -497,7 +517,7 @@ export default function Main() {
               <button
                 type="button"
                 onClick={() => setSuccess(null)}
-                className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all shadow-sm"
+                className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg bg-transparent border-none p-0 hover:bg-white/10 text-white/50 hover:text-white transition-all shadow-none"
                 aria-label="Dismiss success"
               >
                 <i className="fa-solid fa-xmark text-xs"></i>
@@ -523,7 +543,7 @@ export default function Main() {
               <button
                 type="button"
                 onClick={() => setWarning(null)}
-                className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all shadow-sm"
+                className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg bg-transparent border-none p-0 hover:bg-white/10 text-white/50 hover:text-white transition-all shadow-none"
                 aria-label="Dismiss warning"
               >
                 <i className="fa-solid fa-xmark text-xs"></i>
@@ -549,7 +569,7 @@ export default function Main() {
               <button
                 type="button"
                 onClick={() => setError(null)}
-                className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all shadow-sm"
+                className="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-lg bg-transparent border-none p-0 hover:bg-white/10 text-white/50 hover:text-white transition-all shadow-none"
                 aria-label="Dismiss error"
               >
                 <i className="fa-solid fa-xmark text-xs"></i>

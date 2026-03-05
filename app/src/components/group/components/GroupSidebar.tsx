@@ -37,7 +37,8 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
                   label: group.name,
                 }))}
                 value={selectedGroup?.id ?? null}
-                onChange={(groupId: string | null) => {
+                onChange={(value: string | number | null) => {
+                  const groupId = value as string | null;
                   if (groupId) {
                     const group = groups.find((g) => g.id === groupId);
                     setSelectedGroup(group ?? null);
@@ -77,7 +78,7 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
       >
         <button
           onClick={onBack}
-          className={`w-full rounded-lg text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white/80 transition-all text-center ${isSidebarCollapsed ? "px-2 py-2" : "px-3 py-2"}`}
+          className={`w-full rounded-lg text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white/80 border-none bg-transparent transition-all text-center ${isSidebarCollapsed ? "px-2 py-2" : "px-3 py-2"}`}
           aria-label="Close"
         >
           {!isSidebarCollapsed ? (

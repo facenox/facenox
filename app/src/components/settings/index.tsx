@@ -137,7 +137,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>(
           >
             <button
               onClick={props.onBack}
-              className="absolute top-2 right-2 z-50 text-white/20 hover:text-white transition-all duration-300 bg-transparent border-none p-1.5"
+              className="absolute top-2 right-2 z-50 text-white/20 hover:text-white transition-all duration-300 bg-transparent border-none p-1.5 shadow-none"
               aria-label="Close Settings"
             >
               <i className="fa-solid fa-xmark text-lg"></i>

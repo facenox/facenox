@@ -38,7 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const storeGroups = useGroupStore((state) => state.groups);
 
   return (
-    <div className="w-[280px] flex-shrink-0 flex flex-col bg-[#0b0b0b] border-r border-white/5">
+    <div className="w-[200px] sm:w-[240px] lg:w-[280px] flex-shrink-0 flex flex-col bg-[#0b0b0b] border-r border-white/5">
       <div className="px-6 py-8 flex items-center justify-between">
         <h1 className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/50">
           Settings
@@ -121,11 +121,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         setRegistrationState(null, null);
                       }
                     }}
-                    className={`w-full relative group/item text-left px-4 py-2.5 rounded-lg text-[14px] font-medium transition-all flex items-center gap-3 ${
-                      isActive
-                        ? "bg-white/[0.06] text-white"
-                        : "text-white/60 hover:bg-white/5 hover:text-white"
-                    }`}
+                    className={`w-full relative group/item text-left px-4 py-2.5 rounded-lg text-[14px] font-medium transition-all flex items-center gap-3 ${isActive
+                      ? "bg-white/[0.06] text-white"
+                      : "text-white/60 hover:bg-white/5 hover:text-white"
+                      }`}
                   >
                     {isActive && (
                       <motion.div
@@ -158,11 +157,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
-                  className={`w-full relative group/item text-left px-4 py-2.5 rounded-lg text-[14px] font-medium transition-all flex items-center gap-3 ${
-                    isActive
-                      ? "bg-white/[0.06] text-white"
-                      : "text-white/60 hover:bg-white/5 hover:text-white"
-                  }`}
+                  className={`w-full relative group/item text-left px-4 py-2.5 rounded-lg text-[14px] font-medium transition-all flex items-center gap-3 ${isActive
+                    ? "bg-white/[0.06] text-white"
+                    : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
                 >
                   {isActive && (
                     <motion.div

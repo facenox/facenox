@@ -65,7 +65,7 @@ export function MobileDrawer() {
         <div className="h-full flex flex-col pt-12 pb-5">
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 border border-white/10"
+            className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg bg-transparent border-none p-0 text-white/70 hover:text-white hover:bg-white/10 transition-all shadow-none"
             aria-label="Close menu"
           >
             <svg
@@ -103,7 +103,8 @@ export function MobileDrawer() {
                     label: group.name,
                   }))}
                   value={selectedGroup?.id ?? null}
-                  onChange={(groupId: string | null) => {
+                  onChange={(value: string | number | null) => {
+                    const groupId = value as string | null;
                     if (groupId) {
                       const group = groups.find((g) => g.id === groupId);
                       setSelectedGroup(group ?? null);

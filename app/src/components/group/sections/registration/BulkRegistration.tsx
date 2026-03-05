@@ -119,7 +119,7 @@ export function BulkRegistration({
           <span className="flex-1">{error}</span>
           <button
             onClick={() => setError(null)}
-            className="text-red-200/50 hover:text-red-100 transition"
+            className="bg-transparent border-none p-0 text-red-200/50 hover:text-red-100 transition shadow-none"
           >
             <i className="fa fa-times text-xs"></i>
           </button>

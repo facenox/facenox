@@ -9,7 +9,7 @@ import type {
   DatabaseClearResponse,
 } from "@/types/recognition";
 
-export { };
+export {};
 
 export interface UpdateInfo {
   currentVersion: string;

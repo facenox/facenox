@@ -346,7 +346,7 @@ export function CameraQueue({
           <span className="flex-1">{error}</span>
           <button
             onClick={() => setError(null)}
-            className="text-red-200/50 hover:text-red-100 transition"
+            className="bg-transparent border-none p-0 text-red-200/50 hover:text-red-100 transition shadow-none"
           >
             <i className="fa fa-times text-xs"></i>
           </button>
@@ -579,9 +579,9 @@ export function CameraQueue({
                             label: device.label || `Camera ${index + 1}`,
                           }))}
                           value={selectedCamera || null}
-                          onChange={(deviceId) => {
-                            if (deviceId) {
-                              setSelectedCamera(deviceId);
+                          onChange={(value: string | number | null) => {
+                            if (value) {
+                              setSelectedCamera(value as string);
                             }
                           }}
                           placeholder="Select camera..."
