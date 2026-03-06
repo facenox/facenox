@@ -333,7 +333,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                 }))}
                 value={
                   currentGroup &&
-                    attendanceGroups.some((g) => g.id === currentGroup.id)
+                  attendanceGroups.some((g) => g.id === currentGroup.id)
                     ? currentGroup.id
                     : null
                 }
@@ -420,10 +420,11 @@ export const AttendancePanel = memo(function AttendancePanel({
                   onChange={(val) => handleSortFieldChange(val as SortField)}
                   trigger={
                     <i
-                      className={`${sortField === "time"
-                        ? "fa-regular fa-clock"
-                        : "fa-solid fa-arrow-down-a-z"
-                        } text-xs text-white/30 hover:text-cyan-400! transition-colors pointer-events-auto`}
+                      className={`${
+                        sortField === "time"
+                          ? "fa-regular fa-clock"
+                          : "fa-solid fa-arrow-down-a-z"
+                      } text-xs text-white/30 hover:text-cyan-400! transition-colors pointer-events-auto`}
                     />
                   }
                   menuWidth={110}

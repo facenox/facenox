@@ -157,8 +157,6 @@ export class WindowManager {
     });
   }
 
-
-
   static showMainWindow(): void {
     if (state.mainWindow && !state.mainWindow.isDestroyed()) {
       state.mainWindow.webContents.setZoomLevel(0);
