@@ -6,7 +6,7 @@ Hey there! Thanks for considering helping out. This project started as my idea t
 
 1. **Fork the repo** - Standard stuff, fork it to your account
 2. **Clone locally** - `git clone https://github.com/YOUR-USERNAME/suri.git`
-3. **Add upstream** - `git remote add upstream https://github.com/johnraivenolazo/suri.git`
+3. **Add upstream** - `git remote add upstream https://github.com/SuriAI/suri.git`
 
 ## What kind of help I'm looking for
 
