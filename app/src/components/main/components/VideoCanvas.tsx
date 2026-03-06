@@ -38,7 +38,7 @@ export const VideoCanvas = memo(function VideoCanvas({
     }
   };
   return (
-    <div className="relative w-full h-full min-h-[260px] overflow-hidden rounded-lg bg-black border border-white/10">
+    <div className="relative w-full h-full min-h-65 overflow-hidden rounded-lg bg-black border border-white/10">
       <video
         ref={videoRef}
         className={`absolute inset-0 w-full h-full object-contain ${quickSettings.cameraMirrored ? "scale-x-[-1]" : ""}`}

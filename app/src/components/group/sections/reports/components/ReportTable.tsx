@@ -61,7 +61,7 @@ export function ReportTable({
                         : "No results found"}
                   </h3>
 
-                  <p className="text-xs text-white/30 max-w-[280px] mb-8 leading-relaxed">
+                  <p className="text-xs text-white/30 max-w-70 mb-8 leading-relaxed">
                     {search
                       ? "We couldn't find anything matching your search. Try a different keyword."
                       : statusFilter !== "all"
@@ -123,7 +123,7 @@ export function ReportTable({
                   {rows.map((row, rIdx) => (
                     <tr
                       key={rIdx}
-                      className="group hover:bg-cyan-500/[0.03] transition-all duration-200 cursor-default"
+                      className="group hover:bg-cyan-500/3 transition-all duration-200 cursor-default"
                     >
                       {visibleColDefs.map((c, cIdx) => {
                         const val = row[c.key];

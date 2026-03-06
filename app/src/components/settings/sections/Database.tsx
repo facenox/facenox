@@ -145,7 +145,7 @@ export function Database({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Create Backup */}
         <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden flex flex-col h-full">
-          <div className="px-5 py-4 border-b border-white/[0.06] flex-1">
+          <div className="px-5 py-4 border-b border-white/6 flex-1">
             <div className="flex items-center gap-2 mb-1">
               <i className="fa-solid fa-download text-cyan-400 text-xs" />
               <h4 className="text-xs font-semibold text-white">
@@ -178,7 +178,7 @@ export function Database({
 
         {/* Restore Backup */}
         <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden flex flex-col h-full">
-          <div className="px-5 py-4 border-b border-white/[0.06] flex-1">
+          <div className="px-5 py-4 border-b border-white/6 flex-1">
             <div className="flex items-center gap-2 mb-1">
               <i className="fa-solid fa-upload text-cyan-400 text-xs" />
               <h4 className="text-xs font-semibold text-white">
@@ -297,7 +297,7 @@ export function Database({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search members or groups…"
-          className="w-full pl-8 pr-8 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400/30 focus:bg-white/[0.06] transition-all"
+          className="w-full pl-8 pr-8 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400/30 focus:bg-white/6 transition-all"
         />
         {searchQuery && (
           <button
@@ -314,7 +314,7 @@ export function Database({
         className={`space-y-2 pb-4 ${filteredData.length === 0 ? "h-32" : "h-auto"}`}
       >
         {filteredData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-white/20 bg-white/[0.02] rounded-2xl border border-dashed border-white/5">
+          <div className="flex flex-col items-center justify-center py-12 text-white/20 bg-white/2 rounded-2xl border border-dashed border-white/5">
             <i className="fa-solid fa-ghost text-2xl mb-3 opacity-50" />
             <div className="text-[11px] font-medium">No results found</div>
             {groups.length === 0 && (

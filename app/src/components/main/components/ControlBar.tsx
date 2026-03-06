@@ -76,11 +76,11 @@ export function ControlBar({
 
   return (
     <div>
-      <div className="rounded-lg p-4 flex items-center justify-between min-h-[4rem] gap-4">
+      <div className="rounded-lg p-4 flex items-center justify-between min-h-16 gap-4">
         <div className="flex items-center space-x-6">
           {cameraDevices.length > 0 && (
             <div className="flex flex-col items-start space-y-1">
-              <div className="min-w-[200px]">
+              <div className="min-w-50">
                 <Dropdown
                   options={cameraDevices.map((device, index) => ({
                     value: device.deviceId,
@@ -119,7 +119,7 @@ export function ControlBar({
             <button
               onClick={handlePrimaryAction}
               disabled={!buttonState.enabled}
-              className={`min-w-[140px] py-3 rounded-lg font-semibold text-sm transition-all duration-200 ease-in-out flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${buttonState.className}`}
+              className={`min-w-35 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ease-in-out flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${buttonState.className}`}
             >
               {buttonState.label}
             </button>

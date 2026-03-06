@@ -186,7 +186,7 @@ export function Reports({
               initial={{ opacity: 0, scale: 0.998 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="flex-1 flex flex-col rounded-xl border border-white/10 bg-white/[0.01] overflow-hidden shadow-2xl"
+              className="flex-1 flex flex-col rounded-xl border border-white/10 bg-white/1 overflow-hidden shadow-2xl"
             >
               <ReportToolbar
                 startDate={reportStartDate}
