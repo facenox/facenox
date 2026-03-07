@@ -26,10 +26,7 @@ interface ContentPanelProps {
   deselectMemberTrigger: number;
   setDeselectMemberTrigger: (trigger: number) => void;
   setHasSelectedMember: (hasSelected: boolean) => void;
-  handleExportHandlersReady: (handlers: {
-    exportCSV: () => void;
-    print: () => void;
-  }) => void;
+  handleExportHandlersReady: (handlers: { exportCSV: () => void }) => void;
   handleAddMemberHandlerReady: (handler: () => void) => void;
   handleGroupsChanged: (newGroup?: AttendanceGroup) => void;
   handleGroupBack: () => void;
@@ -49,7 +46,6 @@ interface ContentPanelProps {
   members: AttendanceMember[];
   reportsExportHandlers: {
     exportCSV: () => void;
-    print: () => void;
   } | null;
   addMemberHandler: (() => void) | null;
   hasSelectedMember: boolean;
@@ -180,13 +176,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   >
                     <i className="fa-solid fa-file-csv text-[10px]"></i>
                     Export CSV
-                  </button>
-                  <button
-                    onClick={reportsExportHandlers.print}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/10 text-white/40 hover:text-white/80 transition-all text-[11px] font-medium"
-                  >
-                    <i className="fa-solid fa-print text-[10px]"></i>
-                    Print
                   </button>
                 </div>
               )}

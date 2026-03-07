@@ -17,10 +17,7 @@ import type { ColumnKey } from "@/components/group/sections/reports/types";
 interface ReportsProps {
   group: AttendanceGroup;
   onDaysTrackedChange?: (daysTracked: number, loading: boolean) => void;
-  onExportHandlersReady?: (handlers: {
-    exportCSV: () => void;
-    print: () => void;
-  }) => void;
+  onExportHandlersReady?: (handlers: { exportCSV: () => void }) => void;
   onAddMember?: () => void;
 }
 
@@ -111,24 +108,13 @@ export function Reports({
     reportEndDate,
   ]);
 
-  const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
-
   useEffect(() => {
     if (onExportHandlersReady && members.length > 0 && !loading) {
       onExportHandlersReady({
         exportCSV: handleExportCSV,
-        print: handlePrint,
       });
     }
-  }, [
-    onExportHandlersReady,
-    handleExportCSV,
-    handlePrint,
-    members.length,
-    loading,
-  ]);
+  }, [onExportHandlersReady, handleExportCSV, members.length, loading]);
 
   return (
     <section className="h-full flex flex-col overflow-hidden p-6 custom-scroll">

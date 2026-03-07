@@ -56,7 +56,6 @@ export const useSettings = ({
   const [hasSelectedMember, setHasSelectedMember] = useState(false);
   const [reportsExportHandlers, setReportsExportHandlers] = useState<{
     exportCSV: () => void;
-    print: () => void;
   } | null>(null);
   const [addMemberHandler, setAddMemberHandler] = useState<(() => void) | null>(
     null,
@@ -289,7 +288,7 @@ export const useSettings = ({
   }, []);
 
   const handleExportHandlersReady = useCallback(
-    (handlers: { exportCSV: () => void; print: () => void }) => {
+    (handlers: { exportCSV: () => void }) => {
       setReportsExportHandlers(handlers);
     },
     [],

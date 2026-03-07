@@ -17,10 +17,7 @@ export interface GroupPanelProps {
   deselectMemberTrigger?: number; // When this changes, deselect the member in FaceCapture
   onHasSelectedMemberChange?: (hasSelectedMember: boolean) => void; // Callback when member selection changes
   onDaysTrackedChange?: (daysTracked: number, loading: boolean) => void; // Callback when days tracked changes in Reports
-  onExportHandlersReady?: (handlers: {
-    exportCSV: () => void;
-    print: () => void;
-  }) => void; // Callback when export handlers are ready in Reports
+  onExportHandlersReady?: (handlers: { exportCSV: () => void }) => void; // Callback when export handlers are ready in Reports
   onAddMemberHandlerReady?: (handler: () => void) => void; // Callback when add member handler is ready
   onSectionChange?: (section: GroupSection) => void; // Callback when active section changes (for syncing with parent)
 }
