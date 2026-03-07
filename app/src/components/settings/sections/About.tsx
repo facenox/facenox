@@ -30,10 +30,10 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
             Your data stays local
           </h3>
           <p className="text-xs text-white/50 leading-relaxed">
-            Suri runs entirely on your device. Face recognition data (including
-            biometric templates), attendance records, and settings are stored
-            locally on your computer. Nothing is uploaded to external servers
-            unless you explicitly choose to enable cloud sync features.
+            Suri currently stores face templates, attendance records, and
+            settings locally on your device by default. The current desktop app
+            does not depend on a hosted biometric service to perform face
+            recognition.
           </p>
         </section>
 
@@ -42,10 +42,9 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
             No data collection
           </h3>
           <p className="text-xs text-white/50 leading-relaxed">
-            This application does not collect, transmit, or share any personal
-            information. We don&apos;t track usage patterns, gather analytics,
-            or monitor your activity. There are no hidden callbacks, telemetry,
-            or background data transfers.
+            The current desktop app does not include analytics, ads, or hidden
+            telemetry. Biometric processing is performed locally, and the app
+            does not send routine usage data to a hosted monitoring service.
           </p>
         </section>
 
@@ -63,9 +62,9 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
             Optional cloud sync
           </h3>
           <p className="text-xs text-white/50 leading-relaxed">
-            If you enable cloud synchronization in the future, those features
-            will have separate terms you can review before opting in. Cloud
-            features are entirely optional.
+            Any future hosted sync or dashboard features should have separate
+            documentation and terms before use. They are not part of the current
+            desktop privacy guarantees.
           </p>
         </section>
 
@@ -74,20 +73,14 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
             Regulatory compliance
           </h3>
           <p className="text-xs text-white/50 leading-relaxed">
-            Your data, including biometric templates, is stored locally in an
-            isolated environment. You maintain full control with the ability to
-            export or permanently delete your records at any time. This supports
-            compliance with:
+            Suri includes local storage, consent tracking, export, and deletion
+            controls that can help support privacy-conscious deployments.
+            Compliance still depends on your operational policies and legal
+            notices.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5 pb-2">
             <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
               GDPR (EU)
-            </span>
-            <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
-              CCPA (California)
-            </span>
-            <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
-              LGPD (Brazil)
             </span>
             <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
               Data Privacy Act of 2012 (PH)

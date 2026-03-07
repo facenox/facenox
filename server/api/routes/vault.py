@@ -227,6 +227,9 @@ async def import_vault(
                         name=member.name,
                         role=member.role,
                         email=member.email,
+                        has_consent=member.has_consent,
+                        consent_granted_at=member.consent_granted_at,
+                        consent_granted_by=member.consent_granted_by,
                         is_active=member.is_active,
                         is_deleted=False,
                     )
@@ -235,6 +238,9 @@ async def import_vault(
                 existing.name = member.name
                 existing.role = member.role
                 existing.email = member.email
+                existing.has_consent = member.has_consent
+                existing.consent_granted_at = member.consent_granted_at
+                existing.consent_granted_by = member.consent_granted_by
                 existing.is_active = member.is_active
                 existing.is_deleted = False
             imported_members += 1
@@ -280,6 +286,17 @@ async def import_vault(
 
         imported_biometrics = 0
         for entry in payload.biometrics:
+            member_result = await repo.session.execute(
+                select(MemberModel).where(
+                    MemberModel.person_id == entry.person_id,
+                    MemberModel.is_deleted.is_(False),
+                )
+            )
+            member = member_result.scalars().first()
+            if not member or not member.has_consent:
+                skipped += 1
+                continue
+
             raw_bytes = base64.b64decode(entry.embedding_b64)
             # Encrypt before persisting — same as the normal registration path.
             encrypted_bytes = encrypt_local_data(raw_bytes)

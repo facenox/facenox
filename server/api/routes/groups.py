@@ -198,6 +198,8 @@ async def register_face_for_group_person(
         service = AttendanceService(repo, face_recognizer=face_recognizer)
         try:
             return await service.register_face(group_id, person_id, request)
+        except PermissionError as e:
+            raise HTTPException(status_code=403, detail=str(e))
         except ValueError as e:
             if "not found" in str(e).lower():
                 raise HTTPException(status_code=404, detail=str(e))
@@ -273,6 +275,8 @@ async def bulk_register_faces(
 
         service = AttendanceService(repo, face_recognizer=face_recognizer)
         return await service.bulk_register(group_id, registrations)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
     except ValueError as e:
         if "not found" in str(e).lower():
             raise HTTPException(status_code=404, detail=str(e))

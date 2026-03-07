@@ -21,10 +21,10 @@
   </a>
 
   <h1 style="font-size: 4rem; margin-bottom: 0; border-bottom: none;">Suri</h1>
-  <p align="center" style="font-size: 1rem; margin-top: 0.5rem; color: #666; font-weight: bold;">AI ATTENDANCE TRACKER</p>
+  <p align="center" style="font-size: 1rem; margin-top: 0.5rem; color: #666; font-weight: bold;">LOCAL ATTENDANCE TRACKER</p>
 
   <p align="center">
-    Offline-first. Privacy-centric. Local AI.
+    Local-first attendance tracking with on-device face recognition.
     <br />
     <a href="docs/FEATURES.md"><strong>Explore Features »</strong></a>
     <br />
@@ -40,7 +40,7 @@
 <br />
 
 <!-- INTRO -->
-**Suri** is a desktop application for real-time face recognition-based attendance tracking using AI. It executes the entire AI pipeline locally to eliminate network latency and keep sensitive biometric data private.
+**Suri** is a desktop application for attendance tracking with on-device face recognition. Detection, recognition, and biometric storage stay on the local machine, which keeps the system usable offline and reduces exposure of sensitive data.
 
 <div align="center">
   <br />
@@ -48,9 +48,9 @@
   <br />
 </div>
 
-| **Local First** | **Privacy by Default** | **Encrypted** |
+| **Local First** | **Consent Aware** | **Encrypted** |
 |:---|:---|:---|
-| AI runs on your device. No server or cloud involved. | Only scan people who agree. **Privacy Shield** blurs everyone else automatically. | AES-256-GCM encrypted. Hardware-locked local keys and password-protected backups. |
+| Detection, recognition, and storage run on the device. | Biometric registration requires consent, and the registration view can shield non-consenting members. | Biometric templates are encrypted locally, and vault backups are password-protected. |
 
 <div align="center">
   <br/>
@@ -102,19 +102,19 @@ If you see the "Unidentified Developer" warning:
 ---
 ## Documentation
 
-Dig into the specifics:
+Project docs:
 
-- [**Features & Capabilities**](docs/FEATURES.md) - How attendance groups, sessions, and exports work.
-- [**Architecture & Stack**](docs/ARCHITECTURE.md) - The Electron + FastAPI + ONNX setup.
-- [**Installation & Setup**](docs/INSTALLATION.md) - Get it running in minutes.
-- [**Troubleshooting**](docs/TROUBLESHOOTING.md) - Quick fixes and diagnostic codes.
-- [**Privacy & Security**](docs/PRIVACY.md) - How we handle biometric data and encryption.
+- [**Features & Capabilities**](docs/FEATURES.md) - Groups, registration, attendance flows, and exports.
+- [**Architecture & Stack**](docs/ARCHITECTURE.md) - How the Electron app, local API, and database fit together.
+- [**Installation & Setup**](docs/INSTALLATION.md) - Build and run instructions.
+- [**Troubleshooting**](docs/TROUBLESHOOTING.md) - Common setup and runtime issues.
+- [**Privacy & Security**](docs/PRIVACY.md) - What is stored, how consent works, and how biometric data is protected.
 
 <!-- TECH STACK -->
 ## Tech Stack
 
 <p align="center">
-  Suri is built with a focused stack for low-latency desktop performance.
+  Suri uses a small desktop-focused stack built around local execution.
 </p>
 
 <div align="center">
@@ -125,16 +125,16 @@ Dig into the specifics:
 ## Roadmap
 
 ### Phase 1: Local Foundation (Completed)
-- [x] **Core AI**: Local Face Recognition & Liveness Detection.
+- [x] **Face Recognition Pipeline**: Local face recognition and liveness detection.
 - [x] **Data Integrity**: Atomic System Backups & Encrypted Vaults (.suri).
-- [x] **Privacy Architecture**: Local-first SQLite, **Persistent Biometric Consent**, and **Privacy Shield** enforcement.
+- [x] **Privacy Controls**: Local storage, biometric consent tracking, and Privacy Shield enforcement.
 
 ### Phase 2: Connectivity (In-Progress)
 - [ ] **Multi-Camera**: Parallel RTSP stream support for large venues.
-- [ ] **Secure Sync**: Automated encrypted backup synchronization with Cloud Bridge.
+- [ ] **Backup Sync**: Optional encrypted backup synchronization between trusted deployments.
 
 ### Phase 3: Ecosystem (Future)
-- [ ] **Zero-Knowledge Dashboard**: Centralized admin panel for report aggregation without biometric exposure.
+- [ ] **Web Dashboard**: Centralized reporting and administration around local Suri deployments.
 - [ ] **Mobile Companion**: Remote attendance check-in and automated notifications.
 
 
@@ -162,10 +162,10 @@ This project relies on open source software. See [Third Party Licenses](THIRD_PA
 ## Acknowledgments
 
 *   [FastAPI](https://fastapi.tiangolo.com/) - High-performance local API framework.
-*   [ONNX Runtime](https://onnxruntime.ai/) - Local edge inference engine.
+*   [ONNX Runtime](https://onnxruntime.ai/) - Local inference runtime.
 *   [Electron](https://www.electronjs.org/) - Native desktop runtime.
-*   [React](https://react.dev/) - Modern UI state management.
-*   [OpenCV](https://opencv.org/) - The backbone for real-time image processing.
+*   [React](https://react.dev/) - Desktop UI layer.
+*   [OpenCV](https://opencv.org/) - Real-time image processing.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

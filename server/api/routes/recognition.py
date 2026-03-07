@@ -83,7 +83,9 @@ async def recognize_face(
 
 @router.post("/face/register", response_model=FaceRegistrationResponse)
 async def register_person(
-    request: FaceRegistrationRequest, face_recognizer=Depends(get_face_recognizer)
+    request: FaceRegistrationRequest,
+    repo: AttendanceRepository = Depends(get_repository),
+    face_recognizer=Depends(get_face_recognizer),
 ):
     """
     Register a new person in the face database with liveness detection validation
@@ -91,6 +93,22 @@ async def register_person(
     start_time = time.time()
 
     try:
+
+        member = await repo.get_member(request.person_id)
+        if not member:
+            raise HTTPException(status_code=404, detail="Member not found")
+
+        if member.group_id != request.group_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Member does not belong to the provided group",
+            )
+
+        if not member.has_consent:
+            raise HTTPException(
+                status_code=403,
+                detail="Biometric consent is required before face registration.",
+            )
 
         image = decode_base64_image(request.image)
 
@@ -125,6 +143,8 @@ async def register_person(
             error=result.get("error"),
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         processing_time = time.time() - start_time
         logger.error(f"Person registration error: {e}")

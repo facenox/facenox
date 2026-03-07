@@ -97,10 +97,9 @@ export function CloudSync() {
         </h3>
         <p className="text-xs text-white/50 leading-relaxed max-w-lg">
           Keep your information safe by creating a copy you can store or move to
-          a new computer. This includes all your members and history, but for
-          privacy,{" "}
-          <span className="text-amber-400/80 font-medium">face data</span> is
-          kept only on this device.
+          a new computer. Vault backups can include your members, attendance
+          history, settings, and encrypted biometric templates so the system can
+          be restored without re-registering everyone.
         </p>
       </div>
 

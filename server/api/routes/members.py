@@ -1,6 +1,7 @@
 import logging
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy import select
 
 import core.lifespan
 from api.schemas import (
@@ -12,6 +13,7 @@ from api.schemas import (
     SuccessResponse,
 )
 from api.deps import get_repository
+from database.models import Face
 from database.repository import AttendanceRepository
 from services.attendance_service import AttendanceService
 
@@ -187,7 +189,11 @@ async def update_member(
                 target_id=person_id,
             )
             # DPA/GDPR: revoked consent means the biometric must be erased
-            if existing_member.has_face_data and core.lifespan.face_recognizer:
+            face_result = await repo.session.execute(
+                select(Face).where(Face.person_id == person_id)
+            )
+            face = face_result.scalars().first()
+            if face and core.lifespan.face_recognizer:
                 try:
                     await core.lifespan.face_recognizer.remove_person(person_id)
                     logger.info(

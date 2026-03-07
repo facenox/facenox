@@ -3,6 +3,7 @@ import { attendanceManager } from "@/services";
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition";
 import { useCamera } from "@/components/group/sections/registration/hooks/useCamera";
 import { toBase64Payload } from "@/components/group/sections/registration/hooks/useImageProcessing";
+import { useGroupUIStore } from "@/components/group/stores/groupUIStore";
 import { Dropdown } from "@/components/shared";
 
 type CaptureStatus =
@@ -36,6 +37,7 @@ export function CameraQueue({
   onRefresh,
   onClose,
 }: CameraQueueProps) {
+  const setActiveSection = useGroupUIStore((state) => state.setActiveSection);
   const [memberQueue, setMemberQueue] = useState<QueuedMember[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -731,32 +733,14 @@ export function CameraQueue({
                               Biometric Consent Missing
                             </div>
                             <button
-                              onClick={async (e) => {
+                              onClick={(e) => {
                                 e.stopPropagation();
-                                const confirmed = window.confirm(
-                                  `Authorize biometric data collection for ${currentMember.name}?`,
-                                );
-                                if (confirmed) {
-                                  try {
-                                    await attendanceManager.updateMember(
-                                      currentMember.personId,
-                                      {
-                                        has_consent: true,
-                                      },
-                                    );
-                                    onRefresh?.();
-                                  } catch (err) {
-                                    console.error(
-                                      "Failed to quick-authorize:",
-                                      err,
-                                    );
-                                  }
-                                }
+                                setActiveSection("members");
                               }}
                               className="w-fit flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-400/40 text-[10px] text-cyan-200 font-black uppercase tracking-widest hover:bg-cyan-500/30 transition-all shadow-lg active:scale-95"
                             >
                               <i className="fa-solid fa-key text-[9px]"></i>
-                              Authorize Now
+                              Review Consent
                             </button>
                           </div>
                         );

@@ -166,7 +166,12 @@ class AttendanceRepository:
             AttendanceMember.group_id == group_id,
             AttendanceMember.is_active,
             AttendanceMember.is_deleted.is_(False),
+            AttendanceMember.has_consent.is_(True),
         )
+        if self.organization_id:
+            query = query.where(
+                AttendanceMember.organization_id == self.organization_id
+            )
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
