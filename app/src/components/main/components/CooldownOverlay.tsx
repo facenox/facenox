@@ -43,7 +43,7 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
             {/* Main Card */}
             <div className="relative flex min-w-50 items-center gap-3 overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0b]/90 p-3 shadow-2xl">
               {/* Smaller Avatar */}
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center">
                 <i className="fa-solid fa-check text-xs text-cyan-400"></i>
               </div>
 
@@ -53,9 +53,7 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
                   <h4 className="truncate text-xs leading-tight font-semibold text-white">
                     {info.memberName || "Authorized Personnel"}
                   </h4>
-                  <span className="rounded-md border border-cyan-500/10 bg-cyan-500/5 px-1.5 py-0.5 text-[11px] font-medium text-cyan-400/80">
-                    Logged
-                  </span>
+                  <span className="px-1.5 text-[11px] font-medium text-cyan-400/80">Logged</span>
                 </div>
               </div>
             </div>

@@ -242,7 +242,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
               <FormInput
                 value={newMemberRole}
                 onChange={(event) => setNewMemberRole(event.target.value)}
-                placeholder="e.g. Staff, Student, Teacher"
+                placeholder="Enter Role (Optional)"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleAddMember()
                 }}
