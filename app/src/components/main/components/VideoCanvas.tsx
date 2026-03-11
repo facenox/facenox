@@ -1,5 +1,6 @@
 import { memo } from "react"
 import type { RefObject } from "react"
+import { StartTimeChip } from "./StartTimeChip"
 import type { QuickSettings } from "@/components/settings"
 
 interface VideoCanvasProps {
@@ -13,6 +14,7 @@ interface VideoCanvasProps {
   hasSelectedGroup: boolean
   lateTrackingEnabled?: boolean
   classStartTime?: string
+  onStartTimeChange?: (newTime: string) => void
 }
 
 export const VideoCanvas = memo(function VideoCanvas({
@@ -26,17 +28,26 @@ export const VideoCanvas = memo(function VideoCanvas({
   hasSelectedGroup,
   lateTrackingEnabled,
   classStartTime,
+  onStartTimeChange,
 }: VideoCanvasProps) {
-  const formatTime = (time: string) => {
+  const isTimeOutdated = (): boolean => {
     try {
-      const [hours, minutes] = time.split(":").map(Number)
-      const period = hours >= 12 ? "PM" : "AM"
-      const displayHours = hours % 12 || 12
-      return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`
+      if (!classStartTime) return false
+      const [hours, minutes] = classStartTime.split(":").map(Number)
+      const now = new Date()
+      const setTime = new Date()
+      setTime.setHours(hours, minutes, 0, 0)
+
+      const diffMs = Math.abs(now.getTime() - setTime.getTime())
+      const diffHours = diffMs / (1000 * 60 * 60)
+      return diffHours > 6
     } catch {
-      return time
+      return false
     }
   }
+
+  const outdated = isTimeOutdated()
+
   return (
     <div className="relative h-full min-h-65 w-full overflow-hidden rounded-lg border border-white/10 bg-black">
       <video
@@ -59,11 +70,31 @@ export const VideoCanvas = memo(function VideoCanvas({
       )}
 
       {isStreaming && lateTrackingEnabled && (
-        <div className="animate-in fade-in zoom-in-95 pointer-events-none absolute right-4 bottom-4 z-50 flex items-center gap-4 rounded-full border border-white/20 bg-black/60 px-4 py-2 shadow-lg duration-500">
-          <span className="text-[10px] font-medium text-white/30">Start Time</span>
-          <span className="font-mono text-xs font-bold text-cyan-400">
-            {formatTime(classStartTime || "08:00")}
-          </span>
+        <div
+          className={`animate-in fade-in zoom-in-95 pointer-events-none absolute right-4 bottom-4 z-50 flex items-center gap-4 rounded-full border bg-black/60 px-4 py-2 shadow-lg duration-500 ${outdated ? "border-amber-500/50" : "border-white/20"}`}>
+          <div className="flex flex-col items-start">
+            <span className="text-[9px] font-medium tracking-wider text-white/30 uppercase">
+              Start Time
+            </span>
+            <span
+              className={`font-mono text-xs font-bold ${outdated ? "text-amber-400" : "text-cyan-400"}`}>
+              {classStartTime ?
+                (() => {
+                  const [hours, minutes] = classStartTime.split(":").map(Number)
+                  const period = hours >= 12 ? "PM" : "AM"
+                  const displayHours = hours % 12 || 12
+                  return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`
+                })()
+              : "08:00 AM"}
+            </span>
+          </div>
+          {outdated && (
+            <div className="flex items-center border-l border-white/10 pl-4">
+              <span className="animate-pulse text-[9px] font-bold text-amber-500/80 uppercase">
+                Outdated
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -92,10 +123,21 @@ export const VideoCanvas = memo(function VideoCanvas({
                 />
               </svg>
             </div>
-            <div className="max-w-sm text-xs text-white/60">
-              {hasSelectedGroup ?
-                "Select a camera, then press Start Tracking to begin attendance."
-              : "Create a group or choose one to start tracking attendance."}
+            <div className="flex max-w-sm flex-col items-center gap-4 text-xs text-white/60">
+              <p>
+                {hasSelectedGroup ?
+                  "Select a camera, then press Start Tracking to begin attendance."
+                : "Create a group or choose one to start tracking attendance."}
+              </p>
+
+              {hasSelectedGroup && onStartTimeChange && (
+                <div className="pointer-events-auto mt-2">
+                  <StartTimeChip
+                    startTime={classStartTime || "08:00"}
+                    onTimeChange={onStartTimeChange}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

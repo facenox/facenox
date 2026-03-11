@@ -83,13 +83,11 @@ export function StartTimeChip({ startTime, onTimeChange, disabled = false }: Sta
         <button
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          className={`group relative flex items-center gap-2.5 overflow-hidden rounded-lg px-3 py-1.5 transition-all duration-300 ${
-            disabled ? "cursor-not-allowed border border-white/5 bg-white/5 text-white/30"
-            : isOpen ?
-              "border border-cyan-500/50 bg-black/80 shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)]"
-            : outdated ?
-              "border border-amber-500/30 bg-amber-900/20 text-amber-200 hover:border-amber-500/50 hover:bg-amber-900/30"
-            : "border border-transparent bg-transparent text-white/90 hover:border-white/10 hover:bg-white/5"
+          className={`group relative flex flex-col items-center gap-1 overflow-hidden rounded-lg border border-transparent bg-transparent px-3 py-1.5 transition-all duration-300 ${
+            disabled ? "cursor-not-allowed text-white/30"
+            : isOpen ? "border-cyan-500/50 shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)]"
+            : outdated ? "text-amber-200 hover:text-amber-300"
+            : "text-white/90 hover:border-white/10"
           }`}>
           <div className="flex items-baseline gap-1">
             <span
@@ -107,8 +105,10 @@ export function StartTimeChip({ startTime, onTimeChange, disabled = false }: Sta
           </div>
 
           {outdated && (
-            <div>
-              <i className="fa-solid fa-triangle-exclamation animate-pulse text-[15px] text-amber-400" />
+            <div className="flex items-center opacity-80">
+              <span className="animate-pulse text-[10px] font-medium text-amber-500/80">
+                Click to update
+              </span>
             </div>
           )}
         </button>

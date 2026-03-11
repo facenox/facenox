@@ -567,6 +567,7 @@ export default function Main() {
               hasSelectedGroup={Boolean(currentGroup)}
               lateTrackingEnabled={!!currentGroup?.settings?.late_threshold_enabled}
               classStartTime={currentGroup?.settings?.class_start_time}
+              onStartTimeChange={handleStartTimeChange}
             />
 
             {/* New Cooldown Overlay */}
@@ -584,12 +585,6 @@ export default function Main() {
             startCamera={startCameraGuarded}
             stopCamera={stopCamera}
             hasSelectedGroup={Boolean(currentGroup)}
-            lateTrackingEnabled={
-              (currentGroup?.settings as { late_threshold_enabled?: boolean })
-                ?.late_threshold_enabled ?? false
-            }
-            classStartTime={currentGroup?.settings?.class_start_time ?? "08:00"}
-            onStartTimeChange={handleStartTimeChange}
           />
         </div>
 

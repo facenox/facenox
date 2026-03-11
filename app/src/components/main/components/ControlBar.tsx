@@ -1,5 +1,4 @@
 import { Dropdown, Tooltip } from "@/components/shared"
-import { StartTimeChip } from "@/components/main/components/StartTimeChip"
 
 interface ControlBarProps {
   cameraDevices: MediaDeviceInfo[]
@@ -7,11 +6,8 @@ interface ControlBarProps {
   setSelectedCamera: (deviceId: string) => void
   isStreaming: boolean
   startCamera: () => void
-  stopCamera: () => void
+  stopCamera: (forceCleanup?: boolean) => void
   hasSelectedGroup: boolean
-  lateTrackingEnabled?: boolean
-  classStartTime?: string
-  onStartTimeChange?: (newTime: string) => void
 }
 
 export function ControlBar({
@@ -22,9 +18,6 @@ export function ControlBar({
   startCamera,
   stopCamera,
   hasSelectedGroup,
-  lateTrackingEnabled = false,
-  classStartTime = "08:00",
-  onStartTimeChange,
 }: ControlBarProps) {
   const hasCameraDevices = cameraDevices.length > 0
 
@@ -100,14 +93,6 @@ export function ControlBar({
         </div>
 
         <div className="flex items-center gap-3">
-          {lateTrackingEnabled && hasSelectedGroup && onStartTimeChange && !isStreaming && (
-            <StartTimeChip
-              startTime={classStartTime}
-              onTimeChange={onStartTimeChange}
-              disabled={isStreaming}
-            />
-          )}
-
           <Tooltip content={buttonState.tooltip}>
             <button
               onClick={handlePrimaryAction}
