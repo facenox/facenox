@@ -17,14 +17,10 @@
 <br />
 <div align="center">
   <a href="https://github.com/SuriAI/suri">
-    <img src="app/public/icons/suri_mark_logo_round_c.png" alt="Logo" width="100" height="100">
+    <img src="app/public/assets/header.png" alt="Suri Header" width="100%">
   </a>
-
-  <h1 style="font-size: 4rem; margin-bottom: 0; border-bottom: none;">Suri</h1>
-  <p align="center" style="font-size: 1rem; margin-top: 0.5rem; color: #666; font-weight: bold;">LOCAL ATTENDANCE TRACKER</p>
-
   <p align="center">
-    Local-first attendance tracking with on-device face recognition.
+    Local-first, Real-time attendance tracking with face recognition.
     <br />
     <a href="docs/FEATURES.md"><strong>Explore Features »</strong></a>
     <br />
@@ -40,7 +36,7 @@
 <br />
 
 <!-- INTRO -->
-**Suri** is a desktop application for attendance tracking with on-device face recognition. Detection, recognition, and biometric storage stay on the local machine, which keeps the system usable offline and reduces exposure of sensitive data.
+**Suri** is a desktop application for real-time attendance tracking with face recognition. Detection, recognition, and biometric storage stay on the local machine, which keeps the system usable offline and reduces exposure of sensitive data.
 
 <div align="center">
   <br />
