@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect } from "react"
-import { attendanceManager, persistentSettings } from "@/services"
+import { attendanceManager } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 
@@ -248,40 +248,12 @@ export function useAttendanceGroups() {
   ])
 
   useEffect(() => {
-    const initializeAttendance = async () => {
-      try {
-        await loadSettings()
-        const groups = await attendanceManager.getGroups()
-        setAttendanceGroups(groups)
-
-        if (groups.length === 0) {
-          setCurrentGroupWithCache(null)
-        } else if (!currentGroupRef.current) {
-          const uiState = await persistentSettings.getUIState()
-          const savedGroupId = uiState.selectedGroupId
-          let groupToSelect = null
-
-          if (savedGroupId) {
-            groupToSelect = groups.find((group) => group.id === savedGroupId)
-          }
-
-          if (!groupToSelect) {
-            groupToSelect = groups[0]
-          }
-
-          await handleSelectGroup(groupToSelect)
-        }
-      } catch (error) {
-        console.error("Failed to initialize attendance system:", error)
-        setError("Failed to initialize attendance system")
-      }
+    // Initialization is now handled globally during uiStore hydration
+    // Just sync our local ref with whatever the store currently has
+    if (!currentGroupRef.current && currentGroup) {
+      currentGroupRef.current = currentGroup
     }
-
-    initializeAttendance().catch((error) => {
-      console.error("Error in initializeAttendance:", error)
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [currentGroup])
 
   return {
     currentGroup,
