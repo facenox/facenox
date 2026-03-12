@@ -22,7 +22,7 @@
   <p align="center">
     Local-first, Real-time attendance tracking with face recognition.
     <br />
-    <a href="docs/FEATURES.md"><strong>Explore Features »</strong></a>
+    <a href="docs/FEATURES.md"><strong>Explore Features</strong></a>
     <br />
     <br />
     <a href="docs/INSTALLATION.md">Setup Guide</a>
@@ -47,12 +47,6 @@
 | **Local First** | **Consent Aware** | **Encrypted** |
 |:---|:---|:---|
 | Detection, recognition, and storage run on the device. | Biometric registration requires consent, and the registration view can shield non-consenting members. | Biometric templates are encrypted locally, and vault backups are password-protected. |
-
-<div align="center">
-  <br/>
-  <a href="docs/FEATURES.md">Explore Features</a>
-  <br/>
-</div>
 
 ---
 ## Download
