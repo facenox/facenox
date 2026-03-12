@@ -1,5 +1,7 @@
 
 <a id="readme-top"></a>
+> [!CAUTION]
+> This is the official open source repository for Suri. Any other repositories or downloads are not owned by us.
 
 <!-- PROJECT SHIELDS -->
 <div align="center">
@@ -12,13 +14,11 @@
 
 </div>
 
+<a href="https://github.com/SuriAI/suri">
+  <img src="app/public/assets/header.png" alt="Suri Header" width="100%">
+</a>
 
-<!-- PROJECT LOGO -->
-<br />
 <div align="center">
-  <a href="https://github.com/SuriAI/suri">
-    <img src="app/public/assets/header.png" alt="Suri Header" width="100%">
-  </a>
   <p align="center">
     Local-first, Real-time attendance tracking with face recognition.
     <br />
