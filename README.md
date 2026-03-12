@@ -3,7 +3,11 @@
 > [!CAUTION]
 > This is the official open source repository for Suri. Any other repositories or downloads are not owned by us.
 
-<!-- PROJECT SHIELDS -->
+
+<a href="https://github.com/SuriAI/suri">
+  <img src="app/public/assets/header.png" alt="Suri Header" width="100%">
+</a>
+
 <div align="center">
 
 [![Contributors][contributors-shield]][contributors-url]
@@ -13,10 +17,6 @@
 [![AGPL License][license-shield]][license-url]
 
 </div>
-
-<a href="https://github.com/SuriAI/suri">
-  <img src="app/public/assets/header.png" alt="Suri Header" width="100%">
-</a>
 
 <div align="center">
   <p align="center">
