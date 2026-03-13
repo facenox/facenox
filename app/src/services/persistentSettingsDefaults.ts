@@ -67,7 +67,7 @@ export const defaultSettings: PersistentSettingsSchema = {
     lateThresholdEnabled: false,
     lateThresholdMinutes: 5,
     classStartTime: "00:00",
-    attendanceCooldownSeconds: 15,
+    attendanceCooldownSeconds: 60,
   },
   ui: {
     sidebarCollapsed: false,
