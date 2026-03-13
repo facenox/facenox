@@ -287,8 +287,6 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
                       setPersistentCooldowns((prev) => {
                         const newPersistent = new Map(prev)
 
-                        // Self-pruning: Clear entries older than 1 hour to keep memory footprint low
-                        // without needing a separate background polling hook.
                         const pruneThreshold = Date.now() - 3600000
                         for (const [key, val] of newPersistent) {
                           if (val.startTime < pruneThreshold) {

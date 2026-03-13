@@ -7,31 +7,47 @@ interface CooldownOverlayProps {
   attendanceCooldownSeconds: number
 }
 
+const MAX_CHIP_DISPLAY_DURATION_MS = 15000
+
 export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
   const [now, setNow] = useState(() => Date.now())
 
+  const hasActiveCooldowns = persistentCooldowns.size > 0
+
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = []
+    if (!hasActiveCooldowns) return
 
-    for (const [, info] of persistentCooldowns) {
-      const expiresAt = info.startTime + info.cooldownDurationSeconds * 1000
-      const msLeft = expiresAt - Date.now() + 100
+    requestAnimationFrame(() => setNow(Date.now()))
 
-      timers.push(setTimeout(() => setNow(Date.now()), Math.max(0, msLeft)))
-    }
+    const interval = setInterval(() => {
+      setNow(Date.now())
+    }, 200)
 
-    return () => timers.forEach(clearTimeout)
-  }, [persistentCooldowns])
+    return () => clearInterval(interval)
+  }, [hasActiveCooldowns])
 
-  const activeCooldowns = Array.from(persistentCooldowns.entries())
-    .filter(([, info]) => now - info.startTime < info.cooldownDurationSeconds * 1000)
+  const activeItems = Array.from(persistentCooldowns.entries())
+    .filter(([, info]) => {
+      const elapsed = now - info.startTime
+
+      const visualThreshold = Math.min(
+        info.cooldownDurationSeconds * 1000,
+        MAX_CHIP_DISPLAY_DURATION_MS,
+      )
+
+      const isVisuallyActive = elapsed >= 0 && elapsed < visualThreshold
+
+      if (elapsed < 0) return true
+
+      return isVisuallyActive
+    })
     .sort((a, b) => b[1].startTime - a[1].startTime)
     .slice(0, 3)
 
   return (
     <div className="pointer-events-none absolute top-6 left-6 z-100 flex flex-col gap-2">
       <AnimatePresence mode="popLayout">
-        {activeCooldowns.map(([personId, info]) => (
+        {activeItems.map(([personId, info]) => (
           <motion.div
             layout
             key={`${personId}-${info.startTime}`}
@@ -44,14 +60,11 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
               layout: { duration: 0.2 },
             }}
             className="group relative">
-            {/* Main Card */}
             <div className="relative flex min-w-50 items-center gap-3 overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0b]/90 p-3 shadow-2xl">
-              {/* Avatar */}
               <div className="flex h-7 w-7 shrink-0 items-center justify-center">
                 <i className="fa-solid fa-check text-xs text-cyan-400"></i>
               </div>
 
-              {/* Content */}
               <div className="flex min-w-0 flex-1 flex-col justify-center pr-1">
                 <div className="flex items-center justify-between gap-3">
                   <h4 className="truncate text-xs leading-tight font-semibold text-white">
@@ -62,7 +75,6 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
               </div>
             </div>
 
-            {/* Subtle Aura */}
             <div className="absolute -inset-0.5 rounded-xl bg-cyan-500/10 opacity-0 blur-xl transition-opacity group-hover:opacity-100" />
           </motion.div>
         ))}
