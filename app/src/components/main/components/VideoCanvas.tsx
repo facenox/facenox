@@ -123,7 +123,7 @@ export const VideoCanvas = memo(function VideoCanvas({
                 />
               </svg>
             </div>
-            <div className="flex max-w-sm flex-col items-center gap-4 text-xs text-white/60">
+            <div className="relative flex max-w-sm flex-col items-center gap-4 text-xs text-white/60">
               <p>
                 {hasSelectedGroup ?
                   "Select a camera, then press Start Tracking to begin attendance."
@@ -131,7 +131,7 @@ export const VideoCanvas = memo(function VideoCanvas({
               </p>
 
               {hasSelectedGroup && onStartTimeChange && lateTrackingEnabled && (
-                <div className="pointer-events-auto mt-2">
+                <div className="pointer-events-auto absolute top-full left-1/2 mt-4 -translate-x-1/2">
                   <StartTimeChip
                     startTime={classStartTime || "08:00"}
                     onTimeChange={onStartTimeChange}
