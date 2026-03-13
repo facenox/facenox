@@ -69,7 +69,7 @@ export function GroupManagementModal({
           <button
             onClick={handleCreateGroup}
             disabled={!newGroupName.trim()}
-            className="min-w-[120px] rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 uppercase transition-all hover:bg-cyan-500/20 disabled:opacity-50">
+            className="min-w-[120px] rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 disabled:opacity-50">
             Create Group
           </button>
         </div>

@@ -171,7 +171,7 @@ export function Database({
             <button
               onClick={() => setPasswordModal({ isOpen: true, action: "export" })}
               disabled={isBackingUp}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-[11px] font-bold tracking-wider text-cyan-400 uppercase transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-40">
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-40">
               {isBackingUp && status.action === "export" ?
                 <i className="fa-solid fa-circle-notch fa-spin" />
               : <i className="fa-solid fa-file-export" />}
@@ -196,7 +196,7 @@ export function Database({
             <button
               onClick={startImportFlow}
               disabled={isBackingUp}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-[11px] font-bold tracking-wider text-cyan-400 uppercase transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-40">
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-40">
               {isBackingUp && status.action === "import" ?
                 <i className="fa-solid fa-circle-notch fa-spin" />
               : <i className="fa-solid fa-file-import" />}
@@ -222,7 +222,7 @@ export function Database({
           <button
             onClick={handleExportAuditLog}
             disabled={isExportingAuditLog}
-            className="flex shrink-0 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-bold tracking-wider text-white/50 uppercase transition-all hover:bg-white/10 hover:text-white active:scale-95 disabled:opacity-40">
+            className="flex shrink-0 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-all hover:bg-white/10 hover:text-white active:scale-95 disabled:opacity-40">
             {isExportingAuditLog ?
               <i className="fa-solid fa-circle-notch fa-spin" />
             : <i className="fa-solid fa-file-csv" />}
@@ -299,7 +299,7 @@ export function Database({
                   handleImport(pass, passwordModal.overwrite)
                 }
               }}
-              className="min-w-25 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 uppercase transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-50">
+              className="min-w-25 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-50">
               {passwordModal.action === "export" ? "Export" : "Import"}
             </button>
           </div>
@@ -368,14 +368,14 @@ export function Database({
       {/* Clear Actions */}
       <div className="overflow-hidden">
         <div className="border-b border-white/5 py-2">
-          <h3 className="flex items-center gap-2 text-[11px] font-bold tracking-wider text-red-500/60 uppercase">
+          <h3 className="flex items-center gap-2 text-[11px] font-bold tracking-wider text-red-500/60">
             <i className="fa-solid fa-triangle-exclamation text-[10px]"></i>
             Danger Zone
           </h3>
         </div>
         <div className="flex items-center justify-between gap-4 py-4">
           <div className="flex-1">
-            <p className="mt-1 text-[11px] leading-relaxed font-bold tracking-tight text-white/35 uppercase">
+            <p className="mt-1 text-[11px] leading-relaxed font-bold tracking-tight text-white/35">
               Deleting groups is permanent. Face data is managed separately from records.
             </p>
           </div>
@@ -384,7 +384,7 @@ export function Database({
             <button
               onClick={handleClearAllGroups}
               disabled={isLoading || deletingGroup === "all" || groups.length === 0}
-              className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-[11px] font-black tracking-wider text-red-400 uppercase transition-all hover:bg-red-500/15 active:scale-95 disabled:opacity-20">
+              className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-[11px] font-black tracking-wider text-red-400 transition-all hover:bg-red-500/15 active:scale-95 disabled:opacity-20">
               {deletingGroup === "all" ?
                 <i className="fa-solid fa-spinner fa-spin"></i>
               : <i className="fa-solid fa-layer-group"></i>}
@@ -394,7 +394,7 @@ export function Database({
             <button
               onClick={onClearDatabase}
               disabled={isLoading}
-              className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-1.5 text-[11px] font-black tracking-wider text-amber-500/70 uppercase transition-all hover:bg-amber-500/15 hover:text-amber-500 active:scale-95 disabled:opacity-20">
+              className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-1.5 text-[11px] font-black tracking-wider text-amber-500/70 transition-all hover:bg-amber-500/15 hover:text-amber-500 active:scale-95 disabled:opacity-20">
               <i className="fa-solid fa-user-slash"></i>
               Clear Face Data
             </button>

@@ -40,7 +40,7 @@ export function CreateGroup({ onClose, onSuccess }: CreateGroupProps) {
           <h3 className="mb-2 text-xl font-semibold">Create Group</h3>
         </div>
       }
-      maxWidth="lg">
+      maxWidth="md">
       <div className="mt-2">
         {error && <ErrorMessage message={error} />}
 
@@ -62,7 +62,7 @@ export function CreateGroup({ onClose, onSuccess }: CreateGroupProps) {
           <button
             onClick={handleCreate}
             disabled={!name.trim() || loading}
-            className="min-w-[120px] rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-100 uppercase transition-colors hover:bg-cyan-500/30 disabled:opacity-50">
+            className="min-w-[120px] rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-100 transition-colors hover:bg-cyan-500/30 disabled:opacity-50">
             {loading ? "Creating…" : "Create Group"}
           </button>
         </div>

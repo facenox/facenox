@@ -131,7 +131,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                   active?.type === "alert" ?
                     active.options.variant || "default"
                   : active?.options.confirmVariant || "default",
-                ) + " min-w-[100px] px-6 py-2 text-[11px] font-bold tracking-wider uppercase"
+                ) + " min-w-[100px] px-6 py-2 text-[11px] font-bold tracking-wider"
               }
               onClick={() => {
                 if (active?.type === "alert") {

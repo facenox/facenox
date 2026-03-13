@@ -39,7 +39,7 @@ export function DeleteMemberModal({ isOpen, member, onClose, onConfirm }: Delete
         </button>
         <button
           onClick={onConfirm}
-          className="rounded-lg border border-red-500/40 bg-red-500/20 px-6 py-2 text-[11px] font-bold tracking-wider text-red-200 uppercase transition-colors hover:bg-red-500/30">
+          className="rounded-lg border border-red-500/40 bg-red-500/20 px-6 py-2 text-[11px] font-bold tracking-wider text-red-200 transition-colors hover:bg-red-500/30">
           Remove Member
         </button>
       </div>

@@ -54,7 +54,7 @@ export function DeleteConfirmationModal({
         </button>
         <button
           onClick={confirmDeleteGroup}
-          className="btn-error rounded-lg px-6 py-2 text-[11px] font-bold tracking-wider uppercase">
+          className="btn-error rounded-lg px-6 py-2 text-[11px] font-bold tracking-wider">
           Delete Group
         </button>
       </div>

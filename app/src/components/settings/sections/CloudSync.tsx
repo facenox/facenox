@@ -155,7 +155,7 @@ export function CloudSync() {
           <button
             onClick={handleExport}
             disabled={isLoading}
-            className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-400 uppercase transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
+            className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
             {isLoading && status.action === "export" ?
               <i className="fa-solid fa-circle-notch fa-spin" />
             : <i className="fa-solid fa-download" />}
@@ -179,7 +179,7 @@ export function CloudSync() {
           <button
             onClick={() => handleImport(false)}
             disabled={isLoading}
-            className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-400 uppercase transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
+            className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
             {isLoading && status.action === "import" ?
               <i className="fa-solid fa-circle-notch fa-spin" />
             : <i className="fa-solid fa-file-arrow-up" />}
@@ -193,7 +193,7 @@ export function CloudSync() {
             <button
               onClick={() => handleImport(true)}
               disabled={isLoading}
-              className="flex items-center gap-2 rounded-lg border border-amber-500/15 bg-amber-500/5 px-4 py-2 text-[11px] font-bold tracking-wider text-amber-400/70 uppercase transition-all hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-40">
+              className="flex items-center gap-2 rounded-lg border border-amber-500/15 bg-amber-500/5 px-4 py-2 text-[11px] font-bold tracking-wider text-amber-400/70 transition-all hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-40">
               <i className="fa-solid fa-triangle-exclamation text-[10px]" />
               Restore & Overwrite Current Data
             </button>

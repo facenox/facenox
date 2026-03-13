@@ -161,7 +161,7 @@ export function FaceCapture({
                 setSelectedMemberId("")
                 resetFrames()
               }}
-              className="rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 uppercase transition-all hover:bg-cyan-500/30">
+              className="rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/30">
               Done
             </button>
           </div>
@@ -180,7 +180,7 @@ export function FaceCapture({
           <div className="mt-2 flex w-full justify-end">
             <button
               onClick={() => setGlobalError(null)}
-              className="rounded-lg border border-white/10 bg-white/5 px-6 py-2 text-[11px] font-bold tracking-wider text-white/50 uppercase transition-all hover:bg-white/10 hover:text-white">
+              className="rounded-lg border border-white/10 bg-white/5 px-6 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-all hover:bg-white/10 hover:text-white">
               Dismiss
             </button>
           </div>

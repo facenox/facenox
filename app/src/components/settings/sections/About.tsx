@@ -20,7 +20,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
           </p>
         </div>
       }
-      maxWidth="lg">
+      maxWidth="md">
       <div className="custom-scroll mt-2 -mr-2 max-h-[70vh] space-y-6 overflow-y-auto pr-2">
         <section>
           <h3 className="mb-2 text-sm font-medium text-white">Your data stays local</h3>
@@ -75,7 +75,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
         <div className="mt-8 flex justify-end">
           <button
             onClick={onClose}
-            className="rounded-lg border border-white/10 bg-white/5 px-6 py-2 text-[11px] font-bold tracking-wider text-white/50 uppercase transition-colors hover:bg-white/10 hover:text-white">
+            className="rounded-lg border border-white/10 bg-white/5 px-6 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-colors hover:bg-white/10 hover:text-white">
             Close
           </button>
         </div>

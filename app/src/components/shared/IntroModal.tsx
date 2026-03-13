@@ -151,7 +151,7 @@ export function IntroModal() {
 
             <button
               onClick={handleNext}
-              className="btn-premium btn-premium-primary px-8! py-2! text-[11px]! font-bold! tracking-wider uppercase active:scale-95">
+              className="btn-premium btn-premium-primary px-8! py-2! text-[11px]! font-bold! tracking-wider active:scale-95">
               {step === steps.length - 1 ? "Finish" : "Next"}
             </button>
           </div>

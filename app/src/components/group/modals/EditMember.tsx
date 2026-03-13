@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { attendanceManager } from "@/services"
 import type { AttendanceMember } from "@/types/recognition"
 import { FormInput, Modal } from "@/components/common"
+import { InfoPopover } from "@/components/shared"
 
 interface EditMemberProps {
   member: AttendanceMember
@@ -64,12 +65,12 @@ export function EditMember({ member, onClose, onSuccess }: EditMemberProps) {
       title={
         <div>
           <h3 className="mb-1 text-xl font-bold tracking-tight text-white">Edit Member</h3>
-          <p className="text-[11px] font-bold tracking-wider text-white/40 uppercase">
+          <p className="text-[11px] font-bold tracking-wider text-white/40">
             Update details for <span className="text-white/60">{member.name}</span>
           </p>
         </div>
       }
-      maxWidth="lg">
+      maxWidth="md">
       <div className="mt-2">
         {error && (
           <div className="mb-4 rounded-lg border border-red-500/40 bg-red-600/20 px-4 py-2 text-sm text-red-200">
@@ -101,7 +102,7 @@ export function EditMember({ member, onClose, onSuccess }: EditMemberProps) {
             className={`rounded-xl transition-all duration-300 ${
               hasBiometricConsent ? "bg-black/40" : "bg-black/20"
             }`}>
-            <label className="group flex cursor-pointer items-start gap-4 p-4">
+            <label className="group flex cursor-pointer items-center gap-4 p-4">
               <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
                 <input
                   type="checkbox"
@@ -113,15 +114,15 @@ export function EditMember({ member, onClose, onSuccess }: EditMemberProps) {
                 <i className="fa-solid fa-check absolute text-[10px] text-cyan-400/80 opacity-0 transition-all duration-200 peer-checked:opacity-100" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold tracking-tight text-white/90">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold tracking-tight text-white/90">
                     I confirm that this member has provided informed biometric consent.
                   </span>
+                  <InfoPopover
+                    title="Biometric Privacy"
+                    description="Facial features are encrypted and stored strictly on this device. Suri does not upload biometric data to the cloud."
+                  />
                 </div>
-                <p className="text-[11px] leading-relaxed font-bold tracking-tight text-white/40 uppercase transition-colors group-hover:text-white/50">
-                  Note: Facial features are encrypted and stored strictly on this device. Suri does
-                  not upload biometric data to the cloud.
-                </p>
               </div>
             </label>
           </div>
@@ -135,7 +136,7 @@ export function EditMember({ member, onClose, onSuccess }: EditMemberProps) {
           <button
             onClick={handleSave}
             disabled={!name.trim() || loading}
-            className="min-w-[140px] rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 uppercase transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-40">
+            className="min-w-[140px] rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-40">
             {loading ?
               <i className="fa-solid fa-circle-notch fa-spin mr-2" />
             : null}

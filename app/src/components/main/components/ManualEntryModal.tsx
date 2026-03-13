@@ -170,14 +170,14 @@ export const ManualEntryModal = ({
                         <div className="flex w-24 justify-center">
                           <i className="fa-solid fa-spinner fa-spin text-[10px] text-cyan-400"></i>
                         </div>
-                      : <div className="flex items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-cyan-400 uppercase opacity-0 transition-all group-hover/item:opacity-100 hover:bg-cyan-500/20 active:scale-95">
+                      : <div className="flex items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-cyan-400 opacity-0 transition-all group-hover/item:opacity-100 hover:bg-cyan-500/20 active:scale-95">
                           <i className="fa-solid fa-plus text-[8px]"></i>
                           Mark Present
                         </div>
                       }
                       {!isPresent && hasFace === false && (
                         <div
-                          className={`px-2 py-1 text-[11px] font-bold text-amber-500/40 ${isEntrySubmitting || searchQuery ? "hidden" : "group-hover/item:opacity-0"} tracking-tight uppercase transition-opacity`}>
+                          className={`px-2 py-1 text-[11px] font-bold text-amber-500/40 ${isEntrySubmitting || searchQuery ? "hidden" : "group-hover/item:opacity-0"} tracking-tight transition-opacity`}>
                           Not Registered
                         </div>
                       )}
@@ -189,9 +189,7 @@ export const ManualEntryModal = ({
           </div>
         : <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/2 py-12">
             <i className="fa-solid fa-user-slash mb-3 text-xl text-white/10"></i>
-            <p className="text-[11px] font-bold tracking-wider text-white/30 uppercase">
-              No results found
-            </p>
+            <p className="text-[11px] font-bold tracking-wider text-white/30">No results found</p>
           </div>
         }
 

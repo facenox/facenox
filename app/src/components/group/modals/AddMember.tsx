@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from "react"
 import { attendanceManager } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { FormInput, Modal } from "@/components/common"
+import { InfoPopover } from "@/components/shared"
 
 interface AddMemberProps {
   group: AttendanceGroup
@@ -252,12 +253,10 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
 
             {/* Consent Toggle */}
             <div
-              className={`rounded-xl border transition-all duration-300 ${
-                hasBiometricConsent ?
-                  "border-cyan-500/30 bg-black/40"
-                : "border-white/5 bg-black/20"
+              className={`rounded-xl transition-all duration-300 ${
+                hasBiometricConsent ? "bg-black/40" : "bg-black/20"
               }`}>
-              <label className="group flex cursor-pointer items-start gap-4 p-4">
+              <label className="group flex cursor-pointer items-center gap-4 p-4">
                 <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
                   <input
                     type="checkbox"
@@ -269,15 +268,15 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
                   <i className="fa-solid fa-check absolute text-[9px] text-cyan-400 opacity-0 transition-all duration-200 peer-checked:opacity-100" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold tracking-tight text-white/90">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold tracking-tight text-white/90">
                       I confirm that this member has provided informed biometric consent.
                     </span>
+                    <InfoPopover
+                      title="Privacy First"
+                      description="Facial features will be encrypted and stored strictly on this device. Suri does not upload biometric data to any cloud servers."
+                    />
                   </div>
-                  <p className="text-[11px] leading-relaxed text-white/40 transition-colors group-hover:text-white/50">
-                    Facial features will be encrypted and stored strictly on this device. Suri does
-                    not upload biometric data to any cloud servers.
-                  </p>
                 </div>
               </label>
             </div>
@@ -287,37 +286,6 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
         {/* Bulk Add Form */}
         {isBulkMode && (
           <div className="space-y-4">
-            {/* Consent Toggle (Bulk) */}
-            <div
-              className={`rounded-xl border transition-all duration-300 ${
-                hasBiometricConsent ?
-                  "border-cyan-500/30 bg-black/40"
-                : "border-white/5 bg-black/20"
-              }`}>
-              <label className="group flex cursor-pointer items-start gap-4 p-4">
-                <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
-                  <input
-                    type="checkbox"
-                    checked={hasBiometricConsent}
-                    onChange={(e) => setHasBiometricConsent(e.target.checked)}
-                    className="peer sr-only"
-                  />
-                  <div className="h-5 w-5 rounded-md border border-white/20 bg-white/5 transition-all duration-200 group-hover:border-white/40 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10" />
-                  <i className="fa-solid fa-check absolute text-[9px] text-cyan-400 opacity-0 transition-all duration-200 peer-checked:opacity-100" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold tracking-tight text-white/90">
-                      I verify that all members in this list have provided explicit consent.
-                    </span>
-                  </div>
-                  <p className="text-[11px] leading-relaxed text-white/40 transition-colors group-hover:text-white/60">
-                    As an administrator, you are responsible for ensuring offline consent records
-                    are maintained. All data remains within your local encrypted vault.
-                  </p>
-                </div>
-              </label>
-            </div>
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm text-white/60">Upload CSV/TXT file or paste below</span>
@@ -345,6 +313,38 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
                 Format: <span className="font-mono text-white/50">Name, Role</span> (one per line,
                 role is optional)
               </div>
+            </div>
+
+            {/* Consent Toggle (Bulk) */}
+            <div
+              className={`rounded-xl border transition-all duration-300 ${
+                hasBiometricConsent ?
+                  "border-cyan-500/30 bg-black/40"
+                : "border-white/5 bg-black/20"
+              }`}>
+              <label className="group flex cursor-pointer items-start gap-4 p-4">
+                <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={hasBiometricConsent}
+                    onChange={(e) => setHasBiometricConsent(e.target.checked)}
+                    className="peer sr-only"
+                  />
+                  <div className="h-5 w-5 rounded-md border border-white/20 bg-white/5 transition-all duration-200 group-hover:border-white/40 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10" />
+                  <i className="fa-solid fa-check absolute text-[9px] text-cyan-400 opacity-0 transition-all duration-200 peer-checked:opacity-100" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold tracking-tight text-white/90">
+                      I verify that all members in this list have provided explicit consent.
+                    </span>
+                    <InfoPopover
+                      title="Administrative Responsibility"
+                      description="As an administrator, you are responsible for ensuring offline consent records are maintained. All data remains within your local encrypted vault."
+                    />
+                  </div>
+                </div>
+              </label>
             </div>
 
             {/* Bulk Results */}
@@ -398,7 +398,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
               (isBulkMode && !bulkMembersText.trim()) ||
               !hasBiometricConsent
             }
-            className={`min-w-[120px] rounded-lg border px-6 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors disabled:opacity-50 ${
+            className={`min-w-[120px] rounded-lg border px-6 py-2 text-[11px] font-bold tracking-wider transition-colors disabled:opacity-50 ${
               confirmDuplicate && !isBulkMode ?
                 "border-amber-400/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/30"
               : "border-cyan-400/40 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30"
