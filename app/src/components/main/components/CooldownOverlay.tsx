@@ -8,21 +8,28 @@ interface CooldownOverlayProps {
 }
 
 export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
-  const [now, setNow] = useState(() => Date.now())
+  const [, forceUpdate] = useState(0)
 
   useEffect(() => {
-    if (persistentCooldowns.size === 0) return
-    // Re-render every 50ms for perfectly smooth unmount sync with Framer Motion progress bar!
-    const interval = setInterval(() => setNow(Date.now()), 50)
-    return () => clearInterval(interval)
-  }, [persistentCooldowns.size])
+    const timers: ReturnType<typeof setTimeout>[] = []
 
+    for (const [, info] of persistentCooldowns) {
+      const expiresAt = info.startTime + info.cooldownDurationSeconds * 1000
+      const msLeft = expiresAt - Date.now()
+
+      if (msLeft > 0) {
+        timers.push(setTimeout(() => forceUpdate((n) => n + 1), msLeft))
+      }
+    }
+
+    return () => timers.forEach(clearTimeout)
+  }, [persistentCooldowns])
+
+  const now = Date.now()
   const activeCooldowns = Array.from(persistentCooldowns.entries())
-    .filter(([, info]) => {
-      return now - info.startTime < info.cooldownDurationSeconds * 1000
-    })
+    .filter(([, info]) => now - info.startTime < info.cooldownDurationSeconds * 1000)
     .sort((a, b) => b[1].startTime - a[1].startTime)
-    .slice(0, 3) // Only show top 3 recent ones
+    .slice(0, 3)
 
   return (
     <div className="pointer-events-none absolute top-6 left-6 z-100 flex flex-col gap-2">
@@ -42,7 +49,7 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
             className="group relative">
             {/* Main Card */}
             <div className="relative flex min-w-50 items-center gap-3 overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0b]/90 p-3 shadow-2xl">
-              {/* Smaller Avatar */}
+              {/* Avatar */}
               <div className="flex h-7 w-7 shrink-0 items-center justify-center">
                 <i className="fa-solid fa-check text-xs text-cyan-400"></i>
               </div>
