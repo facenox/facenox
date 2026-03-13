@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react"
+import { useCallback, useRef, useEffect } from "react"
 import { startTransition } from "react"
 import { attendanceManager } from "@/services"
 import type { BackendService } from "@/services"
@@ -27,9 +27,6 @@ interface UseFaceRecognitionOptions {
       }[],
     ) => number
   >
-  persistentCooldownsRef: React.RefObject<
-    Map<string, import("@/components/main/types").CooldownInfo>
-  >
   loadAttendanceDataRef: React.RefObject<() => Promise<void>>
 }
 
@@ -39,13 +36,20 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
     currentGroupRef,
     memberCacheRef,
     calculateAngleConsistencyRef,
-    persistentCooldownsRef,
     loadAttendanceDataRef,
   } = options
 
   const { currentRecognitionResults, setCurrentRecognitionResults, setTrackedFaces } =
     useDetectionStore()
-  const { attendanceCooldownSeconds, setPersistentCooldowns } = useAttendanceStore()
+  const { persistentCooldowns, attendanceCooldownSeconds, setPersistentCooldowns } =
+    useAttendanceStore()
+
+  const persistentCooldownsRef = useRef(persistentCooldowns)
+
+  // Sync the ref with the store whenever it changes
+  useEffect(() => {
+    persistentCooldownsRef.current = persistentCooldowns
+  }, [persistentCooldowns])
   const { setError } = useUIStore()
 
   // Prevent sound spam: person+group throttling
@@ -280,20 +284,28 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
                       existingInState && logTime - existingInState.startTime < existingCooldownMs
 
                     if (!existingInStateStillActive) {
-                      startTransition(() => {
-                        setPersistentCooldowns((prev) => {
-                          const newPersistent = new Map(prev)
-                          const cooldownData = {
-                            personId: response.person_id!,
-                            startTime: logTime,
-                            memberName: memberName,
-                            lastKnownBbox: face.bbox,
-                            cooldownDurationSeconds: attendanceCooldownSeconds,
+                      setPersistentCooldowns((prev) => {
+                        const newPersistent = new Map(prev)
+
+                        // Self-pruning: Clear entries older than 1 hour to keep memory footprint low
+                        // without needing a separate background polling hook.
+                        const pruneThreshold = Date.now() - 3600000
+                        for (const [key, val] of newPersistent) {
+                          if (val.startTime < pruneThreshold) {
+                            newPersistent.delete(key)
                           }
-                          newPersistent.set(cooldownKey, cooldownData)
-                          persistentCooldownsRef.current = newPersistent
-                          return newPersistent
-                        })
+                        }
+
+                        const cooldownData = {
+                          personId: response.person_id!,
+                          startTime: logTime,
+                          memberName: memberName,
+                          lastKnownBbox: face.bbox,
+                          cooldownDurationSeconds: attendanceCooldownSeconds,
+                        }
+                        newPersistent.set(cooldownKey, cooldownData)
+                        persistentCooldownsRef.current = newPersistent
+                        return newPersistent
                       })
                     } else {
                       startTransition(() => {

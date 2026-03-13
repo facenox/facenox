@@ -84,16 +84,7 @@ export const useAttendanceStore = create<AttendanceState>()(
     setPersistentCooldowns: (cooldowns) => {
       const prevCooldowns = get().persistentCooldowns
       const newCooldownsMap = typeof cooldowns === "function" ? cooldowns(prevCooldowns) : cooldowns
-
       set({ persistentCooldowns: newCooldownsMap })
-
-      // Persist to electron-store
-      // Convert Map to plain object for storage
-      const obj: Record<string, CooldownInfo> = {}
-      newCooldownsMap.forEach((val, key) => {
-        obj[key] = val
-      })
-      persistentSettings.setCooldowns(obj).catch(console.error)
     },
     // setTrackingMode removed
     setAttendanceCooldownSeconds: (seconds) => {

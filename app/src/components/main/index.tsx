@@ -4,7 +4,6 @@ import { Settings } from "@/components/settings"
 import { attendanceManager, BackendService, backendService, WebSocketService } from "@/services"
 import {
   useStreamState,
-  useAttendanceCooldown,
   useVideoStream,
   useOverlayRendering,
   useFaceDetection,
@@ -170,8 +169,6 @@ export default function Main() {
     lastStopTimeRef,
   })
 
-  const { persistentCooldownsRef } = useAttendanceCooldown()
-
   const { calculateAngleConsistencyRef } = useFaceTracking()
 
   const {
@@ -213,7 +210,6 @@ export default function Main() {
     currentGroupRef,
     memberCacheRef,
     calculateAngleConsistencyRef,
-    persistentCooldownsRef,
     loadAttendanceDataRef,
   })
 

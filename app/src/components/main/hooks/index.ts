@@ -1,5 +1,5 @@
 export { useStreamState } from "@/components/main/hooks/useStreamState"
-export { useAttendanceCooldown } from "@/components/main/hooks/useAttendanceCooldown"
+
 export { useVideoStream } from "@/components/main/hooks/useVideoStream"
 export { useOverlayRendering } from "@/components/main/hooks/useOverlayRendering"
 export { useFaceDetection } from "@/components/main/hooks/useFaceDetection"

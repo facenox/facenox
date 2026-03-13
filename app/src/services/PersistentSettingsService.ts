@@ -197,15 +197,6 @@ class PersistentSettingsService {
     await this.set("updater", { ...current, ...info })
   }
 
-  async getCooldowns(): Promise<Record<string, unknown>> {
-    const cooldowns = await this.get<Record<string, unknown>>("attendanceCooldowns")
-    return cooldowns || {}
-  }
-
-  async setCooldowns(cooldowns: Record<string, unknown>): Promise<void> {
-    await this.set("attendanceCooldowns", cooldowns)
-  }
-
   async getSyncSettings(): Promise<PersistentSettingsSchema["sync"]> {
     const settings = await this.get<PersistentSettingsSchema["sync"]>("sync")
 
