@@ -17,9 +17,10 @@ Suri is a local-first desktop attendance system. The current app processes face 
 
 ## 3. Storage and Deletion
 
-- **Encrypted biometric templates**: Stored face templates are encrypted at rest using a machine-bound local encryption key.
-- **Delete means delete**: Removing a member deletes the stored biometric template. Revoking biometric consent also removes the member's stored biometric template.
-- **Recognition scope respects consent**: Only consented members are eligible for biometric recognition.
+- **Biometric Templates vs Photos**: Face templates are mathematical representations (embeddings) stored in a local SQLite database, not raw image files. 
+- **Encryption at Rest Responsibility**: While data is kept off the cloud, Suri relies on the host environment for physical security. **To achieve full compliance with data protection laws (like GDPR and DPA), organizations MUST enable OS-level disk encryption (e.g., Windows BitLocker, macOS FileVault) on the machine running Suri.**
+- **Delete means delete**: Removing a member permanently deletes their stored biometric template from the database. Revoking biometric consent also triggers the immediate removal of the biometric data.
+- **Recognition scope respects consent**: Only members with an explicit, active consent flag are eligible for biometric recognition.
 
 ## 4. Backups and Transfers
 
