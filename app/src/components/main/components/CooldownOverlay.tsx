@@ -8,24 +8,21 @@ interface CooldownOverlayProps {
 }
 
 export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
-  const [, forceUpdate] = useState(0)
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
 
     for (const [, info] of persistentCooldowns) {
       const expiresAt = info.startTime + info.cooldownDurationSeconds * 1000
-      const msLeft = expiresAt - Date.now()
+      const msLeft = expiresAt - Date.now() + 100
 
-      if (msLeft > 0) {
-        timers.push(setTimeout(() => forceUpdate((n) => n + 1), msLeft))
-      }
+      timers.push(setTimeout(() => setNow(Date.now()), Math.max(0, msLeft)))
     }
 
     return () => timers.forEach(clearTimeout)
   }, [persistentCooldowns])
 
-  const now = Date.now()
   const activeCooldowns = Array.from(persistentCooldowns.entries())
     .filter(([, info]) => now - info.startTime < info.cooldownDurationSeconds * 1000)
     .sort((a, b) => b[1].startTime - a[1].startTime)

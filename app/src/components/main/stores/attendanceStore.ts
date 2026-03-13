@@ -40,28 +40,13 @@ interface AttendanceState {
 }
 
 const loadInitialSettings = async (): Promise<Partial<AttendanceState>> => {
-  const [attendanceSettings, savedCooldowns] = await Promise.all([
-    persistentSettings.getAttendanceSettings(),
-    persistentSettings.getCooldowns(),
-  ])
-
-  // Convert saved record to Map and prune expired ones
-  const now = Date.now()
-  const cooldownMap = new Map<string, CooldownInfo>()
-  Object.entries(savedCooldowns).forEach(([key, value]) => {
-    const info = value as CooldownInfo
-    // Keep persisted cooldowns based on their UI Spam filter duration
-    const infoMs = (info.cooldownDurationSeconds || 0) * 1000
-    const effectiveTtlMs = infoMs
-    if (now - info.startTime < effectiveTtlMs + 500) {
-      cooldownMap.set(key, info)
-    }
-  })
+  const attendanceSettings = await persistentSettings.getAttendanceSettings()
 
   return {
     attendanceCooldownSeconds: attendanceSettings.attendanceCooldownSeconds,
     enableSpoofDetection: attendanceSettings.enableSpoofDetection,
-    persistentCooldowns: cooldownMap,
+    // Cooldowns are session-only spam filter state — never restore across restarts.
+    persistentCooldowns: new Map(),
   }
 }
 
