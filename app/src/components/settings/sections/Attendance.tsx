@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion"
 import type { AttendanceSettings } from "@/components/settings/types"
+import { InfoPopover } from "@/components/shared"
 
 interface AttendanceProps {
   attendanceSettings: AttendanceSettings
@@ -38,7 +39,19 @@ export function Attendance({
           <div className="flex flex-col">
             <div className={`flex items-center gap-4 py-4 ${hasSelectedGroup ? "" : ""}`}>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-white/90">Time In & Time Out</div>
+                <div className="flex items-center gap-1.5">
+                  <div className="text-sm font-medium text-white/90">Time In & Time Out</div>
+                  <InfoPopover
+                    title="Time In & Time Out"
+                    description="When enabled, the system records two events per person per day — their first scan as arrival (Time In) and their most recent scan as departure (Time Out)."
+                    details={[
+                      "Only 1 scan = Time In only, no Time Out.",
+                      "Each scan after the first updates the Time Out.",
+                      "Hours worked is calculated automatically.",
+                    ]}
+                    side="right"
+                  />
+                </div>
                 <div className="relative min-h-4">
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -77,7 +90,19 @@ export function Attendance({
           {/* Spam Filter */}
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-white/90">Spam Filter</div>
+              <div className="flex items-center gap-1.5">
+                <div className="text-sm font-medium text-white/90">Spam Filter</div>
+                <InfoPopover
+                  title="Spam Filter"
+                  description="Prevents the same person from being logged again until the cooldown window expires. Applies to both Activity Log entries and the audio cue."
+                  details={[
+                    "Cannot be disabled — fundamental to system integrity.",
+                    "Short window (5s–30s) = more detailed raw logs.",
+                    "Long window (1m–1h) = cleaner, session-style logs.",
+                  ]}
+                  side="right"
+                />
+              </div>
               <div className="mt-0.5 text-xs text-white/40">
                 Ignore the same person if they scan again within{" "}
                 {attendanceSettings.attendanceCooldownSeconds < 60 ?
@@ -112,7 +137,19 @@ export function Attendance({
           <div className="flex flex-col">
             <div className={`flex items-center gap-4 py-4`}>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-white/90">Late Tracking</div>
+                <div className="flex items-center gap-1.5">
+                  <div className="text-sm font-medium text-white/90">Late Tracking</div>
+                  <InfoPopover
+                    title="Late Tracking"
+                    description="Automatically marks members as late if their first scan occurs after the group's configured class start time plus the late threshold."
+                    details={[
+                      "Requires a group to be selected.",
+                      "Late status appears in Reports and Overview.",
+                      "Set in group settings: Start Time + Threshold (minutes).",
+                    ]}
+                    side="right"
+                  />
+                </div>
                 <div className="relative min-h-4">
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -196,7 +233,18 @@ export function Attendance({
           {/* Anti-Spoof Detection */}
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-white/90">Anti-Spoof Detection</div>
+              <div className="flex items-center gap-1.5">
+                <div className="text-sm font-medium text-white/90">Anti-Spoof Detection</div>
+                <InfoPopover
+                  title="Anti-Spoof Detection"
+                  description="Detects and rejects basic spoof attempts such as someone holding a photo of a registered person in front of the camera."
+                  details={[
+                    "Uses liveness detection under the hood.",
+                    "May slightly reduce recognition speed when enabled.",
+                  ]}
+                  side="right"
+                />
+              </div>
               <div className="relative min-h-4">
                 <AnimatePresence mode="wait">
                   <motion.div
