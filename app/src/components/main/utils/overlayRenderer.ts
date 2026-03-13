@@ -242,7 +242,10 @@ export const drawOverlays = ({
       drawBoundingBox(ctx, x1, y1, x2, y2)
     }
 
-    const isRecognized = recognitionEnabled && recognitionResult?.person_id
+    const isRecognized =
+      recognitionEnabled &&
+      recognitionResult?.person_id &&
+      face.liveness?.status !== "spoof"
     let label = ""
     let shouldShowLabel = false
 
