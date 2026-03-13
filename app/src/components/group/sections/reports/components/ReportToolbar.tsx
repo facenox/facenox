@@ -23,6 +23,7 @@ interface ReportToolbarProps {
 
   allColumns: readonly { key: ColumnKey; label: string }[]
   defaultColumns: ColumnKey[]
+  lateTrackingEnabled?: boolean
 }
 
 const STATUS_OPTIONS = [
@@ -52,11 +53,15 @@ export function ReportToolbar({
   search,
   setSearch,
   allColumns,
+  lateTrackingEnabled = true,
 }: ReportToolbarProps) {
   const [showOptions, setShowOptions] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
   const optionsRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
+
+  const finalStatusOptions =
+    lateTrackingEnabled ? STATUS_OPTIONS : STATUS_OPTIONS.filter((s) => s.value !== "late")
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -148,7 +153,7 @@ export function ReportToolbar({
 
           {showFilter && (
             <div className="animate-in fade-in zoom-in-95 absolute right-0 z-50 mt-2 w-36 overflow-hidden rounded-lg border border-white/10 bg-[#161616] shadow-2xl duration-100">
-              {STATUS_OPTIONS.map(({ value: st, label }) => (
+              {finalStatusOptions.map(({ value: st, label }) => (
                 <button
                   key={st}
                   onClick={() => {

@@ -257,11 +257,17 @@ export function useReportTransform(
     return diffDays
   }, [report, startDateStr, endDateStr])
 
+  const finalColumns = useMemo(() => {
+    const isLateTrackingEnabled = group.settings?.late_threshold_enabled ?? false
+    if (isLateTrackingEnabled) return ALL_COLUMNS
+    return ALL_COLUMNS.filter((c) => c.key !== "is_late" && c.key !== "late_minutes")
+  }, [group.settings?.late_threshold_enabled])
+
   return {
     filteredRows,
     groupedRows,
     daysTracked,
-    allColumns: ALL_COLUMNS,
+    allColumns: finalColumns,
   }
 }
 

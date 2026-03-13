@@ -89,23 +89,28 @@ export function StartTimeChip({ startTime, onTimeChange, disabled = false }: Sta
             : outdated ? "text-amber-200 hover:text-amber-300"
             : "text-white/90 hover:border-white/10"
           }`}>
-          <div className="flex items-baseline gap-1">
-            <span
-              className={`font-mono text-sm tracking-tight ${
-                outdated ? "text-amber-300" : "text-white/80"
-              }`}>
-              {time}
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-[10px] font-medium text-amber-500/80">
+              Late Tracking is enabled
             </span>
-            <span
-              className={`text-[9px] font-medium ${
-                outdated ? "text-amber-400/60" : "text-white/30"
-              }`}>
-              {period}
-            </span>
+            <div className="flex items-baseline gap-1">
+              <span
+                className={`font-mono text-sm tracking-tight ${
+                  outdated ? "text-amber-300" : "text-white/80"
+                }`}>
+                {time}
+              </span>
+              <span
+                className={`text-[9px] font-medium ${
+                  outdated ? "text-amber-400/60" : "text-white/30"
+                }`}>
+                {period}
+              </span>
+            </div>
           </div>
 
           {outdated && (
-            <div className="flex items-center opacity-80">
+            <div className="flex flex-col items-center opacity-80">
               <span className="animate-pulse text-[10px] font-medium text-amber-500/80">
                 Click to update
               </span>
@@ -115,7 +120,7 @@ export function StartTimeChip({ startTime, onTimeChange, disabled = false }: Sta
       </Tooltip>
 
       {isOpen && (
-        <div className="animate-in fade-in zoom-in-95 slide-in-from-bottom-2 absolute right-0 bottom-full z-50 mb-2 min-w-[160px] origin-bottom-right rounded-lg border border-white/10 bg-[#0c0c0c] p-2 shadow-xl duration-150">
+        <div className="animate-in fade-in zoom-in-95 slide-in-from-bottom-2 absolute bottom-full left-1/2 z-50 mb-2 min-w-[160px] origin-bottom -translate-x-1/2 rounded-lg border border-white/10 bg-[#0c0c0c] p-2 shadow-xl duration-150">
           <div className="mb-2 flex items-center justify-between px-1">
             <Tooltip content="Attendance is tracked relative to this scheduled time" position="top">
               <span className="block cursor-help py-1 text-[9px] font-medium text-white/30">

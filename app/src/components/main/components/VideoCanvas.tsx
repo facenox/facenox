@@ -130,7 +130,7 @@ export const VideoCanvas = memo(function VideoCanvas({
                 : "Create a group or choose one to start tracking attendance."}
               </p>
 
-              {hasSelectedGroup && onStartTimeChange && (
+              {hasSelectedGroup && onStartTimeChange && lateTrackingEnabled && (
                 <div className="pointer-events-auto mt-2">
                   <StartTimeChip
                     startTime={classStartTime || "08:00"}

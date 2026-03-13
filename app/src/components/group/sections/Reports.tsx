@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useGroupStore } from "@/components/group/stores"
 import { getLocalDateString } from "@/utils"
@@ -44,6 +44,13 @@ export function Reports({
   const { report, sessions, attendanceRecords, members, loading, error, generateReport } =
     useReportData(group, storeMembers, reportStartDate, reportEndDate)
 
+  const lateTrackingEnabled = group.settings?.late_threshold_enabled ?? false
+
+  const finalDefaultColumns = useMemo(() => {
+    if (lateTrackingEnabled) return DEFAULT_COLUMNS
+    return DEFAULT_COLUMNS.filter((c) => c !== "is_late" && c !== "late_minutes")
+  }, [lateTrackingEnabled])
+
   const {
     visibleColumns,
     setVisibleColumns,
@@ -53,7 +60,7 @@ export function Reports({
     setStatusFilter,
     search,
     setSearch,
-  } = useReportViews(group.id, DEFAULT_COLUMNS)
+  } = useReportViews(group.id, finalDefaultColumns)
 
   const { groupedRows, daysTracked, allColumns } = useReportTransform(
     group,
@@ -168,7 +175,8 @@ export function Reports({
                 search={search}
                 setSearch={setSearch}
                 allColumns={allColumns}
-                defaultColumns={DEFAULT_COLUMNS}
+                defaultColumns={finalDefaultColumns}
+                lateTrackingEnabled={lateTrackingEnabled}
               />
 
               <ReportTable
