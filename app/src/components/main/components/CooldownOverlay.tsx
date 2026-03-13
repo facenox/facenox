@@ -7,7 +7,7 @@ interface CooldownOverlayProps {
   attendanceCooldownSeconds: number
 }
 
-const MAX_CHIP_DISPLAY_DURATION_MS = 15000
+const MAX_CHIP_DISPLAY_DURATION_MS = 8000
 
 export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
   const [now, setNow] = useState(() => Date.now())
