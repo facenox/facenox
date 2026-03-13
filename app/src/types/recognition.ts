@@ -209,6 +209,7 @@ export interface AttendanceReport {
 export interface AttendanceSettings {
   late_threshold_minutes: number
   enable_location_tracking: boolean
+  enable_liveness_detection: boolean
   confidence_threshold?: number
   attendance_cooldown_seconds: number
   data_retention_days?: number

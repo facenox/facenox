@@ -69,7 +69,23 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
         )
         logger.info(f"[WebSocket] Created face tracker for client {client_id}")
 
+    # Initial state for liveness detection
     enable_liveness_detection = True
+    try:
+        from database.session import AsyncSessionLocal
+        from database.repository import AttendanceRepository
+
+        async with AsyncSessionLocal() as session:
+            repo = AttendanceRepository(session)
+            settings = await repo.get_settings()
+            enable_liveness_detection = settings.enable_liveness_detection
+            logger.info(
+                f"[WebSocket] Initial liveness detection state from DB: {enable_liveness_detection}"
+            )
+    except Exception as e:
+        logger.warning(
+            f"[WebSocket] Failed to load initial liveness config from DB: {e}"
+        )
 
     try:
         await websocket.send_text(

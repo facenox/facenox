@@ -55,7 +55,9 @@ class FaceRecognizer:
 
         self._persons_cache = None
         self._cache_timestamp = 0
-        self._cache_ttl = 1.0
+        self._cache_ttl = (
+            60.0  # Increased from 1.0 to reduce DB load during recognition
+        )
 
     async def initialize(self):
         """Initialize the recognizer: migrate legacy data and load cache"""

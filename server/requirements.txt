@@ -15,8 +15,7 @@ pydantic
 onnxruntime
 
 # Tracker dependencies
-lap
-scipy
+# Removed lap and scipy (replaced with pure-python/numpy)
 
 # Attendance database dependencies
 ulid

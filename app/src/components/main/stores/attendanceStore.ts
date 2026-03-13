@@ -3,6 +3,7 @@ import { subscribeWithSelector } from "zustand/middleware"
 import type { AttendanceGroup, AttendanceMember, AttendanceRecord } from "@/types/recognition"
 import type { CooldownInfo } from "@/components/main/types"
 import { persistentSettings } from "@/services/PersistentSettingsService"
+import { attendanceManager } from "@/services/AttendanceManager"
 
 interface AttendanceState {
   currentGroup: AttendanceGroup | null
@@ -41,10 +42,12 @@ interface AttendanceState {
 
 const loadInitialSettings = async (): Promise<Partial<AttendanceState>> => {
   const attendanceSettings = await persistentSettings.getAttendanceSettings()
+  const dbSettings = await attendanceManager.getSettings().catch(() => null)
 
   return {
     attendanceCooldownSeconds: attendanceSettings.attendanceCooldownSeconds,
-    enableSpoofDetection: attendanceSettings.enableSpoofDetection,
+    enableSpoofDetection: dbSettings?.enable_liveness_detection ?? true,
+    dataRetentionDays: dbSettings?.data_retention_days ?? 0,
     // Cooldowns are session-only spam filter state — never restore across restarts.
     persistentCooldowns: new Map(),
   }
@@ -61,7 +64,7 @@ export const useAttendanceStore = create<AttendanceState>()(
     groupToDelete: null,
     newGroupName: "",
     persistentCooldowns: new Map(),
-    // trackingMode removed
+
     attendanceCooldownSeconds: 8,
     enableSpoofDetection: true,
     dataRetentionDays: 0,
@@ -86,7 +89,7 @@ export const useAttendanceStore = create<AttendanceState>()(
       const newCooldownsMap = typeof cooldowns === "function" ? cooldowns(prevCooldowns) : cooldowns
       set({ persistentCooldowns: newCooldownsMap })
     },
-    // setTrackingMode removed
+
     setAttendanceCooldownSeconds: (seconds) => {
       set({ attendanceCooldownSeconds: seconds })
       persistentSettings
@@ -95,9 +98,7 @@ export const useAttendanceStore = create<AttendanceState>()(
     },
     setEnableSpoofDetection: (enabled) => {
       set({ enableSpoofDetection: enabled })
-      persistentSettings
-        .setAttendanceSettings({ enableSpoofDetection: enabled })
-        .catch(console.error)
+      attendanceManager.updateSettings({ enable_liveness_detection: enabled }).catch(console.error)
     },
     setDataRetentionDays: (days) => {
       set({ dataRetentionDays: days })

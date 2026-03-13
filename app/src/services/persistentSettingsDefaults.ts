@@ -7,7 +7,6 @@ export interface PersistentSettingsSchema {
   audio: AudioSettings
 
   attendance: {
-    enableSpoofDetection: boolean
     lateThresholdEnabled: boolean
     lateThresholdMinutes: number
     classStartTime: string
@@ -63,7 +62,6 @@ export const defaultSettings: PersistentSettingsSchema = {
     recognitionSoundUrl: "./assets/sounds/Recognition_Success.mp3",
   },
   attendance: {
-    enableSpoofDetection: false,
     lateThresholdEnabled: false,
     lateThresholdMinutes: 5,
     classStartTime: "00:00",

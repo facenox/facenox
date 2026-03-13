@@ -113,7 +113,6 @@ class PersistentSettingsService {
 
   async setAttendanceSettings(
     settings: Partial<{
-      enableSpoofDetection: boolean
       lateThresholdEnabled: boolean
       lateThresholdMinutes: number
       classStartTime: string

@@ -39,8 +39,6 @@ def check_dependencies():
         "onnxruntime": "onnxruntime",
         "numpy": "numpy",
         "pydantic": "pydantic",
-        "lap": "lap",
-        "scipy": "scipy",
         "ulid": "ulid",
     }
 
@@ -68,7 +66,7 @@ def clean_build_dirs():
     for dir_name in dirs_to_clean:
         dir_path = Path(dir_name)
         if dir_path.exists():
-            print(f"🧹 Cleaning {dir_path}")
+            print(f"Cleaning {dir_path}")
             shutil.rmtree(dir_path)
 
 
@@ -82,7 +80,7 @@ def install_pyinstaller():
             return True
         raise ImportError
     except ImportError:
-        print("📦 Installing PyInstaller...")
+        print("Installing PyInstaller...")
         try:
             subprocess.check_call(
                 [sys.executable, "-m", "pip", "install", "pyinstaller"]
@@ -127,7 +125,7 @@ def build_backend(debug=False, onefile=True, clean=True):
 
     cmd.append("suri_backend.spec")
 
-    print("⏳ Building backend... This may take several minutes")
+    print("Building backend... This may take several minutes")
 
     start_time = time.time()
 
@@ -141,14 +139,14 @@ def build_backend(debug=False, onefile=True, clean=True):
 
             dist_dir = Path("dist")
             if dist_dir.exists():
-                print(f"📁 Output directory: {dist_dir.absolute()}")
+                print(f"Output directory: {dist_dir.absolute()}")
 
                 for item in dist_dir.iterdir():
                     if item.is_file():
                         size_mb = item.stat().st_size / (1024 * 1024)
-                        print(f"   📄 {item.name} ({size_mb:.1f} MB)")
+                        print(f"   [FILE] {item.name} ({size_mb:.1f} MB)")
                     elif item.is_dir():
-                        print(f"   📁 {item.name}/")
+                        print(f"   [DIR] {item.name}/")
 
             return True
         else:
@@ -174,7 +172,7 @@ def test_executable():
         print("[ERROR] Executable not found")
         return False
 
-    print("🧪 Testing executable...")
+    print("Testing executable...")
 
     try:
 

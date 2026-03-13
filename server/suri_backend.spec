@@ -17,35 +17,18 @@ onnx_datas = collect_data_files('onnxruntime')
 import platform
 
 # Common imports for all platforms
-hidden_imports = [
-    'uvicorn.logging',
-    'uvicorn.loops',
-    'uvicorn.loops.auto',
-    'uvicorn.protocols',
-    'uvicorn.protocols.http',
-    'uvicorn.protocols.http.auto',
-    'uvicorn.protocols.websockets',
-    'uvicorn.protocols.websockets.auto',
-    'uvicorn.lifespan',
-    'uvicorn.lifespan.on',
-    'onnxruntime',
-    'onnxruntime.capi',
-    'onnxruntime.capi.onnxruntime_pybind11_state',
-    'cv2',
-    'numpy',
-    'aiosqlite',
+hidden_imports = collect_submodules("uvicorn") + [
+    "onnxruntime",
+    "onnxruntime.capi",
+    "onnxruntime.capi.onnxruntime_pybind11_state",
+    "cv2",
+    "numpy",
+    "aiosqlite",
 ]
 
 # Windows-specific imports (only include on Windows)
-if platform.system() == 'Windows':
-    hidden_imports.extend([
-        'win32ctypes',
-        'win32ctypes.pywin32',
-        'win32ctypes.pywin32.pywintypes',
-        'win32ctypes.pywin32.win32api',
-        'win32ctypes.core',
-        'win32ctypes.core.ctypes',
-    ])
+if platform.system() == "Windows":
+    hidden_imports.extend(collect_submodules("win32ctypes"))
 
 # Disable custom runtime hook to avoid bundling PyInstaller dependencies
 runtime_hooks = []
@@ -96,7 +79,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,  # Disabled UPX for better AV compatibility and speed
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,

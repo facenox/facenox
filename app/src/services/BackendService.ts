@@ -44,7 +44,7 @@ export class BackendService {
   private config: BackendConfig
   private adapter: ElectronAdapter
 
-  private enableLivenessDetection = true
+
 
   constructor(config?: Partial<BackendConfig>) {
     this.config = {
@@ -139,7 +139,7 @@ export class BackendService {
         model_type: options.model_type || "face_detector",
         confidence_threshold: options.confidence_threshold || 0.5,
         nms_threshold: options.nms_threshold || 0.3,
-        enable_liveness_detection: this.enableLivenessDetection,
+        enable_liveness_detection: true,
       }
 
       const response = await fetch(`${this.config.baseUrl}/detect`, {
@@ -162,9 +162,7 @@ export class BackendService {
     }
   }
 
-  setLivenessDetection(enabled: boolean): void {
-    this.enableLivenessDetection = enabled
-  }
+  setLivenessDetection(): void {}
 
   async recognizeFace(
     imageData: ArrayBuffer,
@@ -186,7 +184,7 @@ export class BackendService {
         bbox,
         groupId,
         landmarks_5,
-        this.enableLivenessDetection,
+        true,
       )
     } catch (error) {
       console.error("Face recognition failed:", error)
@@ -208,7 +206,7 @@ export class BackendService {
         bbox,
         groupId,
         landmarks_5,
-        this.enableLivenessDetection,
+        true,
       )
     } catch (error) {
       console.error("Face registration failed:", error)

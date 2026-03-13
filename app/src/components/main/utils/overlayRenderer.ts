@@ -7,16 +7,21 @@ export const getFaceColor = (
   recognitionEnabled: boolean,
   livenessStatus?: string,
 ) => {
-  // Security first: Spoofing always triggers Red
-  if (livenessStatus === "spoof") return "#ef4444" // Red-500
+  const isRecognized =
+    recognitionEnabled && recognitionResult?.person_id && livenessStatus !== "spoof" // SILENT PROTECTION: Spoofed members look like strangers
 
-  const isRecognized = recognitionEnabled && recognitionResult?.person_id
-  if (!isRecognized) return "#ef4444" // Red for unknown
+  // Security logic: Known members get Green/Shield ONLY if they are real
+  if (isRecognized) {
+    if (recognitionResult?.has_consent === false) return "#6366f1" // Indigo-500 for privacy
+    return "#00ff41" // Matrix Green for logged members
+  }
 
-  // Privacy second: No consent triggers Indigo (Shield)
-  if (recognitionResult?.has_consent === false) return "#6366f1" // Indigo-500
+  // Global hints: Everyone sees 'Move Closer' as guidance
+  if (livenessStatus === "move_closer") return "#f59e0b" // Amber-500
 
-  return "#00ff41" // Matrix Green for logged members
+  // Fallback for strangers AND Spoofs: Keep them neutral per user request
+  // This prevents attackers from knowing if they were detected as a spoof.
+  return "#94a3b8" // Neutral Slate-400
 }
 
 // Helper to draw rounded rectangle (manual implementation for compatibility)
@@ -249,6 +254,9 @@ export const drawOverlays = ({
       } else {
         label = recognitionResult.name || recognitionResult.person_id || "Unknown"
       }
+      shouldShowLabel = true
+    } else if (face.liveness?.status === "move_closer") {
+      label = "Move Closer"
       shouldShowLabel = true
     }
 

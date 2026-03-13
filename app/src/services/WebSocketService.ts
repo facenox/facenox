@@ -25,7 +25,7 @@ export class WebSocketService {
   private wsStatus: WebSocketStatus = "disconnected"
   private messageHandlers = new Map<keyof WebSocketEventMap, Set<(data: unknown) => void>>()
   private clientId: string
-  private enableLivenessDetection = true
+
 
   constructor(config?: Partial<WebSocketConfig>) {
     this.config = {
@@ -61,15 +61,6 @@ export class WebSocketService {
             status: "connected",
             message: "Connected to detector",
           })
-
-          if (this.ws) {
-            this.ws.send(
-              JSON.stringify({
-                type: "config",
-                enable_liveness_detection: this.enableLivenessDetection,
-              }),
-            )
-          }
           resolve()
         }
 
@@ -171,7 +162,6 @@ export class WebSocketService {
   }
 
   setLivenessDetection(enabled: boolean): void {
-    this.enableLivenessDetection = enabled
     if (this.isWebSocketReady()) {
       this.ws!.send(
         JSON.stringify({

@@ -177,6 +177,7 @@ class AttendanceSettings(Base, SyncMixin):
     attendance_cooldown_seconds: Mapped[int] = mapped_column(Integer, default=10)
     # Longer anti-duplicate window (e.g., 30 minutes) to prevent re-logging.
     relog_cooldown_seconds: Mapped[int] = mapped_column(Integer, default=1800)
+    enable_liveness_detection: Mapped[bool] = mapped_column(Boolean, default=True)
     # Compliance: auto-purge records older than N days (0 = keep forever)
     data_retention_days: Mapped[int] = mapped_column(Integer, default=0)
 
