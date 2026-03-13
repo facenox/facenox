@@ -118,7 +118,6 @@ class PersistentSettingsService {
       lateThresholdMinutes: number
       classStartTime: string
       attendanceCooldownSeconds: number
-      reLogCooldownSeconds: number
     }>,
   ): Promise<void> {
     const current = await this.getAttendanceSettings()

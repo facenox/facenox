@@ -3,12 +3,8 @@ import { startTransition } from "react"
 import { useAttendanceStore } from "@/components/main/stores"
 
 export function useAttendanceCooldown() {
-  const {
-    persistentCooldowns,
-    setPersistentCooldowns,
-    attendanceCooldownSeconds,
-    reLogCooldownSeconds,
-  } = useAttendanceStore()
+  const { persistentCooldowns, setPersistentCooldowns, attendanceCooldownSeconds } =
+    useAttendanceStore()
   const persistentCooldownsRef = useRef<
     Map<string, import("@/components/main/types").CooldownInfo>
   >(new Map())
@@ -33,9 +29,8 @@ export function useAttendanceCooldown() {
 
           for (const [personId, cooldownInfo] of newPersistent) {
             const timeSinceStart = now - cooldownInfo.startTime
-            const reLogSeconds = reLogCooldownSeconds ?? 1800 // Default 30m
-            const reLogMs = reLogSeconds * 1000
-            const expirationThreshold = reLogMs + 500
+            const cooldownMs = attendanceCooldownSeconds * 1000
+            const expirationThreshold = cooldownMs + 500
 
             if (timeSinceStart >= expirationThreshold) {
               newPersistent.delete(personId)
@@ -82,7 +77,7 @@ export function useAttendanceCooldown() {
       }
       clearInterval(checkInterval)
     }
-  }, [attendanceCooldownSeconds, reLogCooldownSeconds, setPersistentCooldowns])
+  }, [attendanceCooldownSeconds, setPersistentCooldowns])
 
   return {
     persistentCooldownsRef,

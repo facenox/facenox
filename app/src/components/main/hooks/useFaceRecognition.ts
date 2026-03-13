@@ -58,10 +58,10 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
       const cooldownKey = `${personId}-${groupId}`
       const existing = persistentCooldownsRef.current?.get(cooldownKey)
       if (existing?.startTime) {
-        const { reLogCooldownSeconds } = useAttendanceStore.getState()
-        const reLogCooldownMs = (reLogCooldownSeconds ?? 1800) * 1000
+        const { attendanceCooldownSeconds } = useAttendanceStore.getState()
+        const cooldownMs = attendanceCooldownSeconds * 1000
         const now = Date.now()
-        if (now - existing.startTime < reLogCooldownMs) {
+        if (now - existing.startTime < cooldownMs) {
           return
         }
       }
@@ -262,57 +262,15 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
                     }
 
                     // "Re-Log" cooldown check (30m default) - SPAM PROOFING
-                    // We need to fetch the reLogCooldownSeconds from store or use default
-                    const { reLogCooldownSeconds } = useAttendanceStore.getState()
+                    // REMOVED: Now managed entirely by the unified UI Spam Filter (attendanceCooldownSeconds) block above.
+                    // The backend also strictly respects whatever is passed to it as long as it clears that filter.
 
-                    const reLogCooldownMs = (reLogCooldownSeconds ?? 1800) * 1000
+                    // EXCEPTION: If trackCheckout is enabled, the backend handles session logic.
+                    // The frontend only prevents identical back-to-back spam, which the above block handles.
 
-                    const existingInState = persistentCooldownsRef.current?.get(cooldownKey)
-
-                    const lastLogTime = existingInState?.startTime || 0
-                    const timeSinceLastLog = Date.now() - lastLogTime
-
-                    const isTrackCheckoutEnabled =
-                      currentGroupValue.settings?.track_checkout ?? false
-
-                    // If the user is trying to log again, check if they are within the "Session Window" (30 mins)
-                    // If so, we treat it like a "Visual Cooldown" extension - we update bbox, but we DO NOT create a new event.
-                    // EXCEPTION: If trackCheckout is enabled, we ALLOW the scan to go to the backend so it can be recorded as a check-out.
-                    // BUT only if we don't already have a check-out for them (to prevent spamming check-outs).
-                    if (
-                      !isTrackCheckoutEnabled &&
-                      existingInState &&
-                      timeSinceLastLog < reLogCooldownMs
-                    ) {
-                      // Update "last known" so the overlay follows them, but DO NOT fire logging event
-                      startTransition(() => {
-                        setPersistentCooldowns((prev) => {
-                          const newPersistent = new Map(prev)
-                          const existing = newPersistent.get(cooldownKey)
-                          if (existing) {
-                            // We just update the bbox to keep the "Done" overlay tracking them
-                            // We do NOT update startTime, because we want the 30min timer to keep ticking from the FIRST log.
-                            newPersistent.set(cooldownKey, {
-                              ...existing,
-                              memberName: memberName,
-                              lastKnownBbox: face.bbox,
-                            })
-                            persistentCooldownsRef.current = newPersistent
-                            return newPersistent
-                          }
-                          return prev
-                        })
-                      })
-
-                      // Return early - NO NEW LOG sent to backend
-                      return {
-                        trackId,
-                        result: { ...response, name: memberName, memberName },
-                      }
-                    }
-
-                    // If we passed both checks, it is a legitimate NEW session log.
+                    // Clear the detection error if present
                     const logTime = Date.now()
+                    const existingInState = persistentCooldownsRef.current?.get(cooldownKey)
 
                     const existingCooldownSeconds =
                       existingInState?.cooldownDurationSeconds ?? attendanceCooldownSeconds // Uses the destructured variable from above

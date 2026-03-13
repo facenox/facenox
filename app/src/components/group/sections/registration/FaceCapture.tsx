@@ -155,15 +155,15 @@ export function FaceCapture({
           <p className="text-center text-sm font-medium text-cyan-200/60">{successMessage}</p>
 
           <div className="mt-2 flex w-full justify-end">
-              <button
-                onClick={() => {
-                  setSuccessMessage(null)
-                  setSelectedMemberId("")
-                  resetFrames()
-                }}
-                className="rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-6 py-2 text-[11px] font-bold tracking-wider uppercase text-cyan-400 transition-all hover:bg-cyan-500/30">
-                Done
-              </button>
+            <button
+              onClick={() => {
+                setSuccessMessage(null)
+                setSelectedMemberId("")
+                resetFrames()
+              }}
+              className="rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 uppercase transition-all hover:bg-cyan-500/30">
+              Done
+            </button>
           </div>
         </div>
       </Modal>
@@ -178,11 +178,11 @@ export function FaceCapture({
           <p className="text-center text-sm font-medium text-red-200/60">{globalError}</p>
 
           <div className="mt-2 flex w-full justify-end">
-              <button
-                onClick={() => setGlobalError(null)}
-                className="rounded-lg border border-white/10 bg-white/5 px-6 py-2 text-[11px] font-bold tracking-wider uppercase text-white/50 transition-all hover:bg-white/10 hover:text-white">
-                Dismiss
-              </button>
+            <button
+              onClick={() => setGlobalError(null)}
+              className="rounded-lg border border-white/10 bg-white/5 px-6 py-2 text-[11px] font-bold tracking-wider text-white/50 uppercase transition-all hover:bg-white/10 hover:text-white">
+              Dismiss
+            </button>
           </div>
         </div>
       </Modal>

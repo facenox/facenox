@@ -251,7 +251,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
                           const jump = useGroupUIStore.getState().jumpToRegistration
                           jump(member.person_id)
                         }}
-                        className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider uppercase text-cyan-400 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/20 active:scale-95">
+                        className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-400 uppercase transition-all hover:border-cyan-500/40 hover:bg-cyan-500/20 active:scale-95">
                         Register
                       </button>
                     : <button
@@ -292,7 +292,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
               <div className="h-4 w-px bg-white/5" />
               <button
                 onClick={() => setIsBulkConsentModalOpen(true)}
-                className="rounded-lg border border-white/5 bg-white/5 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-white/50 transition-all hover:bg-white/10 active:scale-95">
+                className="rounded-lg border border-white/5 bg-white/5 px-3 py-1.5 text-[11px] font-bold tracking-wider text-white/50 uppercase transition-all hover:bg-white/10 active:scale-95">
                 Grant all
               </button>
             </div>

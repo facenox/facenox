@@ -225,7 +225,6 @@ class AttendanceService:
     ) -> AttendanceEventResponse:
         """Process an attendance event"""
         cooldown_seconds = settings.attendance_cooldown_seconds or 10
-        relog_seconds = getattr(settings, "relog_cooldown_seconds", None) or 1800
 
         import time
 
@@ -240,7 +239,7 @@ class AttendanceService:
             )
 
         current_time = true_time
-        window_seconds = max(cooldown_seconds, relog_seconds)
+        window_seconds = cooldown_seconds
 
         recent_records = await self.repo.get_records(
             person_id=event_data.person_id,
@@ -257,7 +256,7 @@ class AttendanceService:
 
         existing_session = await self.repo.get_session(event_data.person_id, today_str)
 
-        # Check if there's a recent record within either cooldown window.
+        # Ensure single source of truth for cooldown based on UI settings
         if recent_records:
             for record in recent_records:
                 record_time = record.timestamp
@@ -273,24 +272,6 @@ class AttendanceService:
                         location=event_data.location,
                         processed=False,
                         error=f"Cooldown active. Wait {int(cooldown_seconds - time_diff)}s.",
-                    )
-
-                # Skip relog_cooldown if we are in check-out mode AND checking out for the first time
-                is_checking_out = (
-                    track_checkout
-                    and existing_session
-                    and not existing_session.check_out_time
-                )
-                if time_diff < relog_seconds and not is_checking_out:
-                    return AttendanceEventResponse(
-                        id=None,
-                        person_id=event_data.person_id,
-                        group_id=member.group_id,
-                        timestamp=current_time,
-                        confidence=event_data.confidence,
-                        location=event_data.location,
-                        processed=False,
-                        error=f"Duplicate log blocked. Wait {int(relog_seconds - time_diff)}s.",
                     )
 
         record_id = self.generate_id()

@@ -284,7 +284,7 @@ export const drawOverlays = ({
       } else {
         ctx.fillStyle = "#000000"
       }
-      
+
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
       ctx.fillText(text, badgeX + badgeW / 2, badgeY + badgeH / 2)

@@ -22,7 +22,6 @@ export function useAttendanceGroups() {
     newGroupName,
     setNewGroupName,
     setAttendanceCooldownSeconds,
-    setReLogCooldownSeconds,
     setDataRetentionDays,
   } = useAttendanceStore()
   const { setError } = useUIStore()
@@ -46,13 +45,12 @@ export function useAttendanceGroups() {
   const loadSettings = useCallback(async () => {
     try {
       const settings = await attendanceManager.getSettings()
-      setAttendanceCooldownSeconds(settings.attendance_cooldown_seconds ?? 10)
-      setReLogCooldownSeconds(settings.relog_cooldown_seconds ?? 1800)
+      setAttendanceCooldownSeconds(settings.attendance_cooldown_seconds ?? 8)
       setDataRetentionDays(settings.data_retention_days ?? 0)
     } catch (error) {
       console.error("Failed to load settings:", error)
     }
-  }, [setAttendanceCooldownSeconds, setReLogCooldownSeconds, setDataRetentionDays])
+  }, [setAttendanceCooldownSeconds, setDataRetentionDays])
 
   const loadAttendanceData = useCallback(async () => {
     try {

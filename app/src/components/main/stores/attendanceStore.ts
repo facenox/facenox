@@ -18,7 +18,6 @@ interface AttendanceState {
   persistentCooldowns: Map<string, CooldownInfo>
 
   attendanceCooldownSeconds: number
-  reLogCooldownSeconds: number
   enableSpoofDetection: boolean
   dataRetentionDays: number
 
@@ -36,7 +35,6 @@ interface AttendanceState {
       | ((prev: Map<string, CooldownInfo>) => Map<string, CooldownInfo>),
   ) => void
   setAttendanceCooldownSeconds: (seconds: number) => void
-  setReLogCooldownSeconds: (seconds: number) => void
   setEnableSpoofDetection: (enabled: boolean) => void
   setDataRetentionDays: (days: number) => void
 }
@@ -49,15 +47,12 @@ const loadInitialSettings = async (): Promise<Partial<AttendanceState>> => {
 
   // Convert saved record to Map and prune expired ones
   const now = Date.now()
-  const reLogSeconds = attendanceSettings.reLogCooldownSeconds ?? 1800
-  const reLogMs = reLogSeconds * 1000
   const cooldownMap = new Map<string, CooldownInfo>()
   Object.entries(savedCooldowns).forEach(([key, value]) => {
     const info = value as CooldownInfo
-    // Keep persisted cooldowns for the full re-log window so app restarts
-    // don't allow immediate duplicate logs.
+    // Keep persisted cooldowns based on their UI Spam filter duration
     const infoMs = (info.cooldownDurationSeconds || 0) * 1000
-    const effectiveTtlMs = Math.max(reLogMs, infoMs)
+    const effectiveTtlMs = infoMs
     if (now - info.startTime < effectiveTtlMs + 500) {
       cooldownMap.set(key, info)
     }
@@ -65,7 +60,6 @@ const loadInitialSettings = async (): Promise<Partial<AttendanceState>> => {
 
   return {
     attendanceCooldownSeconds: attendanceSettings.attendanceCooldownSeconds,
-    reLogCooldownSeconds: attendanceSettings.reLogCooldownSeconds ?? 1800,
     enableSpoofDetection: attendanceSettings.enableSpoofDetection,
     persistentCooldowns: cooldownMap,
   }
@@ -84,7 +78,6 @@ export const useAttendanceStore = create<AttendanceState>()(
     persistentCooldowns: new Map(),
     // trackingMode removed
     attendanceCooldownSeconds: 8,
-    reLogCooldownSeconds: 1800,
     enableSpoofDetection: true,
     dataRetentionDays: 0,
 
@@ -122,12 +115,6 @@ export const useAttendanceStore = create<AttendanceState>()(
       set({ attendanceCooldownSeconds: seconds })
       persistentSettings
         .setAttendanceSettings({ attendanceCooldownSeconds: seconds })
-        .catch(console.error)
-    },
-    setReLogCooldownSeconds: (seconds) => {
-      set({ reLogCooldownSeconds: seconds })
-      persistentSettings
-        .setAttendanceSettings({ reLogCooldownSeconds: seconds })
         .catch(console.error)
     },
     setEnableSpoofDetection: (enabled) => {

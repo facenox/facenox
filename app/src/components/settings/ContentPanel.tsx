@@ -231,8 +231,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 onLateThresholdToggle={(enabled) =>
                   updateAttendanceSetting({ lateThresholdEnabled: enabled })
                 }
-                onReLogCooldownChange={(seconds) =>
-                  updateAttendanceSetting({ reLogCooldownSeconds: seconds })
+                onAttendanceCooldownChange={(seconds) =>
+                  updateAttendanceSetting({ attendanceCooldownSeconds: seconds })
                 }
                 onSpoofDetectionToggle={(enabled) =>
                   updateAttendanceSetting({ enableSpoofDetection: enabled })

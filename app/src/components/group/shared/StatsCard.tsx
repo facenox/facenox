@@ -19,7 +19,7 @@ export function StatsCard({ type, value, total, label, disabled }: StatsCardProp
       </div>
       <div className="flex items-baseline gap-1.5">
         <span className="text-4xl font-semibold tracking-tight text-white">
-          {disabled ? "—" : value ?? 0}
+          {disabled ? "—" : (value ?? 0)}
         </span>
         {!disabled && total !== undefined && (type === "present" || type === "absent") && (
           <span className="text-xl font-bold text-white/40">/ {total}</span>

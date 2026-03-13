@@ -100,8 +100,6 @@ export default function Main() {
     setNewGroupName,
     attendanceCooldownSeconds,
     setAttendanceCooldownSeconds,
-    reLogCooldownSeconds,
-    setReLogCooldownSeconds,
     enableSpoofDetection,
     setEnableSpoofDetection,
     dataRetentionDays,
@@ -631,7 +629,6 @@ export default function Main() {
               lateThresholdMinutes: currentGroup?.settings?.late_threshold_minutes ?? 15,
               classStartTime: currentGroup?.settings?.class_start_time ?? "08:00",
               attendanceCooldownSeconds: attendanceCooldownSeconds,
-              reLogCooldownSeconds: reLogCooldownSeconds,
               enableSpoofDetection: enableSpoofDetection,
               trackCheckout: currentGroup?.settings?.track_checkout ?? false,
               dataRetentionDays: dataRetentionDays,
@@ -667,17 +664,6 @@ export default function Main() {
                   })
                 } catch (error) {
                   console.error("Failed to update cooldown setting:", error)
-                }
-              }
-
-              if (updates.reLogCooldownSeconds !== undefined) {
-                setReLogCooldownSeconds(updates.reLogCooldownSeconds)
-                try {
-                  await attendanceManager.updateSettings({
-                    relog_cooldown_seconds: updates.reLogCooldownSeconds,
-                  })
-                } catch (error) {
-                  console.error("Failed to update re-log cooldown setting:", error)
                 }
               }
 
