@@ -8,20 +8,18 @@ export const getFaceColor = (
   livenessStatus?: string,
 ) => {
   const isRecognized =
-    recognitionEnabled && recognitionResult?.person_id && livenessStatus !== "spoof" // SILENT PROTECTION: Spoofed members look like strangers
+    recognitionEnabled &&
+    recognitionResult?.person_id &&
+    livenessStatus !== "spoof"
 
-  // Security logic: Known members get Green/Shield ONLY if they are real
   if (isRecognized) {
-    if (recognitionResult?.has_consent === false) return "#6366f1" // Indigo-500 for privacy
-    return "#00ff41" // Matrix Green for logged members
+    if (recognitionResult?.has_consent === false) return "#6366f1"
+    return "#00ff41"
   }
 
-  // Global hints: Everyone sees 'Move Closer' as guidance
-  if (livenessStatus === "move_closer") return "#f59e0b" // Amber-500
+  if (livenessStatus === "move_closer") return "#f59e0b"
 
-  // Fallback for strangers AND Spoofs: Keep them neutral per user request
-  // This prevents attackers from knowing if they were detected as a spoof.
-  return "#94a3b8" // Neutral Slate-400
+  return "#94a3b8"
 }
 
 // Helper to draw rounded rectangle (manual implementation for compatibility)
@@ -179,12 +177,12 @@ export const drawOverlays = ({
     const x1 =
       quickSettings.cameraMirrored ?
         displayWidth - (bbox.x * scaleX + offsetX) - bbox.width * scaleX
-      : bbox.x * scaleX + offsetX
+        : bbox.x * scaleX + offsetX
     const y1 = bbox.y * scaleY + offsetY
     const x2 =
       quickSettings.cameraMirrored ?
         displayWidth - (bbox.x * scaleX + offsetX)
-      : (bbox.x + bbox.width) * scaleX + offsetX
+        : (bbox.x + bbox.width) * scaleX + offsetX
     const y2 = (bbox.y + bbox.height) * scaleY + offsetY
 
     const width = x2 - x1
