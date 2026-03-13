@@ -296,20 +296,18 @@ export const drawOverlays = ({
       const cooldownKey = `${recognitionResult.person_id}-${currentGroupId}`
       const cooldownInfo = persistentCooldowns.get(cooldownKey)
       if (cooldownInfo) {
-        if (cooldownInfo) {
-          ctx.save()
+        ctx.save()
 
-          const centerX = (x1 + x2) / 2
-          const centerY = (y1 + y2) / 2
+        const centerX = (x1 + x2) / 2
+        const centerY = (y1 + y2) / 2
 
-          ctx.fillStyle = "#FFFFFF"
-          ctx.font = "500 40px system-ui, -apple-system, sans-serif"
-          ctx.textAlign = "center"
-          ctx.textBaseline = "middle"
-          ctx.fillText("Done", centerX, centerY)
+        ctx.fillStyle = "#FFFFFF"
+        ctx.font = "500 40px system-ui, -apple-system, sans-serif"
+        ctx.textAlign = "center"
+        ctx.textBaseline = "middle"
+        ctx.fillText("Done", centerX, centerY)
 
-          ctx.restore()
-        }
+        ctx.restore()
       }
     }
 

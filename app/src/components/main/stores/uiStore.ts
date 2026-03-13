@@ -53,7 +53,6 @@ const loadInitialSettings = async () => {
     persistentSettings.getAudioSettings(),
     persistentSettings.getUIState(),
     import("@/services").then((m) => m.attendanceManager.getGroups().catch(() => [])),
-    import("@/services").then((m) => m.attendanceManager.getSettings().catch(() => null)),
   ])
 
   // Try to set the initial group right away if possible, to avoid the delay in Main
