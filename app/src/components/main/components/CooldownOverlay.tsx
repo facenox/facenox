@@ -47,10 +47,10 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
   return (
     <div className="pointer-events-none absolute top-6 left-6 z-100 flex flex-col gap-2">
       <AnimatePresence mode="popLayout">
-        {activeItems.map(([personId, info]) => (
+        {activeItems.map(([cooldownKey, info]) => (
           <motion.div
             layout
-            key={`${personId}-${info.startTime}`}
+            key={cooldownKey}
             initial={{ opacity: 0, x: -20, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
@@ -60,7 +60,7 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
               layout: { duration: 0.2 },
             }}
             className="group relative">
-            <div className="relative flex min-w-50 items-center gap-3 overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0b]/90 p-3 shadow-2xl">
+            <div className="relative flex min-w-50 items-center gap-3 overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0b]/90 p-3">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center">
                 <i className="fa-solid fa-check text-xs text-cyan-400"></i>
               </div>

@@ -46,7 +46,6 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
 
   const persistentCooldownsRef = useRef(persistentCooldowns)
 
-  // Sync the ref with the store whenever it changes
   useEffect(() => {
     persistentCooldownsRef.current = persistentCooldowns
   }, [persistentCooldowns])
@@ -107,7 +106,6 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
         const recognitionPromises = detectionResult.faces.map(async (face) => {
           try {
             if (!backendServiceRef.current) {
-              console.error("Backend service not initialized")
               return null
             }
 
@@ -138,8 +136,6 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
             )
 
             if (response.success && response.person_id) {
-              // Fire sound ASAP: do not wait on member fetch / attendance logging
-              // (spoofed faces are already filtered earlier)
               const memberResult = await getMemberFromCache(
                 response.person_id,
                 currentGroupValue,
@@ -229,132 +225,58 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
 
                 if (!shouldSkipAttendanceLogging) {
                   try {
-                    const actualConfidence = face.confidence
-
-                    const currentTime = Date.now()
                     const cooldownKey = `${response.person_id}-${currentGroupValue.id}`
                     const cooldownInfo = persistentCooldownsRef.current.get(cooldownKey)
                     const authoritativeTimestamp = cooldownInfo?.startTime || 0
-                    const timeSinceLastAttendance = currentTime - authoritativeTimestamp
-                    const storedCooldownSeconds =
-                      cooldownInfo?.cooldownDurationSeconds ?? attendanceCooldownSeconds
-                    const storedCooldownMs = storedCooldownSeconds * 1000
+                    const timeSinceLastAttendance = Date.now() - authoritativeTimestamp
+                    const thresholdMs =
+                      (cooldownInfo?.cooldownDurationSeconds ?? attendanceCooldownSeconds) * 1000
 
-                    // "Visual" cooldown check (15s default)
-                    // If within visual cooldown, update bbox but DO NOT LOG
-                    if (timeSinceLastAttendance < storedCooldownMs) {
-                      startTransition(() => {
-                        setPersistentCooldowns((prev) => {
-                          const newPersistent = new Map(prev)
-                          const existing = newPersistent.get(cooldownKey)
-                          if (existing) {
-                            newPersistent.set(cooldownKey, {
-                              ...existing,
-                              lastKnownBbox: face.bbox,
-                            })
-                            persistentCooldownsRef.current = newPersistent
-                            return newPersistent
-                          }
-                          return prev
-                        })
-                      })
-
-                      return {
-                        trackId,
-                        result: { ...response, name: memberName, memberName },
-                      }
-                    }
-
-                    // "Re-Log" cooldown check (30m default) - SPAM PROOFING
-                    // REMOVED: Now managed entirely by the unified UI Spam Filter (attendanceCooldownSeconds) block above.
-                    // The backend also strictly respects whatever is passed to it as long as it clears that filter.
-
-                    // EXCEPTION: If trackCheckout is enabled, the backend handles session logic.
-                    // The frontend only prevents identical back-to-back spam, which the above block handles.
-
-                    // Clear the detection error if present
-                    const logTime = Date.now()
-                    const existingInState = persistentCooldownsRef.current?.get(cooldownKey)
-
-                    const existingCooldownSeconds =
-                      existingInState?.cooldownDurationSeconds ?? attendanceCooldownSeconds // Uses the destructured variable from above
-                    const existingCooldownMs = existingCooldownSeconds * 1000
-
-                    const existingInStateStillActive =
-                      existingInState && logTime - existingInState.startTime < existingCooldownMs
-
-                    if (!existingInStateStillActive) {
+                    if (timeSinceLastAttendance < thresholdMs) {
                       setPersistentCooldowns((prev) => {
                         const newPersistent = new Map(prev)
-
-                        const pruneThreshold = Date.now() - 3600000
-                        for (const [key, val] of newPersistent) {
-                          if (val.startTime < pruneThreshold) {
-                            newPersistent.delete(key)
-                          }
+                        const existing = newPersistent.get(cooldownKey)
+                        if (existing) {
+                          newPersistent.set(cooldownKey, { ...existing, lastKnownBbox: face.bbox })
+                          persistentCooldownsRef.current = newPersistent
+                          return newPersistent
                         }
-
-                        const cooldownData = {
-                          personId: response.person_id!,
-                          startTime: logTime,
-                          memberName: memberName,
-                          lastKnownBbox: face.bbox,
-                          cooldownDurationSeconds: attendanceCooldownSeconds,
-                        }
-                        newPersistent.set(cooldownKey, cooldownData)
-                        persistentCooldownsRef.current = newPersistent
-                        return newPersistent
+                        return prev
                       })
                     } else {
-                      startTransition(() => {
-                        setPersistentCooldowns((prev) => {
-                          const newPersistent = new Map(prev)
-                          const existing = newPersistent.get(cooldownKey)
-                          if (existing) {
-                            newPersistent.set(cooldownKey, {
-                              ...existing,
-                              memberName: memberName,
-                              lastKnownBbox: face.bbox,
-                            })
-                            persistentCooldownsRef.current = newPersistent
-                          }
-                          return newPersistent
-                        })
-                      })
-                    }
-
-                    try {
                       const attendanceEvent = await attendanceManager.processAttendanceEvent(
                         response.person_id,
-                        actualConfidence,
+                        face.confidence,
                         "LiveVideo Camera",
                         face.liveness?.status,
                         face.liveness?.confidence,
                       )
 
                       if (attendanceEvent) {
+                        setPersistentCooldowns((prev) => {
+                          const newPersistent = new Map(prev)
+                          newPersistent.set(cooldownKey, {
+                            personId: response.person_id!,
+                            startTime: Date.now(),
+                            memberName: memberName,
+                            lastKnownBbox: face.bbox,
+                            cooldownDurationSeconds: attendanceCooldownSeconds,
+                          })
+                          persistentCooldownsRef.current = newPersistent
+                          return newPersistent
+                        })
+
                         requestIdleCallback(
                           () => {
-                            loadAttendanceDataRef
-                              .current()
-                              .catch((err) => console.error("Failed to refresh attendance:", err))
+                            loadAttendanceDataRef.current().catch(() => {})
                           },
                           { timeout: 500 },
                         )
                       }
-                      setError(null)
-                    } catch (attendanceError: unknown) {
-                      const errorMessage =
-                        attendanceError instanceof Error ? attendanceError.message : "Unknown error"
-                      setError(
-                        errorMessage || `Failed to record attendance for ${response.person_id}`,
-                      )
                     }
-                  } catch (error) {
-                    console.error("❌ Attendance processing failed:", error)
-                    setError(
-                      `Attendance error: ${error instanceof Error ? error.message : "Unknown error"}`,
-                    )
+                    setError(null)
+                  } catch {
+                    setError("Attendance failed")
                   }
                 }
               }
@@ -389,8 +311,68 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
                 if (member) {
                   recoveredMemberName = member.memberName
                   recoveredPersonId = knownPersonId
-                  // We need to know if they STILL have consent during recovery
                   const stillHasConsent = member.member?.has_consent ?? false
+
+                  // IDENTITY RECOVERED: Now trigger attendance logic if enabled
+                  if (attendanceEnabled && currentGroupValue && recoveredPersonId) {
+                    try {
+                      const cooldownKey = `${recoveredPersonId}-${currentGroupValue.id}`
+                      const cooldownInfo = persistentCooldownsRef.current.get(cooldownKey)
+                      const authoritativeTimestamp = cooldownInfo?.startTime || 0
+                      const timeSinceLastAttendance = Date.now() - authoritativeTimestamp
+                      const thresholdMs =
+                        (cooldownInfo?.cooldownDurationSeconds ?? attendanceCooldownSeconds) * 1000
+
+                      if (timeSinceLastAttendance < thresholdMs) {
+                        // Just update bbox in the cooldown map
+                        setPersistentCooldowns((prev) => {
+                          const newPersistent = new Map(prev)
+                          const existing = newPersistent.get(cooldownKey)
+                          if (existing) {
+                            newPersistent.set(cooldownKey, {
+                              ...existing,
+                              lastKnownBbox: face.bbox,
+                            })
+                            persistentCooldownsRef.current = newPersistent
+                            return newPersistent
+                          }
+                          return prev
+                        })
+                      } else {
+                        // ELAPSED: Attempt to log
+                        const attendanceEvent = await attendanceManager.processAttendanceEvent(
+                          recoveredPersonId,
+                          face.confidence,
+                          "LiveVideo Camera",
+                          face.liveness?.status,
+                          face.liveness?.confidence,
+                        )
+
+                        if (attendanceEvent) {
+                          setPersistentCooldowns((prev) => {
+                            const newPersistent = new Map(prev)
+                            newPersistent.set(cooldownKey, {
+                              personId: recoveredPersonId!,
+                              startTime: Date.now(),
+                              memberName: recoveredMemberName,
+                              lastKnownBbox: face.bbox,
+                              cooldownDurationSeconds: attendanceCooldownSeconds,
+                            })
+                            persistentCooldownsRef.current = newPersistent
+                            return newPersistent
+                          })
+                          requestIdleCallback(
+                            () => {
+                              loadAttendanceDataRef.current().catch(() => {})
+                            },
+                            { timeout: 500 },
+                          )
+                        }
+                      }
+                    } catch {
+                      // Fail silently or handle
+                    }
+                  }
 
                   return {
                     trackId,
@@ -506,8 +488,8 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
             }
           })
         })
-      } catch (error) {
-        console.error("❌ Face recognition processing failed:", error)
+      } catch {
+        // Recognition failed
       }
     },
     [
