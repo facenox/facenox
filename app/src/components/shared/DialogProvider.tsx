@@ -115,7 +115,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
             {active?.type === "confirm" && (
               <button
                 type="button"
-                className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium text-white/50 transition-colors hover:bg-white/10 hover:text-white"
                 onClick={() => {
                   active.resolve(false)
                   close()
@@ -131,7 +131,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                   active?.type === "alert" ?
                     active.options.variant || "default"
                   : active?.options.confirmVariant || "default",
-                ) + " min-w-[100px] px-6 py-2 text-sm font-medium"
+                ) + " min-w-[100px] px-6 py-2 text-[11px] font-bold tracking-wider uppercase"
               }
               onClick={() => {
                 if (active?.type === "alert") {

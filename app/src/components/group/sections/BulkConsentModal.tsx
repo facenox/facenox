@@ -103,14 +103,14 @@ export function BulkConsentModal({ isOpen, onClose, onConfirm, members }: BulkCo
         <button
           type="button"
           onClick={handleClose}
-          className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white">
+          className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/50 transition-colors hover:bg-white/10 hover:text-white">
           Cancel
         </button>
         <button
           type="button"
           onClick={handleConfirm}
           disabled={checkedIds.size === 0}
-          className="rounded-lg border border-cyan-400/30 bg-cyan-500/15 px-4 py-1.5 text-xs font-medium text-cyan-100 transition-colors hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-40">
+          className="rounded-lg border border-cyan-400/30 bg-cyan-500/15 px-4 py-1.5 text-[11px] font-bold tracking-wider text-cyan-100 uppercase transition-colors hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-40">
           Grant Consent ({checkedIds.size})
         </button>
       </div>

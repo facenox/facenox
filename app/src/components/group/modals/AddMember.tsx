@@ -175,7 +175,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
           </p>
         </div>
       }
-      maxWidth="2xl">
+      maxWidth="lg">
       <div className="-m-5 mt-2 max-h-[90vh] overflow-y-auto p-5">
         {/* Tab selector */}
         <div className="mb-4 flex gap-2 border-b border-white/10 pb-2">
@@ -398,7 +398,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
               (isBulkMode && !bulkMembersText.trim()) ||
               !hasBiometricConsent
             }
-            className={`min-w-[120px] rounded-lg border px-6 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+            className={`min-w-[120px] rounded-lg border px-6 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors disabled:opacity-50 ${
               confirmDuplicate && !isBulkMode ?
                 "border-amber-400/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/30"
               : "border-cyan-400/40 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30"

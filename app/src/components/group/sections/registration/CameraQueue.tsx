@@ -522,8 +522,8 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
             {memberQueue.length > 0 && (
               <button
                 onClick={() => setQueueStarted(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-sm font-medium text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95">
-                Start Queue ({memberQueue.length} members)
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-[11px] font-bold tracking-wider uppercase text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95">
+                Start Queue ({memberQueue.length})
               </button>
             )}
           </div>
@@ -571,7 +571,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                       <button
                         onClick={() => void startCamera()}
                         disabled={!selectedCamera && cameraDevices.length > 0}
-                        className="w-full rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-2.5 text-sm font-medium text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50">
+                        className="w-full rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-2.5 text-[11px] font-bold tracking-wider uppercase text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50">
                         <i className="fa-solid fa-play mr-2"></i>
                         Start Camera
                       </button>
@@ -597,7 +597,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                       <div className="max-w-xs text-xs text-red-300">{cameraError}</div>
                       <button
                         onClick={() => void startCamera()}
-                        className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-white/50 transition-all hover:text-white">
+                        className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-bold tracking-wider uppercase text-white/50 transition-all hover:text-white">
                         Try Again
                       </button>
                     </div>
@@ -726,7 +726,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                       }
                     }}
                     disabled={!currentMember}
-                    className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs font-medium text-white/70 transition-all hover:bg-black/60 hover:text-white disabled:opacity-40">
+                    className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[11px] font-medium text-white/50 transition-all hover:bg-black/60 hover:text-white disabled:opacity-40">
                     Skip
                   </button>
 
@@ -761,7 +761,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                             </span>
                           )
                         }
-                        return <span className="text-xs font-medium">Capture (Space)</span>
+                        return <span className="text-[11px] font-bold tracking-wider uppercase">Capture</span>
                       })()
                     }
                   </button>
@@ -785,7 +785,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                           setError(null)
                         }
                       }}
-                      className="rounded-lg border border-amber-400/50 bg-amber-500/40 px-3 py-2 text-xs font-medium text-amber-100 transition-all hover:bg-amber-500/50">
+                      className="rounded-lg border border-amber-400/50 bg-amber-500/40 px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-amber-100 transition-all hover:bg-amber-500/50">
                       Retry
                     </button>
                   )}
@@ -925,7 +925,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                         onClose()
                       }
                     }}
-                    className="w-full rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-3 py-2 text-xs font-semibold text-cyan-400 transition-all hover:bg-cyan-500/30">
+                    className="w-full rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-cyan-400 transition-all hover:bg-cyan-500/30">
                     <i className="fa-solid fa-check mr-1.5"></i>
                     Done
                   </button>

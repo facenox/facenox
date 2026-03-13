@@ -72,7 +72,7 @@ export function RegistrationResults({
 
       <button
         onClick={onClose}
-        className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-[11px] font-semibold text-white/50 shadow-none transition-all hover:bg-white/10 hover:text-white">
+        className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-[11px] font-bold tracking-wider uppercase text-white/50 shadow-none transition-all hover:bg-white/10 hover:text-white">
         Done
       </button>
     </div>

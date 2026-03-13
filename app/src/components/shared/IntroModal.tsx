@@ -132,7 +132,7 @@ export function IntroModal() {
             <button
               onClick={handleBack}
               disabled={step === 0}
-              className={`border-none! bg-transparent! px-8 pr-5 text-xs font-semibold shadow-none! transition-all ${
+              className={`border-none! bg-transparent! px-8 pr-5 text-[11px] font-medium shadow-none! transition-all ${
                 step === 0 ? "pointer-events-none opacity-0" : "text-white/40 hover:text-white"
               }`}>
               Back
@@ -151,7 +151,7 @@ export function IntroModal() {
 
             <button
               onClick={handleNext}
-              className="btn-premium btn-premium-primary px-8! py-2! text-xs! font-bold! active:scale-95">
+              className="btn-premium btn-premium-primary px-8! py-2! text-[11px]! font-bold! tracking-wider uppercase active:scale-95">
               {step === steps.length - 1 ? "Finish" : "Next"}
             </button>
           </div>

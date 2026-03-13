@@ -144,37 +144,37 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
             <div className="ml-auto flex items-center gap-2">
               <button
                 onClick={() => setRegistrationFilter("all")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all ${
                   registrationFilter === "all" ?
                     "border border-white/20 bg-white/10 text-white"
-                  : "border border-white/10 bg-white/5 text-white/60 hover:bg-white/8 hover:text-white/80"
+                  : "border border-white/10 bg-white/5 text-white/50 hover:bg-white/8 hover:text-white/80"
                 }`}>
                 All
               </button>
               <button
                 onClick={() => setRegistrationFilter("non-registered")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all ${
                   registrationFilter === "non-registered" ?
                     "border border-amber-500/30 bg-amber-500/20 text-amber-200"
-                  : "border border-white/10 bg-white/5 text-white/60 hover:bg-white/8 hover:text-white/80"
+                  : "border border-white/10 bg-white/5 text-white/50 hover:bg-white/8 hover:text-white/80"
                 }`}>
                 Unregistered
               </button>
               <button
                 onClick={() => setRegistrationFilter("registered")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all ${
                   registrationFilter === "registered" ?
                     "border border-cyan-500/30 bg-cyan-500/20 text-cyan-200"
-                  : "border border-white/10 bg-white/5 text-white/60 hover:bg-white/8 hover:text-white/80"
+                  : "border border-white/10 bg-white/5 text-white/50 hover:bg-white/8 hover:text-white/80"
                 }`}>
                 Registered
               </button>
               <button
                 onClick={() => setRegistrationFilter("no-consent")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all ${
                   registrationFilter === "no-consent" ?
                     "border border-cyan-500/30 bg-cyan-500/20 text-cyan-200"
-                  : "border border-white/10 bg-white/5 text-white/60 hover:bg-white/8 hover:text-white/80"
+                  : "border border-white/10 bg-white/5 text-white/50 hover:bg-white/8 hover:text-white/80"
                 }`}>
                 Needs Consent
               </button>
@@ -251,7 +251,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
                           const jump = useGroupUIStore.getState().jumpToRegistration
                           jump(member.person_id)
                         }}
-                        className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-medium text-cyan-400 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/20 active:scale-95">
+                        className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider uppercase text-cyan-400 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/20 active:scale-95">
                         Register
                       </button>
                     : <button
@@ -292,7 +292,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
               <div className="h-4 w-px bg-white/5" />
               <button
                 onClick={() => setIsBulkConsentModalOpen(true)}
-                className="rounded-lg border border-white/5 bg-white/5 px-3 py-1.5 text-[10px] font-bold tracking-wide whitespace-nowrap text-white/80 transition-all hover:bg-white/10 active:scale-95">
+                className="rounded-lg border border-white/5 bg-white/5 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-white/50 transition-all hover:bg-white/10 active:scale-95">
                 Grant all
               </button>
             </div>
