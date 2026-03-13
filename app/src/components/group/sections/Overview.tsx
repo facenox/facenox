@@ -143,11 +143,14 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
             label="Missing Arrival"
           />
         </div>
-        {(group.settings?.late_threshold_enabled ?? false) && (
-          <div className="px-8">
-            <StatsCard type="late" value={stats.late_today} label="Late Check-ins" />
-          </div>
-        )}
+        <div className="px-8">
+          <StatsCard
+            type="late"
+            value={stats.late_today}
+            label="Late Check-ins"
+            disabled={!(group.settings?.late_threshold_enabled ?? false)}
+          />
+        </div>
       </div>
 
       <div className="flex min-h-[400px] shrink-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-white/2 shadow-2xl">

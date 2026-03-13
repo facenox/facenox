@@ -267,12 +267,24 @@ export const drawOverlays = ({
       const badgeY = y1 - 25
 
       // Draw Badge Background
-      ctx.fillStyle = color
-      drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 10)
-      ctx.fill()
+      if (!isShield) {
+        ctx.fillStyle = color
+        drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 10)
+        ctx.fill()
+      }
 
       // Draw Text
-      ctx.fillStyle = isShield ? "#FFFFFF" : "#000000"
+      if (isShield) {
+        // Text-only for 'No Consent'
+        ctx.fillStyle = "#22d3ee" // Cyan-400 for high contrast
+        ctx.shadowColor = "#000000"
+        ctx.shadowBlur = 8
+        ctx.shadowOffsetX = 0
+        ctx.shadowOffsetY = 2
+      } else {
+        ctx.fillStyle = "#000000"
+      }
+      
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
       ctx.fillText(text, badgeX + badgeW / 2, badgeY + badgeH / 2)
