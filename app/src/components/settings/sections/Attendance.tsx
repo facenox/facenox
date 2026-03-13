@@ -108,7 +108,7 @@ export function Attendance({
                     <div className="ml-auto flex shrink-0 items-center gap-3">
                       <span
                         className={`min-w-10 text-right text-[11px] font-medium whitespace-nowrap transition-colors duration-150 ${
-                          attendanceSettings.trackCheckout ? "text-cyan-400/80" : "text-white/20"
+                          attendanceSettings.trackCheckout ? "text-cyan-400/80" : "text-white/60"
                         }`}>
                         {Math.floor((attendanceSettings.reLogCooldownSeconds ?? 1800) / 60)} min
                       </span>
@@ -120,7 +120,7 @@ export function Attendance({
                         value={attendanceSettings.reLogCooldownSeconds ?? 1800}
                         onChange={(e) => onReLogCooldownChange(parseInt(e.target.value))}
                         className={`h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/5 px-1 transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${
-                          attendanceSettings.trackCheckout ? "accent-cyan-500" : "accent-white/20"
+                          attendanceSettings.trackCheckout ? "accent-cyan-500" : "accent-white"
                         }`}
                       />
                     </div>
@@ -263,7 +263,7 @@ export function Attendance({
               </div>
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">
-              <span className="text-[11px] font-medium text-white/40">days</span>
+              <span className="text-[11px] font-medium text-white/60">days</span>
               <input
                 type="number"
                 min={0}
