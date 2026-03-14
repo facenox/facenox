@@ -169,6 +169,7 @@ export class AttendanceManager {
     imageData: string,
     bbox: number[],
     landmarks_5: number[][],
+    enableLiveness: boolean = true,
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     return this.memberManager.registerFaceForGroupPerson(
       groupId,
@@ -176,6 +177,7 @@ export class AttendanceManager {
       imageData,
       bbox,
       landmarks_5,
+      enableLiveness,
     )
   }
 

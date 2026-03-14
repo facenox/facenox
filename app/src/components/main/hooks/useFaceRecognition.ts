@@ -41,8 +41,12 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
 
   const { currentRecognitionResults, setCurrentRecognitionResults, setTrackedFaces } =
     useDetectionStore()
-  const { persistentCooldowns, attendanceCooldownSeconds, setPersistentCooldowns } =
-    useAttendanceStore()
+  const {
+    persistentCooldowns,
+    attendanceCooldownSeconds,
+    setPersistentCooldowns,
+    enableSpoofDetection,
+  } = useAttendanceStore()
 
   const persistentCooldownsRef = useRef(persistentCooldowns)
 
@@ -133,21 +137,31 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
               bbox,
               currentGroupValue.id,
               face.landmarks_5,
+              enableSpoofDetection,
             )
 
             if (response.success && response.person_id) {
-              const memberResult = await getMemberFromCache(
-                response.person_id,
-                currentGroupValue,
-                memberCacheRef,
-              )
+              const isProtected = response.person_id === "PROTECTED_IDENTITY"
+              let hasConsent = false
+              let memberName = "Unknown"
 
-              const hasConsent = memberResult?.member?.has_consent ?? false
+              if (isProtected) {
+                hasConsent = false
+                memberName = "Protected"
+              } else {
+                const memberResult = await getMemberFromCache(
+                  response.person_id,
+                  currentGroupValue,
+                  memberCacheRef,
+                )
+                hasConsent = memberResult?.member?.has_consent ?? false
+                memberName = memberResult?.memberName || "Unknown"
 
-              if (hasConsent) {
-                maybePlayRecognitionSound(response.person_id, currentGroupValue.id)
+                if (hasConsent) {
+                  maybePlayRecognitionSound(response.person_id, currentGroupValue.id)
+                }
               }
-              const { memberName } = memberResult || { memberName: "Unknown" }
+
               const trackIdStr = `track_${face.track_id}`
               const currentTime = Date.now()
 
@@ -506,6 +520,7 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
       setError,
       setPersistentCooldowns,
       setTrackedFaces,
+      enableSpoofDetection,
     ],
   )
 

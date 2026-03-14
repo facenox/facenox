@@ -39,9 +39,12 @@ async def recognize_face(
 
         image = decode_base64_image(request.image)
 
-        should_block, error_msg = process_liveness_for_face_operation(
-            image, request.bbox, request.enable_liveness_detection, "Recognition"
+        should_block, error_msg, liveness_status = (
+            await process_liveness_for_face_operation(
+                image, request.bbox, request.enable_liveness_detection, "Recognition"
+            )
         )
+
         if should_block:
             processing_time = time.time() - start_time
             return FaceRecognitionResponse(
@@ -59,14 +62,32 @@ async def recognize_face(
             image, landmarks_5, allowed_person_ids
         )
 
+        success = result["success"]
+        person_id = result.get("person_id")
+        similarity = result.get("similarity", 0.0)
+        error = result.get("error")
+
+        # FIX: Security Theater - Ensure identity isn't returned for non-consenting users
+        if success and person_id:
+            member = await repo.get_member(person_id)
+            if not member or not member.has_consent:
+                logger.warning(
+                    f"Recognition attempted for user {person_id} without consent. Blocking identity leak."
+                )
+                success = (
+                    True  # Signal Success to trigger UI features, but mask the identity
+                )
+                person_id = "PROTECTED_IDENTITY"
+                error = "Biometric consent missing"
+
         processing_time = time.time() - start_time
 
         return FaceRecognitionResponse(
-            success=result["success"],
-            person_id=result.get("person_id"),
-            similarity=result.get("similarity", 0.0),
+            success=success,
+            person_id=person_id,
+            similarity=similarity,
             processing_time=processing_time,
-            error=result.get("error"),
+            error=error,
         )
 
     except Exception as e:

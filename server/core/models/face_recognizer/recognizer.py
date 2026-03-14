@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 from typing import List, Dict, Tuple, Optional, Any
@@ -67,7 +68,7 @@ class FaceRecognizer:
                 logger.info(message)
             await self._refresh_cache()
 
-    def _extract_embeddings(
+    async def _extract_embeddings(
         self, image: np.ndarray, face_data_list: List[Dict]
     ) -> List[np.ndarray]:
         """
@@ -91,7 +92,12 @@ class FaceRecognizer:
         batch_input = preprocess_batch(aligned_faces, self.INPUT_MEAN, self.INPUT_STD)
 
         feeds = {self.input_name: batch_input}
-        outputs = self.session.run(None, feeds)
+
+        # Offload blocking ONNX inference to a background thread
+        loop = asyncio.get_running_loop()
+        outputs = await loop.run_in_executor(
+            None, lambda: self.session.run(None, feeds)
+        )
         embeddings = outputs[0]
 
         return normalize_embeddings_batch(embeddings)
@@ -154,7 +160,7 @@ class FaceRecognizer:
     ) -> Dict:
         try:
             face_data = [{"landmarks_5": landmarks_5}]
-            embeddings = self._extract_embeddings(image, face_data)
+            embeddings = await self._extract_embeddings(image, face_data)
 
             if not embeddings:
                 return {
@@ -191,7 +197,7 @@ class FaceRecognizer:
     ) -> Dict:
         try:
             face_data = [{"landmarks_5": landmarks_5}]
-            embeddings = self._extract_embeddings(image, face_data)
+            embeddings = await self._extract_embeddings(image, face_data)
 
             if not embeddings:
                 return {

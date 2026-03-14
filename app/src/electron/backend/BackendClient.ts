@@ -34,6 +34,7 @@ export interface DetectionOptions {
   model_type?: string
   confidence_threshold?: number
   nms_threshold?: number
+  enableLiveness?: boolean
 }
 
 export interface DetectionResponse {
@@ -102,6 +103,7 @@ export class BackendClient {
       model_type: options.model_type || "face_detector",
       confidence_threshold: options.confidence_threshold || 0.5,
       nms_threshold: options.nms_threshold || 0.3,
+      enable_liveness_detection: options.enableLiveness ?? true,
     }
 
     const response = await fetch(this.getUrl("/detect"), {

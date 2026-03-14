@@ -8,9 +8,7 @@ export const getFaceColor = (
   livenessStatus?: string,
 ) => {
   const isRecognized =
-    recognitionEnabled &&
-    recognitionResult?.person_id &&
-    livenessStatus !== "spoof"
+    recognitionEnabled && recognitionResult?.person_id && livenessStatus !== "spoof"
 
   if (isRecognized) {
     if (recognitionResult?.has_consent === false) return "#6366f1"
@@ -177,12 +175,12 @@ export const drawOverlays = ({
     const x1 =
       quickSettings.cameraMirrored ?
         displayWidth - (bbox.x * scaleX + offsetX) - bbox.width * scaleX
-        : bbox.x * scaleX + offsetX
+      : bbox.x * scaleX + offsetX
     const y1 = bbox.y * scaleY + offsetY
     const x2 =
       quickSettings.cameraMirrored ?
         displayWidth - (bbox.x * scaleX + offsetX)
-        : (bbox.x + bbox.width) * scaleX + offsetX
+      : (bbox.x + bbox.width) * scaleX + offsetX
     const y2 = (bbox.y + bbox.height) * scaleY + offsetY
 
     const width = x2 - x1
@@ -243,9 +241,7 @@ export const drawOverlays = ({
     }
 
     const isRecognized =
-      recognitionEnabled &&
-      recognitionResult?.person_id &&
-      face.liveness?.status !== "spoof"
+      recognitionEnabled && recognitionResult?.person_id && face.liveness?.status !== "spoof"
     let label = ""
     let shouldShowLabel = false
 

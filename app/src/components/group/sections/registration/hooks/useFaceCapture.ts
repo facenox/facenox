@@ -7,6 +7,7 @@ import {
   makeId,
   toBase64Payload,
 } from "@/components/group/sections/registration/hooks/useImageProcessing"
+import { useAttendanceStore } from "@/components/main/stores"
 
 export function useFaceCapture(
   group: AttendanceGroup | null,
@@ -14,6 +15,7 @@ export function useFaceCapture(
   onRefresh?: () => Promise<void> | void,
   dialog?: Pick<DialogAPI, "confirm">,
 ) {
+  const { enableSpoofDetection } = useAttendanceStore()
   const [frames, setFrames] = useState<CapturedFrame[]>([])
   const [globalError, setGlobalError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -54,6 +56,7 @@ export function useFaceCapture(
       try {
         const detection = await window.electronAPI.backend.detectFaces(toBase64Payload(dataUrl), {
           model_type: "face_detector",
+          enableLiveness: enableSpoofDetection,
         })
 
         if (!detection.faces || detection.faces.length === 0) {
@@ -95,7 +98,7 @@ export function useFaceCapture(
         }))
       }
     },
-    [updateFrame],
+    [updateFrame, enableSpoofDetection],
   )
 
   const handleRegister = useCallback(
@@ -133,6 +136,7 @@ export function useFaceCapture(
           payload,
           frame.bbox,
           frame.landmarks_5,
+          enableSpoofDetection,
         )
 
         if (!result.success) {
@@ -164,7 +168,7 @@ export function useFaceCapture(
         setIsRegistering(false)
       }
     },
-    [group, frames, members, updateFrame, onRefresh],
+    [group, frames, members, updateFrame, onRefresh, enableSpoofDetection],
   )
 
   const handleRemoveFaceData = useCallback(

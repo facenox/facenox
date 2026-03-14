@@ -443,6 +443,18 @@ class AttendanceService:
         if landmarks_5 is None:
             raise ValueError("Landmarks required from frontend face detection")
 
+        enable_liveness = request.get("enable_liveness_detection", True)
+
+        from hooks import process_liveness_for_face_operation
+
+        should_block, error_msg, liveness_status = (
+            await process_liveness_for_face_operation(
+                image, bbox, enable_liveness, "Registration"
+            )
+        )
+        if should_block:
+            raise ValueError(error_msg)
+
         logger.info(f"Registering face for {person_id} in group {group_id}")
 
         result = await self.face_recognizer.register_person(

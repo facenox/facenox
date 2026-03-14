@@ -41,7 +41,7 @@ def find_best_match(
     allowed_person_ids: Optional[List[str]] = None,
 ) -> Tuple[Optional[str], float]:
     """
-    Find best matching person in database.
+    Find best matching person in database using vectorized operations.
 
     Args:
         query_embedding: Query embedding (normalized)
@@ -51,32 +51,33 @@ def find_best_match(
 
     Returns:
         Tuple of (best_person_id, best_similarity)
-        - best_person_id: Person ID if match found above threshold, else None
-        - best_similarity: Best similarity score found
     """
     if not database:
         return None, 0.0
 
     # Filter by allowed person IDs if provided
     if allowed_person_ids is not None:
-        database = {
+        filtered_db = {
             pid: emb for pid, emb in database.items() if pid in allowed_person_ids
         }
-        if not database:
+        if not filtered_db:
             return None, 0.0
+    else:
+        filtered_db = database
 
-    best_person_id = None
-    best_similarity = 0.0
+    # Extract keys and stack embeddings into a matrix
+    person_ids = list(filtered_db.keys())
+    db_matrix = np.stack(list(filtered_db.values()))  # Shape: (N, 512)
 
-    for person_id, stored_embedding in database.items():
-        similarity = compute_similarity(query_embedding, stored_embedding)
+    # Compute cosine similarities in parallel: (1, 512) @ (512, N) -> (1, N)
+    similarities = np.dot(query_embedding, db_matrix.T)
 
-        if similarity > best_similarity:
-            best_similarity = similarity
-            best_person_id = person_id
+    # Find the index of the highest similarity
+    best_idx = np.argmax(similarities)
+    best_similarity = float(similarities[best_idx])
 
-    # Only return person_id if similarity meets threshold
+    # Check against threshold
     if best_similarity >= similarity_threshold:
-        return best_person_id, best_similarity
+        return person_ids[best_idx], best_similarity
     else:
         return None, best_similarity

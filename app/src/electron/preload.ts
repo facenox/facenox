@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
         model_type?: string
         confidence_threshold?: number
         nms_threshold?: number
+        enableLiveness?: boolean
       },
     ) => {
       return ipcRenderer.invoke("backend:detect-faces", imageBase64, options)

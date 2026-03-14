@@ -77,6 +77,13 @@ declare global {
     onUpdateAvailable: (callback: (updateInfo: UpdateInfo) => void) => () => void
   }
 
+  export interface DetectionOptions {
+    model_type?: string
+    confidence_threshold?: number
+    nms_threshold?: number
+    enableLiveness?: boolean
+  }
+
   interface BackendAPI {
     checkAvailability: () => Promise<{
       available: boolean
@@ -103,11 +110,7 @@ declare global {
     >
     detectFaces: (
       imageBase64: string,
-      options?: {
-        model_type?: string
-        confidence_threshold?: number
-        nms_threshold?: number
-      },
+      options?: DetectionOptions,
     ) => Promise<{
       faces: {
         bbox: [number, number, number, number]

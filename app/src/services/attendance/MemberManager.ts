@@ -110,6 +110,7 @@ export class MemberManager {
     imageData: string,
     bbox: number[],
     landmarks_5: number[][],
+    enableLiveness: boolean = true,
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
       const result = await this.httpClient.post<{
@@ -119,6 +120,7 @@ export class MemberManager {
         image: imageData,
         bbox: bbox,
         landmarks_5: landmarks_5,
+        enable_liveness_detection: enableLiveness,
       })
       return { success: true, message: result.message }
     } catch (error) {

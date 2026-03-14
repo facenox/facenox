@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Dict, List, Optional
 
@@ -17,7 +18,7 @@ def set_model_references(liveness, tracker, recognizer, detector=None):
     face_detector = detector
 
 
-def process_face_detection(
+async def process_face_detection(
     image: np.ndarray,
     confidence_threshold: Optional[float] = None,
     nms_threshold: Optional[float] = None,
@@ -36,7 +37,10 @@ def process_face_detection(
         if min_face_size is not None:
             face_detector.set_min_face_size(min_face_size)
 
-        faces = face_detector.detect_faces(image, enable_liveness)
+        loop = asyncio.get_running_loop()
+        faces = await loop.run_in_executor(
+            None, lambda: face_detector.detect_faces(image, enable_liveness)
+        )
         return faces
 
     except Exception as e:
@@ -44,14 +48,18 @@ def process_face_detection(
         return []
 
 
-def process_liveness_detection(
+async def process_liveness_detection(
     faces: List[Dict], image: np.ndarray, enable: bool
 ) -> List[Dict]:
     if not (enable and faces and liveness_detector):
         return faces
 
     try:
-        faces_with_liveness = liveness_detector.detect_faces(image, faces)
+        loop = asyncio.get_running_loop()
+        faces_with_liveness = await loop.run_in_executor(
+            None, lambda: liveness_detector.detect_faces(image, faces)
+        )
+
         return faces_with_liveness
 
     except Exception as e:
@@ -115,19 +123,19 @@ def process_face_tracking(
         return faces
 
 
-def process_liveness_for_face_operation(
+async def process_liveness_for_face_operation(
     image: np.ndarray,
     bbox: list,
     enable_liveness_detection: bool,
     operation_name: str,
-) -> tuple[bool, str | None]:
+) -> tuple[bool, str | None, str]:
     from core.lifespan import liveness_detector
 
     if not (liveness_detector and enable_liveness_detection):
-        return False, None
+        return False, None, "SKIPPED"
 
     if not isinstance(bbox, list) or len(bbox) < 4:
-        return True, f"{operation_name} blocked: invalid bbox format"
+        return True, f"{operation_name} blocked: invalid bbox format", "ERROR"
 
     temp_face = {
         "bbox": {
@@ -140,7 +148,10 @@ def process_liveness_for_face_operation(
         "track_id": -1,
     }
 
-    liveness_results = liveness_detector.detect_faces(image, [temp_face])
+    loop = asyncio.get_running_loop()
+    liveness_results = await loop.run_in_executor(
+        None, lambda: liveness_detector.detect_faces(image, [temp_face])
+    )
 
     if liveness_results and len(liveness_results) > 0:
         liveness_data = liveness_results[0].get("liveness", {})
@@ -151,10 +162,14 @@ def process_liveness_for_face_operation(
             return (
                 True,
                 f"{operation_name} blocked: spoofed face detected (status: {status})",
+                "SPOOF",
             )
 
         if status in ["move_closer", "error"]:
-            logger.warning(f"{operation_name} blocked for face with status: {status}")
-            return True, f"{operation_name} blocked: face status {status}"
+            return (
+                True,
+                f"{operation_name} blocked: face status {status}",
+                status.upper(),
+            )
 
-    return False, None
+    return False, None, "PASSED"
