@@ -1,56 +1,120 @@
-# Contributing to SURI
+# Contributing to Suri
 
-Hey there! Thanks for considering helping out. This project started as my idea to "real world projects" but I'm hoping it grows into something bigger that can actually help people that can't afford fancy attendance systems.
+Thanks for considering helping out! Suri is built to provide an accessible, local-first biometric tracking system for organizations that need a secure, high-performance solution without expensive proprietary hardware. **Performance and simplicity are our top priorities.**
 
-## Getting Started
+## Mission & Principles
+Suri is built to run on low-end hardware. When contributing, keep these three principles in mind:
+1. **Local-First:** Privacy is paramount. No biometric data should ever leave the device.
+2. **Efficiency:** Target CPU-bound environments. Avoid heavy dependencies.
+3. **Accessibility:** The UI must be intuitive for non-technical users.
 
-1. **Fork the repo** - Standard stuff, fork it to your account
-2. **Clone locally** - `git clone https://github.com/YOUR-USERNAME/suri.git`
-3. **Add upstream** - `git remote add upstream https://github.com/SuriAI/suri.git`
+---
 
-## What kind of help I'm looking for
+## Project Structure
+Understanding where everything lives:
+```text
+suri/
+ ├── app/              # Electron frontend (React + TypeScript)
+ ├── server/           # Python backend (FastAPI + ONNX Runtime)
+ ├── docs/             # Technical and user documentation
+ ├── data/             # Local database and biometric storage (ignored)
+ └── scripts/          # Workspace automation and build tools
+```
 
-### Code stuff
-- **Performance optimization** - The model runs okay on older hardware but could definitely be faster
-- **Face recognition improvements** - Especially with different lighting conditions
-- **Server-side code** - The Python backend needs some love
-- **Frontend** - If you know your way around UI/UX, the interface could use an overhaul
+---
 
-### Non-code stuff
-- **Documentation** - Always needed, especially step-by-step guides for non-technical teachers
-- **Testing in different environments** - If you can try it on different hardware/OS combinations
-- **Translation** - Making the interface accessible in more languages
+## Where We Need Help
+* **Performance:** Optimizing the Python backend and ONNX model inference.
+* **Accuracy:** Improving recognition robustness under poor lighting or varying angles.
+* **Accessibility:** Localization (i18n) and UI refinements for standard desktop users.
+* **Security:** Hardening local data storage and encryption flows.
 
-## Development Process
-
-Nothing fancy or bureaucratic here. I'm a student, not a big tech company.
-
-1. **Create a branch** - `git checkout -b fix-something-cool`
-2. **Make your changes** - Try to keep commits somewhat organized
-3. **Test your stuff** - Make sure it actually works
-4. **Push to your fork** - `git push origin fix-something-cool`
-5. **Open a PR** - I'll try to review it ASAP
-
-## Some guidelines to make life easier
-
-- **Keep it simple** - This is meant to run in schools with limited IT resources
-- **Document weird stuff** - If you're doing something non-obvious, leave comments
-- **Think about performance** - Every millisecond counts on older hardware
-- **Test on low-end devices** - If you can, test on something other than your beefy dev machine
-
-## Model & Training
-
-Details regarding the AI models and the development process can be found in the [Architecture Guide](docs/ARCHITECTURE.md).
+---
 
 ## Local Development Setup
+Suri is a monorepo. We use `pnpm`, but other package managers `npm`, `yarn`, or `bun` will work just fine.
 
-1. **Python 3.10+** - Recommended for compatibility with all dependencies
-2. **Install requirements** - `pip install -r server/requirements.txt`
-3. **ONNX Runtime** - Make sure this is installed for inference
+> [!IMPORTANT]
+> **Don't commit their respective lockfiles** to the repo. Only `pnpm-lock.yaml` is allowed.
 
+### 1. Prerequisites
+- **Python 3.10+**
+- **Node.js 18+** & **pnpm**
 
-## Questions?
+### 2. Frontend & Tooling Setup
+Navigate to the `app/` directory and install dependencies:
+```bash
+pnpm install
+```
 
-Just open an issue or hit me up on **[LinkedIn](https://www.linkedin.com/in/johnraivenolazo/)**. I'm still learning too, so don't worry about asking "dumb" questions - there aren't any.
+### 3. Backend Setup
+Navigate to the `server/` directory:
+```bash
+# Create a virtual environment
+python -m venv venv
 
-Thanks again for considering contributing! This project started in my dorm room with limited resources, but with your help, it can become something that actually makes a difference in society that need it.
+# Activate (Linux/macOS)
+source venv/bin/activate
+
+# Activate (Windows)
+venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 4. Running Development
+Suri is split into three parts, each with its own `package.json` for a specific reason:
+- **Root:** Orchestrates the entire project (use this to run the app).
+- **App:** The Electron/React frontend.
+- **Server:** The Python backend automation.
+
+To start the application, **always run the command from the root directory**:
+```bash
+pnpm dev
+```
+*(This triggers the root script which handles everything for you.)*
+---
+
+## Development Workflow
+
+### 1. Code Style
+We enforce strict style guidelines to keep the codebase maintainable:
+- **Frontend (TS/JS):** ESLint + Prettier (handled via `pnpm fix`).
+- **Backend (Python):** 
+    - **Formatting:** [Black](https://github.com/psf/black)
+    - **Linting:** [Ruff](https://github.com/astral-sh/ruff)
+    - **Type Hints:** Encouraged for all new logic.
+
+### 2. Branching & Commits
+- Create a descriptive branch: `feat/description` or `fix/description`.
+- We follow [Conventional Commits](https://www.conventionalcommits.org/):
+    - `feat:` for new features.
+    - `fix:` for bug fixes.
+    - `chore:` for maintenance or script updates.
+
+### 3. Quality Checks
+Before pushing, ensure your code meets our quality standards:
+```bash
+pnpm fix
+```
+
+---
+
+## Issue & Pull Request Guidelines
+
+### Opening an Issue
+Before creating a new issue:
+1. **Search:** Check existing issues to see if it’s already being discussed.
+2. **Reproduction:** Provide clear steps to reproduce the bug.
+3. **Environment:** Include your OS and hardware specs if performance-related.
+
+### Creating a Pull Request
+1. **Atomic PRs:** Keep PRs focused. One problem, one PR.
+2. **Template:** Use the provided PR template. Explain *what* changed and *why*.
+3. **Verification:** Confirm that `pnpm fix` passes and you have tested the changes.
+
+---
+
+**Bugs & Features:** Use [GitHub Issues](https://github.com/SuriAI/suri/issues).
+**Security:** See our [Security Policy](SECURITY.md).

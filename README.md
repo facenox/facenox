@@ -130,25 +130,18 @@ Project docs:
 
 Visit the [issues page](https://github.com/SuriAI/suri/issues) to submit feature requests.
 
-<!-- CONTRIBUTING -->
 ## Contributing
 
 Suri is open source. If you want to help make it better, pull requests are welcome.
 
-1. Fork the project
-2. Create a branch (`git checkout -b feature/AmazingFeature`)
-3. Commit what you've built (`git commit -m 'Add some AmazingFeature'`)
-4. Push it to your fork (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Please see our [**Contributing Guide**](CONTRIBUTING.md).
 
-<!-- LICENSE -->
 ## License
 
-Distributed under the **AGPL-3.0 License**. See `LICENSE` for more information.
+Distributed under the **AGPL-3.0 License**. See `LICENSE`.
 
-This project relies on open source software. See [Third Party Licenses](THIRD_PARTY_LICENSES.md) for details.
+This project relies on open source software. See [Third Party Licenses](THIRD_PARTY_LICENSES.md).
 
-<!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
 *   [FastAPI](https://fastapi.tiangolo.com/) - High-performance local API framework.
