@@ -108,8 +108,12 @@ Project docs:
 </p>
 
 <div align="center">
-    <img src="https://skillicons.dev/icons?i=electron,react,vite,tailwindcss,python,fastapi,sqlite,opencv&theme=dark" />
+    <img src="https://skillicons.dev/icons?i=electron,react,typescript,vite,tailwindcss,python,fastapi,sqlite,opencv,pnpm&theme=dark" />
 </div>
+
+### Core Technologies
+*   **Frontend:** [Electron][Electron-url], [React][React-url], [TypeScript][TypeScript-url], [Zustand][Zustand-url], [Framer Motion][Framer-url], [Tailwind CSS][TailwindCSS-url], [Vite][Vite-url].
+*   **Backend:** [Python][Python-url], [FastAPI][FastAPI-url], [ONNX Runtime][ONNX-url], [OpenCV][OpenCV-url], [SQLAlchemy][SQLAlchemy-url], [Alembic][Alembic-url], [Pydantic][Pydantic-url].
 
 ## Contributing
 
@@ -165,3 +169,10 @@ This project relies on open source software. See [Third Party Licenses](THIRD_PA
 [SQLite-url]: https://www.sqlite.org/
 [SQLAlchemy]: https://img.shields.io/badge/SQLAlchemy-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white
 [SQLAlchemy-url]: https://www.sqlalchemy.org/
+[OpenCV-url]: https://opencv.org/
+[TypeScript-url]: https://www.typescriptlang.org/
+[Zustand-url]: https://docs.pmnd.rs/zustand
+[Framer-url]: https://www.framer.com/motion/
+[Alembic-url]: https://alembic.sqlalchemy.org/
+[Pydantic-url]: https://docs.pydantic.dev/
+[pnpm-url]: https://pnpm.io/
