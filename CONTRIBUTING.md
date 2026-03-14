@@ -73,7 +73,6 @@ To start the application, **always run the command from the root directory**:
 ```bash
 pnpm dev
 ```
-*(This triggers the root script which handles everything for you.)*
 ---
 
 ## Development Workflow
