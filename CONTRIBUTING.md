@@ -115,5 +115,5 @@ Before creating a new issue:
 
 ---
 
-**Bugs & Features:** Use [GitHub Issues](https://github.com/SuriAI/suri/issues).
+**Bugs & Features:** Use [GitHub Issues](https://github.com/SuriAI/suri/issues). <br>
 **Security:** See our [Security Policy](SECURITY.md).
