@@ -12,15 +12,12 @@ export const getFaceColor = (
 
   if (isRecognized) {
     if (recognitionResult?.has_consent === false) return "#6366f1"
-    return "#22d3ee" // Cyan-400 for Branding Consistency
+    return "#22d3ee"
   }
-
-  if (livenessStatus === "move_closer") return "#f59e0b"
 
   return "#94a3b8"
 }
 
-// Helper to draw rounded rectangle (manual implementation for compatibility)
 const drawRoundedRect = (
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -52,7 +49,7 @@ export const drawBoundingBox = (
 ) => {
   const width = x2 - x1
   const height = y2 - y1
-  const cornerRadius = 8 // Modern rounded corners
+  const cornerRadius = 8
 
   if (isAnonymous) {
     ctx.setLineDash([5, 5])
@@ -60,12 +57,10 @@ export const drawBoundingBox = (
     ctx.setLineDash([])
   }
 
-  // Draw rounded rectangle
   ctx.beginPath()
   drawRoundedRect(ctx, x1, y1, width, height, cornerRadius)
   ctx.stroke()
 
-  // Reset dash
   ctx.setLineDash([])
 }
 
@@ -171,10 +166,6 @@ export const drawOverlays = ({
   if (!isFinite(scaleX) || !isFinite(scaleY) || scaleX <= 0 || scaleY <= 0) return
 
   currentDetections.faces.forEach((face) => {
-    // SILENT SPOOFING: Completely ignore spoof detections
-    const status = face.liveness?.status as string | undefined
-    if (status === "spoof") return
-
     const { bbox } = face
 
     if (
@@ -213,14 +204,12 @@ export const drawOverlays = ({
     const isBlocked = recognitionResult?.has_consent === false
 
     if (isBlocked) {
-      // PREMIUM SHIELD: Blur the face area
       ctx.save()
       const cornerRadius = 8
       ctx.beginPath()
       drawRoundedRect(ctx, x1, y1, width, height, cornerRadius)
       ctx.clip()
 
-      // Draw mirrored or normal video section
       ctx.filter = "blur(20px)"
       if (quickSettings.cameraMirrored) {
         ctx.translate(displayWidth, 0)
@@ -253,7 +242,6 @@ export const drawOverlays = ({
       ctx.restore()
     } else {
       setupCanvasContext(ctx, color)
-      // GHOST PULSE: Use dashed lines for anonymous real faces
       drawBoundingBox(ctx, x1, y1, x2, y2, !isRecognized)
     }
 
@@ -270,9 +258,6 @@ export const drawOverlays = ({
         label = (recognitionResult.name || recognitionResult.person_id || "") + (isDone ? " ✓" : "")
       }
       shouldShowLabel = !!label
-    } else if (face.liveness?.status === "move_closer") {
-      label = "Move Closer"
-      shouldShowLabel = true
     }
 
     if (shouldShowLabel && recognitionResult) {
@@ -289,16 +274,14 @@ export const drawOverlays = ({
       const badgeX = x1 + (width - badgeW) / 2
       const badgeY = y1 - 25
 
-      // Draw Badge Background
       if (isShield) {
-        ctx.fillStyle = "#818cf8" // Indigo-400 for Privacy
+        ctx.fillStyle = "#818cf8"
       } else {
         ctx.fillStyle = color
       }
       drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 10)
       ctx.fill()
 
-      // Draw Text
       ctx.fillStyle = "#000000"
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
@@ -306,8 +289,6 @@ export const drawOverlays = ({
 
       ctx.restore()
     }
-
-    // Done text removed for Premium UI - replaced by checkmark in badge
 
     ctx.shadowBlur = 0
   })

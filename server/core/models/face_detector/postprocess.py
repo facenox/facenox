@@ -38,7 +38,7 @@ def process_detection(
     if min_face_size > 0 and (w < min_face_size or h < min_face_size):
         detection["liveness"] = {
             "is_real": None,
-            "status": "move_closer",
+            "status": "unknown",
         }
 
     return detection

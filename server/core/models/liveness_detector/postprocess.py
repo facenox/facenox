@@ -21,8 +21,6 @@ def process_with_logits(raw_logits: np.ndarray, threshold: float) -> Dict:
 
 
 def validate_detection(detection: Dict) -> Tuple[bool, Optional[Dict]]:
-    if "liveness" in detection and detection["liveness"].get("status") == "move_closer":
-        return False, None
 
     bbox = detection.get("bbox", {})
     if not isinstance(bbox, dict):

@@ -165,7 +165,7 @@ async def process_liveness_for_face_operation(
                 "SPOOF",
             )
 
-        if status in ["move_closer", "error"]:
+        if status == "error":
             return (
                 True,
                 f"{operation_name} blocked: face status {status}",
