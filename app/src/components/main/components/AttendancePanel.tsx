@@ -105,7 +105,7 @@ const AttendanceRecordItem = memo(
           label:
             trackCheckoutEnabled ? "TIME IN"
             : lateThresholdEnabled ? "ON TIME"
-            : "",
+            : "PRESENT",
           color: "text-white/40",
           pillColor: "bg-white/5 text-white/40 border-white/10",
           borderColor: "border-l-transparent",
@@ -124,16 +124,19 @@ const AttendanceRecordItem = memo(
         position="right"
         role={record.event_type === "check_out" ? "Exiting" : "Present"}>
         <div
-          className={`group relative border-b border-white/5 px-3 py-2.5 transition-colors hover:bg-white/5`}>
-          <div className="flex items-center gap-2 py-0.5">
-            <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-white/90">
+          className={`group relative border-b border-l-2 border-white/5 py-2.5 pr-3 pl-4 transition-colors hover:bg-white/5 ${timeStatus?.borderColor || "border-l-transparent"}`}>
+          <div className="flex items-center gap-3 py-0.5">
+            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-white/90">
               {displayName}
             </span>
 
-            <div className="flex shrink-0 items-center gap-1.5">
-              <span className={`text-[11px] font-bold ${timeStatus?.color || "text-white/50"}`}>
-                {timeStatus?.label}
-              </span>
+            <div className="flex shrink-0 items-center gap-2">
+              {timeStatus?.label && (
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-tight ${timeStatus.pillColor}`}>
+                  {timeStatus.label}
+                </span>
+              )}
               <span className="font-mono text-[11px] text-white/40 tabular-nums">
                 {record.timestamp.toLocaleTimeString([], {
                   hour: "2-digit",

@@ -1,4 +1,5 @@
 import { useMemo, memo } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { MemberTooltip } from "@/components/shared"
 import { createDisplayNameMap } from "@/utils"
 import type { DetectionResult, TrackedFace } from "@/components/main/types"
@@ -13,6 +14,8 @@ interface DetectionPanelProps {
   groupMembers: AttendanceMember[]
   isStreaming: boolean
   isVideoLoading: boolean
+  persistentCooldowns: Map<string, { startTime: number }>
+  currentGroupId?: string
 }
 
 const DetectionCard = memo(
@@ -23,6 +26,7 @@ const DetectionCard = memo(
     displayName,
     member,
     trackedFace,
+    isDone,
   }: {
     index: number
     recognitionResult: ExtendedFaceRecognitionResponse | undefined
@@ -30,39 +34,53 @@ const DetectionCard = memo(
     displayName: string
     member?: AttendanceMember | null
     trackedFace: TrackedFace | undefined
+    isDone: boolean
   }) => {
-    const getStatusStyles = () => {
-      if (isRecognized) {
-        return {
-          textColor: "text-cyan-400",
-        }
-      }
-
-      return {
-        textColor: "text-white/40",
-      }
-    }
-
-    const statusStyles = getStatusStyles()
-    const hasName = isRecognized && recognitionResult?.person_id && displayName
+    const hasConsent = recognitionResult?.has_consent !== false
+    const isActive = trackedFace?.isLocked || isRecognized
 
     return (
-      <div
+      <motion.div
+        layout
+        initial={{ opacity: 0, x: -8 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -8 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
         key={index}
-        className={`min-h-10 rounded-lg border border-white/5 bg-white/2 p-2.5 transition-all ${trackedFace?.isLocked ? "border-cyan-500/30 bg-cyan-500/3" : ""} ${hasName ? "shadow-sm shadow-black/20" : ""} `}>
-        <div className="flex items-center justify-between gap-2">
+        className={`group relative border-b border-l-2 border-white/5 py-2.5 pr-3 pl-4 transition-colors hover:bg-white/5 ${isActive ? "border-l-cyan-500/50" : "border-l-transparent"}`}
+        style={
+          isActive ?
+            { background: "linear-gradient(to right, rgba(34, 211, 238, 0.06), transparent)" }
+          : undefined
+        }>
+        <div className="flex items-center justify-between gap-3 py-0.5">
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            {hasName ?
-              <MemberTooltip member={member} position="right" role="Recognized">
-                <span
-                  className={`cursor-help truncate text-sm font-semibold ${statusStyles.textColor}`}>
-                  {displayName}
-                </span>
-              </MemberTooltip>
-            : <span className="text-xs text-white/40 italic">Unknown</span>}
+            {isRecognized ?
+              hasConsent ?
+                <MemberTooltip member={member} position="right" role="Recognized">
+                  <span className="cursor-help truncate text-[13px] font-medium text-white/90">
+                    {displayName}
+                  </span>
+                </MemberTooltip>
+              : <div className="flex items-center gap-1.5 opacity-80">
+                  <i className="fa-solid fa-eye-slash text-xs text-indigo-400"></i>
+                  <span className="text-[11px] font-bold tracking-tight text-indigo-400/90 uppercase">
+                    No Consent
+                  </span>
+                </div>
+
+            : <span className="text-[13px] font-medium text-white/40">Searching...</span>}
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            {isDone && (
+              <div className="flex animate-pulse items-center justify-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.2)]">
+                <i className="fa-solid fa-check text-[10px]"></i>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </motion.div>
     )
   },
 )
@@ -77,6 +95,8 @@ export function DetectionPanel({
   groupMembers,
   isStreaming,
   isVideoLoading,
+  persistentCooldowns,
+  currentGroupId,
 }: DetectionPanelProps) {
   const displayNameMap = useMemo(() => {
     return createDisplayNameMap(groupMembers)
@@ -95,15 +115,22 @@ export function DetectionPanel({
 
     const faces = currentDetections.faces
 
-    return [...faces].sort((a, b) => {
-      const aIsLive = a.liveness?.status === "real"
-      const bIsLive = b.liveness?.status === "real"
+    // SILENT ANONYMOUS: Only include recognized faces in the sidebar
+    return [...faces]
+      .filter((f) => {
+        const trackId = f.track_id!
+        const rec = currentRecognitionResults.get(trackId)
+        return f.liveness?.status !== "spoof" && !!rec?.person_id
+      })
+      .sort((a, b) => {
+        const aIsLive = a.liveness?.status === "real"
+        const bIsLive = b.liveness?.status === "real"
 
-      if (aIsLive && !bIsLive) return -1 // a comes first
-      if (!aIsLive && bIsLive) return 1 // b comes first
-      return 0 // maintain original order for same status
-    })
-  }, [currentDetections])
+        if (aIsLive && !bIsLive) return -1
+        if (!aIsLive && bIsLive) return 1
+        return 0
+      })
+  }, [currentDetections, currentRecognitionResults])
 
   const hasDetections = filteredFaces.length > 0
 
@@ -115,7 +142,9 @@ export function DetectionPanel({
             <div className="relative h-20 w-20">
               {isVideoLoading ?
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-14 w-14 animate-spin rounded-full border-2 border-white/20 border-t-white/60"></div>
+                  <div className="h-10 w-10 rounded-full border border-cyan-500/20">
+                    <div className="h-full w-full animate-spin rounded-full border-t border-cyan-400/60"></div>
+                  </div>
                 </div>
               : <>
                   <div
@@ -128,16 +157,18 @@ export function DetectionPanel({
                     )}
 
                     <svg
-                      className={`h-full w-full p-4 ${isStreaming ? "text-cyan-400/50" : "animate-pulse text-white/30"}`}
+                      className={`h-full w-full p-4 transition-all duration-500 ${isStreaming ? "text-cyan-400/40" : "animate-pulse text-white/30"}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
+                      {!isStreaming && (
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                      )}
                     </svg>
                   </div>
 
@@ -167,37 +198,47 @@ export function DetectionPanel({
             </div>
           </div>
         </div>
-      : <div className="w-full space-y-1.5 py-2">
-          {filteredFaces.map((face, index) => {
-            const trackId = face.track_id!
-            const recognitionResult = currentRecognitionResults.get(trackId)
-            const isRecognized = recognitionEnabled && !!recognitionResult?.person_id
-            const displayName =
-              recognitionResult?.person_id ?
-                displayNameMap.get(recognitionResult.person_id) || "Unknown"
-              : ""
+      : <div className="w-full py-0">
+          <AnimatePresence mode="popLayout" initial={false}>
+            {filteredFaces.map((face, index) => {
+              const trackId = face.track_id!
+              // ... (keep the same logic but inside AnimatePresence)
+              const recognitionResult = currentRecognitionResults.get(trackId)
+              const isRecognized = recognitionEnabled && !!recognitionResult?.person_id
+              const displayName =
+                recognitionResult?.person_id ?
+                  displayNameMap.get(recognitionResult.person_id) || "Unknown"
+                : ""
 
-            const trackedFace = trackedFacesArray.find(
-              (track) =>
-                track.personId === recognitionResult?.person_id ||
-                (Math.abs(track.bbox.x - face.bbox.x) < 30 &&
-                  Math.abs(track.bbox.y - face.bbox.y) < 30),
-            )
+              const trackedFace = trackedFacesArray.find(
+                (track) =>
+                  track.personId === recognitionResult?.person_id ||
+                  (Math.abs(track.bbox.x - face.bbox.x) < 30 &&
+                    Math.abs(track.bbox.y - face.bbox.y) < 30),
+              )
 
-            return (
-              <DetectionCard
-                key={trackId}
-                index={index}
-                recognitionResult={recognitionResult}
-                isRecognized={isRecognized}
-                displayName={displayName}
-                member={
-                  recognitionResult?.person_id ? memberMap.get(recognitionResult.person_id) : null
-                }
-                trackedFace={trackedFace}
-              />
-            )
-          })}
+              const cooldownKey =
+                recognitionResult?.person_id && currentGroupId ?
+                  `${recognitionResult.person_id}-${currentGroupId}`
+                : null
+              const isDone = !!(cooldownKey && persistentCooldowns.has(cooldownKey))
+
+              return (
+                <DetectionCard
+                  key={trackId}
+                  index={index}
+                  recognitionResult={recognitionResult}
+                  isRecognized={isRecognized}
+                  displayName={displayName}
+                  member={
+                    recognitionResult?.person_id ? memberMap.get(recognitionResult.person_id) : null
+                  }
+                  trackedFace={trackedFace}
+                  isDone={isDone}
+                />
+              )
+            })}
+          </AnimatePresence>
         </div>
       }
     </>

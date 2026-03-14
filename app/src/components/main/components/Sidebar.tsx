@@ -41,7 +41,7 @@ export const Sidebar = memo(function Sidebar({
   isVideoLoading,
   handleSelectGroup,
 }: SidebarProps) {
-  const { groupMembers } = useAttendanceStore()
+  const { groupMembers, persistentCooldowns, currentGroup } = useAttendanceStore()
   const {
     setShowSettings,
     sidebarCollapsed: isCollapsed,
@@ -286,6 +286,8 @@ export const Sidebar = memo(function Sidebar({
               groupMembers={groupMembers}
               isStreaming={isStreaming}
               isVideoLoading={isVideoLoading}
+              persistentCooldowns={persistentCooldowns}
+              currentGroupId={currentGroup?.id}
             />
           </div>
         </div>

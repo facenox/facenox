@@ -33,7 +33,8 @@ export function ControlBar({
     if (isStreaming) {
       return {
         label: "Stop Tracking",
-        className: "bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20",
+        className:
+          "bg-rose-500/5 border border-rose-500/10 text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20",
         tooltip: "Stop tracking attendance",
         enabled: true,
       }

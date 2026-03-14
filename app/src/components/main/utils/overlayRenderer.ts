@@ -12,7 +12,7 @@ export const getFaceColor = (
 
   if (isRecognized) {
     if (recognitionResult?.has_consent === false) return "#6366f1"
-    return "#00ff41"
+    return "#22d3ee" // Cyan-400 for Branding Consistency
   }
 
   if (livenessStatus === "move_closer") return "#f59e0b"
@@ -48,15 +48,25 @@ export const drawBoundingBox = (
   y1: number,
   x2: number,
   y2: number,
+  isAnonymous?: boolean,
 ) => {
   const width = x2 - x1
   const height = y2 - y1
   const cornerRadius = 8 // Modern rounded corners
 
+  if (isAnonymous) {
+    ctx.setLineDash([5, 5])
+  } else {
+    ctx.setLineDash([])
+  }
+
   // Draw rounded rectangle
   ctx.beginPath()
   drawRoundedRect(ctx, x1, y1, width, height, cornerRadius)
   ctx.stroke()
+
+  // Reset dash
+  ctx.setLineDash([])
 }
 
 export const setupCanvasContext = (ctx: CanvasRenderingContext2D, color: string) => {
@@ -161,6 +171,10 @@ export const drawOverlays = ({
   if (!isFinite(scaleX) || !isFinite(scaleY) || scaleX <= 0 || scaleY <= 0) return
 
   currentDetections.faces.forEach((face) => {
+    // SILENT SPOOFING: Completely ignore spoof detections
+    const status = face.liveness?.status as string | undefined
+    if (status === "spoof") return
+
     const { bbox } = face
 
     if (
@@ -194,9 +208,11 @@ export const drawOverlays = ({
     const recognitionResult = currentRecognitionResults.get(trackId)
     const color = getFaceColor(recognitionResult || null, recognitionEnabled, face.liveness?.status)
 
+    const isRecognized =
+      recognitionEnabled && recognitionResult?.person_id && face.liveness?.status !== "spoof"
     const isBlocked = recognitionResult?.has_consent === false
 
-    if (isBlocked && face.liveness?.status !== "spoof") {
+    if (isBlocked) {
       // PREMIUM SHIELD: Blur the face area
       ctx.save()
       const cornerRadius = 8
@@ -237,21 +253,23 @@ export const drawOverlays = ({
       ctx.restore()
     } else {
       setupCanvasContext(ctx, color)
-      drawBoundingBox(ctx, x1, y1, x2, y2)
+      // GHOST PULSE: Use dashed lines for anonymous real faces
+      drawBoundingBox(ctx, x1, y1, x2, y2, !isRecognized)
     }
 
-    const isRecognized =
-      recognitionEnabled && recognitionResult?.person_id && face.liveness?.status !== "spoof"
+    const isActuallyRecognized = isRecognized && !!recognitionResult?.person_id
     let label = ""
     let shouldShowLabel = false
 
-    if (isRecognized && recognitionResult && quickSettings.showRecognitionNames) {
+    if (isActuallyRecognized && recognitionResult && quickSettings.showRecognitionNames) {
       if (recognitionResult.has_consent === false) {
         label = "No Consent"
       } else {
-        label = recognitionResult.name || recognitionResult.person_id || "Unknown"
+        const cooldownKey = `${recognitionResult.person_id}-${currentGroupId}`
+        const isDone = persistentCooldowns.has(cooldownKey)
+        label = (recognitionResult.name || recognitionResult.person_id || "") + (isDone ? " ✓" : "")
       }
-      shouldShowLabel = true
+      shouldShowLabel = !!label
     } else if (face.liveness?.status === "move_closer") {
       label = "Move Closer"
       shouldShowLabel = true
@@ -272,24 +290,16 @@ export const drawOverlays = ({
       const badgeY = y1 - 25
 
       // Draw Badge Background
-      if (!isShield) {
+      if (isShield) {
+        ctx.fillStyle = "#818cf8" // Indigo-400 for Privacy
+      } else {
         ctx.fillStyle = color
-        drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 10)
-        ctx.fill()
       }
+      drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 10)
+      ctx.fill()
 
       // Draw Text
-      if (isShield) {
-        // Text-only for 'No Consent'
-        ctx.fillStyle = "#22d3ee" // Cyan-400 for high contrast
-        ctx.shadowColor = "#000000"
-        ctx.shadowBlur = 8
-        ctx.shadowOffsetX = 0
-        ctx.shadowOffsetY = 2
-      } else {
-        ctx.fillStyle = "#000000"
-      }
-
+      ctx.fillStyle = "#000000"
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
       ctx.fillText(text, badgeX + badgeW / 2, badgeY + badgeH / 2)
@@ -297,24 +307,7 @@ export const drawOverlays = ({
       ctx.restore()
     }
 
-    if (isRecognized && recognitionResult?.person_id && currentGroupId) {
-      const cooldownKey = `${recognitionResult.person_id}-${currentGroupId}`
-      const cooldownInfo = persistentCooldowns.get(cooldownKey)
-      if (cooldownInfo) {
-        ctx.save()
-
-        const centerX = (x1 + x2) / 2
-        const centerY = (y1 + y2) / 2
-
-        ctx.fillStyle = "#FFFFFF"
-        ctx.font = "500 40px system-ui, -apple-system, sans-serif"
-        ctx.textAlign = "center"
-        ctx.textBaseline = "middle"
-        ctx.fillText("Done", centerX, centerY)
-
-        ctx.restore()
-      }
-    }
+    // Done text removed for Premium UI - replaced by checkmark in badge
 
     ctx.shadowBlur = 0
   })

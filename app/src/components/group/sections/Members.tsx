@@ -173,7 +173,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
                 onClick={() => setRegistrationFilter("no-consent")}
                 className={`rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-wider transition-all ${
                   registrationFilter === "no-consent" ?
-                    "border border-cyan-500/30 bg-cyan-500/20 text-cyan-200"
+                    "border border-indigo-500/30 bg-indigo-500/20 text-indigo-400"
                   : "border border-white/10 bg-white/5 text-white/50 hover:bg-white/8 hover:text-white/80"
                 }`}>
                 Needs Consent
@@ -225,8 +225,8 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
 
                   <div className="relative z-10 flex shrink-0 items-center gap-3">
                     {!member.has_consent && (
-                      <div className="rounded-m flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-red-400/80">
-                        <i className="fa-solid fa-xmark" />
+                      <div className="flex items-center gap-1.5 rounded-full bg-indigo-500/15 px-2.5 py-1 text-[9px] font-black tracking-wider text-indigo-400 uppercase">
+                        <i className="fa-solid fa-eye-slash text-[8px]" />
                         No Consent
                       </div>
                     )}

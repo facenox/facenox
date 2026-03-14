@@ -99,9 +99,14 @@ export const VideoCanvas = memo(function VideoCanvas({
       )}
 
       {isVideoLoading && (
-        <div className="pointer-events-none absolute inset-0 z-15 flex items-center justify-center bg-black/20">
-          <div className="flex flex-col items-center">
-            <div className="h-20 w-20 animate-spin rounded-full border-2 border-white/20 border-t-white/60"></div>
+        <div className="pointer-events-none absolute inset-0 z-15 flex items-center justify-center bg-black/40">
+          <div className="relative flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full border border-cyan-500/30">
+              <div className="h-full w-full animate-spin rounded-full border-t-2 border-cyan-400"></div>
+            </div>
+            <div className="mt-4 animate-pulse text-[10px] font-bold tracking-[0.2em] text-cyan-400/60 uppercase">
+              Starting
+            </div>
           </div>
         </div>
       )}

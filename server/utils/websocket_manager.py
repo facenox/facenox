@@ -98,8 +98,8 @@ class ConnectionManager:
                 # Check if the connection is still "open" before closing
                 if websocket.client_state.name == "CONNECTED":
                     await websocket.close(code=1000)
-            except:
-                pass # Truthful silence: We don't care if it fails during shutdown
+            except Exception:
+                pass  # Truthful silence: We don't care if it fails during shutdown
 
             del self.active_connections[client_id]
             if client_id in self.connection_metadata:
