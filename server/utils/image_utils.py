@@ -2,67 +2,10 @@
 Image utility functions for the face detection API
 """
 
-import base64
 from typing import Tuple
 
 import cv2
 import numpy as np
-
-
-def decode_base64_image(base64_string: str) -> np.ndarray:
-    """
-    Decode base64 string to OpenCV image
-
-    Args:
-        base64_string: Base64 encoded image string
-
-    Returns:
-        OpenCV image as numpy array (BGR format)
-    """
-    try:
-
-        if base64_string.startswith("data:image"):
-            base64_string = base64_string.split(",")[1]
-
-        image_data = base64.b64decode(base64_string)
-
-        # Convert to numpy array
-        nparr = np.frombuffer(image_data, np.uint8)
-
-        # Decode image
-        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-        if image is None:
-            raise ValueError("Failed to decode image")
-
-        return image
-
-    except Exception as e:
-        raise ValueError(f"Failed to decode base64 image: {e}")
-
-
-def encode_image_to_base64(image: np.ndarray, format: str = "jpg") -> str:
-    """
-    Encode OpenCV image to base64 string
-
-    Args:
-        image: OpenCV image as numpy array
-        format: Image format ('jpg', 'png', etc.)
-
-    Returns:
-        Base64 encoded image string
-    """
-    try:
-        # Encode image
-        _, buffer = cv2.imencode(f".{format}", image)
-
-        # Convert to base64
-        image_base64 = base64.b64encode(buffer).decode("utf-8")
-
-        return image_base64
-
-    except Exception as e:
-        raise ValueError(f"Failed to encode image to base64: {e}")
 
 
 def resize_image(

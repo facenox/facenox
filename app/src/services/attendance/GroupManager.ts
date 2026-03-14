@@ -1,4 +1,10 @@
-import type { AttendanceGroup, AttendanceMember, AttendanceSettings } from "../../types/recognition"
+import type {
+  AttendanceGroup,
+  AttendanceMember,
+  AttendanceSettings,
+  BulkDetectResponse,
+  BulkRegisterResponse,
+} from "../../types/recognition"
 import type { HttpClient } from "./HttpClient"
 
 export class GroupManager {
@@ -112,5 +118,35 @@ export class GroupManager {
       console.error("Error getting group members:", error)
       return []
     }
+  }
+
+  async bulkDetectFaces(groupId: string, images: File[]): Promise<BulkDetectResponse> {
+    const formData = new FormData()
+    images.forEach((file) => formData.append("images", file))
+
+    return this.httpClient.postMultipart(
+      `${this.apiEndpoints.groups}/${groupId}/bulk-detect-faces`,
+      formData,
+    )
+  }
+
+  async bulkRegisterFaces(
+    groupId: string,
+    registrations: {
+      person_id: string
+      bbox: number[] | { x: number; y: number; width: number; height: number }
+      landmarks_5: number[][]
+      filename?: string
+    }[],
+    images: { file: File; filename: string }[],
+  ): Promise<BulkRegisterResponse> {
+    const formData = new FormData()
+    images.forEach((item) => formData.append("images", item.file, item.filename))
+    formData.append("metadata", JSON.stringify(registrations))
+
+    return this.httpClient.postMultipart(
+      `${this.apiEndpoints.groups}/${groupId}/bulk-register-faces`,
+      formData,
+    )
   }
 }

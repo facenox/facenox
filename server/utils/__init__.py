@@ -5,8 +5,6 @@ Contains image processing utilities, WebSocket management, and face serializatio
 """
 
 from .image_utils import (
-    decode_base64_image,
-    encode_image_to_base64,
     resize_image,
     normalize_image,
     convert_color_space,
@@ -18,8 +16,6 @@ from .websocket_manager import manager, ConnectionManager, handle_websocket_mess
 from .face_utils import serialize_faces
 
 __all__ = [
-    "decode_base64_image",
-    "encode_image_to_base64",
     "resize_image",
     "normalize_image",
     "convert_color_space",

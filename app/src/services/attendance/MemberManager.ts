@@ -107,21 +107,39 @@ export class MemberManager {
   async registerFaceForGroupPerson(
     groupId: string,
     personId: string,
-    imageData: string,
+    imageData: Blob | string,
     bbox: number[],
     landmarks_5: number[][],
     enableLiveness: boolean = true,
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const result = await this.httpClient.post<{
+      let imageBlob: Blob
+      if (typeof imageData === "string") {
+        const dataUrl =
+          imageData.startsWith("data:") ? imageData : `data:image/jpeg;base64,${imageData}`
+        const response = await fetch(dataUrl)
+        imageBlob = await response.blob()
+      } else {
+        imageBlob = imageData
+      }
+
+      const formData = new FormData()
+      formData.append("image", imageBlob, "face.jpg")
+      formData.append(
+        "metadata",
+        JSON.stringify({
+          bbox,
+          landmarks_5,
+          enable_liveness_detection: enableLiveness,
+        }),
+      )
+
+      const url = `${this.apiEndpoints.groups}/${groupId}/persons/${personId}/register-face`
+      const result = await this.httpClient.postMultipart<{
         success: boolean
         message: string
-      }>(`${this.apiEndpoints.groups}/${groupId}/persons/${personId}/register-face`, {
-        image: imageData,
-        bbox: bbox,
-        landmarks_5: landmarks_5,
-        enable_liveness_detection: enableLiveness,
-      })
+      }>(url, formData)
+
       return { success: true, message: result.message }
     } catch (error) {
       console.error("Error registering face for group person:", error)

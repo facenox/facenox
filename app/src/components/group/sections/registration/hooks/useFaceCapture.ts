@@ -1,12 +1,9 @@
 import { useState, useCallback } from "react"
-import { attendanceManager } from "@/services"
+import { attendanceManager, backendService } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import type { DialogAPI } from "@/components/shared"
 import type { CapturedFrame } from "@/components/group/sections/registration/types"
-import {
-  makeId,
-  toBase64Payload,
-} from "@/components/group/sections/registration/hooks/useImageProcessing"
+import { makeId } from "@/components/group/sections/registration/hooks/useImageProcessing"
 import { useAttendanceStore } from "@/components/main/stores"
 
 export function useFaceCapture(
@@ -54,7 +51,10 @@ export function useFaceCapture(
       ])
 
       try {
-        const detection = await window.electronAPI.backend.detectFaces(toBase64Payload(dataUrl), {
+        const response = await fetch(dataUrl)
+        const blob = await response.blob()
+
+        const detection = await backendService.detectFaces(blob, {
           model_type: "face_detector",
           enableLiveness: enableSpoofDetection,
         })
@@ -124,7 +124,8 @@ export function useFaceCapture(
       setSuccessMessage(null)
 
       try {
-        const payload = toBase64Payload(frame.dataUrl)
+        const res = await fetch(frame.dataUrl)
+        const blob = await res.blob()
 
         if (frame.landmarks_5?.length !== 5) {
           throw new Error("Cannot register: landmarks missing. Please re-capture the face.")
@@ -133,7 +134,7 @@ export function useFaceCapture(
         const result = await attendanceManager.registerFaceForGroupPerson(
           group.id,
           selectedMemberId,
-          payload,
+          blob,
           frame.bbox,
           frame.landmarks_5,
           enableSpoofDetection,

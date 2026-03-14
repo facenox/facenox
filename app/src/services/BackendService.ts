@@ -1,6 +1,5 @@
 import type {
   FaceRecognitionResponse,
-  FaceRegistrationResponse,
   PersonRemovalResponse,
   PersonUpdateResponse,
   SimilarityThresholdResponse,
@@ -9,14 +8,6 @@ import type {
 } from "../types/recognition"
 
 import { ElectronAdapter } from "./adapters/ElectronAdapter"
-
-interface DetectionRequest {
-  image: string
-  model_type?: string
-  confidence_threshold?: number
-  nms_threshold?: number
-  enable_liveness_detection?: boolean
-}
 
 interface DetectionResponse {
   faces: {
@@ -43,6 +34,7 @@ interface ModelInfo {
 export class BackendService {
   private config: BackendConfig
   private adapter: ElectronAdapter
+  private token: string | null = null
 
   constructor(config?: Partial<BackendConfig>) {
     this.config = {
@@ -53,6 +45,17 @@ export class BackendService {
     }
 
     this.adapter = new ElectronAdapter()
+  }
+
+  private async getApiToken(): Promise<string> {
+    if (this.token !== null) return this.token
+    try {
+      const t = await window.electronAPI?.backend?.getToken?.()
+      this.token = typeof t === "string" ? t : ""
+    } catch {
+      this.token = ""
+    }
+    return this.token
   }
 
   async isBackendAvailable(): Promise<boolean> {
@@ -107,8 +110,13 @@ export class BackendService {
 
   async getAvailableModels(): Promise<Record<string, ModelInfo>> {
     try {
+      const token = await this.getApiToken()
+      const headers: Record<string, string> = {}
+      if (token) headers["X-Suri-Token"] = token
+
       const response = await fetch(`${this.config.baseUrl}/models`, {
         method: "GET",
+        headers,
         signal: AbortSignal.timeout(this.config.timeout),
       })
 
@@ -124,7 +132,7 @@ export class BackendService {
   }
 
   async detectFaces(
-    imageData: string,
+    imageData: Blob | string,
     options: {
       model_type?: string
       confidence_threshold?: number
@@ -133,25 +141,37 @@ export class BackendService {
     } = {},
   ): Promise<DetectionResponse> {
     try {
-      const request: DetectionRequest = {
-        image: imageData,
-        model_type: options.model_type || "face_detector",
-        confidence_threshold: options.confidence_threshold || 0.5,
-        nms_threshold: options.nms_threshold || 0.3,
-        enable_liveness_detection: options.enableLiveness ?? true,
+      let imageBlob: Blob
+      if (typeof imageData === "string") {
+        const dataUrl =
+          imageData.startsWith("data:") ? imageData : `data:image/jpeg;base64,${imageData}`
+        const response = await fetch(dataUrl)
+        imageBlob = await response.blob()
+      } else {
+        imageBlob = imageData
       }
+
+      const formData = new FormData()
+      formData.append("image", imageBlob, "face.jpg")
+      formData.append("model_type", options.model_type || "face_detector")
+      formData.append("confidence_threshold", (options.confidence_threshold || 0.6).toString())
+      formData.append("nms_threshold", (options.nms_threshold || 0.3).toString())
+      formData.append("enable_liveness_detection", (options.enableLiveness ?? true).toString())
+
+      const token = await this.getApiToken()
+      const headers: Record<string, string> = {}
+      if (token) headers["X-Suri-Token"] = token
 
       const response = await fetch(`${this.config.baseUrl}/detect`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(request),
+        body: formData,
+        headers,
         signal: AbortSignal.timeout(this.config.timeout),
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`)
       }
 
       return await response.json()
@@ -171,46 +191,38 @@ export class BackendService {
     enableLiveness: boolean = true,
   ): Promise<FaceRecognitionResponse> {
     try {
+      const formData = new FormData()
       const blob = new Blob([imageData], { type: "image/jpeg" })
-      const dataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result as string)
-        reader.readAsDataURL(blob)
-      })
-      const base64Image = dataUrl.split(",")[1]
-
-      return await this.adapter.recognizeFace(
-        base64Image,
-        bbox,
-        groupId,
-        landmarks_5,
-        enableLiveness,
+      formData.append("image", blob, "face.jpg")
+      formData.append(
+        "metadata",
+        JSON.stringify({
+          bbox,
+          landmarks_5,
+          group_id: groupId,
+          enable_liveness_detection: enableLiveness,
+        }),
       )
+
+      const token = await this.getApiToken()
+      const headers: Record<string, string> = {}
+      if (token) headers["X-Suri-Token"] = token
+
+      const response = await fetch(`${this.config.baseUrl}/face/recognize`, {
+        method: "POST",
+        body: formData,
+        headers,
+        signal: AbortSignal.timeout(this.config.timeout),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      return await response.json()
     } catch (error) {
       console.error("Face recognition failed:", error)
-      throw error
-    }
-  }
-
-  async registerFace(
-    imageData: string,
-    personId: string,
-    bbox: number[],
-    groupId: string,
-    landmarks_5: number[][],
-    enableLiveness: boolean = true,
-  ): Promise<FaceRegistrationResponse> {
-    try {
-      return await this.adapter.registerFace(
-        imageData,
-        personId,
-        bbox,
-        groupId,
-        landmarks_5,
-        enableLiveness,
-      )
-    } catch (error) {
-      console.error("Face registration failed:", error)
       throw error
     }
   }
@@ -263,11 +275,15 @@ export class BackendService {
 
   async clearCache(): Promise<{ success: boolean; message: string }> {
     try {
+      const token = await this.getApiToken()
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      }
+      if (token) headers["X-Suri-Token"] = token
+
       const response = await fetch(`${this.config.baseUrl}/face/cache/invalidate`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         signal: AbortSignal.timeout(this.config.timeout),
       })
 

@@ -1,13 +1,8 @@
 import { useState, useCallback, useMemo } from "react"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
-import type {
-  DetectedFace,
-  BulkRegistrationResult,
-  BulkRegisterResponseItem,
-} from "@/components/group/modals/types"
-import { makeId, readFileAsDataUrl, toBase64Payload } from "@/utils/imageHelpers"
-
-const API_BASE_URL = "http://127.0.0.1:8700"
+import type { DetectedFace, BulkRegistrationResult } from "@/components/group/modals/types"
+import { makeId, readFileAsDataUrl } from "@/utils/imageHelpers"
+import { attendanceManager } from "@/services/AttendanceManager"
 
 export function useBulkRegistration(
   group: AttendanceGroup,
@@ -87,35 +82,8 @@ export function useBulkRegistration(
       setError(null)
 
       try {
-        const imagesData = await Promise.all(
-          files.map(async (file, idx) => {
-            const dataUrl = await readFileAsDataUrl(file)
-            return {
-              id: `image_${idx}`,
-              image: toBase64Payload(dataUrl),
-              fileName: file.name,
-            }
-          }),
-        )
+        const result = await attendanceManager.bulkDetectFaces(group.id, files)
 
-        const response = await fetch(
-          `${API_BASE_URL}/attendance/groups/${group.id}/bulk-detect-faces`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-            body: JSON.stringify({ images: imagesData }),
-          },
-        )
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.detail || "Face detection failed")
-        }
-
-        const result = await response.json()
         const allDetectedFaces: DetectedFace[] = []
 
         for (const imageResult of result.results) {
@@ -138,7 +106,7 @@ export function useBulkRegistration(
               landmarks_5: face.landmarks_5,
               qualityScore: face.quality_score,
               isAcceptable: face.is_acceptable,
-              suggestions: face.suggestions || [],
+              suggestions: [], // Standardized service doesn't provide these yet
               assignedPersonId: null,
               previewUrl,
             })
@@ -208,46 +176,43 @@ export function useBulkRegistration(
     setRegistrationResults(null)
 
     try {
-      const registrations = await Promise.all(
-        assignedFaces.map(async (face) => {
-          const imageIdx = parseInt(face.imageId.replace("image_", ""))
-          const file = uploadedFiles[imageIdx]
-          const dataUrl = await readFileAsDataUrl(file)
+      const registrations = assignedFaces.map((face) => {
+        const imageIdx = parseInt(face.imageId.replace("image_", ""))
+        const file = uploadedFiles[imageIdx]
+        const filename = `image_${imageIdx}.${file.name.split(".").pop() || "jpg"}`
 
-          return {
-            person_id: face.assignedPersonId,
-            image: toBase64Payload(dataUrl),
-            bbox: face.bbox,
-            landmarks_5: face.landmarks_5,
-            skip_quality_check: false,
-          }
-        }),
+        return {
+          person_id: face.assignedPersonId!,
+          filename: filename,
+          bbox: face.bbox,
+          landmarks_5: face.landmarks_5 || [],
+        }
+      })
+
+      // Collect unique files needed with their associated names
+      const uniqueImageIndices = Array.from(
+        new Set(assignedFaces.map((f) => parseInt(f.imageId.replace("image_", "")))),
       )
+      const imageFiles: { file: File; filename: string }[] = uniqueImageIndices.map((idx) => {
+        const file = uploadedFiles[idx]
+        return {
+          file,
+          filename: `image_${idx}.${file.name.split(".").pop() || "jpg"}`,
+        }
+      })
 
-      const response = await fetch(
-        `${API_BASE_URL}/attendance/groups/${group.id}/bulk-register-faces`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ registrations }),
-        },
-      )
+      const result = await attendanceManager.bulkRegisterFaces(group.id, registrations, imageFiles)
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || "Bulk registration failed")
-      }
-
-      const result = await response.json()
-      const results: BulkRegistrationResult[] = result.results.map(
-        (r: BulkRegisterResponseItem) => ({
-          personId: r.person_id,
-          memberName: r.member_name || "",
+      const results: BulkRegistrationResult[] = result.results.map((r) => {
+        // Find member info for the name
+        const member = members.find((m) => m.person_id === r.person_id)
+        return {
+          personId: r.person_id!,
+          memberName: member?.name || "Unknown Member",
           success: r.success,
           error: r.error,
-          qualityWarning: r.quality_warning,
-        }),
-      )
+        }
+      })
 
       setRegistrationResults(results)
       if (result.success_count > 0 && onRefresh) {
@@ -259,7 +224,7 @@ export function useBulkRegistration(
     } finally {
       setIsRegistering(false)
     }
-  }, [detectedFaces, uploadedFiles, group.id, onRefresh])
+  }, [detectedFaces, uploadedFiles, group.id, members, onRefresh])
 
   return {
     uploadedFiles,

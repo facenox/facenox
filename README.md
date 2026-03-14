@@ -46,7 +46,7 @@
 
 | **Local First** | **Consent Aware** | **Encrypted** |
 |:---|:---|:---|
-| Detection, recognition, and storage run on the device. | Biometric registration requires consent, and the registration view can shield non-consenting members. | Biometric templates are encrypted locally, and vault backups are password-protected. |
+| Detection, recognition, and storage run on-device via optimized binary transport. | Biometric registration requires consent, and the registration view can shield non-consenting members. | Biometric templates are encrypted locally, and vault backups are password-protected. |
 
 ---
 ## Download

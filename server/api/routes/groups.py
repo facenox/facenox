@@ -1,6 +1,6 @@
 import logging
 from typing import List
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, File, UploadFile, Form
 
 from api.schemas import (
     AttendanceGroupCreate,
@@ -218,16 +218,49 @@ async def get_group_persons(
 async def register_face_for_group_person(
     group_id: str,
     person_id: str,
-    request: dict,
+    image: UploadFile = File(...),
+    metadata: str = Form(...),
     repo: AttendanceRepository = Depends(get_repository),
 ):
-    """Register face data for a specific person in a group with anti-duplicate protection"""
+    """Register face data for a specific person in a group with anti-duplicate protection.
+    Supports multipart/form-data for consistent, high-performance binary transfer.
+    """
     try:
         from core.lifespan import face_recognizer
+        import json
+        import numpy as np
+        import cv2
+
+        # Decode metadata
+        try:
+            meta = json.loads(metadata)
+            bbox = meta.get("bbox")
+            landmarks_5 = meta.get("landmarks_5")
+            enable_liveness = meta.get("enable_liveness_detection", True)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid metadata format: {e}")
+
+        if not bbox or not landmarks_5:
+            raise HTTPException(
+                status_code=400,
+                detail="Missing required face metadata (bbox or landmarks)",
+            )
+
+        # Read and decode image binary
+        contents = await image.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img is None:
+            raise HTTPException(
+                status_code=400, detail="Failed to decode registration image"
+            )
 
         service = AttendanceService(repo, face_recognizer=face_recognizer)
         try:
-            return await service.register_face(group_id, person_id, request)
+            return await service.register_face(
+                group_id, person_id, img, bbox, landmarks_5, enable_liveness
+            )
         except PermissionError as e:
             raise HTTPException(status_code=403, detail=str(e))
         except ValueError as e:
@@ -271,18 +304,19 @@ async def remove_face_data_for_group_person(
 
 @router.post("/{group_id}/bulk-detect-faces")
 async def bulk_detect_faces(
-    group_id: str, request: dict, repo: AttendanceRepository = Depends(get_repository)
+    group_id: str,
+    images: List[UploadFile] = File(...),
+    repo: AttendanceRepository = Depends(get_repository),
 ):
-    """Detect faces in multiple uploaded images for bulk registration"""
+    """Detect faces in multiple uploaded images (Multipart)"""
     try:
         from core.lifespan import face_detector
 
-        images_data = request.get("images", [])
-        if not images_data:
+        if not images:
             raise HTTPException(status_code=400, detail="No images provided")
 
         service = AttendanceService(repo, face_detector=face_detector)
-        return await service.bulk_detect_faces_in_images(group_id, images_data)
+        return await service.bulk_detect_faces_in_files(group_id, images)
 
     except ValueError as e:
         if "not found" in str(e).lower():
@@ -293,18 +327,29 @@ async def bulk_detect_faces(
 
 @router.post("/{group_id}/bulk-register-faces")
 async def bulk_register_faces(
-    group_id: str, request: dict, repo: AttendanceRepository = Depends(get_repository)
+    group_id: str,
+    metadata: str = Form(...),
+    images: List[UploadFile] = File(...),
+    repo: AttendanceRepository = Depends(get_repository),
 ):
-    """Register multiple faces in bulk"""
+    """Register multiple faces in bulk (Multipart)"""
     try:
         from core.lifespan import face_recognizer
+        import json
 
-        registrations = request.get("registrations", [])
-        if not registrations:
-            raise HTTPException(status_code=400, detail="No registrations provided")
+        try:
+            regs = json.loads(metadata)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid metadata format: {e}")
+
+        if not regs or not images:
+            raise HTTPException(
+                status_code=400, detail="Missing registrations or images"
+            )
 
         service = AttendanceService(repo, face_recognizer=face_recognizer)
-        return await service.bulk_register(group_id, registrations)
+        return await service.bulk_register_with_files(group_id, regs, images)
+
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
     except ValueError as e:

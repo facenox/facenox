@@ -1,5 +1,5 @@
 import { ipcMain } from "electron"
-import { backendService, type DetectionOptions } from "../backendService.js"
+import { backendService } from "../backendService.js"
 
 /** Build auth headers for all direct fetch calls to the local backend. */
 function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
@@ -45,90 +45,6 @@ export function registerBackendHandlers() {
       )
     }
   })
-
-  ipcMain.handle(
-    "backend:detect-faces",
-    async (_event, imageBase64: string, options: DetectionOptions = {}) => {
-      try {
-        return await backendService.detectFaces(imageBase64, options)
-      } catch (error) {
-        throw new Error(
-          `Face detection failed: ${error instanceof Error ? error.message : String(error)}`,
-          { cause: error },
-        )
-      }
-    },
-  )
-
-  ipcMain.handle(
-    "backend:recognize-face",
-    async (
-      _event,
-      imageData: string,
-      bbox: number[],
-      groupId: string,
-      landmarks_5: number[][],
-      enableLivenessDetection: boolean,
-    ) => {
-      try {
-        const url = `${backendService.getUrl()}/face/recognize`
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders() },
-          body: JSON.stringify({
-            image: imageData,
-            bbox,
-            group_id: groupId,
-            landmarks_5,
-            enable_liveness_detection: enableLivenessDetection,
-          }),
-          signal: AbortSignal.timeout(30000),
-        })
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        return await response.json()
-      } catch (error) {
-        console.error("Face recognition failed:", error)
-        return { success: false, error: String(error) }
-      }
-    },
-  )
-
-  ipcMain.handle(
-    "backend:register-face",
-    async (
-      _event,
-      imageData: string,
-      personId: string,
-      bbox: number[],
-      groupId: string,
-      landmarks_5: number[][],
-      enableLivenessDetection: boolean,
-    ) => {
-      try {
-        const url = `${backendService.getUrl()}/face/register`
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders() },
-          body: JSON.stringify({
-            image: imageData,
-            person_id: personId,
-            bbox,
-            group_id: groupId,
-            landmarks_5,
-            enable_liveness_detection: enableLivenessDetection,
-          }),
-          signal: AbortSignal.timeout(30000),
-        })
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        return await response.json()
-      } catch (error) {
-        console.error("Face registration failed:", error)
-        return { success: false, error: String(error) }
-      }
-    },
-  )
 
   ipcMain.handle("backend:get-face-stats", async () => {
     const response = await fetch(`${backendService.getUrl()}/face/stats`, {

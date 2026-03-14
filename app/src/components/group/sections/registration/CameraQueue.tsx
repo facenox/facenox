@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
-import { attendanceManager } from "@/services"
+import { attendanceManager, backendService } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { useCamera } from "@/components/group/sections/registration/hooks/useCamera"
-import { toBase64Payload } from "@/components/group/sections/registration/hooks/useImageProcessing"
 import { useGroupUIStore } from "@/components/group/stores/groupUIStore"
 import { Dropdown } from "@/components/shared"
 
@@ -145,13 +144,15 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
     ctx.drawImage(video, -width, 0, width, height)
 
     const dataUrl = canvas.toDataURL("image/jpeg", 0.92)
-    const base64Payload = toBase64Payload(dataUrl)
 
     setIsProcessing(true)
     setError(null)
 
     try {
-      const detection = await window.electronAPI.backend.detectFaces(base64Payload, {
+      const response = await fetch(dataUrl)
+      const blob = await response.blob()
+
+      const detection = await backendService.detectFaces(blob, {
         model_type: "face_detector",
       })
 
@@ -189,7 +190,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
       const result = await attendanceManager.registerFaceForGroupPerson(
         group.id,
         currentMember.personId,
-        base64Payload,
+        blob,
         bestFace.bbox,
         bestFace.landmarks_5,
       )

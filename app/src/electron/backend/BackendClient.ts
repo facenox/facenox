@@ -1,5 +1,3 @@
-import type { FaceRecognitionResponse } from "../../types/recognition.js"
-
 export interface ModelInfo {
   model_name?: string
   model_path: string
@@ -28,22 +26,6 @@ export interface ModelsResponse {
     liveness_detector?: ModelEntry
     face_recognizer?: ModelEntry
   }
-}
-
-export interface DetectionOptions {
-  model_type?: string
-  confidence_threshold?: number
-  nms_threshold?: number
-  enableLiveness?: boolean
-}
-
-export interface DetectionResponse {
-  faces: {
-    bbox: [number, number, number, number]
-    confidence: number
-    landmarks_5?: number[][]
-  }[]
-  model_used: string
 }
 
 export class BackendClient {
@@ -88,55 +70,6 @@ export class BackendClient {
       method: "GET",
       headers: this.authHeaders(),
       signal: AbortSignal.timeout(10000),
-    })
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    return await response.json()
-  }
-
-  async detectFaces(
-    imageBase64: string,
-    options: DetectionOptions = {},
-  ): Promise<DetectionResponse> {
-    const request = {
-      image: imageBase64,
-      model_type: options.model_type || "face_detector",
-      confidence_threshold: options.confidence_threshold || 0.5,
-      nms_threshold: options.nms_threshold || 0.3,
-      enable_liveness_detection: options.enableLiveness ?? true,
-    }
-
-    const response = await fetch(this.getUrl("/detect"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...this.authHeaders() },
-      body: JSON.stringify(request),
-      signal: AbortSignal.timeout(30000),
-    })
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    return await response.json()
-  }
-
-  async recognizeFace(
-    imageBase64: string,
-    bbox: number[],
-    groupId: string,
-    landmarks_5: number[][],
-    enableLivenessDetection: boolean,
-  ): Promise<FaceRecognitionResponse> {
-    const request = {
-      image: imageBase64,
-      bbox,
-      group_id: groupId,
-      landmarks_5,
-      enable_liveness_detection: enableLivenessDetection,
-    }
-
-    const response = await fetch(this.getUrl("/face/recognize"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...this.authHeaders() },
-      body: JSON.stringify(request),
-      signal: AbortSignal.timeout(30000),
     })
 
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`)

@@ -23,51 +23,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
     getModels: () => {
       return ipcRenderer.invoke("backend:get-models")
     },
-    detectFaces: (
-      imageBase64: string,
-      options?: {
-        model_type?: string
-        confidence_threshold?: number
-        nms_threshold?: number
-        enableLiveness?: boolean
-      },
-    ) => {
-      return ipcRenderer.invoke("backend:detect-faces", imageBase64, options)
-    },
-    recognizeFace: (
-      imageData: string,
-      bbox: number[],
-      groupId: string,
-      landmarks_5: number[][],
-      enableLivenessDetection: boolean,
-    ) => {
-      return ipcRenderer.invoke(
-        "backend:recognize-face",
-        imageData,
-        bbox,
-        groupId,
-        landmarks_5,
-        enableLivenessDetection,
-      )
-    },
-    registerFace: (
-      imageData: string,
-      personId: string,
-      bbox: number[],
-      groupId: string,
-      landmarks_5: number[][],
-      enableLivenessDetection: boolean,
-    ) => {
-      return ipcRenderer.invoke(
-        "backend:register-face",
-        imageData,
-        personId,
-        bbox,
-        groupId,
-        landmarks_5,
-        enableLivenessDetection,
-      )
-    },
     getFaceStats: () => {
       return ipcRenderer.invoke("backend:get-face-stats")
     },

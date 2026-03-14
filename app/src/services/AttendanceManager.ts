@@ -7,6 +7,8 @@ import type {
   AttendanceReport,
   AttendanceSettings,
   AttendanceEvent,
+  BulkDetectResponse,
+  BulkRegisterResponse,
 } from "../types/recognition"
 
 import { HttpClient } from "./attendance/HttpClient"
@@ -166,7 +168,7 @@ export class AttendanceManager {
   async registerFaceForGroupPerson(
     groupId: string,
     personId: string,
-    imageData: string,
+    imageData: Blob | string,
     bbox: number[],
     landmarks_5: number[][],
     enableLiveness: boolean = true,
@@ -186,6 +188,23 @@ export class AttendanceManager {
     personId: string,
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     return this.memberManager.removeFaceDataForGroupPerson(groupId, personId)
+  }
+
+  async bulkDetectFaces(groupId: string, images: File[]): Promise<BulkDetectResponse> {
+    return this.groupManager.bulkDetectFaces(groupId, images)
+  }
+
+  async bulkRegisterFaces(
+    groupId: string,
+    registrations: {
+      person_id: string
+      bbox: number[] | { x: number; y: number; width: number; height: number }
+      landmarks_5: number[][]
+      filename?: string
+    }[],
+    images: { file: File; filename: string }[],
+  ): Promise<BulkRegisterResponse> {
+    return this.groupManager.bulkRegisterFaces(groupId, registrations, images)
   }
 
   async processAttendanceEvent(

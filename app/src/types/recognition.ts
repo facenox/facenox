@@ -226,3 +226,40 @@ export interface AttendanceEvent {
   event_type?: "check_in" | "check_out"
   error?: string
 }
+
+// Bulk Operations
+export interface BulkDetectResultItem {
+  image_id: string
+  success: boolean
+  faces: {
+    bbox: [number, number, number, number]
+    confidence: number
+    landmarks_5?: number[][]
+    quality_score: number
+    is_acceptable: boolean
+  }[]
+  total_faces?: number
+  error?: string
+}
+
+export interface BulkDetectResponse {
+  success: boolean
+  group_id: string
+  total_images: number
+  results: BulkDetectResultItem[]
+}
+
+export interface BulkRegisterResultItem {
+  index: number
+  person_id?: string
+  success: boolean
+  error?: string
+}
+
+export interface BulkRegisterResponse {
+  success: boolean
+  group_id: string
+  success_count: number
+  failed_count: number
+  results: BulkRegisterResultItem[]
+}

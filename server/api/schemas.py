@@ -11,14 +11,6 @@ from enum import Enum
 # ============================================================================
 
 
-class DetectionRequest(BaseModel):
-    image: str  # Base64
-    model_type: str = "face_detector"
-    confidence_threshold: float = 0.6
-    nms_threshold: float = 0.3
-    enable_liveness_detection: bool = True
-
-
 class DetectionResponse(BaseModel):
     success: bool
     faces: List[Dict]
@@ -44,33 +36,12 @@ class StreamingRequest(BaseModel):
 # ============================================================================
 
 
-class FaceRecognitionRequest(BaseModel):
-    image: str  # Base64
-    bbox: List[float]  # [x, y, w, h]
-    landmarks_5: List[List[float]]
-    group_id: str = Field(..., min_length=1)
-    enable_liveness_detection: bool
-
-    model_config = ConfigDict(extra="forbid")
-
-
 class FaceRecognitionResponse(BaseModel):
     success: bool
     person_id: Optional[str] = None
     similarity: float
     processing_time: float
     error: Optional[str] = None
-
-
-class FaceRegistrationRequest(BaseModel):
-    person_id: str
-    image: str  # Base64
-    bbox: List[float]  # [x, y, w, h]
-    group_id: str = Field(..., min_length=1)
-    landmarks_5: List[List[float]]
-    enable_liveness_detection: bool
-
-    model_config = ConfigDict(extra="forbid")
 
 
 class FaceRegistrationResponse(BaseModel):

@@ -3,10 +3,11 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import List, Optional, Any, Dict
 import ulid
+import numpy as np
+import cv2
 
 from api.schemas import AttendanceEventResponse
 from database.repository import AttendanceRepository
-from utils.image_utils import decode_base64_image
 
 logger = logging.getLogger(__name__)
 
@@ -401,7 +402,13 @@ class AttendanceService:
         )
 
     async def register_face(
-        self, group_id: str, person_id: str, request: dict
+        self,
+        group_id: str,
+        person_id: str,
+        image: np.ndarray,
+        bbox: List[float],
+        landmarks_5: List[List[float]],
+        enable_liveness: bool = True,
     ) -> Dict[str, Any]:
         """Register face for a person"""
         if not self.face_recognizer:
@@ -425,25 +432,7 @@ class AttendanceService:
                 "Biometric consent is required before face registration"
             )
 
-        image_data = request.get("image")
-        bbox = request.get("bbox")
-
-        if not image_data:
-            raise ValueError("Image data required")
-
-        if not bbox:
-            raise ValueError("Face bounding box required")
-
-        try:
-            image = decode_base64_image(image_data)
-        except Exception as e:
-            raise ValueError(f"Invalid image data: {str(e)}")
-
-        landmarks_5 = request.get("landmarks_5")
-        if landmarks_5 is None:
-            raise ValueError("Landmarks required from frontend face detection")
-
-        enable_liveness = request.get("enable_liveness_detection", True)
+        enable_liveness = enable_liveness
 
         from hooks import process_liveness_for_face_operation
 
@@ -508,10 +497,10 @@ class AttendanceService:
         else:
             raise ValueError("Face data not found for this person")
 
-    async def bulk_detect_faces_in_images(
-        self, group_id: str, images_data: list
+    async def bulk_detect_faces_in_files(
+        self, group_id: str, images: list
     ) -> Dict[str, Any]:
-        """Detect faces in multiple images"""
+        """Detect faces in multiple uploaded binary files (Multipart)"""
         if not self.face_detector:
             raise ValueError("Face detection system not available")
 
@@ -522,36 +511,25 @@ class AttendanceService:
         results = []
         from hooks import process_face_detection
 
-        for idx, image_data in enumerate(images_data):
+        for idx, file in enumerate(images):
+            image_id = file.filename or f"image_{idx}"
             try:
+                contents = await file.read()
+                nparr = np.frombuffer(contents, np.uint8)
+                image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-                image_base64 = image_data.get("image")
-                image_id = image_data.get("id", f"image_{idx}")
-
-                if not image_base64:
+                if image is None:
                     results.append(
                         {
                             "image_id": image_id,
                             "success": False,
-                            "error": "No image data provided",
+                            "error": "Failed to decode image",
                             "faces": [],
                         }
                     )
                     continue
 
-                image = decode_base64_image(image_base64)
-                detections = process_face_detection(image)
-
-                if not detections:
-                    results.append(
-                        {
-                            "image_id": image_id,
-                            "success": True,
-                            "faces": [],
-                            "message": "No faces detected",
-                        }
-                    )
-                    continue
+                detections = await process_face_detection(image)
 
                 processed_faces = []
                 for face in detections:
@@ -575,25 +553,29 @@ class AttendanceService:
                 )
 
             except Exception as e:
-                logger.error(f"Error processing image {idx}: {e}")
+                logger.error(f"Error processing image {image_id}: {e}")
                 results.append(
                     {
-                        "image_id": image_data.get("id"),
+                        "image_id": image_id,
                         "success": False,
                         "error": str(e),
                         "faces": [],
                     }
                 )
+            finally:
+                await file.close()
 
         return {
             "success": True,
             "group_id": group_id,
-            "total_images": len(images_data),
+            "total_images": len(images),
             "results": results,
         }
 
-    async def bulk_register(self, group_id: str, registrations: list) -> Dict[str, Any]:
-        """Bulk register faces"""
+    async def bulk_register_with_files(
+        self, group_id: str, registrations: list, files: list
+    ) -> Dict[str, Any]:
+        """Bulk register faces from uploaded binary files (Multipart)"""
         if not self.face_recognizer:
             raise ValueError("Face recognition system not available")
 
@@ -601,14 +583,38 @@ class AttendanceService:
         if not group:
             raise ValueError("Group not found")
 
+        # Create a mapping of file names to UploadFile objects for easy lookup
+        file_map = {f.filename: f for f in files if f.filename}
+        # Fallback to index-based mapping if no filenames
+        file_list = [f for f in files]
+
         success_count = 0
         failed_count = 0
         results = []
 
         for idx, reg_data in enumerate(registrations):
+            person_id = reg_data.get("person_id")
+            filename = reg_data.get("filename")
+
             try:
-                person_id = reg_data.get("person_id")
-                image_base64 = reg_data.get("image")
+                # Get the corresponding file
+                file = None
+                if filename and filename in file_map:
+                    file = file_map[filename]
+                elif idx < len(file_list):
+                    file = file_list[idx]
+
+                if not file:
+                    failed_count += 1
+                    results.append(
+                        {
+                            "index": idx,
+                            "person_id": person_id,
+                            "success": False,
+                            "error": "No image file matched",
+                        }
+                    )
+                    continue
 
                 member = await self.repo.get_member(person_id)
                 if not member or member.group_id != group_id:
@@ -625,17 +631,24 @@ class AttendanceService:
                             "index": idx,
                             "person_id": person_id,
                             "success": False,
-                            "error": "Biometric consent is required before face registration",
+                            "error": "Biometric consent required",
                         }
                     )
                     continue
 
-                try:
-                    image = decode_base64_image(image_base64)
-                except Exception:
+                contents = await file.read()
+                nparr = np.frombuffer(contents, np.uint8)
+                image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+                if image is None:
                     failed_count += 1
                     results.append(
-                        {"index": idx, "success": False, "error": "Invalid image"}
+                        {
+                            "index": idx,
+                            "person_id": person_id,
+                            "success": False,
+                            "error": "Failed to decode image",
+                        }
                     )
                     continue
 
@@ -647,7 +660,7 @@ class AttendanceService:
                             "index": idx,
                             "person_id": person_id,
                             "success": False,
-                            "error": "Landmarks required from frontend face detection",
+                            "error": "Landmarks required",
                         }
                     )
                     continue
@@ -673,8 +686,19 @@ class AttendanceService:
                     )
 
             except Exception as e:
+                logger.error(f"Error in bulk register item {idx}: {e}")
                 failed_count += 1
-                results.append({"index": idx, "success": False, "error": str(e)})
+                results.append(
+                    {
+                        "index": idx,
+                        "person_id": person_id,
+                        "success": False,
+                        "error": str(e),
+                    }
+                )
+            finally:
+                if file:
+                    await file.close()
 
         return {
             "success": True,

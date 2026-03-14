@@ -10,6 +10,10 @@ export class HttpClient {
     this.baseUrl = baseUrl
   }
 
+  getBaseUrl(): string {
+    return this.baseUrl
+  }
+
   /** Lazy-fetch the session token from the Electron main process (once per session). */
   private async getApiToken(): Promise<string> {
     if (this.token !== null) return this.token
@@ -121,13 +125,39 @@ export class HttpClient {
     })
   }
 
+  async postMultipart<T>(endpoint: string, formData: FormData): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`
+    const token = await this.getApiToken()
+    const headers: Record<string, string> = {}
+    if (token) headers["X-Suri-Token"] = token
+
+    // Note: Don't set Content-Type for FormData, browser sets it with boundary
+    const response = await fetchWithRetry(url, {
+      method: "POST",
+      body: formData,
+      headers,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(
+        (errorData as { detail?: string }).detail ||
+          (errorData as { error?: string }).error ||
+          `HTTP ${response.status}: ${response.statusText}`,
+      )
+    }
+
+    return response.json()
+  }
+
   async getText(endpoint: string): Promise<string> {
     await this.ensureBackendReady()
     const url = `${this.baseUrl}${endpoint}`
     const token = await this.getApiToken()
     const headers: Record<string, string> = {}
     if (token) headers["X-Suri-Token"] = token
-    const response = await fetch(url, { headers })
+
+    const response = await fetchWithRetry(url, { headers })
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }

@@ -1,6 +1,4 @@
 import type {
-  FaceRecognitionResponse,
-  FaceRegistrationResponse,
   PersonRemovalResponse,
   PersonUpdateResponse,
   SimilarityThresholdResponse,
@@ -9,40 +7,6 @@ import type {
 } from "../../types/recognition"
 
 export class ElectronAdapter {
-  async recognizeFace(
-    base64Image: string,
-    bbox: number[],
-    groupId: string,
-    landmarks_5: number[][],
-    enableLivenessDetection: boolean,
-  ): Promise<FaceRecognitionResponse> {
-    return window.electronAPI.backend.recognizeFace(
-      base64Image,
-      bbox,
-      groupId,
-      landmarks_5,
-      enableLivenessDetection,
-    )
-  }
-
-  async registerFace(
-    imageData: string,
-    personId: string,
-    bbox: number[],
-    groupId: string,
-    landmarks_5: number[][],
-    enableLivenessDetection: boolean,
-  ): Promise<FaceRegistrationResponse> {
-    return window.electronAPI.backend.registerFace(
-      imageData,
-      personId,
-      bbox,
-      groupId,
-      landmarks_5,
-      enableLivenessDetection,
-    )
-  }
-
   async removePerson(personId: string): Promise<PersonRemovalResponse> {
     return window.electronAPI.backend.removePerson(personId)
   }

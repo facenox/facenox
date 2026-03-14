@@ -1,6 +1,4 @@
 import type {
-  FaceRecognitionResponse,
-  FaceRegistrationResponse,
   PersonRemovalResponse,
   DatabaseStatsResponse,
   SimilarityThresholdResponse,
@@ -85,6 +83,7 @@ declare global {
   }
 
   interface BackendAPI {
+    getToken: () => Promise<string>
     checkAvailability: () => Promise<{
       available: boolean
       status?: number
@@ -108,33 +107,6 @@ declare global {
         }
       >
     >
-    detectFaces: (
-      imageBase64: string,
-      options?: DetectionOptions,
-    ) => Promise<{
-      faces: {
-        bbox: [number, number, number, number]
-        confidence: number
-        landmarks_5?: number[][]
-      }[]
-      model_used: string
-      session_id?: string
-    }>
-    recognizeFace: (
-      imageData: string,
-      bbox: number[],
-      groupId: string,
-      landmarks_5: number[][],
-      enableLivenessDetection: boolean,
-    ) => Promise<FaceRecognitionResponse>
-    registerFace: (
-      imageData: string,
-      personId: string,
-      bbox: number[],
-      groupId: string,
-      landmarks_5: number[][],
-      enableLivenessDetection: boolean,
-    ) => Promise<FaceRegistrationResponse>
     getFaceStats: () => Promise<DatabaseStatsResponse>
     removePerson: (personId: string) => Promise<PersonRemovalResponse>
     updatePerson: (oldPersonId: string, newPersonId: string) => Promise<PersonUpdateResponse>

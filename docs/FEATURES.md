@@ -7,6 +7,7 @@
 - **Local recognition pipeline**: face detection and recognition run on the local machine.
 - **Liveness checks**: the recognition flow includes anti-spoofing checks.
 - **Identity tracking**: tracked detections are stabilized across frames during live use.
+- **Optimized Binary Transport**: uses raw multipart binary streams for minimum latency and zero Base64 overhead.
 
 ### Attendance Management
 

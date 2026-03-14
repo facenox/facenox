@@ -3,15 +3,9 @@ import {
   type BackendConfig,
   type BackendStatus,
 } from "./backend/BackendProcessManager.js"
-import {
-  BackendClient,
-  type ModelsResponse,
-  type DetectionOptions,
-  type DetectionResponse,
-} from "./backend/BackendClient.js"
-import type { FaceRecognitionResponse } from "../types/recognition.js"
+import { BackendClient, type ModelsResponse } from "./backend/BackendClient.js"
 
-export type { BackendConfig, BackendStatus, ModelsResponse, DetectionOptions, DetectionResponse }
+export type { BackendConfig, BackendStatus, ModelsResponse }
 
 export class BackendService {
   private config: BackendConfig
@@ -88,29 +82,6 @@ export class BackendService {
 
   async getModels(): Promise<ModelsResponse> {
     return this.client.getModels()
-  }
-
-  async detectFaces(
-    imageBase64: string,
-    options: DetectionOptions = {},
-  ): Promise<DetectionResponse> {
-    return this.client.detectFaces(imageBase64, options)
-  }
-
-  async recognizeFace(
-    imageBase64: string,
-    bbox: number[],
-    groupId: string,
-    landmarks_5: number[][],
-    enableLivenessDetection: boolean,
-  ): Promise<FaceRecognitionResponse> {
-    return this.client.recognizeFace(
-      imageBase64,
-      bbox,
-      groupId,
-      landmarks_5,
-      enableLivenessDetection,
-    )
   }
 }
 

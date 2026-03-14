@@ -5,11 +5,6 @@ export const makeId = (prefix = "id") => {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-export const toBase64Payload = (dataUrl: string) => {
-  const [, payload] = dataUrl.split(",")
-  return payload || dataUrl
-}
-
 export const readFileAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader()

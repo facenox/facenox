@@ -1,21 +1,20 @@
 import logging
 import time
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
+import json
 
 from api.deps import get_repository
 from api.recognition_deps import get_face_recognizer
 from database.repository import AttendanceRepository
 from api.schemas import (
-    FaceRecognitionRequest,
     FaceRecognitionResponse,
-    FaceRegistrationRequest,
-    FaceRegistrationResponse,
     PersonUpdateRequest,
     SimilarityThresholdRequest,
 )
 from hooks import process_liveness_for_face_operation
-from utils.image_utils import decode_base64_image
+import numpy as np
+import cv2
 
 if not logging.getLogger().handlers:
     logging.basicConfig(level=logging.INFO)
@@ -26,22 +25,44 @@ router = APIRouter()
 
 @router.post("/face/recognize", response_model=FaceRecognitionResponse)
 async def recognize_face(
-    request: FaceRecognitionRequest,
+    image: UploadFile = File(...),
+    metadata: str = Form(...),
     repo: AttendanceRepository = Depends(get_repository),
     face_recognizer=Depends(get_face_recognizer),
 ):
     """
     Recognize a face using face recognizer with liveness detection validation
+    Supports multipart/form-data for high-performance binary transfer.
     """
     start_time = time.time()
 
     try:
+        # Decode metadata JSON string
+        try:
+            meta = json.loads(metadata)
+            bbox = meta.get("bbox")
+            landmarks_5 = meta.get("landmarks_5")
+            group_id = meta.get("group_id")
+            enable_liveness_detection = meta.get("enable_liveness_detection", True)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid metadata format: {e}")
 
-        image = decode_base64_image(request.image)
+        if not bbox or not landmarks_5 or not group_id:
+            raise HTTPException(
+                status_code=400, detail="Missing required metadata fields"
+            )
+
+        # Read and decode image binary directly
+        contents = await image.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img is None:
+            raise ValueError("Failed to decode image from multipart data")
 
         should_block, error_msg, liveness_status = (
             await process_liveness_for_face_operation(
-                image, request.bbox, request.enable_liveness_detection, "Recognition"
+                img, bbox, enable_liveness_detection, "Recognition"
             )
         )
 
@@ -55,11 +76,9 @@ async def recognize_face(
                 error=error_msg,
             )
 
-        landmarks_5 = request.landmarks_5
-
-        allowed_person_ids = await repo.get_group_person_ids(request.group_id)
+        allowed_person_ids = await repo.get_group_person_ids(group_id)
         result = await face_recognizer.recognize_face(
-            image, landmarks_5, allowed_person_ids
+            img, landmarks_5, allowed_person_ids
         )
 
         success = result["success"]
@@ -97,90 +116,6 @@ async def recognize_face(
             success=False,
             person_id=None,
             similarity=0.0,
-            processing_time=processing_time,
-            error=str(e),
-        )
-
-
-@router.post("/face/register", response_model=FaceRegistrationResponse)
-async def register_person(
-    request: FaceRegistrationRequest,
-    repo: AttendanceRepository = Depends(get_repository),
-    face_recognizer=Depends(get_face_recognizer),
-):
-    """
-    Register a new person in the face database with liveness detection validation
-    """
-    start_time = time.time()
-
-    try:
-
-        member = await repo.get_member(request.person_id)
-        if not member:
-            raise HTTPException(status_code=404, detail="Member not found")
-
-        if member.group_id != request.group_id:
-            raise HTTPException(
-                status_code=400,
-                detail="Member does not belong to the provided group",
-            )
-
-        if not member.has_consent:
-            raise HTTPException(
-                status_code=403,
-                detail="Biometric consent is required before face registration.",
-            )
-
-        image = decode_base64_image(request.image)
-
-        # Check liveness detection
-        should_block, error_msg = process_liveness_for_face_operation(
-            image, request.bbox, request.enable_liveness_detection, "Registration"
-        )
-        if should_block:
-            processing_time = time.time() - start_time
-            return FaceRegistrationResponse(
-                success=False,
-                person_id=request.person_id,
-                total_persons=0,
-                processing_time=processing_time,
-                error=error_msg,
-            )
-
-        # Landmarks are required for alignment in this pipeline.
-        landmarks_5 = request.landmarks_5
-
-        result = await face_recognizer.register_person(
-            request.person_id, image, landmarks_5
-        )
-
-        if result["success"]:
-            await repo.add_audit_log(
-                action="MEMBER_REGISTERED",
-                target_type="member",
-                target_id=request.person_id,
-                details=f"Face data registered in group {request.group_id}",
-            )
-
-        processing_time = time.time() - start_time
-
-        return FaceRegistrationResponse(
-            success=result["success"],
-            person_id=request.person_id,
-            total_persons=result.get("total_persons", 0),
-            processing_time=processing_time,
-            error=result.get("error"),
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        processing_time = time.time() - start_time
-        logger.error(f"Person registration error: {e}")
-        return FaceRegistrationResponse(
-            success=False,
-            person_id=request.person_id,
-            total_persons=0,
             processing_time=processing_time,
             error=str(e),
         )

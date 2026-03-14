@@ -170,40 +170,6 @@ class ConnectionManager:
         for client_id in disconnected_clients:
             await self.disconnect(client_id)
 
-    async def send_detection_result(
-        self,
-        client_id: str,
-        image_base64: str,
-        detections: list,
-        processing_time: float,
-        model_info: dict,
-    ) -> bool:
-        """
-        Send detection result to client
-
-        Args:
-            client_id: Target client identifier
-            image_base64: Base64 encoded result image
-            detections: List of detected faces
-            processing_time: Processing time in seconds
-            model_info: Model information
-
-        Returns:
-            True if sent successfully, False otherwise
-        """
-        message = {
-            "type": "detection_result",
-            "data": {
-                "image": image_base64,
-                "detections": detections,
-                "processing_time": processing_time,
-                "model_info": model_info,
-                "timestamp": datetime.now().isoformat(),
-            },
-        }
-
-        return await self.send_personal_message(message, client_id)
-
     async def send_error(
         self, client_id: str, error_message: str, error_code: str = None
     ) -> bool:

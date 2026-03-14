@@ -6,26 +6,37 @@ Suri is currently a **local-first desktop application**. The implemented system 
 
 ```mermaid
 graph TD
-    subgraph Local [Local Machine]
-        UI[React Frontend] <-->|IPC| Main[Electron Main]
-        Main <-->|WebSockets| AI[Python AI Engine]
-        AI <-->|SQLAlchemy| SQLite[(Local DB)]
+    subgraph UI [Renderer Process]
+        React[React Frontend]
     end
+
+    subgraph Main [Main Process]
+        Electron[Electron Core]
+    end
+
+    subgraph Backend [AI Engine]
+        FastAPI[FastAPI Backend]
+        DB[(Local SQLite)]
+    end
+
+    React <-->|IPC| Electron
+    React <-->|HTTP/Multipart| FastAPI
+    FastAPI <--> DB
 ```
 
 ## Core Components
 
-### 1. Local Processing Layer
--   **Electron renderer** provides the desktop UI.
--   **Electron main** handles local orchestration, IPC, and app lifecycle.
--   **FastAPI backend** exposes localhost-only endpoints for attendance, consent, vault import/export, and biometric operations.
--   **ONNX-based recognition pipeline** runs on the local machine.
+### 1. High-Performance Processing Layer
+-   **Electron Renderer** provides the desktop UI and handles direct binary transport.
+-   **Electron Main** manages app lifecycle, system-level orchestration, and secure token generation.
+-   **FastAPI Backend** (localhost-only) provides high-performance endpoints for attendance, consent, and biometrics.
+-   **ONNX-based Recognition Pipeline** runs on the local machine using raw binary buffers (OpenCV).
 
-### 2. Local Data Flow
-The implemented data flow is local:
-1.  **Electron UI** handles user actions and local app orchestration.
-2.  **FastAPI backend** handles attendance, consent, vault import/export, and biometric operations over localhost.
-3.  **SQLite** stores attendance data, member records, settings, audit entries, and encrypted biometric templates on the device.
+### 2. Standardized Data Flow
+1.  **Direct Transport**: The UI communicates directly with the Python backend via authenticated HTTP for image processing, bypassing Electron IPC bottlenecks.
+2.  **Binary First**: Images are moved as raw `multipart/form-data` (Blobs/Files), eliminating Base64 overhead.
+3.  **Unified Auth**: All renderer-to-backend requests are secured with an `X-Suri-Token` injected by the service layer.
+4.  **Local Storage**: SQLite stores membership data, settings, and encrypted biometric templates on-device.
 
 ### 3. Current Deployment Model
 -   **Primary deployment**: single desktop app installation.
