@@ -95,9 +95,11 @@ class ConnectionManager:
                 del self.streaming_tasks[client_id]
 
             try:
-                await websocket.close(code=1008, reason="Idle timeout")
-            except Exception as e:
-                logger.warning(f"Error closing websocket for {client_id}: {e}")
+                # Check if the connection is still "open" before closing
+                if websocket.client_state.name == "CONNECTED":
+                    await websocket.close(code=1000)
+            except:
+                pass # Truthful silence: We don't care if it fails during shutdown
 
             del self.active_connections[client_id]
             if client_id in self.connection_metadata:
