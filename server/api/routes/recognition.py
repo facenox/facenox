@@ -86,7 +86,7 @@ async def recognize_face(
         similarity = result.get("similarity", 0.0)
         error = result.get("error")
 
-        # FIX: Security Theater - Ensure identity isn't returned for non-consenting users
+        # Privacy safeguard: Ensure identity matches are suppressed for non-consenting users
         if success and person_id:
             member = await repo.get_member(person_id)
             if not member or not member.has_consent:

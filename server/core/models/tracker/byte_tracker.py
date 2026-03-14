@@ -70,13 +70,7 @@ class STrack(BaseTrack):
         self.score = new_track.score
 
     def update(self, new_track, frame_id):
-        """
-        Update a matched track
-        :type new_track: STrack
-        :type frame_id: int
-        :type update_feature: bool
-        :return:
-        """
+        """Update a matched track"""
         self.frame_id = frame_id
         self.tracklet_len += 1
 
@@ -141,9 +135,9 @@ class STrack(BaseTrack):
 
 class BYTETracker(object):
     def __init__(self, args, frame_rate=30):
-        self.tracked_stracks = []  # type: list[STrack]
-        self.lost_stracks = []  # type: list[STrack]
-        self.removed_stracks = []  # type: list[STrack]
+        self.tracked_stracks = []
+        self.lost_stracks = []
+        self.removed_stracks = []
 
         self.frame_id = 0
         self.args = args
@@ -192,7 +186,7 @@ class BYTETracker(object):
 
         """ Add newly detected tracklets to tracked_stracks"""
         unconfirmed = []
-        tracked_stracks = []  # type: list[STrack]
+        tracked_stracks = []
         for track in self.tracked_stracks:
             if not track.is_activated:
                 unconfirmed.append(track)

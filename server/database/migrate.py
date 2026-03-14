@@ -11,14 +11,12 @@ def run_migrations():
     try:
         logger.info("Checking for database migrations...")
 
-        # Initialize Alembic config
         alembic_cfg = Config(str(ALEMBIC_CONFIG_PATH))
 
         # Ensure script_location points to the correct absolute path
         # This is critical for frozen environments
         alembic_cfg.set_main_option("script_location", str(MIGRATIONS_DIR))
 
-        # Run the migration
         command.upgrade(alembic_cfg, "head")
 
         logger.info("Database migration check complete (head).")

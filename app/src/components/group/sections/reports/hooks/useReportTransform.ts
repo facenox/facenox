@@ -144,8 +144,6 @@ export function useReportTransform(
         let isLate = finalSession?.is_late || false
         let lateMinutes = finalSession?.late_minutes || 0
 
-        // If we have a check-in time and group settings are active
-        // Check if late tracking is enabled in settings
         const isLateTrackingEnabled = group.settings?.late_threshold_enabled ?? false
 
         if (!isLateTrackingEnabled) {
@@ -164,7 +162,6 @@ export function useReportTransform(
             const thresholdMinutes = group.settings.late_threshold_minutes || 0
             const lateThresholdTime = new Date(classStart.getTime() + thresholdMinutes * 60000)
 
-            // Compare
             if (checkIn > lateThresholdTime) {
               isLate = true
               // Calculate raw minutes late (relative to start time, not threshold)

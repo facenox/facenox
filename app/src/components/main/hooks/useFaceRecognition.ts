@@ -308,7 +308,6 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
               const trackIdStr = `track_${face.track_id}`
               const currentTime = Date.now()
 
-              // Check store for existing identity
               const existingTrack = useDetectionStore.getState().trackedFaces.get(trackIdStr)
               const knownPersonId = existingTrack?.personId
 
@@ -338,7 +337,6 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
                         (cooldownInfo?.cooldownDurationSeconds ?? attendanceCooldownSeconds) * 1000
 
                       if (timeSinceLastAttendance < thresholdMs) {
-                        // Just update bbox in the cooldown map
                         setPersistentCooldowns((prev) => {
                           const newPersistent = new Map(prev)
                           const existing = newPersistent.get(cooldownKey)
@@ -353,7 +351,6 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
                           return prev
                         })
                       } else {
-                        // ELAPSED: Attempt to log
                         const attendanceEvent = await attendanceManager.processAttendanceEvent(
                           recoveredPersonId,
                           face.confidence,
@@ -407,7 +404,6 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
                 startTransition(() => {
                   setTrackedFaces((prev) => {
                     const newTracked = new Map(prev)
-                    // Create new track with NO identity
                     newTracked.set(trackIdStr, {
                       id: trackIdStr,
                       bbox: face.bbox,
