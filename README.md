@@ -111,25 +111,6 @@ Project docs:
     <img src="https://skillicons.dev/icons?i=electron,react,vite,tailwindcss,python,fastapi,sqlite,opencv&theme=dark" />
 </div>
 
-<!-- ROADMAP -->
-## Roadmap
-
-### Phase 1: Local Foundation (Completed)
-- [x] **Face Recognition Pipeline**: Local face recognition and liveness detection.
-- [x] **Data Integrity**: Atomic System Backups & Encrypted Vaults (.suri).
-- [x] **Privacy Controls**: Local storage, biometric consent tracking, and Privacy Shield enforcement.
-
-### Phase 2: Connectivity (In-Progress)
-- [ ] **Multi-Camera**: Parallel RTSP stream support for large venues.
-- [ ] **Backup Sync**: Optional encrypted backup synchronization between trusted deployments.
-
-### Phase 3: Ecosystem (Future)
-- [ ] **Web Dashboard**: Centralized reporting and administration around local Suri deployments.
-- [ ] **Mobile Companion**: Remote attendance check-in and automated notifications.
-
-
-Visit the [issues page](https://github.com/SuriAI/suri/issues) to submit feature requests.
-
 ## Contributing
 
 Suri is open source. If you want to help make it better, pull requests are welcome.
