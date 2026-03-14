@@ -2,9 +2,17 @@
   "name": "suri",
   "private": true,
   "scripts": {
-    "dev": "cd app && pnpm dev",
-    "clean:app": "cd app && npx eslint . --fix && npx prettier . --write && cd ../",
-    "clean:server": "cd server && ruff check --fix && black ."
+    "dev": "npm run dev --prefix app",
+    "clean:app": "npm run clean --prefix app",
+    "clean:server": "npm run clean --prefix server",
+    "clean": "npm run clean:app && npm run clean:server",
+    "lint:app": "npm run lint --prefix app",
+    "lint:server": "npm run lint --prefix server",
+    "lint": "npm run lint:app && npm run lint:server",
+    "format:app": "npm run format --prefix app",
+    "format:server": "npm run format --prefix server",
+    "format": "npm run format:app && npm run format:server",
+    "fix": "npm run lint && npm run format"
   },
   "license": "AGPL-3.0"
 }

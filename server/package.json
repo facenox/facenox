@@ -1,0 +1,11 @@
+{
+  "name": "suri-server",
+  "private": true,
+  "scripts": {
+    "dev": "python run.py",
+    "clean": "npx rimraf build dist .ruff_cache __pycache__ .pytest_cache",
+    "lint": "ruff check --fix",
+    "format": "black .",
+    "fix": "npm run lint && npm run format"
+  }
+}
