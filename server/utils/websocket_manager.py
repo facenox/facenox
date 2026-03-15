@@ -249,31 +249,6 @@ class ConnectionManager:
         """
         return self.connection_metadata.get(client_id)
 
-    def get_active_connections(self) -> Dict[str, dict]:
-        """
-        Get all active connections with metadata
-
-        Returns:
-            Dictionary of active connections and their metadata
-        """
-        return {
-            client_id: {
-                **metadata,
-                "connected_at": metadata["connected_at"].isoformat(),
-                "last_activity": metadata["last_activity"].isoformat(),
-            }
-            for client_id, metadata in self.connection_metadata.items()
-        }
-
-    def get_connection_count(self) -> int:
-        """
-        Get number of active connections
-
-        Returns:
-            Number of active connections
-        """
-        return len(self.active_connections)
-
     def update_fps(self, client_id: str) -> int:
         """
         Update and get FPS for a client based on frame timestamps
@@ -320,46 +295,6 @@ class ConnectionManager:
             FaceTracker instance or None if not found
         """
         return self.face_trackers.get(client_id)
-
-    def get_fps(self, client_id: str) -> int:
-        """
-        Get current FPS for a client
-
-        Args:
-            client_id: Client identifier
-
-        Returns:
-            Current FPS (defaults to 30 if not found)
-        """
-        if client_id not in self.fps_tracking:
-            return 30
-        return self.fps_tracking[client_id]["current_fps"]
-
-    async def ping_all_clients(self):
-        """
-        Send ping to all clients to check connection health
-        """
-        ping_message = {"type": "ping", "timestamp": datetime.now().isoformat()}
-
-        await self.broadcast(ping_message)
-
-    async def cleanup_inactive_connections(self, timeout_minutes: int = 30):
-        """
-        Clean up inactive connections
-
-        Args:
-            timeout_minutes: Timeout in minutes for inactive connections
-        """
-        current_time = datetime.now()
-        inactive_clients = []
-
-        for client_id, metadata in self.connection_metadata.items():
-            time_diff = current_time - metadata["last_activity"]
-            if time_diff.total_seconds() > (timeout_minutes * 60):
-                inactive_clients.append(client_id)
-
-        for client_id in inactive_clients:
-            await self.disconnect(client_id)
 
 
 # Global connection manager instance
