@@ -18,22 +18,6 @@ def normalize_embeddings_batch(embeddings: np.ndarray) -> List[np.ndarray]:
     return [normalized[i].astype(np.float32) for i in range(len(embeddings))]
 
 
-def compute_similarity(
-    query_embedding: np.ndarray, database_embedding: np.ndarray
-) -> float:
-    """
-    Compute cosine similarity between two normalized embeddings.
-
-    Args:
-        query_embedding: Query embedding (normalized)
-        database_embedding: Database embedding (normalized)
-
-    Returns:
-        Similarity score in range [0, 1]
-    """
-    return float(np.dot(query_embedding, database_embedding))
-
-
 def find_best_match(
     query_embedding: np.ndarray,
     database: Dict[str, np.ndarray],

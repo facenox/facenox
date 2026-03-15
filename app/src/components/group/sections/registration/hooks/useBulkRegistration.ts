@@ -103,15 +103,20 @@ export function useBulkRegistration(
           }
 
           const imageIdx = parseInt(imageResult.image_id.replace("image_", ""))
-          const file = files[imageIdx - startIndex]
+          const file = files[imageIdx]
+          if (!file) {
+            console.error(`No file found for image index ${imageIdx}`)
+            continue
+          }
           const dataUrl = await readFileAsDataUrl(file)
+          const absoluteImageId = `image_${imageIdx + startIndex}`
 
           for (const face of imageResult.faces) {
             const previewUrl = await createFacePreview(dataUrl, face.bbox)
 
             allDetectedFaces.push({
               faceId: makeId(),
-              imageId: imageResult.image_id,
+              imageId: absoluteImageId,
               bbox: face.bbox,
               confidence: face.confidence,
               landmarks_5: face.landmarks_5,
@@ -252,9 +257,9 @@ export function useBulkRegistration(
         const imageIdx = parseInt(face.imageId.replace("image_", ""))
         const file = uploadedFiles[imageIdx]
         return {
-          person_id: face.assignedPersonId,
+          person_id: face.assignedPersonId as string,
           bbox: face.bbox,
-          landmarks_5: face.landmarks_5,
+          landmarks_5: face.landmarks_5 as number[][],
           skip_quality_check: false,
           filename: file.name,
         }

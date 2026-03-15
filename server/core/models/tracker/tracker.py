@@ -181,11 +181,3 @@ class FaceTracker:
                 result.append(face_result)
 
         return result
-
-    def reset(self):
-        """Reset tracker"""
-        self.tracker = BYTETracker(self.args, frame_rate=self.frame_rate)
-
-    def get_active_track_count(self) -> int:
-        """Get number of active tracks"""
-        return len(self.tracker.tracked_stracks)

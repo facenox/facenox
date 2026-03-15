@@ -1,5 +1,6 @@
 import type { AttendanceMember } from "@/types/recognition"
 import type { DetectedFace } from "@/components/group/sections/registration/types"
+import { Dropdown } from "@/components/shared"
 
 interface FaceAssignmentGridProps {
   detectedFaces: DetectedFace[]
@@ -24,16 +25,23 @@ export function FaceAssignmentGrid({
 }: FaceAssignmentGridProps) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="text-2xl font-light text-white">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex h-7 items-center rounded-full border border-cyan-500/20 bg-cyan-500/5 px-3 shadow-[0_0_15px_rgba(34,211,238,0.05)]">
+          <span className="text-[10px] font-bold tracking-tight text-white/90">
             {assignedCount}
-            <span className="text-white/20">/{detectedFaces.length}</span>
-          </div>
-          <div className="text-[11px] font-medium text-white/40">assigned</div>
+            <span className="mx-1 text-white/30">/</span>
+            {detectedFaces.length}
+            <span className="ml-1.5 font-medium tracking-wider text-white/40 uppercase">
+              Assigned
+            </span>
+          </span>
         </div>
-        <div className="text-[11px] font-medium text-white/40">
-          {availableMembers.length} members available
+
+        <div className="flex h-7 items-center rounded-full border border-white/5 bg-white/5 px-3">
+          <span className="text-[10px] font-medium text-white/40">
+            {availableMembers.length} {availableMembers.length === 1 ? "member" : "members"}{" "}
+            available
+          </span>
         </div>
       </div>
 
@@ -59,12 +67,6 @@ export function FaceAssignmentGrid({
                   alt="Detected face"
                   className="h-full w-full object-cover"
                 />
-                <div className="absolute top-2 right-2 flex items-center rounded-full border border-white/5 bg-black/80 p-1.5 shadow-sm">
-                  <div
-                    className={`h-2 w-2 rounded-full ${face.confidence > 0.8 ? "bg-cyan-400/80 shadow-[0_0_8px_rgba(34,211,238,0.3)]" : "bg-amber-400/80 shadow-[0_0_8px_rgba(251,191,36,0.3)]"}`}
-                    title={face.confidence > 0.8 ? "High Confidence" : "Low Confidence"}
-                  />
-                </div>
                 {!face.isAcceptable && (
                   <div className="absolute right-2 bottom-2 left-2 translate-z-0 transform rounded-lg bg-amber-500/90 px-2 py-1.5 text-center shadow-lg">
                     <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-black">
@@ -77,60 +79,31 @@ export function FaceAssignmentGrid({
 
               <div className="space-y-2 p-3">
                 {!face.assignedPersonId ?
-                  <div className="relative">
-                    <select
-                      value=""
-                      onChange={(e) => onAssignMember(face.faceId, e.target.value)}
-                      className="w-full cursor-pointer appearance-none rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 pr-7 text-xs text-white transition-all focus:border-cyan-400/50 focus:bg-white/10 focus:outline-none"
-                      style={{ colorScheme: "dark" }}>
-                      <option value="" className="bg-black text-white">
-                        Select member...
-                      </option>
-                      {availableMembers.map((member) => (
-                        <option
-                          key={member.person_id}
-                          value={member.person_id}
-                          className="bg-black text-white">
-                          {member.name}
-                        </option>
-                      ))}
-                    </select>
-                    {/* Custom dropdown arrow */}
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                      <svg
-                        className="h-2.5 w-2.5 text-white/50 transition-colors duration-200"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2.5}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                : <div className="flex items-center gap-2 rounded-lg border border-cyan-400/20 bg-cyan-500/10 p-2">
-                    <div className="flex-1 truncate text-[11px] font-semibold text-cyan-200">
-                      {assignedMember?.name}
+                  <Dropdown
+                    options={availableMembers.map((m) => ({
+                      value: m.person_id,
+                      label: m.name,
+                    }))}
+                    value=""
+                    onChange={(val) => val && onAssignMember(face.faceId, val as string)}
+                    placeholder="Select member..."
+                    showPlaceholderOption={true}
+                    allowClear={false}
+                    buttonClassName="!py-1.5 !text-[11px] border-white/10 bg-white/5 hover:border-cyan-400/30 hover:bg-cyan-500/3"
+                  />
+                : <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[11px] font-bold text-cyan-200">
+                        {assignedMember?.name}
+                      </div>
+                      <div className="text-[9px] font-medium tracking-wider text-cyan-400/40 uppercase">
+                        Assigned
+                      </div>
                     </div>
                     <button
                       onClick={() => onUnassign(face.faceId)}
-                      className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/5 text-white/50 transition hover:bg-red-500/20 hover:text-red-300">
-                      <svg
-                        className="h-3 w-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white/5 text-white/50 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-neutral-800 hover:text-white">
+                      <i className="fa-solid fa-xmark text-[10px]"></i>
                     </button>
                   </div>
                 }

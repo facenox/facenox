@@ -41,10 +41,12 @@ export function RegistrationResults({
                 : "border-red-400/20 bg-red-500/5"
               }`}>
               <div
-                className={`flex h-6 w-6 items-center justify-center rounded-lg text-sm ${
-                  result.success ? "bg-cyan-500/20" : "bg-red-500/20"
+                className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs ${
+                  result.success ? "bg-cyan-500/20 text-cyan-400" : "bg-red-500/20 text-red-400"
                 }`}>
-                {result.success ? "✓" : "✕"}
+                {result.success ?
+                  <i className="fa-solid fa-check"></i>
+                : <i className="fa-solid fa-xmark"></i>}
               </div>
               <div className="min-w-0 flex-1">
                 <div

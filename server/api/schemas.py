@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Dict, List, Optional
-from pydantic import BaseModel, Field, validator, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 
 
@@ -23,14 +23,6 @@ class OptimizationRequest(BaseModel):
     pass
 
 
-class StreamingRequest(BaseModel):
-    session_id: str
-    model_type: str = "face_detector"
-    confidence_threshold: float = 0.6
-    nms_threshold: float = 0.3
-    enable_liveness_detection: bool = True
-
-
 # ============================================================================
 # Face Recognition Schemas
 # ============================================================================
@@ -42,18 +34,6 @@ class FaceRecognitionResponse(BaseModel):
     similarity: float
     processing_time: float
     error: Optional[str] = None
-
-
-class FaceRegistrationResponse(BaseModel):
-    success: bool
-    person_id: str
-    total_persons: int
-    processing_time: float
-    error: Optional[str] = None
-
-
-class PersonRemovalRequest(BaseModel):
-    person_id: str
 
 
 class PersonUpdateRequest(BaseModel):
@@ -271,43 +251,12 @@ class AttendanceReportResponse(BaseModel):
 
 
 # Query Models
-class AttendanceRecordsQuery(BaseModel):
-    group_id: Optional[str] = None
-    person_id: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    limit: Optional[int] = Field(None, ge=1, le=1000)
-
-
-class AttendanceSessionsQuery(BaseModel):
-    group_id: Optional[str] = None
-    person_id: Optional[str] = None
-    start_date: Optional[str] = None  # YYYY-MM-DD format
-    end_date: Optional[str] = None  # YYYY-MM-DD format
-
-
-class AttendanceReportQuery(BaseModel):
-    group_id: str = Field(..., min_length=1)
-    start_date: datetime
-    end_date: datetime
-
-    @validator("end_date")
-    def end_date_must_be_after_start_date(cls, v, values):
-        if "start_date" in values and v <= values["start_date"]:
-            raise ValueError("end_date must be after start_date")
-        return v
 
 
 # Response Models
 class SuccessResponse(BaseModel):
     success: bool = True
     message: str
-
-
-class ErrorResponse(BaseModel):
-    success: bool = False
-    error: str
-    detail: Optional[str] = None
 
 
 class DatabaseStatsResponse(BaseModel):

@@ -512,7 +512,7 @@ class AttendanceService:
         from hooks import process_face_detection
 
         for idx, file in enumerate(images):
-            image_id = file.filename or f"image_{idx}"
+            image_id = f"image_{idx}"
             try:
                 contents = await file.read()
                 nparr = np.frombuffer(contents, np.uint8)

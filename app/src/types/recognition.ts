@@ -237,6 +237,7 @@ export interface BulkDetectResultItem {
     landmarks_5?: number[][]
     quality_score: number
     is_acceptable: boolean
+    suggestions?: string[]
   }[]
   total_faces?: number
   error?: string
@@ -251,9 +252,11 @@ export interface BulkDetectResponse {
 
 export interface BulkRegisterResultItem {
   index: number
-  person_id?: string
+  person_id: string
+  member_name?: string
   success: boolean
   error?: string
+  quality_warning?: string
 }
 
 export interface BulkRegisterResponse {

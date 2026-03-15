@@ -42,7 +42,7 @@ class BaseTrack(object):
     def predict(self):
         raise NotImplementedError
 
-    def update(self, *args, **kwargs):
+    def update(self, *args, **_kwargs):
         raise NotImplementedError
 
     def mark_lost(self):

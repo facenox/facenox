@@ -37,7 +37,6 @@ class FaceRecognizer:
 
         self.INPUT_MEAN = 127.5
         self.INPUT_STD = 127.5
-        self.EMBEDDING_DIM = 512
 
         self.session, self.input_name = init_face_recognizer_session(
             model_path, self.providers, session_options

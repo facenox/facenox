@@ -22,7 +22,7 @@ config = {
 }
 
 
-def signal_handler(signum, frame):
+def signal_handler(signum, _frame):
     """Handle shutdown signals gracefully"""
     signal_name = (
         "SIGINT"

@@ -110,7 +110,7 @@ export function BulkRegistration({ group, members, onRefresh, onClose }: BulkReg
       )}
 
       <div
-        className={`scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent flex-1 overflow-y-auto px-6 py-6 ${
+        className={`custom-scroll flex-1 overflow-y-auto px-6 py-6 ${
           !registrationResults && uploadedFiles.length === 0 ? "flex flex-col justify-center" : ""
         }`}>
         {!registrationResults && (

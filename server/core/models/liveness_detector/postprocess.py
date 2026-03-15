@@ -3,23 +3,6 @@ from typing import Dict, List, Tuple, Optional
 from .preprocess import preprocess_batch
 
 
-def process_with_logits(raw_logits: np.ndarray, threshold: float) -> Dict:
-    real_logit = float(raw_logits[0])
-    spoof_logit = float(raw_logits[1])
-    logit_diff = real_logit - spoof_logit
-    is_real = logit_diff >= threshold
-    confidence = abs(logit_diff)
-
-    return {
-        "is_real": bool(is_real),
-        "status": "real" if is_real else "spoof",
-        "logit_diff": float(logit_diff),
-        "real_logit": float(real_logit),
-        "spoof_logit": float(spoof_logit),
-        "confidence": float(confidence),
-    }
-
-
 def validate_detection(detection: Dict) -> Tuple[bool, Optional[Dict]]:
 
     bbox = detection.get("bbox", {})

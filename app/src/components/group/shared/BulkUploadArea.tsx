@@ -13,25 +13,26 @@ export function BulkUploadArea({
 }: BulkUploadAreaProps) {
   if (uploadedCount > 0) {
     return (
-      <div className="mb-6">
-        <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-4">
+      <div className="mb-4">
+        <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-2.5">
           <div className="flex items-center gap-3">
-            {isDetecting ?
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/20 text-amber-300">
-                <i className="fa-solid fa-circle-notch fa-spin text-lg"></i>
-              </div>
-            : <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/20 text-cyan-300">
-                <i className="fa-solid fa-check text-lg"></i>
-              </div>
-            }
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+              {isDetecting ?
+                <i className="fa-solid fa-circle-notch fa-spin text-lg text-amber-400"></i>
+              : <i className="fa-solid fa-circle-check text-xl text-cyan-400"></i>}
+            </div>
 
             <div>
-              <div className="text-sm font-medium text-white">
-                {isDetecting ? "Analyzing images..." : `${uploadedCount} images uploaded`}
+              <div className="text-[13px] font-bold tracking-tight text-white">
+                {isDetecting ?
+                  "Analyzing images..."
+                : `${uploadedCount} ${uploadedCount === 1 ? "image" : "images"} uploaded`}
               </div>
-              <div className="text-[11px] font-bold tracking-tight text-white/50">
-                {isDetecting ? "Please wait while we process faces" : "READY FOR ASSIGNMENT"}
-              </div>
+              {isDetecting && (
+                <div className="text-[10px] font-medium tracking-wide text-white/40 uppercase">
+                  Processing faces...
+                </div>
+              )}
             </div>
           </div>
 

@@ -65,8 +65,3 @@ class TemporalSmoother:
             del self.track_states[track_id]
 
         self.last_cleanup_frame = self.current_frame
-
-    def reset(self):
-        self.track_states.clear()
-        self.current_frame = 0
-        self.last_cleanup_frame = 0

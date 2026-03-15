@@ -16,9 +16,6 @@ class STrack(BaseTrack):
         self.mean, self.covariance = None, None
         self.is_activated = False
 
-        self.score = score
-        self.tracklet_len = 0
-
     def predict(self):
         mean_state = self.mean.copy()
         if self.state != TrackState.Tracked:
@@ -72,7 +69,6 @@ class STrack(BaseTrack):
     def update(self, new_track, frame_id):
         """Update a matched track"""
         self.frame_id = frame_id
-        self.tracklet_len += 1
 
         new_tlwh = new_track.tlwh
         self.mean, self.covariance = self.kalman_filter.update(
@@ -114,19 +110,10 @@ class STrack(BaseTrack):
         ret[2] /= ret[3]
         return ret
 
-    def to_xyah(self):
-        return self.tlwh_to_xyah(self.tlwh)
-
     @staticmethod
     def tlbr_to_tlwh(tlbr):
         ret = np.asarray(tlbr).copy()
         ret[2:] -= ret[:2]
-        return ret
-
-    @staticmethod
-    def tlwh_to_tlbr(tlwh):
-        ret = np.asarray(tlwh).copy()
-        ret[2:] += ret[:2]
         return ret
 
     def __repr__(self):
