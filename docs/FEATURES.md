@@ -1,44 +1,83 @@
 # Features
 
-## Current Capabilities
+This page covers the shipped desktop feature set and the scope of the current Cloud Beta integration.
 
-### Face Recognition
+## Desktop Features
 
-- **Local recognition pipeline**: face detection and recognition run on the local machine.
-- **Liveness checks**: the recognition flow includes anti-spoofing checks.
-- **Identity tracking**: tracked detections are stabilized across frames during live use.
-- **Optimized Binary Transport**: uses raw multipart binary streams for minimum latency and zero Base64 overhead.
+### Local recognition pipeline
 
-### Attendance Management
+- Face detection runs on the local machine.
+- Face recognition runs on the local machine.
+- Anti-spoofing checks run in the local pipeline.
+- The renderer sends image data as binary payloads to avoid unnecessary encoding overhead.
 
-- **Group-based organization**: members are assigned to groups.
-- **Attendance logging**: recognized members can be recorded as attendance events and sessions.
-- **Configurable attendance settings**: thresholds and timing behavior can be adjusted in settings.
-- **Historical records**: attendance history can be reviewed and exported.
+### Attendance workflows
 
-### Member and Consent Handling
+- Create and manage groups.
+- Create, edit, and remove members.
+- Record attendance events and attendance sessions.
+- Configure attendance timing behavior in settings.
+- Review historical attendance data and export reports.
 
-- **Member management**: create, update, and remove member records.
-- **Biometric consent tracking**: member consent is stored with audit-related metadata.
-- **Consent-aware registration**: biometric registration is blocked until consent exists.
-- **Consent-aware recognition scope**: non-consenting members are excluded from biometric matching.
-- **Privacy Shield in registration**: the registration workflow can show a shield overlay for members without consent.
+### Consent-aware biometrics
 
-### Data Storage and Portability
+- Biometric enrollment is blocked until consent exists for the member.
+- Members without active consent are excluded from matching.
+- Revoking consent removes the member's biometric template.
+- The registration flow can visually shield members who do not yet have consent.
 
-- **Local storage**: attendance data, settings, and biometric templates are stored locally.
-- **Encrypted biometric templates**: stored templates are encrypted at rest.
-- **Vault export and import**: password-protected `.suri` vaults can be used for backup and restore.
-- **CSV export**: attendance data can be exported for external reporting.
+### Local storage and portability
 
-### Administrative Support
+- The local database stores groups, members, attendance, settings, and audit data.
+- Biometric templates are encrypted at rest in the local store.
+- Vault exports create password-protected `.suri` backup files.
+- Vault imports can restore attendance data and biometric templates when consent is present in the imported data.
 
-- **Audit logging**: sensitive actions such as consent changes and vault operations are logged.
-- **Cleanup support**: retention-related cleanup endpoints exist for attendance data.
-- **Settings UI**: application behavior can be adjusted through the desktop interface.
+### Operational features
 
-## Not Part of the Current Feature Set
+- Audit logging for sensitive local actions
+- Desktop settings for camera, attendance, updater, and sync behavior
+- Offline-first operation for the core attendance workflow
 
-- **Hosted web dashboard**: not implemented in the current repository.
-- **Cloud biometric sync**: not implemented in the current repository.
-- **Cloud reporting platform**: not implemented in the current repository.
+## Cloud Beta Integration
+
+Cloud Beta connects a Suri desktop instance to a separate Suri Cloud deployment for reporting and device visibility.
+
+### What the desktop app supports
+
+- store a cloud base URL
+- redeem a short-lived pairing code
+- connect a desktop instance to an organization and site
+- show pairing state, last sync state, and sync messages
+- run background auto-sync
+- run manual sync on demand
+
+### What gets synced
+
+- group metadata
+- member directory data needed for reports
+- attendance records
+- attendance sessions
+- device and sync metadata
+
+### What does not get synced
+
+- raw face photos
+- biometric templates
+- embeddings
+- cloud-side recognition state
+
+## Not in Scope
+
+These items are outside the current desktop repository scope:
+
+- cloud-side biometric storage
+- cloud-side face matching
+- two-way sync for members and attendance edits
+- payroll or HRIS integrations
+- self-serve billing
+- SSO or SCIM
+- public developer API
+- mobile app
+
+If any of these ship later, they should be documented as separate capabilities instead of being implied here.

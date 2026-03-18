@@ -132,6 +132,85 @@ declare global {
   }
 
   interface SyncAPI {
+    getConfig: () => Promise<{
+      enabled: boolean
+      cloudBaseUrl: string
+      organizationId: string
+      organizationName: string
+      siteId: string
+      siteName: string
+      deviceId: string
+      deviceName: string
+      intervalMinutes: number
+      lastSyncedAt: string | null
+      lastSyncStatus: "idle" | "success" | "error"
+      lastSyncMessage: string | null
+      connected: boolean
+    }>
+    updateConfig: (updates: {
+      enabled?: boolean
+      cloudBaseUrl?: string
+      deviceName?: string
+      intervalMinutes?: number
+    }) => Promise<{
+      enabled: boolean
+      cloudBaseUrl: string
+      organizationId: string
+      organizationName: string
+      siteId: string
+      siteName: string
+      deviceId: string
+      deviceName: string
+      intervalMinutes: number
+      lastSyncedAt: string | null
+      lastSyncStatus: "idle" | "success" | "error"
+      lastSyncMessage: string | null
+      connected: boolean
+    }>
+    pairDevice: (input: {
+      cloudBaseUrl: string
+      pairingCode: string
+      deviceName?: string
+    }) => Promise<{
+      success: boolean
+      message?: string
+      error?: string
+      initialSyncSucceeded?: boolean
+      config?: {
+        enabled: boolean
+        cloudBaseUrl: string
+        organizationId: string
+        organizationName: string
+        siteId: string
+        siteName: string
+        deviceId: string
+        deviceName: string
+        intervalMinutes: number
+        lastSyncedAt: string | null
+        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncMessage: string | null
+        connected: boolean
+      }
+    }>
+    disconnectDevice: () => Promise<{
+      success: boolean
+      warning?: string | null
+      config: {
+        enabled: boolean
+        cloudBaseUrl: string
+        organizationId: string
+        organizationName: string
+        siteId: string
+        siteName: string
+        deviceId: string
+        deviceName: string
+        intervalMinutes: number
+        lastSyncedAt: string | null
+        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncMessage: string | null
+        connected: boolean
+      }
+    }>
     exportData: (password: string) => Promise<{
       success: boolean
       canceled?: boolean
@@ -153,8 +232,29 @@ declare global {
       message?: string
       error?: string
     }>
-    restartManager: () => Promise<boolean>
-    triggerNow: () => Promise<boolean>
+    restartManager: () => Promise<{
+      success: boolean
+      config: {
+        enabled: boolean
+        cloudBaseUrl: string
+        organizationId: string
+        organizationName: string
+        siteId: string
+        siteName: string
+        deviceId: string
+        deviceName: string
+        intervalMinutes: number
+        lastSyncedAt: string | null
+        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncMessage: string | null
+        connected: boolean
+      }
+    }>
+    triggerNow: () => Promise<{
+      success: boolean
+      message: string
+      syncedAt?: string
+    }>
   }
 
   interface BackendServiceAPI {

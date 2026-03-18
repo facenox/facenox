@@ -51,8 +51,8 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
         <section>
           <h3 className="mb-2 text-sm font-medium text-white">Optional cloud sync</h3>
           <p className="text-xs leading-relaxed text-white/50">
-            Any future hosted sync or dashboard features should have separate documentation and
-            terms before use. They are not part of the current desktop privacy guarantees.
+            Suri can pair with a separate Suri Cloud deployment for reporting and device sync. Face
+            matching, biometric templates, and raw face images still stay local to the desktop app.
           </p>
         </section>
 
@@ -270,7 +270,7 @@ export const About: React.FC = () => {
             <div className="flex items-center justify-between border-b border-white/5 py-3">
               <span className="text-[11px] font-medium text-white/30">Version</span>
               <div className="flex items-center justify-center px-3 py-1.5">
-                <span className="font-mono text-xs text-white/60">{version || "—"}</span>
+                <span className="font-mono text-xs text-white/60">{version || "-"}</span>
               </div>
             </div>
 
@@ -333,7 +333,7 @@ export const About: React.FC = () => {
               Docs
             </button>
           </div>
-          <p className="text-[11px] font-medium text-white/25">© 2026 Suri</p>
+          <p className="text-[11px] font-medium text-white/25">(c) 2026 Suri</p>
         </div>
       </div>
     </div>

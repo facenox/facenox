@@ -1,52 +1,121 @@
-# Troubleshooting & Diagnostics
+# Troubleshooting
 
-This guide covers common issues and their resolutions.
+This page covers the problems you are most likely to hit while running Suri from source.
 
-## Common Error Codes
+## The desktop app opens but the backend never becomes ready
 
-### 1. `ImportError: DLL load failed` (Windows)
-**Symptom**: The backend fails to start with a generic DLL error.
-**Cause**: Missing Visual C++ Redistributable or incompatible ONNX Runtime version.
-**Solution**:
-- Install the [Visual C++ Redistributable 2015-2022](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170).
-- Reinstall dependencies:
-  ```bash
-  pip uninstall onnxruntime onnxruntime-gpu
-  pip install -r requirements.txt
-  ```
+Check the Python environment first.
 
-### 2. `Address already in use` (Port 8700)
-**Symptom**: `OSError: [Errno 98] Address already in use`.
-**Cause**: Another instance of Suri or a zombie Python process is occupying port **8700**.
-**Solution**:
-- **Windows**: `netstat -ano | findstr :8700` then `taskkill /PID <PID> /F`
-- **Linux/Mac**: `lsof -i :8700` then `kill -9 <PID>`
+- Confirm that `server/venv` exists.
+- Confirm that the virtual environment contains the packages from `server/requirements.txt`.
+- If needed, recreate the environment:
 
-### 3. `ONNX Runtime Error: No provider`
-**Symptom**: Slow inference speed using CPU only.
-**Cause**: GPU drivers are missing or incompatible with `onnxruntime-gpu`.
-**Solution**:
-- Ensure you have the latest **NVIDIA CUDA Toolkit** installed.
-- Verify installation:
-  ```python
-  import onnxruntime
-  print(onnxruntime.get_available_providers())
-  # Should list 'CUDAExecutionProvider'
-  ```
+```bash
+cd server
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-## Environment Configuration
+The Electron app looks for a Python interpreter in the server virtual environment before falling back to system Python.
 
-You can override default behaviors using System Environment Variables.
+## Port `8700` is already in use
 
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `ENVIRONMENT` | `development` | Set to `production` to minimize logging and optimize concurrency. |
-| `SERVER_PORT` | `8700` | Change the backend API listening port. |
-| `SERVER_HOST` | `127.0.0.1` | Bind to `0.0.0.0` to expose the API to the local network (Warning: Security Risk). |
+Suri's local backend uses port `8700` by default. Another Suri instance or an orphaned Python process can block startup.
 
-## Developer Mode
+### Windows
 
-To enable verbose debug logs for the AI pipeline:
-1. Set `ENVIRONMENT=development`
-2. Check `data/server.log` (Project Root in dev, AppData in prod) for frame-by-frame inference timings.
+```bash
+netstat -ano | findstr :8700
+taskkill /PID <PID> /F
+```
 
+### macOS or Linux
+
+```bash
+lsof -i :8700
+kill -9 <PID>
+```
+
+## `ImportError` or DLL errors on Windows
+
+This usually means a missing runtime dependency or a broken Python environment.
+
+Try the following:
+
+1. Recreate the virtual environment.
+2. Reinstall backend dependencies from `server/requirements.txt`.
+3. Install the current Microsoft Visual C++ Redistributable if the error points to missing DLL support.
+
+Official Microsoft download page:
+https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist
+
+## Camera access fails
+
+Check these basics first:
+
+- another app is not already holding the camera
+- OS camera permissions allow Suri to use the device
+- the selected camera in Suri still exists
+
+If the wrong device is selected, switch cameras in the desktop settings and retry.
+
+## Recognition works slowly
+
+The default setup uses CPU inference. That is the safest development baseline.
+
+If performance is lower than expected:
+
+- close other camera-heavy apps
+- use a smaller test group first
+- verify that you did not accidentally install an incompatible GPU runtime
+
+Do not assume GPU inference is broken just because CPU performance is slower. CPU is the default path.
+
+## Cloud Beta pairing fails
+
+Common causes:
+
+- wrong cloud base URL
+- expired or already-claimed pairing code
+- cloud deployment missing required environment variables
+- the device cannot reach the Suri Cloud server
+
+What to verify:
+
+- the cloud URL is correct and includes the protocol, for example `https://cloud.example.com`
+- the pairing code is still valid
+- the cloud server can respond to `POST /api/device/pair`
+
+## Cloud sync fails
+
+Cloud sync failure should not stop local attendance. If local attendance stops, that is a separate problem.
+
+For sync issues, check:
+
+- the device is still paired
+- the stored device token has not been revoked
+- the cloud deployment is reachable
+- the last sync message in the Cloud Beta settings panel
+
+The current sync model is snapshot-based. A failed cloud push does not mean local attendance data was lost.
+
+## Initial sync never appears in the cloud
+
+After pairing, the desktop attempts an immediate first sync. If that does not appear in the cloud:
+
+- confirm that pairing succeeded fully
+- check the last sync message in the desktop app
+- inspect the cloud deployment logs for `/api/sync/push`
+- retry with the manual `Sync Now` button
+
+## Need deeper inspection?
+
+When the problem is not obvious, gather:
+
+- operating system and version
+- whether you are running from source or from a packaged build
+- whether the issue is desktop-only or Cloud Beta related
+- the exact error message shown by the app
+
+Then open an issue with reproduction steps or a security advisory if the report is security-sensitive.

@@ -1,6 +1,8 @@
 import type { AudioSettings, QuickSettings } from "../components/settings/types"
 import type { UpdateInfo } from "../types/global"
 
+const DEFAULT_SYNC_INTERVAL_MINUTES = 15
+
 export interface PersistentSettingsSchema {
   quickSettings: QuickSettings
 
@@ -44,10 +46,18 @@ export interface PersistentSettingsSchema {
   }
   sync: {
     enabled: boolean
-    syncUrl: string
-    syncKey: string
+    cloudBaseUrl: string
+    organizationId: string
+    organizationName: string
+    siteId: string
+    siteName: string
+    deviceId: string
+    deviceName: string
+    deviceToken: string
     intervalMinutes: number
     lastSyncedAt: string | null
+    lastSyncStatus: "idle" | "success" | "error"
+    lastSyncMessage: string | null
   }
 }
 
@@ -89,9 +99,17 @@ export const defaultSettings: PersistentSettingsSchema = {
   },
   sync: {
     enabled: false,
-    syncUrl: "",
-    syncKey: "",
-    intervalMinutes: 30, // Default to every 30 minutes
+    cloudBaseUrl: "",
+    organizationId: "",
+    organizationName: "",
+    siteId: "",
+    siteName: "",
+    deviceId: "",
+    deviceName: "",
+    deviceToken: "",
+    intervalMinutes: DEFAULT_SYNC_INTERVAL_MINUTES,
     lastSyncedAt: null,
+    lastSyncStatus: "idle",
+    lastSyncMessage: null,
   },
 }

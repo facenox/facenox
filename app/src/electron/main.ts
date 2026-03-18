@@ -9,6 +9,7 @@ import { state } from "./State.js"
 import { WindowManager } from "./window/WindowManager.js"
 import { TrayManager } from "./tray/TrayManager.js"
 import { registerAllHandlers } from "./ipc/index.js"
+import { syncManager } from "./managers/BackgroundSyncManager.js"
 
 const main_filename = fileURLToPath(import.meta.url)
 const main_dirname = path.dirname(main_filename)
@@ -124,7 +125,11 @@ app.whenReady().then(async () => {
     state.mainWindow?.once("ready-to-show", () => resolve())
   })
 
-  await Promise.all([backendPromise, windowPromise])
+  const [backendReady] = await Promise.all([backendPromise, windowPromise])
+
+  if (backendReady) {
+    syncManager.start()
+  }
 
   TrayManager.createTray()
 

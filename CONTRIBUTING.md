@@ -1,119 +1,126 @@
 # Contributing to Suri
 
-Thanks for considering helping out! Suri is built to provide an accessible, local-first biometric tracking system for organizations that need a secure, high-performance solution without expensive proprietary hardware. **Performance and simplicity are our top priorities.**
+Thanks for contributing.
 
-## Mission & Principles
-Suri is built to run on low-end hardware. When contributing, keep these three principles in mind:
-1. **Local-First:** Privacy is paramount. No biometric data should ever leave the device.
-2. **Efficiency:** Target CPU-bound environments. Avoid heavy dependencies.
-3. **Accessibility:** The UI must be intuitive for non-technical users.
+Suri is a local-first desktop product with a privacy-sensitive domain. Changes that affect biometrics, consent, storage, exports, sync, or deletion need extra care and clear documentation.
 
----
+## Before You Start
 
-## Project Structure
-Understanding where everything lives:
+- Read the relevant docs in `docs/`.
+- Search existing issues before opening a new one.
+- Keep changes focused. Small, reviewable pull requests are easier to merge and safer to reason about.
+
+## Repository Layout
+
 ```text
 suri/
- ├── app/              # Electron frontend (React + TypeScript)
- ├── server/           # Python backend (FastAPI + ONNX Runtime)
- ├── docs/             # Technical and user documentation
- ├── data/             # Local database and biometric storage (ignored)
- └── scripts/          # Workspace automation and build tools
+  app/     Electron desktop app (React + TypeScript)
+  server/  Local FastAPI backend (Python)
+  docs/    Project documentation
 ```
 
----
+## Local Setup
 
-## Where We Need Help
-* **Performance:** Optimizing the Python backend and ONNX model inference.
-* **Accuracy:** Improving recognition robustness under poor lighting or varying angles.
-* **Accessibility:** Localization (i18n) and UI refinements for standard desktop users.
-* **Security:** Hardening local data storage and encryption flows.
+### JavaScript dependencies
 
----
-
-## Local Development Setup
-Suri is a monorepo. We use `pnpm`, but other package managers `npm`, `yarn`, or `bun` will work just fine.
-
-> [!IMPORTANT]
-> **Don't commit their respective lockfiles** to the repo. Only `pnpm-lock.yaml` is allowed.
-
-### 1. Prerequisites
-- **Python 3.10+**
-- **Node.js 18+** & **pnpm**
-
-### 2. Frontend & Tooling Setup
-Navigate to the `app/` directory and install dependencies:
 ```bash
+cd app
 pnpm install
 ```
 
-### 3. Backend Setup
-Navigate to the `server/` directory:
+### Python dependencies
+
 ```bash
-# Create a virtual environment
+cd server
 python -m venv venv
 
-# Activate (Linux/macOS)
-source venv/bin/activate
-
-# Activate (Windows)
+# Windows
 venv\Scripts\activate
 
-# Install dependencies
+# macOS / Linux
+source venv/bin/activate
+
 pip install -r requirements.txt
 ```
 
-### 4. Running Development
-Suri is split into three parts, each with its own `package.json` for a specific reason:
-- **Root:** Orchestrates the entire project (use this to run the app).
-- **App:** The Electron/React frontend.
-- **Server:** The Python backend automation.
+### Run the app
 
-To start the application, **always run the command from the root directory**:
+From the repository root:
+
 ```bash
 pnpm dev
 ```
----
 
-## Development Workflow
+## Development Guidelines
 
-### 1. Code Style
-We enforce strict style guidelines to keep the codebase maintainable:
-- **Frontend (TS/JS):** ESLint + Prettier (handled via `pnpm fix`).
-- **Backend (Python):** 
-    - **Formatting:** [Black](https://github.com/psf/black)
-    - **Linting:** [Ruff](https://github.com/astral-sh/ruff)
-    - **Type Hints:** Encouraged for all new logic.
+### 1. Keep the local-first model intact
 
-### 2. Branching & Commits
-- Create a descriptive branch: `feat/description` or `fix/description`.
-- We follow [Conventional Commits](https://www.conventionalcommits.org/):
-    - `feat:` for new features.
-    - `fix:` for bug fixes.
-    - `chore:` for maintenance or script updates.
+Do not turn a local desktop workflow into a cloud dependency by accident.
 
-### 3. Quality Checks
-Before pushing, ensure your code meets our quality standards:
+The current rules are simple:
+
+- local attendance must keep working without internet
+- biometrics stay local unless a change explicitly documents and justifies otherwise
+- cloud sync must not block attendance capture
+
+### 2. Prefer direct language in code and docs
+
+Avoid filler, slogans, and vague claims. If a feature is partial, say it is partial. If a feature is not shipped, do not describe it as if it exists.
+
+### 3. Update docs with behavior changes
+
+If your change affects any of these, update the docs in the same pull request:
+
+- product boundary
+- storage behavior
+- consent behavior
+- backup or restore behavior
+- Cloud Beta behavior
+- security or privacy expectations
+
+### 4. Keep performance in mind
+
+Suri runs on desktops in real environments. Avoid unnecessary dependencies and avoid work that adds latency to recognition or attendance capture without a clear payoff.
+
+## Commands
+
+### Desktop app
+
 ```bash
+cd app
+pnpm lint
+pnpm format
+pnpm build
+```
+
+### Python backend
+
+```bash
+cd server
+npm run lint
+npm run format
+```
+
+### Root convenience scripts
+
+```bash
+pnpm dev
+pnpm lint
+pnpm format
 pnpm fix
 ```
 
----
+## Pull Requests
 
-## Issue & Pull Request Guidelines
+Include the following in your PR description:
 
-### Opening an Issue
-Before creating a new issue:
-1. **Search:** Check existing issues to see if it’s already being discussed.
-2. **Reproduction:** Provide clear steps to reproduce the bug.
-3. **Environment:** Include your OS and hardware specs if performance-related.
+- what changed
+- why it changed
+- how you tested it
+- any follow-up work that is intentionally left out
 
-### Creating a Pull Request
-1. **Atomic PRs:** Keep PRs focused. One problem, one PR.
-2. **Template:** Use the provided PR template. Explain *what* changed and *why*.
-3. **Verification:** Confirm that `pnpm fix` passes and you have tested the changes.
+If the change affects privacy or sync behavior, say that explicitly so reviewers know to inspect the boundary carefully.
 
----
+## Security Reports
 
-**Bugs & Features:** Use [GitHub Issues](https://github.com/SuriAI/suri/issues). <br>
-**Security:** See our [Security Policy](SECURITY.md).
+Do not open public issues for security vulnerabilities. Follow the process in [SECURITY.md](SECURITY.md).

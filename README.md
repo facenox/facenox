@@ -1,11 +1,10 @@
-
 <a id="readme-top"></a>
-> [!CAUTION]
-> This is the official open source repository for Suri. Any other repositories or downloads are not owned by us.
 
+> [!CAUTION]
+> This is the official open source repository for Suri. Treat other repositories, installers, and downloads as unverified unless they come from the official Suri channels.
 
 <a href="https://github.com/SuriAI/suri">
-  <img src="app/public/assets/header.png" alt="Suri Header" width="100%">
+  <img src="app/public/assets/header.png" alt="Suri header" width="100%">
 </a>
 
 <div align="center">
@@ -18,128 +17,149 @@
 
 </div>
 
-<div align="center">
-  <p align="center">
-    Local-first, Real-time attendance tracking with face recognition.
-    <br />
-    <a href="docs/FEATURES.md"><strong>Explore Features</strong></a>
-    <br />
-    <br />
-    <a href="docs/INSTALLATION.md">Setup Guide</a>
-    &middot;
-    <a href="https://github.com/SuriAI/suri/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    &middot;
-    <a href="https://github.com/SuriAI/suri/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
-  </p>
-</div>
+## Suri
 
-<br />
+Suri is an open source desktop attendance app built for local face recognition. It keeps recognition, attendance capture, biometric templates, and the primary database on the local machine, so the desktop app stays usable offline and does not depend on a cloud biometric service.
 
-<!-- INTRO -->
-**Suri** is a desktop application for real-time attendance tracking with face recognition. Detection, recognition, and biometric storage stay on the local machine, which keeps the system usable offline and reduces exposure of sensitive data.
+Suri can optionally pair with Suri Cloud for centralized reporting, device pairing, and sync visibility. The desktop app remains the biometric engine.
 
 <div align="center">
-  <br />
-  <img src="app/public/assets/banner.png" alt="Suri Application Screenshot" width="100%" />
-  <br />
+  <img src="app/public/assets/banner.png" alt="Suri application screenshot" width="100%">
 </div>
 
-| **Local First** | **Consent Aware** | **Encrypted** |
-|:---|:---|:---|
-| Detection, recognition, and storage run on-device via optimized binary transport. | Biometric registration requires consent, and the registration view can shield non-consenting members. | Biometric templates are encrypted locally, and vault backups are password-protected. |
+## Why Suri
 
----
+| Local-first | Offline-ready | Consent-aware | Encrypted |
+| --- | --- | --- | --- |
+| Recognition and attendance stay on the desktop. | Core attendance workflows keep working without internet. | Enrollment and matching respect biometric consent. | Biometric templates are encrypted locally and vault exports are password-protected. |
+
+## Core Capabilities
+
+- Local face detection, recognition, and anti-spoofing
+- Group and member management
+- Attendance records, sessions, and exports
+- Consent-aware biometric enrollment and deletion
+- Encrypted local biometric storage
+- Password-protected `.suri` vault backup and restore
+- Optional Cloud Beta pairing with manual and background sync
+
+## Cloud Beta
+
+Suri Cloud is an optional companion service for:
+
+- centralized reporting
+- device pairing
+- sync monitoring
+- organization and site-level visibility
+
+The desktop app pushes attendance snapshots to the cloud. Raw face images, biometric templates, embeddings, and face matching stay on-device.
+
+## Offline-First Behavior
+
+Suri Desktop continues to work locally when internet access is unavailable:
+
+- recognition still works
+- attendance is still recorded locally
+- local settings and vault operations still work
+
+Cloud pairing, cloud sync, and cloud dashboard updates resume when connectivity returns.
+
 ## Download
 
 [![Release](https://img.shields.io/github/v/release/SuriAI/suri?label=Latest%20Release&color=4caf50&v=1)](https://github.com/SuriAI/suri/releases/latest)
 
-> [!NOTE]
-> **Pre-compiled binaries are currently only available for Windows (`.exe`).**
-> macOS and Linux users can [build from source manually](docs/INSTALLATION.md#building-for-production).
+Prebuilt binaries are currently published for Windows. If you are on macOS or Linux, build from source using [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
-> [!IMPORTANT]
-> Please see the [Installation Notes](#-installation-notes) below before installing.
-
----
 ### Installation Notes
 
-> [!IMPORTANT]
-> **Suri is currently in Early Access.** Because we are an independent open-source project, our binaries are not yet "notarized" by Microsoft or Apple. 
+Suri is still early-stage software. Desktop installers may trigger OS trust prompts until code-signing and notarization are in place.
 
-#### **For Windows Users:**
-If Windows SmartScreen (blue window) appears:
-1.  Click **More info**.
-2.  Click **Run anyway**.
+#### Windows SmartScreen
 
-<img src="app/public/assets/smartscreen_warning.png" alt="Windows SmartScreen Warning" width="400" />
+If Windows shows the SmartScreen warning:
 
-<br />
+1. Select **More info**.
+2. Select **Run anyway**.
 
-*We are currently in the process of applying for SignPath OSS to eliminate this warning.*
+<img src="app/public/assets/smartscreen_warning.png" alt="Windows SmartScreen warning" width="400">
 
-#### **For macOS Users:**
-If you see the "Unidentified Developer" warning:
-1.  **Right-click** `Suri.dmg` in your Applications folder/Downloads.
-2.  Select **Open** from the menu.
-3.  Click **Open** again in the dialog box.
+#### macOS Gatekeeper
 
-<img src="app/public/assets/macos_gatekeeper_warning.png" alt="macOS Gatekeeper Warning" width="400" />
+If macOS blocks the app because the developer is unidentified:
 
-<br />
+1. Right-click the downloaded app or disk image.
+2. Select **Open**.
+3. Confirm the prompt.
 
-*This is a one-time step to grant permission.*
+<img src="app/public/assets/macos_gatekeeper_warning.png" alt="macOS Gatekeeper warning" width="400">
 
----
 ## Documentation
 
-Project docs:
+- [docs/FEATURES.md](docs/FEATURES.md): features, Cloud Beta scope, and out-of-scope items
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): desktop architecture and desktop-cloud boundaries
+- [docs/INSTALLATION.md](docs/INSTALLATION.md): local development and desktop build setup
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): common setup and runtime issues
+- [docs/PRIVACY.md](docs/PRIVACY.md): data handling, consent, backups, and cloud sync boundaries
+- [SECURITY.md](SECURITY.md): supported version policy and vulnerability reporting
 
-- [**Features & Capabilities**](docs/FEATURES.md) - Groups, registration, attendance flows, and exports.
-- [**Architecture & Stack**](docs/ARCHITECTURE.md) - How the Electron app, local API, and database fit together.
-- [**Installation & Setup**](docs/INSTALLATION.md) - Build and run instructions.
-- [**Troubleshooting**](docs/TROUBLESHOOTING.md) - Common setup and runtime issues.
-- [**Privacy & Security**](docs/PRIVACY.md) - What is stored, how consent works, and how biometric data is protected.
-
-<!-- TECH STACK -->
 ## Tech Stack
 
-<p align="center">
-  Suri uses a small desktop-focused stack built around local execution.
-</p>
+### Desktop
 
-<div align="center">
-    <img src="https://skillicons.dev/icons?i=electron,react,typescript,vite,tailwindcss,python,fastapi,sqlite,opencv,pnpm&theme=dark" />
-</div>
+- Electron
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
 
-### Core Technologies
-*   **Frontend:** [Electron][Electron-url], [React][React-url], [TypeScript][TypeScript-url], [Zustand][Zustand-url], [Framer Motion][Framer-url], [Tailwind CSS][TailwindCSS-url], [Vite][Vite-url].
-*   **Backend:** [Python][Python-url], [FastAPI][FastAPI-url], [ONNX Runtime][ONNX-url], [OpenCV][OpenCV-url], [SQLAlchemy][SQLAlchemy-url], [Alembic][Alembic-url], [Pydantic][Pydantic-url].
+### Local backend
+
+- Python 3.10+
+- FastAPI
+- ONNX Runtime
+- OpenCV
+- SQLAlchemy
+- Alembic
+- SQLite
+
+## Development
+
+See [docs/INSTALLATION.md](docs/INSTALLATION.md) for the full setup flow.
+
+Quick start:
+
+```bash
+git clone https://github.com/SuriAI/suri.git
+cd suri
+cd server
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+cd ..
+cd app
+pnpm install
+cd ..
+pnpm dev
+```
 
 ## Contributing
 
-Suri is open source. If you want to help make it better, pull requests are welcome.
-
-Please see our [**Contributing Guide**](CONTRIBUTING.md).
+Pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR, especially if you touch privacy, sync, biometrics, or storage behavior.
 
 ## License
 
-Distributed under the **AGPL-3.0 License**. See `LICENSE`.
+Suri is licensed under the GNU AGPL v3. See [LICENSE](LICENSE).
 
-This project relies on open source software. See [Third Party Licenses](THIRD_PARTY_LICENSES.md).
+Third-party notices live in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 ## Acknowledgments
 
-*   [FastAPI](https://fastapi.tiangolo.com/) - High-performance local API framework.
-*   [ONNX Runtime](https://onnxruntime.ai/) - Local inference runtime.
-*   [Electron](https://www.electronjs.org/) - Native desktop runtime.
-*   [React](https://react.dev/) - Desktop UI layer.
-*   [OpenCV](https://opencv.org/) - Real-time image processing.
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [ONNX Runtime](https://onnxruntime.ai/)
+- [Electron](https://www.electronjs.org/)
+- [React](https://react.dev/)
+- [OpenCV](https://opencv.org/)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- MARKDOWN LINKS & IMAGES -->
 [contributors-shield]: https://img.shields.io/github/contributors/SuriAI/suri.svg?style=for-the-badge&color=000000&v=1
 [contributors-url]: https://github.com/SuriAI/suri/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/SuriAI/suri.svg?style=for-the-badge&color=000000&v=1
@@ -150,29 +170,3 @@ This project relies on open source software. See [Third Party Licenses](THIRD_PA
 [issues-url]: https://github.com/SuriAI/suri/issues
 [license-shield]: https://img.shields.io/github/license/SuriAI/suri.svg?style=for-the-badge&color=000000&v=1
 [license-url]: LICENSE
-
-[Electron.js]: https://img.shields.io/badge/Electron-2B2E3A?style=for-the-badge&logo=electron&logoColor=9FEAF9
-[Electron-url]: https://www.electronjs.org/
-[React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
-[React-url]: https://reactjs.org/
-[Python.org]: https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white
-[Python-url]: https://www.python.org/
-[FastAPI]: https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white
-[FastAPI-url]: https://fastapi.tiangolo.com/
-[ONNX]: https://img.shields.io/badge/ONNX-005CED?style=for-the-badge&logo=onnx&logoColor=white
-[ONNX-url]: https://onnxruntime.ai/
-[TailwindCSS]: https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white
-[TailwindCSS-url]: https://tailwindcss.com/
-[Vite]: https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white
-[Vite-url]: https://vitejs.dev/
-[SQLite]: https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white
-[SQLite-url]: https://www.sqlite.org/
-[SQLAlchemy]: https://img.shields.io/badge/SQLAlchemy-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white
-[SQLAlchemy-url]: https://www.sqlalchemy.org/
-[OpenCV-url]: https://opencv.org/
-[TypeScript-url]: https://www.typescriptlang.org/
-[Zustand-url]: https://docs.pmnd.rs/zustand
-[Framer-url]: https://www.framer.com/motion/
-[Alembic-url]: https://alembic.sqlalchemy.org/
-[Pydantic-url]: https://docs.pydantic.dev/
-[pnpm-url]: https://pnpm.io/

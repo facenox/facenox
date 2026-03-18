@@ -90,6 +90,14 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   const registrationSource = useGroupUIStore((state) => state.lastRegistrationSource)
   const registrationMode = useGroupUIStore((state) => state.lastRegistrationMode)
   const handleRegistrationBack = useGroupUIStore((state) => state.handleRegistrationBack)
+  const generalTitles: Record<string, string> = {
+    attendance: "Attendance",
+    display: "Display",
+    notifications: "Notifications",
+    database: "Database",
+    cloudsync: "Cloud Beta",
+    about: "About",
+  }
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[#090909]">
       {/* Section Header */}
@@ -112,7 +120,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             : <div className="flex flex-col">
                 <span className="mb-0.5 text-[11px] font-medium text-white/30">General</span>
                 <span className="text-xl font-semibold text-white">
-                  {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
+                  {generalTitles[activeSection] ||
+                    activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
                 </span>
               </div>
             }

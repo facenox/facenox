@@ -105,6 +105,25 @@ contextBridge.exposeInMainWorld("electronAPI", {
     importData: (password: string, filePath: string, overwrite = false) => {
       return ipcRenderer.invoke("sync:import-data", password, filePath, overwrite)
     },
+    getConfig: () => {
+      return ipcRenderer.invoke("sync:get-config")
+    },
+    updateConfig: (
+      updates: Partial<{
+        enabled: boolean
+        cloudBaseUrl: string
+        deviceName: string
+        intervalMinutes: number
+      }>,
+    ) => {
+      return ipcRenderer.invoke("sync:update-config", updates)
+    },
+    pairDevice: (input: { cloudBaseUrl: string; pairingCode: string; deviceName?: string }) => {
+      return ipcRenderer.invoke("sync:pair-device", input)
+    },
+    disconnectDevice: () => {
+      return ipcRenderer.invoke("sync:disconnect-device")
+    },
     restartManager: () => {
       return ipcRenderer.invoke("sync:restart-manager")
     },

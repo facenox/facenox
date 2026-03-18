@@ -1,13 +1,70 @@
 import { ipcMain, dialog } from "electron"
 import fs from "node:fs/promises"
 import crypto from "node:crypto"
+import os from "node:os"
 
 import { backendService } from "../backendService.js"
 import { syncManager } from "../managers/BackgroundSyncManager.js"
+import { persistentStore } from "../persistentStore.js"
+import { getCurrentVersion } from "../updater.js"
+
+const DEFAULT_SYNC_INTERVAL_MINUTES = 15
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
   return token ? { "X-Suri-Token": token, ...extra } : { ...extra }
+}
+
+function normalizeCloudBaseUrl(value: string): string {
+  return value.trim().replace(/\/+$/, "")
+}
+
+function getCloudSyncStatus() {
+  const cloudBaseUrl = (persistentStore.get("sync.cloudBaseUrl") as string) || ""
+  const organizationId = (persistentStore.get("sync.organizationId") as string) || ""
+  const organizationName = (persistentStore.get("sync.organizationName") as string) || ""
+  const siteId = (persistentStore.get("sync.siteId") as string) || ""
+  const siteName = (persistentStore.get("sync.siteName") as string) || ""
+  const deviceId = (persistentStore.get("sync.deviceId") as string) || ""
+  const deviceName = (persistentStore.get("sync.deviceName") as string) || ""
+  const deviceToken = (persistentStore.get("sync.deviceToken") as string) || ""
+  const enabled = Boolean(persistentStore.get("sync.enabled"))
+  const intervalMinutes =
+    (persistentStore.get("sync.intervalMinutes") as number) || DEFAULT_SYNC_INTERVAL_MINUTES
+  const lastSyncedAt = (persistentStore.get("sync.lastSyncedAt") as string | null) || null
+  const lastSyncStatus = ((persistentStore.get("sync.lastSyncStatus") as
+    | "idle"
+    | "success"
+    | "error"
+    | undefined) ?? "idle") as "idle" | "success" | "error"
+  const lastSyncMessage = (persistentStore.get("sync.lastSyncMessage") as string | null) || null
+
+  return {
+    enabled,
+    cloudBaseUrl,
+    organizationId,
+    organizationName,
+    siteId,
+    siteName,
+    deviceId,
+    deviceName,
+    intervalMinutes,
+    lastSyncedAt,
+    lastSyncStatus,
+    lastSyncMessage,
+    connected: Boolean(cloudBaseUrl && organizationId && siteId && deviceId && deviceToken),
+  }
+}
+
+function clearCloudConnection() {
+  persistentStore.set("sync.enabled", false)
+  persistentStore.set("sync.organizationId", "")
+  persistentStore.set("sync.organizationName", "")
+  persistentStore.set("sync.siteId", "")
+  persistentStore.set("sync.siteName", "")
+  persistentStore.set("sync.deviceId", "")
+  persistentStore.set("sync.deviceToken", "")
+  persistentStore.set("sync.lastSyncedAt", null)
 }
 
 // Cryptographic Constants
@@ -75,13 +132,195 @@ function decryptVault(blob: Buffer, password: string): Buffer {
 // IPC Registration
 export function registerSyncHandlers() {
   ipcMain.handle("sync:restart-manager", () => {
-    syncManager.start()
-    return true
+    const status = getCloudSyncStatus()
+    if (status.enabled && status.connected) {
+      syncManager.start()
+    } else {
+      syncManager.stop()
+    }
+    return {
+      success: true,
+      config: getCloudSyncStatus(),
+    }
   })
 
   ipcMain.handle("sync:trigger-now", async () => {
-    await syncManager.performSync()
-    return true
+    return await syncManager.performSync()
+  })
+
+  ipcMain.handle("sync:get-config", () => {
+    return getCloudSyncStatus()
+  })
+
+  ipcMain.handle("sync:update-config", async (_event, updates: Record<string, unknown> = {}) => {
+    if (typeof updates.cloudBaseUrl === "string") {
+      persistentStore.set("sync.cloudBaseUrl", normalizeCloudBaseUrl(updates.cloudBaseUrl))
+    }
+
+    if (typeof updates.deviceName === "string") {
+      persistentStore.set("sync.deviceName", updates.deviceName.trim())
+    }
+
+    if (typeof updates.intervalMinutes === "number" && Number.isFinite(updates.intervalMinutes)) {
+      persistentStore.set("sync.intervalMinutes", Math.max(1, Math.round(updates.intervalMinutes)))
+    }
+
+    if (typeof updates.enabled === "boolean") {
+      persistentStore.set("sync.enabled", updates.enabled)
+    }
+
+    const status = getCloudSyncStatus()
+    if (status.enabled && status.connected) {
+      syncManager.start()
+    } else {
+      syncManager.stop()
+    }
+
+    return status
+  })
+
+  ipcMain.handle(
+    "sync:pair-device",
+    async (
+      _event,
+      input: {
+        cloudBaseUrl?: string
+        pairingCode?: string
+        deviceName?: string
+      } = {},
+    ) => {
+      const cloudBaseUrl = normalizeCloudBaseUrl(input.cloudBaseUrl || "")
+      const pairingCode = (input.pairingCode || "").trim()
+      const deviceName = (input.deviceName || "").trim() || os.hostname()
+
+      if (!cloudBaseUrl) {
+        return {
+          success: false,
+          error: "Cloud URL is required.",
+        }
+      }
+
+      if (!pairingCode) {
+        return {
+          success: false,
+          error: "Pairing code is required.",
+        }
+      }
+
+      try {
+        const response = await fetch(`${cloudBaseUrl}/api/device/pair`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Suri-Version": getCurrentVersion(),
+            "User-Agent": "Suri-Desktop-Pair",
+          },
+          body: JSON.stringify({
+            pairing_code: pairingCode,
+            device_name: deviceName,
+            app_version: getCurrentVersion(),
+          }),
+          signal: AbortSignal.timeout(30000),
+        })
+
+        const responseText = await response.text()
+        let payload: Record<string, unknown> | null = null
+        if (responseText) {
+          try {
+            payload = JSON.parse(responseText) as Record<string, unknown>
+          } catch {
+            payload = null
+          }
+        }
+
+        if (!response.ok) {
+          return {
+            success: false,
+            error:
+              typeof payload?.error === "string" ?
+                payload.error
+              : `Pairing failed with HTTP ${response.status}.`,
+          }
+        }
+
+        persistentStore.set("sync.cloudBaseUrl", cloudBaseUrl)
+        persistentStore.set("sync.organizationId", String(payload?.organizationId ?? ""))
+        persistentStore.set("sync.organizationName", String(payload?.organizationName ?? ""))
+        persistentStore.set("sync.siteId", String(payload?.siteId ?? ""))
+        persistentStore.set("sync.siteName", String(payload?.siteName ?? ""))
+        persistentStore.set("sync.deviceId", String(payload?.deviceId ?? ""))
+        persistentStore.set("sync.deviceName", deviceName)
+        persistentStore.set("sync.deviceToken", String(payload?.deviceToken ?? ""))
+        persistentStore.set("sync.enabled", true)
+        persistentStore.set("sync.lastSyncedAt", null)
+        persistentStore.set("sync.lastSyncStatus", "idle")
+        persistentStore.set("sync.lastSyncMessage", "Device paired. Starting initial sync...")
+
+        syncManager.start({ skipCatchUp: true })
+        const initialSyncResult = await syncManager.performSync()
+
+        return {
+          success: true,
+          config: getCloudSyncStatus(),
+          initialSyncSucceeded: initialSyncResult.success,
+          message:
+            initialSyncResult.success ?
+              "Device paired and initial sync completed."
+            : `Device paired, but the initial sync failed. Local attendance still works. ${initialSyncResult.message}`,
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Pairing failed.",
+        }
+      }
+    },
+  )
+
+  ipcMain.handle("sync:disconnect-device", async () => {
+    const status = getCloudSyncStatus()
+    let warning: string | null = null
+
+    if (status.connected) {
+      try {
+        const response = await fetch(`${status.cloudBaseUrl}/api/device/unpair`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${persistentStore.get("sync.deviceToken") as string}`,
+            "X-Suri-Version": getCurrentVersion(),
+            "User-Agent": "Suri-Desktop-Unpair",
+          },
+          body: JSON.stringify({
+            device_id: status.deviceId,
+          }),
+          signal: AbortSignal.timeout(30000),
+        })
+
+        if (!response.ok && ![401, 404].includes(response.status)) {
+          const text = await response.text()
+          warning = text || `Cloud unpair returned HTTP ${response.status}.`
+        }
+      } catch (error) {
+        warning = error instanceof Error ? error.message : "Cloud unpair failed."
+      }
+    }
+
+    clearCloudConnection()
+    persistentStore.set("sync.lastSyncStatus", "idle")
+    persistentStore.set(
+      "sync.lastSyncMessage",
+      warning ?
+        `Disconnected locally. Remote warning: ${warning}`
+      : "Device disconnected from Suri Cloud.",
+    )
+    syncManager.stop()
+
+    return {
+      success: true,
+      warning,
+      config: getCloudSyncStatus(),
+    }
   })
 
   ipcMain.handle("sync:pick-import-file", async () => {

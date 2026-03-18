@@ -4,21 +4,25 @@ This document contains the licenses for third-party AI models, frameworks, and r
 
 ---
 
-## Core Frameworks & Runtimes
+## Core Frameworks and Runtimes
 
-### Electronh
+### Electron
+
 - **License**: MIT
 - **Copyright**: (c) OpenJS Foundation and Electron contributors
 
 ### React
+
 - **License**: MIT
 - **Copyright**: (c) Meta Platforms, Inc. and affiliates.
 
 ### FastAPI
+
 - **License**: MIT
-- **Copyright**: (c) Sebastián Ramírez
+- **Copyright**: (c) Sebastian Ramirez
 
 ### ONNX Runtime
+
 - **License**: MIT
 - **Copyright**: (c) Microsoft Corporation
 
@@ -28,7 +32,7 @@ This document contains the licenses for third-party AI models, frameworks, and r
 
 **License**: BSD 3-Clause License
 
-**Copyright (c) 2024, Anjith George, Christophe Ecabert, Hatef Otroshi Shahreza, Ketan Kotwal, Sébastien Marcel**
+**Copyright (c) 2024, Anjith George, Christophe Ecabert, Hatef Otroshi Shahreza, Ketan Kotwal, Sebastien Marcel**
 
 **Idiap Research Institute, Martigny 1920, Switzerland.**
 
@@ -74,8 +78,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 ### Full Apache License 2.0 Text
 
-Apache License  
-Version 2.0, January 2004  
+Apache License
+Version 2.0, January 2004
 http://www.apache.org/licenses/
 
 TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION

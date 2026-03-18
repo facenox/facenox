@@ -1,85 +1,97 @@
-# Installation & Setup
+# Installation
 
-This guide will help you set up Suri for development or build it for production.
+This guide covers local development and desktop builds for the open source Suri repository.
 
 ## Prerequisites
 
-Ensure you have the following installed:
-- **OS**: Windows 10/11, macOS 10.14+, or Linux
-- **Node.js**: v18 or higher
-- **Python**: v3.10 or higher
-- **Git**: Latest version
-- **Hardware**: Webcam required. Dedicated GPU (NVIDIA) recommended for high-traffic environments.
+- Windows, macOS, or Linux
+- Node.js 18 or newer
+- Python 3.10 or newer
+- `pnpm`
+- a webcam for live recognition testing
 
-> [!NOTE]
-> For GPU acceleration, ensure you install `onnxruntime-gpu` instead of the default `onnxruntime` in `server/requirements.txt`.
+Recommended for development:
 
-## System Specifications
+- 8 GB RAM or more
+- a recent x86-64 CPU with AVX2 support
 
-Suri is optimized for efficiency but scales with hardware capabilities.
+## Repository Layout
 
-| Tier | Spec | Capacity |
-| :--- | :--- | :--- |
-| **Minimum** | CPU (AVX2 Support), 4GB RAM | < 5 Faces / Second |
-| **Recommended** | Intel i5 / Ryzen 5, 8GB RAM | 10+ Faces / Second |
-| **Performance** | NVIDIA RTX Series (CUDA), 16GB RAM | 30+ Faces / Second (Real-Time) |
+- `app/`: Electron desktop app
+- `server/`: local Python backend
+- `docs/`: project documentation
 
-> [!TIP]
-> **Troubleshooting**: Encountering issues? See the [Diagnostic Guide](TROUBLESHOOTING.md).
+## Local Development Setup
 
-## Development Setup
+### 1. Clone the repository
 
-### 1. Clone the Repository
 ```bash
-git clone https://github.com/suriAI/suri.git
+git clone https://github.com/SuriAI/suri.git
 cd suri
 ```
 
-### 2. Backend Setup (Python)
-Navigate to the server directory and set up the virtual environment.
+### 2. Create the Python environment
+
+The desktop app looks for a Python interpreter in the local server virtual environment first, so create the virtual environment inside `server/venv`.
 
 ```bash
 cd server
 python -m venv venv
+```
 
+Activate it:
+
+```bash
 # Windows
 venv\Scripts\activate
 
-# macOS/Linux
+# macOS / Linux
 source venv/bin/activate
+```
 
-# Install Dependencies
+Install backend dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 3. Frontend Setup (React/Electron)
-Open a new terminal window for the app.
+### 3. Install desktop dependencies
 
 ```bash
-cd app
+cd ../app
 pnpm install
 ```
 
-### 4. Running Locally
-Run the application with a single command. The Electron app will automatically launch the Python backend.
+### 4. Start the desktop app
+
+From the repository root:
 
 ```bash
-cd app
+cd ..
 pnpm dev
 ```
 
-The application window will open once the backend service is ready.
-> **Note**: You do not need to run the Python server manually; the app manages the process for you.
+This starts the Electron development app. The app is responsible for starting the local Python backend. You do not need to run the FastAPI server separately for normal desktop development.
 
-## Building for Production
+## Optional GPU Runtime
 
-To create a standalone executable/installer for your OS:
+The default requirements install `onnxruntime` for CPU execution. If you are deliberately testing GPU inference, replace it with the GPU build that matches your environment and drivers.
+
+Do not switch to the GPU runtime unless you actually need it. CPU is the safer default for most contributors.
+
+## Build Commands
+
+Run these from `app/`:
 
 ```bash
-cd app
-pnpm run dist:win   # For Windows
-pnpm run dist:mac   # For macOS
-pnpm run dist:linux # For Linux
+pnpm build
+pnpm dist:win
+pnpm dist:mac
+pnpm dist:linux
 ```
 
-The output files (setup.exe, .dmg, etc.) will be located in `app/dist`.
+Desktop build output is written under `app/dist` and related build folders used by Electron Builder.
+
+## Troubleshooting
+
+See [docs/TROUBLESHOOTING.md](TROUBLESHOOTING.md) if the backend fails to start, the camera is unavailable, or Cloud Beta pairing and sync fail.

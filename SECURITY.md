@@ -2,23 +2,45 @@
 
 ## Supported Versions
 
-Attendance systems handle sensitive biometric data. Only the latest version of Suri is supported with security updates.
+Suri handles biometric and attendance data. Only the latest released version is considered supported for security fixes.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
-| < 0.1.0 | :x:                |
+| Version | Supported |
+| --- | --- |
+| latest release | yes |
+| older releases | no |
 
 ## Reporting a Vulnerability
 
-We/Authors take security seriously. If a vulnerability is discovered, please report it responsibly.
+Do not open a public GitHub issue for a security vulnerability.
 
-**Do not open a public GitHub issue for security vulnerabilities.**
+Preferred path:
 
-Instead, please send a detailed report via **[LinkedIn](https://www.linkedin.com/in/johnraivenolazo/)** or open a "Draft Security Advisory" on GitHub if you have the permissions.
+1. Open a GitHub draft security advisory for this repository.
 
-### Response Time
-Reports will be acknowledged within 48–72 hours. A fix will be prioritized based on the severity and impact on biometric privacy.
+Fallback path:
 
-## Biometric Privacy
-Suri is designed with "Privacy by Default." If you find a way to extract raw face images or unencrypted embeddings from the local database or the sync stream, this is considered a **High Severity** issue.
+1. Contact the maintainer privately through [LinkedIn](https://www.linkedin.com/in/johnraivenolazo/) if GitHub advisories are not available to you.
+
+Include:
+
+- the affected version or commit
+- a clear description of the issue
+- reproduction steps or proof of concept
+- impact, especially if biometric or attendance data can be exposed or altered
+
+## Response Target
+
+Reports are normally acknowledged within 48 to 72 hours. The exact fix timeline depends on severity and reproducibility.
+
+## What Counts as High Severity
+
+Examples of high-severity issues include:
+
+- extracting raw face images or biometric templates unexpectedly
+- bypassing consent checks for enrollment or recognition
+- reading another organization's cloud data through a tenant-isolation bug
+- modifying attendance or audit data without authorization
+
+## Scope Reminder
+
+This repository covers the open source desktop application and its desktop-side cloud integration points. A deployed Suri Cloud environment has its own operational and infrastructure risk surface and should be reviewed separately.
