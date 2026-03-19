@@ -1,6 +1,6 @@
 # Architecture
 
-Suri is a desktop-first system. Recognition, attendance, and biometric storage run on the local machine.
+Atracana is a desktop-first system. Recognition, attendance, and biometric storage run on the local machine.
 
 ## Deployment Model
 
@@ -8,13 +8,13 @@ Suri is a desktop-first system. Recognition, attendance, and biometric storage r
 - Primary database: local SQLite
 - Network requirement for core attendance: none
 - Biometric processing: local only
-- Optional cloud integration: separate Suri Cloud deployment for reporting and device management
+- Optional cloud integration: separate Atracana Cloud deployment for reporting and device management
 
 ## High-Level Components
 
 ```mermaid
 graph TD
-    subgraph Desktop["Suri Desktop"]
+    subgraph Desktop["Atracana Desktop"]
         UI["React renderer"]
         MAIN["Electron main process"]
         API["Local FastAPI backend"]
@@ -26,7 +26,7 @@ graph TD
         API <--> DB
     end
 
-    CLOUD["Optional Suri Cloud"]
+    CLOUD["Optional Atracana Cloud"]
 
     MAIN -. pairing, sync control .-> CLOUD
 ```
@@ -76,7 +76,7 @@ This path does not require internet access.
 
 ### Cloud Beta flow
 
-1. An admin generates a pairing code in Suri Cloud.
+1. An admin generates a pairing code in Atracana Cloud.
 2. The desktop app stores the cloud URL and redeems the pairing code.
 3. The desktop receives an organization ID, site ID, device ID, and device token.
 4. The desktop exports a local attendance snapshot.
@@ -95,7 +95,7 @@ The desktop-cloud boundary is intentionally narrow.
 - local face matching
 - local enrollment workflow
 
-### Data that may be sent to Suri Cloud
+### Data that may be sent to Atracana Cloud
 
 - organization, site, and device identifiers
 - group and member directory data needed for reporting

@@ -1,6 +1,6 @@
 # Installation
 
-This guide covers local development and desktop builds for the open source Suri repository.
+This guide covers local development and desktop builds for the open source Atracana repository.
 
 ## Prerequisites
 
@@ -26,8 +26,8 @@ Recommended for development:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/SuriAI/suri.git
-cd suri
+git clone https://github.com/atracana/atracana.git
+cd atracana
 ```
 
 ### 2. Create the Python environment

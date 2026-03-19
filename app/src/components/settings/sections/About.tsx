@@ -25,9 +25,9 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
         <section>
           <h3 className="mb-2 text-sm font-medium text-white">Your data stays local</h3>
           <p className="text-xs leading-relaxed text-white/50">
-            Suri currently stores face templates, attendance records, and settings locally on your
-            device by default. The current desktop app does not depend on a hosted biometric service
-            to perform face recognition.
+            Atracana currently stores face templates, attendance records, and settings locally on
+            your device by default. The current desktop app does not depend on a hosted biometric
+            service to perform face recognition.
           </p>
         </section>
 
@@ -51,17 +51,18 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
         <section>
           <h3 className="mb-2 text-sm font-medium text-white">Optional cloud sync</h3>
           <p className="text-xs leading-relaxed text-white/50">
-            Suri can pair with a separate Suri Cloud deployment for reporting and device sync. Face
-            matching, biometric templates, and raw face images still stay local to the desktop app.
+            Atracana can pair with a separate Atracana Cloud deployment for reporting and device
+            sync. Face matching, biometric templates, and raw face images still stay local to the
+            desktop app.
           </p>
         </section>
 
         <section>
           <h3 className="mb-2 text-sm font-medium text-white">Regulatory compliance</h3>
           <p className="text-xs leading-relaxed text-white/50">
-            Suri includes local storage, consent tracking, export, and deletion controls that can
-            help support privacy-conscious deployments. Compliance still depends on your operational
-            policies and legal notices.
+            Atracana includes local storage, consent tracking, export, and deletion controls that
+            can help support privacy-conscious deployments. Compliance still depends on your
+            operational policies and legal notices.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5 pb-2">
             <span className="rounded bg-white/5 px-2 py-0.5 text-[10px] text-white/40">
@@ -262,7 +263,7 @@ export const About: React.FC = () => {
       <div className="mx-auto flex h-full max-w-lg flex-col items-center px-10 pt-4 pb-10 text-center">
         <div className="w-full flex-1 space-y-12">
           <div className="space-y-2">
-            <h1 className="text-4xl font-black tracking-[-0.04em] text-white">Suri</h1>
+            <h1 className="text-4xl font-black tracking-[-0.04em] text-white">Atracana</h1>
             <p className="text-[11px] font-medium text-white/40">AI Attendance Tracker</p>
           </div>
 
@@ -298,7 +299,7 @@ export const About: React.FC = () => {
             <div className="flex items-center justify-between border-b border-white/5 py-3">
               <span className="text-[11px] font-medium text-white/30">Source code</span>
               <button
-                onClick={openLink("https://github.com/suriAI/suri")}
+                onClick={openLink("https://github.com/atracana/atracana")}
                 className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/40 transition-all hover:border-white/10 hover:bg-white/5 hover:text-white/90 active:scale-95">
                 View Repository
               </button>
@@ -318,22 +319,22 @@ export const About: React.FC = () => {
         <div className="mt-auto w-full border-t border-white/5 pt-12 pb-4">
           <div className="mb-6 flex items-center justify-center gap-6">
             <button
-              onClick={openLink("https://github.com/suriAI/suri/releases")}
+              onClick={openLink("https://github.com/atracana/atracana/releases")}
               className="text-[11px] font-semibold text-white/35 transition-colors hover:text-white/80">
               Releases
             </button>
             <button
-              onClick={openLink("https://github.com/suriAI/suri/issues")}
+              onClick={openLink("https://github.com/atracana/atracana/issues")}
               className="text-[11px] font-semibold text-white/35 transition-colors hover:text-white/80">
               Support
             </button>
             <button
-              onClick={openLink("https://github.com/suriAI/suri#readme")}
+              onClick={openLink("https://github.com/atracana/atracana#readme")}
               className="text-[11px] font-semibold text-white/35 transition-colors hover:text-white/80">
               Docs
             </button>
           </div>
-          <p className="text-[11px] font-medium text-white/25">(c) 2026 Suri</p>
+          <p className="text-[11px] font-medium text-white/25">(c) 2026 Atracana</p>
         </div>
       </div>
     </div>

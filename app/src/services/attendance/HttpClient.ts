@@ -28,7 +28,7 @@ export class HttpClient {
 
   /**
    * Gatekeeper: Blocks until backend is confirmed ready via IPC.
-   * Prevents "Connection Refused" errors by ensuring we never call fetch() too early.
+   * Prevents "Connection Refused" errors by enatracanang we never call fetch() too early.
    */
   private async ensureBackendReady(): Promise<void> {
     if (this.readinessPromise) {
@@ -78,7 +78,7 @@ export class HttpClient {
 
     const token = await this.getApiToken()
     if (token) {
-      headers["X-Suri-Token"] = token
+      headers["X-Atracana-Token"] = token
     }
 
     const response = await fetchWithRetry(url, { ...options, headers })
@@ -129,7 +129,7 @@ export class HttpClient {
     const url = `${this.baseUrl}${endpoint}`
     const token = await this.getApiToken()
     const headers: Record<string, string> = {}
-    if (token) headers["X-Suri-Token"] = token
+    if (token) headers["X-Atracana-Token"] = token
 
     // Note: Don't set Content-Type for FormData, browser sets it with boundary
     const response = await fetchWithRetry(url, {
@@ -155,7 +155,7 @@ export class HttpClient {
     const url = `${this.baseUrl}${endpoint}`
     const token = await this.getApiToken()
     const headers: Record<string, string> = {}
-    if (token) headers["X-Suri-Token"] = token
+    if (token) headers["X-Atracana-Token"] = token
 
     const response = await fetchWithRetry(url, { headers })
     if (!response.ok) {

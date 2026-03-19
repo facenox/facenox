@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build script for Suri Face Detection Backend using PyInstaller
+Build script for Atracana Face Detection Backend using PyInstaller
 Handles cross-platform builds and optimization
 """
 
@@ -95,7 +95,7 @@ def install_pyinstaller():
 def build_backend(debug=False, onefile=True, clean=True):
     """Build the backend using PyInstaller"""
 
-    print("Starting Suri Backend Build Process")
+    print("Starting Atracana Backend Build Process")
     print("=" * 50)
 
     platform_name, arch = get_platform_info()
@@ -123,7 +123,7 @@ def build_backend(debug=False, onefile=True, clean=True):
     if debug:
         cmd.extend(["--debug", "all"])
 
-    cmd.append("suri_backend.spec")
+    cmd.append("atracana_backend.spec")
 
     print("Building backend... This may take several minutes")
 
@@ -198,7 +198,9 @@ def test_executable():
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(description="Build Suri Backend with PyInstaller")
+    parser = argparse.ArgumentParser(
+        description="Build Atracana Backend with PyInstaller"
+    )
     parser.add_argument("--debug", action="store_true", help="Build in debug mode")
     parser.add_argument(
         "--onedir",

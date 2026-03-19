@@ -112,7 +112,7 @@ export class BackendService {
     try {
       const token = await this.getApiToken()
       const headers: Record<string, string> = {}
-      if (token) headers["X-Suri-Token"] = token
+      if (token) headers["X-Atracana-Token"] = token
 
       const response = await fetch(`${this.config.baseUrl}/models`, {
         method: "GET",
@@ -160,7 +160,7 @@ export class BackendService {
 
       const token = await this.getApiToken()
       const headers: Record<string, string> = {}
-      if (token) headers["X-Suri-Token"] = token
+      if (token) headers["X-Atracana-Token"] = token
 
       const response = await fetch(`${this.config.baseUrl}/detect`, {
         method: "POST",
@@ -206,7 +206,7 @@ export class BackendService {
 
       const token = await this.getApiToken()
       const headers: Record<string, string> = {}
-      if (token) headers["X-Suri-Token"] = token
+      if (token) headers["X-Atracana-Token"] = token
 
       const response = await fetch(`${this.config.baseUrl}/face/recognize`, {
         method: "POST",
@@ -279,7 +279,7 @@ export class BackendService {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       }
-      if (token) headers["X-Suri-Token"] = token
+      if (token) headers["X-Atracana-Token"] = token
 
       const response = await fetch(`${this.config.baseUrl}/face/cache/invalidate`, {
         method: "POST",

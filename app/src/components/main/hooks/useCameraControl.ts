@@ -227,7 +227,7 @@ export function useCameraControl({
               "Please check your Windows Privacy settings: Go to Settings → Privacy → Camera and ensure 'Allow apps to access your camera' is turned ON."
           } else if (userAgent.includes("mac")) {
             instructions =
-              "Please check your macOS Privacy settings: Go to System Settings → Privacy & Security → Camera and ensure Suri is allowed to access your camera."
+              "Please check your macOS Privacy settings: Go to System Settings → Privacy & Security → Camera and ensure Atracana is allowed to access your camera."
           } else {
             instructions =
               "Please ensure you have granted camera permissions in your system settings."

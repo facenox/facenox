@@ -122,7 +122,7 @@ class UpdaterService {
     } catch (error) {
       console.error("[UpdaterService] Failed to open release page:", error)
 
-      window.open(url || "https://github.com/suriAI/suri/releases/latest", "_blank")
+      window.open(url || "https://github.com/atracana/atracana/releases/latest", "_blank")
     }
   }
 

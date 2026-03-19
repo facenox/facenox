@@ -14,7 +14,7 @@ import { syncManager } from "./managers/BackgroundSyncManager.js"
 const main_filename = fileURLToPath(import.meta.url)
 const main_dirname = path.dirname(main_filename)
 
-app.setName("Suri")
+app.setName("Atracana")
 
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
@@ -110,7 +110,7 @@ app.whenReady().then(async () => {
       const { dialog } = await import("electron")
       await dialog.showMessageBox({
         type: "error",
-        title: "SURI Startup Error",
+        title: "ATRACANA Startup Error",
         message: "Failed to start background services.",
         detail:
           e instanceof Error ? e.message : "An unknown error occurred during backend startup.",

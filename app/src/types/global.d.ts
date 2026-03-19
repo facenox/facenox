@@ -22,7 +22,7 @@ export interface UpdateInfo {
 }
 
 declare global {
-  interface SuriWSClientAPI {
+  interface AtracanaWSClientAPI {
     connect: (url?: string) => Promise<void>
     send: (msg: unknown) => void
     sendRequest: (action: string, payload?: unknown, timeoutMs?: number) => Promise<unknown>
@@ -30,7 +30,7 @@ declare global {
     close: () => void
   }
 
-  interface SuriVideoAPI {
+  interface AtracanaVideoAPI {
     start: (opts?: {
       device?: number
       width?: number
@@ -54,7 +54,7 @@ declare global {
     onWebSocketBroadcast: (handler: (evt: Record<string, unknown>) => void) => () => void
   }
 
-  interface SuriElectronAPI {
+  interface AtracanaElectronAPI {
     minimize: () => Promise<boolean>
     maximize: () => Promise<boolean>
     close: () => Promise<boolean>
@@ -272,10 +272,10 @@ declare global {
   }
 
   interface Window {
-    suriWS?: SuriWSClientAPI
-    suriVideo?: SuriVideoAPI
-    suriElectron?: SuriElectronAPI
+    atracanaWS?: AtracanaWSClientAPI
+    atracanaVideo?: AtracanaVideoAPI
+    atracanaElectron?: AtracanaElectronAPI
     electronAPI: BackendServiceAPI
-    __suriOffFrame?: () => void
+    __atracanaOffFrame?: () => void
   }
 }

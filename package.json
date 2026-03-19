@@ -1,5 +1,5 @@
 {
-  "name": "suri-root",
+  "name": "atracana-root",
   "private": true,
   "scripts": {
     "dev": "npm run dev --prefix app",

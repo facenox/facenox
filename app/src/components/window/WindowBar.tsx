@@ -10,9 +10,9 @@ export default function WindowBar() {
     let cleanupMaximize: (() => void) | undefined
     let cleanupUnmaximize: (() => void) | undefined
 
-    if (window.suriElectron) {
-      cleanupMaximize = window.suriElectron.onMaximize(handleMaximize)
-      cleanupUnmaximize = window.suriElectron.onUnmaximize(handleUnmaximize)
+    if (window.atracanaElectron) {
+      cleanupMaximize = window.atracanaElectron.onMaximize(handleMaximize)
+      cleanupUnmaximize = window.atracanaElectron.onUnmaximize(handleUnmaximize)
     }
 
     return () => {
@@ -22,20 +22,20 @@ export default function WindowBar() {
   }, [])
 
   const handleMinimize = () => {
-    if (window.suriElectron) {
-      window.suriElectron.minimize()
+    if (window.atracanaElectron) {
+      window.atracanaElectron.minimize()
     }
   }
 
   const handleMaximize = () => {
-    if (window.suriElectron) {
-      window.suriElectron.maximize()
+    if (window.atracanaElectron) {
+      window.atracanaElectron.maximize()
     }
   }
 
   const handleClose = () => {
-    if (window.suriElectron) {
-      window.suriElectron.close()
+    if (window.atracanaElectron) {
+      window.atracanaElectron.close()
     }
   }
 
@@ -51,8 +51,8 @@ export default function WindowBar() {
 
       <div className="pointer-events-none relative z-40 ml-4 flex flex-1 items-center space-x-3">
         <img
-          src="./icons/suri_mark_logo_transparent.png"
-          alt="Suri"
+          src="./icons/atracana_mark_logo_transparent.png"
+          alt="Atracana"
           className="mr-1 -ml-3 h-6 w-6 object-contain opacity-90"
         />
       </div>

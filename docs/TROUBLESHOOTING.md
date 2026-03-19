@@ -1,6 +1,6 @@
 # Troubleshooting
 
-This page covers the problems you are most likely to hit while running Suri from source.
+This page covers the problems you are most likely to hit while running Atracana from source.
 
 ## The desktop app opens but the backend never becomes ready
 
@@ -21,7 +21,7 @@ The Electron app looks for a Python interpreter in the server virtual environmen
 
 ## Port `8700` is already in use
 
-Suri's local backend uses port `8700` by default. Another Suri instance or an orphaned Python process can block startup.
+Atracana's local backend uses port `8700` by default. Another Atracana instance or an orphaned Python process can block startup.
 
 ### Windows
 
@@ -55,8 +55,8 @@ https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist
 Check these basics first:
 
 - another app is not already holding the camera
-- OS camera permissions allow Suri to use the device
-- the selected camera in Suri still exists
+- OS camera permissions allow Atracana to use the device
+- the selected camera in Atracana still exists
 
 If the wrong device is selected, switch cameras in the desktop settings and retry.
 
@@ -79,7 +79,7 @@ Common causes:
 - wrong cloud base URL
 - expired or already-claimed pairing code
 - cloud deployment missing required environment variables
-- the device cannot reach the Suri Cloud server
+- the device cannot reach the Atracana Cloud server
 
 What to verify:
 

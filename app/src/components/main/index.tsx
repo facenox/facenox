@@ -428,11 +428,14 @@ export default function Main() {
       }
     }
 
-    window.addEventListener("suri:clock-warning", handleClockWarning as unknown as EventListener)
+    window.addEventListener(
+      "atracana:clock-warning",
+      handleClockWarning as unknown as EventListener,
+    )
 
     return () => {
       window.removeEventListener(
-        "suri:clock-warning",
+        "atracana:clock-warning",
         handleClockWarning as unknown as EventListener,
       )
     }
@@ -443,7 +446,7 @@ export default function Main() {
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const electron = (window as any).suriElectron
+    const electron = (window as any).atracanaElectron
     if (!electron) return
 
     const cleanupMinimize = electron.onMinimize(() => {

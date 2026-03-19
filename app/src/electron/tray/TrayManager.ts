@@ -13,8 +13,8 @@ export class TrayManager {
 
     const iconPath =
       isDev() ?
-        path.join(tray_dirname, "../../public/icons/suri_mark_logo_transparent.png")
-      : path.join(process.resourcesPath, "icons/suri_mark_logo_transparent.png")
+        path.join(tray_dirname, "../../public/icons/atracana_mark_logo_transparent.png")
+      : path.join(process.resourcesPath, "icons/atracana_mark_logo_transparent.png")
 
     let image
     try {
@@ -26,7 +26,7 @@ export class TrayManager {
     }
 
     const tray = new Tray(image.resize({ width: 16, height: 16 }))
-    tray.setToolTip("Suri")
+    tray.setToolTip("Atracana")
 
     const contextMenu = Menu.buildFromTemplate([
       {

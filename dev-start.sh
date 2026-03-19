@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "========================================"
-echo "    Suri - Development Mode"
+echo "    Atracana - Development Mode"
 echo "========================================"
 echo
 

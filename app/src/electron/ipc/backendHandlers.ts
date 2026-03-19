@@ -4,7 +4,7 @@ import { backendService } from "../backendService.js"
 /** Build auth headers for all direct fetch calls to the local backend. */
 function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const token = backendService.getToken()
-  return token ? { "X-Suri-Token": token, ...extra } : { ...extra }
+  return token ? { "X-Atracana-Token": token, ...extra } : { ...extra }
 }
 
 export function registerBackendHandlers() {

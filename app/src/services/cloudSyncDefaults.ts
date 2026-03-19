@@ -1,2 +1,2 @@
 export const DEFAULT_SYNC_INTERVAL_MINUTES = 15
-export const DEFAULT_CLOUD_BASE_URL = "https://suriai.vercel.app"
+export const DEFAULT_CLOUD_BASE_URL = "https://atracana.vercel.app"

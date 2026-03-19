@@ -1,3 +1,3 @@
 """
-API package for SURI backend
+API package for ATRACANA backend
 """

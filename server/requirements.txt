@@ -37,5 +37,5 @@ sqlalchemy[asyncio]
 alembic
 aiosqlite
 
-# Encryption for secure vault backup (.suri format)
+# Encryption for secure vault backup (.atracana format)
 cryptography

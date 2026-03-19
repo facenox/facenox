@@ -112,11 +112,11 @@ export class WindowManager {
       void dialog
         .showMessageBox(mainWindow, {
           type: "info",
-          title: "Suri is running in the background",
-          message: "Suri will keep running in your system tray.",
+          title: "Atracana is running in the background",
+          message: "Atracana will keep running in your system tray.",
           detail:
             "You can fully close the app by right-clicking the tray icon and selecting 'Quit'.",
-          buttons: ["Got it", "Quit Suri"],
+          buttons: ["Got it", "Quit Atracana"],
           defaultId: 0,
           cancelId: 0,
           checkboxLabel: "Don't show this reminder again",

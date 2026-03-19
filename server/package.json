@@ -1,5 +1,5 @@
 {
-  "name": "suri-server",
+  "name": "atracana-server",
   "private": true,
   "scripts": {
     "dev": "python run.py",

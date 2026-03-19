@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo ========================================
-echo    Suri - Development Mode
+echo    Atracana - Development Mode
 echo ========================================
 echo.
 
@@ -24,7 +24,7 @@ echo.
 
 
 echo Starting Python server...
-start "Suri Server" cmd /k "cd server && python run.py"
+start "Atracana Server" cmd /k "cd server && python run.py"
 
 
 timeout /t 3 /nobreak > nul

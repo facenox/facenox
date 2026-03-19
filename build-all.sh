@@ -3,7 +3,7 @@
 set -e  # Exit on any error
 
 echo "========================================"
-echo "    Suri - Complete Build Script"
+echo "    Atracana - Complete Build Script"
 echo "========================================"
 echo
 

@@ -1,10 +1,10 @@
 <a id="readme-top"></a>
 
 > [!CAUTION]
-> This is the official open source repository for Suri. Treat other repositories, installers, and downloads as unverified unless they come from the official Suri channels.
+> This is the official open source repository for Atracana. Treat other repositories, installers, and downloads as unverified unless they come from the official Atracana channels.
 
-<a href="https://github.com/SuriAI/suri">
-  <img src="app/public/assets/header.png" alt="Suri header" width="100%">
+<a href="https://github.com/atracana/atracana">
+  <img src="app/public/assets/header.png" alt="Atracana header" width="100%">
 </a>
 
 <div align="center">
@@ -17,17 +17,17 @@
 
 </div>
 
-## Suri
+## Atracana
 
-Suri is an open source desktop attendance app built for local face recognition. It keeps recognition, attendance capture, biometric templates, and the primary database on the local machine, so the desktop app stays usable offline and does not depend on a cloud biometric service.
+Atracana is an open source desktop attendance app built for local face recognition. It keeps recognition, attendance capture, biometric templates, and the primary database on the local machine, so the desktop app stays usable offline and does not depend on a cloud biometric service.
 
-Suri can optionally pair with Suri Cloud for centralized reporting, device pairing, and sync visibility. The desktop app remains the biometric engine.
+Atracana can optionally pair with Atracana Cloud for centralized reporting, device pairing, and sync visibility. The desktop app remains the biometric engine.
 
 <div align="center">
-  <img src="app/public/assets/banner.png" alt="Suri application screenshot" width="100%">
+  <img src="app/public/assets/banner.png" alt="Atracana application screenshot" width="100%">
 </div>
 
-## Why Suri
+## Why Atracana
 
 | Local-first | Offline-ready | Consent-aware | Encrypted |
 | --- | --- | --- | --- |
@@ -40,12 +40,12 @@ Suri can optionally pair with Suri Cloud for centralized reporting, device pairi
 - Attendance records, sessions, and exports
 - Consent-aware biometric enrollment and deletion
 - Encrypted local biometric storage
-- Password-protected `.suri` vault backup and restore
+- Password-protected `.atracana` vault backup and restore
 - Optional Cloud Beta pairing with manual and background sync
 
 ## Cloud Beta
 
-Suri Cloud is an optional companion service for:
+Atracana Cloud is an optional companion service for:
 
 - centralized reporting
 - device pairing
@@ -56,7 +56,7 @@ The desktop app pushes attendance snapshots to the cloud. Raw face images, biome
 
 ## Offline-First Behavior
 
-Suri Desktop continues to work locally when internet access is unavailable:
+Atracana Desktop continues to work locally when internet access is unavailable:
 
 - recognition still works
 - attendance is still recorded locally
@@ -66,13 +66,13 @@ Cloud pairing, cloud sync, and cloud dashboard updates resume when connectivity 
 
 ## Download
 
-[![Release](https://img.shields.io/github/v/release/SuriAI/suri?label=Latest%20Release&color=4caf50&v=1)](https://github.com/SuriAI/suri/releases/latest)
+[![Release](https://img.shields.io/github/v/release/atracana/atracana?label=Latest%20Release&color=4caf50&v=1)](https://github.com/atracana/atracana/releases/latest)
 
 Prebuilt binaries are currently published for Windows. If you are on macOS or Linux, build from source using [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 ### Installation Notes
 
-Suri is still early-stage software. Desktop installers may trigger OS trust prompts until code-signing and notarization are in place.
+Atracana is still early-stage software. Desktop installers may trigger OS trust prompts until code-signing and notarization are in place.
 
 #### Windows SmartScreen
 
@@ -129,8 +129,8 @@ See [docs/INSTALLATION.md](docs/INSTALLATION.md) for the full setup flow.
 Quick start:
 
 ```bash
-git clone https://github.com/SuriAI/suri.git
-cd suri
+git clone https://github.com/atracana/atracana.git
+cd atracana
 cd server
 python -m venv venv
 venv\Scripts\activate
@@ -148,7 +148,7 @@ Pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before openin
 
 ## License
 
-Suri is licensed under the GNU AGPL v3. See [LICENSE](LICENSE).
+Atracana is licensed under the GNU AGPL v3. See [LICENSE](LICENSE).
 
 Third-party notices live in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
@@ -160,13 +160,13 @@ Third-party notices live in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 - [React](https://react.dev/)
 - [OpenCV](https://opencv.org/)
 
-[contributors-shield]: https://img.shields.io/github/contributors/SuriAI/suri.svg?style=for-the-badge&color=000000&v=1
-[contributors-url]: https://github.com/SuriAI/suri/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/SuriAI/suri.svg?style=for-the-badge&color=000000&v=1
-[forks-url]: https://github.com/SuriAI/suri/network/members
-[stars-shield]: https://img.shields.io/github/stars/SuriAI/suri.svg?style=for-the-badge&color=000000&v=1
-[stars-url]: https://github.com/SuriAI/suri/stargazers
-[issues-shield]: https://img.shields.io/github/issues/SuriAI/suri.svg?style=for-the-badge&color=000000&v=1
-[issues-url]: https://github.com/SuriAI/suri/issues
-[license-shield]: https://img.shields.io/github/license/SuriAI/suri.svg?style=for-the-badge&color=000000&v=1
+[contributors-shield]: https://img.shields.io/github/contributors/atracana/atracana.svg?style=for-the-badge&color=000000&v=1
+[contributors-url]: https://github.com/atracana/atracana/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/atracana/atracana.svg?style=for-the-badge&color=000000&v=1
+[forks-url]: https://github.com/atracana/atracana/network/members
+[stars-shield]: https://img.shields.io/github/stars/atracana/atracana.svg?style=for-the-badge&color=000000&v=1
+[stars-url]: https://github.com/atracana/atracana/stargazers
+[issues-shield]: https://img.shields.io/github/issues/atracana/atracana.svg?style=for-the-badge&color=000000&v=1
+[issues-url]: https://github.com/atracana/atracana/issues
+[license-shield]: https://img.shields.io/github/license/atracana/atracana.svg?style=for-the-badge&color=000000&v=1
 [license-url]: LICENSE

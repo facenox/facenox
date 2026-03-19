@@ -1,8 +1,8 @@
-# Contributing to Suri
+# Contributing to Atracana
 
 Thanks for contributing.
 
-Suri is a local-first desktop product with a privacy-sensitive domain. Changes that affect biometrics, consent, storage, exports, sync, or deletion need extra care and clear documentation.
+Atracana is a local-first desktop product with a privacy-sensitive domain. Changes that affect biometrics, consent, storage, exports, sync, or deletion need extra care and clear documentation.
 
 ## Before You Start
 
@@ -13,7 +13,7 @@ Suri is a local-first desktop product with a privacy-sensitive domain. Changes t
 ## Repository Layout
 
 ```text
-suri/
+atracana/
   app/     Electron desktop app (React + TypeScript)
   server/  Local FastAPI backend (Python)
   docs/    Project documentation
@@ -80,7 +80,7 @@ If your change affects any of these, update the docs in the same pull request:
 
 ### 4. Keep performance in mind
 
-Suri runs on desktops in real environments. Avoid unnecessary dependencies and avoid work that adds latency to recognition or attendance capture without a clear payoff.
+Atracana runs on desktops in real environments. Avoid unnecessary dependencies and avoid work that adds latency to recognition or attendance capture without a clear payoff.
 
 ## Commands
 

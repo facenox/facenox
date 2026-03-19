@@ -1,11 +1,11 @@
 #!/bin/bash
-# Build script for Suri Backend on Unix systems (macOS/Linux)
+# Build script for Atracana Backend on Unix systems (macOS/Linux)
 # This script builds the Python backend into a standalone executable
 
 set -e  # Exit on any error
 
 echo "========================================"
-echo "Suri Backend Build Script - Unix"
+echo "Atracana Backend Build Script - Unix"
 echo "========================================"
 
 # Check if Python is available

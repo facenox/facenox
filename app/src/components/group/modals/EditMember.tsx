@@ -120,7 +120,7 @@ export function EditMember({ member, onClose, onSuccess }: EditMemberProps) {
                   </span>
                   <InfoPopover
                     title="Biometric Privacy"
-                    description="Facial features are encrypted and stored strictly on this device. Suri does not upload biometric data to the cloud."
+                    description="Facial features are encrypted and stored strictly on this device. Atracana does not upload biometric data to the cloud."
                   />
                 </div>
               </div>

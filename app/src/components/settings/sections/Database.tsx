@@ -163,7 +163,7 @@ export function Database({
               <h4 className="text-xs font-semibold text-white">Export Database</h4>
             </div>
             <p className="text-[11px] leading-relaxed font-medium text-white/40">
-              Exports an encrypted <code className="font-mono text-cyan-400/50">.suri</code>{" "}
+              Exports an encrypted <code className="font-mono text-cyan-400/50">.atracana</code>{" "}
               database · members, history, and biometric profiles.
             </p>
           </div>
@@ -188,8 +188,8 @@ export function Database({
               <h4 className="text-xs font-semibold text-white">Import Database</h4>
             </div>
             <p className="text-[11px] leading-relaxed font-medium text-white/40">
-              Restores from a <code className="font-mono text-cyan-400/50">.suri</code> backup file.
-              Requires the original password.
+              Restores from a <code className="font-mono text-cyan-400/50">.atracana</code> backup
+              file. Requires the original password.
             </p>
           </div>
           <div className="mt-auto px-5 py-4">

@@ -9,7 +9,7 @@ const STARTUP_CATCH_UP_DELAY_MS = 5000
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
-  return token ? { "X-Suri-Token": token, ...extra } : { ...extra }
+  return token ? { "X-Atracana-Token": token, ...extra } : { ...extra }
 }
 
 function toCloudIsoDateTime(value: unknown): string | null {
@@ -51,8 +51,7 @@ function normalizeAttendanceExportForCloud(attendanceExport: Record<string, unkn
 
   return {
     ...attendanceExport,
-    exported_at:
-      toCloudIsoDateTime(attendanceExport.exported_at) ?? new Date().toISOString(),
+    exported_at: toCloudIsoDateTime(attendanceExport.exported_at) ?? new Date().toISOString(),
     groups: groups.map((group) => {
       const candidate = typeof group === "object" && group !== null ? group : {}
       return {
@@ -69,8 +68,9 @@ function normalizeAttendanceExportForCloud(attendanceExport: Record<string, unkn
         joined_at:
           toCloudIsoDateTime((candidate as { joined_at?: unknown }).joined_at) ??
           new Date().toISOString(),
-        consent_granted_at:
-          toCloudIsoDateTime((candidate as { consent_granted_at?: unknown }).consent_granted_at),
+        consent_granted_at: toCloudIsoDateTime(
+          (candidate as { consent_granted_at?: unknown }).consent_granted_at,
+        ),
       }
     }),
     records: records.map((record) => {
@@ -86,10 +86,10 @@ function normalizeAttendanceExportForCloud(attendanceExport: Record<string, unkn
       const candidate = typeof session === "object" && session !== null ? session : {}
       return {
         ...candidate,
-        check_in_time:
-          toCloudIsoDateTime((candidate as { check_in_time?: unknown }).check_in_time),
-        check_out_time:
-          toCloudIsoDateTime((candidate as { check_out_time?: unknown }).check_out_time),
+        check_in_time: toCloudIsoDateTime((candidate as { check_in_time?: unknown }).check_in_time),
+        check_out_time: toCloudIsoDateTime(
+          (candidate as { check_out_time?: unknown }).check_out_time,
+        ),
       }
     }),
   }
@@ -199,7 +199,7 @@ export class BackgroundSyncManager {
       this.stop()
       this.setLastSyncState({
         lastSyncStatus: "error",
-        lastSyncMessage: "Connect this desktop to Suri Cloud before syncing.",
+        lastSyncMessage: "Connect this desktop to Atracana Cloud before syncing.",
       })
       return {
         success: false,
@@ -251,8 +251,8 @@ export class BackgroundSyncManager {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${deviceToken}`,
-          "X-Suri-Version": getCurrentVersion(),
-          "User-Agent": "Suri-Desktop-Sync",
+          "X-Atracana-Version": getCurrentVersion(),
+          "User-Agent": "Atracana-Desktop-Sync",
         },
         body: JSON.stringify(syncPayload),
         signal: AbortSignal.timeout(60000),

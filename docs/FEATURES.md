@@ -30,7 +30,7 @@ This page covers the shipped desktop feature set and the scope of the current Cl
 
 - The local database stores groups, members, attendance, settings, and audit data.
 - Biometric templates are encrypted at rest in the local store.
-- Vault exports create password-protected `.suri` backup files.
+- Vault exports create password-protected `.atracana` backup files.
 - Vault imports can restore attendance data and biometric templates when consent is present in the imported data.
 
 ### Operational features
@@ -41,7 +41,7 @@ This page covers the shipped desktop feature set and the scope of the current Cl
 
 ## Cloud Beta Integration
 
-Cloud Beta connects a Suri desktop instance to a separate Suri Cloud deployment for reporting and device visibility.
+Cloud Beta connects a Atracana desktop instance to a separate Atracana Cloud deployment for reporting and device visibility.
 
 ### What the desktop app supports
 

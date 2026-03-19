@@ -1,12 +1,12 @@
 {
   "files": ["out/**/*"],
-  "appId": "com.suri.app",
-  "productName": "Suri AI Attendance Tracker",
-  "icon": "./public/icons/suri_mark_logo_round_c.png",
+  "appId": "com.atracana.app",
+  "productName": "Atracana AI Attendance Tracker",
+  "icon": "./public/icons/atracana_mark_logo_round_c.png",
   "beforePack": "scripts/before-pack.mjs",
   "win": {
     "target": "nsis",
-    "artifactName": "Suri-Setup-v${version}.${ext}",
+    "artifactName": "Atracana-Setup-v${version}.${ext}",
     "extraResources": [
       {
         "from": "../server/dist/server.exe",
@@ -26,7 +26,7 @@
     "createStartMenuShortcut": true,
     "deleteAppDataOnUninstall": false,
     "runAfterFinish": true,
-    "artifactName": "Suri-Setup-v${version}.${ext}"
+    "artifactName": "Atracana-Setup-v${version}.${ext}"
   },
   "linux": {
     "target": "AppImage",
