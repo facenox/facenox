@@ -22,7 +22,7 @@ Atracana is an open source desktop attendance app built for local face recogniti
 Atracana can optionally pair with Atracana Cloud for centralized reporting, device pairing, and sync visibility. The desktop app remains the biometric engine.
 
 <div align="center">
-  <img src="app/public/assets/banner.png" alt="Atracana application screenshot" width="100%">
+  <img src="app/public/assets/banner_updated.png" alt="Atracana application screenshot" width="100%">
 </div>
 
 ## Why Atracana
