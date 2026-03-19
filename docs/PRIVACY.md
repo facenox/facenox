@@ -54,7 +54,7 @@ If you export a vault, treat the backup file as sensitive data.
 
 ## Telemetry
 
-The open source desktop app does not include analytics, ads, or hidden telemetry by default.
+The open source desktop app does not include analytics, ads, or hidden background telemetry by default.
 
 That does not automatically make every surrounding deployment private. If you add hosting, external logs, monitoring, or third-party infrastructure, those systems need their own review.
 
@@ -62,7 +62,7 @@ That does not automatically make every surrounding deployment private. If you ad
 
 The desktop app can optionally pair with a separate Suri Cloud deployment.
 
-### Data that stays local
+### Data not sent to Suri Cloud
 
 - raw face images
 - biometric templates
@@ -98,7 +98,7 @@ If the internet is unavailable, Cloud Beta stops updating until connectivity ret
 
 ## Compliance Position
 
-Suri can support privacy-conscious deployments, but the software alone does not make a deployment compliant with GDPR, the Philippine Data Privacy Act, or any other privacy law.
+Suri includes controls that can support privacy-conscious deployments, but the software alone does not make a deployment compliant with GDPR, the Philippine Data Privacy Act, or any other privacy law.
 
 Operators are still responsible for:
 
