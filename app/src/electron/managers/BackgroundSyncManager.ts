@@ -12,6 +12,89 @@ function authHeaders(extra: Record<string, string> = {}) {
   return token ? { "X-Suri-Token": token, ...extra } : { ...extra }
 }
 
+function toCloudIsoDateTime(value: unknown): string | null {
+  if (value == null || value === "") {
+    return null
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toISOString()
+  }
+
+  if (typeof value !== "string") {
+    return null
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  const direct = new Date(trimmed)
+  if (!Number.isNaN(direct.getTime())) {
+    return direct.toISOString()
+  }
+
+  const assumedUtc = new Date(`${trimmed}Z`)
+  if (!Number.isNaN(assumedUtc.getTime())) {
+    return assumedUtc.toISOString()
+  }
+
+  return null
+}
+
+function normalizeAttendanceExportForCloud(attendanceExport: Record<string, unknown>) {
+  const groups = Array.isArray(attendanceExport.groups) ? attendanceExport.groups : []
+  const members = Array.isArray(attendanceExport.members) ? attendanceExport.members : []
+  const records = Array.isArray(attendanceExport.records) ? attendanceExport.records : []
+  const sessions = Array.isArray(attendanceExport.sessions) ? attendanceExport.sessions : []
+
+  return {
+    ...attendanceExport,
+    exported_at:
+      toCloudIsoDateTime(attendanceExport.exported_at) ?? new Date().toISOString(),
+    groups: groups.map((group) => {
+      const candidate = typeof group === "object" && group !== null ? group : {}
+      return {
+        ...candidate,
+        created_at:
+          toCloudIsoDateTime((candidate as { created_at?: unknown }).created_at) ??
+          new Date().toISOString(),
+      }
+    }),
+    members: members.map((member) => {
+      const candidate = typeof member === "object" && member !== null ? member : {}
+      return {
+        ...candidate,
+        joined_at:
+          toCloudIsoDateTime((candidate as { joined_at?: unknown }).joined_at) ??
+          new Date().toISOString(),
+        consent_granted_at:
+          toCloudIsoDateTime((candidate as { consent_granted_at?: unknown }).consent_granted_at),
+      }
+    }),
+    records: records.map((record) => {
+      const candidate = typeof record === "object" && record !== null ? record : {}
+      return {
+        ...candidate,
+        timestamp:
+          toCloudIsoDateTime((candidate as { timestamp?: unknown }).timestamp) ??
+          new Date().toISOString(),
+      }
+    }),
+    sessions: sessions.map((session) => {
+      const candidate = typeof session === "object" && session !== null ? session : {}
+      return {
+        ...candidate,
+        check_in_time:
+          toCloudIsoDateTime((candidate as { check_in_time?: unknown }).check_in_time),
+        check_out_time:
+          toCloudIsoDateTime((candidate as { check_out_time?: unknown }).check_out_time),
+      }
+    }),
+  }
+}
+
 export class BackgroundSyncManager {
   private timer: NodeJS.Timeout | null = null
   private catchUpTimer: NodeJS.Timeout | null = null
@@ -147,7 +230,8 @@ export class BackgroundSyncManager {
         throw new Error(`Local export failed: HTTP ${response.status}`)
       }
 
-      const attendanceExport = await response.json()
+      const rawAttendanceExport = (await response.json()) as Record<string, unknown>
+      const attendanceExport = normalizeAttendanceExportForCloud(rawAttendanceExport)
       const exportedAt =
         typeof attendanceExport?.exported_at === "string" ?
           attendanceExport.exported_at
