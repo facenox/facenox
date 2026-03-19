@@ -168,7 +168,7 @@ declare global {
       connected: boolean
     }>
     pairDevice: (input: {
-      cloudBaseUrl: string
+      cloudBaseUrl?: string
       pairingCode: string
       deviceName?: string
     }) => Promise<{

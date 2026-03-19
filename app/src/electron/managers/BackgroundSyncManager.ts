@@ -1,8 +1,10 @@
 import { persistentStore } from "../persistentStore.js"
 import { backendService } from "../backendService.js"
 import { getCurrentVersion } from "../updater.js"
-
-const DEFAULT_SYNC_INTERVAL_MINUTES = 15
+import {
+  DEFAULT_CLOUD_BASE_URL,
+  DEFAULT_SYNC_INTERVAL_MINUTES,
+} from "../../services/cloudSyncDefaults.js"
 const STARTUP_CATCH_UP_DELAY_MS = 5000
 
 function authHeaders(extra: Record<string, string> = {}) {
@@ -18,7 +20,7 @@ export class BackgroundSyncManager {
   private getSyncConfig() {
     return {
       enabled: persistentStore.get("sync.enabled") as boolean,
-      cloudBaseUrl: (persistentStore.get("sync.cloudBaseUrl") as string) || "",
+      cloudBaseUrl: (persistentStore.get("sync.cloudBaseUrl") as string) || DEFAULT_CLOUD_BASE_URL,
       siteId: (persistentStore.get("sync.siteId") as string) || "",
       deviceId: (persistentStore.get("sync.deviceId") as string) || "",
       deviceToken: (persistentStore.get("sync.deviceToken") as string) || "",

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 
+import { DEFAULT_CLOUD_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "@/services/cloudSyncDefaults"
+
 type CloudConfig = {
   enabled: boolean
   cloudBaseUrl: string
@@ -23,38 +25,60 @@ type BannerState =
 
 const defaultConfig: CloudConfig = {
   enabled: false,
-  cloudBaseUrl: "",
+  cloudBaseUrl: DEFAULT_CLOUD_BASE_URL,
   organizationId: "",
   organizationName: "",
   siteId: "",
   siteName: "",
   deviceId: "",
   deviceName: "Suri Desktop",
-  intervalMinutes: 15,
+  intervalMinutes: DEFAULT_SYNC_INTERVAL_MINUTES,
   lastSyncedAt: null,
   lastSyncStatus: "idle",
   lastSyncMessage: null,
   connected: false,
 }
 
+const pairingSteps = [
+  {
+    label: "Step 1",
+    title: "Generate a pairing code",
+    body: "Sign in to Suri Cloud, choose the site, and create a short-lived pairing code.",
+  },
+  {
+    label: "Step 2",
+    title: "Paste the code here",
+    body: "For the hosted beta, the cloud server address is already set in Suri Desktop.",
+  },
+  {
+    label: "Step 3",
+    title: "Connect and sync",
+    body: "This desktop stores its device token locally and starts the first snapshot sync.",
+  },
+] as const
+
 export function CloudSync() {
   const [config, setConfig] = useState<CloudConfig>(defaultConfig)
-  const [cloudBaseUrl, setCloudBaseUrl] = useState("")
+  const [cloudBaseUrl, setCloudBaseUrl] = useState(DEFAULT_CLOUD_BASE_URL)
   const [deviceName, setDeviceName] = useState("Suri Desktop")
   const [pairingCode, setPairingCode] = useState("")
-  const [intervalMinutes, setIntervalMinutes] = useState(15)
+  const [intervalMinutes, setIntervalMinutes] = useState(DEFAULT_SYNC_INTERVAL_MINUTES)
   const [enabled, setEnabled] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [busyAction, setBusyAction] = useState<
     "saving" | "pairing" | "disconnecting" | "syncing" | null
   >(null)
   const [banner, setBanner] = useState<BannerState>({ type: "idle" })
 
   const syncFromConfig = useCallback((nextConfig: CloudConfig) => {
+    const nextCloudBaseUrl = nextConfig.cloudBaseUrl || DEFAULT_CLOUD_BASE_URL
+
     setConfig(nextConfig)
-    setCloudBaseUrl(nextConfig.cloudBaseUrl)
+    setCloudBaseUrl(nextCloudBaseUrl)
     setDeviceName(nextConfig.deviceName || "Suri Desktop")
-    setIntervalMinutes(nextConfig.intervalMinutes)
+    setIntervalMinutes(nextConfig.intervalMinutes || DEFAULT_SYNC_INTERVAL_MINUTES)
     setEnabled(nextConfig.enabled)
+    setShowAdvanced(nextCloudBaseUrl !== DEFAULT_CLOUD_BASE_URL)
   }, [])
 
   const loadConfig = useCallback(async () => {
@@ -81,8 +105,8 @@ export function CloudSync() {
         type: "success",
         message:
           nextConfig.connected ?
-            "Cloud Beta settings saved. Auto-sync state updated."
-          : "Cloud Beta settings saved. Pair this device to start syncing.",
+            "Advanced cloud settings saved. Auto-sync state updated."
+          : "Advanced cloud settings saved. You can pair this desktop whenever you're ready.",
       })
     } catch (error) {
       setBanner({
@@ -99,7 +123,7 @@ export function CloudSync() {
     setBanner({ type: "idle" })
     try {
       const result = await window.electronAPI.sync.pairDevice({
-        cloudBaseUrl,
+        cloudBaseUrl: cloudBaseUrl || DEFAULT_CLOUD_BASE_URL,
         pairingCode,
         deviceName,
       })
@@ -182,9 +206,8 @@ export function CloudSync() {
       <div className="space-y-1">
         <h3 className="text-sm font-semibold text-white">Cloud Beta</h3>
         <p className="max-w-2xl text-xs leading-relaxed text-white/50">
-          Pair this desktop with your Suri Cloud workspace for centralized reporting, device
-          visibility, and sync monitoring. Attendance data moves one-way to the cloud in the beta.
-          Biometric templates and raw face data stay local on this machine.
+          Suri Desktop stays local-first. Cloud Beta adds shared reports, device status, and admin
+          visibility without moving biometric templates or raw face data off this machine.
         </p>
       </div>
 
@@ -196,8 +219,8 @@ export function CloudSync() {
             </div>
             <div className="mt-1 text-xs">
               {config.connected ?
-                `${config.organizationName || "Unknown org"} · ${config.siteName || "Unknown site"}`
-              : "This desktop is still local-only until you pair it with Suri Cloud."}
+                `${config.organizationName || "Unknown org"} - ${config.siteName || "Unknown site"}`
+              : "This desktop is still local-only until you connect it to Suri Cloud."}
             </div>
           </div>
           <div className="rounded-full border border-current/20 px-3 py-1 text-[10px] font-semibold tracking-[0.22em] uppercase">
@@ -233,114 +256,32 @@ export function CloudSync() {
       <div className="overflow-hidden rounded-lg border border-white/10 bg-white/5">
         <div className="border-b border-white/6 px-6 py-5">
           <div className="mb-1 flex items-center gap-2">
-            <i className="fa-solid fa-cloud text-sm text-cyan-400" />
-            <h4 className="text-sm font-semibold text-white">Connection Settings</h4>
-          </div>
-          <p className="text-xs text-white/50">
-            Save the cloud URL, local device label, and auto-sync interval before pairing.
-          </p>
-        </div>
-        <div className="space-y-4 px-6 py-5">
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="space-y-2">
-              <span className="text-[11px] font-medium text-white/30">Cloud Base URL</span>
-              <input
-                type="url"
-                placeholder="https://cloud.suri.app"
-                value={cloudBaseUrl}
-                disabled={config.connected}
-                onChange={(e) => setCloudBaseUrl(e.target.value)}
-                className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-60"
-              />
-            </label>
-            <label className="space-y-2">
-              <span className="text-[11px] font-medium text-white/30">Device Name</span>
-              <input
-                type="text"
-                placeholder="Front Desk Desktop"
-                value={deviceName}
-                disabled={config.connected}
-                onChange={(e) => setDeviceName(e.target.value)}
-                className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-60"
-              />
-            </label>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-[1fr_auto]">
-            <label className="space-y-2">
-              <span className="text-[11px] font-medium text-white/30">Auto-Sync Interval</span>
-              <input
-                type="number"
-                min={1}
-                max={1440}
-                value={intervalMinutes}
-                onChange={(e) => setIntervalMinutes(Math.max(1, Number(e.target.value) || 1))}
-                className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
-              />
-            </label>
-            <label className="mt-auto flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/70">
-              <input
-                type="checkbox"
-                checked={enabled}
-                onChange={(e) => setEnabled(e.target.checked)}
-                className="h-4 w-4 accent-cyan-500"
-              />
-              Enable background auto-sync
-            </label>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={handleSave}
-              disabled={busyAction !== null}
-              className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-300 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
-              <i
-                className={
-                  busyAction === "saving" ? "fa-solid fa-circle-notch fa-spin" : "fa-solid fa-gear"
-                }
-              />
-              Save Settings
-            </button>
-            {config.connected && (
-              <button
-                onClick={handleManualSync}
-                disabled={busyAction !== null}
-                className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-bold tracking-wider text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
-                <i
-                  className={
-                    busyAction === "syncing" ?
-                      "fa-solid fa-circle-notch fa-spin"
-                    : "fa-solid fa-rotate"
-                  }
-                />
-                Sync Now
-              </button>
-            )}
-          </div>
-
-          {config.connected && (
-            <p className={`text-[11px] ${syncTone}`}>
-              {config.lastSyncedAt ?
-                `Last successful sync: ${new Date(config.lastSyncedAt).toLocaleString()}`
-              : "No successful sync yet."}
-              {config.lastSyncMessage ? ` ${config.lastSyncMessage}` : ""}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-lg border border-white/10 bg-white/5">
-        <div className="border-b border-white/6 px-6 py-5">
-          <div className="mb-1 flex items-center gap-2">
             <i className="fa-solid fa-link text-sm text-cyan-400" />
-            <h4 className="text-sm font-semibold text-white">Pairing</h4>
+            <h4 className="text-sm font-semibold text-white">Connect this desktop</h4>
           </div>
           <p className="text-xs text-white/50">
-            Use a short-lived pairing code from Suri Cloud to connect this desktop to an
-            organization and site.
+            For the hosted beta, normal users only need a pairing code. Server URL is an advanced
+            override for custom deployments.
           </p>
         </div>
+
         <div className="space-y-4 px-6 py-5">
+          {!config.connected ?
+            <div className="grid gap-3 md:grid-cols-3">
+              {pairingSteps.map((step) => (
+                <div
+                  className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-4"
+                  key={step.title}>
+                  <div className="text-[10px] font-semibold tracking-[0.24em] text-cyan-300 uppercase">
+                    {step.label}
+                  </div>
+                  <div className="mt-2 text-sm font-semibold text-white">{step.title}</div>
+                  <div className="mt-2 text-[11px] leading-relaxed text-white/50">{step.body}</div>
+                </div>
+              ))}
+            </div>
+          : null}
+
           {!config.connected ?
             <>
               <label className="space-y-2">
@@ -353,19 +294,25 @@ export function CloudSync() {
                   className="h-10 w-full max-w-sm rounded-lg border border-white/10 bg-white/5 px-4 text-xs tracking-[0.18em] text-white uppercase transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
                 />
               </label>
-              <button
-                onClick={handlePair}
-                disabled={busyAction !== null || !cloudBaseUrl || !pairingCode}
-                className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-300 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
-                <i
-                  className={
-                    busyAction === "pairing" ?
-                      "fa-solid fa-circle-notch fa-spin"
-                    : "fa-solid fa-plug"
-                  }
-                />
-                Pair This Desktop
-              </button>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={handlePair}
+                  disabled={busyAction !== null || !pairingCode}
+                  className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-300 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
+                  <i
+                    className={
+                      busyAction === "pairing" ?
+                        "fa-solid fa-circle-notch fa-spin"
+                      : "fa-solid fa-plug"
+                    }
+                  />
+                  Connect to Suri Cloud
+                </button>
+                <span className="text-[11px] text-white/40">
+                  Advanced settings are only for staging, self-hosted, or special device labels.
+                </span>
+              </div>
             </>
           : <>
               <div className="grid gap-3 text-xs text-white/60 sm:grid-cols-2">
@@ -384,21 +331,148 @@ export function CloudSync() {
                   <div className="text-white">{config.siteName || config.siteId}</div>
                 </div>
               </div>
-              <button
-                onClick={handleDisconnect}
-                disabled={busyAction !== null}
-                className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-red-300 transition-all hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-40">
-                <i
-                  className={
-                    busyAction === "disconnecting" ?
-                      "fa-solid fa-circle-notch fa-spin"
-                    : "fa-solid fa-link-slash"
-                  }
-                />
-                Disconnect Device
-              </button>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={handleManualSync}
+                  disabled={busyAction !== null}
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-bold tracking-wider text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
+                  <i
+                    className={
+                      busyAction === "syncing" ?
+                        "fa-solid fa-circle-notch fa-spin"
+                      : "fa-solid fa-rotate"
+                    }
+                  />
+                  Sync Now
+                </button>
+                <button
+                  onClick={handleDisconnect}
+                  disabled={busyAction !== null}
+                  className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-red-300 transition-all hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-40">
+                  <i
+                    className={
+                      busyAction === "disconnecting" ?
+                        "fa-solid fa-circle-notch fa-spin"
+                      : "fa-solid fa-link-slash"
+                    }
+                  />
+                  Disconnect Device
+                </button>
+              </div>
             </>
           }
+
+          <div className="rounded-lg border border-white/8 bg-black/20 px-4 py-3 text-[11px] text-white/45">
+            Hosted cloud default:
+            <span className="ml-2 text-cyan-300">{DEFAULT_CLOUD_BASE_URL}</span>
+          </div>
+
+          <button
+            onClick={() => setShowAdvanced((value) => !value)}
+            className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-white/45 uppercase transition hover:text-white/70">
+            <i className={`fa-solid ${showAdvanced ? "fa-chevron-up" : "fa-chevron-down"}`} />
+            {showAdvanced ? "Hide advanced settings" : "Show advanced settings"}
+          </button>
+
+          {showAdvanced ?
+            <div className="space-y-4 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-4">
+              <div className="text-[11px] leading-relaxed text-white/45">
+                Change these only if you need a custom server URL, a clearer device label, or a
+                different background sync schedule.
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="text-[11px] font-medium text-white/30">Server URL</span>
+                  <input
+                    type="url"
+                    placeholder={DEFAULT_CLOUD_BASE_URL}
+                    value={cloudBaseUrl}
+                    disabled={config.connected}
+                    onChange={(e) => setCloudBaseUrl(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-[11px] font-medium text-white/30">Device Name</span>
+                  <input
+                    type="text"
+                    placeholder="Front Desk Desktop"
+                    value={deviceName}
+                    disabled={config.connected}
+                    onChange={(e) => setDeviceName(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-[1fr_auto]">
+                <label className="space-y-2">
+                  <span className="text-[11px] font-medium text-white/30">Auto-Sync Interval</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={1440}
+                    value={intervalMinutes}
+                    onChange={(e) => setIntervalMinutes(Math.max(1, Number(e.target.value) || 1))}
+                    className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
+                  />
+                </label>
+                <label className="mt-auto flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/70">
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={(e) => setEnabled(e.target.checked)}
+                    className="h-4 w-4 accent-cyan-500"
+                  />
+                  Enable background auto-sync
+                </label>
+              </div>
+
+              <button
+                onClick={handleSave}
+                disabled={busyAction !== null}
+                className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-300 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
+                <i
+                  className={
+                    busyAction === "saving" ?
+                      "fa-solid fa-circle-notch fa-spin"
+                    : "fa-solid fa-gear"
+                  }
+                />
+                Save Advanced Settings
+              </button>
+            </div>
+          : null}
+
+          {config.connected ?
+            <p className={`text-[11px] ${syncTone}`}>
+              {config.lastSyncedAt ?
+                `Last successful sync: ${new Date(config.lastSyncedAt).toLocaleString()}`
+              : "No successful sync yet."}
+              {config.lastSyncMessage ? ` ${config.lastSyncMessage}` : ""}
+            </p>
+          : null}
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-white/10 bg-white/5">
+        <div className="border-b border-white/6 px-6 py-5">
+          <div className="mb-1 flex items-center gap-2">
+            <i className="fa-solid fa-cloud text-sm text-cyan-400" />
+            <h4 className="text-sm font-semibold text-white">What syncs to Cloud</h4>
+          </div>
+          <p className="text-xs text-white/50">
+            Attendance snapshots move one-way to the cloud for reporting and device visibility.
+          </p>
+        </div>
+        <div className="space-y-4 px-6 py-5">
+          <ul className="space-y-2 pl-5 text-[11px] leading-relaxed text-white/50">
+            <li>Groups, members, attendance records, and sessions from the local desktop export</li>
+            <li>Device identity, sync status, and admin activity for shared reporting</li>
+            <li>Biometric templates, raw face images, and local matching stay on the desktop</li>
+          </ul>
         </div>
       </div>
 

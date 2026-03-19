@@ -1,7 +1,6 @@
 import type { AudioSettings, QuickSettings } from "../components/settings/types"
 import type { UpdateInfo } from "../types/global"
-
-const DEFAULT_SYNC_INTERVAL_MINUTES = 15
+import { DEFAULT_CLOUD_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "./cloudSyncDefaults"
 
 export interface PersistentSettingsSchema {
   quickSettings: QuickSettings
@@ -99,7 +98,7 @@ export const defaultSettings: PersistentSettingsSchema = {
   },
   sync: {
     enabled: false,
-    cloudBaseUrl: "",
+    cloudBaseUrl: DEFAULT_CLOUD_BASE_URL,
     organizationId: "",
     organizationName: "",
     siteId: "",

@@ -7,8 +7,10 @@ import { backendService } from "../backendService.js"
 import { syncManager } from "../managers/BackgroundSyncManager.js"
 import { persistentStore } from "../persistentStore.js"
 import { getCurrentVersion } from "../updater.js"
-
-const DEFAULT_SYNC_INTERVAL_MINUTES = 15
+import {
+  DEFAULT_CLOUD_BASE_URL,
+  DEFAULT_SYNC_INTERVAL_MINUTES,
+} from "../../services/cloudSyncDefaults.js"
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
@@ -19,8 +21,14 @@ function normalizeCloudBaseUrl(value: string): string {
   return value.trim().replace(/\/+$/, "")
 }
 
+function resolveCloudBaseUrl(value: string): string {
+  return normalizeCloudBaseUrl(value) || DEFAULT_CLOUD_BASE_URL
+}
+
 function getCloudSyncStatus() {
-  const cloudBaseUrl = (persistentStore.get("sync.cloudBaseUrl") as string) || ""
+  const cloudBaseUrl = resolveCloudBaseUrl(
+    (persistentStore.get("sync.cloudBaseUrl") as string) || "",
+  )
   const organizationId = (persistentStore.get("sync.organizationId") as string) || ""
   const organizationName = (persistentStore.get("sync.organizationName") as string) || ""
   const siteId = (persistentStore.get("sync.siteId") as string) || ""
@@ -154,7 +162,7 @@ export function registerSyncHandlers() {
 
   ipcMain.handle("sync:update-config", async (_event, updates: Record<string, unknown> = {}) => {
     if (typeof updates.cloudBaseUrl === "string") {
-      persistentStore.set("sync.cloudBaseUrl", normalizeCloudBaseUrl(updates.cloudBaseUrl))
+      persistentStore.set("sync.cloudBaseUrl", resolveCloudBaseUrl(updates.cloudBaseUrl))
     }
 
     if (typeof updates.deviceName === "string") {
@@ -189,16 +197,9 @@ export function registerSyncHandlers() {
         deviceName?: string
       } = {},
     ) => {
-      const cloudBaseUrl = normalizeCloudBaseUrl(input.cloudBaseUrl || "")
+      const cloudBaseUrl = resolveCloudBaseUrl(input.cloudBaseUrl || "")
       const pairingCode = (input.pairingCode || "").trim()
       const deviceName = (input.deviceName || "").trim() || os.hostname()
-
-      if (!cloudBaseUrl) {
-        return {
-          success: false,
-          error: "Cloud URL is required.",
-        }
-      }
 
       if (!pairingCode) {
         return {

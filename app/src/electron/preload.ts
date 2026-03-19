@@ -118,7 +118,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ) => {
       return ipcRenderer.invoke("sync:update-config", updates)
     },
-    pairDevice: (input: { cloudBaseUrl: string; pairingCode: string; deviceName?: string }) => {
+    pairDevice: (input: { cloudBaseUrl?: string; pairingCode: string; deviceName?: string }) => {
       return ipcRenderer.invoke("sync:pair-device", input)
     },
     disconnectDevice: () => {
