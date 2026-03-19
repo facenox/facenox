@@ -51,7 +51,7 @@ export default function WindowBar() {
 
       <div className="pointer-events-none relative z-40 ml-4 flex flex-1 items-center space-x-3">
         <img
-          src="./icons/atracana_mark_logo_transparent.png"
+          src="./icons/logo.png"
           alt="Atracana"
           className="mr-1 -ml-3 h-6 w-6 object-contain opacity-90"
         />

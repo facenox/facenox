@@ -12,8 +12,8 @@ function copyAssetsPlugin() {
       copyFileSync("src/electron/splash.html", "out/main/splash.html")
       copyFileSync("src/electron/splash.css", "out/main/splash.css")
       copyFileSync(
-        "public/icons/atracana_primary_emblem_transparent.png",
-        "out/main/atracana_primary_emblem_transparent.png",
+        "public/icons/logo.png",
+        "out/main/logo.png",
       )
     },
   }

@@ -13,8 +13,8 @@ export class TrayManager {
 
     const iconPath =
       isDev() ?
-        path.join(tray_dirname, "../../public/icons/atracana_mark_logo_transparent.png")
-      : path.join(process.resourcesPath, "icons/atracana_mark_logo_transparent.png")
+        path.join(tray_dirname, "../../public/icons/logo.png")
+      : path.join(process.resourcesPath, "icons/logo.png")
 
     let image
     try {

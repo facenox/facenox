@@ -2,7 +2,7 @@
   "files": ["out/**/*"],
   "appId": "com.atracana.app",
   "productName": "Atracana AI Attendance Tracker",
-  "icon": "./public/icons/atracana_mark_logo_round_c.png",
+  "icon": "./public/icons/logo.png",
   "beforePack": "scripts/before-pack.mjs",
   "win": {
     "target": "nsis",

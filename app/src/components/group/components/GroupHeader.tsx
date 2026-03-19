@@ -11,7 +11,7 @@ export function GroupHeader({ isCollapsed, onToggleCollapse }: GroupHeaderProps)
       {!isCollapsed && (
         <div className="flex items-center gap-2">
           <img
-            src="./icons/atracana_mark_logo_transparent.png"
+            src="./icons/logo.png"
             alt="Atracana"
             className="h-9 w-9"
           />

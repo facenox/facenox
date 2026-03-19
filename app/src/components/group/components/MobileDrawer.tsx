@@ -67,7 +67,7 @@ export function MobileDrawer() {
           <div className="border-b border-white/10 px-4 pt-1 pb-3">
             <div className="flex items-center gap-2">
               <img
-                src="./icons/atracana_mark_logo_transparent.png"
+                src="./icons/logo.png"
                 alt="Atracana"
                 className="h-9 w-9"
               />
