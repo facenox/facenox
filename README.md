@@ -17,15 +17,24 @@
 
 </div>
 
-Facenox is an open source desktop attendance app built for local face recognition. It keeps recognition, attendance capture, biometric templates, and the primary database on the local machine, so the desktop app stays usable offline and does not depend on a cloud biometric service.
+Facenox is an offline-first face recognition system that runs entirely on-device in real time — no cloud required.
 
-Facenox can optionally pair with Facenox Cloud for centralized reporting, device pairing, and sync visibility. The desktop app remains the biometric engine.
+Built for privacy-conscious teams, it keeps biometric data local while optionally syncing attendance to a cloud dashboard. The desktop app remains the biometric engine.
 
 <div align="center">
   <img src="app/public/assets/banner.png" alt="Facenox application screenshot" width="100%">
 </div>
 
+## Key Highlights
+
+- ⚡ Real-time face recognition — CPU-friendly, no GPU required
+- 🔒 Fully local biometric processing — data never leaves the device
+- 🌐 Works offline — no internet required for core workflows
+- ☁️ Optional cloud dashboard for centralized reporting and sync
+
 ## Why Facenox
+
+Most attendance systems rely on cloud-based biometrics. Facenox doesn't.
 
 | Local-first | Offline-ready | Consent-aware | Encrypted |
 | --- | --- | --- | --- |
@@ -40,6 +49,12 @@ Facenox can optionally pair with Facenox Cloud for centralized reporting, device
 - Encrypted local biometric storage
 - Password-protected `.facenox` vault backup and restore
 - Optional Cloud Beta pairing with manual and background sync
+
+## Performance
+
+- Real-time recognition on CPU — no GPU required
+- Tested on low-spec hardware
+- Lightweight local backend with minimal resource footprint
 
 ## Cloud Beta
 
