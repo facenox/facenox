@@ -12,7 +12,7 @@ function App() {
 
   useEffect(() => {
     if (isHydrated) {
-      window.atracanaElectron?.onAppReady()
+      window.facenoxElectron?.onAppReady()
     }
   }, [isHydrated])
 

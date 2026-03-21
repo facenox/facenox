@@ -10,9 +10,9 @@ export default function WindowBar() {
     let cleanupMaximize: (() => void) | undefined
     let cleanupUnmaximize: (() => void) | undefined
 
-    if (window.atracanaElectron) {
-      cleanupMaximize = window.atracanaElectron.onMaximize(handleMaximize)
-      cleanupUnmaximize = window.atracanaElectron.onUnmaximize(handleUnmaximize)
+    if (window.facenoxElectron) {
+      cleanupMaximize = window.facenoxElectron.onMaximize(handleMaximize)
+      cleanupUnmaximize = window.facenoxElectron.onUnmaximize(handleUnmaximize)
     }
 
     return () => {
@@ -22,20 +22,20 @@ export default function WindowBar() {
   }, [])
 
   const handleMinimize = () => {
-    if (window.atracanaElectron) {
-      window.atracanaElectron.minimize()
+    if (window.facenoxElectron) {
+      window.facenoxElectron.minimize()
     }
   }
 
   const handleMaximize = () => {
-    if (window.atracanaElectron) {
-      window.atracanaElectron.maximize()
+    if (window.facenoxElectron) {
+      window.facenoxElectron.maximize()
     }
   }
 
   const handleClose = () => {
-    if (window.atracanaElectron) {
-      window.atracanaElectron.close()
+    if (window.facenoxElectron) {
+      window.facenoxElectron.close()
     }
   }
 
@@ -52,7 +52,7 @@ export default function WindowBar() {
       <div className="pointer-events-none relative z-40 ml-4 flex flex-1 items-center space-x-3">
         <img
           src="./icons/logo.png"
-          alt="Atracana"
+          alt="Facenox"
           className="mr-1 -ml-3 h-6 w-6 object-contain opacity-90"
         />
       </div>

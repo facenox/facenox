@@ -8,11 +8,11 @@ export function IntroModal() {
 
   const steps = [
     {
-      title: "Welcome to Atracana",
+      title: "Welcome to Facenox",
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Atracana is a <strong>real-time</strong> attendance system built for privacy. Everything
+            Facenox is a <strong>real-time</strong> attendance system built for privacy. Everything
             is processed on this device to keep your data secure and under your control.
           </p>
           <p className="text-xs text-white/50">
@@ -27,7 +27,7 @@ export function IntroModal() {
         <div className="space-y-4">
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm leading-relaxed text-white/90">
-              Atracana <strong>never saves actual photos</strong> of people. Instead, it creates a
+              Facenox <strong>never saves actual photos</strong> of people. Instead, it creates a
               secure piece of data called a face template.
             </p>
           </div>
@@ -59,13 +59,13 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Atracana is built to follow privacy standards like the{" "}
+            Facenox is built to follow privacy standards like the{" "}
             <strong>Philippine Data Privacy Act</strong> and <strong>GDPR</strong>.
           </p>
           <p className="text-xs leading-relaxed text-white/50">
             As an{" "}
             <a
-              href="https://github.com/atracana/atracana"
+              href="https://github.com/facenox/facenox"
               target="_blank"
               rel="noopener noreferrer"
               className="text-cyan-400/80 underline decoration-cyan-400/30 underline-offset-4 transition-colors hover:text-cyan-400">
@@ -76,7 +76,7 @@ export function IntroModal() {
 
           <div className="border-t border-white/5 pt-2 text-center">
             <a
-              href="https://github.com/atracana/atracana/blob/main/docs/PRIVACY.md"
+              href="https://github.com/facenox/facenox/blob/main/docs/PRIVACY.md"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[10px] text-white/30 underline decoration-white/10 underline-offset-2 transition-colors hover:text-white/60">

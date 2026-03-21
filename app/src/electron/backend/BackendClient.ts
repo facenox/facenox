@@ -43,7 +43,7 @@ export class BackendClient {
 
   private authHeaders(): Record<string, string> {
     const token = this.getToken()
-    return token ? { "X-Atracana-Token": token } : {}
+    return token ? { "X-Facenox-Token": token } : {}
   }
 
   async checkAvailability(): Promise<{

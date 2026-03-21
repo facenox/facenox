@@ -6,8 +6,8 @@
 
 import { app, shell, BrowserWindow, net } from "electron"
 
-const GITHUB_OWNER = "atracana"
-const GITHUB_REPO = "atracana"
+const GITHUB_OWNER = "facenox"
+const GITHUB_REPO = "facenox"
 const GITHUB_RELEASES_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`
 const GITHUB_RELEASES_PAGE = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`
 
@@ -161,7 +161,7 @@ async function fetchLatestRelease(): Promise<GitHubRelease | null> {
     const response = await fetch(GITHUB_RELEASES_URL, {
       headers: {
         Accept: "application/vnd.github.v3+json",
-        "User-Agent": `Atracana/${app.getVersion()}`,
+        "User-Agent": `Facenox/${app.getVersion()}`,
       },
       signal: controller.signal,
     })

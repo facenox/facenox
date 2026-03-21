@@ -26,7 +26,7 @@ export class TrayManager {
     }
 
     const tray = new Tray(image.resize({ width: 16, height: 16 }))
-    tray.setToolTip("Atracana")
+    tray.setToolTip("Facenox")
 
     const contextMenu = Menu.buildFromTemplate([
       {

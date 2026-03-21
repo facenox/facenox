@@ -3,7 +3,7 @@
 set -e  # Exit on any error
 
 echo "========================================"
-echo "    Atracana - Complete Build Script"
+echo "    Facenox - Complete Build Script"
 echo "========================================"
 echo
 

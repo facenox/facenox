@@ -274,7 +274,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
                     </span>
                     <InfoPopover
                       title="Privacy First"
-                      description="Facial features will be encrypted and stored strictly on this device. Atracana does not upload biometric data to any cloud servers."
+                      description="Facial features will be encrypted and stored strictly on this device. Facenox does not upload biometric data to any cloud servers."
                     />
                   </div>
                 </div>
@@ -340,7 +340,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
                     </span>
                     <InfoPopover
                       title="Administrative Responsibility"
-                      description="As an administrator, you are responsible for enatracanang offline consent records are maintained. All data remains within your local encrypted vault."
+                      description="As an administrator, you are responsible for enfacenoxng offline consent records are maintained. All data remains within your local encrypted vault."
                     />
                   </div>
                 </div>

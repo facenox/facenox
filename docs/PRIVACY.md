@@ -10,9 +10,9 @@ This document applies to:
 - the local FastAPI backend in `server/`
 - the current desktop-side Cloud Beta integration
 
-It does not replace the privacy and operational documentation required for a hosted Atracana Cloud deployment.
+It does not replace the privacy and operational documentation required for a hosted Facenox Cloud deployment.
 
-## What Atracana Stores Locally
+## What Facenox Stores Locally
 
 By default, the desktop app stores the following data on the local machine:
 
@@ -27,13 +27,13 @@ The desktop app is the primary environment for biometric processing in this repo
 
 ## Biometric Data
 
-### What Atracana keeps
+### What Facenox keeps
 
-Atracana keeps biometric templates used for recognition. These templates are mathematical representations used by the local recognition pipeline.
+Facenox keeps biometric templates used for recognition. These templates are mathematical representations used by the local recognition pipeline.
 
 ### How biometric data is handled
 
-Atracana is not designed as a raw face-image archive. Registration and recognition images are processed for enrollment and matching, while the long-term working record is the encrypted biometric template.
+Facenox is not designed as a raw face-image archive. Registration and recognition images are processed for enrollment and matching, while the long-term working record is the encrypted biometric template.
 
 ## Consent Rules
 
@@ -46,7 +46,7 @@ These controls help enforce a narrow recognition scope inside the application. T
 
 ## Backups and Restore
 
-- Vault exports are password-protected `.atracana` files.
+- Vault exports are password-protected `.facenox` files.
 - Vault exports can include biometric templates so a restore does not require full re-enrollment.
 - Restores still depend on the consent information present in the imported data.
 
@@ -60,16 +60,16 @@ That does not automatically make every surrounding deployment private. If you ad
 
 ## Cloud Beta Boundary
 
-The desktop app can optionally pair with a separate Atracana Cloud deployment.
+The desktop app can optionally pair with a separate Facenox Cloud deployment.
 
-### Data not sent to Atracana Cloud
+### Data not sent to Facenox Cloud
 
 - raw face images
 - biometric templates
 - embeddings
 - face matching and recognition decisions
 
-### Data that may be sent to Atracana Cloud
+### Data that may be sent to Facenox Cloud
 
 - organization, site, and device identifiers
 - groups and member directory data needed for reports
@@ -98,7 +98,7 @@ If the internet is unavailable, Cloud Beta stops updating until connectivity ret
 
 ## Compliance Position
 
-Atracana includes controls that can support privacy-conscious deployments, but the software alone does not make a deployment compliant with GDPR, the Philippine Data Privacy Act, or any other privacy law.
+Facenox includes controls that can support privacy-conscious deployments, but the software alone does not make a deployment compliant with GDPR, the Philippine Data Privacy Act, or any other privacy law.
 
 Operators are still responsible for:
 
@@ -109,4 +109,4 @@ Operators are still responsible for:
 - vendor and processor management
 - incident response and breach handling
 
-If you deploy Atracana Cloud, document that environment separately. This file should not be treated as the complete privacy position for a hosted service.
+If you deploy Facenox Cloud, document that environment separately. This file should not be treated as the complete privacy position for a hosted service.

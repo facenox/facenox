@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "========================================"
-echo "    Atracana - Development Mode"
+echo "    Facenox - Development Mode"
 echo "========================================"
 echo
 

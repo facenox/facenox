@@ -1,9 +1,9 @@
 {
-  "name": "atracana",
+  "name": "facenox",
   "private": true,
   "version": "1.0.0-beta.1",
   "description": "Real-time AI attendance tracker with face recognition.",
-  "author": "ATRACANA",
+  "author": "FACENOX",
   "main": "out/main/main.js",
   "scripts": {
     "dev": "electron-vite dev",

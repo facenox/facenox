@@ -1,5 +1,5 @@
 {
-  "name": "atracana-server",
+  "name": "facenox-server",
   "private": true,
   "scripts": {
     "dev": "python run.py",

@@ -28,7 +28,7 @@ logger.info("Server script started")
 
 
 app = FastAPI(
-    title="ATRACANA",
+    title="FACENOX",
     description="A desktop application for automated attendance tracking using Artificial Intelligence.",
     lifespan=lifespan,
 )
@@ -41,7 +41,7 @@ setup_cors(app)
 async def verify_local_token(request: Request, call_next):
     """Reject requests that don’t carry the session token injected by Electron.
 
-    Only active when ATRACANA_API_TOKEN is set in the environment (i.e. when the
+    Only active when FACENOX_API_TOKEN is set in the environment (i.e. when the
     backend is launched by the Electron shell).  Direct ‘python run.py’
     invocations without the variable skip validation so development remains
     convenient, but a warning is emitted.
@@ -50,18 +50,18 @@ async def verify_local_token(request: Request, call_next):
     if request.url.path == "/" or request.method == "OPTIONS":
         return await call_next(request)
 
-    expected_token = os.getenv("ATRACANA_API_TOKEN")
+    expected_token = os.getenv("FACENOX_API_TOKEN")
     if not expected_token:
         # Token not configured — allow but warn once
         if not getattr(app.state, "_token_warn_emitted", False):
             logger.warning(
-                "ATRACANA_API_TOKEN is not set. API is accessible without authentication. "
+                "FACENOX_API_TOKEN is not set. API is accessible without authentication. "
                 "In production this variable is always injected by Electron."
             )
             app.state._token_warn_emitted = True
         return await call_next(request)
 
-    provided = request.headers.get("X-Atracana-Token", "")
+    provided = request.headers.get("X-Facenox-Token", "")
     if not hmac.compare_digest(provided, expected_token):
         return JSONResponse(status_code=401, content={"error": "Unauthorized"})
 

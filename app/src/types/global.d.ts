@@ -22,7 +22,7 @@ export interface UpdateInfo {
 }
 
 declare global {
-  interface AtracanaWSClientAPI {
+  interface FacenoxWSClientAPI {
     connect: (url?: string) => Promise<void>
     send: (msg: unknown) => void
     sendRequest: (action: string, payload?: unknown, timeoutMs?: number) => Promise<unknown>
@@ -30,7 +30,7 @@ declare global {
     close: () => void
   }
 
-  interface AtracanaVideoAPI {
+  interface FacenoxVideoAPI {
     start: (opts?: {
       device?: number
       width?: number
@@ -54,7 +54,7 @@ declare global {
     onWebSocketBroadcast: (handler: (evt: Record<string, unknown>) => void) => () => void
   }
 
-  interface AtracanaElectronAPI {
+  interface FacenoxElectronAPI {
     minimize: () => Promise<boolean>
     maximize: () => Promise<boolean>
     close: () => Promise<boolean>
@@ -272,10 +272,10 @@ declare global {
   }
 
   interface Window {
-    atracanaWS?: AtracanaWSClientAPI
-    atracanaVideo?: AtracanaVideoAPI
-    atracanaElectron?: AtracanaElectronAPI
+    facenoxWS?: FacenoxWSClientAPI
+    facenoxVideo?: FacenoxVideoAPI
+    facenoxElectron?: FacenoxElectronAPI
     electronAPI: BackendServiceAPI
-    __atracanaOffFrame?: () => void
+    __facenoxOffFrame?: () => void
   }
 }

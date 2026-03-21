@@ -1,6 +1,6 @@
 # Installation
 
-This guide covers local development and desktop builds for the open source Atracana repository.
+This guide covers local development and desktop builds for the open source Facenox repository.
 
 ## Prerequisites
 
@@ -26,8 +26,8 @@ Recommended for development:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/atracana/atracana.git
-cd atracana
+git clone https://github.com/facenox/facenox.git
+cd facenox
 ```
 
 ### 2. Create the Python environment

@@ -9,7 +9,7 @@ const STARTUP_CATCH_UP_DELAY_MS = 5000
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
-  return token ? { "X-Atracana-Token": token, ...extra } : { ...extra }
+  return token ? { "X-Facenox-Token": token, ...extra } : { ...extra }
 }
 
 function toCloudIsoDateTime(value: unknown): string | null {
@@ -199,7 +199,7 @@ export class BackgroundSyncManager {
       this.stop()
       this.setLastSyncState({
         lastSyncStatus: "error",
-        lastSyncMessage: "Connect this desktop to Atracana Cloud before syncing.",
+        lastSyncMessage: "Connect this desktop to Facenox Cloud before syncing.",
       })
       return {
         success: false,
@@ -251,8 +251,8 @@ export class BackgroundSyncManager {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${deviceToken}`,
-          "X-Atracana-Version": getCurrentVersion(),
-          "User-Agent": "Atracana-Desktop-Sync",
+          "X-Facenox-Version": getCurrentVersion(),
+          "User-Agent": "Facenox-Desktop-Sync",
         },
         body: JSON.stringify(syncPayload),
         signal: AbortSignal.timeout(60000),

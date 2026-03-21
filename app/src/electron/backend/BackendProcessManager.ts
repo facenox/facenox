@@ -32,7 +32,7 @@ export class BackendProcessManager {
   private status: BackendStatus
   private healthCheckTimer: NodeJS.Timeout | null = null
   private startupPromise: Promise<void> | null = null
-  /** Session token injected into the Python process via ATRACANA_API_TOKEN. */
+  /** Session token injected into the Python process via FACENOX_API_TOKEN. */
   private token: string = ""
 
   constructor(config: BackendConfig, status: BackendStatus) {
@@ -40,7 +40,7 @@ export class BackendProcessManager {
     this.status = status
   }
 
-  /** Return the per-session API token so callers can include it as X-Atracana-Token. */
+  /** Return the per-session API token so callers can include it as X-Facenox-Token. */
   getToken(): string {
     return this.token
   }
@@ -75,12 +75,12 @@ export class BackendProcessManager {
       const env: Record<string, string | undefined> = {
         ...process.env,
         ENVIRONMENT: isDev() ? "development" : "production",
-        ATRACANA_API_TOKEN: this.token,
+        FACENOX_API_TOKEN: this.token,
       }
 
       // In production, force data to AppData. In dev, let backend use repo root/data
       if (!isDev()) {
-        env.ATRACANA_DATA_DIR = app.getPath("userData")
+        env.FACENOX_DATA_DIR = app.getPath("userData")
       }
 
       this.process = spawn(command, args, {

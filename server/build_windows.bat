@@ -1,9 +1,9 @@
 @echo off
-REM Build script for Atracana Backend on Windows
+REM Build script for Facenox Backend on Windows
 REM This script builds the Python backend into a standalone executable
 
 echo ========================================
-echo Atracana Backend Build Script - Windows
+echo Facenox Backend Build Script - Windows
 echo ========================================
 
 REM Check if Python is available

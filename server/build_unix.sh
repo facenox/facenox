@@ -1,11 +1,11 @@
 #!/bin/bash
-# Build script for Atracana Backend on Unix systems (macOS/Linux)
+# Build script for Facenox Backend on Unix systems (macOS/Linux)
 # This script builds the Python backend into a standalone executable
 
 set -e  # Exit on any error
 
 echo "========================================"
-echo "Atracana Backend Build Script - Unix"
+echo "Facenox Backend Build Script - Unix"
 echo "========================================"
 
 # Check if Python is available

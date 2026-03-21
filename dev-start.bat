@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo ========================================
-echo    Atracana - Development Mode
+echo    Facenox - Development Mode
 echo ========================================
 echo.
 
@@ -24,7 +24,7 @@ echo.
 
 
 echo Starting Python server...
-start "Atracana Server" cmd /k "cd server && python run.py"
+start "Facenox Server" cmd /k "cd server && python run.py"
 
 
 timeout /t 3 /nobreak > nul

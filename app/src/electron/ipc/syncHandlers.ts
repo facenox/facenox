@@ -14,7 +14,7 @@ import {
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
-  return token ? { "X-Atracana-Token": token, ...extra } : { ...extra }
+  return token ? { "X-Facenox-Token": token, ...extra } : { ...extra }
 }
 
 function normalizeCloudBaseUrl(value: string): string {
@@ -76,7 +76,7 @@ function clearCloudConnection() {
 }
 
 // Cryptographic Constants
-const ATRACANA_MAGIC = Buffer.from("ATRACANA\x00\x01") // 6 bytes
+const FACENOX_MAGIC = Buffer.from("FACENOX\x00\x01") // 6 bytes
 const SALT_SIZE = 16
 const IV_SIZE = 12
 const TAG_SIZE = 16
@@ -99,21 +99,21 @@ function encryptVault(plaintext: Buffer, password: string): Buffer {
   const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()])
   const tag = cipher.getAuthTag() // 16 bytes
 
-  return Buffer.concat([ATRACANA_MAGIC, salt, iv, tag, ciphertext])
+  return Buffer.concat([FACENOX_MAGIC, salt, iv, tag, ciphertext])
 }
 
 // Decrypt
 function decryptVault(blob: Buffer, password: string): Buffer {
-  const magicLen = ATRACANA_MAGIC.length
+  const magicLen = FACENOX_MAGIC.length
   const minLen = magicLen + SALT_SIZE + IV_SIZE + TAG_SIZE + 1
 
   if (blob.length < minLen) {
-    throw new Error("File is too short to be a valid .atracana vault.")
+    throw new Error("File is too short to be a valid .facenox vault.")
   }
 
   const magic = blob.subarray(0, magicLen)
-  if (!crypto.timingSafeEqual(magic, ATRACANA_MAGIC)) {
-    throw new Error("Invalid file format. This file is not a Atracana vault (.atracana).")
+  if (!crypto.timingSafeEqual(magic, FACENOX_MAGIC)) {
+    throw new Error("Invalid file format. This file is not a Facenox vault (.facenox).")
   }
 
   let offset = magicLen
@@ -213,8 +213,8 @@ export function registerSyncHandlers() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Atracana-Version": getCurrentVersion(),
-            "User-Agent": "Atracana-Desktop-Pair",
+            "X-Facenox-Version": getCurrentVersion(),
+            "User-Agent": "Facenox-Desktop-Pair",
           },
           body: JSON.stringify({
             pairing_code: pairingCode,
@@ -289,8 +289,8 @@ export function registerSyncHandlers() {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${persistentStore.get("sync.deviceToken") as string}`,
-            "X-Atracana-Version": getCurrentVersion(),
-            "User-Agent": "Atracana-Desktop-Unpair",
+            "X-Facenox-Version": getCurrentVersion(),
+            "User-Agent": "Facenox-Desktop-Unpair",
           },
           body: JSON.stringify({
             device_id: status.deviceId,
@@ -313,7 +313,7 @@ export function registerSyncHandlers() {
       "sync.lastSyncMessage",
       warning ?
         `Disconnected locally. Remote warning: ${warning}`
-      : "Device disconnected from Atracana Cloud.",
+      : "Device disconnected from Facenox Cloud.",
     )
     syncManager.stop()
 
@@ -327,8 +327,8 @@ export function registerSyncHandlers() {
   ipcMain.handle("sync:pick-import-file", async () => {
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
-        title: "Open Atracana Vault",
-        filters: [{ name: "Atracana Vault", extensions: ["atracana"] }],
+        title: "Open Facenox Vault",
+        filters: [{ name: "Facenox Vault", extensions: ["facenox"] }],
         properties: ["openFile"],
         buttonLabel: "Open Vault",
       })
@@ -368,9 +368,9 @@ export function registerSyncHandlers() {
       const vaultPayload = await exportRes.json()
 
       const { canceled, filePath } = await dialog.showSaveDialog({
-        title: "Save Atracana Vault",
-        defaultPath: `atracana-vault-${new Date().toISOString().slice(0, 10)}.atracana`,
-        filters: [{ name: "Atracana Vault", extensions: ["atracana"] }],
+        title: "Save Facenox Vault",
+        defaultPath: `facenox-vault-${new Date().toISOString().slice(0, 10)}.facenox`,
+        filters: [{ name: "Facenox Vault", extensions: ["facenox"] }],
         buttonLabel: "Save Vault",
       })
 

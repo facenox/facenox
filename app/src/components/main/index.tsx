@@ -429,13 +429,13 @@ export default function Main() {
     }
 
     window.addEventListener(
-      "atracana:clock-warning",
+      "facenox:clock-warning",
       handleClockWarning as unknown as EventListener,
     )
 
     return () => {
       window.removeEventListener(
-        "atracana:clock-warning",
+        "facenox:clock-warning",
         handleClockWarning as unknown as EventListener,
       )
     }
@@ -446,7 +446,7 @@ export default function Main() {
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const electron = (window as any).atracanaElectron
+    const electron = (window as any).facenoxElectron
     if (!electron) return
 
     const cleanupMinimize = electron.onMinimize(() => {

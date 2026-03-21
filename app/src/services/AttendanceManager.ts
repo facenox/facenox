@@ -28,7 +28,7 @@ const API_ENDPOINTS = {
 }
 
 export class AttendanceManager {
-  private readonly clockCheckStorageKey = "atracana:lastSystemTimeMs"
+  private readonly clockCheckStorageKey = "facenox:lastSystemTimeMs"
   private readonly clockBackwardWarnThresholdMs = 60 * 1000
 
   private httpClient: HttpClient
@@ -347,7 +347,7 @@ export class AttendanceManager {
         const diffMs = last - now
         const diffMinutes = Math.max(1, Math.round(diffMs / 60000))
         window.dispatchEvent(
-          new CustomEvent("atracana:clock-warning", {
+          new CustomEvent("facenox:clock-warning", {
             detail: {
               message: `System clock appears to have moved backwards by more than 1 minute (~${diffMinutes} minute(s)).`,
             },

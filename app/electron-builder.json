@@ -1,12 +1,12 @@
 {
   "files": ["out/**/*"],
-  "appId": "com.atracana.app",
-  "productName": "Atracana AI Attendance Tracker",
+  "appId": "com.facenox.app",
+  "productName": "Facenox AI Attendance Tracker",
   "icon": "./public/icons/logo.png",
   "beforePack": "scripts/before-pack.mjs",
   "win": {
     "target": "nsis",
-    "artifactName": "Atracana-Setup-v${version}.${ext}",
+    "artifactName": "Facenox-Setup-v${version}.${ext}",
     "extraResources": [
       {
         "from": "../server/dist/server.exe",
@@ -26,7 +26,7 @@
     "createStartMenuShortcut": true,
     "deleteAppDataOnUninstall": false,
     "runAfterFinish": true,
-    "artifactName": "Atracana-Setup-v${version}.${ext}"
+    "artifactName": "Facenox-Setup-v${version}.${ext}"
   },
   "linux": {
     "target": "AppImage",

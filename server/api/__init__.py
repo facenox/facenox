@@ -1,3 +1,3 @@
 """
-API package for ATRACANA backend
+API package for FACENOX backend
 """

@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Atracana handles biometric and attendance data. Only the latest released version is considered supported for security fixes.
+Facenox handles biometric and attendance data. Only the latest released version is considered supported for security fixes.
 
 | Version | Supported |
 | --- | --- |
@@ -43,4 +43,4 @@ Examples of high-severity issues include:
 
 ## Scope Reminder
 
-This repository covers the open source desktop application and its desktop-side cloud integration points. A deployed Atracana Cloud environment has its own operational and infrastructure risk surface and should be reviewed separately.
+This repository covers the open source desktop application and its desktop-side cloud integration points. A deployed Facenox Cloud environment has its own operational and infrastructure risk surface and should be reviewed separately.

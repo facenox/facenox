@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-PyInstaller spec file for Atracana Backend
+PyInstaller spec file for Facenox Backend
 Optimized for production builds with ONNX Runtime support
 """
 

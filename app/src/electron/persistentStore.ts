@@ -23,7 +23,7 @@ const storeOptions: {
 } = {
   name: "config",
   defaults: defaultSettings,
-  projectName: "Atracana",
+  projectName: "Facenox",
 }
 
 // If in development, isolate the config file from production AppData

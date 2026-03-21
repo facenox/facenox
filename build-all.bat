@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo ========================================
-echo    Atracana - Complete Build Script
+echo    Facenox - Complete Build Script
 echo ========================================
 echo.
 

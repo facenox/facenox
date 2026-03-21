@@ -6,7 +6,7 @@ from pathlib import Path
 IS_FROZEN = getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS")
 
 
-APP_NAME = "Atracana"
+APP_NAME = "Facenox"
 
 
 def get_base_dir() -> Path:
@@ -17,7 +17,7 @@ def get_base_dir() -> Path:
 
 
 def get_project_root() -> Path:
-    """Get the absolute project root (e.g. repo/atracana/ folder in dev)."""
+    """Get the absolute project root (e.g. repo/facenox/ folder in dev)."""
     return get_base_dir().parent if not IS_FROZEN else get_base_dir()
 
 
@@ -25,11 +25,11 @@ def get_data_dir() -> Path:
     """
     Get the data directory for persistent read-write storage (databases, logs).
     Priority:
-    1. ATRACANA_DATA_DIR env variable (Preferred for Electron integration)
+    1. FACENOX_DATA_DIR env variable (Preferred for Electron integration)
     2. IS_FROZEN: OS-native AppData directory
     3. Dev: project_root/data
     """
-    env_data_dir = os.getenv("ATRACANA_DATA_DIR")
+    env_data_dir = os.getenv("FACENOX_DATA_DIR")
     if env_data_dir:
         data_dir = Path(env_data_dir)
     elif IS_FROZEN:

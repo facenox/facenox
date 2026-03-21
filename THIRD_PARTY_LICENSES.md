@@ -1,6 +1,6 @@
 # Third-Party Licenses
 
-This document contains the licenses for third-party AI models, frameworks, and runtimes used in Atracana.
+This document contains the licenses for third-party AI models, frameworks, and runtimes used in Facenox.
 
 ---
 

@@ -31,7 +31,7 @@ const defaultConfig: CloudConfig = {
   siteId: "",
   siteName: "",
   deviceId: "",
-  deviceName: "Atracana Desktop",
+  deviceName: "Facenox Desktop",
   intervalMinutes: DEFAULT_SYNC_INTERVAL_MINUTES,
   lastSyncedAt: null,
   lastSyncStatus: "idle",
@@ -43,12 +43,12 @@ const pairingSteps = [
   {
     label: "Step 1",
     title: "Generate a pairing code",
-    body: "Sign in to Atracana Cloud, choose the site, and create a short-lived pairing code.",
+    body: "Sign in to Facenox Cloud, choose the site, and create a short-lived pairing code.",
   },
   {
     label: "Step 2",
     title: "Paste the code here",
-    body: "For the hosted beta, the cloud server address is already set in Atracana Desktop.",
+    body: "For the hosted beta, the cloud server address is already set in Facenox Desktop.",
   },
   {
     label: "Step 3",
@@ -60,7 +60,7 @@ const pairingSteps = [
 export function CloudSync() {
   const [config, setConfig] = useState<CloudConfig>(defaultConfig)
   const [cloudBaseUrl, setCloudBaseUrl] = useState(DEFAULT_CLOUD_BASE_URL)
-  const [deviceName, setDeviceName] = useState("Atracana Desktop")
+  const [deviceName, setDeviceName] = useState("Facenox Desktop")
   const [pairingCode, setPairingCode] = useState("")
   const [intervalMinutes, setIntervalMinutes] = useState(DEFAULT_SYNC_INTERVAL_MINUTES)
   const [enabled, setEnabled] = useState(false)
@@ -75,7 +75,7 @@ export function CloudSync() {
 
     setConfig(nextConfig)
     setCloudBaseUrl(nextCloudBaseUrl)
-    setDeviceName(nextConfig.deviceName || "Atracana Desktop")
+    setDeviceName(nextConfig.deviceName || "Facenox Desktop")
     setIntervalMinutes(nextConfig.intervalMinutes || DEFAULT_SYNC_INTERVAL_MINUTES)
     setEnabled(nextConfig.enabled)
     setShowAdvanced(nextCloudBaseUrl !== DEFAULT_CLOUD_BASE_URL)
@@ -160,7 +160,7 @@ export function CloudSync() {
         message:
           result.warning ?
             `Disconnected locally, but the cloud returned a warning: ${result.warning}`
-          : "Device disconnected from Atracana Cloud.",
+          : "Device disconnected from Facenox Cloud.",
       })
     } catch (error) {
       setBanner({
@@ -206,7 +206,7 @@ export function CloudSync() {
       <div className="space-y-1">
         <h3 className="text-sm font-semibold text-white">Cloud Beta</h3>
         <p className="max-w-2xl text-xs leading-relaxed text-white/50">
-          Atracana Desktop stays local-first. Cloud Beta adds shared reports, device status, and
+          Facenox Desktop stays local-first. Cloud Beta adds shared reports, device status, and
           admin visibility without moving biometric templates or raw face data off this machine.
         </p>
       </div>
@@ -220,7 +220,7 @@ export function CloudSync() {
             <div className="mt-1 text-xs">
               {config.connected ?
                 `${config.organizationName || "Unknown org"} - ${config.siteName || "Unknown site"}`
-              : "This desktop is still local-only until you connect it to Atracana Cloud."}
+              : "This desktop is still local-only until you connect it to Facenox Cloud."}
             </div>
           </div>
           <div className="rounded-full border border-current/20 px-3 py-1 text-[10px] font-semibold tracking-[0.22em] uppercase">
@@ -307,7 +307,7 @@ export function CloudSync() {
                       : "fa-solid fa-plug"
                     }
                   />
-                  Connect to Atracana Cloud
+                  Connect to Facenox Cloud
                 </button>
                 <span className="text-[11px] text-white/40">
                   Advanced settings are only for staging, self-hosted, or special device labels.

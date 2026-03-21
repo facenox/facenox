@@ -133,7 +133,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
 })
 
-contextBridge.exposeInMainWorld("atracanaElectron", {
+contextBridge.exposeInMainWorld("facenoxElectron", {
   minimize: () => ipcRenderer.invoke("window:minimize"),
   maximize: () => ipcRenderer.invoke("window:maximize"),
   close: () => ipcRenderer.invoke("window:close"),
