@@ -17,9 +17,9 @@
 
 </div>
 
-Facenox is an offline-first face recognition system that runs entirely on-device in real time — no cloud required.
+Facenox is an offline-first face recognition system that runs entirely on-device in real time. No cloud required.
 
-Built for privacy-conscious teams, it keeps biometric data local while optionally syncing attendance to a cloud dashboard. The desktop app remains the biometric engine.
+Built for privacy-conscious teams, it keeps biometric data local while optionally syncing attendance to a cloud dashboard. All recognition happens on the desktop.
 
 <div align="center">
   <img src="app/public/assets/banner.png" alt="Facenox application screenshot" width="100%">
@@ -27,10 +27,10 @@ Built for privacy-conscious teams, it keeps biometric data local while optionall
 
 ## Key Highlights
 
-- ⚡ Real-time face recognition — CPU-friendly, no GPU required
-- 🔒 Fully local biometric processing — data never leaves the device
-- 🌐 Works offline — no internet required for core workflows
-- ☁️ Optional cloud dashboard for centralized reporting and sync
+- Real-time face recognition, CPU-friendly, no GPU required
+- Fully local biometric processing. Data never leaves the device
+- Works offline. No internet required for core workflows
+- Optional cloud dashboard for centralized reporting and sync
 
 ## Why Facenox
 
@@ -52,7 +52,7 @@ Most attendance systems rely on cloud-based biometrics. Facenox doesn't.
 
 ## Performance
 
-- Real-time recognition on CPU — no GPU required
+- Real-time recognition on CPU, no GPU required
 - Tested on low-spec hardware
 - Lightweight local backend with minimal resource footprint
 
