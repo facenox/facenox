@@ -19,7 +19,11 @@
 
 Facenox is an offline-first face recognition system that runs entirely on-device in real time. No cloud required.
 
-Built for privacy-conscious teams, it keeps biometric data local while optionally syncing attendance to a cloud dashboard. All recognition happens on the desktop.
+Built for privacy-conscious teams, it keeps biometric data local while optionally syncing attendance to a cloud dashboard. All face recognition and biometric processing stays local.
+
+Facenox is built on a simple idea: you should own your biometric data.
+
+Ideal for teams, schools, and organizations that need reliable attendance without relying on cloud-based biometrics.
 
 <div align="center">
   <img src="app/public/assets/banner.png" alt="Facenox application screenshot" width="100%">
@@ -29,18 +33,18 @@ Built for privacy-conscious teams, it keeps biometric data local while optionall
 
 - Real-time face recognition, CPU-friendly, no GPU required
 - Fully local biometric processing. Data never leaves the device
-- Works offline. No internet required for core workflows
+- Works fully offline. No internet required for core workflows
 - Optional cloud dashboard for centralized reporting and sync
 
 ## Why Facenox
 
-Most attendance systems rely on cloud-based biometrics. Facenox doesn't.
+Most face recognition attendance systems rely on cloud-based biometrics. Facenox doesn't. Your biometric data stays local.
 
 | Local-first | Offline-ready | Consent-aware | Encrypted |
 | --- | --- | --- | --- |
 | Recognition and attendance stay on the desktop. | Core attendance workflows keep working without internet. | Enrollment and matching respect biometric consent. | Biometric templates are encrypted locally and vault exports are password-protected. |
 
-## Core Capabilities
+## Features
 
 - Local face detection, recognition, and anti-spoofing
 - Group and member management
@@ -52,9 +56,10 @@ Most attendance systems rely on cloud-based biometrics. Facenox doesn't.
 
 ## Performance
 
-- Real-time recognition on CPU, no GPU required
-- Tested on low-spec hardware
-- Lightweight local backend with minimal resource footprint
+- Real-time recognition on CPU (no GPU required)
+- Tested on low-spec hardware (e.g., older laptops)
+- Optimized for low-latency inference
+- Designed for real-world environments with varying lighting and hardware conditions
 
 ## Cloud Beta
 
@@ -76,6 +81,14 @@ Facenox Desktop continues to work locally when internet access is unavailable:
 - local settings and vault operations still work
 
 Cloud pairing, cloud sync, and cloud dashboard updates resume when connectivity returns.
+
+## Roadmap
+
+- [ ] Cloud dashboard for centralized reporting and analytics
+- [ ] macOS and Linux installer support
+- [ ] Code signing and notarization
+- [ ] Multi-device sync support
+- [ ] Mobile companion app
 
 ## Download
 
