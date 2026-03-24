@@ -1,4 +1,5 @@
 import { fetchWithRetry } from "../../utils/http"
+import { withLocalBackendHeaders } from "../localBackendScope"
 
 export class HttpClient {
   private baseUrl: string
@@ -80,8 +81,9 @@ export class HttpClient {
     if (token) {
       headers["X-Facenox-Token"] = token
     }
+    const scopedHeaders = await withLocalBackendHeaders(headers)
 
-    const response = await fetchWithRetry(url, { ...options, headers })
+    const response = await fetchWithRetry(url, { ...options, headers: scopedHeaders })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -130,12 +132,13 @@ export class HttpClient {
     const token = await this.getApiToken()
     const headers: Record<string, string> = {}
     if (token) headers["X-Facenox-Token"] = token
+    const scopedHeaders = await withLocalBackendHeaders(headers)
 
     // Note: Don't set Content-Type for FormData, browser sets it with boundary
     const response = await fetchWithRetry(url, {
       method: "POST",
       body: formData,
-      headers,
+      headers: scopedHeaders,
     })
 
     if (!response.ok) {
@@ -156,8 +159,9 @@ export class HttpClient {
     const token = await this.getApiToken()
     const headers: Record<string, string> = {}
     if (token) headers["X-Facenox-Token"] = token
+    const scopedHeaders = await withLocalBackendHeaders(headers)
 
-    const response = await fetchWithRetry(url, { headers })
+    const response = await fetchWithRetry(url, { headers: scopedHeaders })
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }

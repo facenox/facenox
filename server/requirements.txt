@@ -2,6 +2,7 @@
 
 # FastAPI and web server dependencies
 fastapi
+httpx
 uvicorn[standard]
 
 # Computer vision and image processing

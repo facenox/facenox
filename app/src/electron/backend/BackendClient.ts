@@ -73,7 +73,7 @@ export class BackendClient {
     })
 
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    return await response.json()
+    return (await response.json()) as ModelsResponse
   }
 
   // Helper method for health check status

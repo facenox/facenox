@@ -23,6 +23,8 @@ Built for privacy-conscious teams, it keeps biometric data local while optionall
 
 Facenox is built on a simple idea: you should own your biometric data.
 
+This repository contains the open source Facenox desktop app and local backend. Facenox Cloud is an optional separate hosted companion service and is not included in this repository.
+
 Ideal for teams, schools, and organizations that need reliable attendance without relying on cloud-based biometrics.
 
 <div align="center">
@@ -69,6 +71,8 @@ Facenox Cloud is an optional companion service for:
 - device pairing
 - sync monitoring
 - organization and site-level visibility
+
+Facenox Cloud is separate from this open source desktop repository. The desktop app in this repo remains usable without the hosted cloud service.
 
 The desktop app pushes attendance snapshots to the cloud. Raw face images, biometric templates, embeddings, and face matching stay on-device.
 

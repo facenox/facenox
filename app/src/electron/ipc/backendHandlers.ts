@@ -1,10 +1,11 @@
 import { ipcMain } from "electron"
 import { backendService } from "../backendService.js"
+import { withLocalBackendHeaders } from "../localBackendScope.js"
 
 /** Build auth headers for all direct fetch calls to the local backend. */
 function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const token = backendService.getToken()
-  return token ? { "X-Facenox-Token": token, ...extra } : { ...extra }
+  return withLocalBackendHeaders(token ? { "X-Facenox-Token": token, ...extra } : { ...extra })
 }
 
 export function registerBackendHandlers() {

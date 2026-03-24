@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List, Optional
 
 import numpy as np
+import ulid
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -75,18 +76,31 @@ async def export_vault(
         groups_orm = await repo.get_groups(active_only=False)
         settings_orm = await repo.get_settings()
 
-        members_result = await repo.session.execute(
-            select(MemberModel).where(MemberModel.is_deleted.is_(False))
-        )
+        members_query = select(MemberModel).where(MemberModel.is_deleted.is_(False))
+        if repo.organization_id:
+            members_query = members_query.where(
+                MemberModel.organization_id == repo.organization_id
+            )
+        members_result = await repo.session.execute(members_query)
         members_orm = members_result.scalars().all()
 
+        records_query = select(RecordModel)
+        if repo.organization_id:
+            records_query = records_query.where(
+                RecordModel.organization_id == repo.organization_id
+            )
         records_result = await repo.session.execute(
-            select(RecordModel).order_by(RecordModel.timestamp.desc())
+            records_query.order_by(RecordModel.timestamp.desc())
         )
         records_orm = records_result.scalars().all()
 
+        sessions_query = select(SessionModel)
+        if repo.organization_id:
+            sessions_query = sessions_query.where(
+                SessionModel.organization_id == repo.organization_id
+            )
         sessions_result = await repo.session.execute(
-            select(SessionModel).order_by(SessionModel.date.desc())
+            sessions_query.order_by(SessionModel.date.desc())
         )
         sessions_orm = sessions_result.scalars().all()
 
@@ -118,9 +132,9 @@ async def export_vault(
         try:
             from core.lifespan import face_recognizer
 
-            if face_recognizer and face_recognizer.db_manager:
+            if face_recognizer:
                 persons: dict[str, np.ndarray] = (
-                    await face_recognizer.db_manager.get_all_persons()
+                    await face_recognizer.export_embeddings(repo.organization_id)
                 )
                 for person_id, embedding in persons.items():
                     arr = embedding.astype(np.float32)
@@ -226,17 +240,21 @@ async def import_vault(
             imported_groups += 1
 
         for member in data.members:
-            # Note: get_member excludes soft-deleted members by default, so if they
-            # were soft-deleted, existing will be None, and session.merge will
-            # cleanly restore them in the DB below.
-            existing = await repo.get_member(member.person_id)
+            existing_result = await repo.session.execute(
+                select(MemberModel).where(
+                    MemberModel.person_id == member.person_id,
+                    MemberModel.organization_id == repo.organization_id,
+                )
+            )
+            existing = existing_result.scalars().first()
             if existing and not overwrite:
                 skipped += 1
                 continue
 
             if not existing:
-                await repo.session.merge(
+                repo.session.add(
                     MemberModel(
+                        id=ulid.ulid(),
                         person_id=member.person_id,
                         group_id=member.group_id,
                         name=member.name,
@@ -247,6 +265,7 @@ async def import_vault(
                         consent_granted_by=member.consent_granted_by,
                         is_active=member.is_active,
                         is_deleted=False,
+                        organization_id=repo.organization_id,
                     )
                 )
             else:
@@ -268,10 +287,16 @@ async def import_vault(
                 skipped += 1
                 continue
 
+            member = await repo.get_member(record.person_id)
+            if not member:
+                skipped += 1
+                continue
+
             await repo.session.merge(
                 RecordModel(
                     id=record.id,
                     person_id=record.person_id,
+                    member_id=member.id,
                     group_id=record.group_id,
                     timestamp=record.timestamp,
                     confidence=record.confidence,
@@ -279,15 +304,22 @@ async def import_vault(
                     notes=record.notes,
                     is_manual=record.is_manual,
                     created_by=record.created_by,
+                    organization_id=repo.organization_id,
                 )
             )
             imported_records += 1
 
         for session in data.sessions:
+            member = await repo.get_member(session.person_id)
+            if not member:
+                skipped += 1
+                continue
+
             await repo.session.merge(
                 SessionModel(
                     id=session.id,
                     person_id=session.person_id,
+                    member_id=member.id,
                     group_id=session.group_id,
                     date=session.date,
                     check_in_time=session.check_in_time,
@@ -297,6 +329,7 @@ async def import_vault(
                     is_late=session.is_late,
                     late_minutes=session.late_minutes,
                     notes=session.notes,
+                    organization_id=repo.organization_id,
                 )
             )
             imported_sessions += 1
@@ -307,6 +340,7 @@ async def import_vault(
                 select(MemberModel).where(
                     MemberModel.person_id == entry.person_id,
                     MemberModel.is_deleted.is_(False),
+                    MemberModel.organization_id == repo.organization_id,
                 )
             )
             member = member_result.scalars().first()
@@ -317,15 +351,28 @@ async def import_vault(
             raw_bytes = base64.b64decode(entry.embedding_b64)
             # Encrypt before persisting — same as the normal registration path.
             encrypted_bytes = encrypt_local_data(raw_bytes)
-            await repo.session.merge(
-                FaceModel(
-                    person_id=entry.person_id,
-                    embedding=encrypted_bytes,
-                    embedding_dimension=entry.embedding_dim,
-                    organization_id=repo.organization_id,
-                    is_deleted=False,
+            existing_face_result = await repo.session.execute(
+                select(FaceModel).where(
+                    FaceModel.person_id == entry.person_id,
+                    FaceModel.organization_id == repo.organization_id,
                 )
             )
+            existing_face = existing_face_result.scalars().first()
+            if existing_face:
+                existing_face.embedding = encrypted_bytes
+                existing_face.embedding_dimension = entry.embedding_dim
+                existing_face.is_deleted = False
+            else:
+                repo.session.add(
+                    FaceModel(
+                        id=ulid.ulid(),
+                        person_id=entry.person_id,
+                        embedding=encrypted_bytes,
+                        embedding_dimension=entry.embedding_dim,
+                        organization_id=repo.organization_id,
+                        is_deleted=False,
+                    )
+                )
             imported_biometrics += 1
 
         await repo.session.commit()
@@ -333,7 +380,7 @@ async def import_vault(
         from core.lifespan import face_recognizer
 
         if face_recognizer:
-            await face_recognizer._refresh_cache()
+            await face_recognizer.refresh_cache(repo.organization_id)
 
         return SuccessResponse(
             message=(

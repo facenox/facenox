@@ -428,10 +428,7 @@ export default function Main() {
       }
     }
 
-    window.addEventListener(
-      "facenox:clock-warning",
-      handleClockWarning as unknown as EventListener,
-    )
+    window.addEventListener("facenox:clock-warning", handleClockWarning as unknown as EventListener)
 
     return () => {
       window.removeEventListener(

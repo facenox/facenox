@@ -20,6 +20,7 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
+    "@facenox-cloud/sync-contract": "file:../../facenox-cloud/packages/sync-contract",
     "framer-motion": "^12.35.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

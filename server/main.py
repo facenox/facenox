@@ -11,7 +11,6 @@ from core.lifespan import lifespan
 from api.endpoints import router
 from middleware.cors import setup_cors
 
-
 if not logging.getLogger().handlers:
     from config.logging_config import get_logging_config
 
@@ -25,6 +24,13 @@ if not logging.getLogger().handlers:
 
 logger = logging.getLogger(__name__)
 logger.info("Server script started")
+
+
+def is_valid_local_token(provided: str) -> bool:
+    expected_token = os.getenv("FACENOX_API_TOKEN")
+    if not expected_token:
+        return True
+    return hmac.compare_digest(provided, expected_token)
 
 
 app = FastAPI(
@@ -62,7 +68,7 @@ async def verify_local_token(request: Request, call_next):
         return await call_next(request)
 
     provided = request.headers.get("X-Facenox-Token", "")
-    if not hmac.compare_digest(provided, expected_token):
+    if not is_valid_local_token(provided):
         return JSONResponse(status_code=401, content={"error": "Unauthorized"})
 
     return await call_next(request)

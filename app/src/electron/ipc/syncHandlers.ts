@@ -4,6 +4,7 @@ import crypto from "node:crypto"
 import os from "node:os"
 
 import { backendService } from "../backendService.js"
+import { withLocalBackendHeaders } from "../localBackendScope.js"
 import { syncManager } from "../managers/BackgroundSyncManager.js"
 import { persistentStore } from "../persistentStore.js"
 import { getCurrentVersion } from "../updater.js"
@@ -14,7 +15,7 @@ import {
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
-  return token ? { "X-Facenox-Token": token, ...extra } : { ...extra }
+  return withLocalBackendHeaders(token ? { "X-Facenox-Token": token, ...extra } : { ...extra })
 }
 
 function normalizeCloudBaseUrl(value: string): string {
@@ -439,7 +440,7 @@ export function registerSyncHandlers() {
           throw new Error(`Import failed: ${err}`)
         }
 
-        const result = await importRes.json()
+        const result = (await importRes.json()) as { message?: string }
         return { success: true, message: result.message }
       } catch (error) {
         console.error("[Vault] Import failed:", error)

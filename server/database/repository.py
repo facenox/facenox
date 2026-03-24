@@ -1,6 +1,6 @@
 from typing import Optional, List, Any, Dict
 from datetime import datetime, timedelta
-from sqlalchemy import select, desc, func
+from sqlalchemy import select, desc, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 import ulid
 
@@ -21,6 +21,28 @@ class AttendanceRepository:
     def __init__(self, session: AsyncSession, organization_id: Optional[str] = None):
         self.session = session
         self.organization_id = organization_id
+
+    def _apply_org_scope(self, query, model):
+        if self.organization_id:
+            query = query.where(model.organization_id == self.organization_id)
+        return query
+
+    def _settings_payload(
+        self, source: Optional[AttendanceSettings] = None
+    ) -> Dict[str, Any]:
+        if source is None:
+            return {"organization_id": self.organization_id}
+
+        return {
+            "organization_id": self.organization_id,
+            "late_threshold_minutes": source.late_threshold_minutes,
+            "enable_location_tracking": source.enable_location_tracking,
+            "confidence_threshold": source.confidence_threshold,
+            "attendance_cooldown_seconds": source.attendance_cooldown_seconds,
+            "relog_cooldown_seconds": source.relog_cooldown_seconds,
+            "enable_liveness_detection": source.enable_liveness_detection,
+            "data_retention_days": source.data_retention_days,
+        }
 
     # Group Methods
     async def create_group(self, group_data: Dict[str, Any]) -> AttendanceGroup:
@@ -55,7 +77,12 @@ class AttendanceRepository:
         return result.scalars().all()
 
     async def get_group(self, group_id: str) -> Optional[AttendanceGroup]:
-        return await self.session.get(AttendanceGroup, group_id)
+        query = select(AttendanceGroup).where(
+            AttendanceGroup.id == group_id, AttendanceGroup.is_deleted.is_(False)
+        )
+        query = self._apply_org_scope(query, AttendanceGroup)
+        result = await self.session.execute(query)
+        return result.scalars().first()
 
     async def update_group(
         self, group_id: str, updates: Dict[str, Any]
@@ -99,6 +126,7 @@ class AttendanceRepository:
             member.is_deleted = True
 
             face_query = select(Face).where(Face.person_id == member.person_id)
+            face_query = self._apply_org_scope(face_query, Face)
             face_result = await self.session.execute(face_query)
             face = face_result.scalars().first()
             if face:
@@ -110,8 +138,37 @@ class AttendanceRepository:
     # Member Methods
     async def add_member(self, member_data: Dict[str, Any]) -> AttendanceMember:
         has_consent = member_data.get("has_consent", False)
-        member = await self.session.merge(
-            AttendanceMember(
+        existing_query = select(AttendanceMember).where(
+            AttendanceMember.person_id == member_data["person_id"]
+        )
+        existing_query = self._apply_org_scope(existing_query, AttendanceMember)
+        existing_result = await self.session.execute(existing_query)
+        existing_member = existing_result.scalars().first()
+        if existing_member:
+            if existing_member.is_deleted or not existing_member.is_active:
+                existing_member.group_id = member_data["group_id"]
+                existing_member.name = member_data["name"]
+                existing_member.role = member_data.get("role")
+                existing_member.email = member_data.get("email")
+                existing_member.has_consent = has_consent
+                existing_member.consent_granted_at = (
+                    datetime.utcnow() if has_consent else None
+                )
+                existing_member.consent_granted_by = (
+                    member_data.get("consent_granted_by", "admin")
+                    if has_consent
+                    else None
+                )
+                existing_member.is_active = True
+                existing_member.is_deleted = False
+                member = existing_member
+            else:
+                raise ValueError(
+                    f"Person ID '{member_data['person_id']}' already exists in this organization."
+                )
+        else:
+            member = AttendanceMember(
+                id=ulid.ulid(),
                 person_id=member_data["person_id"],
                 group_id=member_data["group_id"],
                 name=member_data["name"],
@@ -126,8 +183,9 @@ class AttendanceRepository:
                 ),
                 is_active=True,
                 is_deleted=False,
+                organization_id=self.organization_id,
             )
-        )
+            self.session.add(member)
         await self.session.commit()
         await self.session.refresh(member)
         return member
@@ -207,6 +265,7 @@ class AttendanceRepository:
         member.is_deleted = True
 
         face_query = select(Face).where(Face.person_id == person_id)
+        face_query = self._apply_org_scope(face_query, Face)
         face_result = await self.session.execute(face_query)
         face = face_result.scalars().first()
         if face:
@@ -215,11 +274,45 @@ class AttendanceRepository:
         await self.session.commit()
         return True
 
+    async def rename_person_id(self, old_person_id: str, new_person_id: str) -> bool:
+        member = await self.get_member(old_person_id)
+        if not member:
+            return False
+
+        existing_query = select(AttendanceMember).where(
+            AttendanceMember.person_id == new_person_id
+        )
+        existing_query = self._apply_org_scope(existing_query, AttendanceMember)
+        existing_result = await self.session.execute(existing_query)
+        existing = existing_result.scalars().first()
+        if existing:
+            return False
+
+        member.person_id = new_person_id
+        await self.session.execute(
+            update(AttendanceRecord)
+            .where(AttendanceRecord.member_id == member.id)
+            .values(person_id=new_person_id)
+        )
+        await self.session.execute(
+            update(AttendanceSession)
+            .where(AttendanceSession.member_id == member.id)
+            .values(person_id=new_person_id)
+        )
+        await self.session.commit()
+        await self.session.refresh(member)
+        return True
+
     # Record Methods
     async def add_record(self, record_data: Dict[str, Any]) -> AttendanceRecord:
+        member = await self.get_member(record_data["person_id"])
+        if not member:
+            raise ValueError("Member not found")
+
         record = AttendanceRecord(
             id=record_data["id"],
             person_id=record_data["person_id"],
+            member_id=member.id,
             group_id=record_data["group_id"],
             timestamp=record_data["timestamp"],
             confidence=record_data["confidence"],
@@ -227,6 +320,7 @@ class AttendanceRepository:
             notes=record_data.get("notes"),
             is_manual=record_data.get("is_manual", False),
             created_by=record_data.get("created_by"),
+            organization_id=self.organization_id,
         )
         self.session.add(record)
         await self.session.commit()
@@ -242,6 +336,7 @@ class AttendanceRepository:
         limit: Optional[int] = None,
     ) -> List[AttendanceRecord]:
         query = select(AttendanceRecord)
+        query = self._apply_org_scope(query, AttendanceRecord)
 
         if group_id:
             query = query.where(AttendanceRecord.group_id == group_id)
@@ -262,10 +357,27 @@ class AttendanceRepository:
 
     # Session Methods
     async def upsert_session(self, session_data: Dict[str, Any]) -> AttendanceSession:
-        session_obj = await self.session.merge(
-            AttendanceSession(
+        member = await self.get_member(session_data["person_id"])
+        if not member:
+            raise ValueError("Member not found")
+
+        session_obj = await self.get_session(
+            session_data["person_id"], session_data["date"]
+        )
+        if session_obj:
+            session_obj.group_id = session_data["group_id"]
+            session_obj.check_in_time = session_data.get("check_in_time")
+            session_obj.check_out_time = session_data.get("check_out_time")
+            session_obj.total_hours = session_data.get("total_hours")
+            session_obj.status = session_data["status"]
+            session_obj.is_late = session_data.get("is_late", False)
+            session_obj.late_minutes = session_data.get("late_minutes")
+            session_obj.notes = session_data.get("notes")
+        else:
+            session_obj = AttendanceSession(
                 id=session_data["id"],
                 person_id=session_data["person_id"],
+                member_id=member.id,
                 group_id=session_data["group_id"],
                 date=session_data["date"],
                 check_in_time=session_data.get("check_in_time"),
@@ -275,8 +387,9 @@ class AttendanceRepository:
                 is_late=session_data.get("is_late", False),
                 late_minutes=session_data.get("late_minutes"),
                 notes=session_data.get("notes"),
+                organization_id=self.organization_id,
             )
-        )
+            self.session.add(session_obj)
         await self.session.commit()
         await self.session.refresh(session_obj)
         return session_obj
@@ -302,6 +415,7 @@ class AttendanceRepository:
         end_date: Optional[str] = None,
     ) -> List[AttendanceSession]:
         query = select(AttendanceSession)
+        query = self._apply_org_scope(query, AttendanceSession)
 
         if group_id:
             query = query.where(AttendanceSession.group_id == group_id)
@@ -320,10 +434,29 @@ class AttendanceRepository:
 
     # Settings Methods
     async def get_settings(self) -> AttendanceSettings:
-        settings = await self.session.get(AttendanceSettings, 1)
+        query = select(AttendanceSettings)
+        if self.organization_id:
+            query = query.where(
+                AttendanceSettings.organization_id == self.organization_id
+            )
+        else:
+            query = query.where(AttendanceSettings.organization_id.is_(None))
+
+        query = query.order_by(
+            desc(AttendanceSettings.last_modified_at), AttendanceSettings.id
+        )
+        result = await self.session.execute(query)
+        settings = result.scalars().first()
         if not settings:
-            # Create default settings
-            settings = AttendanceSettings(id=1)
+            template_query = select(AttendanceSettings).where(
+                AttendanceSettings.organization_id.is_(None)
+            )
+            template_query = template_query.order_by(
+                desc(AttendanceSettings.last_modified_at), AttendanceSettings.id
+            )
+            template_result = await self.session.execute(template_query)
+            template = template_result.scalars().first()
+            settings = AttendanceSettings(**self._settings_payload(template))
             self.session.add(settings)
             await self.session.commit()
             await self.session.refresh(settings)
@@ -376,20 +509,34 @@ class AttendanceRepository:
         db_path = DATA_DIR / "attendance.db"
 
         groups_count = await self.session.scalar(
-            select(func.count())
-            .select_from(AttendanceGroup)
-            .where(AttendanceGroup.is_active)
+            self._apply_org_scope(
+                select(func.count())
+                .select_from(AttendanceGroup)
+                .where(
+                    AttendanceGroup.is_active, AttendanceGroup.is_deleted.is_(False)
+                ),
+                AttendanceGroup,
+            )
         )
         members_count = await self.session.scalar(
-            select(func.count())
-            .select_from(AttendanceMember)
-            .where(AttendanceMember.is_active)
+            self._apply_org_scope(
+                select(func.count())
+                .select_from(AttendanceMember)
+                .where(
+                    AttendanceMember.is_active, AttendanceMember.is_deleted.is_(False)
+                ),
+                AttendanceMember,
+            )
         )
         records_count = await self.session.scalar(
-            select(func.count()).select_from(AttendanceRecord)
+            self._apply_org_scope(
+                select(func.count()).select_from(AttendanceRecord), AttendanceRecord
+            )
         )
         sessions_count = await self.session.scalar(
-            select(func.count()).select_from(AttendanceSession)
+            self._apply_org_scope(
+                select(func.count()).select_from(AttendanceSession), AttendanceSession
+            )
         )
 
         db_size = db_path.stat().st_size if db_path.exists() else 0
@@ -413,6 +560,7 @@ class AttendanceRepository:
         record_query = select(AttendanceRecord).where(
             AttendanceRecord.timestamp < cutoff_date
         )
+        record_query = self._apply_org_scope(record_query, AttendanceRecord)
         records_result = await self.session.execute(record_query)
         records_to_delete = records_result.scalars().all()
         for r in records_to_delete:
@@ -422,6 +570,7 @@ class AttendanceRepository:
         session_query = select(AttendanceSession).where(
             AttendanceSession.date < cutoff_date_str
         )
+        session_query = self._apply_org_scope(session_query, AttendanceSession)
         sessions_result = await self.session.execute(session_query)
         sessions_to_delete = sessions_result.scalars().all()
         for s in sessions_to_delete:
@@ -449,8 +598,21 @@ class FaceRepository:
         dimension: int,
         image_hash: Optional[str] = None,
     ) -> Face:
-        face = await self.session.merge(
-            Face(
+        query = select(Face).where(Face.person_id == person_id)
+        if self.organization_id:
+            query = query.where(Face.organization_id == self.organization_id)
+        else:
+            query = query.where(Face.organization_id.is_(None))
+        result = await self.session.execute(query)
+        face = result.scalars().first()
+        if face:
+            face.embedding = embedding
+            face.embedding_dimension = dimension
+            face.hash = image_hash
+            face.is_deleted = False
+        else:
+            face = Face(
+                id=ulid.ulid(),
                 person_id=person_id,
                 embedding=embedding,
                 embedding_dimension=dimension,
@@ -458,7 +620,7 @@ class FaceRepository:
                 organization_id=self.organization_id,
                 is_deleted=False,  # Ensure it's active if re-added
             )
-        )
+            self.session.add(face)
         await self.session.commit()
         await self.session.refresh(face)
         return face
@@ -493,7 +655,13 @@ class FaceRepository:
             return False
 
         # Check if new_id already exists
-        exists = await self.get_face(new_id)
+        query = select(Face).where(Face.person_id == new_id)
+        if self.organization_id:
+            query = query.where(Face.organization_id == self.organization_id)
+        else:
+            query = query.where(Face.organization_id.is_(None))
+        exists_result = await self.session.execute(query)
+        exists = exists_result.scalars().first()
         if exists:
             return False
 
@@ -503,6 +671,8 @@ class FaceRepository:
 
     async def clear_faces(self) -> bool:
         query = select(Face)
+        if self.organization_id:
+            query = query.where(Face.organization_id == self.organization_id)
         result = await self.session.execute(query)
         faces = result.scalars().all()
         for f in faces:

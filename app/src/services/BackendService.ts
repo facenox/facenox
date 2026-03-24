@@ -8,6 +8,7 @@ import type {
 } from "../types/recognition"
 
 import { ElectronAdapter } from "./adapters/ElectronAdapter"
+import { withLocalBackendHeaders } from "./localBackendScope"
 
 interface DetectionResponse {
   faces: {
@@ -116,7 +117,7 @@ export class BackendService {
 
       const response = await fetch(`${this.config.baseUrl}/models`, {
         method: "GET",
-        headers,
+        headers: await withLocalBackendHeaders(headers),
         signal: AbortSignal.timeout(this.config.timeout),
       })
 
@@ -165,7 +166,7 @@ export class BackendService {
       const response = await fetch(`${this.config.baseUrl}/detect`, {
         method: "POST",
         body: formData,
-        headers,
+        headers: await withLocalBackendHeaders(headers),
         signal: AbortSignal.timeout(this.config.timeout),
       })
 
@@ -211,7 +212,7 @@ export class BackendService {
       const response = await fetch(`${this.config.baseUrl}/face/recognize`, {
         method: "POST",
         body: formData,
-        headers,
+        headers: await withLocalBackendHeaders(headers),
         signal: AbortSignal.timeout(this.config.timeout),
       })
 
@@ -283,7 +284,7 @@ export class BackendService {
 
       const response = await fetch(`${this.config.baseUrl}/face/cache/invalidate`, {
         method: "POST",
-        headers,
+        headers: await withLocalBackendHeaders(headers),
         signal: AbortSignal.timeout(this.config.timeout),
       })
 

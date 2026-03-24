@@ -24,7 +24,6 @@ from api.routes import (
     maintenance,
 )
 
-
 router = APIRouter(prefix="/attendance")
 
 
@@ -45,18 +44,33 @@ async def export_attendance_data(
         groups_orm = await repo.get_groups(active_only=False)
         settings_orm = await repo.get_settings()
 
-        members_result = await repo.session.execute(
-            select(AttendanceMember).where(AttendanceMember.is_deleted.is_(False))
+        members_query = select(AttendanceMember).where(
+            AttendanceMember.is_deleted.is_(False)
         )
+        if repo.organization_id:
+            members_query = members_query.where(
+                AttendanceMember.organization_id == repo.organization_id
+            )
+        members_result = await repo.session.execute(members_query)
         members_orm = members_result.scalars().all()
 
+        records_query = select(AttendanceRecord)
+        if repo.organization_id:
+            records_query = records_query.where(
+                AttendanceRecord.organization_id == repo.organization_id
+            )
         records_result = await repo.session.execute(
-            select(AttendanceRecord).order_by(AttendanceRecord.timestamp.desc())
+            records_query.order_by(AttendanceRecord.timestamp.desc())
         )
         records_orm = records_result.scalars().all()
 
+        sessions_query = select(AttendanceSession)
+        if repo.organization_id:
+            sessions_query = sessions_query.where(
+                AttendanceSession.organization_id == repo.organization_id
+            )
         sessions_result = await repo.session.execute(
-            select(AttendanceSession).order_by(AttendanceSession.date.desc())
+            sessions_query.order_by(AttendanceSession.date.desc())
         )
         sessions_orm = sessions_result.scalars().all()
 

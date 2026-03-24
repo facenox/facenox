@@ -1,3 +1,5 @@
+import { syncPushSchema, type SyncPushPayload } from "@facenox-cloud/sync-contract"
+import { withLocalBackendHeaders } from "../localBackendScope.js"
 import { persistentStore } from "../persistentStore.js"
 import { backendService } from "../backendService.js"
 import { getCurrentVersion } from "../updater.js"
@@ -9,7 +11,7 @@ const STARTUP_CATCH_UP_DELAY_MS = 5000
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
-  return token ? { "X-Facenox-Token": token, ...extra } : { ...extra }
+  return withLocalBackendHeaders(token ? { "X-Facenox-Token": token, ...extra } : { ...extra })
 }
 
 function toCloudIsoDateTime(value: unknown): string | null {
@@ -43,7 +45,9 @@ function toCloudIsoDateTime(value: unknown): string | null {
   return null
 }
 
-function normalizeAttendanceExportForCloud(attendanceExport: Record<string, unknown>) {
+function normalizeAttendanceExportForCloud(
+  attendanceExport: Record<string, unknown>,
+): SyncPushPayload["attendance_export"] {
   const groups = Array.isArray(attendanceExport.groups) ? attendanceExport.groups : []
   const members = Array.isArray(attendanceExport.members) ? attendanceExport.members : []
   const records = Array.isArray(attendanceExport.records) ? attendanceExport.records : []
@@ -59,6 +63,16 @@ function normalizeAttendanceExportForCloud(attendanceExport: Record<string, unkn
         created_at:
           toCloudIsoDateTime((candidate as { created_at?: unknown }).created_at) ??
           new Date().toISOString(),
+        settings:
+          (
+            typeof (candidate as { settings?: unknown }).settings === "object" &&
+            (candidate as { settings?: unknown }).settings !== null
+          ) ?
+            (candidate as { settings: Record<string, unknown> }).settings
+          : {
+              late_threshold_enabled: false,
+              track_checkout: false,
+            },
       }
     }),
     members: members.map((member) => {
@@ -92,7 +106,19 @@ function normalizeAttendanceExportForCloud(attendanceExport: Record<string, unkn
         ),
       }
     }),
-  }
+    settings:
+      typeof attendanceExport.settings === "object" && attendanceExport.settings !== null ?
+        attendanceExport.settings
+      : {
+          late_threshold_minutes: 15,
+          enable_location_tracking: false,
+          confidence_threshold: 0.7,
+          attendance_cooldown_seconds: 10,
+          relog_cooldown_seconds: 1800,
+          enable_liveness_detection: true,
+          data_retention_days: 0,
+        },
+  } as SyncPushPayload["attendance_export"]
 }
 
 export class BackgroundSyncManager {
@@ -236,7 +262,7 @@ export class BackgroundSyncManager {
         typeof attendanceExport?.exported_at === "string" ?
           attendanceExport.exported_at
         : new Date().toISOString()
-      const syncPayload = {
+      const syncPayload: SyncPushPayload = {
         schema_version: 1 as const,
         snapshot_id: `${deviceId}:${exportedAt}`,
         device_id: deviceId,
@@ -245,6 +271,7 @@ export class BackgroundSyncManager {
         exported_at: exportedAt,
         attendance_export: attendanceExport,
       }
+      const validatedPayload = syncPushSchema.parse(syncPayload)
 
       const cloudResponse = await fetch(`${cloudBaseUrl.replace(/\/+$/, "")}/api/sync/push`, {
         method: "POST",
@@ -254,7 +281,7 @@ export class BackgroundSyncManager {
           "X-Facenox-Version": getCurrentVersion(),
           "User-Agent": "Facenox-Desktop-Sync",
         },
-        body: JSON.stringify(syncPayload),
+        body: JSON.stringify(validatedPayload),
         signal: AbortSignal.timeout(60000),
       })
 

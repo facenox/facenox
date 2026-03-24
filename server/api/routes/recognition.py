@@ -13,6 +13,7 @@ from api.schemas import (
     SimilarityThresholdRequest,
 )
 from hooks import process_liveness_for_face_operation
+from services.face_metadata_validator import verify_detected_face_metadata
 import numpy as np
 import cv2
 
@@ -60,9 +61,16 @@ async def recognize_face(
         if img is None:
             raise ValueError("Failed to decode image from multipart data")
 
+        verified_bbox, verified_landmarks = await verify_detected_face_metadata(
+            img,
+            bbox,
+            landmarks_5,
+            operation_name="Recognition",
+        )
+
         should_block, error_msg, liveness_status = (
             await process_liveness_for_face_operation(
-                img, bbox, enable_liveness_detection, "Recognition"
+                img, verified_bbox, enable_liveness_detection, "Recognition"
             )
         )
 
@@ -78,7 +86,7 @@ async def recognize_face(
 
         allowed_person_ids = await repo.get_group_person_ids(group_id)
         result = await face_recognizer.recognize_face(
-            img, landmarks_5, allowed_person_ids
+            img, verified_landmarks, allowed_person_ids, repo.organization_id
         )
 
         success = result["success"]
@@ -132,7 +140,7 @@ async def remove_person(
     """
     try:
 
-        result = await face_recognizer.remove_person(person_id)
+        result = await face_recognizer.remove_person(person_id, repo.organization_id)
 
         if result["success"]:
             await repo.add_audit_log(
@@ -160,7 +168,9 @@ async def remove_person(
 
 @router.put("/face/person")
 async def update_person(
-    request: PersonUpdateRequest, face_recognizer=Depends(get_face_recognizer)
+    request: PersonUpdateRequest,
+    repo: AttendanceRepository = Depends(get_repository),
+    face_recognizer=Depends(get_face_recognizer),
 ):
     """
     Update a person's ID in the face database
@@ -177,16 +187,34 @@ async def update_person(
                 status_code=400, detail="Old and new person IDs must be different"
             )
 
-        result = await face_recognizer.update_person_id(
+        rename_success = await repo.rename_person_id(
             request.old_person_id.strip(), request.new_person_id.strip()
+        )
+        if not rename_success:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"Person '{request.old_person_id.strip()}' not found or "
+                    f"'{request.new_person_id.strip()}' already exists"
+                ),
+            )
+
+        result = await face_recognizer.update_person_id(
+            request.old_person_id.strip(),
+            request.new_person_id.strip(),
+            repo.organization_id,
         )
 
         if result["success"]:
             return result
-        else:
-            raise HTTPException(
-                status_code=404, detail=result.get("error", "Update failed")
-            )
+        return {
+            "success": True,
+            "message": (
+                result.get("message")
+                or f"Person '{request.old_person_id.strip()}' renamed successfully"
+            ),
+            "updated_records": result.get("updated_records", 1),
+        }
 
     except HTTPException:
         raise
@@ -196,14 +224,17 @@ async def update_person(
 
 
 @router.get("/face/persons")
-async def get_all_persons(face_recognizer=Depends(get_face_recognizer)):
+async def get_all_persons(
+    repo: AttendanceRepository = Depends(get_repository),
+    face_recognizer=Depends(get_face_recognizer),
+):
     """
     Get list of all registered persons
     """
     try:
 
-        persons = await face_recognizer.get_all_persons()
-        stats = await face_recognizer.get_stats()
+        persons = await face_recognizer.get_all_persons(repo.organization_id)
+        stats = await face_recognizer.get_stats(repo.organization_id)
 
         return {
             "success": True,
@@ -247,11 +278,14 @@ async def set_similarity_threshold(
 
 
 @router.post("/face/cache/invalidate")
-async def invalidate_face_cache(face_recognizer=Depends(get_face_recognizer)):
+async def invalidate_face_cache(
+    repo: AttendanceRepository = Depends(get_repository),
+    face_recognizer=Depends(get_face_recognizer),
+):
     try:
 
-        if hasattr(face_recognizer, "_invalidate_cache"):
-            face_recognizer._invalidate_cache()
+        if hasattr(face_recognizer, "invalidate_cache"):
+            face_recognizer.invalidate_cache(repo.organization_id)
 
         return {"success": True, "message": "Face recognizer cache invalidated"}
 
@@ -274,7 +308,7 @@ async def clear_database(
     """
     try:
 
-        result = await face_recognizer.clear_database()
+        result = await face_recognizer.clear_database(repo.organization_id)
 
         if result["success"]:
             await repo.add_audit_log(
@@ -301,13 +335,16 @@ async def clear_database(
 
 
 @router.get("/face/stats")
-async def get_face_stats(face_recognizer=Depends(get_face_recognizer)):
+async def get_face_stats(
+    repo: AttendanceRepository = Depends(get_repository),
+    face_recognizer=Depends(get_face_recognizer),
+):
     """
     Get face recognition statistics and configuration
     """
     try:
 
-        stats = await face_recognizer.get_stats()
+        stats = await face_recognizer.get_stats(repo.organization_id)
 
         # Return stats directly in the format expected by the Settings component
         return stats

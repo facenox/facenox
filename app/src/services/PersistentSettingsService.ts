@@ -3,19 +3,12 @@ import { defaultSettings, type PersistentSettingsSchema } from "./persistentSett
 
 class PersistentSettingsService {
   private scope: string | null = null
-
-  /**
-   * Set the organization/tenant scope for settings.
-   * When set, all get/set operations will be isolated to this scope.
-   */
-  setScope(scopeId: string | null): void {
-    this.scope = scopeId
-  }
-
-  private scopedKey(key: string): string {
-    if (!this.scope) return key
-    return `orgs.${this.scope}.${key}`
-  }
+  private readonly scopedKeys = new Set([
+    "attendance",
+    "reportViews",
+    "reportScratchpad",
+    "reportDefaultViewNames",
+  ])
 
   private getStoreAPI(): StoreAPI | null {
     if (typeof window === "undefined") return null
@@ -24,25 +17,52 @@ class PersistentSettingsService {
     return electronAPI?.store || null
   }
 
+  setScope(scope: string | null): void {
+    this.scope = scope?.trim() || null
+  }
+
+  private async getActiveScope(): Promise<string | null> {
+    if (this.scope) {
+      return this.scope
+    }
+
+    const store = this.getStoreAPI()
+    if (!store) return null
+
+    const organizationId = await store.get("sync.organizationId")
+    if (typeof organizationId !== "string") {
+      return null
+    }
+
+    const normalized = organizationId.trim()
+    return normalized || null
+  }
+
+  private async scopedKey(key: string): Promise<string> {
+    if (!this.scopedKeys.has(key)) {
+      return key
+    }
+
+    const scope = await this.getActiveScope()
+    return scope ? `org:${scope}.${key}` : key
+  }
+
   async get<T = unknown>(key: string): Promise<T | undefined> {
     const store = this.getStoreAPI()
     if (!store) return undefined
-    const finalKey = this.scopedKey(key)
-    return store.get(finalKey) as Promise<T | undefined>
+    return store.get(await this.scopedKey(key)) as Promise<T | undefined>
   }
 
   async set(key: string, value: unknown): Promise<void> {
     const store = this.getStoreAPI()
     if (!store) return
-    const finalKey = this.scopedKey(key)
-    await store.set(finalKey, value)
+    await store.set(await this.scopedKey(key), value)
   }
 
   async delete(key: string): Promise<void> {
     const store = this.getStoreAPI()
     if (!store) return
-    const finalKey = this.scopedKey(key)
-    await store.delete(finalKey)
+    await store.delete(await this.scopedKey(key))
   }
 
   async getAll(): Promise<Record<string, unknown>> {

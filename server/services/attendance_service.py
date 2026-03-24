@@ -8,6 +8,7 @@ import cv2
 
 from api.schemas import AttendanceEventResponse
 from database.repository import AttendanceRepository
+from services.face_metadata_validator import verify_detected_face_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -432,13 +433,18 @@ class AttendanceService:
                 "Biometric consent is required before face registration"
             )
 
-        enable_liveness = enable_liveness
-
         from hooks import process_liveness_for_face_operation
+
+        verified_bbox, verified_landmarks = await verify_detected_face_metadata(
+            image,
+            bbox,
+            landmarks_5,
+            operation_name="Registration",
+        )
 
         should_block, error_msg, liveness_status = (
             await process_liveness_for_face_operation(
-                image, bbox, enable_liveness, "Registration"
+                image, verified_bbox, enable_liveness, "Registration"
             )
         )
         if should_block:
@@ -447,7 +453,7 @@ class AttendanceService:
         logger.info(f"Registering face for {person_id} in group {group_id}")
 
         result = await self.face_recognizer.register_person(
-            person_id, image, landmarks_5
+            person_id, image, verified_landmarks, self.repo.organization_id
         )
 
         if result["success"]:
@@ -485,7 +491,9 @@ class AttendanceService:
         if member.group_id != group_id:
             raise ValueError("Member does not belong to this group")
 
-        result = await self.face_recognizer.remove_person(person_id)
+        result = await self.face_recognizer.remove_person(
+            person_id, self.repo.organization_id
+        )
 
         if result["success"]:
             return {
@@ -653,6 +661,7 @@ class AttendanceService:
                     continue
 
                 landmarks_5 = reg_data.get("landmarks_5")
+                bbox = reg_data.get("bbox")
                 if landmarks_5 is None:
                     failed_count += 1
                     results.append(
@@ -665,8 +674,27 @@ class AttendanceService:
                     )
                     continue
 
+                if bbox is None:
+                    failed_count += 1
+                    results.append(
+                        {
+                            "index": idx,
+                            "person_id": person_id,
+                            "success": False,
+                            "error": "Bounding box required",
+                        }
+                    )
+                    continue
+
+                _, verified_landmarks = await verify_detected_face_metadata(
+                    image,
+                    bbox,
+                    landmarks_5,
+                    operation_name="Bulk registration",
+                )
+
                 result = await self.face_recognizer.register_person(
-                    person_id, image, landmarks_5
+                    person_id, image, verified_landmarks, self.repo.organization_id
                 )
 
                 if result["success"]:

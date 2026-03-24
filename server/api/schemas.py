@@ -5,7 +5,6 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 
-
 # ============================================================================
 # Face Detection Schemas
 # ============================================================================

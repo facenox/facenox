@@ -51,18 +51,18 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
         <section>
           <h3 className="mb-2 text-sm font-medium text-white">Optional cloud sync</h3>
           <p className="text-xs leading-relaxed text-white/50">
-            Facenox can pair with a separate Facenox Cloud deployment for reporting and device
-            sync. Face matching, biometric templates, and raw face images still stay local to the
-            desktop app.
+            Facenox can pair with a separate Facenox Cloud deployment for reporting and device sync.
+            Face matching, biometric templates, and raw face images still stay local to the desktop
+            app.
           </p>
         </section>
 
         <section>
           <h3 className="mb-2 text-sm font-medium text-white">Regulatory compliance</h3>
           <p className="text-xs leading-relaxed text-white/50">
-            Facenox includes local storage, consent tracking, export, and deletion controls that
-            can help support privacy-conscious deployments. Compliance still depends on your
-            operational policies and legal notices.
+            Facenox includes local storage, consent tracking, export, and deletion controls that can
+            help support privacy-conscious deployments. Compliance still depends on your operational
+            policies and legal notices.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5 pb-2">
             <span className="rounded bg-white/5 px-2 py-0.5 text-[10px] text-white/40">

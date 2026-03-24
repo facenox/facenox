@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "python run.py",
     "clean": "npx rimraf build dist .ruff_cache .pytest_cache && python -c \"from pathlib import Path; import shutil; [shutil.rmtree(p) for p in Path('.').rglob('__pycache__')]; [p.unlink() for p in Path('.').rglob('*.py[co]')]\"",
+    "test": "python -m unittest discover -s tests -p \"test_*.py\"",
     "lint": "ruff check --fix",
     "format": "black .",
     "fix": "npm run lint && npm run format"

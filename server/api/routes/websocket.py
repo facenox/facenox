@@ -1,12 +1,15 @@
 import json
 import logging
+import os
 import time
+import hmac
 from datetime import datetime
 
 import cv2
 import numpy as np
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from api.deps import normalize_organization_id
 from config.models import FACE_DETECTOR_CONFIG
 from utils import serialize_faces
 from hooks import (
@@ -23,9 +26,33 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def is_authorized_websocket(websocket: WebSocket) -> bool:
+    expected_token = os.getenv("FACENOX_API_TOKEN")
+    if not expected_token:
+        return True
+
+    provided = websocket.query_params.get("token") or websocket.headers.get(
+        "X-Facenox-Token", ""
+    )
+    return hmac.compare_digest(provided, expected_token)
+
+
+def get_websocket_organization_id(websocket: WebSocket) -> str | None:
+    return normalize_organization_id(websocket.query_params.get("organization_id"))
+
+
 async def handle_websocket_detect(websocket: WebSocket, client_id: str):
     """Handle WebSocket detection endpoint"""
     logger.info(f"[WebSocket] Client {client_id} attempting to connect...")
+
+    if not is_authorized_websocket(websocket):
+        logger.warning(
+            f"[WebSocket] Unauthorized client {client_id} attempted to connect"
+        )
+        await websocket.close(code=1008)
+        return
+
+    organization_id = get_websocket_organization_id(websocket)
     await websocket.accept()
     logger.info(f"[WebSocket] Client {client_id} connected successfully")
 
@@ -76,7 +103,7 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
         from database.repository import AttendanceRepository
 
         async with AsyncSessionLocal() as session:
-            repo = AttendanceRepository(session)
+            repo = AttendanceRepository(session, organization_id=organization_id)
             settings = await repo.get_settings()
             enable_liveness_detection = settings.enable_liveness_detection
             logger.info(
@@ -276,6 +303,13 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
 
 async def handle_websocket_notifications(websocket: WebSocket, client_id: str):
     """Handle WebSocket notifications endpoint"""
+    if not is_authorized_websocket(websocket):
+        logger.warning(
+            f"[WebSocket] Unauthorized notifications client {client_id} attempted to connect"
+        )
+        await websocket.close(code=1008)
+        return
+
     existing_ws = notification_manager.active_connections.get(client_id)
     if existing_ws is not None and existing_ws is not websocket:
         try:

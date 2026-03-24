@@ -13,7 +13,6 @@ from config.server import get_server_config
 from config.paths import BASE_DIR
 from database.migrate import run_migrations
 
-
 sys.path.insert(0, str(BASE_DIR))
 
 config = {

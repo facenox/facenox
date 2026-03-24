@@ -194,34 +194,9 @@ export class BackendProcessManager {
   }
 
   async stop(): Promise<void> {
-    try {
-      if (process.platform === "win32") {
-        for (let i = 0; i < 3; i++) {
-          try {
-            await execAsync("taskkill /F /IM server.exe /T")
-            await sleep(50)
-          } catch (error: unknown) {
-            const err = error as { message?: string; code?: number }
-            if (err?.message?.includes("not found") || err?.code === 128) break
-          }
-        }
-      } else {
-        for (let i = 0; i < 3; i++) {
-          try {
-            const checkResult = await execAsync("pgrep -f server")
-            if (!checkResult.stdout.trim()) break
-            await execAsync("pkill -9 server")
-            await sleep(50)
-          } catch {
-            break
-          }
-        }
-      }
-    } catch (error: unknown) {
-      const err = error as { message?: string }
-      if (!err?.message?.includes("not found")) {
-        console.error("[BackendProcessManager] Error stopping:", error)
-      }
+    const pid = this.process?.pid ?? (await this.findListeningPid())
+    if (pid) {
+      await this.terminatePid(pid)
     }
 
     this.process = null
@@ -231,20 +206,11 @@ export class BackendProcessManager {
   }
 
   killSync(): void {
-    // Synchronous kill specifically for app exit — called from before-quit handler.
-    // Does NOT use the async killAllBackendProcesses to avoid unawaited promises.
-    try {
-      if (process.platform === "win32") {
-        execSync("taskkill /F /IM server.exe /T", {
-          stdio: "ignore",
-          timeout: 3000,
-        })
-      } else {
-        execSync("pkill -9 server", { stdio: "ignore", timeout: 3000 })
-      }
-    } catch {
-      /* silent — process may not be running */
+    const pid = this.process?.pid ?? this.findListeningPidSync()
+    if (pid) {
+      this.terminatePidSync(pid)
     }
+
     this.process = null
     this.status.isRunning = false
     this.status.pid = undefined
@@ -252,71 +218,185 @@ export class BackendProcessManager {
   }
 
   /**
-   * Kills all stale backend processes before starting a new one.
-   * Uses async sleep() instead of a CPU busy-spin to avoid blocking the main process.
+   * Kills only the backend process we own, or the process currently holding the
+   * configured backend port after an unclean previous shutdown.
    */
   private async killAllBackendProcesses(): Promise<void> {
-    const isWin = process.platform === "win32"
-    const maxAttempts = isWin ? 5 : 3
+    const ownedPid = this.process?.pid
+    if (ownedPid) {
+      await this.terminatePid(ownedPid)
+    }
 
-    for (let i = 0; i < maxAttempts; i++) {
+    const listeningPid = await this.findListeningPid()
+    if (listeningPid && listeningPid !== ownedPid) {
+      await this.terminatePid(listeningPid)
+    }
+  }
+
+  private async terminatePid(pid: number): Promise<void> {
+    try {
+      if (process.platform === "win32") {
+        await execAsync(`taskkill /F /PID ${pid} /T`)
+        return
+      }
+
       try {
-        if (isWin) {
-          const checkResult = execSync('tasklist /FI "IMAGENAME eq server.exe" /NH', {
-            encoding: "utf8",
-            timeout: 2000,
-          })
-          if (checkResult.includes("INFO: No tasks") || !checkResult.includes("server.exe")) return
-          try {
-            execSync("taskkill /F /IM server.exe /T", {
-              stdio: "ignore",
-              timeout: 2000,
-            })
-          } catch {
-            /* silent */
-          }
-          try {
-            const pidsOutput = execSync('tasklist /FI "IMAGENAME eq server.exe" /NH /FO CSV', {
-              encoding: "utf8",
-              timeout: 2000,
-            })
-            pidsOutput.split("\n").forEach((line) => {
-              if (line.includes("server.exe")) {
-                const match = /"(\d+)"/.exec(line)
-                if (match?.[1]) {
-                  try {
-                    execSync(`taskkill /F /PID ${match[1]} /T`, {
-                      stdio: "ignore",
-                      timeout: 1000,
-                    })
-                  } catch {
-                    /* silent */
-                  }
-                }
-              }
-            })
-          } catch {
-            /* silent */
-          }
-        } else {
-          try {
-            const checkResult = execSync("pgrep -f server", {
-              encoding: "utf8",
-              timeout: 2000,
-            })
-            if (!checkResult.trim()) return
-            execSync("pkill -9 server", { stdio: "ignore", timeout: 2000 })
-          } catch {
-            return
-          }
+        process.kill(pid, "SIGTERM")
+      } catch {
+        return
+      }
+
+      const exited = await this.waitForPidExit(pid, 1500)
+      if (!exited) {
+        try {
+          process.kill(pid, "SIGKILL")
+        } catch {
+          /* silent */
         }
-        // Non-blocking async sleep — does NOT block the Electron main process
-        await sleep(300)
-      } catch (error: unknown) {
-        const err = error as { message?: string }
-        if (err?.message?.includes("not found")) return
+      }
+    } catch (error: unknown) {
+      const err = error as { message?: string }
+      if (!err?.message?.includes("not found")) {
+        console.error(`[BackendProcessManager] Failed to terminate PID ${pid}:`, error)
       }
     }
+  }
+
+  private terminatePidSync(pid: number): void {
+    try {
+      if (process.platform === "win32") {
+        execSync(`taskkill /F /PID ${pid} /T`, {
+          stdio: "ignore",
+          timeout: 3000,
+        })
+        return
+      }
+
+      try {
+        process.kill(pid, "SIGTERM")
+      } catch {
+        return
+      }
+
+      const deadline = Date.now() + 1500
+      while (Date.now() < deadline && this.isPidAlive(pid)) {
+        // Short busy wait only during forced app shutdown.
+      }
+
+      if (this.isPidAlive(pid)) {
+        try {
+          process.kill(pid, "SIGKILL")
+        } catch {
+          /* silent */
+        }
+      }
+    } catch {
+      /* silent */
+    }
+  }
+
+  private async waitForPidExit(pid: number, timeoutMs: number): Promise<boolean> {
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+      if (!this.isPidAlive(pid)) return true
+      await sleep(100)
+    }
+    return !this.isPidAlive(pid)
+  }
+
+  private isPidAlive(pid: number): boolean {
+    try {
+      process.kill(pid, 0)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  private async findListeningPid(): Promise<number | null> {
+    try {
+      if (process.platform === "win32") {
+        const { stdout } = await execAsync("netstat -ano -p TCP")
+        return this.parseWindowsNetstatPid(stdout)
+      }
+
+      try {
+        const { stdout } = await execAsync(`lsof -nP -iTCP:${this.config.port} -sTCP:LISTEN -t`)
+        return this.parseFirstPid(stdout)
+      } catch {
+        const { stdout } = await execAsync(`ss -ltnp 'sport = :${this.config.port}'`)
+        return this.parseUnixSocketPid(stdout)
+      }
+    } catch {
+      return null
+    }
+  }
+
+  private findListeningPidSync(): number | null {
+    try {
+      if (process.platform === "win32") {
+        const stdout = execSync("netstat -ano -p TCP", {
+          encoding: "utf8",
+          timeout: 3000,
+        })
+        return this.parseWindowsNetstatPid(stdout)
+      }
+
+      try {
+        const stdout = execSync(`lsof -nP -iTCP:${this.config.port} -sTCP:LISTEN -t`, {
+          encoding: "utf8",
+          timeout: 3000,
+        })
+        return this.parseFirstPid(stdout)
+      } catch {
+        const stdout = execSync(`ss -ltnp 'sport = :${this.config.port}'`, {
+          encoding: "utf8",
+          timeout: 3000,
+        })
+        return this.parseUnixSocketPid(stdout)
+      }
+    } catch {
+      return null
+    }
+  }
+
+  private parseWindowsNetstatPid(output: string): number | null {
+    const portSuffix = `:${this.config.port}`
+    for (const rawLine of output.split(/\r?\n/)) {
+      const line = rawLine.trim()
+      if (!line) continue
+      const parts = line.split(/\s+/)
+      if (parts.length < 5) continue
+
+      const [protocol, localAddress, , state, pidText] = parts
+      if (protocol !== "TCP" || state !== "LISTENING" || !localAddress.endsWith(portSuffix)) {
+        continue
+      }
+
+      const pid = Number(pidText)
+      if (Number.isInteger(pid) && pid > 0) return pid
+    }
+
+    return null
+  }
+
+  private parseUnixSocketPid(output: string): number | null {
+    const match = /pid=(\d+)/.exec(output)
+    if (!match) return null
+    const pid = Number(match[1])
+    return Number.isInteger(pid) && pid > 0 ? pid : null
+  }
+
+  private parseFirstPid(output: string): number | null {
+    const firstLine = output
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find(Boolean)
+
+    if (!firstLine) return null
+
+    const pid = Number(firstLine)
+    return Number.isInteger(pid) && pid > 0 ? pid : null
   }
 
   private cleanup(): void {

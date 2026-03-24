@@ -11,10 +11,7 @@ function copyAssetsPlugin() {
       if (!existsSync("out/main")) mkdirSync("out/main", { recursive: true })
       copyFileSync("src/electron/splash.html", "out/main/splash.html")
       copyFileSync("src/electron/splash.css", "out/main/splash.css")
-      copyFileSync(
-        "public/icons/logo.png",
-        "out/main/logo.png",
-      )
+      copyFileSync("public/icons/logo.png", "out/main/logo.png")
     },
   }
 }

@@ -11,6 +11,7 @@ from sqlalchemy import (
     func,
     Index,
     LargeBinary,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncAttrs
@@ -74,7 +75,8 @@ class AttendanceGroup(Base, SyncMixin):
 class AttendanceMember(Base, SyncMixin):
     __tablename__ = "attendance_members"
 
-    person_id: Mapped[str] = mapped_column(String, primary_key=True)
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    person_id: Mapped[str] = mapped_column(String, nullable=False)
     group_id: Mapped[str] = mapped_column(
         String, ForeignKey("attendance_groups.id"), nullable=False
     )
@@ -98,7 +100,19 @@ class AttendanceMember(Base, SyncMixin):
 
     __table_args__ = (
         Index("ix_member_group_id", "group_id"),
-        Index("ix_member_person_org", "person_id", "organization_id", unique=True),
+        Index(
+            "ux_member_person_global",
+            "person_id",
+            unique=True,
+            sqlite_where=text("organization_id IS NULL"),
+        ),
+        Index(
+            "ux_member_person_org",
+            "person_id",
+            "organization_id",
+            unique=True,
+            sqlite_where=text("organization_id IS NOT NULL"),
+        ),
     )
 
 
@@ -106,8 +120,9 @@ class AttendanceRecord(Base, SyncMixin):
     __tablename__ = "attendance_records"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
-    person_id: Mapped[str] = mapped_column(
-        String, ForeignKey("attendance_members.person_id"), nullable=False
+    person_id: Mapped[str] = mapped_column(String, nullable=False)
+    member_id: Mapped[str] = mapped_column(
+        String, ForeignKey("attendance_members.id"), nullable=False
     )
     group_id: Mapped[str] = mapped_column(
         String, ForeignKey("attendance_groups.id"), nullable=False
@@ -125,6 +140,7 @@ class AttendanceRecord(Base, SyncMixin):
     __table_args__ = (
         Index("ix_record_group_id", "group_id"),
         Index("ix_record_person_id", "person_id"),
+        Index("ix_record_member_id", "member_id"),
         Index("ix_record_timestamp", "timestamp"),
         Index("ix_record_group_timestamp", "group_id", "timestamp"),
     )
@@ -134,8 +150,9 @@ class AttendanceSession(Base, SyncMixin):
     __tablename__ = "attendance_sessions"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
-    person_id: Mapped[str] = mapped_column(
-        String, ForeignKey("attendance_members.person_id"), nullable=False
+    person_id: Mapped[str] = mapped_column(String, nullable=False)
+    member_id: Mapped[str] = mapped_column(
+        String, ForeignKey("attendance_members.id"), nullable=False
     )
     group_id: Mapped[str] = mapped_column(
         String, ForeignKey("attendance_groups.id"), nullable=False
@@ -155,22 +172,17 @@ class AttendanceSession(Base, SyncMixin):
     __table_args__ = (
         Index("ix_session_group_id", "group_id"),
         Index("ix_session_person_id", "person_id"),
+        Index("ix_session_member_id", "member_id"),
         Index("ix_session_date", "date"),
         Index("ix_session_group_date", "group_id", "date"),
-        Index(
-            "ix_session_person_date_org",
-            "person_id",
-            "date",
-            "organization_id",
-            unique=True,
-        ),
+        Index("ux_session_member_date", "member_id", "date", unique=True),
     )
 
 
 class AttendanceSettings(Base, SyncMixin):
     __tablename__ = "attendance_settings"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)  # Singleton
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     late_threshold_minutes: Mapped[int] = mapped_column(Integer, default=15)
     enable_location_tracking: Mapped[bool] = mapped_column(Boolean, default=False)
     confidence_threshold: Mapped[float] = mapped_column(Float, default=0.7)
@@ -181,11 +193,21 @@ class AttendanceSettings(Base, SyncMixin):
     # Compliance: auto-purge records older than N days (0 = keep forever)
     data_retention_days: Mapped[int] = mapped_column(Integer, default=0)
 
+    __table_args__ = (
+        Index(
+            "ux_attendance_settings_organization_id",
+            "organization_id",
+            unique=True,
+            sqlite_where=text("organization_id IS NOT NULL"),
+        ),
+    )
+
 
 class Face(Base, SyncMixin):
     __tablename__ = "faces"
 
-    person_id: Mapped[str] = mapped_column(String, primary_key=True)
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    person_id: Mapped[str] = mapped_column(String, nullable=False)
     embedding: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     embedding_dimension: Mapped[int] = mapped_column(Integer, nullable=False)
     hash: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
@@ -193,7 +215,22 @@ class Face(Base, SyncMixin):
         DateTime, server_default=func.current_timestamp()
     )
 
-    __table_args__ = (Index("ix_face_person_id", "person_id"),)
+    __table_args__ = (
+        Index("ix_face_person_id", "person_id"),
+        Index(
+            "ux_face_person_global",
+            "person_id",
+            unique=True,
+            sqlite_where=text("organization_id IS NULL"),
+        ),
+        Index(
+            "ux_face_person_org",
+            "person_id",
+            "organization_id",
+            unique=True,
+            sqlite_where=text("organization_id IS NOT NULL"),
+        ),
+    )
 
 
 class AuditLog(Base):

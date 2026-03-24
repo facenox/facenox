@@ -207,14 +207,19 @@ async def update_member(
                 target_id=person_id,
             )
             # DPA/GDPR: revoked consent means the biometric must be erased
-            face_result = await repo.session.execute(
-                select(Face).where(Face.person_id == person_id)
-            )
+            face_query = select(Face).where(Face.person_id == person_id)
+            if repo.organization_id:
+                face_query = face_query.where(
+                    Face.organization_id == repo.organization_id
+                )
+            face_result = await repo.session.execute(face_query)
             face = face_result.scalars().first()
             if face:
                 try:
                     if core.lifespan.face_recognizer:
-                        await core.lifespan.face_recognizer.remove_person(person_id)
+                        await core.lifespan.face_recognizer.remove_person(
+                            person_id, repo.organization_id
+                        )
                     else:
                         await repo.session.delete(face)
                         await repo.session.commit()

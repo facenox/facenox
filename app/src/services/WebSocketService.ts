@@ -3,6 +3,7 @@ import type {
   WebSocketConnectionMessage,
   WebSocketErrorMessage,
 } from "../components/main/types"
+import { appendOrganizationId } from "./localBackendScope"
 
 export type WebSocketStatus = "disconnected" | "connecting" | "connected" | "error"
 
@@ -25,6 +26,7 @@ export class WebSocketService {
   private wsStatus: WebSocketStatus = "disconnected"
   private messageHandlers = new Map<keyof WebSocketEventMap, Set<(data: unknown) => void>>()
   private clientId: string
+  private token: string | null = null
 
   constructor(config?: Partial<WebSocketConfig>) {
     this.config = {
@@ -42,62 +44,82 @@ export class WebSocketService {
     return this.wsStatus === "connected" && this.ws?.readyState === WebSocket.OPEN
   }
 
+  private async getApiToken(): Promise<string> {
+    if (this.token !== null) return this.token
+    try {
+      const t = await window.electronAPI?.backend?.getToken?.()
+      this.token = typeof t === "string" ? t : ""
+    } catch {
+      this.token = ""
+    }
+    return this.token
+  }
+
   async connectWebSocket(): Promise<void> {
     if (this.wsStatus === "connected" || this.wsStatus === "connecting") {
       return
     }
 
     return new Promise((resolve, reject) => {
-      try {
-        this.wsStatus = "connecting"
-        const wsUrl = `${this.config.baseUrl.replace(/^http/, "ws")}/ws/detect/${this.clientId}`
-        this.ws = new WebSocket(wsUrl)
-        this.ws.binaryType = "arraybuffer"
-
-        this.ws.onopen = () => {
-          this.wsStatus = "connected"
-          this.notifyHandlers("connection", {
-            status: "connected",
-            message: "Connected to detector",
-          })
-          resolve()
-        }
-
-        this.ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data)
-            if (data.type) {
-              this.notifyHandlers(data.type, data)
-            } else if (data.faces || data.model_used) {
-              // Legacy/Direct detection response
-              this.notifyHandlers("detection_response", data)
-            }
-          } catch (e) {
-            console.error("Failed to parse WebSocket message:", e)
+      void (async () => {
+        try {
+          const token = await this.getApiToken()
+          const wsBaseUrl = this.config.baseUrl.replace(/^http/, "ws")
+          const wsUrl = new URL(`/ws/detect/${this.clientId}`, `${wsBaseUrl}/`)
+          await appendOrganizationId(wsUrl)
+          if (token) {
+            wsUrl.searchParams.set("token", token)
           }
-        }
 
-        this.ws.onclose = () => {
-          const prevStatus = this.wsStatus
-          this.wsStatus = "disconnected"
-          this.ws = null
-          if (prevStatus !== "disconnected") {
+          this.wsStatus = "connecting"
+          this.ws = new WebSocket(wsUrl.toString())
+          this.ws.binaryType = "arraybuffer"
+
+          this.ws.onopen = () => {
+            this.wsStatus = "connected"
             this.notifyHandlers("connection", {
-              status: "disconnected",
-              message: "Disconnected from detector",
+              status: "connected",
+              message: "Connected to detector",
             })
+            resolve()
           }
-        }
 
-        this.ws.onerror = (error) => {
+          this.ws.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data)
+              if (data.type) {
+                this.notifyHandlers(data.type, data)
+              } else if (data.faces || data.model_used) {
+                // Legacy/Direct detection response
+                this.notifyHandlers("detection_response", data)
+              }
+            } catch (e) {
+              console.error("Failed to parse WebSocket message:", e)
+            }
+          }
+
+          this.ws.onclose = () => {
+            const prevStatus = this.wsStatus
+            this.wsStatus = "disconnected"
+            this.ws = null
+            if (prevStatus !== "disconnected") {
+              this.notifyHandlers("connection", {
+                status: "disconnected",
+                message: "Disconnected from detector",
+              })
+            }
+          }
+
+          this.ws.onerror = (error) => {
+            this.wsStatus = "error"
+            this.notifyHandlers("error", { message: "WebSocket error occurred" })
+            reject(error)
+          }
+        } catch (error) {
           this.wsStatus = "error"
-          this.notifyHandlers("error", { message: "WebSocket error occurred" })
           reject(error)
         }
-      } catch (error) {
-        this.wsStatus = "error"
-        reject(error)
-      }
+      })()
     })
   }
 

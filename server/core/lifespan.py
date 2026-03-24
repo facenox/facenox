@@ -3,6 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from sqlalchemy import select
 
 from config.models import (
     FACE_DETECTOR_CONFIG,
@@ -91,22 +92,34 @@ async def lifespan(app: FastAPI):
         # Run data retention purge on startup (respects configured retention policy)
         try:
             from database.session import AsyncSessionLocal
+            from database.models import AttendanceSettings
             from database.repository import AttendanceRepository
 
             async with AsyncSessionLocal() as session:
-                repo = AttendanceRepository(session)
-                settings = await repo.get_settings()
-                if settings.data_retention_days > 0:
+                settings_result = await session.execute(select(AttendanceSettings))
+                settings_rows = list(settings_result.scalars().all())
+
+                if not settings_rows:
+                    settings_rows = [await AttendanceRepository(session).get_settings()]
+
+                for settings in settings_rows:
+                    if settings.data_retention_days <= 0:
+                        continue
+
+                    repo = AttendanceRepository(
+                        session, organization_id=settings.organization_id
+                    )
                     result = await repo.cleanup_old_data(settings.data_retention_days)
                     total_deleted = result.get("records_deleted", 0) + result.get(
                         "sessions_deleted", 0
                     )
                     if total_deleted > 0:
                         logger.info(
-                            "Retention purge: removed %d records and %d sessions older than %d days.",
+                            "Retention purge: removed %d records and %d sessions older than %d days for org %s.",
                             result.get("records_deleted", 0),
                             result.get("sessions_deleted", 0),
                             settings.data_retention_days,
+                            settings.organization_id or "<global>",
                         )
         except Exception as purge_err:
             logger.warning("Retention purge failed (non-fatal): %s", purge_err)

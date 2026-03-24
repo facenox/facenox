@@ -187,7 +187,7 @@ async def get_group_persons(
             ]
 
         persons_with_face_data = []
-        all_persons = await face_recognizer.get_all_persons()
+        all_persons = await face_recognizer.get_all_persons(repo.organization_id)
 
         for member in members:
             has_face_data = member.person_id in all_persons

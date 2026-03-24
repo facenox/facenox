@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 from typing import List, Tuple
 
-
 # Reference points for face alignment (112x112 standard)
 REFERENCE_POINTS = np.array(
     [
