@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 
+import { Tooltip } from "@/components/shared"
 import { DEFAULT_CLOUD_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "@/services/cloudSyncDefaults"
 
 type CloudConfig = {
@@ -193,31 +194,21 @@ export function CloudSync() {
   }
 
   const statusTone =
-    config.connected ?
-      "border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
-    : "border-white/10 bg-white/5 text-white/60"
+    config.connected ? "border-cyan-500/20 text-cyan-300" : "border-white/10 text-white/60"
   const syncTone =
     config.lastSyncStatus === "success" ? "text-cyan-300"
     : config.lastSyncStatus === "error" ? "text-red-400"
     : "text-white/50"
 
   return (
-    <div className="max-w-auto space-y-8 p-10">
-      <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-white">Cloud Beta</h3>
-        <p className="max-w-2xl text-xs leading-relaxed text-white/50">
-          Facenox Desktop stays local-first. Cloud Beta adds shared reports, device status, and
-          admin visibility without moving biometric templates or raw face data off this machine.
-        </p>
-      </div>
-
-      <div className={`rounded-lg border px-4 py-4 ${statusTone}`}>
-        <div className="mb-2 flex items-center justify-between gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col space-y-8 p-10">
+      <div className={`border-y px-0 py-4 ${statusTone}`}>
+        <div className="flex items-center justify-between gap-4">
           <div>
             <div className="text-[11px] font-semibold tracking-[0.24em] uppercase">
               {config.connected ? "Connected" : "Not Connected"}
             </div>
-            <div className="mt-1 text-xs">
+            <div className="mt-1 text-sm">
               {config.connected ?
                 `${config.organizationName || "Unknown org"} - ${config.siteName || "Unknown site"}`
               : "This desktop is still local-only until you connect it to Facenox Cloud."}
@@ -228,7 +219,7 @@ export function CloudSync() {
           </div>
         </div>
         {config.connected && (
-          <div className="grid gap-1 text-[11px] text-white/60 sm:grid-cols-2">
+          <div className="mt-3 grid gap-1 text-[11px] text-white/50 sm:grid-cols-2">
             <span>Device: {config.deviceName || "Unnamed desktop"}</span>
             <span>Device ID: {config.deviceId}</span>
           </div>
@@ -237,10 +228,10 @@ export function CloudSync() {
 
       {banner.type !== "idle" && (
         <div
-          className={`flex items-start gap-3 rounded-lg border px-4 py-3 text-xs ${
+          className={`flex items-start gap-3 border-l-2 px-4 py-1 text-xs ${
             banner.type === "success" ?
-              "border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
-            : "border-red-500/20 bg-red-500/10 text-red-400"
+              "border-cyan-400 text-cyan-300"
+            : "border-red-400 text-red-400"
           }`}>
           <i
             className={`mt-0.5 shrink-0 ${
@@ -253,30 +244,37 @@ export function CloudSync() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-white/10 bg-white/5">
-        <div className="border-b border-white/6 px-6 py-5">
-          <div className="mb-1 flex items-center gap-2">
+      <section className="space-y-6 pt-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
             <i className="fa-solid fa-link text-sm text-cyan-400" />
-            <h4 className="text-sm font-semibold text-white">Connect this desktop</h4>
+            <h4 className="text-base font-semibold text-white">Connect this desktop</h4>
+            <Tooltip
+              content="Cloud Beta sync does not upload face embeddings or raw face images. Biometric matching stays local on this desktop. To move biometric profiles between devices, use encrypted vault backup and restore."
+              position="bottom">
+              <button
+                type="button"
+                className="flex h-6 w-6 items-center justify-center rounded-full text-white/30 transition hover:text-cyan-300">
+                <i className="fa-solid fa-circle-info text-[11px]" />
+              </button>
+            </Tooltip>
           </div>
-          <p className="text-xs text-white/50">
+          <p className="text-sm text-white/45">
             For the hosted beta, normal users only need a pairing code. Server URL is an advanced
             override for custom deployments.
           </p>
         </div>
 
-        <div className="space-y-4 px-6 py-5">
+        <div className="space-y-6">
           {!config.connected ?
-            <div className="grid gap-3 md:grid-cols-3">
-              {pairingSteps.map((step) => (
-                <div
-                  className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-4"
-                  key={step.title}>
+            <div className="grid gap-4 md:grid-cols-3">
+              {pairingSteps.map((step, index) => (
+                <div className="space-y-2 border-l border-white/10 pl-4" key={step.title}>
                   <div className="text-[10px] font-semibold tracking-[0.24em] text-cyan-300 uppercase">
-                    {step.label}
+                    0{index + 1}
                   </div>
-                  <div className="mt-2 text-sm font-semibold text-white">{step.title}</div>
-                  <div className="mt-2 text-[11px] leading-relaxed text-white/50">{step.body}</div>
+                  <div className="text-sm font-semibold text-white">{step.title}</div>
+                  <div className="text-[11px] leading-relaxed text-white/50">{step.body}</div>
                 </div>
               ))}
             </div>
@@ -284,22 +282,21 @@ export function CloudSync() {
 
           {!config.connected ?
             <>
-              <label className="space-y-2">
-                <span className="text-[11px] font-medium text-white/30">Pairing Code</span>
-                <input
-                  type="text"
-                  placeholder="ABCD2345"
-                  value={pairingCode}
-                  onChange={(e) => setPairingCode(e.target.value.toUpperCase())}
-                  className="h-10 w-full max-w-sm rounded-lg border border-white/10 bg-white/5 px-4 text-xs tracking-[0.18em] text-white uppercase transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
-                />
-              </label>
-
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <label className="min-w-0 flex-1 space-y-2">
+                  <span className="text-[11px] font-medium text-white/30">Pairing Code</span>
+                  <input
+                    type="text"
+                    placeholder="ABCD2345"
+                    value={pairingCode}
+                    onChange={(e) => setPairingCode(e.target.value.toUpperCase())}
+                    className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs tracking-[0.18em] text-white uppercase transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
+                  />
+                </label>
                 <button
                   onClick={handlePair}
                   disabled={busyAction !== null || !pairingCode}
-                  className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-300 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
+                  className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 text-[11px] font-bold tracking-wider text-cyan-300 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
                   <i
                     className={
                       busyAction === "pairing" ?
@@ -307,16 +304,17 @@ export function CloudSync() {
                       : "fa-solid fa-plug"
                     }
                   />
-                  Connect to Facenox Cloud
+                  Connect
                 </button>
-                <span className="text-[11px] text-white/40">
-                  Advanced settings are only for staging, self-hosted, or special device labels.
-                </span>
+              </div>
+              <div className="text-[11px] text-white/35">
+                Advanced settings are only for staging, self-hosted deployments, or custom device
+                labels.
               </div>
             </>
           : <>
-              <div className="grid gap-3 text-xs text-white/60 sm:grid-cols-2">
-                <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+              <div className="grid gap-5 border-y border-white/8 py-4 text-xs text-white/60 sm:grid-cols-2">
+                <div>
                   <div className="mb-1 text-[11px] tracking-[0.22em] text-white/30 uppercase">
                     Organization
                   </div>
@@ -324,7 +322,7 @@ export function CloudSync() {
                     {config.organizationName || config.organizationId}
                   </div>
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+                <div>
                   <div className="mb-1 text-[11px] tracking-[0.22em] text-white/30 uppercase">
                     Site
                   </div>
@@ -363,11 +361,6 @@ export function CloudSync() {
             </>
           }
 
-          <div className="rounded-lg border border-white/8 bg-black/20 px-4 py-3 text-[11px] text-white/45">
-            Hosted cloud default:
-            <span className="ml-2 text-cyan-300">{DEFAULT_CLOUD_BASE_URL}</span>
-          </div>
-
           <button
             onClick={() => setShowAdvanced((value) => !value)}
             className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-white/45 uppercase transition hover:text-white/70">
@@ -376,7 +369,7 @@ export function CloudSync() {
           </button>
 
           {showAdvanced ?
-            <div className="space-y-4 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-4">
+            <div className="space-y-4 border-l border-white/10 pl-4">
               <div className="text-[11px] leading-relaxed text-white/45">
                 Change these only if you need a custom server URL, a clearer device label, or a
                 different background sync schedule.
@@ -384,7 +377,7 @@ export function CloudSync() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-2">
-                  <span className="text-[11px] font-medium text-white/30">Server URL</span>
+                  <span className="text-[11px] font-medium text-white/30">Custom Server URL</span>
                   <input
                     type="url"
                     placeholder={DEFAULT_CLOUD_BASE_URL}
@@ -393,6 +386,10 @@ export function CloudSync() {
                     onChange={(e) => setCloudBaseUrl(e.target.value)}
                     className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                   />
+                  <div className="text-[11px] text-white/35">
+                    Leave this unchanged unless you&apos;re connecting to a self-hosted or custom
+                    deployment.
+                  </div>
                 </label>
                 <label className="space-y-2">
                   <span className="text-[11px] font-medium text-white/30">Device Name</span>
@@ -419,7 +416,7 @@ export function CloudSync() {
                     className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
                   />
                 </label>
-                <label className="mt-auto flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/70">
+                <label className="mt-auto flex items-center gap-3 border border-white/10 px-4 py-2 text-xs text-white/70">
                   <input
                     type="checkbox"
                     checked={enabled}
@@ -455,37 +452,23 @@ export function CloudSync() {
             </p>
           : null}
         </div>
-      </div>
+      </section>
 
-      <div className="overflow-hidden rounded-lg border border-white/10 bg-white/5">
-        <div className="border-b border-white/6 px-6 py-5">
-          <div className="mb-1 flex items-center gap-2">
-            <i className="fa-solid fa-cloud text-sm text-cyan-400" />
-            <h4 className="text-sm font-semibold text-white">What syncs to Cloud</h4>
-          </div>
-          <p className="text-xs text-white/50">
-            Attendance snapshots move one-way to the cloud for reporting and device visibility.
-          </p>
+      <section className="space-y-4 border-t border-white/8 pt-6">
+        <div className="flex items-center gap-2">
+          <i className="fa-solid fa-cloud text-sm text-cyan-400" />
+          <h4 className="text-base font-semibold text-white">What goes to cloud</h4>
         </div>
-        <div className="space-y-4 px-6 py-5">
-          <ul className="space-y-2 pl-5 text-[11px] leading-relaxed text-white/50">
-            <li>Groups, members, attendance records, and sessions from the local desktop export</li>
-            <li>Device identity, sync status, and admin activity for shared reporting</li>
-            <li>Biometric templates, raw face images, and local matching stay on the desktop</li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="flex items-start gap-4 rounded-lg border border-cyan-500/10 bg-cyan-500/5 p-4">
-        <i className="fa-solid fa-shield-halved mt-0.5 shrink-0 text-cyan-400/40" />
-        <div className="space-y-1">
-          <h5 className="text-[11px] font-medium text-cyan-300/80">Privacy boundary</h5>
-          <p className="max-w-2xl text-[10px] leading-relaxed text-white/40">
-            Cloud Beta is for admin, sync visibility, and reporting. Face embeddings, raw face
-            images, and local biometric matching remain on-device in the desktop app.
-          </p>
-        </div>
-      </div>
+        <ul className="space-y-3 text-sm leading-relaxed text-white/50">
+          <li>Groups, members, attendance records, and sessions from this desktop.</li>
+          <li>Device identity, sync status, and admin-facing reporting data.</li>
+          <li>Cloud Beta sync does not send face embeddings or raw face images.</li>
+          <li>
+            Biometric matching stays local. To move biometric profiles, use encrypted vault backup
+            and restore.
+          </li>
+        </ul>
+      </section>
     </div>
   )
 }
