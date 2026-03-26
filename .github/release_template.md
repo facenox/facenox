@@ -16,6 +16,11 @@
 * All biometric data remains stored locally on your machine in `facenox.db`.
 * [Note any changes to anti-spoofing or data handling].
 
+### Code Signing Status
+* State whether this release is unsigned or code-signed.
+* If signed in the future, specify which artifacts are signed and how users can verify them.
+* Reference: `docs/CODE_SIGNING_POLICY.md`
+
 ### Important Notice
 * [e.g., "Database migration required" or "None"].
 

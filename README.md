@@ -100,6 +100,8 @@ Cloud pairing, cloud sync, and cloud dashboard updates resume when connectivity 
 
 Prebuilt binaries are currently published for Windows. If you are on macOS or Linux, build from source using [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
+Official release and trust rules are documented in [docs/CODE_SIGNING_POLICY.md](docs/CODE_SIGNING_POLICY.md).
+
 ### Installation Notes
 
 Facenox is still early-stage software. Desktop installers may trigger OS trust prompts until code-signing and notarization are in place.
@@ -128,6 +130,7 @@ If macOS blocks the app because the developer is unidentified:
 - [docs/FEATURES.md](docs/FEATURES.md): features, Cloud Beta scope, and out-of-scope items
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): desktop architecture and desktop-cloud boundaries
 - [docs/INSTALLATION.md](docs/INSTALLATION.md): local development and desktop build setup
+- [docs/CODE_SIGNING_POLICY.md](docs/CODE_SIGNING_POLICY.md): official release identity, trust rules, and current signing status
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): common setup and runtime issues
 - [docs/PRIVACY.md](docs/PRIVACY.md): data handling, consent, backups, and cloud sync boundaries
 - [SECURITY.md](SECURITY.md): supported version policy and vulnerability reporting
