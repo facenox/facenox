@@ -1,7 +1,7 @@
 """Add max recognition faces per frame setting
 
 Revision ID: b4c5d6e7f8a9
-Revises: c7f8b7b9a123
+Revises: e8b1f2c4d5a6
 Create Date: 2026-03-26 22:15:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "b4c5d6e7f8a9"
-down_revision: Union[str, Sequence[str], None] = "c7f8b7b9a123"
+down_revision: Union[str, Sequence[str], None] = "e8b1f2c4d5a6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
