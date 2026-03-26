@@ -44,20 +44,10 @@ async function beforePack(context) {
       stdio: "inherit",
       cwd: backendDir,
     })
-
-    try {
-      execSync('python -c "import PyInstaller"', {
-        stdio: "pipe",
-        cwd: backendDir,
-      })
-      console.log("PyInstaller is available")
-    } catch {
-      console.log("Installing PyInstaller...")
-      execSync("python -m pip install pyinstaller", {
-        stdio: "inherit",
-        cwd: backendDir,
-      })
-    }
+    execSync("python -m pip install -r requirements-build.txt", {
+      stdio: "inherit",
+      cwd: backendDir,
+    })
 
     console.log("Building backend with PyInstaller...")
     execSync("python build_backend.py", { stdio: "inherit", cwd: backendDir })

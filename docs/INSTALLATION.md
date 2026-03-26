@@ -55,6 +55,16 @@ Install backend dependencies:
 pip install -r requirements.txt
 ```
 
+Optional dependency sets:
+
+```bash
+# Formatter and linter
+pip install -r requirements-dev.txt
+
+# PyInstaller packaging/build dependencies
+pip install -r requirements-build.txt
+```
+
 ### 3. Install desktop dependencies
 
 ```bash
@@ -91,6 +101,13 @@ pnpm dist:linux
 ```
 
 Desktop build output is written under `app/dist` and related build folders used by Electron Builder.
+
+When packaging the Python backend directly, make sure the build environment has:
+
+```bash
+cd server
+pip install -r requirements-build.txt
+```
 
 ## Troubleshooting
 

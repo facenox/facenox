@@ -1,42 +1,22 @@
-#   Tested with Python 3.10.9
+# Tested with Python 3.10.9
 
-# FastAPI and web server dependencies
-fastapi
-httpx
-uvicorn[standard]
+# Web API and local server
+fastapi==0.135.2
+httpx==0.28.1
+uvicorn[standard]==0.42.0
 
-# Computer vision and image processing
-opencv-python
-numpy
+# Computer vision and numeric processing
+opencv-python==4.13.0.92
+numpy==2.4.3
+onnxruntime==1.24.4
 
-# Data validation and serialization
-pydantic
+# Data validation and storage
+pydantic==2.12.5
+python-multipart==0.0.22
+sqlalchemy[asyncio]==2.0.48
+alembic==1.18.4
+aiosqlite==0.22.1
+ulid==1.1
 
-# ONNX runtime for anti-spoofing models
-onnxruntime
-
-# Tracker dependencies
-# Removed lap and scipy (replaced with pure-python/numpy)
-
-# Attendance database dependencies
-ulid
-
-# Installer dependencies
-pyinstaller
-
-# Windows-specific dependencies for PyInstaller builds
-# Note: Only needed on Windows. Install conditionally:
-#   Windows: pip install pywin32-ctypes
-#   macOS/Linux: Not required
-pywin32-ctypes; sys_platform == 'win32'
-
-# Multipart dependencies
-python-multipart
-
-# Database dependencies
-sqlalchemy[asyncio]
-alembic
-aiosqlite
-
-# Encryption for secure vault backup (.facenox format)
-cryptography
+# Vault encryption
+cryptography==46.0.5

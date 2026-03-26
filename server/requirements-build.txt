@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# Packaging/build dependencies
+pyinstaller==6.19.0
+pywin32-ctypes==0.2.3; sys_platform == "win32"

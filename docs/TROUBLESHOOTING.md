@@ -17,6 +17,13 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+If you also need formatting/linting tools or backend packaging tools, install:
+
+```bash
+pip install -r requirements-dev.txt
+pip install -r requirements-build.txt
+```
+
 The Electron app looks for a Python interpreter in the server virtual environment before falling back to system Python.
 
 ## Port `8700` is already in use
@@ -44,7 +51,7 @@ This usually means a missing runtime dependency or a broken Python environment.
 Try the following:
 
 1. Recreate the virtual environment.
-2. Reinstall backend dependencies from `server/requirements.txt`.
+2. Reinstall backend runtime dependencies from `server/requirements.txt`.
 3. Install the current Microsoft Visual C++ Redistributable if the error points to missing DLL support.
 
 Official Microsoft download page:

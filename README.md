@@ -165,6 +165,12 @@ cd server
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
+
+# Optional: development tools
+# pip install -r requirements-dev.txt
+
+# Optional: backend packaging/build tools
+# pip install -r requirements-build.txt
 cd ..
 cd app
 pnpm install

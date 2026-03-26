@@ -41,7 +41,16 @@ venv\Scripts\activate
 source venv/bin/activate
 
 pip install -r requirements.txt
+
+# Optional: formatter and linter
+pip install -r requirements-dev.txt
 ```
+
+Dependency files are split on purpose:
+
+- `requirements.txt`: backend runtime dependencies
+- `requirements-dev.txt`: development tools such as `black` and `ruff`
+- `requirements-build.txt`: packaging dependencies such as `pyinstaller`
 
 ### Run the app
 
