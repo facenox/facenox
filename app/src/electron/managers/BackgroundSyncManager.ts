@@ -116,6 +116,7 @@ function normalizeAttendanceExportForCloud(
           attendance_cooldown_seconds: 10,
           relog_cooldown_seconds: 1800,
           enable_liveness_detection: true,
+          max_recognition_faces_per_frame: 6,
           data_retention_days: 0,
         },
   } as SyncPushPayload["attendance_export"]

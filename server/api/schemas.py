@@ -200,6 +200,7 @@ class AttendanceSettingsUpdate(BaseModel):
     attendance_cooldown_seconds: Optional[int] = Field(None, ge=1, le=300)
     relog_cooldown_seconds: Optional[int] = Field(None, ge=300, le=7200)
     enable_liveness_detection: Optional[bool] = None
+    max_recognition_faces_per_frame: Optional[int] = Field(None, ge=1, le=20)
     data_retention_days: Optional[int] = Field(
         None, ge=0, le=3650
     )  # 0=keep forever, max 10 years
@@ -212,6 +213,7 @@ class AttendanceSettingsResponse(BaseModel):
     attendance_cooldown_seconds: int
     relog_cooldown_seconds: int
     enable_liveness_detection: bool
+    max_recognition_faces_per_frame: int
     data_retention_days: int
 
     model_config = ConfigDict(from_attributes=True)

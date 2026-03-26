@@ -105,6 +105,8 @@ export default function Main() {
     setAttendanceCooldownSeconds,
     enableSpoofDetection,
     setEnableSpoofDetection,
+    maxRecognitionFacesPerFrame,
+    setMaxRecognitionFacesPerFrame,
     dataRetentionDays,
     setDataRetentionDays,
     persistentCooldowns,
@@ -463,7 +465,6 @@ export default function Main() {
       if (isStreamingRef.current) {
         wasStreamingBeforeMinimize.current = true
         stopCamera(false) // Pause tracking
-        console.log("App minimized: Pausing tracking...")
       } else {
         wasStreamingBeforeMinimize.current = false
       }
@@ -471,7 +472,6 @@ export default function Main() {
 
     const cleanupRestore = electron.onRestore(() => {
       if (wasStreamingBeforeMinimize.current) {
-        console.log("App restored: Resuming tracking...")
         startCameraGuarded()
         wasStreamingBeforeMinimize.current = false
       }
@@ -639,12 +639,17 @@ export default function Main() {
               classStartTime: currentGroup?.settings?.class_start_time ?? "08:00",
               attendanceCooldownSeconds: attendanceCooldownSeconds,
               enableSpoofDetection: enableSpoofDetection,
+              maxRecognitionFacesPerFrame: maxRecognitionFacesPerFrame,
               trackCheckout: currentGroup?.settings?.track_checkout ?? false,
               dataRetentionDays: dataRetentionDays,
             }}
             onAttendanceSettingsChange={async (updates) => {
               if (updates.enableSpoofDetection !== undefined) {
                 setEnableSpoofDetection(updates.enableSpoofDetection)
+              }
+
+              if (updates.maxRecognitionFacesPerFrame !== undefined) {
+                setMaxRecognitionFacesPerFrame(updates.maxRecognitionFacesPerFrame)
               }
 
               if (updates.trackCheckout !== undefined && currentGroup) {

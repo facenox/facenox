@@ -8,6 +8,7 @@ interface AttendanceProps {
   onLateThresholdToggle: (enabled: boolean) => void
   onAttendanceCooldownChange: (seconds: number) => void
   onSpoofDetectionToggle: (enabled: boolean) => void
+  onMaxRecognitionFacesChange: (count: number) => void
   onTrackCheckoutToggle: (enabled: boolean) => void
   onDataRetentionChange: (days: number) => void
   hasSelectedGroup?: boolean
@@ -19,6 +20,7 @@ export function Attendance({
   onLateThresholdToggle,
   onAttendanceCooldownChange,
   onSpoofDetectionToggle,
+  onMaxRecognitionFacesChange,
   onTrackCheckoutToggle,
   onDataRetentionChange,
   hasSelectedGroup = false,
@@ -126,6 +128,46 @@ export function Attendance({
                 step="5"
                 value={attendanceSettings.attendanceCooldownSeconds}
                 onChange={(e) => onAttendanceCooldownChange(parseInt(e.target.value))}
+                className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/5 px-1 accent-cyan-500"
+              />
+            </div>
+          </div>
+
+          <div className="h-px w-full bg-white/5" />
+
+          {/* Recognition Load */}
+          <div className="flex items-center gap-4 py-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <div className="text-sm font-medium text-white/90">Max Recognized Faces</div>
+                <InfoPopover
+                  title="Max Recognized Faces"
+                  description="Limits how many detected faces are sent to recognition per frame. Detection still sees everything; only recognition is capped."
+                  details={[
+                    "Lower values improve speed and stability.",
+                    "Higher values help in crowded scenes but use more CPU.",
+                    "Largest plausible faces are prioritized first.",
+                  ]}
+                  side="right"
+                />
+              </div>
+              <div className="mt-0.5 text-xs text-white/40">
+                Recognize up to {attendanceSettings.maxRecognitionFacesPerFrame} face
+                {attendanceSettings.maxRecognitionFacesPerFrame === 1 ? "" : "s"} per frame.
+              </div>
+            </div>
+
+            <div className="ml-auto flex shrink-0 items-center gap-3">
+              <span className="min-w-10 text-right text-[11px] font-medium whitespace-nowrap text-cyan-400/80">
+                {attendanceSettings.maxRecognitionFacesPerFrame}
+              </span>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                step="1"
+                value={attendanceSettings.maxRecognitionFacesPerFrame}
+                onChange={(e) => onMaxRecognitionFacesChange(parseInt(e.target.value))}
                 className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/5 px-1 accent-cyan-500"
               />
             </div>

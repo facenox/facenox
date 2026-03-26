@@ -246,6 +246,9 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 onSpoofDetectionToggle={(enabled) =>
                   updateAttendanceSetting({ enableSpoofDetection: enabled })
                 }
+                onMaxRecognitionFacesChange={(count) =>
+                  updateAttendanceSetting({ maxRecognitionFacesPerFrame: count })
+                }
                 onTrackCheckoutToggle={(enabled) =>
                   updateAttendanceSetting({ trackCheckout: enabled })
                 }

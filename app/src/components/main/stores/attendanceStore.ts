@@ -20,6 +20,7 @@ interface AttendanceState {
 
   attendanceCooldownSeconds: number
   enableSpoofDetection: boolean
+  maxRecognitionFacesPerFrame: number
   dataRetentionDays: number
 
   setCurrentGroup: (group: AttendanceGroup | null) => void
@@ -37,6 +38,7 @@ interface AttendanceState {
   ) => void
   setAttendanceCooldownSeconds: (seconds: number) => void
   setEnableSpoofDetection: (enabled: boolean) => void
+  setMaxRecognitionFacesPerFrame: (count: number) => void
   setDataRetentionDays: (days: number) => void
 }
 
@@ -47,8 +49,9 @@ const loadInitialSettings = async (): Promise<Partial<AttendanceState>> => {
   return {
     attendanceCooldownSeconds: attendanceSettings.attendanceCooldownSeconds,
     enableSpoofDetection: dbSettings?.enable_liveness_detection ?? true,
+    maxRecognitionFacesPerFrame: dbSettings?.max_recognition_faces_per_frame ?? 6,
     dataRetentionDays: dbSettings?.data_retention_days ?? 0,
-    // Cooldowns are session-only spam filter state — never restore across restarts.
+    // Cooldowns are session-only spam filter state - never restore across restarts.
     persistentCooldowns: new Map(),
   }
 }
@@ -67,6 +70,7 @@ export const useAttendanceStore = create<AttendanceState>()(
 
     attendanceCooldownSeconds: 8,
     enableSpoofDetection: true,
+    maxRecognitionFacesPerFrame: 6,
     dataRetentionDays: 0,
 
     setCurrentGroup: (group) => {
@@ -99,6 +103,12 @@ export const useAttendanceStore = create<AttendanceState>()(
     setEnableSpoofDetection: (enabled) => {
       set({ enableSpoofDetection: enabled })
       attendanceManager.updateSettings({ enable_liveness_detection: enabled }).catch(console.error)
+    },
+    setMaxRecognitionFacesPerFrame: (count) => {
+      set({ maxRecognitionFacesPerFrame: count })
+      attendanceManager
+        .updateSettings({ max_recognition_faces_per_frame: count })
+        .catch(console.error)
     },
     setDataRetentionDays: (days) => {
       set({ dataRetentionDays: days })

@@ -212,6 +212,7 @@ export interface AttendanceSettings {
   enable_liveness_detection: boolean
   confidence_threshold?: number
   attendance_cooldown_seconds: number
+  max_recognition_faces_per_frame: number
   data_retention_days?: number
 }
 

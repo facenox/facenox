@@ -160,7 +160,6 @@ export function useVideoStream(options: UseVideoStreamOptions) {
 
     // Respond to hardware changes (plugging/unplugging extra cameras)
     const handleDeviceChange = () => {
-      console.log("[useVideoStream] Hardware change detected, refreshing cameras...")
       getCameraDevices()
     }
 

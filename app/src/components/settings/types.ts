@@ -19,6 +19,7 @@ export interface AttendanceSettings {
   classStartTime: string
   attendanceCooldownSeconds: number
   enableSpoofDetection: boolean
+  maxRecognitionFacesPerFrame: number
   trackCheckout: boolean
   dataRetentionDays?: number
 }

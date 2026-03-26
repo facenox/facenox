@@ -41,6 +41,7 @@ class AttendanceRepository:
             "attendance_cooldown_seconds": source.attendance_cooldown_seconds,
             "relog_cooldown_seconds": source.relog_cooldown_seconds,
             "enable_liveness_detection": source.enable_liveness_detection,
+            "max_recognition_faces_per_frame": source.max_recognition_faces_per_frame,
             "data_retention_days": source.data_retention_days,
         }
 

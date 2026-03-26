@@ -31,7 +31,6 @@ interface UseFaceRecognitionOptions {
 }
 
 const MIN_RECOGNITION_FACE_SIZE = 48
-const MAX_RECOGNITION_FACES_PER_FRAME = 6
 
 export function useFaceRecognition(options: UseFaceRecognitionOptions) {
   const {
@@ -49,6 +48,7 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
     attendanceCooldownSeconds,
     setPersistentCooldowns,
     enableSpoofDetection,
+    maxRecognitionFacesPerFrame,
   } = useAttendanceStore()
 
   const persistentCooldownsRef = useRef(persistentCooldowns)
@@ -120,7 +120,7 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
             (left, right) =>
               right.bbox.width * right.bbox.height - left.bbox.width * left.bbox.height,
           )
-          .slice(0, MAX_RECOGNITION_FACES_PER_FRAME)
+          .slice(0, maxRecognitionFacesPerFrame)
 
         const recognitionPromises = recognitionCandidates.map(async (face) => {
           try {
@@ -532,6 +532,7 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
       setPersistentCooldowns,
       setTrackedFaces,
       enableSpoofDetection,
+      maxRecognitionFacesPerFrame,
     ],
   )
 

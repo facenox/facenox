@@ -63,6 +63,7 @@ export const attendanceSettingsSchema = z.object({
   attendance_cooldown_seconds: z.number(),
   relog_cooldown_seconds: z.number(),
   enable_liveness_detection: z.boolean(),
+  max_recognition_faces_per_frame: z.number(),
   data_retention_days: z.number(),
 })
 
