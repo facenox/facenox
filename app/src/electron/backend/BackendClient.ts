@@ -4,11 +4,22 @@ export interface ModelInfo {
   input_size: number[] | [number, number]
   conf_threshold?: number
   nms_threshold?: number
+  min_face_size?: number
+  edge_margin?: number
   top_k?: number
+  confidence_threshold?: number
+  bbox_inc?: number
+  temporal_alpha?: number
+  enable_temporal_smoothing?: boolean
   backend_id?: number
   target_id?: number
   embedding_dimension?: number
   similarity_threshold?: number
+  track_thresh?: number
+  match_thresh?: number
+  track_buffer?: number
+  frame_rate?: number
+  model_img_size?: number
   providers?: string[]
   description?: string
   version?: string
@@ -25,6 +36,7 @@ export interface ModelsResponse {
     face_detector?: ModelEntry
     liveness_detector?: ModelEntry
     face_recognizer?: ModelEntry
+    face_tracker?: ModelEntry
   }
 }
 

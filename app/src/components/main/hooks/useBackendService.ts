@@ -7,6 +7,7 @@ import type {
   WebSocketErrorMessage,
   DetectionResult,
   WebSocketFaceData,
+  PendingDetectionRequest,
 } from "@/components/main/types"
 import { cleanupStream, cleanupVideo, cleanupAnimationFrame } from "@/components/main/utils"
 import {
@@ -23,9 +24,8 @@ interface UseBackendServiceOptions {
   isStartingRef: React.RefObject<boolean>
   performFaceRecognition: (
     detectionResult: DetectionResult,
-    frameData: ArrayBuffer | null,
+    pendingRequest: PendingDetectionRequest | null,
   ) => Promise<void>
-  lastDetectionFrameRef: React.RefObject<ArrayBuffer | null>
   lastFrameTimestampRef: React.RefObject<number>
   lastDetectionRef: React.RefObject<DetectionResult | null>
   fpsTrackingRef: React.RefObject<{
@@ -35,6 +35,9 @@ interface UseBackendServiceOptions {
   }>
   skipFramesRef: React.RefObject<number>
   processCurrentFrameRef: React.RefObject<() => Promise<void>>
+  trackingSessionRef: React.RefObject<number>
+  pendingDetectionRequestsRef: React.MutableRefObject<PendingDetectionRequest[]>
+  detectionInFlightRef: React.MutableRefObject<boolean>
   stopCamera: React.RefObject<((forceCleanup: boolean) => void) | null>
   animationFrameRef: React.RefObject<number | undefined>
   streamRef: React.RefObject<MediaStream | null>
@@ -50,12 +53,14 @@ export function useBackendService(options: UseBackendServiceOptions) {
     isScanningRef,
     isStartingRef,
     performFaceRecognition,
-    lastDetectionFrameRef,
     lastFrameTimestampRef,
     lastDetectionRef,
     fpsTrackingRef,
     skipFramesRef,
     processCurrentFrameRef,
+    trackingSessionRef,
+    pendingDetectionRequestsRef,
+    detectionInFlightRef,
     stopCamera,
     animationFrameRef,
     streamRef,
@@ -190,6 +195,9 @@ export function useBackendService(options: UseBackendServiceOptions) {
     webSocketServiceRef.current.onMessage(
       "detection_response",
       (data: WebSocketDetectionResponse) => {
+        const pendingRequest = pendingDetectionRequestsRef.current.shift() ?? null
+        detectionInFlightRef.current = false
+
         if (!isStreamingRef.current || !isScanningRef.current) {
           return
         }
@@ -302,11 +310,12 @@ export function useBackendService(options: UseBackendServiceOptions) {
           if (
             recognitionEnabled &&
             backendServiceReadyRef.current &&
-            detectionResult.faces.length > 0
+            detectionResult.faces.length > 0 &&
+            pendingRequest &&
+            pendingRequest.trackingSessionId === trackingSessionRef.current
           ) {
             startTransition(() => {
-              const frameDataForRecognition = lastDetectionFrameRef.current
-              performFaceRecognition(detectionResult, frameDataForRecognition).catch((error) => {
+              performFaceRecognition(detectionResult, pendingRequest).catch((error) => {
                 console.error("Face recognition failed:", error)
               })
             })
@@ -329,11 +338,14 @@ export function useBackendService(options: UseBackendServiceOptions) {
     })
 
     webSocketServiceRef.current.onMessage("error", (data: WebSocketErrorMessage) => {
+      pendingDetectionRequestsRef.current.shift()
+      detectionInFlightRef.current = false
+
       if (!isStreamingRef.current || !isScanningRef.current) {
         return
       }
 
-      console.error("❌ WebSocket error message:", data)
+      console.error("WebSocket error message:", data)
       if (data.message) {
         setError(`Detection error: ${data.message}`)
       } else {
@@ -353,8 +365,10 @@ export function useBackendService(options: UseBackendServiceOptions) {
     skipFramesRef,
     lastDetectionRef,
     backendServiceReadyRef,
-    lastDetectionFrameRef,
     processCurrentFrameRef,
+    trackingSessionRef,
+    pendingDetectionRequestsRef,
+    detectionInFlightRef,
     setCurrentDetections,
     setDetectionFps,
     setWebsocketStatus,

@@ -199,14 +199,12 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                         )
                         continue
 
-                    min_face_size = (
-                        0
-                        if not enable_liveness_detection
-                        else FACE_DETECTOR_CONFIG["min_face_size"]
-                    )
+                    min_face_size = FACE_DETECTOR_CONFIG["min_face_size"]
 
                     faces = await process_face_detection(
                         image,
+                        confidence_threshold=FACE_DETECTOR_CONFIG["score_threshold"],
+                        nms_threshold=FACE_DETECTOR_CONFIG["nms_threshold"],
                         min_face_size=min_face_size,
                         enable_liveness=enable_liveness_detection,
                     )

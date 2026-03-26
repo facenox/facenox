@@ -16,6 +16,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncAttrs
 
+from config.models import FACE_DETECTOR_CONFIG
+
 
 class Base(AsyncAttrs, DeclarativeBase):
     pass
@@ -185,7 +187,9 @@ class AttendanceSettings(Base, SyncMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     late_threshold_minutes: Mapped[int] = mapped_column(Integer, default=15)
     enable_location_tracking: Mapped[bool] = mapped_column(Boolean, default=False)
-    confidence_threshold: Mapped[float] = mapped_column(Float, default=0.7)
+    confidence_threshold: Mapped[float] = mapped_column(
+        Float, default=FACE_DETECTOR_CONFIG["score_threshold"]
+    )
     attendance_cooldown_seconds: Mapped[int] = mapped_column(Integer, default=10)
     # Longer anti-duplicate window (e.g., 30 minutes) to prevent re-logging.
     relog_cooldown_seconds: Mapped[int] = mapped_column(Integer, default=1800)

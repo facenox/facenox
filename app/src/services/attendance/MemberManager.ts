@@ -1,5 +1,6 @@
 import type { AttendanceMember } from "../../types/recognition"
 import type { HttpClient } from "./HttpClient"
+import { dataUrlToBlob } from "@/utils/dataUrl"
 
 export class MemberManager {
   private httpClient: HttpClient
@@ -117,8 +118,7 @@ export class MemberManager {
       if (typeof imageData === "string") {
         const dataUrl =
           imageData.startsWith("data:") ? imageData : `data:image/jpeg;base64,${imageData}`
-        const response = await fetch(dataUrl)
-        imageBlob = await response.blob()
+        imageBlob = dataUrlToBlob(dataUrl)
       } else {
         imageBlob = imageData
       }

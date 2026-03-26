@@ -13,7 +13,6 @@ from api.schemas import (
     SimilarityThresholdRequest,
 )
 from hooks import process_liveness_for_face_operation
-from services.face_metadata_validator import verify_detected_face_metadata
 import numpy as np
 import cv2
 
@@ -61,16 +60,9 @@ async def recognize_face(
         if img is None:
             raise ValueError("Failed to decode image from multipart data")
 
-        verified_bbox, verified_landmarks = await verify_detected_face_metadata(
-            img,
-            bbox,
-            landmarks_5,
-            operation_name="Recognition",
-        )
-
         should_block, error_msg, liveness_status = (
             await process_liveness_for_face_operation(
-                img, verified_bbox, enable_liveness_detection, "Recognition"
+                img, bbox, enable_liveness_detection, "Recognition"
             )
         )
 
@@ -86,7 +78,7 @@ async def recognize_face(
 
         allowed_person_ids = await repo.get_group_person_ids(group_id)
         result = await face_recognizer.recognize_face(
-            img, verified_landmarks, allowed_person_ids, repo.organization_id
+            img, landmarks_5, allowed_person_ids, repo.organization_id
         )
 
         success = result["success"]

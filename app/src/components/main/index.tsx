@@ -32,7 +32,7 @@ import { Sidebar } from "@/components/main/components/Sidebar"
 import { GroupManagementModal } from "@/components/main/components/GroupManagementModal"
 import { DeleteConfirmationModal } from "@/components/main/components/DeleteConfirmationModal"
 import { CooldownOverlay } from "@/components/main/components/CooldownOverlay"
-import type { DetectionResult } from "@/components/main/types"
+import type { DetectionResult, PendingDetectionRequest } from "@/components/main/types"
 import { soundEffects } from "@/services/SoundEffectsService"
 
 export default function Main() {
@@ -48,6 +48,10 @@ export default function Main() {
   const lastDetectionFrameRef = useRef<ArrayBuffer | null>(null)
   const frameCounterRef = useRef(0)
   const skipFramesRef = useRef(0)
+  const trackingSessionRef = useRef(0)
+  const detectionRequestIdRef = useRef(0)
+  const pendingDetectionRequestsRef = useRef<PendingDetectionRequest[]>([])
+  const detectionInFlightRef = useRef(false)
 
   const lastStartTimeRef = useRef<number>(0)
   const lastStopTimeRef = useRef<number>(0)
@@ -202,6 +206,10 @@ export default function Main() {
     lastFrameTimestampRef,
     lastDetectionRef,
     processCurrentFrameRef,
+    trackingSessionRef,
+    detectionRequestIdRef,
+    pendingDetectionRequestsRef,
+    detectionInFlightRef,
     fpsTrackingRef,
   })
 
@@ -229,12 +237,14 @@ export default function Main() {
     isScanningRef,
     isStartingRef,
     performFaceRecognition,
-    lastDetectionFrameRef,
     lastFrameTimestampRef,
     lastDetectionRef,
     fpsTrackingRef,
     skipFramesRef,
     processCurrentFrameRef,
+    trackingSessionRef,
+    pendingDetectionRequestsRef,
+    detectionInFlightRef,
     stopCamera: stopCameraRef,
     animationFrameRef,
     streamRef,
@@ -262,6 +272,9 @@ export default function Main() {
     fpsTrackingRef,
     backendServiceReadyRef,
     processCurrentFrameRef,
+    trackingSessionRef,
+    pendingDetectionRequestsRef,
+    detectionInFlightRef,
     resetOverlayRefs,
     overlayCanvasRef,
     setIsStreaming,

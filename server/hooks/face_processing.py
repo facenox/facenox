@@ -9,13 +9,16 @@ logger = logging.getLogger(__name__)
 liveness_detector = None
 face_recognizer = None
 face_detector = None
+face_detector_lock: Optional[asyncio.Lock] = None
 
 
 def set_model_references(liveness, tracker, recognizer, detector=None):
-    global liveness_detector, face_recognizer, face_detector
+    global liveness_detector, face_recognizer, face_detector, face_detector_lock
     liveness_detector = liveness
     face_recognizer = recognizer
     face_detector = detector
+    if face_detector_lock is None:
+        face_detector_lock = asyncio.Lock()
 
 
 async def process_face_detection(
@@ -30,18 +33,35 @@ async def process_face_detection(
         return []
 
     try:
-        if confidence_threshold is not None:
-            face_detector.set_confidence_threshold(confidence_threshold)
-        if nms_threshold is not None:
-            face_detector.set_nms_threshold(nms_threshold)
-        if min_face_size is not None:
-            face_detector.set_min_face_size(min_face_size)
+        lock = face_detector_lock or asyncio.Lock()
+        async with lock:
+            original_confidence_threshold = getattr(
+                face_detector, "score_threshold", None
+            )
+            original_nms_threshold = getattr(face_detector, "nms_threshold", None)
+            original_min_face_size = getattr(face_detector, "min_face_size", None)
 
-        loop = asyncio.get_running_loop()
-        faces = await loop.run_in_executor(
-            None, lambda: face_detector.detect_faces(image, enable_liveness)
-        )
-        return faces
+            if confidence_threshold is not None:
+                face_detector.set_confidence_threshold(confidence_threshold)
+            if nms_threshold is not None:
+                face_detector.set_nms_threshold(nms_threshold)
+            if min_face_size is not None:
+                face_detector.set_min_face_size(min_face_size)
+
+            loop = asyncio.get_running_loop()
+            try:
+                return await loop.run_in_executor(
+                    None, lambda: face_detector.detect_faces(image, enable_liveness)
+                )
+            finally:
+                if original_confidence_threshold is not None:
+                    face_detector.set_confidence_threshold(
+                        original_confidence_threshold
+                    )
+                if original_nms_threshold is not None:
+                    face_detector.set_nms_threshold(original_nms_threshold)
+                if original_min_face_size is not None:
+                    face_detector.set_min_face_size(original_min_face_size)
 
     except Exception as e:
         logger.error(f"Face detection failed: {e}", exc_info=True)

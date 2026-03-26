@@ -3,7 +3,7 @@ import { startTransition } from "react"
 import { attendanceManager } from "@/services"
 import type { BackendService } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
-import type { DetectionResult } from "@/components/main/types"
+import type { DetectionResult, PendingDetectionRequest } from "@/components/main/types"
 import type { ExtendedFaceRecognitionResponse } from "@/components/main/utils"
 import {
   trimTrackingHistory,
@@ -29,6 +29,9 @@ interface UseFaceRecognitionOptions {
   >
   loadAttendanceDataRef: React.RefObject<() => Promise<void>>
 }
+
+const MIN_RECOGNITION_FACE_SIZE = 48
+const MAX_RECOGNITION_FACES_PER_FRAME = 6
 
 export function useFaceRecognition(options: UseFaceRecognitionOptions) {
   const {
@@ -93,7 +96,7 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
   const attendanceEnabled = true
 
   const performFaceRecognition = useCallback(
-    async (detectionResult: DetectionResult, frameData: ArrayBuffer | null) => {
+    async (detectionResult: DetectionResult, pendingRequest: PendingDetectionRequest | null) => {
       try {
         const currentGroupValue = currentGroupRef.current
         if (!currentGroupValue) {
@@ -101,13 +104,25 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
           return
         }
 
+        const frameData = pendingRequest?.frameData ?? null
         if (!frameData) {
           return
         }
 
         const processingGroup = currentGroupValue
+        const recognitionCandidates = [...detectionResult.faces]
+          .filter(
+            (face) =>
+              face.bbox.width >= MIN_RECOGNITION_FACE_SIZE &&
+              face.bbox.height >= MIN_RECOGNITION_FACE_SIZE,
+          )
+          .sort(
+            (left, right) =>
+              right.bbox.width * right.bbox.height - left.bbox.width * left.bbox.height,
+          )
+          .slice(0, MAX_RECOGNITION_FACES_PER_FRAME)
 
-        const recognitionPromises = detectionResult.faces.map(async (face) => {
+        const recognitionPromises = recognitionCandidates.map(async (face) => {
           try {
             if (!backendServiceRef.current) {
               return null
@@ -427,8 +442,8 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
                 })
               }
             }
-          } catch {
-            // Ignore individual face recognition errors
+          } catch (error) {
+            void error
           }
           return null
         })

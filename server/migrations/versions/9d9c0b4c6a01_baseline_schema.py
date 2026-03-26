@@ -70,7 +70,7 @@ def upgrade() -> None:
         sa.Column(
             "confidence_threshold",
             sa.Float(),
-            server_default=sa.text("0.7"),
+            server_default=sa.text("0.8"),
             nullable=False,
         ),
         sa.Column(

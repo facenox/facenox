@@ -4,6 +4,7 @@ import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { useCamera } from "@/components/group/sections/registration/hooks/useCamera"
 import { useGroupUIStore } from "@/components/group/stores/groupUIStore"
 import { Dropdown } from "@/components/shared"
+import { dataUrlToBlob } from "@/utils/dataUrl"
 
 type CaptureStatus = "pending" | "capturing" | "processing" | "completed" | "skipped" | "error"
 
@@ -149,8 +150,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
     setError(null)
 
     try {
-      const response = await fetch(dataUrl)
-      const blob = await response.blob()
+      const blob = dataUrlToBlob(dataUrl)
 
       const detection = await backendService.detectFaces(blob, {
         model_type: "face_detector",

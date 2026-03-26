@@ -32,6 +32,7 @@ class LivenessDetector:
         self.model_img_size = model_img_size
         self.bbox_inc = bbox_inc
         self.enable_temporal_smoothing = enable_temporal_smoothing
+        self.confidence_threshold = confidence_threshold
         self.logit_threshold = probability_to_logit_threshold(confidence_threshold)
 
         self.ort_session, self.input_name = self._init_session_(model_path)

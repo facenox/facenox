@@ -112,7 +112,7 @@ function normalizeAttendanceExportForCloud(
       : {
           late_threshold_minutes: 15,
           enable_location_tracking: false,
-          confidence_threshold: 0.7,
+          confidence_threshold: 0.8,
           attendance_cooldown_seconds: 10,
           relog_cooldown_seconds: 1800,
           enable_liveness_detection: true,

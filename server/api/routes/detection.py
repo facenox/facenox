@@ -69,8 +69,8 @@ async def configure_face_detector_optimization(request: dict):
 async def detect_faces(
     image: UploadFile = File(...),
     model_type: str = Form("face_detector"),
-    confidence_threshold: float = Form(0.6),
-    nms_threshold: float = Form(0.3),
+    confidence_threshold: float = Form(FACE_DETECTOR_CONFIG["score_threshold"]),
+    nms_threshold: float = Form(FACE_DETECTOR_CONFIG["nms_threshold"]),
     enable_liveness_detection: bool = Form(True),
 ):
     """

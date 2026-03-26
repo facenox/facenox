@@ -9,6 +9,7 @@ import type {
 
 import { ElectronAdapter } from "./adapters/ElectronAdapter"
 import { withLocalBackendHeaders } from "./localBackendScope"
+import { dataUrlToBlob } from "@/utils/dataUrl"
 
 interface DetectionResponse {
   faces: {
@@ -146,8 +147,7 @@ export class BackendService {
       if (typeof imageData === "string") {
         const dataUrl =
           imageData.startsWith("data:") ? imageData : `data:image/jpeg;base64,${imageData}`
-        const response = await fetch(dataUrl)
-        imageBlob = await response.blob()
+        imageBlob = dataUrlToBlob(dataUrl)
       } else {
         imageBlob = imageData
       }
@@ -155,8 +155,8 @@ export class BackendService {
       const formData = new FormData()
       formData.append("image", imageBlob, "face.jpg")
       formData.append("model_type", options.model_type || "face_detector")
-      formData.append("confidence_threshold", (options.confidence_threshold || 0.6).toString())
-      formData.append("nms_threshold", (options.nms_threshold || 0.3).toString())
+      formData.append("confidence_threshold", (options.confidence_threshold ?? 0.8).toString())
+      formData.append("nms_threshold", (options.nms_threshold ?? 0.3).toString())
       formData.append("enable_liveness_detection", (options.enableLiveness ?? true).toString())
 
       const token = await this.getApiToken()

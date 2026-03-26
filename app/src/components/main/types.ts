@@ -27,6 +27,13 @@ export interface DetectionResult {
   model_used: string
 }
 
+export interface PendingDetectionRequest {
+  requestId: number
+  trackingSessionId: number
+  capturedAt: number
+  frameData: ArrayBuffer
+}
+
 export interface WebSocketFaceData {
   bbox?: number[]
   confidence?: number

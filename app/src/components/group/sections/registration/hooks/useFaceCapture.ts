@@ -5,6 +5,7 @@ import type { DialogAPI } from "@/components/shared"
 import type { CapturedFrame } from "@/components/group/sections/registration/types"
 import { makeId } from "@/components/group/sections/registration/hooks/useImageProcessing"
 import { useAttendanceStore } from "@/components/main/stores"
+import { dataUrlToBlob } from "@/utils/dataUrl"
 
 export function useFaceCapture(
   group: AttendanceGroup | null,
@@ -51,8 +52,7 @@ export function useFaceCapture(
       ])
 
       try {
-        const response = await fetch(dataUrl)
-        const blob = await response.blob()
+        const blob = dataUrlToBlob(dataUrl)
 
         const detection = await backendService.detectFaces(blob, {
           model_type: "face_detector",
@@ -124,8 +124,7 @@ export function useFaceCapture(
       setSuccessMessage(null)
 
       try {
-        const res = await fetch(frame.dataUrl)
-        const blob = await res.blob()
+        const blob = dataUrlToBlob(frame.dataUrl)
 
         if (frame.landmarks_5?.length !== 5) {
           throw new Error("Cannot register: landmarks missing. Please re-capture the face.")
