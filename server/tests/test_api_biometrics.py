@@ -23,7 +23,7 @@ from utils.websocket_manager import manager, notification_manager
 class DummyFaceRecognizer:
     def __init__(self) -> None:
         self.registered: dict[str | None, dict[str, dict]] = defaultdict(dict)
-        self.threshold = 0.4
+        self.threshold = 0.5
 
     async def register_person(
         self,
