@@ -1,4 +1,4 @@
-import { syncPushSchema, type SyncPushPayload } from "@facenox-cloud/sync-contract"
+import { syncPushSchema, type SyncPushPayload } from "../../shared/cloudSyncContract.js"
 import { withLocalBackendHeaders } from "../localBackendScope.js"
 import { persistentStore } from "../persistentStore.js"
 import { backendService } from "../backendService.js"

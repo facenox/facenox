@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@facenox-cloud/sync-contract':
-        specifier: file:../../facenox-cloud/packages/sync-contract
-        version: file:../../facenox-cloud/packages/sync-contract
       framer-motion:
         specifier: ^12.35.1
         version: 12.35.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -20,6 +17,9 @@ importers:
       react-dom:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
       zustand:
         specifier: ^5.0.11
         version: 5.0.11(@types/react@19.2.14)(react@19.2.4)
@@ -597,9 +597,6 @@ packages:
   '@eslint/plugin-kit@0.6.1':
     resolution: {integrity: sha512-iH1B076HoAshH1mLpHMgwdGeTs0CYwL0SPMkGuSebZrwBp16v415e9NZXg2jtrqPVQjf6IANe2Vtlr5KswtcZQ==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
-
-  '@facenox-cloud/sync-contract@file:../../facenox-cloud/packages/sync-contract':
-    resolution: {directory: ../../facenox-cloud/packages/sync-contract, type: directory}
 
   '@fortawesome/fontawesome-free@7.2.0':
     resolution: {integrity: sha512-3DguDv/oUE+7vjMeTSOjCSG+KeawgVQOHrKRnvUuqYh1mfArrh7s+s8hXW3e4RerBA1+Wh+hBqf8sJNpqNrBWg==}
@@ -3783,10 +3780,6 @@ snapshots:
     dependencies:
       '@eslint/core': 1.1.1
       levn: 0.4.1
-
-  '@facenox-cloud/sync-contract@file:../../facenox-cloud/packages/sync-contract':
-    dependencies:
-      zod: 4.3.6
 
   '@fortawesome/fontawesome-free@7.2.0': {}
 
