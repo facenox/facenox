@@ -268,9 +268,14 @@ export function useBulkRegistration(
       const result = await attendanceManager.bulkRegisterFaces(
         group.id,
         registrations,
-        uploadedFiles.filter((_, i) =>
-          assignedFaces.some((f) => parseInt(f.imageId.replace("image_", "")) === i),
-        ),
+        uploadedFiles
+          .filter((_, i) =>
+            assignedFaces.some((f) => parseInt(f.imageId.replace("image_", "")) === i),
+          )
+          .map((file) => ({
+            file,
+            filename: file.name,
+          })),
       )
       const results: BulkRegistrationResult[] = result.results.map(
         (r: BulkRegisterResponseItem) => ({

@@ -173,7 +173,9 @@ export function useDatabaseManagement(
 
   const saveGroupEdit = useCallback(
     async (groupId: string, field: GroupField, value: string) => {
-      if (field === "name" && !value.trim()) {
+      const trimmedValue = value.trim()
+
+      if (field === "name" && !trimmedValue) {
         if (dialog) {
           await dialog.alert({
             title: "Missing group name",
@@ -188,14 +190,14 @@ export function useDatabaseManagement(
       setSavingGroup(groupId)
       try {
         const updates: Partial<AttendanceGroup> = {
-          [field]: value.trim() || undefined,
+          [field]: trimmedValue,
         }
 
         const success = await attendanceManager.updateGroup(groupId, updates)
         if (success) {
           setGroupsWithMembers((prev) =>
             prev.map((group) =>
-              group.id === groupId ? { ...group, [field]: value.trim() || undefined } : group,
+              group.id === groupId ? { ...group, [field]: trimmedValue } : group,
             ),
           )
           cancelEditing()

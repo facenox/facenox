@@ -294,6 +294,11 @@ export class AttendanceManager {
     })
   }
 
+  async exportData(): Promise<string> {
+    const data = await this.httpClient.post<Record<string, unknown>>("/attendance/export")
+    return JSON.stringify(data, null, 2)
+  }
+
   async downloadAuditLog(): Promise<void> {
     const csv = await this.httpClient.getText("/attendance/settings/audit-log")
     const blob = new Blob([csv], { type: "text/csv" })
