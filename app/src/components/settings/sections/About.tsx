@@ -25,9 +25,9 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
         <section>
           <h3 className="mb-2 text-sm font-medium text-white">Your data stays local</h3>
           <p className="text-xs leading-relaxed text-white/50">
-            Facenox currently stores face templates, attendance records, and settings locally on
-            your device by default. The current desktop app does not depend on a hosted biometric
-            service to perform face recognition.
+            Facenox stores biometric profiles, attendance records, and settings locally on your
+            device by default. The desktop app performs face detection, recognition, and liveness
+            checks locally and does not depend on a hosted biometric service.
           </p>
         </section>
 
@@ -52,9 +52,9 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
           <h3 className="mb-2 text-sm font-medium text-white">Optional cloud sync</h3>
           <p className="text-xs leading-relaxed text-white/50">
             Facenox can pair with a separate Facenox Cloud deployment for reporting and device sync.
-            Cloud sync does not upload face embeddings or raw face images, and face matching stays
-            local to the desktop app. To move biometric profiles between devices, use an encrypted
-            vault backup and restore.
+            Cloud sync does not upload face embeddings or raw face images, and biometric matching
+            stays local to the desktop app. To move biometric profiles between devices, use an
+            encrypted vault backup and restore.
           </p>
         </section>
 

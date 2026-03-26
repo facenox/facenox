@@ -17,9 +17,9 @@
 
 </div>
 
-Facenox is an offline-first face recognition system that runs entirely on-device in real time. No cloud required.
+Facenox is an offline-first face recognition system that performs real-time face detection, recognition, and liveness checks locally. No cloud required.
 
-Built for privacy-conscious teams, it keeps biometric data local while optionally syncing attendance to a cloud dashboard. All face recognition and biometric processing stays local.
+Built for privacy-conscious teams, it keeps biometric matching local while optionally syncing attendance data to a cloud dashboard.
 
 Facenox is built on a simple idea: you should own your biometric data.
 
@@ -34,17 +34,17 @@ Ideal for teams, schools, and organizations that need reliable attendance withou
 ## Key Highlights
 
 - Real-time face recognition, CPU-friendly, no GPU required
-- Fully local biometric processing. Data never leaves the device
+- Fully local biometric matching by default
 - Works fully offline. No internet required for core workflows
 - Optional cloud dashboard for centralized reporting and sync
 
 ## Why Facenox
 
-Most face recognition attendance systems rely on cloud-based biometrics. Facenox doesn't. Your biometric data stays local.
+Most face recognition attendance systems rely on cloud-based biometrics. Facenox doesn't. Biometric matching stays local on the desktop.
 
-| Local-first | Offline-ready | Consent-aware | Encrypted |
-| --- | --- | --- | --- |
-| Recognition and attendance stay on the desktop. | Core attendance workflows keep working without internet. | Enrollment and matching respect biometric consent. | Biometric templates are encrypted locally and vault exports are password-protected. |
+| Local-first                                     | Offline-ready                                            | Consent-aware                                      | Encrypted                                                                                                                  |
+| ----------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Recognition and attendance stay on the desktop. | Core attendance workflows keep working without internet. | Enrollment and matching respect biometric consent. | Biometric templates are encrypted locally, and moving them between devices requires an encrypted vault backup and restore. |
 
 ## Features
 
@@ -74,7 +74,7 @@ Facenox Cloud is an optional companion service for:
 
 Facenox Cloud is separate from this open source desktop repository. The desktop app in this repo remains usable without the hosted cloud service.
 
-The desktop app pushes attendance snapshots to the cloud. Raw face images, biometric templates, embeddings, and face matching stay on-device.
+The desktop app pushes attendance snapshots to the cloud. Cloud Beta does not upload raw face images or face embeddings, and biometric matching stays local. To move biometric profiles between devices, use encrypted vault backup and restore.
 
 ## Offline-First Behavior
 
