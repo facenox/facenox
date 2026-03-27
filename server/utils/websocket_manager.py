@@ -108,6 +108,13 @@ class ConnectionManager:
                 del self.fps_tracking[client_id]
             if client_id in self.face_trackers:
                 del self.face_trackers[client_id]
+            try:
+                from core.lifespan import liveness_detector
+
+                if liveness_detector and hasattr(liveness_detector, "clear_namespace"):
+                    liveness_detector.clear_namespace(client_id)
+            except Exception:
+                pass
 
     async def send_personal_message(self, message: dict, client_id: str) -> bool:
         """

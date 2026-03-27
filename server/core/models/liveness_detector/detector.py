@@ -57,7 +57,10 @@ class LivenessDetector:
         return crop(img, bbox, bbox_inc)
 
     def detect_faces(
-        self, image: np.ndarray, face_detections: List[Dict]
+        self,
+        image: np.ndarray,
+        face_detections: List[Dict],
+        smoothing_namespace: Optional[str] = None,
     ) -> List[Dict]:
         if not face_detections:
             return []
@@ -118,9 +121,14 @@ class LivenessDetector:
             results,
             self.temporal_smoother,
             self.frame_counter,
+            namespace=smoothing_namespace,
         )
 
         if self.temporal_smoother:
             self.temporal_smoother.cleanup_stale_tracks()
 
         return results
+
+    def clear_namespace(self, namespace: Optional[str]):
+        if self.temporal_smoother:
+            self.temporal_smoother.clear_namespace(namespace)

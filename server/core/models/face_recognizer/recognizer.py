@@ -235,6 +235,46 @@ class FaceRecognizer:
                 "error": str(e),
             }
 
+    async def recognize_faces(
+        self,
+        image: np.ndarray,
+        faces: List[Dict],
+        allowed_person_ids: Optional[List[str]] = None,
+        organization_id: Optional[str] = None,
+    ) -> List[Dict]:
+        try:
+            if not faces:
+                return []
+
+            embeddings = await self._extract_embeddings(image, faces)
+            if len(embeddings) != len(faces):
+                raise ValueError("Failed to extract embeddings for all faces")
+
+            results: List[Dict] = []
+            for embedding in embeddings:
+                person_id, similarity = await self._find_best_match(
+                    embedding, allowed_person_ids, organization_id
+                )
+                results.append(
+                    {
+                        "person_id": person_id,
+                        "similarity": similarity,
+                        "success": person_id is not None,
+                    }
+                )
+            return results
+        except Exception as e:
+            logger.error(f"Face batch recognition error: {e}")
+            return [
+                {
+                    "person_id": None,
+                    "similarity": 0.0,
+                    "success": False,
+                    "error": str(e),
+                }
+                for _ in faces
+            ]
+
     async def register_person(
         self,
         person_id: str,

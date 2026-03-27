@@ -35,6 +35,21 @@ class FaceRecognitionResponse(BaseModel):
     error: Optional[str] = None
 
 
+class BatchFaceRecognitionItem(BaseModel):
+    track_id: int
+    success: bool
+    person_id: Optional[str] = None
+    similarity: float
+    processing_time: float
+    error: Optional[str] = None
+
+
+class BatchFaceRecognitionResponse(BaseModel):
+    success: bool
+    results: List[BatchFaceRecognitionItem]
+    processing_time: float
+
+
 class PersonUpdateRequest(BaseModel):
     old_person_id: str
     new_person_id: str

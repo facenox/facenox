@@ -55,7 +55,7 @@ class FaceTracker:
 
     def update_frame_rate(self, frame_rate: int):
         """
-        Update frame rate dynamically and recreate tracker if needed.
+        Update frame rate dynamically without resetting tracker state.
 
         Args:
             frame_rate: New frame rate (clamped between 1 and 120)
@@ -63,7 +63,9 @@ class FaceTracker:
         frame_rate = max(1, min(120, int(frame_rate)))
         if frame_rate != self.frame_rate:
             self.frame_rate = frame_rate
-            self.tracker = BYTETracker(self.args, frame_rate=frame_rate)
+            buffer_size = max(1, int(frame_rate / 30.0 * self.args.track_buffer))
+            self.tracker.buffer_size = buffer_size
+            self.tracker.max_time_lost = buffer_size
 
     def update(
         self,

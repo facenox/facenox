@@ -9,10 +9,12 @@ from api.recognition_deps import get_face_recognizer
 from database.repository import AttendanceRepository
 from api.schemas import (
     FaceRecognitionResponse,
+    BatchFaceRecognitionResponse,
     PersonUpdateRequest,
     SimilarityThresholdRequest,
 )
 from hooks import process_liveness_for_face_operation
+from hooks import process_face_detection
 import numpy as np
 import cv2
 
@@ -59,6 +61,12 @@ async def recognize_face(
 
         if img is None:
             raise ValueError("Failed to decode image from multipart data")
+
+        detections = await process_face_detection(
+            img, min_face_size=0, enable_liveness=False
+        )
+        if not detections:
+            raise ValueError("No detectable face found in image")
 
         should_block, error_msg, liveness_status = (
             await process_liveness_for_face_operation(
@@ -118,6 +126,100 @@ async def recognize_face(
             similarity=0.0,
             processing_time=processing_time,
             error=str(e),
+        )
+
+
+@router.post("/face/recognize-batch", response_model=BatchFaceRecognitionResponse)
+async def recognize_faces_batch(
+    image: UploadFile = File(...),
+    metadata: str = Form(...),
+    repo: AttendanceRepository = Depends(get_repository),
+    face_recognizer=Depends(get_face_recognizer),
+):
+    start_time = time.time()
+
+    try:
+        try:
+            meta = json.loads(metadata)
+            faces_meta = meta.get("faces") or []
+            group_id = meta.get("group_id")
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid metadata format: {e}")
+
+        if not group_id or not isinstance(faces_meta, list):
+            raise HTTPException(
+                status_code=400, detail="Missing required group_id or faces metadata"
+            )
+
+        valid_faces = []
+        for face in faces_meta:
+            track_id = face.get("track_id")
+            landmarks_5 = face.get("landmarks_5")
+            if track_id is None or not landmarks_5:
+                continue
+            valid_faces.append({"track_id": int(track_id), "landmarks_5": landmarks_5})
+
+        if not valid_faces:
+            return BatchFaceRecognitionResponse(
+                success=True, results=[], processing_time=time.time() - start_time
+            )
+
+        contents = await image.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img is None:
+            raise HTTPException(status_code=400, detail="Invalid image file")
+
+        group_members = await repo.get_group_members(group_id)
+        allowed_person_ids = [member.person_id for member in group_members]
+        member_map = {member.person_id: member for member in group_members}
+
+        raw_results = await face_recognizer.recognize_faces(
+            img, valid_faces, allowed_person_ids, repo.organization_id
+        )
+
+        results = []
+        for face_meta, raw_result in zip(valid_faces, raw_results):
+            success = raw_result.get("success", False)
+            person_id = raw_result.get("person_id")
+            similarity = raw_result.get("similarity", 0.0)
+            error = raw_result.get("error")
+
+            if success and person_id:
+                member = member_map.get(person_id)
+                if not member or not member.has_consent:
+                    logger.warning(
+                        f"Recognition attempted for user {person_id} without consent. Blocking identity leak."
+                    )
+                    person_id = "PROTECTED_IDENTITY"
+                    error = "Biometric consent missing"
+
+            results.append(
+                {
+                    "track_id": face_meta["track_id"],
+                    "success": success,
+                    "person_id": person_id,
+                    "similarity": similarity,
+                    "processing_time": 0.0,
+                    "error": error,
+                }
+            )
+
+        processing_time = time.time() - start_time
+        for result in results:
+            result["processing_time"] = processing_time
+
+        return BatchFaceRecognitionResponse(
+            success=True, results=results, processing_time=processing_time
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        processing_time = time.time() - start_time
+        logger.error(f"Face batch recognition error: {e}")
+        return BatchFaceRecognitionResponse(
+            success=False, results=[], processing_time=processing_time
         )
 
 

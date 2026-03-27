@@ -79,8 +79,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
   const { setCurrentDetections, setDetectionFps } = useDetectionStore()
   const { enableSpoofDetection } = useAttendanceStore()
   const { setError } = useUIStore()
-
-  const recognitionEnabled = true
   const initializationRef = useRef<{
     initialized: boolean
     isInitializing: boolean
@@ -173,16 +171,21 @@ export function useBackendService(options: UseBackendServiceOptions) {
 
     webSocketServiceRef.current.onMessage(
       "attendance_event",
-      (data: import("@/components/main/types").AttendanceEvent) => {
+      (
+        data: import("@/components/main/types").AttendanceEvent & {
+          data?: import("@/components/main/types").AttendanceEvent
+        },
+      ) => {
         const { setSuccess } = useUIStore.getState()
         const { currentGroup } = useAttendanceStore.getState()
+        const payload = data.data ?? data
 
-        if (currentGroup && data.group_id === currentGroup.id) {
+        if (currentGroup && payload.group_id === currentGroup.id) {
           const member = useAttendanceStore
             .getState()
-            .groupMembers.find((m) => m.person_id === data.person_id)
+            .groupMembers.find((m) => m.person_id === payload.person_id)
           const memberName = member ? member.name : "Member"
-          const eventLabel = data.event_type === "check_in" ? "Timed In" : "Timed Out"
+          const eventLabel = payload.event_type === "check_in" ? "Timed In" : "Timed Out"
 
           setSuccess(`${memberName} ${eventLabel}`)
 
@@ -308,7 +311,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
           lastDetectionRef.current = detectionResult
 
           if (
-            recognitionEnabled &&
             backendServiceReadyRef.current &&
             detectionResult.faces.length > 0 &&
             pendingRequest &&
@@ -355,7 +357,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
       requestAnimationFrame(() => processCurrentFrameRef.current?.())
     })
   }, [
-    recognitionEnabled,
     performFaceRecognition,
     webSocketServiceRef,
     isStreamingRef,

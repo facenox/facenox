@@ -69,16 +69,27 @@ async def process_face_detection(
 
 
 async def process_liveness_detection(
-    faces: List[Dict], image: np.ndarray, enable: bool
+    faces: List[Dict], image: np.ndarray, enable: bool, smoothing_namespace: str = None
 ) -> List[Dict]:
     if not (enable and faces and liveness_detector):
         return faces
 
     try:
         loop = asyncio.get_running_loop()
-        faces_with_liveness = await loop.run_in_executor(
-            None, lambda: liveness_detector.detect_faces(image, faces)
-        )
+
+        def detector_call():
+            return liveness_detector.detect_faces(
+                image, faces, smoothing_namespace=smoothing_namespace
+            )
+
+        try:
+            faces_with_liveness = await loop.run_in_executor(None, detector_call)
+        except TypeError as exc:
+            if "smoothing_namespace" not in str(exc):
+                raise
+            faces_with_liveness = await loop.run_in_executor(
+                None, lambda: liveness_detector.detect_faces(image, faces)
+            )
 
         return faces_with_liveness
 

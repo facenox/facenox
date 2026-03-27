@@ -15,8 +15,17 @@ class TemporalSmoother:
             lambda: {"live": None, "spoof": None, "last_frame": -1}
         )
 
+    @staticmethod
+    def _normalize_namespace(namespace: str | None) -> str:
+        return namespace or "__global__"
+
     def smooth(
-        self, track_id: int, real_score: float, spoof_score: float, frame_number: int
+        self,
+        track_id: int,
+        real_score: float,
+        spoof_score: float,
+        frame_number: int,
+        namespace: str | None = None,
     ) -> Tuple[float, float]:
         if frame_number < 0:
             frame_number = 0
@@ -25,7 +34,7 @@ class TemporalSmoother:
             frame_number = self.current_frame
 
         self.current_frame = frame_number
-        state = self.track_states[track_id]
+        state = self.track_states[(self._normalize_namespace(namespace), track_id)]
 
         if state["live"] is None or state["spoof"] is None:
             smoothed_live = real_score
@@ -42,6 +51,14 @@ class TemporalSmoother:
 
         return smoothed_live, smoothed_spoof
 
+    def clear_namespace(self, namespace: str | None):
+        namespace_key = self._normalize_namespace(namespace)
+        keys_to_remove = [
+            key for key in list(self.track_states.keys()) if key[0] == namespace_key
+        ]
+        for key in keys_to_remove:
+            del self.track_states[key]
+
     def cleanup_stale_tracks(self, force: bool = False):
         if (
             not force
@@ -51,17 +68,17 @@ class TemporalSmoother:
             return
 
         stale_tracks = [
-            track_id
-            for track_id, state in self.track_states.items()
+            track_key
+            for track_key, state in self.track_states.items()
             if self.current_frame - state["last_frame"] > self.max_stale_frames
         ]
 
         negative_tracks = [
-            track_id for track_id in self.track_states.keys() if track_id < 0
+            track_key for track_key in self.track_states.keys() if track_key[1] < 0
         ]
         stale_tracks.extend(negative_tracks)
 
-        for track_id in stale_tracks:
-            del self.track_states[track_id]
+        for track_key in stale_tracks:
+            del self.track_states[track_key]
 
         self.last_cleanup_frame = self.current_frame

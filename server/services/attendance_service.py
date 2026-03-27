@@ -432,7 +432,13 @@ class AttendanceService:
                 "Biometric consent is required before face registration"
             )
 
-        from hooks import process_liveness_for_face_operation
+        from hooks import process_face_detection, process_liveness_for_face_operation
+
+        detections = await process_face_detection(
+            image, min_face_size=0, enable_liveness=False
+        )
+        if not detections:
+            raise ValueError("No detectable face found in image")
 
         should_block, error_msg, liveness_status = (
             await process_liveness_for_face_operation(
@@ -648,6 +654,23 @@ class AttendanceService:
                             "person_id": person_id,
                             "success": False,
                             "error": "Failed to decode image",
+                        }
+                    )
+                    continue
+
+                from hooks import process_face_detection
+
+                detections = await process_face_detection(
+                    image, min_face_size=0, enable_liveness=False
+                )
+                if not detections:
+                    failed_count += 1
+                    results.append(
+                        {
+                            "index": idx,
+                            "person_id": person_id,
+                            "success": False,
+                            "error": "No detectable face found in image",
                         }
                     )
                     continue

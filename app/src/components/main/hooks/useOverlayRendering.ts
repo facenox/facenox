@@ -25,8 +25,6 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
   const { persistentCooldowns, currentGroup } = useAttendanceStore()
   const { quickSettings } = useUIStore()
 
-  const recognitionEnabled = true
-
   const lastCanvasSizeRef = useRef<{ width: number; height: number }>({
     width: 0,
     height: 0,
@@ -122,7 +120,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
       currentDetections,
       isStreaming,
       currentRecognitionResults,
-      recognitionEnabled,
+      recognitionEnabled: true,
       persistentCooldowns,
       quickSettings,
       getVideoRect,
@@ -133,7 +131,6 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     currentDetections,
     isStreaming,
     currentRecognitionResults,
-    recognitionEnabled,
     persistentCooldowns,
     currentGroup,
     quickSettings,

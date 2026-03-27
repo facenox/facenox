@@ -132,8 +132,6 @@ export default function Main() {
     setSidebarCollapsed,
   } = useUIStore()
 
-  const recognitionEnabled = true
-
   // Preload sound to minimize delay on first recognition
   useEffect(() => {
     if (audioSettings.recognitionSoundEnabled && audioSettings.recognitionSoundUrl) {
@@ -220,7 +218,6 @@ export default function Main() {
     currentGroupRef,
     memberCacheRef,
     calculateAngleConsistencyRef,
-    loadAttendanceDataRef,
   })
 
   const { animate, resetOverlayRefs } = useOverlayRendering({
@@ -598,7 +595,7 @@ export default function Main() {
         <Sidebar
           currentDetections={currentDetections}
           currentRecognitionResults={currentRecognitionResults}
-          recognitionEnabled={recognitionEnabled}
+          recognitionEnabled={true}
           trackedFaces={trackedFaces}
           isStreaming={isStreaming}
           isVideoLoading={isVideoLoading}

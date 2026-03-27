@@ -197,7 +197,6 @@ export const AttendancePanel = memo(function AttendancePanel({
     setShowSettings(true)
   }, [setGroupInitialSection, setShowSettings])
 
-  const attendanceEnabled = true
   const [searchQuery, setSearchQuery] = useState("")
   const [sortField, setSortField] = useState<SortField>("time")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
@@ -291,17 +290,6 @@ export const AttendancePanel = memo(function AttendancePanel({
     const timer = setTimeout(() => setDisplayLimit(20), 0)
     return () => clearTimeout(timer)
   }, [searchQuery, sortField, sortOrder])
-
-  if (!attendanceEnabled) {
-    return (
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <h3 className="shrink-0 px-4 pt-4 text-lg font-light">Recent Logs</h3>
-        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-4">
-          <div className="py-4 text-center text-sm text-white/50">No logs yet</div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">

@@ -15,6 +15,16 @@ export interface FaceRecognitionResponse {
   error: string | null
 }
 
+export interface BatchFaceRecognitionItem extends FaceRecognitionResponse {
+  track_id: number
+}
+
+export interface BatchFaceRecognitionResponse {
+  success: boolean
+  results: BatchFaceRecognitionItem[]
+  processing_time: number
+}
+
 export interface FaceRegistrationRequest {
   image: string
   person_id: string
