@@ -466,7 +466,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
       registerWebSocketHandlers()
       await webSocketServiceRef.current.connectWebSocket()
     } catch (error) {
-      console.error("❌ WebSocket initialization failed:", error)
+      console.error("WebSocket initialization failed:", error)
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
 
       if (!isStartingRef.current) {

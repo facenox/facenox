@@ -351,7 +351,7 @@ export function useDatabaseManagement(
           variant: "danger",
         })
       } else {
-        alert("❌ Failed to delete some groups")
+        alert("Failed to delete some groups")
       }
     } finally {
       setDeletingGroup(null)

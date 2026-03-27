@@ -106,7 +106,7 @@ export function useAttendanceGroups() {
       setGroupMembers(members)
       setRecentAttendance(records)
     } catch (error) {
-      console.error("❌ Failed to load attendance data:", error)
+      console.error("Failed to load attendance data:", error)
     }
   }, [setGroupMembers, setRecentAttendance, setAttendanceGroups, setCurrentGroupWithCache])
 
@@ -131,7 +131,7 @@ export function useAttendanceGroups() {
         setGroupMembers(members)
         setRecentAttendance(records)
       } catch (error) {
-        console.error("❌ Failed to load data for selected group:", error)
+        console.error("Failed to load data for selected group:", error)
       }
     },
     [setCurrentGroupWithCache, setGroupMembers, setRecentAttendance],
@@ -149,7 +149,7 @@ export function useAttendanceGroups() {
         await handleSelectGroup(group)
       }
     } catch (error) {
-      console.error("❌ Failed to create group:", error)
+      console.error("Failed to create group:", error)
       setError("Failed to create group")
     }
   }, [
@@ -186,7 +186,7 @@ export function useAttendanceGroups() {
         throw new Error("Failed to delete group")
       }
     } catch (error) {
-      console.error("❌ Failed to delete group:", error)
+      console.error("Failed to delete group:", error)
       setError("Failed to delete group")
     } finally {
       setShowDeleteConfirmation(false)

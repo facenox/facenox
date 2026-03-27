@@ -116,7 +116,7 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       await get().fetchGroups()
       set({ lastDeletedGroupId: null })
     } catch (err) {
-      console.error("[GroupStore] ❌ Error in deleteGroup:", err)
+      console.error("[GroupStore] Error in deleteGroup:", err)
       set({
         error: err instanceof Error ? err.message : "Failed to delete group",
         lastDeletedGroupId: null,
