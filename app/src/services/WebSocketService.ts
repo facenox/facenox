@@ -24,6 +24,12 @@ export class WebSocketService {
   private config: WebSocketConfig
   private ws: WebSocket | null = null
   private wsStatus: WebSocketStatus = "disconnected"
+  private connectPromise: Promise<void> | null = null
+  private pendingLiveConfig: {
+    enableLivenessDetection?: boolean
+    groupId?: string | null
+    maxRecognitionFacesPerFrame?: number
+  } | null = null
   private messageHandlers = new Map<keyof WebSocketEventMap, Set<(data: unknown) => void>>()
   private clientId: string
   private token: string | null = null
@@ -56,11 +62,16 @@ export class WebSocketService {
   }
 
   async connectWebSocket(): Promise<void> {
-    if (this.wsStatus === "connected" || this.wsStatus === "connecting") {
+    if (this.wsStatus === "connected") {
       return
     }
 
-    return new Promise((resolve, reject) => {
+    if (this.connectPromise) {
+      return this.connectPromise
+    }
+
+    this.wsStatus = "connecting"
+    this.connectPromise = new Promise((resolve, reject) => {
       void (async () => {
         try {
           const token = await this.getApiToken()
@@ -71,49 +82,62 @@ export class WebSocketService {
             wsUrl.searchParams.set("token", token)
           }
 
-          this.wsStatus = "connecting"
-          this.ws = new WebSocket(wsUrl.toString())
-          this.ws.binaryType = "arraybuffer"
+          const socket = new WebSocket(wsUrl.toString())
+          this.ws = socket
+          socket.binaryType = "arraybuffer"
           let settled = false
-          let handshakeTimer: ReturnType<typeof setTimeout> | undefined
-
-          const settleReject = (error: unknown) => {
+          const connectTimeout = window.setTimeout(() => {
             if (settled) {
               return
             }
             settled = true
-            if (handshakeTimer) {
-              clearTimeout(handshakeTimer)
-            }
-            reject(error)
-          }
+            this.wsStatus = "error"
+            this.connectPromise = null
+            reject(new Error("Timed out opening websocket connection"))
+            socket.close()
+          }, 10000)
 
-          const settleResolve = () => {
+          const resolveOnce = () => {
             if (settled) {
               return
             }
             settled = true
-            if (handshakeTimer) {
-              clearTimeout(handshakeTimer)
-            }
+            window.clearTimeout(connectTimeout)
+            this.connectPromise = null
             resolve()
           }
 
-          this.ws.onopen = () => {
-            this.wsStatus = "connecting"
-            handshakeTimer = setTimeout(() => {
-              this.wsStatus = "error"
-              settleReject(new Error("Timed out waiting for detection service handshake"))
-            }, 10000)
+          const rejectOnce = (error: Error) => {
+            if (settled) {
+              return
+            }
+            settled = true
+            window.clearTimeout(connectTimeout)
+            this.connectPromise = null
+            reject(error)
           }
 
-          this.ws.onmessage = (event) => {
+          socket.onopen = () => {
+            if (socket !== this.ws) {
+              return
+            }
+            this.wsStatus = "connected"
+            this.notifyHandlers("connection", {
+              status: "connected",
+              message: "Connected to detector",
+            })
+            if (this.pendingLiveConfig) {
+              this.emitLiveConfig(this.pendingLiveConfig)
+            }
+            resolveOnce()
+          }
+
+          socket.onmessage = (event) => {
+            if (socket !== this.ws) {
+              return
+            }
             try {
               const data = JSON.parse(event.data)
-              if (data.type === "connection" && data.status === "connected") {
-                this.wsStatus = "connected"
-                settleResolve()
-              }
               if (data.type) {
                 this.notifyHandlers(data.type, data)
               } else if (data.faces || data.model_used) {
@@ -125,10 +149,22 @@ export class WebSocketService {
             }
           }
 
-          this.ws.onclose = () => {
+          socket.onclose = (event) => {
+            if (socket !== this.ws) {
+              return
+            }
             const prevStatus = this.wsStatus
             this.wsStatus = "disconnected"
             this.ws = null
+            this.connectPromise = null
+            window.clearTimeout(connectTimeout)
+            if (!settled && prevStatus === "connecting") {
+              rejectOnce(
+                new Error(
+                  `WebSocket closed before opening (code ${event.code}${event.reason ? `: ${event.reason}` : ""})`,
+                ),
+              )
+            }
             if (prevStatus !== "disconnected") {
               this.notifyHandlers("connection", {
                 status: "disconnected",
@@ -137,17 +173,25 @@ export class WebSocketService {
             }
           }
 
-          this.ws.onerror = (error) => {
+          socket.onerror = () => {
+            if (socket !== this.ws) {
+              return
+            }
             this.wsStatus = "error"
+            this.connectPromise = null
+            window.clearTimeout(connectTimeout)
             this.notifyHandlers("error", { message: "WebSocket error occurred" })
-            settleReject(error)
+            rejectOnce(new Error("WebSocket transport error"))
           }
         } catch (error) {
           this.wsStatus = "error"
+          this.connectPromise = null
           reject(error)
         }
       })()
     })
+
+    return this.connectPromise
   }
 
   disconnect(): void {
@@ -156,6 +200,7 @@ export class WebSocketService {
       this.ws.close()
       this.ws = null
     }
+    this.connectPromise = null
   }
 
   onMessage<K extends keyof WebSocketEventMap>(
@@ -209,26 +254,43 @@ export class WebSocketService {
     this.ws!.send(frameData)
   }
 
+  private emitLiveConfig(config: {
+    enableLivenessDetection?: boolean
+    groupId?: string | null
+    maxRecognitionFacesPerFrame?: number
+  }): void {
+    if (!this.isWebSocketReady()) {
+      return
+    }
+
+    this.ws!.send(
+      JSON.stringify({
+        type: "config",
+        ...(config.enableLivenessDetection !== undefined && {
+          enable_liveness_detection: config.enableLivenessDetection,
+        }),
+        ...(config.groupId !== undefined && {
+          group_id: config.groupId,
+        }),
+        ...(config.maxRecognitionFacesPerFrame !== undefined && {
+          max_recognition_faces_per_frame: config.maxRecognitionFacesPerFrame,
+        }),
+      }),
+    )
+  }
+
   updateLiveConfig(config: {
     enableLivenessDetection?: boolean
     groupId?: string | null
     maxRecognitionFacesPerFrame?: number
   }): void {
+    this.pendingLiveConfig = {
+      ...(this.pendingLiveConfig ?? {}),
+      ...config,
+    }
+
     if (this.isWebSocketReady()) {
-      this.ws!.send(
-        JSON.stringify({
-          type: "config",
-          ...(config.enableLivenessDetection !== undefined && {
-            enable_liveness_detection: config.enableLivenessDetection,
-          }),
-          ...(config.groupId !== undefined && {
-            group_id: config.groupId,
-          }),
-          ...(config.maxRecognitionFacesPerFrame !== undefined && {
-            max_recognition_faces_per_frame: config.maxRecognitionFacesPerFrame,
-          }),
-        }),
-      )
+      this.emitLiveConfig(this.pendingLiveConfig)
     }
   }
 

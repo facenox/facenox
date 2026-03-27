@@ -66,6 +66,13 @@ class LiveStreamService:
         liveness = face.get("liveness") or {}
         return liveness.get("status") == "real" and liveness.get("is_real") is True
 
+    def _is_attendance_allowed(
+        self, face: Dict[str, Any], config: LiveSessionConfig
+    ) -> bool:
+        if not config.enable_liveness_detection:
+            return self._has_live_recognition_basics(face)
+        return self._is_attendance_candidate(face)
+
     @staticmethod
     def _serialize_recognition_result(
         result: Dict[str, Any], member_info: Optional[Dict[str, Any]]
@@ -289,7 +296,7 @@ class LiveStreamService:
             if (
                 not original_person_id
                 or serialized_result["person_id"] == PROTECTED_IDENTITY
-                or not self._is_attendance_candidate(face)
+                or not self._is_attendance_allowed(face, config)
             ):
                 continue
 

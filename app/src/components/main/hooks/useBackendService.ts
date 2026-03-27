@@ -385,11 +385,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
       if (data.status === "connected") {
         backendServiceReadyRef.current = true
         setWebsocketStatus("connected")
-        webSocketServiceRef.current?.updateLiveConfig({
-          enableLivenessDetection: useAttendanceStore.getState().enableSpoofDetection,
-          groupId: currentGroupId,
-          maxRecognitionFacesPerFrame,
-        })
       } else if (data.status === "disconnected") {
         setWebsocketStatus("disconnected")
       }
@@ -430,8 +425,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
     setError,
     setPersistentCooldowns,
     attendanceCooldownSeconds,
-    currentGroupId,
-    maxRecognitionFacesPerFrame,
     loadAttendanceDataRef,
   ])
 
