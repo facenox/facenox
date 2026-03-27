@@ -74,19 +74,46 @@ export class WebSocketService {
           this.wsStatus = "connecting"
           this.ws = new WebSocket(wsUrl.toString())
           this.ws.binaryType = "arraybuffer"
+          let settled = false
+          let handshakeTimer: ReturnType<typeof setTimeout> | undefined
+
+          const settleReject = (error: unknown) => {
+            if (settled) {
+              return
+            }
+            settled = true
+            if (handshakeTimer) {
+              clearTimeout(handshakeTimer)
+            }
+            reject(error)
+          }
+
+          const settleResolve = () => {
+            if (settled) {
+              return
+            }
+            settled = true
+            if (handshakeTimer) {
+              clearTimeout(handshakeTimer)
+            }
+            resolve()
+          }
 
           this.ws.onopen = () => {
-            this.wsStatus = "connected"
-            this.notifyHandlers("connection", {
-              status: "connected",
-              message: "Connected to detector",
-            })
-            resolve()
+            this.wsStatus = "connecting"
+            handshakeTimer = setTimeout(() => {
+              this.wsStatus = "error"
+              settleReject(new Error("Timed out waiting for detection service handshake"))
+            }, 10000)
           }
 
           this.ws.onmessage = (event) => {
             try {
               const data = JSON.parse(event.data)
+              if (data.type === "connection" && data.status === "connected") {
+                this.wsStatus = "connected"
+                settleResolve()
+              }
               if (data.type) {
                 this.notifyHandlers(data.type, data)
               } else if (data.faces || data.model_used) {
@@ -113,7 +140,7 @@ export class WebSocketService {
           this.ws.onerror = (error) => {
             this.wsStatus = "error"
             this.notifyHandlers("error", { message: "WebSocket error occurred" })
-            reject(error)
+            settleReject(error)
           }
         } catch (error) {
           this.wsStatus = "error"
