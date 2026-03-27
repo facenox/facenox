@@ -85,7 +85,7 @@ export function ReportToolbar({
             type="date"
             value={startDate}
             onChange={(e) => onStartDateChange(e.target.value)}
-            className="min-w-[110px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/35 focus:ring-2 focus:ring-cyan-500/6"
+            className="min-w-[110px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
             style={
               {
                 colorScheme: "dark",
@@ -100,7 +100,7 @@ export function ReportToolbar({
             type="date"
             value={endDate}
             onChange={(e) => onEndDateChange(e.target.value)}
-            className="min-w-[110px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/35 focus:ring-2 focus:ring-cyan-500/6"
+            className="min-w-[110px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
             style={
               {
                 colorScheme: "dark",
@@ -124,7 +124,7 @@ export function ReportToolbar({
             placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-36 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] py-1.5 pr-3 pl-7 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/25 focus:w-52 focus:border-cyan-500/35 focus:ring-2 focus:ring-cyan-500/6"
+            className="w-36 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] py-1.5 pr-3 pl-7 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/25 focus:w-52 focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
           />
         </div>
 

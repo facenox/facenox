@@ -129,7 +129,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
                 placeholder="Search members..."
-                className="w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] py-3 pr-3 pl-10 text-[11px] font-medium text-white shadow-inner transition-all duration-300 outline-none placeholder:text-white/30 focus:border-cyan-500/35 focus:bg-[rgba(28,35,44,0.82)] focus:ring-2 focus:ring-cyan-500/6"
+                className="w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] py-3 pr-3 pl-10 text-[11px] font-medium text-white shadow-inner transition-all duration-300 outline-none placeholder:text-white/30 focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
               />
             </div>
           </div>

@@ -170,7 +170,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                 value={activitySearch}
                 onChange={(e) => setActivitySearch(e.target.value)}
                 placeholder="Search records..."
-                className="w-full rounded-xl border border-white/10 bg-[rgba(10,13,18,0.9)] py-2 pr-3 pl-9 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/25 focus:border-cyan-500/35 focus:bg-[rgba(20,25,32,0.82)] focus:ring-2 focus:ring-cyan-500/6"
+                className="w-full rounded-xl border border-white/10 bg-[rgba(10,13,18,0.9)] py-2 pr-3 pl-9 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/25 focus:border-cyan-500/32 focus:bg-[rgba(20,25,32,0.82)] focus:ring-1 focus:ring-cyan-500/5"
               />
             </div>
           </div>

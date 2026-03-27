@@ -306,7 +306,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
               <textarea
                 value={bulkMembersText}
                 onChange={(event) => setBulkMembersText(event.target.value)}
-                className="min-h-[200px] w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-3 font-mono text-sm transition-all duration-300 outline-none focus:border-cyan-500/35 focus:bg-[rgba(28,35,44,0.82)] focus:ring-2 focus:ring-cyan-500/6"
+                className="min-h-[200px] w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-3 font-mono text-sm transition-all duration-300 outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
                 placeholder="Enter one member per line. Format:&#10;Name, Role (optional)&#10;&#10;Example:&#10;John Doe, Student&#10;Jane Smith, Teacher&#10;Bob Johnson"
               />
               <div className="mt-2 text-[11px] text-white/30">

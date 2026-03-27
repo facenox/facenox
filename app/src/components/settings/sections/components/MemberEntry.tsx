@@ -52,7 +52,7 @@ export function MemberEntry({
                 onKeyDown={(e) => handleKeyDown(e, "name")}
                 autoFocus
                 disabled={savingMember === member.person_id}
-                className="h-5 rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-[11px] font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/35 focus:ring-1 focus:ring-cyan-500/6"
+                className="h-5 rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-[11px] font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
               />
             : <div
                 onClick={() => onStartEditing(member, "name")}
@@ -76,7 +76,7 @@ export function MemberEntry({
                 autoFocus
                 disabled={savingMember === member.person_id}
                 placeholder="Role"
-                className="h-5 max-w-[100px] rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-[10px] text-white/70 transition-all duration-300 outline-none focus:border-cyan-500/35 focus:ring-1 focus:ring-cyan-500/6"
+                className="h-5 max-w-[100px] rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-[10px] text-white/70 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
               />
             : <div
                 onClick={() => onStartEditing(member, "role")}
@@ -101,7 +101,7 @@ export function MemberEntry({
                 autoFocus
                 disabled={savingMember === member.person_id}
                 placeholder="Email"
-                className="h-5 max-w-[150px] rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-[10px] text-white/70 transition-all duration-300 outline-none focus:border-cyan-500/35 focus:ring-1 focus:ring-cyan-500/6"
+                className="h-5 max-w-[150px] rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-[10px] text-white/70 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
               />
             : <div
                 onClick={() => onStartEditing(member, "email")}

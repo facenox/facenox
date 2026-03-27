@@ -82,7 +82,7 @@ export function GroupEntry({
                 onClick={(e) => e.stopPropagation()}
                 autoFocus
                 disabled={savingGroup === group.id}
-                className="h-6 rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-xs font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/35 focus:ring-1 focus:ring-cyan-500/6"
+                className="h-6 rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-xs font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
               />
             : <div
                 onClick={(e) => {
