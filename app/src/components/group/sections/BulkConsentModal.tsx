@@ -71,7 +71,7 @@ export function BulkConsentModal({ isOpen, onClose, onConfirm, members }: BulkCo
                   onChange={() => toggle(member.person_id)}
                   className="peer sr-only"
                 />
-                <div className="h-4 w-4 rounded border border-white/20 bg-white/5 transition-all peer-checked:border-cyan-500 peer-checked:bg-cyan-500/20" />
+                <div className="h-4 w-4 rounded border border-white/20 bg-[rgba(22,28,36,0.62)] transition-all peer-checked:border-cyan-500 peer-checked:bg-cyan-500/20" />
                 <i className="fa-solid fa-check absolute text-[8px] text-cyan-400 opacity-0 transition-opacity peer-checked:opacity-100" />
               </div>
               <div className="min-w-0 flex-1">
@@ -103,7 +103,7 @@ export function BulkConsentModal({ isOpen, onClose, onConfirm, members }: BulkCo
         <button
           type="button"
           onClick={handleClose}
-          className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+          className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-1.5 text-[11px] font-medium text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
           Cancel
         </button>
         <button

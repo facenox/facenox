@@ -87,7 +87,7 @@ export function Attendance({
             </div>
           </div>
 
-          <div className="h-px w-full bg-white/5" />
+          <div className="h-px w-full bg-white/8" />
 
           {/* Spam Filter */}
           <div className="flex items-center gap-4 py-4">
@@ -128,12 +128,12 @@ export function Attendance({
                 step="5"
                 value={attendanceSettings.attendanceCooldownSeconds}
                 onChange={(e) => onAttendanceCooldownChange(parseInt(e.target.value))}
-                className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/5 px-1 accent-cyan-500"
+                className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/8 px-1 accent-cyan-500"
               />
             </div>
           </div>
 
-          <div className="h-px w-full bg-white/5" />
+          <div className="h-px w-full bg-white/8" />
 
           {/* Recognition Load */}
           <div className="flex items-center gap-4 py-4">
@@ -168,12 +168,12 @@ export function Attendance({
                 step="1"
                 value={attendanceSettings.maxRecognitionFacesPerFrame}
                 onChange={(e) => onMaxRecognitionFacesChange(parseInt(e.target.value))}
-                className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/5 px-1 accent-cyan-500"
+                className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/8 px-1 accent-cyan-500"
               />
             </div>
           </div>
 
-          <div className="h-px w-full bg-white/5" />
+          <div className="h-px w-full bg-white/8" />
 
           {/* Late Tracking */}
           <div className="flex flex-col">
@@ -251,7 +251,7 @@ export function Attendance({
                         step="5"
                         value={attendanceSettings.lateThresholdMinutes}
                         onChange={(e) => onLateThresholdChange(parseInt(e.target.value))}
-                        className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/5 px-1 accent-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/8 px-1 accent-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -316,7 +316,7 @@ export function Attendance({
             </button>
           </div>
 
-          <div className="h-px w-full bg-white/5" />
+          <div className="h-px w-full bg-white/8" />
 
           {/* Data Retention */}
           <div className="flex items-center gap-4 py-4">
@@ -336,7 +336,7 @@ export function Attendance({
                 max={3650}
                 value={attendanceSettings.dataRetentionDays ?? 0}
                 onChange={(e) => onDataRetentionChange(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-14 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/30 focus:ring-4 focus:ring-cyan-500/10"
+                className="w-14 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/30 focus:ring-4 focus:ring-cyan-500/10"
               />
             </div>
           </div>

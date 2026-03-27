@@ -15,40 +15,45 @@
 
   --gradient-primary: linear-gradient(
     135deg,
-    #000000 0%,
-    #0a0a0a 25%,
-    #1a1a1a 50%,
-    #0f0f0f 75%,
-    #000000 100%
+    #0a0d12 0%,
+    #0e1218 25%,
+    #171c24 50%,
+    #10151d 75%,
+    #090c11 100%
   );
-  --gradient-secondary: linear-gradient(45deg, #111111 0%, #1a1a1a 50%, #0d0d0d 100%);
-  --gradient-accent: linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%);
-  --gradient-surface: linear-gradient(180deg, rgba(10, 10, 10, 0.95) 0%, rgba(5, 5, 5, 0.8) 100%);
+  --gradient-secondary: linear-gradient(45deg, #12171e 0%, #1a2029 50%, #0d1117 100%);
+  --gradient-accent: linear-gradient(90deg, #171d25 0%, #212834 50%, #171d25 100%);
+  --gradient-surface: linear-gradient(
+    180deg,
+    rgba(18, 22, 29, 0.96) 0%,
+    rgba(10, 13, 18, 0.86) 100%
+  );
 
-  --bg-primary: #000000;
-  --bg-secondary: #080808;
-  --bg-tertiary: #0c0c0c;
-  --bg-hover: #141414;
-  --surface-primary: rgba(0, 0, 0, 0.95);
-  --surface-secondary: rgba(10, 10, 10, 0.8);
-  --surface-tertiary: rgba(15, 15, 15, 0.6);
-  --surface-glass: rgba(0, 0, 0, 0.4);
+  --bg-primary: #090c11;
+  --bg-secondary: #0f1319;
+  --bg-tertiary: #141a22;
+  --bg-hover: #1b232d;
+  --bg-canvas: #05070a;
+  --surface-primary: rgba(10, 13, 18, 0.96);
+  --surface-secondary: rgba(15, 19, 25, 0.88);
+  --surface-tertiary: rgba(22, 28, 36, 0.72);
+  --surface-glass: rgba(11, 15, 20, 0.58);
 
   --card-blur: 16px;
   --card-border-width: 1px;
   --card-bg: var(--bg-secondary);
-  --card-border: rgba(255, 255, 255, 0.04);
-  --card-hover-bg: #0c0c0c;
-  --card-hover-border: rgba(255, 255, 255, 0.08);
+  --card-border: rgba(255, 255, 255, 0.06);
+  --card-hover-bg: #171d25;
+  --card-hover-border: rgba(255, 255, 255, 0.1);
 
-  --border-primary: rgba(255, 255, 255, 0.04);
-  --border-hover: rgba(255, 255, 255, 0.08);
-  --border-accent: rgba(255, 255, 255, 0.12);
+  --border-primary: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.1);
+  --border-accent: rgba(255, 255, 255, 0.14);
 
   --text-primary: #ffffff;
-  --text-secondary: #e0e0e0;
-  --text-tertiary: #a0a0a0;
-  --text-muted: #606060;
+  --text-secondary: #d8dee8;
+  --text-tertiary: #95a0af;
+  --text-muted: #616c7b;
 
   --accent: #22d3ee;
   /* cyan-400 */

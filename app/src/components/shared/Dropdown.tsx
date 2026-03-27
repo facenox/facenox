@@ -32,7 +32,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
       options,
       value,
       onChange,
-      placeholder = "Select…",
+      placeholder = "Select...",
       emptyMessage = "No options available",
       className = "",
       buttonClassName = "",
@@ -134,7 +134,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
           ref={buttonRef}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          className={`flex w-full min-w-0 cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-white/5 py-2 text-left text-sm text-white transition-all hover:bg-white/8 focus:border-white/20 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${trigger ? "justify-center px-0" : "ps-3 pe-2"} ${buttonClassName} `}>
+          className={`flex w-full min-w-0 cursor-pointer items-center justify-between rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 text-left text-sm text-white transition-all hover:bg-[rgba(28,35,44,0.82)] focus:border-white/20 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${trigger ? "justify-center px-0" : "ps-3 pe-2"} ${buttonClassName} `}>
           {trigger ?
             trigger
           : <>
@@ -166,7 +166,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -5 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
-                  className="fixed z-9999 overflow-hidden rounded-lg border border-white/10 bg-[#080808] shadow-xl"
+                  className="fixed z-9999 overflow-hidden rounded-lg border border-white/10 bg-[rgba(15,19,25,0.98)] shadow-xl"
                   onMouseDown={(e) => e.stopPropagation()}
                   style={{
                     top: `${menuPosition.top}px`,
@@ -198,9 +198,9 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                                 setIsOpen(false)
                               }}
                               className={`w-full rounded-none px-3 py-2 text-left text-sm transition-colors ${
-                                !value ? "bg-white/10 text-white" : (
-                                  "text-white/70 hover:bg-white/5 hover:text-white"
-                                )
+                                !value ?
+                                  "bg-[rgba(28,35,44,0.88)] text-white"
+                                : "text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white"
                               } ${optionClassName}`}>
                               {placeholder}
                             </button>
@@ -215,9 +215,9 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                             onClick={() => handleSelect(option.value)}
                             disabled={option.disabled}
                             className={`w-full truncate rounded-none px-3 py-2 text-left text-sm transition-colors ${
-                              value === option.value ? "bg-white/10 text-white"
+                              value === option.value ? "bg-[rgba(28,35,44,0.88)] text-white"
                               : option.disabled ? "cursor-not-allowed text-white/30"
-                              : "text-white/70 hover:bg-white/5 hover:text-white"
+                              : "text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white"
                             } ${optionClassName}`}
                             title={option.label}>
                             {option.label}

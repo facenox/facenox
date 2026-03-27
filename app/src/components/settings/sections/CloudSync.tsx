@@ -290,7 +290,7 @@ export function CloudSync() {
                     placeholder="ABCD2345"
                     value={pairingCode}
                     onChange={(e) => setPairingCode(e.target.value.toUpperCase())}
-                    className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs tracking-[0.18em] text-white uppercase transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
+                    className="h-10 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 text-xs tracking-[0.18em] text-white uppercase transition-all outline-none focus:border-cyan-500/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 focus:ring-cyan-500/10"
                   />
                 </label>
                 <button
@@ -334,7 +334,7 @@ export function CloudSync() {
                 <button
                   onClick={handleManualSync}
                   disabled={busyAction !== null}
-                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-bold tracking-wider text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-[11px] font-bold tracking-wider text-white/70 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
                   <i
                     className={
                       busyAction === "syncing" ?
@@ -384,7 +384,7 @@ export function CloudSync() {
                     value={cloudBaseUrl}
                     disabled={config.connected}
                     onChange={(e) => setCloudBaseUrl(e.target.value)}
-                    className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-10 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   <div className="text-[11px] text-white/35">
                     Leave this unchanged unless you&apos;re connecting to a self-hosted or custom
@@ -399,7 +399,7 @@ export function CloudSync() {
                     value={deviceName}
                     disabled={config.connected}
                     onChange={(e) => setDeviceName(e.target.value)}
-                    className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-10 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </label>
               </div>
@@ -413,7 +413,7 @@ export function CloudSync() {
                     max={1440}
                     value={intervalMinutes}
                     onChange={(e) => setIntervalMinutes(Math.max(1, Number(e.target.value) || 1))}
-                    className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
+                    className="h-10 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 focus:ring-cyan-500/10"
                   />
                 </label>
                 <label className="mt-auto flex items-center gap-3 border border-white/10 px-4 py-2 text-xs text-white/70">

@@ -49,7 +49,7 @@ export const VideoCanvas = memo(function VideoCanvas({
   const outdated = isTimeOutdated()
 
   return (
-    <div className="relative h-full min-h-65 w-full overflow-hidden rounded-lg border border-white/10 bg-black">
+    <div className="relative h-full min-h-65 w-full overflow-hidden rounded-lg border border-white/10 bg-[var(--bg-canvas)]">
       <video
         ref={videoRef}
         className={`absolute inset-0 h-full w-full object-contain ${quickSettings.cameraMirrored ? "scale-x-[-1]" : ""}`}
@@ -64,14 +64,14 @@ export const VideoCanvas = memo(function VideoCanvas({
         }}
       />
       {quickSettings.showFPS && detectionFps > 0 && (
-        <div className="pointer-events-none absolute top-4 left-4 z-20 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+        <div className="pointer-events-none absolute top-4 left-4 z-20 rounded-full border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-1.5">
           <span className="text-sm font-medium text-white/80">{detectionFps.toFixed(1)} FPS</span>
         </div>
       )}
 
       {isStreaming && lateTrackingEnabled && (
         <div
-          className={`animate-in fade-in zoom-in-95 pointer-events-none absolute right-4 bottom-4 z-50 flex items-center gap-4 rounded-full border bg-black/60 px-4 py-2 shadow-lg duration-500 ${outdated ? "border-amber-500/50" : "border-white/20"}`}>
+          className={`animate-in fade-in zoom-in-95 pointer-events-none absolute right-4 bottom-4 z-50 flex items-center gap-4 rounded-full border bg-[rgba(10,13,18,0.84)] px-4 py-2 shadow-lg duration-500 ${outdated ? "border-amber-500/50" : "border-white/20"}`}>
           <div className="flex flex-col items-start">
             <span className="text-[9px] font-medium tracking-wider text-white/30 uppercase">
               Start Time
@@ -99,7 +99,7 @@ export const VideoCanvas = memo(function VideoCanvas({
       )}
 
       {isVideoLoading && (
-        <div className="pointer-events-none absolute inset-0 z-15 flex items-center justify-center bg-black/40">
+        <div className="pointer-events-none absolute inset-0 z-15 flex items-center justify-center bg-[rgba(5,7,10,0.46)]">
           <div className="relative flex items-center justify-center">
             <div className="h-12 w-12 rounded-full border border-cyan-500/30">
               <div className="h-full w-full animate-spin rounded-full border-t-2 border-cyan-400"></div>

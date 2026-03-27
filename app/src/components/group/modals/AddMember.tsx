@@ -254,7 +254,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
             {/* Consent Toggle */}
             <div
               className={`rounded-xl transition-all duration-300 ${
-                hasBiometricConsent ? "bg-black/40" : "bg-black/20"
+                hasBiometricConsent ? "bg-[rgba(18,24,31,0.94)]" : "bg-[rgba(13,17,23,0.82)]"
               }`}>
               <label className="group flex cursor-pointer items-center gap-4 p-4">
                 <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
@@ -264,7 +264,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
                     onChange={(e) => setHasBiometricConsent(e.target.checked)}
                     className="peer sr-only"
                   />
-                  <div className="h-5 w-5 rounded-md border border-white/20 bg-white/5 transition-all duration-200 group-hover:border-white/40 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10" />
+                  <div className="h-5 w-5 rounded-md border border-white/20 bg-[rgba(22,28,36,0.62)] transition-all duration-200 group-hover:border-white/40 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10" />
                   <i className="fa-solid fa-check absolute text-[9px] text-cyan-400 opacity-0 transition-all duration-200 peer-checked:opacity-100" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -290,7 +290,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm text-white/60">Upload CSV/TXT file or paste below</span>
                 <label className="cursor-pointer rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-3 py-1 text-xs text-cyan-200 transition hover:bg-cyan-500/30">
-                  📁 Upload File
+                  Upload File
                   <input
                     type="file"
                     accept=".txt,.csv"
@@ -306,7 +306,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
               <textarea
                 value={bulkMembersText}
                 onChange={(event) => setBulkMembersText(event.target.value)}
-                className="min-h-[200px] w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 font-mono text-sm transition-all duration-300 outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
+                className="min-h-[200px] w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-3 font-mono text-sm transition-all duration-300 outline-none focus:border-cyan-500/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 focus:ring-cyan-500/10"
                 placeholder="Enter one member per line. Format:&#10;Name, Role (optional)&#10;&#10;Example:&#10;John Doe, Student&#10;Jane Smith, Teacher&#10;Bob Johnson"
               />
               <div className="mt-2 text-[11px] text-white/30">
@@ -319,8 +319,8 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
             <div
               className={`rounded-xl border transition-all duration-300 ${
                 hasBiometricConsent ?
-                  "border-cyan-500/30 bg-black/40"
-                : "border-white/5 bg-black/20"
+                  "border-cyan-500/30 bg-[rgba(18,24,31,0.94)]"
+                : "border-white/10 bg-[rgba(13,17,23,0.82)]"
               }`}>
               <label className="group flex cursor-pointer items-start gap-4 p-4">
                 <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
@@ -330,7 +330,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
                     onChange={(e) => setHasBiometricConsent(e.target.checked)}
                     className="peer sr-only"
                   />
-                  <div className="h-5 w-5 rounded-md border border-white/20 bg-white/5 transition-all duration-200 group-hover:border-white/40 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10" />
+                  <div className="h-5 w-5 rounded-md border border-white/20 bg-[rgba(22,28,36,0.62)] transition-all duration-200 group-hover:border-white/40 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10" />
                   <i className="fa-solid fa-check absolute text-[9px] text-cyan-400 opacity-0 transition-all duration-200 peer-checked:opacity-100" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -340,7 +340,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
                     </span>
                     <InfoPopover
                       title="Administrative Responsibility"
-                      description="As an administrator, you are responsible for enfacenoxng offline consent records are maintained. All data remains within your local encrypted vault."
+                      description="As an administrator, you are responsible for ensuring offline consent records are maintained. All data remains within your local encrypted vault."
                     />
                   </div>
                 </div>
@@ -386,7 +386,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
               resetForm()
               onClose()
             }}
-            className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+            className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-[11px] font-medium text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
             Cancel
           </button>
           <button
@@ -404,7 +404,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
               : "border-cyan-400/40 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30"
             }`}>
             {loading || isProcessingBulk ?
-              "Processing…"
+              "Processing..."
             : !hasBiometricConsent ?
               "Consent Required"
             : confirmDuplicate && !isBulkMode ?

@@ -156,7 +156,7 @@ export function Database({
       {/* Backup & Restore Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Create Backup */}
-        <div className="flex h-full flex-col overflow-hidden rounded-lg border border-white/10 bg-white/5">
+        <div className="flex h-full flex-col overflow-hidden rounded-lg border border-white/10 bg-[rgba(17,22,29,0.96)]">
           <div className="flex-1 border-b border-white/6 px-5 py-4">
             <div className="mb-1 flex items-center gap-2">
               <i className="fa-solid fa-download text-xs text-cyan-400" />
@@ -164,7 +164,7 @@ export function Database({
             </div>
             <p className="text-[11px] leading-relaxed font-medium text-white/40">
               Exports an encrypted <code className="font-mono text-cyan-400/50">.facenox</code>{" "}
-              database · members, history, and biometric profiles.
+              database: members, history, and biometric profiles.
             </p>
           </div>
           <div className="mt-auto px-5 py-4">
@@ -181,7 +181,7 @@ export function Database({
         </div>
 
         {/* Restore Backup */}
-        <div className="flex h-full flex-col overflow-hidden rounded-lg border border-white/10 bg-white/5">
+        <div className="flex h-full flex-col overflow-hidden rounded-lg border border-white/10 bg-[rgba(17,22,29,0.96)]">
           <div className="flex-1 border-b border-white/6 px-5 py-4">
             <div className="mb-1 flex items-center gap-2">
               <i className="fa-solid fa-upload text-xs text-cyan-400" />
@@ -207,7 +207,7 @@ export function Database({
       </div>
 
       {/* Audit Log Export */}
-      <div className="overflow-hidden rounded-lg border border-white/10 bg-white/5">
+      <div className="overflow-hidden rounded-lg border border-white/10 bg-[rgba(17,22,29,0.96)]">
         <div className="flex items-center justify-between gap-4 px-5 py-4">
           <div>
             <div className="mb-1 flex items-center gap-2">
@@ -215,14 +215,14 @@ export function Database({
               <h4 className="text-xs font-semibold text-white">Audit Log</h4>
             </div>
             <p className="text-[11px] leading-relaxed font-medium text-white/40">
-              Download a CSV of all admin actions — consent changes, deletions, vault
+              Download a CSV of all admin actions: consent changes, deletions, vault
               imports/exports. Required for DPA compliance review.
             </p>
           </div>
           <button
             onClick={handleExportAuditLog}
             disabled={isExportingAuditLog}
-            className="flex shrink-0 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-all hover:bg-white/10 hover:text-white active:scale-95 disabled:opacity-40">
+            className="flex shrink-0 items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white active:scale-95 disabled:opacity-40">
             {isExportingAuditLog ?
               <i className="fa-solid fa-circle-notch fa-spin" />
             : <i className="fa-solid fa-file-csv" />}
@@ -275,7 +275,7 @@ export function Database({
                 }
               }}
               placeholder="Enter password..."
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white transition-all duration-300 outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
+              className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-xs text-white transition-all duration-300 outline-none focus:border-cyan-500/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 focus:ring-cyan-500/10"
             />
           </div>
           <div className="mt-6 flex justify-end gap-3">
@@ -284,7 +284,7 @@ export function Database({
                 setPasswordModal({ ...passwordModal, isOpen: false })
                 setPasswordInput("")
               }}
-              className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+              className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-[11px] font-medium text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
               Cancel
             </button>
             <button
@@ -315,13 +315,13 @@ export function Database({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search members or groups…"
-          className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pr-8 pl-9 text-[11px] font-medium text-white placeholder-white/25 transition-all duration-300 outline-none focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
+          placeholder="Search members or groups..."
+          className="w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 pr-8 pl-9 text-[11px] font-medium text-white placeholder-white/25 transition-all duration-300 outline-none focus:border-cyan-500/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 focus:ring-cyan-500/10"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery("")}
-            className="absolute top-1/2 right-2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border-none bg-transparent p-0 text-white/30 transition-all hover:bg-white/10 hover:text-white/70">
+            className="absolute top-1/2 right-2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border-none bg-transparent p-0 text-white/30 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white/70">
             <i className="fa-solid fa-xmark text-[9px]"></i>
           </button>
         )}
@@ -330,7 +330,7 @@ export function Database({
       {/* Groups with Members List */}
       <div className={`space-y-2 pb-4 ${filteredData.length === 0 ? "h-32" : "h-auto"}`}>
         {filteredData.length === 0 ?
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/5 bg-white/2 py-12 text-white/20">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/6 bg-[rgba(22,28,36,0.52)] py-12 text-white/20">
             <i className="fa-solid fa-ghost mb-3 text-2xl opacity-50" />
             <div className="text-[11px] font-medium">No results found</div>
             {groups.length === 0 && (

@@ -25,7 +25,7 @@ export function ReportTable({
   return (
     <div className="custom-scroll flex-1 overflow-auto">
       <table className="w-full border-separate border-spacing-0 text-left">
-        <thead className="sticky top-0 z-10 bg-[#0f0f0f]">
+        <thead className="sticky top-0 z-10 bg-[rgba(16,21,28,0.98)]">
           <tr>
             {visibleColDefs.map((c, i) => {
               let alignClass = "text-left"
@@ -34,7 +34,7 @@ export function ReportTable({
               return (
                 <th
                   key={c.key}
-                  className={`border-b border-white/5 bg-black px-4 py-2.5 text-[11px] font-medium text-white/40 ${alignClass} ${i === 0 ? "rounded-tl-xl" : ""} ${i === visibleColDefs.length - 1 ? "rounded-tr-xl" : ""}`}>
+                  className={`border-b border-white/6 bg-[rgba(11,15,20,0.98)] px-4 py-2.5 text-[11px] font-medium text-white/40 ${alignClass} ${i === 0 ? "rounded-tl-xl" : ""} ${i === visibleColDefs.length - 1 ? "rounded-tr-xl" : ""}`}>
                   {c.label}
                 </th>
               )
@@ -69,7 +69,7 @@ export function ReportTable({
                     {statusFilter !== "all" && (
                       <button
                         onClick={onResetFilter}
-                        className="rounded-lg border border-white/5 bg-white/5 px-4 py-2 text-xs font-medium text-white/40 transition-all hover:bg-white/10 hover:text-white/80">
+                        className="rounded-lg border border-white/6 bg-[rgba(22,28,36,0.64)] px-4 py-2 text-xs font-medium text-white/40 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white/80">
                         Reset Filter
                       </button>
                     )}
@@ -79,10 +79,10 @@ export function ReportTable({
                           Suggestions
                         </span>
                         <div className="flex gap-2">
-                          <span className="rounded-lg border border-white/5 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/40">
+                          <span className="rounded-lg border border-white/6 bg-[rgba(22,28,36,0.64)] px-3 py-1.5 text-[11px] font-medium text-white/40">
                             Try Previous Week
                           </span>
-                          <span className="rounded-lg border border-white/5 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/40">
+                          <span className="rounded-lg border border-white/6 bg-[rgba(22,28,36,0.64)] px-3 py-1.5 text-[11px] font-medium text-white/40">
                             Expand Range
                           </span>
                         </div>
@@ -100,12 +100,12 @@ export function ReportTable({
                     <tr>
                       <td
                         colSpan={visibleColDefs.length}
-                        className="border-b border-white/5 bg-white/5 px-4 py-3">
+                        className="border-b border-white/6 bg-[rgba(22,28,36,0.58)] px-4 py-3">
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-bold tracking-wide text-cyan-100/90">
                             {groupInfo}
                           </span>
-                          <span className="inline-flex items-center rounded-lg border border-white/5 bg-white/5 px-1.5 py-0.5 text-[11px] font-medium text-white/40">
+                          <span className="inline-flex items-center rounded-lg border border-white/6 bg-[rgba(12,16,22,0.82)] px-1.5 py-0.5 text-[11px] font-medium text-white/40">
                             {rows.length} {rows.length === 1 ? "record" : "records"}
                           </span>
                         </div>

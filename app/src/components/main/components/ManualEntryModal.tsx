@@ -91,7 +91,7 @@ export const ManualEntryModal = ({
             <span className="text-xl font-bold tracking-tight">Members</span>
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <div className="rounded-full border border-white/5 bg-white/5 px-2.5 py-1 text-[11px] font-bold text-white/45">
+            <div className="rounded-full border border-white/10 bg-[rgba(22,28,36,0.62)] px-2.5 py-1 text-[11px] font-bold text-white/45">
               {members.length} Total
             </div>
             <div className="rounded-full border border-cyan-500/10 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-bold text-cyan-400">
@@ -116,7 +116,7 @@ export const ManualEntryModal = ({
               placeholder="Search members..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/10 bg-white/5 pr-4 pl-9 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/25 focus:border-white/20 focus:bg-white/10"
+              className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/10 bg-[rgba(22,28,36,0.68)] pr-4 pl-9 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/25 focus:border-white/20 focus:bg-[rgba(28,35,44,0.82)]"
             />
           </div>
           <Tooltip content="Add member" position="top">
@@ -125,7 +125,7 @@ export const ManualEntryModal = ({
                 onClose()
                 onAddMember()
               }}
-              className="group/add flex h-9 w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-lg border border-white/10 bg-white/5 text-white/50 transition-all hover:bg-white/10 hover:text-white focus:outline-none">
+              className="group/add flex h-9 w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-lg border border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white focus:outline-none">
               <i className="fa-solid fa-plus text-xs transition-transform group-hover/add:scale-110"></i>
             </button>
           </Tooltip>
@@ -139,7 +139,7 @@ export const ManualEntryModal = ({
         )}
 
         {sortedAllMembers.length > 0 ?
-          <div className="overflow-hidden rounded-xl border border-white/10 bg-[#080808]">
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)]">
             <div className="custom-scroll max-h-48 overflow-y-auto">
               {sortedAllMembers.map((member) => {
                 const isPresent = presentPersonIds.has(member.person_id)
@@ -153,8 +153,8 @@ export const ManualEntryModal = ({
                     onClick={() => !isPresent && handleManualEntry(member.person_id)}
                     className={`group/item flex items-center gap-3 border-b border-white/5 px-4 py-2.5 transition-all last:border-0 ${
                       isPresent ?
-                        "cursor-default bg-white/2 opacity-50 grayscale-[0.3]"
-                      : "cursor-pointer hover:bg-white/5 active:scale-[0.99]"
+                        "cursor-default bg-[rgba(22,28,36,0.44)] opacity-50 grayscale-[0.3]"
+                      : "cursor-pointer hover:bg-[rgba(22,28,36,0.52)] active:scale-[0.99]"
                     }`}>
                     <span className="flex-1 truncate text-[12px] font-bold text-white/70 transition-colors group-hover/item:text-white">
                       {member.name}
@@ -187,14 +187,14 @@ export const ManualEntryModal = ({
               })}
             </div>
           </div>
-        : <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/2 py-12">
+        : <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-[rgba(22,28,36,0.44)] py-12">
             <i className="fa-solid fa-user-slash mb-3 text-xl text-white/10"></i>
             <p className="text-[11px] font-bold tracking-wider text-white/30">No results found</p>
           </div>
         }
 
         {noFaceCount > 0 && (
-          <div className="rounded-xl border border-white/10 bg-[#080808] px-4 py-3 shadow-inner">
+          <div className="rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] px-4 py-3 shadow-inner">
             <p className="flex items-start gap-3 text-[11px] leading-relaxed font-bold text-white/35">
               <i className="fa-solid fa-circle-info mt-1 shrink-0 text-[12px] text-amber-500/60"></i>
               <span className="tracking-tight">

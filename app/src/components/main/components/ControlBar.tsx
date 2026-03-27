@@ -44,7 +44,7 @@ export function ControlBar({
       return {
         label: "Start Tracking",
         className:
-          "bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white",
+          "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/70 hover:bg-[rgba(28,35,44,0.82)] hover:text-white",
         tooltip: "Create or select a group to start tracking",
         enabled: true,
       }
@@ -80,7 +80,7 @@ export function ControlBar({
                   onChange={(deviceId) => {
                     if (deviceId) setSelectedCamera(String(deviceId))
                   }}
-                  placeholder="Select camera…"
+                  placeholder="Select camera..."
                   emptyMessage="No cameras available"
                   disabled={isStreaming || cameraDevices.length <= 1}
                   maxHeight={256}

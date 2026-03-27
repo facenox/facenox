@@ -475,7 +475,7 @@ export default function Main() {
   }, [stopCamera, startCameraGuarded])
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-black text-white">
+    <div className="flex h-full flex-col overflow-hidden bg-[var(--bg-primary)] text-white">
       {/* Floating Alert System */}
       <div className="pointer-events-none absolute top-6 left-1/2 z-100 w-full max-w-xl -translate-x-1/2 px-4">
         <AnimatePresence>
@@ -496,7 +496,7 @@ export default function Main() {
               <button
                 type="button"
                 onClick={() => setSuccess(null)}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-none bg-transparent p-0 text-white/30 shadow-none transition-all hover:bg-white/5 hover:text-white"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-none bg-transparent p-0 text-white/30 shadow-none transition-all hover:bg-[rgba(22,28,36,0.62)] hover:text-white"
                 aria-label="Dismiss success">
                 <i className="fa-solid fa-xmark text-xs"></i>
               </button>
@@ -520,7 +520,7 @@ export default function Main() {
               <button
                 type="button"
                 onClick={() => setWarning(null)}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-none bg-transparent p-0 text-white/30 shadow-none transition-all hover:bg-white/5 hover:text-white"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-none bg-transparent p-0 text-white/30 shadow-none transition-all hover:bg-[rgba(22,28,36,0.62)] hover:text-white"
                 aria-label="Dismiss warning">
                 <i className="fa-solid fa-xmark text-xs"></i>
               </button>
@@ -542,7 +542,7 @@ export default function Main() {
               <button
                 type="button"
                 onClick={() => setError(null)}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-none bg-transparent p-0 text-white/30 shadow-none transition-all hover:bg-white/5 hover:text-white"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border-none bg-transparent p-0 text-white/30 shadow-none transition-all hover:bg-[rgba(22,28,36,0.62)] hover:text-white"
                 aria-label="Dismiss error">
                 <i className="fa-solid fa-xmark text-xs"></i>
               </button>

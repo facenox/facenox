@@ -60,7 +60,7 @@ export function CameraFeed({
           emptyMessage="No cameras available"
           disabled={isStreaming || cameraDevices.length <= 1}
           maxHeight={256}
-          buttonClassName="text-[11px] px-3 py-1.5 bg-black/60 border border-white/10 hover:bg-black/80 transition-all font-medium"
+          buttonClassName="text-[11px] px-3 py-1.5 bg-[rgba(10,13,18,0.84)] border border-white/10 hover:bg-[rgba(15,19,25,0.92)] transition-all font-medium"
           showPlaceholderOption={false}
           allowClear={false}
         />
@@ -116,8 +116,8 @@ export function CameraFeed({
           className={`min-w-[140px] rounded-lg border px-6 py-2 text-sm font-medium transition-all ${
             isStreaming ? "border-red-500/20 bg-red-500/10 text-red-400 hover:bg-red-500/20"
             : isCameraSelected ?
-              "border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
-            : "cursor-not-allowed border-white/5 bg-black/20 text-white/20 opacity-50"
+              "border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 hover:bg-[rgba(28,35,44,0.82)] hover:text-white"
+            : "cursor-not-allowed border-white/10 bg-[rgba(13,17,23,0.82)] text-white/20 opacity-50"
           }`}>
           {isStreaming ? "Stop Camera" : "Start Camera"}
         </button>

@@ -18,7 +18,7 @@ function App() {
 
   if (!isHydrated) {
     return (
-      <div className="electron-window-container bg-black">
+      <div className="electron-window-container bg-[var(--bg-primary)]">
         <WindowBar />
         <div className="flex-1" />
       </div>
@@ -27,7 +27,7 @@ function App() {
 
   return (
     <DialogProvider>
-      <div className="electron-window-container">
+      <div className="electron-window-container bg-[var(--bg-primary)]">
         <WindowBar />
         <div className="app-content-wrapper">
           <div className="h-full overflow-hidden text-white">

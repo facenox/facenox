@@ -129,7 +129,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
                 placeholder="Search members..."
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pr-3 pl-10 text-[11px] font-medium text-white shadow-inner transition-all duration-300 outline-none placeholder:text-white/30 focus:border-cyan-500/30 focus:bg-white/10 focus:ring-4 focus:ring-cyan-500/10"
+                className="w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] py-3 pr-3 pl-10 text-[11px] font-medium text-white shadow-inner transition-all duration-300 outline-none placeholder:text-white/30 focus:border-cyan-500/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 focus:ring-cyan-500/10"
               />
             </div>
           </div>
@@ -146,8 +146,8 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
                 onClick={() => setRegistrationFilter("all")}
                 className={`rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-wider transition-all ${
                   registrationFilter === "all" ?
-                    "border border-white/20 bg-white/10 text-white"
-                  : "border border-white/10 bg-white/5 text-white/50 hover:bg-white/8 hover:text-white/80"
+                    "border border-white/20 bg-[rgba(28,35,44,0.82)] text-white"
+                  : "border border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 hover:bg-[rgba(28,35,44,0.82)] hover:text-white/80"
                 }`}>
                 All
               </button>
@@ -156,7 +156,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
                 className={`rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-wider transition-all ${
                   registrationFilter === "non-registered" ?
                     "border border-amber-500/30 bg-amber-500/20 text-amber-200"
-                  : "border border-white/10 bg-white/5 text-white/50 hover:bg-white/8 hover:text-white/80"
+                  : "border border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 hover:bg-[rgba(28,35,44,0.82)] hover:text-white/80"
                 }`}>
                 Unregistered
               </button>
@@ -165,7 +165,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
                 className={`rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-wider transition-all ${
                   registrationFilter === "registered" ?
                     "border border-cyan-500/30 bg-cyan-500/20 text-cyan-200"
-                  : "border border-white/10 bg-white/5 text-white/50 hover:bg-white/8 hover:text-white/80"
+                  : "border border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 hover:bg-[rgba(28,35,44,0.82)] hover:text-white/80"
                 }`}>
                 Registered
               </button>
@@ -174,7 +174,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
                 className={`rounded-lg px-3 py-1.5 text-[11px] font-bold tracking-wider transition-all ${
                   registrationFilter === "no-consent" ?
                     "border border-indigo-500/30 bg-indigo-500/20 text-indigo-400"
-                  : "border border-white/10 bg-white/5 text-white/50 hover:bg-white/8 hover:text-white/80"
+                  : "border border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 hover:bg-[rgba(28,35,44,0.82)] hover:text-white/80"
                 }`}>
                 Needs Consent
               </button>
@@ -183,7 +183,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
 
           <div className="custom-scroll min-h-0 flex-1 space-y-1.5 overflow-x-hidden overflow-y-auto pb-16">
             {filteredMembers.length === 0 && (
-              <div className="w-full rounded-lg border border-white/5 bg-white/5 px-3 py-6 text-center">
+              <div className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-3 py-6 text-center">
                 <div className="text-xs text-white/40">
                   {memberSearch.trim() ?
                     `No results for "${memberSearch}"`
@@ -201,7 +201,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
               return (
                 <div
                   key={member.person_id}
-                  className="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl border border-white/5 bg-white/5 px-4 py-4 transition-all duration-300 hover:bg-white/5">
+                  className="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl border border-white/10 bg-[rgba(17,22,29,0.96)] px-4 py-4 transition-all duration-300 hover:bg-[rgba(22,28,36,0.52)]">
                   <div className="relative z-10 min-w-0 flex-1">
                     <div className="mb-0.5 text-sm font-bold tracking-tight text-white">
                       {member.displayName}
@@ -259,7 +259,7 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
                           const jump = useGroupUIStore.getState().jumpToRegistration
                           jump(member.person_id)
                         }}
-                        className="group/btn relative flex items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-3 py-1.5 text-[11px] font-bold text-white/25 transition-all duration-300 hover:border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-400">
+                        className="group/btn relative flex items-center gap-1.5 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-1.5 text-[11px] font-bold text-white/25 transition-all duration-300 hover:border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-400">
                         <i className="fa-solid fa-check text-[10px] transition-all duration-300 group-hover/btn:absolute group-hover/btn:scale-75 group-hover/btn:opacity-0"></i>
 
                         <i className="fa-solid fa-rotate-right absolute scale-75 text-[10px] opacity-0 transition-all duration-300 group-hover/btn:relative group-hover/btn:scale-100 group-hover/btn:opacity-100"></i>
@@ -282,17 +282,17 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
         {/* Consent banner — premium floating snackbar centered at the bottom */}
         {members.some((m) => !m.has_consent) && (
           <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 w-fit max-w-[90%] -translate-x-1/2">
-            <div className="animate-in fade-in slide-in-from-bottom-4 pointer-events-auto flex items-center gap-4 rounded-xl border border-white/10 bg-[#080808] px-4 py-2.5 text-[11px] font-medium text-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.8)] duration-500">
+            <div className="animate-in fade-in slide-in-from-bottom-4 pointer-events-auto flex items-center gap-4 rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] px-4 py-2.5 text-[11px] font-medium text-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.8)] duration-500">
               <div className="flex items-center gap-2">
                 <i className="fa-solid fa-triangle-exclamation shrink-0 text-amber-500/80" />
                 <span className="leading-snug whitespace-nowrap">
                   Some members need biometric consent.
                 </span>
               </div>
-              <div className="h-4 w-px bg-white/5" />
+              <div className="h-4 w-px bg-white/8" />
               <button
                 onClick={() => setIsBulkConsentModalOpen(true)}
-                className="rounded-lg border border-white/5 bg-white/5 px-3 py-1.5 text-[11px] font-bold tracking-wider text-white/50 transition-all hover:bg-white/10 active:scale-95">
+                className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-1.5 text-[11px] font-bold tracking-wider text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] active:scale-95">
                 Grant all
               </button>
             </div>

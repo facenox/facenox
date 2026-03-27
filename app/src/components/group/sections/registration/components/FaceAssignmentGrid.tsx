@@ -37,7 +37,7 @@ export function FaceAssignmentGrid({
           </span>
         </div>
 
-        <div className="flex h-7 items-center rounded-full border border-white/5 bg-white/5 px-3">
+        <div className="flex h-7 items-center rounded-full border border-white/10 bg-[rgba(22,28,36,0.62)] px-3">
           <span className="text-[10px] font-medium text-white/40">
             {availableMembers.length} {availableMembers.length === 1 ? "member" : "members"}{" "}
             available
@@ -58,7 +58,8 @@ export function FaceAssignmentGrid({
               className={`group overflow-hidden rounded-lg border transition-all ${
                 face.assignedPersonId ?
                   "border-cyan-400/40 bg-linear-to-br from-cyan-500/10 to-cyan-600/5"
-                : face.isAcceptable ? "border-white/10 bg-white/5 hover:border-white/20"
+                : face.isAcceptable ?
+                  "border-white/10 bg-[rgba(17,22,29,0.96)] hover:border-white/20"
                 : "border-amber-400/30 bg-amber-500/5"
               }`}>
               <div className="relative aspect-square">
@@ -89,7 +90,7 @@ export function FaceAssignmentGrid({
                     placeholder="Select member..."
                     showPlaceholderOption={true}
                     allowClear={false}
-                    buttonClassName="!py-1.5 !text-[11px] border-white/10 bg-white/5 hover:border-cyan-400/30 hover:bg-cyan-500/3"
+                    buttonClassName="!py-1.5 !text-[11px] border-white/10 bg-[rgba(22,28,36,0.68)] hover:border-cyan-400/30 hover:bg-cyan-500/3"
                   />
                 : <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -102,7 +103,7 @@ export function FaceAssignmentGrid({
                     </div>
                     <button
                       onClick={() => onUnassign(face.faceId)}
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white/5 text-white/50 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-neutral-800 hover:text-white">
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[rgba(22,28,36,0.62)] text-white/50 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
                       <i className="fa-solid fa-xmark text-[10px]"></i>
                     </button>
                   </div>
@@ -117,7 +118,7 @@ export function FaceAssignmentGrid({
         <button
           onClick={onBulkRegister}
           disabled={isRegistering}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-4 text-sm font-medium text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 disabled:border-white/10 disabled:bg-white/5 disabled:text-white/20">
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-4 text-sm font-medium text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 disabled:border-white/10 disabled:bg-[rgba(22,28,36,0.62)] disabled:text-white/20">
           {isRegistering ?
             <>
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />

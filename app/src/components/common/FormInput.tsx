@@ -39,7 +39,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         disabled={disabled}
-        className={`w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition-all duration-300 outline-none placeholder:text-white/30 focus:bg-white/10 focus:ring-4 ${focusStyles} ${className}`}
+        className={`w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2.5 text-sm font-medium text-white transition-all duration-300 outline-none placeholder:text-white/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 ${focusStyles} ${className}`}
       />
     )
   },

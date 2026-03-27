@@ -66,10 +66,10 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
             policies and legal notices.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5 pb-2">
-            <span className="rounded bg-white/5 px-2 py-0.5 text-[10px] text-white/40">
+            <span className="rounded bg-[rgba(22,28,36,0.62)] px-2 py-0.5 text-[10px] text-white/40">
               GDPR (EU)
             </span>
-            <span className="rounded bg-white/5 px-2 py-0.5 text-[10px] text-white/40">
+            <span className="rounded bg-[rgba(22,28,36,0.62)] px-2 py-0.5 text-[10px] text-white/40">
               Data Privacy Act of 2012 (PH)
             </span>
           </div>
@@ -77,7 +77,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
         <div className="mt-8 flex justify-end">
           <button
             onClick={onClose}
-            className="rounded-lg border border-white/10 bg-white/5 px-6 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+            className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-6 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
             Close
           </button>
         </div>
@@ -146,7 +146,7 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
           <button
             onClick={onCheck}
             disabled={isChecking}
-            className="rounded-lg border border-white/5 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+            className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-1.5 text-xs font-medium text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
             Retry
           </button>
         </div>
@@ -163,8 +163,8 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
           disabled={isChecking}
           className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
             isChecking ?
-              "border-white/5 bg-white/5 text-white/30"
-            : "border-transparent bg-transparent text-white/50 hover:border-white/10 hover:bg-white/5 hover:text-white"
+              "border-white/10 bg-[rgba(22,28,36,0.68)] text-white/30"
+            : "border-transparent bg-transparent text-white/50 hover:border-white/10 hover:bg-[rgba(22,28,36,0.62)] hover:text-white"
           } disabled:opacity-50`}>
           {isChecking ?
             <div className="flex items-center gap-2">
@@ -292,7 +292,7 @@ export const About: React.FC = () => {
               <span className="text-[11px] font-medium text-white/30">License</span>
               <button
                 onClick={openLink("https://www.gnu.org/licenses/agpl-3.0.html")}
-                className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/40 transition-all hover:border-white/10 hover:bg-white/5 hover:text-white/90 active:scale-95">
+                className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/40 transition-all hover:border-white/10 hover:bg-[rgba(22,28,36,0.62)] hover:text-white/90 active:scale-95">
                 View GNU AGPL v3
               </button>
             </div>
@@ -301,7 +301,7 @@ export const About: React.FC = () => {
               <span className="text-[11px] font-medium text-white/30">Source code</span>
               <button
                 onClick={openLink("https://github.com/facenox/facenox")}
-                className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/40 transition-all hover:border-white/10 hover:bg-white/5 hover:text-white/90 active:scale-95">
+                className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/40 transition-all hover:border-white/10 hover:bg-[rgba(22,28,36,0.62)] hover:text-white/90 active:scale-95">
                 View Repository
               </button>
             </div>

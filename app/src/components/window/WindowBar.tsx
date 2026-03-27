@@ -47,13 +47,13 @@ export default function WindowBar() {
           WebkitAppRegion: isMaximized ? "no-drag" : "drag",
         } as React.CSSProperties
       }>
-      <div className="pointer-events-none absolute inset-0 z-40 border-b border-white/6 bg-black/90"></div>
+      <div className="pointer-events-none absolute inset-0 z-40 border-b border-white/8 bg-[rgba(11,15,20,0.92)]"></div>
 
       <div className="pointer-events-none relative z-40 ml-4 flex flex-1 items-center space-x-3">
         <img
           src="./icons/logo.png"
           alt="Facenox"
-          className="mr-1 -ml-3 h-6 w-6 object-contain opacity-90"
+          className="mr-1 -ml-2 h-5 w-5 object-contain opacity-90"
         />
       </div>
 

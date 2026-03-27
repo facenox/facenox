@@ -25,7 +25,7 @@ export function IntroModal() {
       title: "We don't save photos",
       content: (
         <div className="space-y-4">
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+          <div className="rounded-xl border border-white/10 bg-[rgba(22,28,36,0.62)] p-4">
             <p className="text-sm leading-relaxed text-white/90">
               Facenox <strong>never saves actual photos</strong> of people. Instead, it creates a
               secure piece of data called a face template.
@@ -42,7 +42,7 @@ export function IntroModal() {
       title: "It stays on this computer",
       content: (
         <div className="space-y-4">
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+          <div className="rounded-xl border border-white/10 bg-[rgba(22,28,36,0.62)] p-4">
             <p className="text-sm leading-relaxed text-white/90">
               All face recognition and data storage happen <strong>only on this machine</strong>.
             </p>
@@ -111,9 +111,9 @@ export function IntroModal() {
 
   return (
     <Modal isOpen={true} maxWidth="md" hideCloseButton={true}>
-      <div className="relative -m-5 overflow-hidden bg-[#0a0a0a]">
+      <div className="relative -m-5 overflow-hidden bg-[var(--bg-secondary)]">
         {/* Progress Bar */}
-        <div className="absolute top-0 right-0 left-0 h-1 bg-white/5">
+        <div className="absolute top-0 right-0 left-0 h-1 bg-[rgba(255,255,255,0.06)]">
           <div
             className="h-full bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.3)] transition-all duration-500"
             style={{ width: `${((step + 1) / steps.length) * 100}%` }}

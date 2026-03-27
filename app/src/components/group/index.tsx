@@ -122,11 +122,11 @@ function GroupPanelComponent({
   }
 
   return (
-    <div className="flex h-full overflow-hidden bg-black text-white">
+    <div className="flex h-full overflow-hidden bg-[var(--bg-primary)] text-white">
       {error && <ErrorBanner error={error} onDismiss={() => setError(null)} />}
 
       <div className="fixed inset-x-0 top-9 z-30 lg:hidden">
-        <div className="flex h-12 items-center justify-between border-b border-white/10 bg-white/5 px-3">
+        <div className="flex h-12 items-center justify-between border-b border-white/10 bg-[rgba(17,22,29,0.96)] px-3">
           <button
             onClick={() => setIsMobileDrawerOpen(true)}
             className="rounded-lg px-3 py-1.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
@@ -148,7 +148,7 @@ function GroupPanelComponent({
 
       <MobileDrawer />
 
-      <main className="relative flex h-full flex-1 flex-col overflow-hidden bg-black">
+      <main className="relative flex h-full flex-1 flex-col overflow-hidden bg-[var(--bg-primary)]">
         <GroupContent
           onMembersChange={handleMembersChange}
           deselectMemberTrigger={deselectMemberTrigger}

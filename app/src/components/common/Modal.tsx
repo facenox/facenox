@@ -56,7 +56,7 @@ export function Modal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="absolute inset-0 bg-black/60"
+        className="absolute inset-0 bg-[rgba(5,7,10,0.72)]"
         onClick={onClose}
       />
 
@@ -67,7 +67,7 @@ export function Modal({
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={snappyTransition}
         style={{ willChange: "transform, opacity" }}
-        className={`w-full ${maxWidthClass} relative z-10 overflow-hidden rounded-xl border border-white/5 bg-[#080808]`}
+        className={`relative z-10 w-full overflow-hidden rounded-xl border border-white/6 bg-[rgba(15,19,25,0.98)] ${maxWidthClass}`}
         onClick={(e) => e.stopPropagation()}>
         <div className="p-5">
           {(title || !hideCloseButton) && (

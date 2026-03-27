@@ -33,9 +33,9 @@ export function UploadArea({ onFileProcessed, onError }: UploadAreaProps) {
 
   return (
     <div className="relative h-full w-full">
-      <label className="group flex h-full cursor-pointer flex-col items-center justify-center p-8 text-center transition-all hover:bg-white/5">
+      <label className="group flex h-full cursor-pointer flex-col items-center justify-center p-8 text-center transition-all hover:bg-[rgba(22,28,36,0.52)]">
         <div className="flex flex-col items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 transition-colors group-hover:bg-cyan-500/10">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[rgba(22,28,36,0.62)] transition-colors group-hover:bg-cyan-500/10">
             <i className="fa-solid fa-cloud-arrow-up text-3xl text-white/20 transition-colors group-hover:text-cyan-400"></i>
           </div>
           <div>

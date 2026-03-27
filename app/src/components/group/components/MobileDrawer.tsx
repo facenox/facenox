@@ -45,7 +45,7 @@ export function MobileDrawer() {
       />
 
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] transform border-r border-white/10 bg-white/5 transition-transform duration-300 ease-out lg:hidden ${isMobileDrawerOpen ? "translate-x-0" : "-translate-x-full"} `}
+        className={`fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] transform border-r border-white/10 bg-[rgba(12,16,22,0.97)] transition-transform duration-300 ease-out lg:hidden ${isMobileDrawerOpen ? "translate-x-0" : "-translate-x-full"} `}
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu">
@@ -89,7 +89,7 @@ export function MobileDrawer() {
                       setSelectedGroup(null)
                     }
                   }}
-                  placeholder="Select group…"
+                  placeholder="Select group..."
                   emptyMessage="No groups available"
                   maxHeight={256}
                   buttonClassName="h-10"
@@ -98,7 +98,7 @@ export function MobileDrawer() {
               </div>
               <button
                 onClick={openCreateGroup}
-                className="h-10 shrink-0 rounded-lg border border-white/10 px-3 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                className="h-10 shrink-0 rounded-lg border border-white/10 px-3 text-sm font-medium text-white/80 transition-colors hover:bg-[rgba(24,30,38,0.85)] hover:text-white"
                 aria-label="New Group"
                 title="New Group">
                 Add

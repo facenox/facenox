@@ -193,7 +193,7 @@ export const Sidebar = memo(function Sidebar({
     <>
       <div
         ref={sidebarRef}
-        className={`relative z-50 flex h-full flex-col overflow-hidden border-l border-white/10 bg-black/80 shadow-[-8px_0_32px_rgba(0,0,0,0.5)] ${isInitialized ? "transition-all duration-300 ease-in-out" : ""}`}
+        className={`relative z-50 flex h-full flex-col overflow-hidden border-l border-white/10 bg-[rgba(15,19,25,0.88)] ${isInitialized ? "transition-all duration-300 ease-in-out" : ""}`}
         style={{
           width: `${currentWidth}px`,
           minWidth: `${currentWidth}px`,
@@ -277,7 +277,7 @@ export const Sidebar = memo(function Sidebar({
             <AttendancePanel handleSelectGroup={handleSelectGroup} />
           </div>
 
-          <div className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto border-t border-white/10 bg-black">
+          <div className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto border-t border-white/10 bg-[rgba(10,13,18,0.96)]">
             <DetectionPanel
               currentDetections={currentDetections}
               currentRecognitionResults={currentRecognitionResults}

@@ -47,7 +47,7 @@ const DetectionCard = memo(
         exit={{ opacity: 0, x: -8 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
         key={index}
-        className={`group relative border-b border-l-2 border-white/5 py-2.5 pr-3 pl-4 transition-colors hover:bg-white/5 ${isActive ? "border-l-cyan-500/50" : "border-l-transparent"}`}
+        className={`group relative border-b border-l-2 border-white/5 py-2.5 pr-3 pl-4 transition-colors hover:bg-[rgba(22,28,36,0.52)] ${isActive ? "border-l-cyan-500/50" : "border-l-transparent"}`}
         style={
           isActive ?
             { background: "linear-gradient(to right, rgba(34, 211, 238, 0.06), transparent)" }

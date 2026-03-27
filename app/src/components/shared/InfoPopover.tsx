@@ -10,7 +10,7 @@ interface InfoPopoverProps {
   /** Optional extra detail bullets */
   details?: string[]
   /**
-   * Optional media slot — pass an image src or a <video> element.
+   * Optional media slot: pass an image src or a <video> element.
    * When omitted the popover is text-only.
    * Future: pass a video src for Anti-Spoof demo, etc.
    */
@@ -59,7 +59,6 @@ export function InfoPopover({
       left = tr.left + tr.width / 2 - pw / 2
     }
 
-    // Clamp to viewport
     left = Math.max(SCREEN_PAD, Math.min(left, vw - pw - SCREEN_PAD))
     top = Math.max(SCREEN_PAD, Math.min(top, vh - ph - SCREEN_PAD))
 
@@ -117,8 +116,7 @@ export function InfoPopover({
                 left: pos?.left ?? -9999,
                 visibility: pos ? "visible" : "hidden",
               }}>
-              <div className="overflow-hidden rounded-xl border border-white/8 bg-[#0d0d0d] shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-                {/* Media slot */}
+              <div className="overflow-hidden rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] shadow-[0_12px_28px_rgba(0,0,0,0.34)]">
                 {media && (
                   <div className="relative w-full overflow-hidden bg-black/40">
                     {media.type === "image" ?
@@ -136,11 +134,10 @@ export function InfoPopover({
                         className="h-32 w-full object-cover opacity-80"
                       />
                     }
-                    <div className="absolute inset-0 bg-linear-to-t from-[#0d0d0d] to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-[rgba(15,19,25,0.98)] to-transparent" />
                   </div>
                 )}
 
-                {/* Content */}
                 <div className="space-y-2 px-3.5 py-3">
                   <div className="flex items-center gap-1.5">
                     <i className="fa-solid fa-circle-info text-[10px] text-cyan-400/60" />
@@ -152,13 +149,13 @@ export function InfoPopover({
                   <p className="text-[11px] leading-relaxed text-white/50">{description}</p>
 
                   {details && details.length > 0 && (
-                    <ul className="space-y-1 border-t border-white/5 pt-2">
-                      {details.map((d, i) => (
+                    <ul className="space-y-1 border-t border-white/8 pt-2">
+                      {details.map((detail, index) => (
                         <li
-                          key={i}
+                          key={index}
                           className="flex items-start gap-1.5 text-[10.5px] text-white/35">
-                          <span className="mt-0.5 text-cyan-500/40">›</span>
-                          <span>{d}</span>
+                          <span className="mt-0.5 text-cyan-500/40">&gt;</span>
+                          <span>{detail}</span>
                         </li>
                       ))}
                     </ul>

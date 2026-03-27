@@ -38,7 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const storeGroups = useGroupStore((state) => state.groups)
 
   return (
-    <div className="flex w-[200px] shrink-0 flex-col border-r border-white/5 bg-[#080808] sm:w-[240px] lg:w-[280px]">
+    <div className="flex w-[200px] shrink-0 flex-col border-r border-white/6 bg-[rgba(12,16,22,0.96)] sm:w-[240px] lg:w-[280px]">
       <div className="flex items-center justify-between px-3 pt-8 pb-4">
         <h1 className="text-[11px] font-medium text-white/30">Settings</h1>
       </div>
@@ -75,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       )
                     }
                   }}
-                  placeholder="Select group…"
+                  placeholder="Select group..."
                   emptyMessage="No groups available"
                   maxHeight={256}
                   buttonClassName="h-9 border-r-0 rounded-r-none focus:ring-0! focus:border-white/20!"
@@ -91,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     }
                     setTriggerCreateGroup(Date.now())
                   }}
-                  className="group/btn flex h-9 w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-lg border border-white/10 bg-white/5 text-white/40 transition-all hover:bg-white/10 hover:text-cyan-400 focus:outline-none">
+                  className="group/btn flex h-9 w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-lg border border-white/10 bg-[rgba(20,25,32,0.78)] text-white/40 transition-all hover:bg-[rgba(28,35,44,0.92)] hover:text-cyan-400 focus:outline-none">
                   <i className="fa-solid fa-plus text-xs transition-transform group-hover/btn:scale-110"></i>
                 </button>
               </Tooltip>
@@ -113,9 +113,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       }
                     }}
                     className={`group/item relative flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left text-[14px] font-medium transition-all ${
-                      isActive ? "bg-white/6 text-white" : (
-                        "text-white/60 hover:bg-white/5 hover:text-white"
-                      )
+                      isActive ?
+                        "bg-[rgba(27,34,43,0.95)] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+                      : "text-white/60 hover:bg-[rgba(20,25,32,0.78)] hover:text-white"
                     }`}>
                     {isActive && (
                       <motion.div
@@ -146,9 +146,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
                   className={`group/item relative flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left text-[14px] font-medium transition-all ${
-                    isActive ? "bg-white/6 text-white" : (
-                      "text-white/60 hover:bg-white/5 hover:text-white"
-                    )
+                    isActive ?
+                      "bg-[rgba(27,34,43,0.95)] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+                    : "text-white/60 hover:bg-[rgba(20,25,32,0.78)] hover:text-white"
                   }`}>
                   {isActive && (
                     <motion.div

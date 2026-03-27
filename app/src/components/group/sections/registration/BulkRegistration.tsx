@@ -37,12 +37,12 @@ export function BulkRegistration({ group, members, onRefresh, onClose }: BulkReg
   const failedCount = registrationResults?.filter((r) => !r.success).length || 0
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-[#0a0a0a]">
+    <div className="relative flex h-full flex-col overflow-hidden bg-[var(--bg-secondary)]">
       {pendingDuplicates && (
         <>
-          <div className="absolute inset-0 z-40 bg-black/40" />
+          <div className="absolute inset-0 z-40 bg-[rgba(5,7,10,0.72)]" />
 
-          <div className="intro-y absolute top-1/2 left-1/2 z-50 max-w-[95%] min-w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-amber-500/30 bg-black/90 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.7)]">
+          <div className="intro-y absolute top-1/2 left-1/2 z-50 max-w-[95%] min-w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-amber-500/30 bg-[rgba(15,19,25,0.98)] p-6">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/20">
                 <i className="fa-solid fa-triangle-exclamation text-xl text-amber-400"></i>
@@ -59,7 +59,7 @@ export function BulkRegistration({ group, members, onRefresh, onClose }: BulkReg
               <p className="mb-2 text-xs text-white/60">
                 The following files appear to be duplicates:
               </p>
-              <div className="custom-scroll max-h-28 space-y-1 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-2.5">
+              <div className="custom-scroll max-h-28 space-y-1 overflow-y-auto rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] p-2.5">
                 {pendingDuplicates.duplicates.map((file, idx) => (
                   <div key={idx} className="flex items-center gap-2 text-xs text-white/50">
                     <i className="fa-solid fa-file-image text-[10px] text-white/30"></i>
@@ -77,13 +77,13 @@ export function BulkRegistration({ group, members, onRefresh, onClose }: BulkReg
             <div className="flex gap-2">
               <button
                 onClick={() => void handleDismissDuplicates()}
-                className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium text-white/50 transition-all hover:bg-white/10 hover:text-white">
+                className="flex-1 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-[11px] font-medium text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
                 Cancel
               </button>
               {pendingDuplicates.newFiles.length > 0 && (
                 <button
                   onClick={() => void handleCancelDuplicates()}
-                  className="flex-1 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-medium text-white transition-all hover:bg-white/20">
+                  className="flex-1 rounded-lg border border-white/20 bg-[rgba(28,35,44,0.82)] px-4 py-2 text-[11px] font-medium text-white transition-all hover:bg-[rgba(40,48,58,0.92)]">
                   Skip
                 </button>
               )}

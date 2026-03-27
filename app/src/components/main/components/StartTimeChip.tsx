@@ -120,7 +120,7 @@ export function StartTimeChip({ startTime, onTimeChange, disabled = false }: Sta
       </Tooltip>
 
       {isOpen && (
-        <div className="animate-in fade-in zoom-in-95 slide-in-from-bottom-2 absolute bottom-full left-1/2 z-50 mb-2 min-w-[160px] origin-bottom -translate-x-1/2 rounded-lg border border-white/10 bg-[#0c0c0c] p-2 shadow-xl duration-150">
+        <div className="animate-in fade-in zoom-in-95 slide-in-from-bottom-2 absolute bottom-full left-1/2 z-50 mb-2 min-w-[160px] origin-bottom -translate-x-1/2 rounded-lg border border-white/10 bg-[rgba(15,19,25,0.98)] p-2 shadow-xl duration-150">
           <div className="mb-2 flex items-center justify-between px-1">
             <Tooltip content="Attendance is tracked relative to this scheduled time" position="top">
               <span className="block cursor-help py-1 text-[9px] font-medium text-white/30">
@@ -131,14 +131,14 @@ export function StartTimeChip({ startTime, onTimeChange, disabled = false }: Sta
             <Tooltip content="Set to Current Time" position="top">
               <button
                 onClick={handleSetNow}
-                className="group/now flex h-6 w-6 items-center justify-center rounded border-none bg-transparent p-0 transition-colors hover:bg-white/5 focus:outline-none"
+                className="group/now flex h-6 w-6 items-center justify-center rounded border-none bg-transparent p-0 transition-colors hover:bg-[rgba(22,28,36,0.62)] focus:outline-none"
                 aria-label="Set to Current Time">
                 <i className="fa-solid fa-arrows-rotate text-[10px] text-white/30 transition-all duration-300 group-hover/now:rotate-180 hover:text-cyan-400"></i>
               </button>
             </Tooltip>
           </div>
 
-          <div className="group relative overflow-hidden rounded-lg border border-white/5 bg-white/5 transition-colors hover:bg-white/10">
+          <div className="group relative overflow-hidden rounded-lg border border-white/6 bg-[rgba(22,28,36,0.62)] transition-colors hover:bg-[rgba(28,35,44,0.82)]">
             <input
               type="time"
               value={startTime}

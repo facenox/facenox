@@ -20,7 +20,7 @@ const toDate = (value: Date | string): Date => (value instanceof Date ? value : 
 const formatTime = (value: Date | string): string => {
   const date = toDate(value)
   if (Number.isNaN(date.getTime())) {
-    return "—"
+    return "-"
   }
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 }
@@ -28,7 +28,7 @@ const formatTime = (value: Date | string): string => {
 const formatDate = (value: Date | string): string => {
   const date = toDate(value)
   if (Number.isNaN(date.getTime())) {
-    return "—"
+    return "-"
   }
   const month = date.toLocaleDateString("en-US", { month: "short" })
   const day = date.getDate()
@@ -126,7 +126,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
 
   return (
     <section className="custom-scroll flex h-full flex-col space-y-6 overflow-hidden overflow-y-auto p-6">
-      <div className="grid shrink-0 grid-cols-1 divide-x divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-[#080808] sm:grid-cols-3">
+      <div className="grid shrink-0 grid-cols-1 divide-x divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-[rgba(12,16,22,0.96)] shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:grid-cols-3">
         <div className="px-8">
           <StatsCard
             type="present"
@@ -153,8 +153,8 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
         </div>
       </div>
 
-      <div className="flex min-h-[400px] shrink-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-white/2 shadow-2xl">
-        <div className="flex shrink-0 flex-col justify-between gap-4 border-b border-white/5 bg-white/2 p-4 md:flex-row md:items-center">
+      <div className="flex min-h-[400px] shrink-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-[rgba(17,22,29,0.96)] shadow-[0_18px_42px_rgba(0,0,0,0.24)]">
+        <div className="flex shrink-0 flex-col justify-between gap-4 border-b border-white/6 bg-[rgba(22,28,36,0.7)] p-4 md:flex-row md:items-center">
           <div className="flex items-center gap-3">
             <h3 className="flex items-center gap-2 text-sm font-bold tracking-tight text-white">
               <i className="fa-solid fa-clock-rotate-left text-xs text-cyan-500"></i>
@@ -170,7 +170,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                 value={activitySearch}
                 onChange={(e) => setActivitySearch(e.target.value)}
                 placeholder="Search records..."
-                className="w-full rounded-xl border border-white/10 bg-black/40 py-2 pr-3 pl-9 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/25 focus:border-cyan-500/30 focus:bg-white/5 focus:ring-4 focus:ring-cyan-500/10"
+                className="w-full rounded-xl border border-white/10 bg-[rgba(10,13,18,0.9)] py-2 pr-3 pl-9 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/25 focus:border-cyan-500/30 focus:bg-[rgba(20,25,32,0.82)] focus:ring-4 focus:ring-cyan-500/10"
               />
             </div>
           </div>
@@ -186,7 +186,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                 <div className="text-xs font-bold text-white/60">No activity yet</div>
               </div>
             : filteredRecords.length === 0 ?
-              <div className="mt-4 w-full rounded-lg border border-white/5 bg-white/5 px-6 py-8 text-center">
+              <div className="mt-4 w-full rounded-lg border border-white/6 bg-[rgba(22,28,36,0.62)] px-6 py-8 text-center">
                 <div className="text-xs text-white/40">
                   No results found for &quot;{activitySearch}&quot;
                 </div>
@@ -198,7 +198,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                   return (
                     <div
                       key={record.id}
-                      className="group/item relative flex items-center justify-between rounded-lg border border-transparent px-3 py-2.5 transition-all hover:border-white/5 hover:bg-white/2">
+                      className="group/item relative flex items-center justify-between rounded-lg border border-transparent px-3 py-2.5 transition-all hover:border-white/6 hover:bg-[rgba(22,28,36,0.52)]">
                       <div className="flex min-w-0 flex-1 flex-col justify-center">
                         <div className="flex items-baseline gap-2">
                           <span className="text-[13px] font-bold tracking-tight text-white transition-colors group-hover:text-cyan-400">

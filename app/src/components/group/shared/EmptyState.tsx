@@ -16,7 +16,7 @@ export function EmptyState({ title, action, className = "" }: EmptyStateProps) {
         {action && (
           <button
             onClick={action.onClick}
-            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-white/80 shadow-sm transition-colors hover:bg-white/10 hover:text-white active:scale-95">
+            className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-1.5 text-xs text-white/80 shadow-sm transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white active:scale-95">
             <i className="fa-solid fa-user-plus text-[10px]"></i>
             <span className="font-semibold">{action.label}</span>
           </button>

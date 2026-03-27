@@ -99,7 +99,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     about: "About",
   }
   return (
-    <div className="flex flex-1 flex-col overflow-hidden bg-[#090909]">
+    <div className="flex flex-1 flex-col overflow-hidden bg-[var(--bg-secondary)]">
       {/* Section Header */}
       <div className="px-10 pt-10 pb-2">
         <div className="flex items-center justify-between">

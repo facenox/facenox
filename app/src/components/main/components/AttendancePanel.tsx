@@ -107,9 +107,9 @@ const AttendanceRecordItem = memo(
             : lateThresholdEnabled ? "ON TIME"
             : "PRESENT",
           color: "text-white/40",
-          pillColor: "bg-white/5 text-white/40 border-white/10",
+          pillColor: "bg-[rgba(22,28,36,0.62)] text-white/40 border-white/10",
           borderColor: "border-l-transparent",
-          avatarColor: "bg-white/5 text-white/40",
+          avatarColor: "bg-[rgba(22,28,36,0.62)] text-white/40",
         }
       } catch {
         return null
@@ -124,7 +124,7 @@ const AttendanceRecordItem = memo(
         position="right"
         role={record.event_type === "check_out" ? "Exiting" : "Present"}>
         <div
-          className={`group relative border-b border-l-2 border-white/5 py-2.5 pr-3 pl-4 transition-colors hover:bg-white/5 ${timeStatus?.borderColor || "border-l-transparent"}`}>
+          className={`group relative border-b border-l-2 border-white/5 py-2.5 pr-3 pl-4 transition-colors hover:bg-[rgba(22,28,36,0.52)] ${timeStatus?.borderColor || "border-l-transparent"}`}>
           <div className="flex items-center gap-3 py-0.5">
             <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-white/90">
               {displayName}
@@ -313,7 +313,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                     if (group) handleSelectGroup(group)
                   }
                 }}
-                placeholder="Select group…"
+                placeholder="Select group..."
                 emptyMessage="No groups available"
                 maxHeight={256}
                 buttonClassName="text-xs h-9 border-r-0 rounded-r-none focus:ring-0! focus:border-white/20!"
@@ -324,7 +324,7 @@ export const AttendancePanel = memo(function AttendancePanel({
             <Tooltip content="Create Group" position="top">
               <button
                 onClick={() => setShowGroupManagement(true)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none border border-r-0 border-white/10 bg-white/5 text-white/50 transition-all hover:bg-white/10 hover:text-white focus:outline-none"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none border border-r-0 border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white focus:outline-none"
                 aria-label="Create Group">
                 <i className="fa-solid fa-plus text-sm"></i>
               </button>
@@ -332,7 +332,7 @@ export const AttendancePanel = memo(function AttendancePanel({
             <Tooltip content="Members" position="top">
               <button
                 onClick={() => setShowManualEntry(true)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-lg border border-white/10 bg-white/5 text-white/50 transition-all hover:bg-white/10 hover:text-white focus:outline-none"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-lg border border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white focus:outline-none"
                 aria-label="Members">
                 <i className="fa-solid fa-users text-sm"></i>
               </button>
@@ -344,7 +344,7 @@ export const AttendancePanel = memo(function AttendancePanel({
             <div className="text-center text-xs text-white/40">No groups created yet</div>
             <button
               onClick={() => setShowGroupManagement(true)}
-              className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+              className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-xs text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
               <i className="fa-solid fa-plus text-xs"></i>
               Create Group
             </button>
@@ -457,7 +457,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                 <div className="px-2 py-2">
                   <button
                     onClick={handleLoadMore}
-                    className="w-full rounded-lg border border-white/10 bg-white/5 py-2 text-xs text-white/70 transition-colors hover:bg-white/10">
+                    className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 text-xs text-white/70 transition-colors hover:bg-[rgba(28,35,44,0.82)]">
                     Load More ({processedRecords.length - displayLimit} remaining)
                   </button>
                 </div>
@@ -483,7 +483,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                 </div>
                 <button
                   onClick={handleOpenSettingsForRegistration}
-                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-xs text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
                   <i className="fa-solid fa-user-plus text-xs"></i>
                   Add Member
                 </button>
@@ -495,7 +495,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                 <div className="text-xs text-white/40">No face biometric data registered yet.</div>
                 <button
                   onClick={handleOpenSettingsForRegistration}
-                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-xs text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
                   <i className="fa-solid fa-user-plus text-xs"></i>
                   Register Face
                 </button>

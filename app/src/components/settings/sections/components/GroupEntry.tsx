@@ -61,7 +61,7 @@ export function GroupEntry({
   }
 
   return (
-    <div className="group/row overflow-hidden rounded-lg border border-white/5 bg-white/1 font-sans transition-all hover:bg-white/5">
+    <div className="group/row overflow-hidden rounded-lg border border-white/10 bg-[rgba(17,22,29,0.96)] font-sans transition-all hover:bg-[rgba(22,28,36,0.52)]">
       {/* Group Header */}
       <div
         onClick={() => onToggle(group.id)}
@@ -82,7 +82,7 @@ export function GroupEntry({
                 onClick={(e) => e.stopPropagation()}
                 autoFocus
                 disabled={savingGroup === group.id}
-                className="h-6 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-xs font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/30 focus:ring-2 focus:ring-cyan-500/10"
+                className="h-6 rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-xs font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/30 focus:ring-2 focus:ring-cyan-500/10"
               />
             : <div
                 onClick={(e) => {
@@ -133,7 +133,7 @@ export function GroupEntry({
 
       {/* Members List */}
       {isExpanded && (
-        <div className="border-t border-white/5 bg-white/5">
+        <div className="border-t border-white/10 bg-[rgba(22,28,36,0.44)]">
           {group.members.length === 0 ?
             <div className="px-4 py-8 text-center text-sm text-white/40">
               No members in this group

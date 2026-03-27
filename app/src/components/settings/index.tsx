@@ -59,7 +59,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
   ]
 
   const mainContent = (
-    <div className="flex h-full bg-[#0c0c0c] text-white">
+    <div className="flex h-full bg-[var(--bg-secondary)] text-white">
       <Sidebar
         activeSection={settings.activeSection}
         setActiveSection={settings.setActiveSection}
@@ -119,7 +119,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         exit={{ opacity: 0 }}
         transition={{ duration: 0.15, ease: "easeOut" }}
         style={{ willChange: "opacity" }}
-        className="fixed inset-0 z-60 flex items-center justify-center bg-black/70">
+        className="fixed inset-0 z-60 flex items-center justify-center bg-[rgba(5,7,10,0.76)]">
         <motion.div
           initial={{ opacity: 0, scale: 0.98, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -129,7 +129,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
             ease: [0.16, 1, 0.3, 1], // Custom "snappy" cubic-bezier
           }}
           style={{ willChange: "transform, opacity" }}
-          className="relative mt-6 w-full max-w-full overflow-hidden rounded-xl border border-white/5 bg-[#0b0b0b] md:h-[92vh] lg:h-[90vh] lg:max-w-[96%]">
+          className="relative mt-6 w-full max-w-full overflow-hidden rounded-xl border border-white/6 bg-[var(--bg-secondary)] md:h-[92vh] lg:h-[90vh] lg:max-w-[96%]">
           <button
             onClick={props.onBack}
             className="absolute top-2 right-2 z-50 border-none bg-transparent p-1.5 text-white/20 shadow-none transition-all duration-300 hover:text-white"
