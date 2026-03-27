@@ -6,6 +6,7 @@ import { state } from "../State.js"
 
 const tray_filename = fileURLToPath(import.meta.url)
 const tray_dirname = path.dirname(tray_filename)
+const FACENOX_TRAY_GUID = "7f6b1d4c-7f86-4c73-a9c1-6c7ef5dd8a52"
 
 export class TrayManager {
   static createTray(): void {
@@ -25,7 +26,7 @@ export class TrayManager {
       return
     }
 
-    const tray = new Tray(image.resize({ width: 16, height: 16 }))
+    const tray = new Tray(image.resize({ width: 16, height: 16 }), FACENOX_TRAY_GUID)
     tray.setToolTip("Facenox")
 
     const contextMenu = Menu.buildFromTemplate([
@@ -45,6 +46,16 @@ export class TrayManager {
     })
 
     state.tray = tray
+  }
+
+  static destroyTray(): void {
+    if (!state.tray) return
+
+    if (!state.tray.isDestroyed()) {
+      state.tray.destroy()
+    }
+
+    state.tray = null
   }
 
   private static toggleWindow(): void {

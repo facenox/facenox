@@ -13,8 +13,13 @@ import { syncManager } from "./managers/BackgroundSyncManager.js"
 
 const main_filename = fileURLToPath(import.meta.url)
 const main_dirname = path.dirname(main_filename)
+const FACENOX_APP_ID = "com.facenox.app"
 
 app.setName("Facenox")
+
+if (process.platform === "win32") {
+  app.setAppUserModelId(FACENOX_APP_ID)
+}
 
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
@@ -141,6 +146,7 @@ app.whenReady().then(async () => {
 function cleanup() {
   if (state.isQuitting) return
   state.isQuitting = true
+  TrayManager.destroyTray()
   console.log("[Main] Stopping backend...")
   backendService.killSync()
 }
