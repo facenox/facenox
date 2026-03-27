@@ -275,7 +275,7 @@ export function Database({
                 }
               }}
               placeholder="Enter password..."
-              className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-xs text-white transition-all duration-300 outline-none focus:border-cyan-500/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 focus:ring-cyan-500/10"
+              className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-xs text-white transition-all duration-300 outline-none focus:border-cyan-500/35 focus:bg-[rgba(28,35,44,0.82)] focus:ring-2 focus:ring-cyan-500/6"
             />
           </div>
           <div className="mt-6 flex justify-end gap-3">
@@ -316,7 +316,7 @@ export function Database({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search members or groups..."
-          className="w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 pr-8 pl-9 text-[11px] font-medium text-white placeholder-white/25 transition-all duration-300 outline-none focus:border-cyan-500/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 focus:ring-cyan-500/10"
+          className="w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 pr-8 pl-9 text-[11px] font-medium text-white placeholder-white/25 transition-all duration-300 outline-none focus:border-cyan-500/35 focus:bg-[rgba(28,35,44,0.82)] focus:ring-2 focus:ring-cyan-500/6"
         />
         {searchQuery && (
           <button

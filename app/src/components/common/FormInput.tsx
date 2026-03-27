@@ -26,9 +26,9 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
     ref,
   ) => {
     const focusStyles =
-      focusColor.includes("amber") ? "focus:border-amber-500/30 focus:ring-amber-500/10"
-      : focusColor.includes("red") ? "focus:border-red-500/30 focus:ring-red-500/10"
-      : "focus:border-cyan-500/30 focus:ring-cyan-500/10"
+      focusColor.includes("amber") ? "focus:border-amber-500/35 focus:ring-2 focus:ring-amber-500/6"
+      : focusColor.includes("red") ? "focus:border-red-500/35 focus:ring-2 focus:ring-red-500/6"
+      : "focus:border-cyan-500/35 focus:ring-2 focus:ring-cyan-500/6"
 
     return (
       <input
@@ -39,7 +39,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         disabled={disabled}
-        className={`w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2.5 text-sm font-medium text-white transition-all duration-300 outline-none placeholder:text-white/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 ${focusStyles} ${className}`}
+        className={`w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2.5 text-sm font-medium text-white transition-all duration-300 outline-none placeholder:text-white/30 focus:bg-[rgba(28,35,44,0.82)] ${focusStyles} ${className}`}
       />
     )
   },

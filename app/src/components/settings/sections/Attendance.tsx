@@ -336,7 +336,7 @@ export function Attendance({
                 max={3650}
                 value={attendanceSettings.dataRetentionDays ?? 0}
                 onChange={(e) => onDataRetentionChange(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-14 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/30 focus:ring-4 focus:ring-cyan-500/10"
+                className="w-14 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/35 focus:ring-2 focus:ring-cyan-500/6"
               />
             </div>
           </div>

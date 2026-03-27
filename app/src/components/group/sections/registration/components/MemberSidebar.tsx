@@ -82,7 +82,7 @@ export function MemberSidebar({
             value={memberSearch}
             onChange={(e) => setMemberSearch(e.target.value)}
             placeholder="Search members..."
-            className="w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] py-2.5 pr-3 pl-10 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/30 focus:border-cyan-500/30 focus:bg-[rgba(28,35,44,0.82)] focus:ring-4 focus:ring-cyan-500/10"
+            className="w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] py-2.5 pr-3 pl-10 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/30 focus:border-cyan-500/35 focus:bg-[rgba(28,35,44,0.82)] focus:ring-2 focus:ring-cyan-500/6"
           />
         </div>
       </div>
