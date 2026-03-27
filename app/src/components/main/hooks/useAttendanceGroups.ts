@@ -27,6 +27,7 @@ export function useAttendanceGroups() {
   const { setError } = useUIStore()
 
   const currentGroupRef = useRef<AttendanceGroup | null>(null)
+  const hasBootstrappedRef = useRef(false)
   const memberCacheRef = useRef<Map<string, AttendanceMember | null>>(new Map())
   const loadAttendanceDataRef = useRef<() => Promise<void>>(async () => {})
 
@@ -246,12 +247,18 @@ export function useAttendanceGroups() {
   ])
 
   useEffect(() => {
-    // Initialization is now handled globally during uiStore hydration
-    // Just sync our local ref with whatever the store currently has
     if (!currentGroupRef.current && currentGroup) {
       currentGroupRef.current = currentGroup
     }
   }, [currentGroup])
+
+  useEffect(() => {
+    if (hasBootstrappedRef.current) return
+
+    hasBootstrappedRef.current = true
+    loadSettings().catch(console.error)
+    loadAttendanceData().catch(console.error)
+  }, [loadSettings, loadAttendanceData])
 
   return {
     currentGroup,

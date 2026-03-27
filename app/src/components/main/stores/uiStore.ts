@@ -2,8 +2,6 @@ import { create } from "zustand"
 import type { AudioSettings, QuickSettings } from "@/components/settings"
 import type { GroupSection } from "@/components/group"
 import { persistentSettings } from "@/services/PersistentSettingsService"
-import { attendanceManager } from "@/services"
-import { useAttendanceStore } from "@/components/main/stores/attendanceStore"
 
 interface UIState {
   // Error state
@@ -50,38 +48,11 @@ interface UIState {
 }
 
 const loadInitialSettings = async () => {
-  const [quickSettings, audioSettings, uiState, groups] = await Promise.all([
+  const [quickSettings, audioSettings, uiState] = await Promise.all([
     persistentSettings.getQuickSettings(),
     persistentSettings.getAudioSettings(),
     persistentSettings.getUIState(),
-    attendanceManager.getGroups().catch(() => []),
   ])
-
-  // Try to set the initial group right away if possible, to avoid the delay in Main
-  if (groups && groups.length > 0) {
-    const attendanceStore = useAttendanceStore.getState()
-
-    attendanceStore.setAttendanceGroups(groups)
-
-    const savedGroupId = uiState.selectedGroupId
-    let groupToSelect =
-      savedGroupId ? groups.find((g: { id: string }) => g.id === savedGroupId) : null
-    if (!groupToSelect) groupToSelect = groups[0]
-
-    if (groupToSelect) {
-      attendanceStore.setCurrentGroup(groupToSelect)
-      // We don't block hydration on member fetching, just group selection
-      Promise.all([
-        attendanceManager.getGroupMembers(groupToSelect.id),
-        attendanceManager.getRecords({ group_id: groupToSelect.id, limit: 100 }),
-      ])
-        .then(([members, records]) => {
-          attendanceStore.setGroupMembers(members)
-          attendanceStore.setRecentAttendance(records)
-        })
-        .catch(console.error)
-    }
-  }
 
   return {
     quickSettings,
