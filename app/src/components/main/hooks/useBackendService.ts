@@ -440,22 +440,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
         return
       }
 
-      if (currentStatus === "connecting") {
-        let attempts = 0
-        while (attempts < 50) {
-          await new Promise((resolve) => setTimeout(resolve, 50))
-          const status = webSocketServiceRef.current.getWebSocketStatus()
-          if (status === "connected") {
-            registerWebSocketHandlers()
-            return
-          }
-          if (status === "disconnected") {
-            break
-          }
-          attempts++
-        }
-      }
-
       const readinessResult = await waitForBackendReady(60000, 500)
 
       if (!readinessResult.ready || !readinessResult.modelsLoaded) {
@@ -588,21 +572,10 @@ export function useBackendService(options: UseBackendServiceOptions) {
   useEffect(() => {
     if (!webSocketServiceRef.current) return
 
-    const pollWebSocketStatus = () => {
-      if (webSocketServiceRef.current) {
-        const actualStatus = webSocketServiceRef.current.getWebSocketStatus()
-        if (actualStatus !== websocketStatus) {
-          setWebsocketStatus(actualStatus)
-        }
-      }
-    }
-
-    const statusInterval = setInterval(pollWebSocketStatus, 200)
-
-    return () => {
-      clearInterval(statusInterval)
-    }
-  }, [websocketStatus, webSocketServiceRef, setWebsocketStatus])
+    return webSocketServiceRef.current.onStatusChange((status) => {
+      setWebsocketStatus(status)
+    })
+  }, [webSocketServiceRef, setWebsocketStatus])
 
   useEffect(() => {
     if (websocketStatus === "connected" && isScanningRef.current && isStreamingRef.current) {

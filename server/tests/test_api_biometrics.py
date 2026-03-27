@@ -706,6 +706,75 @@ class AttendanceBiometricsIntegrationTests(unittest.TestCase):
         self.assertEqual(records.status_code, 200, records.text)
         self.assertEqual(len(records.json()), 0)
 
+    def test_detection_websocket_logs_attendance_when_liveness_is_disabled(
+        self,
+    ) -> None:
+        headers = self._headers("org-live-no-liveness")
+        group_id = self._create_group(headers, "No Liveness Group")
+        self._create_member(
+            headers,
+            group_id,
+            "no-live-person",
+            "No Live Person",
+            has_consent=True,
+        )
+
+        image_bytes = self._make_image_bytes()
+        register_metadata = json.dumps(
+            {
+                "bbox": [8, 12, 42, 36],
+                "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
+                "enable_liveness_detection": False,
+            }
+        )
+        register = self.client.post(
+            f"/attendance/groups/{group_id}/persons/no-live-person/register-face",
+            headers=headers,
+            data={"metadata": register_metadata},
+            files={"image": ("face.jpg", image_bytes, "image/jpeg")},
+        )
+        self.assertEqual(register.status_code, 200, register.text)
+
+        client_id = "live-no-liveness-client"
+        manager.face_trackers[client_id] = DummyTracker()
+
+        with self.client.websocket_connect(
+            f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-live-no-liveness"
+        ) as websocket:
+            self.assertEqual(websocket.receive_json()["type"], "connection")
+
+            websocket.send_json(
+                {
+                    "type": "config",
+                    "group_id": group_id,
+                    "enable_liveness_detection": False,
+                }
+            )
+            config_ack = websocket.receive_json()
+            self.assertEqual(config_ack["type"], "config_ack")
+            self.assertEqual(config_ack["group_id"], group_id)
+
+            websocket.send_bytes(image_bytes)
+            detection = websocket.receive_json()
+            self.assertEqual(detection["type"], "detection_response")
+            face = detection["faces"][0]
+            self.assertEqual(face["recognition"]["person_id"], "no-live-person")
+            self.assertNotIn("liveness", face)
+
+            attendance_event = websocket.receive_json()
+            self.assertEqual(attendance_event["type"], "attendance_event")
+            self.assertEqual(attendance_event["data"]["person_id"], "no-live-person")
+
+            websocket.send_json({"type": "disconnect"})
+
+        records = self.client.get(
+            "/attendance/records",
+            headers=headers,
+            params={"group_id": group_id},
+        )
+        self.assertEqual(records.status_code, 200, records.text)
+        self.assertEqual(len(records.json()), 1)
+
     def test_biometric_endpoints_reject_images_without_detectable_face(self) -> None:
         org_headers = self._headers("org-hardening")
         group_id = self._create_group(org_headers, "Hardening Group")

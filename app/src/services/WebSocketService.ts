@@ -6,6 +6,7 @@ import type {
 import { appendOrganizationId } from "./localBackendScope"
 
 export type WebSocketStatus = "disconnected" | "connecting" | "connected" | "error"
+type StatusChangeHandler = (status: WebSocketStatus) => void
 
 export interface WebSocketEventMap {
   connection: WebSocketConnectionMessage
@@ -30,6 +31,7 @@ export class WebSocketService {
     groupId?: string | null
     maxRecognitionFacesPerFrame?: number
   } | null = null
+  private statusHandlers = new Set<StatusChangeHandler>()
   private messageHandlers = new Map<keyof WebSocketEventMap, Set<(data: unknown) => void>>()
   private clientId: string
   private token: string | null = null
@@ -44,6 +46,28 @@ export class WebSocketService {
 
   getWebSocketStatus(): WebSocketStatus {
     return this.wsStatus
+  }
+
+  onStatusChange(handler: StatusChangeHandler): () => void {
+    this.statusHandlers.add(handler)
+    return () => {
+      this.statusHandlers.delete(handler)
+    }
+  }
+
+  private setWebSocketStatus(status: WebSocketStatus): void {
+    if (this.wsStatus === status) {
+      return
+    }
+
+    this.wsStatus = status
+    this.statusHandlers.forEach((handler) => {
+      try {
+        handler(status)
+      } catch (error) {
+        console.error("Error in WebSocket status handler:", error)
+      }
+    })
   }
 
   isWebSocketReady(): boolean {
@@ -70,7 +94,7 @@ export class WebSocketService {
       return this.connectPromise
     }
 
-    this.wsStatus = "connecting"
+    this.setWebSocketStatus("connecting")
     this.connectPromise = new Promise((resolve, reject) => {
       void (async () => {
         try {
@@ -91,7 +115,7 @@ export class WebSocketService {
               return
             }
             settled = true
-            this.wsStatus = "error"
+            this.setWebSocketStatus("error")
             this.connectPromise = null
             reject(new Error("Timed out opening websocket connection"))
             socket.close()
@@ -121,7 +145,7 @@ export class WebSocketService {
             if (socket !== this.ws) {
               return
             }
-            this.wsStatus = "connected"
+            this.setWebSocketStatus("connected")
             this.notifyHandlers("connection", {
               status: "connected",
               message: "Connected to detector",
@@ -154,7 +178,7 @@ export class WebSocketService {
               return
             }
             const prevStatus = this.wsStatus
-            this.wsStatus = "disconnected"
+            this.setWebSocketStatus("disconnected")
             this.ws = null
             this.connectPromise = null
             window.clearTimeout(connectTimeout)
@@ -177,14 +201,14 @@ export class WebSocketService {
             if (socket !== this.ws) {
               return
             }
-            this.wsStatus = "error"
+            this.setWebSocketStatus("error")
             this.connectPromise = null
             window.clearTimeout(connectTimeout)
             this.notifyHandlers("error", { message: "WebSocket error occurred" })
             rejectOnce(new Error("WebSocket transport error"))
           }
         } catch (error) {
-          this.wsStatus = "error"
+          this.setWebSocketStatus("error")
           this.connectPromise = null
           reject(error)
         }
@@ -196,7 +220,7 @@ export class WebSocketService {
 
   disconnect(): void {
     if (this.ws) {
-      this.wsStatus = "disconnected"
+      this.setWebSocketStatus("disconnected")
       this.ws.close()
       this.ws = null
     }
