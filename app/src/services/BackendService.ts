@@ -1,6 +1,5 @@
 import type {
   FaceRecognitionResponse,
-  BatchFaceRecognitionResponse,
   PersonRemovalResponse,
   PersonUpdateResponse,
   SimilarityThresholdResponse,
@@ -225,46 +224,6 @@ export class BackendService {
       return await response.json()
     } catch (error) {
       console.error("Face recognition failed:", error)
-      throw error
-    }
-  }
-
-  async recognizeFacesBatch(
-    imageData: ArrayBuffer,
-    groupId: string,
-    faces: { track_id: number; landmarks_5: number[][] }[],
-  ): Promise<BatchFaceRecognitionResponse> {
-    try {
-      const formData = new FormData()
-      const blob = new Blob([imageData], { type: "image/jpeg" })
-      formData.append("image", blob, "face.jpg")
-      formData.append(
-        "metadata",
-        JSON.stringify({
-          group_id: groupId,
-          faces,
-        }),
-      )
-
-      const token = await this.getApiToken()
-      const headers: Record<string, string> = {}
-      if (token) headers["X-Facenox-Token"] = token
-
-      const response = await fetch(`${this.config.baseUrl}/face/recognize-batch`, {
-        method: "POST",
-        body: formData,
-        headers: await withLocalBackendHeaders(headers),
-        signal: AbortSignal.timeout(this.config.timeout),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      return await response.json()
-    } catch (error) {
-      console.error("Face batch recognition failed:", error)
       throw error
     }
   }

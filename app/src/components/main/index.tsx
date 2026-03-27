@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Settings } from "@/components/settings"
-import { attendanceManager, BackendService, backendService, WebSocketService } from "@/services"
+import { attendanceManager, WebSocketService } from "@/services"
 import {
   useStreamState,
   useVideoStream,
@@ -32,7 +32,7 @@ import { Sidebar } from "@/components/main/components/Sidebar"
 import { GroupManagementModal } from "@/components/main/components/GroupManagementModal"
 import { DeleteConfirmationModal } from "@/components/main/components/DeleteConfirmationModal"
 import { CooldownOverlay } from "@/components/main/components/CooldownOverlay"
-import type { DetectionResult, PendingDetectionRequest } from "@/components/main/types"
+import type { DetectionResult } from "@/components/main/types"
 import { soundEffects } from "@/services/SoundEffectsService"
 
 export default function Main() {
@@ -41,7 +41,6 @@ export default function Main() {
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const animationFrameRef = useRef<number | undefined>(undefined)
-  const backendServiceRef = useRef<BackendService | null>(backendService)
   const webSocketServiceRef = useRef<WebSocketService | null>(null)
   const isProcessingRef = useRef<boolean>(false)
   const isStreamingRef = useRef<boolean>(false)
@@ -49,8 +48,6 @@ export default function Main() {
   const frameCounterRef = useRef(0)
   const skipFramesRef = useRef(0)
   const trackingSessionRef = useRef(0)
-  const detectionRequestIdRef = useRef(0)
-  const pendingDetectionRequestsRef = useRef<PendingDetectionRequest[]>([])
   const detectionInFlightRef = useRef(false)
 
   const lastStartTimeRef = useRef<number>(0)
@@ -207,14 +204,11 @@ export default function Main() {
     lastDetectionRef,
     processCurrentFrameRef,
     trackingSessionRef,
-    detectionRequestIdRef,
-    pendingDetectionRequestsRef,
     detectionInFlightRef,
     fpsTrackingRef,
   })
 
   const { performFaceRecognition } = useFaceRecognition({
-    backendServiceRef,
     currentGroupRef,
     memberCacheRef,
     calculateAngleConsistencyRef,
@@ -235,6 +229,8 @@ export default function Main() {
     isStreamingRef,
     isScanningRef,
     isStartingRef,
+    currentGroupId: currentGroup?.id ?? null,
+    maxRecognitionFacesPerFrame,
     performFaceRecognition,
     lastFrameTimestampRef,
     lastDetectionRef,
@@ -242,7 +238,6 @@ export default function Main() {
     skipFramesRef,
     processCurrentFrameRef,
     trackingSessionRef,
-    pendingDetectionRequestsRef,
     detectionInFlightRef,
     stopCamera: stopCameraRef,
     animationFrameRef,
@@ -272,7 +267,6 @@ export default function Main() {
     backendServiceReadyRef,
     processCurrentFrameRef,
     trackingSessionRef,
-    pendingDetectionRequestsRef,
     detectionInFlightRef,
     resetOverlayRefs,
     overlayCanvasRef,

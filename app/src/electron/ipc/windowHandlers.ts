@@ -1,5 +1,6 @@
 import { ipcMain } from "electron"
 import { state } from "../State.js"
+import { WindowManager } from "../window/WindowManager.js"
 
 export function registerWindowHandlers() {
   ipcMain.handle("window:minimize", () => {
@@ -24,9 +25,7 @@ export function registerWindowHandlers() {
   })
 
   ipcMain.on("app:ready", () => {
-    import("../window/WindowManager.js").then(({ WindowManager }) => {
-      WindowManager.destroySplash()
-      WindowManager.showMainWindow()
-    })
+    WindowManager.destroySplash()
+    WindowManager.showMainWindow()
   })
 }

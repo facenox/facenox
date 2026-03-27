@@ -52,8 +52,9 @@ export default defineConfig({
         input: resolve(__dirname, "index.html"),
         output: {
           manualChunks: {
-            vendor: ["react", "react-dom"],
-            ui: ["@fortawesome/fontawesome-free"],
+            react: ["react", "react-dom"],
+            motion: ["framer-motion"],
+            state: ["zustand", "zod"],
           },
           assetFileNames: (assetInfo) => {
             if (
@@ -68,6 +69,7 @@ export default defineConfig({
           },
         },
       },
+      chunkSizeWarningLimit: 700,
     },
     server: {
       port: 3000,

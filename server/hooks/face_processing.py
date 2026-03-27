@@ -49,10 +49,12 @@ async def process_face_detection(
                 face_detector.set_min_face_size(min_face_size)
 
             loop = asyncio.get_running_loop()
+
+            def detector_call():
+                return face_detector.detect_faces(image, enable_liveness)
+
             try:
-                return await loop.run_in_executor(
-                    None, lambda: face_detector.detect_faces(image, enable_liveness)
-                )
+                return await loop.run_in_executor(None, detector_call)
             finally:
                 if original_confidence_threshold is not None:
                     face_detector.set_confidence_threshold(
@@ -87,8 +89,12 @@ async def process_liveness_detection(
         except TypeError as exc:
             if "smoothing_namespace" not in str(exc):
                 raise
+
+            def detector_call_without_namespace():
+                return liveness_detector.detect_faces(image, faces)
+
             faces_with_liveness = await loop.run_in_executor(
-                None, lambda: liveness_detector.detect_faces(image, faces)
+                None, detector_call_without_namespace
             )
 
         return faces_with_liveness
@@ -180,9 +186,11 @@ async def process_liveness_for_face_operation(
     }
 
     loop = asyncio.get_running_loop()
-    liveness_results = await loop.run_in_executor(
-        None, lambda: liveness_detector.detect_faces(image, [temp_face])
-    )
+
+    def liveness_call():
+        return liveness_detector.detect_faces(image, [temp_face])
+
+    liveness_results = await loop.run_in_executor(None, liveness_call)
 
     if liveness_results and len(liveness_results) > 0:
         liveness_data = liveness_results[0].get("liveness", {})

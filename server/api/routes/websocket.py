@@ -18,6 +18,7 @@ from hooks import (
     process_liveness_detection,
 )
 from utils.websocket_manager import manager, notification_manager
+from services.live_stream_service import LiveStreamService
 
 if not logging.getLogger().handlers:
     logging.basicConfig(level=logging.INFO)
@@ -53,6 +54,7 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
         return
 
     organization_id = get_websocket_organization_id(websocket)
+    live_stream_service = LiveStreamService(organization_id)
     await websocket.accept()
     logger.info(f"[WebSocket] Client {client_id} connected successfully")
 
@@ -96,23 +98,11 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
         )
         logger.info(f"[WebSocket] Created face tracker for client {client_id}")
 
-    # Initial state for liveness detection
-    enable_liveness_detection = True
-    try:
-        from database.session import AsyncSessionLocal
-        from database.repository import AttendanceRepository
-
-        async with AsyncSessionLocal() as session:
-            repo = AttendanceRepository(session, organization_id=organization_id)
-            settings = await repo.get_settings()
-            enable_liveness_detection = settings.enable_liveness_detection
-            logger.info(
-                f"[WebSocket] Initial liveness detection state from DB: {enable_liveness_detection}"
-            )
-    except Exception as e:
-        logger.warning(
-            f"[WebSocket] Failed to load initial liveness config from DB: {e}"
-        )
+    live_session_config = await live_stream_service.load_initial_config()
+    logger.info(
+        "[WebSocket] Initial liveness detection state from DB: %s",
+        live_session_config.enable_liveness_detection,
+    )
 
     try:
         await websocket.send_text(
@@ -159,17 +149,16 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                         break
 
                     elif message.get("type") == "config":
-                        # Update enable_liveness_detection from config
-                        if "enable_liveness_detection" in message:
-                            enable_liveness_detection = message.get(
-                                "enable_liveness_detection", True
-                            )
+                        live_stream_service.apply_config_message(
+                            live_session_config, message
+                        )
 
                         await websocket.send_text(
                             json.dumps(
                                 {
                                     "type": "config_ack",
                                     "success": True,
+                                    "group_id": live_session_config.active_group_id,
                                     "timestamp": time.time(),
                                 }
                             )
@@ -206,7 +195,7 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                         confidence_threshold=FACE_DETECTOR_CONFIG["score_threshold"],
                         nms_threshold=FACE_DETECTOR_CONFIG["nms_threshold"],
                         min_face_size=min_face_size,
-                        enable_liveness=enable_liveness_detection,
+                        enable_liveness=live_session_config.enable_liveness_detection,
                     )
 
                     current_fps = manager.update_fps(client_id)
@@ -214,8 +203,14 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                     faces = await process_liveness_detection(
                         faces,
                         image,
-                        enable_liveness_detection,
+                        live_session_config.enable_liveness_detection,
                         smoothing_namespace=client_id,
+                    )
+
+                    attendance_messages = (
+                        await live_stream_service.process_live_recognition(
+                            image, faces, live_session_config
+                        )
                     )
 
                     serialized_faces = serialize_faces(faces, "websocket")
@@ -244,6 +239,8 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                     response_data["suggested_skip"] = suggested_skip
 
                     await websocket.send_text(json.dumps(response_data))
+                    for attendance_message in attendance_messages:
+                        await websocket.send_text(json.dumps(attendance_message))
 
             except WebSocketDisconnect:
 

@@ -279,7 +279,7 @@ export function Attendance({
                 <div className="text-sm font-medium text-white/90">Anti-Spoof Detection</div>
                 <InfoPopover
                   title="Anti-Spoof Detection"
-                  description="Detects and rejects basic spoof attempts such as someone holding a photo of a registered person in front of the camera."
+                  description="Requires a live face before showing identity or recording attendance, helping block photo and screen replay attempts."
                   details={[
                     "Uses liveness detection under the hood.",
                     "May slightly reduce recognition speed when enabled.",
@@ -297,8 +297,8 @@ export function Attendance({
                     transition={{ duration: 0.15 }}
                     className="text-xs font-normal text-white/40">
                     {attendanceSettings.enableSpoofDetection ?
-                      "ON: Protects against spoofing."
-                    : "OFF: No protection against spoofing."}
+                      "ON: Requires a live face before showing identity or recording attendance."
+                    : "OFF: Identity can appear without a live-face check."}
                   </motion.div>
                 </AnimatePresence>
               </div>

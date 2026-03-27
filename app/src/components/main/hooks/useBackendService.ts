@@ -1,13 +1,13 @@
 import { useRef, useCallback, useEffect } from "react"
 import { startTransition } from "react"
 import { WebSocketService } from "@/services/WebSocketService"
+import { soundEffects } from "@/services/SoundEffectsService"
 import type {
   WebSocketDetectionResponse,
   WebSocketConnectionMessage,
   WebSocketErrorMessage,
   DetectionResult,
   WebSocketFaceData,
-  PendingDetectionRequest,
 } from "@/components/main/types"
 import { cleanupStream, cleanupVideo, cleanupAnimationFrame } from "@/components/main/utils"
 import {
@@ -22,10 +22,9 @@ interface UseBackendServiceOptions {
   isStreamingRef: React.RefObject<boolean>
   isScanningRef: React.RefObject<boolean>
   isStartingRef: React.RefObject<boolean>
-  performFaceRecognition: (
-    detectionResult: DetectionResult,
-    pendingRequest: PendingDetectionRequest | null,
-  ) => Promise<void>
+  currentGroupId: string | null
+  maxRecognitionFacesPerFrame: number
+  performFaceRecognition: (detectionResult: DetectionResult) => Promise<void>
   lastFrameTimestampRef: React.RefObject<number>
   lastDetectionRef: React.RefObject<DetectionResult | null>
   fpsTrackingRef: React.RefObject<{
@@ -36,7 +35,6 @@ interface UseBackendServiceOptions {
   skipFramesRef: React.RefObject<number>
   processCurrentFrameRef: React.RefObject<() => Promise<void>>
   trackingSessionRef: React.RefObject<number>
-  pendingDetectionRequestsRef: React.MutableRefObject<PendingDetectionRequest[]>
   detectionInFlightRef: React.MutableRefObject<boolean>
   stopCamera: React.RefObject<((forceCleanup: boolean) => void) | null>
   animationFrameRef: React.RefObject<number | undefined>
@@ -52,6 +50,8 @@ export function useBackendService(options: UseBackendServiceOptions) {
     isStreamingRef,
     isScanningRef,
     isStartingRef,
+    currentGroupId,
+    maxRecognitionFacesPerFrame,
     performFaceRecognition,
     lastFrameTimestampRef,
     lastDetectionRef,
@@ -59,7 +59,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
     skipFramesRef,
     processCurrentFrameRef,
     trackingSessionRef,
-    pendingDetectionRequestsRef,
     detectionInFlightRef,
     stopCamera,
     animationFrameRef,
@@ -77,8 +76,10 @@ export function useBackendService(options: UseBackendServiceOptions) {
     setWebsocketStatus,
   } = useCameraStore()
   const { setCurrentDetections, setDetectionFps } = useDetectionStore()
-  const { enableSpoofDetection } = useAttendanceStore()
+  const { enableSpoofDetection, attendanceCooldownSeconds, setPersistentCooldowns } =
+    useAttendanceStore()
   const { setError } = useUIStore()
+  const lastSoundAtRef = useRef<Map<string, number>>(new Map())
   const initializationRef = useRef<{
     initialized: boolean
     isInitializing: boolean
@@ -87,9 +88,13 @@ export function useBackendService(options: UseBackendServiceOptions) {
 
   useEffect(() => {
     if (webSocketServiceRef.current) {
-      webSocketServiceRef.current.setLivenessDetection(enableSpoofDetection)
+      webSocketServiceRef.current.updateLiveConfig({
+        enableLivenessDetection: enableSpoofDetection,
+        groupId: currentGroupId,
+        maxRecognitionFacesPerFrame,
+      })
     }
-  }, [enableSpoofDetection, webSocketServiceRef])
+  }, [enableSpoofDetection, currentGroupId, maxRecognitionFacesPerFrame, webSocketServiceRef])
 
   const waitForBackendReady = useCallback(
     async (
@@ -181,13 +186,52 @@ export function useBackendService(options: UseBackendServiceOptions) {
         const payload = data.data ?? data
 
         if (currentGroup && payload.group_id === currentGroup.id) {
-          const member = useAttendanceStore
-            .getState()
-            .groupMembers.find((m) => m.person_id === payload.person_id)
+          const member =
+            payload.member?.name ?
+              { name: payload.member.name }
+            : useAttendanceStore
+                .getState()
+                .groupMembers.find((m) => m.person_id === payload.person_id)
           const memberName = member ? member.name : "Member"
           const eventLabel = payload.event_type === "check_in" ? "Timed In" : "Timed Out"
+          const cooldownKey = `${payload.person_id}-${payload.group_id}`
 
           setSuccess(`${memberName} ${eventLabel}`)
+          setPersistentCooldowns((prev) => {
+            const next = new Map(prev)
+            next.set(cooldownKey, {
+              personId: payload.person_id,
+              memberName,
+              startTime: Date.now(),
+              lastKnownBbox:
+                (
+                  payload.bbox &&
+                  payload.bbox.x !== undefined &&
+                  payload.bbox.y !== undefined &&
+                  payload.bbox.width !== undefined &&
+                  payload.bbox.height !== undefined
+                ) ?
+                  {
+                    x: payload.bbox.x,
+                    y: payload.bbox.y,
+                    width: payload.bbox.width,
+                    height: payload.bbox.height,
+                  }
+                : undefined,
+              cooldownDurationSeconds: attendanceCooldownSeconds,
+            })
+            return next
+          })
+
+          const { audioSettings } = useUIStore.getState()
+          if (audioSettings.recognitionSoundEnabled && audioSettings.recognitionSoundUrl) {
+            const now = Date.now()
+            const lastAt = lastSoundAtRef.current.get(cooldownKey) ?? 0
+            if (now - lastAt > 1200) {
+              lastSoundAtRef.current.set(cooldownKey, now)
+              soundEffects.play(audioSettings.recognitionSoundUrl)
+            }
+          }
 
           // Refresh attendance data to show in sidebar
           loadAttendanceDataRef.current?.().catch(console.error)
@@ -198,7 +242,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
     webSocketServiceRef.current.onMessage(
       "detection_response",
       (data: WebSocketDetectionResponse) => {
-        const pendingRequest = pendingDetectionRequestsRef.current.shift() ?? null
         detectionInFlightRef.current = false
 
         if (!isStreamingRef.current || !isScanningRef.current) {
@@ -301,6 +344,19 @@ export function useBackendService(options: UseBackendServiceOptions) {
                       message: face.liveness.message,
                     }
                   })(),
+                  recognition:
+                    face.recognition ?
+                      {
+                        success: face.recognition.success,
+                        person_id: face.recognition.person_id ?? null,
+                        name: face.recognition.name,
+                        similarity: face.recognition.similarity,
+                        processing_time: face.recognition.processing_time,
+                        error: face.recognition.error ?? null,
+                        memberName: face.recognition.memberName,
+                        has_consent: face.recognition.has_consent,
+                      }
+                    : undefined,
                 }
               })
               .filter((face) => face !== null) as DetectionResult["faces"],
@@ -310,14 +366,9 @@ export function useBackendService(options: UseBackendServiceOptions) {
           setCurrentDetections(detectionResult)
           lastDetectionRef.current = detectionResult
 
-          if (
-            backendServiceReadyRef.current &&
-            detectionResult.faces.length > 0 &&
-            pendingRequest &&
-            pendingRequest.trackingSessionId === trackingSessionRef.current
-          ) {
+          if (backendServiceReadyRef.current && trackingSessionRef.current > 0) {
             startTransition(() => {
-              performFaceRecognition(detectionResult, pendingRequest).catch((error) => {
+              performFaceRecognition(detectionResult).catch((error) => {
                 console.error("Face recognition failed:", error)
               })
             })
@@ -334,13 +385,17 @@ export function useBackendService(options: UseBackendServiceOptions) {
       if (data.status === "connected") {
         backendServiceReadyRef.current = true
         setWebsocketStatus("connected")
+        webSocketServiceRef.current?.updateLiveConfig({
+          enableLivenessDetection: useAttendanceStore.getState().enableSpoofDetection,
+          groupId: currentGroupId,
+          maxRecognitionFacesPerFrame,
+        })
       } else if (data.status === "disconnected") {
         setWebsocketStatus("disconnected")
       }
     })
 
     webSocketServiceRef.current.onMessage("error", (data: WebSocketErrorMessage) => {
-      pendingDetectionRequestsRef.current.shift()
       detectionInFlightRef.current = false
 
       if (!isStreamingRef.current || !isScanningRef.current) {
@@ -368,12 +423,15 @@ export function useBackendService(options: UseBackendServiceOptions) {
     backendServiceReadyRef,
     processCurrentFrameRef,
     trackingSessionRef,
-    pendingDetectionRequestsRef,
     detectionInFlightRef,
     setCurrentDetections,
     setDetectionFps,
     setWebsocketStatus,
     setError,
+    setPersistentCooldowns,
+    attendanceCooldownSeconds,
+    currentGroupId,
+    maxRecognitionFacesPerFrame,
     loadAttendanceDataRef,
   ])
 

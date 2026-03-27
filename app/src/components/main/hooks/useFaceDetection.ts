@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react"
 import type { WebSocketService } from "@/services/WebSocketService"
-import type { DetectionResult, PendingDetectionRequest } from "@/components/main/types"
+import type { DetectionResult } from "@/components/main/types"
 import { useDetectionStore } from "@/components/main/stores"
 
 interface UseFaceDetectionOptions {
@@ -15,8 +15,6 @@ interface UseFaceDetectionOptions {
   lastDetectionRef: React.MutableRefObject<DetectionResult | null>
   processCurrentFrameRef: React.MutableRefObject<() => Promise<void>>
   trackingSessionRef: React.MutableRefObject<number>
-  detectionRequestIdRef: React.MutableRefObject<number>
-  pendingDetectionRequestsRef: React.MutableRefObject<PendingDetectionRequest[]>
   detectionInFlightRef: React.MutableRefObject<boolean>
   fpsTrackingRef: React.MutableRefObject<{
     timestamps: number[]
@@ -36,8 +34,6 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
     skipFramesRef,
     processCurrentFrameRef,
     trackingSessionRef,
-    detectionRequestIdRef,
-    pendingDetectionRequestsRef,
     detectionInFlightRef,
   } = options
 
@@ -48,7 +44,8 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
     if (
       !webSocketServiceRef.current?.isWebSocketReady() ||
       !isScanningRef.current ||
-      !isStreamingRef.current
+      !isStreamingRef.current ||
+      trackingSessionRef.current <= 0
     ) {
       return
     }
@@ -72,26 +69,15 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
       }
 
       lastDetectionFrameRef.current = frameData
-      const requestId = ++detectionRequestIdRef.current
-      const pendingRequest: PendingDetectionRequest = {
-        requestId,
-        trackingSessionId: trackingSessionRef.current,
-        capturedAt: Date.now(),
-        frameData,
-      }
-      pendingDetectionRequestsRef.current.push(pendingRequest)
       detectionInFlightRef.current = true
 
       webSocketServiceRef.current.sendDetectionRequest(frameData).catch((error) => {
-        pendingDetectionRequestsRef.current = pendingDetectionRequestsRef.current.filter(
-          (request) => request.requestId !== requestId,
-        )
         detectionInFlightRef.current = false
-        console.error("❌ WebSocket detection request failed:", error)
+        console.error("Frame detection request failed:", error)
         requestAnimationFrame(() => processCurrentFrameRef.current?.())
       })
     } catch (error) {
-      console.error("❌ Frame capture failed:", error)
+      console.error("Frame capture failed:", error)
       requestAnimationFrame(() => processCurrentFrameRef.current?.())
     }
   }, [
@@ -104,8 +90,6 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
     processCurrentFrameRef,
     skipFramesRef,
     trackingSessionRef,
-    detectionRequestIdRef,
-    pendingDetectionRequestsRef,
     detectionInFlightRef,
   ])
 

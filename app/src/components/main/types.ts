@@ -1,6 +1,7 @@
 // Shared types for Main component
 
 import type { AttendanceGroup, AttendanceMember, AttendanceRecord } from "@/types/recognition"
+import type { ExtendedFaceRecognitionResponse } from "@/components/main/utils"
 
 export interface DetectionResult {
   faces: {
@@ -23,15 +24,9 @@ export interface DetectionResult {
       attack_type?: string
       message?: string
     }
+    recognition?: ExtendedFaceRecognitionResponse
   }[]
   model_used: string
-}
-
-export interface PendingDetectionRequest {
-  requestId: number
-  trackingSessionId: number
-  capturedAt: number
-  frameData: ArrayBuffer
 }
 
 export interface WebSocketFaceData {
@@ -49,6 +44,7 @@ export interface WebSocketFaceData {
     attack_type?: string
     message?: string
   }
+  recognition?: ExtendedFaceRecognitionResponse
 }
 
 export interface WebSocketDetectionResponse {
@@ -77,6 +73,17 @@ export interface AttendanceEvent {
   check_in_time?: string
   check_out_time?: string
   total_hours?: number
+  member?: {
+    name?: string
+    role?: string
+  }
+  bbox?: {
+    x?: number
+    y?: number
+    width?: number
+    height?: number
+  }
+  track_id?: number
 }
 
 export interface WebSocketConnectionMessage {

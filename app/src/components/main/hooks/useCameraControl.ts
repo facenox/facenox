@@ -8,7 +8,7 @@ import {
 } from "@/components/main/utils"
 import { useDetectionStore } from "@/components/main/stores"
 import type { WebSocketService } from "@/services/WebSocketService"
-import type { DetectionResult, PendingDetectionRequest } from "@/components/main/types"
+import type { DetectionResult } from "@/components/main/types"
 
 interface CameraControlProps {
   videoRef: React.RefObject<HTMLVideoElement | null>
@@ -34,7 +34,6 @@ interface CameraControlProps {
   backendServiceReadyRef: React.MutableRefObject<boolean>
   processCurrentFrameRef: React.MutableRefObject<() => Promise<void>>
   trackingSessionRef: React.MutableRefObject<number>
-  pendingDetectionRequestsRef: React.MutableRefObject<PendingDetectionRequest[]>
   detectionInFlightRef: React.MutableRefObject<boolean>
   resetOverlayRefs: () => void
   overlayCanvasRef: React.RefObject<HTMLCanvasElement | null>
@@ -72,7 +71,6 @@ export function useCameraControl({
   backendServiceReadyRef,
   processCurrentFrameRef,
   trackingSessionRef,
-  pendingDetectionRequestsRef,
   detectionInFlightRef,
   resetOverlayRefs,
   overlayCanvasRef,
@@ -105,7 +103,6 @@ export function useCameraControl({
       isStartingRef.current = true
       lastStartTimeRef.current = now
       trackingSessionRef.current += 1
-      pendingDetectionRequestsRef.current = []
       detectionInFlightRef.current = false
       isStreamingRef.current = true
       setIsStreaming(true)
@@ -326,7 +323,6 @@ export function useCameraControl({
     backendServiceReadyRef,
     processCurrentFrameRef,
     trackingSessionRef,
-    pendingDetectionRequestsRef,
     detectionInFlightRef,
   ])
 
@@ -348,7 +344,6 @@ export function useCameraControl({
       isStoppingRef.current = true
       lastStopTimeRef.current = now
       isScanningRef.current = false
-      pendingDetectionRequestsRef.current = []
       detectionInFlightRef.current = false
 
       cleanupStream(streamRef)
@@ -405,7 +400,6 @@ export function useCameraControl({
       isScanningRef,
       isStoppingRef,
       lastStopTimeRef,
-      pendingDetectionRequestsRef,
       detectionInFlightRef,
     ],
   )

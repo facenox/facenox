@@ -2,6 +2,8 @@ import { create } from "zustand"
 import type { AudioSettings, QuickSettings } from "@/components/settings"
 import type { GroupSection } from "@/components/group"
 import { persistentSettings } from "@/services/PersistentSettingsService"
+import { attendanceManager } from "@/services"
+import { useAttendanceStore } from "@/components/main/stores/attendanceStore"
 
 interface UIState {
   // Error state
@@ -52,12 +54,11 @@ const loadInitialSettings = async () => {
     persistentSettings.getQuickSettings(),
     persistentSettings.getAudioSettings(),
     persistentSettings.getUIState(),
-    import("@/services").then((m) => m.attendanceManager.getGroups().catch(() => [])),
+    attendanceManager.getGroups().catch(() => []),
   ])
 
   // Try to set the initial group right away if possible, to avoid the delay in Main
   if (groups && groups.length > 0) {
-    const { useAttendanceStore } = await import("@/components/main/stores/attendanceStore")
     const attendanceStore = useAttendanceStore.getState()
 
     attendanceStore.setAttendanceGroups(groups)
@@ -70,17 +71,15 @@ const loadInitialSettings = async () => {
     if (groupToSelect) {
       attendanceStore.setCurrentGroup(groupToSelect)
       // We don't block hydration on member fetching, just group selection
-      import("@/services").then((m) => {
-        Promise.all([
-          m.attendanceManager.getGroupMembers(groupToSelect.id),
-          m.attendanceManager.getRecords({ group_id: groupToSelect.id, limit: 100 }),
-        ])
-          .then(([members, records]) => {
-            attendanceStore.setGroupMembers(members)
-            attendanceStore.setRecentAttendance(records)
-          })
-          .catch(console.error)
-      })
+      Promise.all([
+        attendanceManager.getGroupMembers(groupToSelect.id),
+        attendanceManager.getRecords({ group_id: groupToSelect.id, limit: 100 }),
+      ])
+        .then(([members, records]) => {
+          attendanceStore.setGroupMembers(members)
+          attendanceStore.setRecentAttendance(records)
+        })
+        .catch(console.error)
     }
   }
 

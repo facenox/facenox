@@ -182,15 +182,31 @@ export class WebSocketService {
     this.ws!.send(frameData)
   }
 
-  setLivenessDetection(enabled: boolean): void {
+  updateLiveConfig(config: {
+    enableLivenessDetection?: boolean
+    groupId?: string | null
+    maxRecognitionFacesPerFrame?: number
+  }): void {
     if (this.isWebSocketReady()) {
       this.ws!.send(
         JSON.stringify({
           type: "config",
-          enable_liveness_detection: enabled,
+          ...(config.enableLivenessDetection !== undefined && {
+            enable_liveness_detection: config.enableLivenessDetection,
+          }),
+          ...(config.groupId !== undefined && {
+            group_id: config.groupId,
+          }),
+          ...(config.maxRecognitionFacesPerFrame !== undefined && {
+            max_recognition_faces_per_frame: config.maxRecognitionFacesPerFrame,
+          }),
         }),
       )
     }
+  }
+
+  setLivenessDetection(enabled: boolean): void {
+    this.updateLiveConfig({ enableLivenessDetection: enabled })
   }
 }
 
