@@ -41,7 +41,7 @@ export default function WindowBar() {
 
   return (
     <div
-      className="relative flex h-[32px] w-full shrink-0 items-center justify-between select-none border-b border-white/8"
+      className="relative flex h-[32px] w-full shrink-0 items-center justify-between border-b border-white/8 select-none"
       style={
         {
           WebkitAppRegion: isMaximized ? "no-drag" : "drag",

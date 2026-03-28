@@ -119,7 +119,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         exit={{ opacity: 0 }}
         transition={{ duration: 0.15, ease: "easeOut" }}
         style={{ willChange: "opacity" }}
-        className="fixed inset-0 z-60 flex items-center justify-center bg-[rgba(5,7,10,0.76)]">
+        className="fixed inset-0 z-60 flex items-center justify-center bg-[rgba(5,7,10,0.76)] [@media(max-height:760px)_and_(max-width:1100px)]:inset-x-0 [@media(max-height:760px)_and_(max-width:1100px)]:top-[32px] [@media(max-height:760px)_and_(max-width:1100px)]:bottom-0 [@media(max-height:760px)_and_(max-width:1100px)]:items-stretch">
         <motion.div
           initial={{ opacity: 0, scale: 0.98, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -129,7 +129,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
             ease: [0.16, 1, 0.3, 1], // Custom "snappy" cubic-bezier
           }}
           style={{ willChange: "transform, opacity" }}
-          className="relative mt-6 w-full max-w-full overflow-hidden rounded-xl border border-white/6 bg-[var(--bg-secondary)] md:h-[92vh] lg:h-[90vh] lg:max-w-[96%]">
+          className="relative mt-6 w-full max-w-full overflow-hidden rounded-xl border border-white/6 bg-[var(--bg-secondary)] md:h-[92vh] lg:h-[90vh] lg:max-w-[96%] [@media(max-height:760px)_and_(max-width:1100px)]:mt-0 [@media(max-height:760px)_and_(max-width:1100px)]:h-full [@media(max-height:760px)_and_(max-width:1100px)]:max-w-full [@media(max-height:760px)_and_(max-width:1100px)]:rounded-none [@media(max-height:760px)_and_(max-width:1100px)]:border-0">
           <button
             onClick={props.onBack}
             className="absolute top-2 right-2 z-50 border-none bg-transparent p-1.5 text-white/20 shadow-none transition-all duration-300 hover:text-white"

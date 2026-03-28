@@ -22,7 +22,11 @@ const ScrollCenteredEmptyState = memo(function ScrollCenteredEmptyState({
   children: ReactNode
   className?: string
 }) {
-  return <div className={`flex min-h-0 flex-1 items-center justify-center pl-[10px] ${className}`}>{children}</div>
+  return (
+    <div className={`flex min-h-0 flex-1 items-center justify-center pl-[10px] ${className}`}>
+      {children}
+    </div>
+  )
 })
 
 const SidebarTopSkeleton = memo(function SidebarTopSkeleton() {
