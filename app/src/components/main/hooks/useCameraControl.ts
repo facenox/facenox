@@ -26,11 +26,6 @@ interface CameraControlProps {
   lastFrameTimestampRef: React.MutableRefObject<number>
   lastDetectionRef: React.MutableRefObject<DetectionResult | null>
   lastDetectionFrameRef: React.MutableRefObject<ArrayBuffer | null>
-  fpsTrackingRef: React.MutableRefObject<{
-    timestamps: number[]
-    maxSamples: number
-    lastUpdateTime: number
-  }>
   backendServiceReadyRef: React.MutableRefObject<boolean>
   processCurrentFrameRef: React.MutableRefObject<() => Promise<void>>
   trackingSessionRef: React.MutableRefObject<number>
@@ -42,7 +37,6 @@ interface CameraControlProps {
   setIsVideoLoading: (val: boolean) => void
   setCameraActive: (val: boolean) => void
   setSelectedCamera: (id: string) => void
-  setDetectionFps: (fps: number) => void
   setError: (msg: string | null) => void
   selectedCamera: string | null
   cameraDevices: MediaDeviceInfo[]
@@ -67,7 +61,6 @@ export function useCameraControl({
   lastFrameTimestampRef,
   lastDetectionRef,
   lastDetectionFrameRef,
-  fpsTrackingRef,
   backendServiceReadyRef,
   processCurrentFrameRef,
   trackingSessionRef,
@@ -78,7 +71,6 @@ export function useCameraControl({
   setIsVideoLoading,
   setCameraActive,
   setSelectedCamera,
-  setDetectionFps,
   setError,
   selectedCamera,
   cameraDevices,
@@ -360,13 +352,6 @@ export function useCameraControl({
       resetLastDetectionRef(lastDetectionRef)
       useDetectionStore.getState().resetDetectionState()
 
-      setDetectionFps(0)
-      fpsTrackingRef.current = {
-        timestamps: [],
-        maxSamples: 10,
-        lastUpdateTime: Date.now(),
-      }
-
       resetFrameCounters(frameCounterRef, skipFramesRef, lastFrameTimestampRef)
       resetOverlayRefs()
 
@@ -385,7 +370,6 @@ export function useCameraControl({
       setIsStreaming,
       setIsVideoLoading,
       setCameraActive,
-      setDetectionFps,
       streamRef,
       videoRef,
       animationFrameRef,
@@ -395,7 +379,6 @@ export function useCameraControl({
       frameCounterRef,
       skipFramesRef,
       lastFrameTimestampRef,
-      fpsTrackingRef,
       isStreamingRef,
       isScanningRef,
       isStoppingRef,

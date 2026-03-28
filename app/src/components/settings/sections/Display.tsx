@@ -17,14 +17,6 @@ export function Display({ quickSettings, toggleQuickSetting }: DisplayProps) {
       },
     },
     {
-      key: "showFPS" as keyof QuickSettings,
-      label: "Performance Info",
-      descriptions: {
-        on: "ON: Showing real-time FPS counter.",
-        off: "OFF: FPS counter is hidden.",
-      },
-    },
-    {
       key: "showRecognitionNames" as keyof QuickSettings,
       label: "Identification Labels",
       descriptions: {

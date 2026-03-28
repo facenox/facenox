@@ -1,7 +1,6 @@
 import { useCallback, useEffect } from "react"
 import type { WebSocketService } from "@/services/WebSocketService"
 import type { DetectionResult } from "@/components/main/types"
-import { useDetectionStore } from "@/components/main/stores"
 
 interface UseFaceDetectionOptions {
   webSocketServiceRef: React.RefObject<WebSocketService | null>
@@ -16,11 +15,6 @@ interface UseFaceDetectionOptions {
   processCurrentFrameRef: React.MutableRefObject<() => Promise<void>>
   trackingSessionRef: React.MutableRefObject<number>
   detectionInFlightRef: React.MutableRefObject<boolean>
-  fpsTrackingRef: React.MutableRefObject<{
-    timestamps: number[]
-    maxSamples: number
-    lastUpdateTime: number
-  }>
 }
 
 export function useFaceDetection(options: UseFaceDetectionOptions) {
@@ -36,9 +30,6 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
     trackingSessionRef,
     detectionInFlightRef,
   } = options
-
-  const { detectionFps, currentDetections, setDetectionFps, setCurrentDetections } =
-    useDetectionStore()
 
   const processCurrentFrame = useCallback(async () => {
     if (
@@ -96,11 +87,4 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
   useEffect(() => {
     processCurrentFrameRef.current = processCurrentFrame
   }, [processCurrentFrame, processCurrentFrameRef])
-
-  return {
-    detectionFps,
-    setDetectionFps,
-    currentDetections,
-    setCurrentDetections,
-  }
 }

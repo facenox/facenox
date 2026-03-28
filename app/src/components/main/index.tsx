@@ -58,11 +58,6 @@ export default function Main() {
   const lastDetectionRef = useRef<DetectionResult | null>(null)
   const lastFrameTimestampRef = useRef<number>(0)
   const processCurrentFrameRef = useRef<() => Promise<void>>(async () => {})
-  const fpsTrackingRef = useRef({
-    timestamps: [] as number[],
-    maxSamples: 10,
-    lastUpdateTime: 0,
-  })
 
   const backendServiceReadyRef = useRef(false)
   const isScanningRef = useRef(false)
@@ -82,8 +77,6 @@ export default function Main() {
 
   const {
     currentDetections,
-    detectionFps,
-    setDetectionFps,
     trackedFaces,
     currentRecognitionResults: rawCurrentRecognitionResults,
   } = useDetectionStore()
@@ -206,7 +199,6 @@ export default function Main() {
     processCurrentFrameRef,
     trackingSessionRef,
     detectionInFlightRef,
-    fpsTrackingRef,
   })
 
   const { performFaceRecognition } = useFaceRecognition({
@@ -235,7 +227,6 @@ export default function Main() {
     performFaceRecognition,
     lastFrameTimestampRef,
     lastDetectionRef,
-    fpsTrackingRef,
     skipFramesRef,
     processCurrentFrameRef,
     trackingSessionRef,
@@ -264,7 +255,6 @@ export default function Main() {
     lastFrameTimestampRef,
     lastDetectionRef,
     lastDetectionFrameRef,
-    fpsTrackingRef,
     backendServiceReadyRef,
     processCurrentFrameRef,
     trackingSessionRef,
@@ -275,7 +265,6 @@ export default function Main() {
     setIsVideoLoading,
     setCameraActive,
     setSelectedCamera,
-    setDetectionFps,
     setError,
     selectedCamera,
     cameraDevices,
@@ -561,7 +550,6 @@ export default function Main() {
               canvasRef={canvasRef}
               overlayCanvasRef={overlayCanvasRef}
               quickSettings={quickSettings}
-              detectionFps={detectionFps}
               isVideoLoading={isVideoLoading}
               isStreaming={isStreaming}
               isShellReady={isShellReady}

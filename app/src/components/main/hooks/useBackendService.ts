@@ -27,11 +27,6 @@ interface UseBackendServiceOptions {
   performFaceRecognition: (detectionResult: DetectionResult) => Promise<void>
   lastFrameTimestampRef: React.RefObject<number>
   lastDetectionRef: React.RefObject<DetectionResult | null>
-  fpsTrackingRef: React.RefObject<{
-    timestamps: number[]
-    maxSamples: number
-    lastUpdateTime: number
-  }>
   skipFramesRef: React.RefObject<number>
   processCurrentFrameRef: React.RefObject<() => Promise<void>>
   trackingSessionRef: React.RefObject<number>
@@ -55,7 +50,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
     performFaceRecognition,
     lastFrameTimestampRef,
     lastDetectionRef,
-    fpsTrackingRef,
     skipFramesRef,
     processCurrentFrameRef,
     trackingSessionRef,
@@ -75,7 +69,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
     websocketStatus,
     setWebsocketStatus,
   } = useCameraStore()
-  const { setCurrentDetections, setDetectionFps } = useDetectionStore()
+  const { setCurrentDetections } = useDetectionStore()
   const { enableSpoofDetection, attendanceCooldownSeconds, setPersistentCooldowns } =
     useAttendanceStore()
   const { setError } = useUIStore()
@@ -261,28 +255,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
 
         lastFrameTimestampRef.current = responseFrameTimestamp
 
-        const now = Date.now()
-        const fpsTracking = fpsTrackingRef.current
-        if (!fpsTracking) return
-        fpsTracking.timestamps.push(now)
-
-        if (fpsTracking.timestamps.length > fpsTracking.maxSamples) {
-          fpsTracking.timestamps.shift()
-        }
-
-        if (now - fpsTracking.lastUpdateTime >= 100 && fpsTracking.timestamps.length >= 2) {
-          const timeSpan =
-            fpsTracking.timestamps[fpsTracking.timestamps.length - 1] - fpsTracking.timestamps[0]
-          const frameCount = fpsTracking.timestamps.length - 1
-
-          if (timeSpan > 0) {
-            const accurateFps = (frameCount * 1000) / timeSpan
-            setDetectionFps(Math.round(accurateFps * 10) / 10)
-          }
-
-          fpsTracking.lastUpdateTime = now
-        }
-
         if (data.faces && Array.isArray(data.faces)) {
           if (data.suggested_skip !== undefined) {
             skipFramesRef.current = data.suggested_skip
@@ -412,7 +384,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
     isStreamingRef,
     isScanningRef,
     lastFrameTimestampRef,
-    fpsTrackingRef,
     skipFramesRef,
     lastDetectionRef,
     backendServiceReadyRef,
@@ -420,7 +391,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
     trackingSessionRef,
     detectionInFlightRef,
     setCurrentDetections,
-    setDetectionFps,
     setWebsocketStatus,
     setError,
     setPersistentCooldowns,

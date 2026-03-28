@@ -5,7 +5,6 @@ import type { ExtendedFaceRecognitionResponse } from "@/components/main/utils"
 interface DetectionState {
   // Detection state
   currentDetections: DetectionResult | null
-  detectionFps: number
 
   // Recognition state
   currentRecognitionResults: Map<number, ExtendedFaceRecognitionResponse>
@@ -15,7 +14,6 @@ interface DetectionState {
 
   // Actions
   setCurrentDetections: (detections: DetectionResult | null) => void
-  setDetectionFps: (fps: number) => void
   setCurrentRecognitionResults: (
     results:
       | Map<number, ExtendedFaceRecognitionResponse>
@@ -34,13 +32,11 @@ interface DetectionState {
 export const useDetectionStore = create<DetectionState>((set, get) => ({
   // Initial state
   currentDetections: null,
-  detectionFps: 0,
   currentRecognitionResults: new Map(),
   trackedFaces: new Map(),
 
   // Actions
   setCurrentDetections: (detections) => set({ currentDetections: detections }),
-  setDetectionFps: (fps) => set({ detectionFps: fps }),
   setCurrentRecognitionResults: (results) => {
     const prevResults = get().currentRecognitionResults
     const newResults = typeof results === "function" ? results(prevResults) : results

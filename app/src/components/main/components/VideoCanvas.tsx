@@ -8,7 +8,6 @@ interface VideoCanvasProps {
   canvasRef: RefObject<HTMLCanvasElement | null>
   overlayCanvasRef: RefObject<HTMLCanvasElement | null>
   quickSettings: QuickSettings
-  detectionFps: number
   isVideoLoading: boolean
   isStreaming: boolean
   isShellReady: boolean
@@ -23,7 +22,6 @@ export const VideoCanvas = memo(function VideoCanvas({
   canvasRef,
   overlayCanvasRef,
   quickSettings,
-  detectionFps,
   isVideoLoading,
   isStreaming,
   isShellReady,
@@ -65,11 +63,6 @@ export const VideoCanvas = memo(function VideoCanvas({
           mixBlendMode: "normal",
         }}
       />
-      {quickSettings.showFPS && detectionFps > 0 && (
-        <div className="pointer-events-none absolute top-4 left-4 z-20 rounded-full border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-1.5">
-          <span className="text-sm font-medium text-white/80">{detectionFps.toFixed(1)} FPS</span>
-        </div>
-      )}
 
       {isStreaming && lateTrackingEnabled && (
         <div
