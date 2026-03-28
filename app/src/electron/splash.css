@@ -125,7 +125,7 @@ body {
   z-index: 1;
 }
 
-.status-block {
+.brand-block {
   display: flex;
   flex-direction: column;
   align-items: center;
