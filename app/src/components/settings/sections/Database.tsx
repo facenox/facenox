@@ -49,7 +49,6 @@ export function Database({
     handleDeleteGroup,
     handleDeleteMember,
     handleClearAllGroups,
-    totalMembers,
   } = useDatabaseManagement(groups, onGroupsChanged, dialog)
 
   const { setError, setSuccess } = useUIStore()
@@ -149,7 +148,7 @@ export function Database({
       {/* Statistics Overview */}
       <DatabaseStats
         groupsCount={groups.length}
-        totalMembers={totalMembers}
+        totalMembers={systemData.totalMembers}
         totalPersons={systemData.totalPersons}
       />
 

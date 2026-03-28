@@ -44,8 +44,8 @@ export const useSettings = ({
     initialGroupSection || "overview",
   )
   const [systemData, setSystemData] = useState<SettingsOverview>({
-    totalPersons: 0,
-    totalMembers: 0,
+    totalPersons: null,
+    totalMembers: null,
     lastUpdated: new Date().toISOString(),
   })
   const [isLoading, setIsLoading] = useState(false)

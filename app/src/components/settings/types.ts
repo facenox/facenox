@@ -24,7 +24,7 @@ export interface AttendanceSettings {
 }
 
 export interface SettingsOverview {
-  totalPersons: number
-  totalMembers: number
+  totalPersons: number | null
+  totalMembers: number | null
   lastUpdated: string
 }
