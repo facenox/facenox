@@ -10,6 +10,11 @@ interface AttendanceState {
   attendanceGroups: AttendanceGroup[]
   groupMembers: AttendanceMember[]
   recentAttendance: AttendanceRecord[]
+  isShellBootstrapping: boolean
+  isShellReady: boolean
+  shellBootstrapError: string | null
+  isPanelLoading: boolean
+  isPanelRefreshing: boolean
 
   showGroupManagement: boolean
   showDeleteConfirmation: boolean
@@ -27,6 +32,11 @@ interface AttendanceState {
   setAttendanceGroups: (groups: AttendanceGroup[]) => void
   setGroupMembers: (members: AttendanceMember[]) => void
   setRecentAttendance: (records: AttendanceRecord[]) => void
+  setShellBootstrapping: (bootstrapping: boolean) => void
+  setShellReady: (ready: boolean) => void
+  setShellBootstrapError: (error: string | null) => void
+  setPanelLoading: (loading: boolean) => void
+  setPanelRefreshing: (refreshing: boolean) => void
   setShowGroupManagement: (show: boolean) => void
   setShowDeleteConfirmation: (show: boolean) => void
   setGroupToDelete: (group: AttendanceGroup | null) => void
@@ -42,26 +52,17 @@ interface AttendanceState {
   setDataRetentionDays: (days: number) => void
 }
 
-const loadInitialSettings = async (): Promise<Partial<AttendanceState>> => {
-  const attendanceSettings = await persistentSettings.getAttendanceSettings()
-  const dbSettings = await attendanceManager.getSettings().catch(() => null)
-
-  return {
-    attendanceCooldownSeconds: attendanceSettings.attendanceCooldownSeconds,
-    enableSpoofDetection: dbSettings?.enable_liveness_detection ?? true,
-    maxRecognitionFacesPerFrame: dbSettings?.max_recognition_faces_per_frame ?? 6,
-    dataRetentionDays: dbSettings?.data_retention_days ?? 0,
-    // Cooldowns are session-only spam filter state - never restore across restarts.
-    persistentCooldowns: new Map(),
-  }
-}
-
 export const useAttendanceStore = create<AttendanceState>()(
   subscribeWithSelector((set, get) => ({
     currentGroup: null,
     attendanceGroups: [],
     groupMembers: [],
     recentAttendance: [],
+    isShellBootstrapping: true,
+    isShellReady: false,
+    shellBootstrapError: null,
+    isPanelLoading: false,
+    isPanelRefreshing: false,
     showGroupManagement: false,
     showDeleteConfirmation: false,
     groupToDelete: null,
@@ -84,6 +85,11 @@ export const useAttendanceStore = create<AttendanceState>()(
     setAttendanceGroups: (groups) => set({ attendanceGroups: groups }),
     setGroupMembers: (members) => set({ groupMembers: members }),
     setRecentAttendance: (records) => set({ recentAttendance: records }),
+    setShellBootstrapping: (bootstrapping) => set({ isShellBootstrapping: bootstrapping }),
+    setShellReady: (ready) => set({ isShellReady: ready }),
+    setShellBootstrapError: (error) => set({ shellBootstrapError: error }),
+    setPanelLoading: (loading) => set({ isPanelLoading: loading }),
+    setPanelRefreshing: (refreshing) => set({ isPanelRefreshing: refreshing }),
     setShowGroupManagement: (show) => set({ showGroupManagement: show }),
     setShowDeleteConfirmation: (show) => set({ showDeleteConfirmation: show }),
     setGroupToDelete: (group) => set({ groupToDelete: group }),
@@ -115,27 +121,3 @@ export const useAttendanceStore = create<AttendanceState>()(
     },
   })),
 )
-
-if (typeof window !== "undefined") {
-  loadInitialSettings().then((settings) => {
-    useAttendanceStore.setState(settings)
-  })
-
-  // Second pass: once groups are set, find the one matching selectedGroupId
-  useAttendanceStore.subscribe(
-    (state) => state.attendanceGroups,
-    (groups: AttendanceGroup[]) => {
-      const currentGroup = useAttendanceStore.getState().currentGroup
-      if (!currentGroup && groups.length > 0) {
-        persistentSettings.getUIState().then((ui) => {
-          if (ui.selectedGroupId) {
-            const match = groups.find((g: AttendanceGroup) => g.id === ui.selectedGroupId)
-            if (match) {
-              useAttendanceStore.setState({ currentGroup: match })
-            }
-          }
-        })
-      }
-    },
-  )
-}

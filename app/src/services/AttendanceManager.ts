@@ -50,54 +50,6 @@ export class AttendanceManager {
       this.toLocalDateTimeParam.bind(this),
       this.warnIfSystemClockWentBackwards.bind(this),
     )
-
-    this.loadSettingsWhenReady()
-  }
-
-  private async loadSettingsWhenReady(): Promise<void> {
-    const maxWaitTime = 60000
-    const checkInterval = 500
-    const startTime = Date.now()
-
-    try {
-      if (window.electronAPI && "backend_ready" in window.electronAPI) {
-        const ready = await window.electronAPI.backend_ready.isReady()
-        if (ready) {
-          await this.loadSettings()
-          return
-        }
-      }
-    } catch (error) {
-      console.debug("[AttendanceManager] Error checking backend readiness:", error)
-    }
-
-    while (Date.now() - startTime < maxWaitTime) {
-      try {
-        if (window.electronAPI && "backend_ready" in window.electronAPI) {
-          const ready = await window.electronAPI.backend_ready.isReady()
-          if (ready) {
-            await this.loadSettings()
-            return
-          }
-        } else {
-          await new Promise((resolve) => setTimeout(resolve, checkInterval))
-          continue
-        }
-        await new Promise((resolve) => setTimeout(resolve, checkInterval))
-      } catch (error) {
-        console.debug("[AttendanceManager] Error checking backend readiness:", error)
-        await new Promise((resolve) => setTimeout(resolve, checkInterval))
-      }
-    }
-
-    console.warn(
-      "[AttendanceManager] Backend not ready after timeout, attempting to load anyway...",
-    )
-    try {
-      await this.loadSettings()
-    } catch (error) {
-      console.warn("[AttendanceManager] Failed to load settings:", error)
-    }
   }
 
   private async loadSettings(): Promise<void> {
@@ -109,6 +61,9 @@ export class AttendanceManager {
   }
 
   async createGroup(name: string): Promise<AttendanceGroup> {
+    if (!this.settings) {
+      await this.loadSettings()
+    }
     return this.groupManager.createGroup(name, this.settings)
   }
 

@@ -14,6 +14,51 @@ interface AttendancePanelProps {
 type SortField = "time" | "name"
 type SortOrder = "asc" | "desc"
 
+const SidebarTopSkeleton = memo(function SidebarTopSkeleton() {
+  return (
+    <div className="shrink-0 px-3 py-2 pb-1.5">
+      <div className="flex items-center gap-0">
+        <div className="h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/5" />
+        <div className="h-9 w-9 border border-r-0 border-white/10 bg-white/5" />
+        <div className="h-9 w-9 rounded-r-lg border border-white/10 bg-white/5" />
+      </div>
+    </div>
+  )
+})
+
+const AttendanceListSkeleton = memo(function AttendanceListSkeleton({
+  showSearch = false,
+}: {
+  showSearch?: boolean
+}) {
+  return (
+    <>
+      {showSearch && (
+        <div className="shrink-0 px-3 pb-3">
+          <div className="flex items-center">
+            <div className="h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/4" />
+            <div className="h-9 w-11 rounded-r-lg border border-white/10 bg-white/4" />
+          </div>
+        </div>
+      )}
+
+      <div className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div
+            key={index}
+            className="border-b border-l-2 border-white/5 border-l-transparent py-2.5 pr-3 pl-4">
+            <div className="flex items-center gap-3 py-0.5">
+              <div className="h-3.5 flex-1 rounded bg-white/7" />
+              <div className="h-5 w-16 rounded-full border border-white/10 bg-white/5" />
+              <div className="h-3 w-12 rounded bg-white/7" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+})
+
 const AttendanceRecordItem = memo(
   ({
     record,
@@ -156,8 +201,16 @@ AttendanceRecordItem.displayName = "AttendanceRecordItem"
 export const AttendancePanel = memo(function AttendancePanel({
   handleSelectGroup,
 }: AttendancePanelProps) {
-  const { attendanceGroups, currentGroup, recentAttendance, groupMembers, setShowGroupManagement } =
-    useAttendanceStore()
+  const {
+    attendanceGroups,
+    currentGroup,
+    recentAttendance,
+    groupMembers,
+    isShellReady,
+    isPanelLoading,
+    isPanelRefreshing,
+    setShowGroupManagement,
+  } = useAttendanceStore()
 
   const { setShowSettings, setGroupInitialSection } = useUIStore()
   const [showManualEntry, setShowManualEntry] = useState(false)
@@ -291,6 +344,15 @@ export const AttendancePanel = memo(function AttendancePanel({
     return () => clearTimeout(timer)
   }, [searchQuery, sortField, sortOrder])
 
+  if (!isShellReady) {
+    return (
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <SidebarTopSkeleton />
+        <AttendanceListSkeleton />
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {attendanceGroups.length > 0 ?
@@ -352,10 +414,9 @@ export const AttendancePanel = memo(function AttendancePanel({
         </div>
       }
 
-      {recentAttendance.length > 0 && (
+      {!isPanelLoading && recentAttendance.length > 0 && (
         <div className="shrink-0 px-3 pb-3">
-          <div className="flex items-center">
-            {/* Joined Search and Sort Container */}
+          <div className="flex items-center gap-2">
             <div className="group/search relative flex-1">
               <i className="fa-solid fa-magnifying-glass pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[10px] text-white/20 transition-colors group-focus-within/search:text-cyan-400/60" />
               <input
@@ -391,122 +452,120 @@ export const AttendancePanel = memo(function AttendancePanel({
                 />
               </Tooltip>
             </div>
+
+            {isPanelRefreshing && (
+              <div className="flex h-9 shrink-0 items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/8 px-3 text-[10px] font-semibold tracking-wide text-cyan-300/85 uppercase">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
+                Refreshing
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {attendanceGroups.length > 0 && (
-        <div className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
-          {visibleRecords.length > 0 ?
-            <>
-              {(() => {
-                // Keep track of who has a valid \"Time In\" scan
-                const checkedInSet = new Set<string>()
-
-                // We iterate from oldest to newest to chronologically track check-ins
-                // But we still want to render them in the original sorted order (which might be newest first)
-                // First, determine check-in status chronologically
-                const chronologicalRecords = [...processedRecords].sort(
-                  (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
-                )
-
-                const recordCheckInStatus = new Map<string, boolean>()
-
-                chronologicalRecords.forEach((record) => {
-                  const personId = record.person_id
-                  const dateString = record.timestamp.toDateString()
-                  const key = `${personId}_${dateString}`
-
-                  if (!checkedInSet.has(key)) {
-                    // First scan of the day!
-                    checkedInSet.add(key)
-                    recordCheckInStatus.set(record.id, false) // false = "not checked in earlier"
-                  } else {
-                    // Subsequent scan of the day!
-                    // Add 60-second grace period protection here if needed,
-                    // but simple existence in set is enough for "checked in earlier" flag
-                    recordCheckInStatus.set(record.id, true) // true = "has checked in earlier"
-                  }
-                })
-
-                return visibleRecords.map((record) => {
-                  const displayName = displayNameMap.get(record.person_id) || "Unknown"
-
-                  // Default to false (Time In) if somehow missing from map
-                  const hasCheckedInEarlier = recordCheckInStatus.get(record.id) ?? false
-
-                  const member = memberMap.get(record.person_id)
-
-                  return (
-                    <AttendanceRecordItem
-                      key={record.id}
-                      record={record}
-                      displayName={displayName}
-                      member={member}
-                      classStartTime={lateTrackingSettings.classStartTime}
-                      lateThresholdMinutes={lateTrackingSettings.lateThresholdMinutes}
-                      lateThresholdEnabled={lateTrackingSettings.lateThresholdEnabled}
-                      trackCheckoutEnabled={currentGroup?.settings?.track_checkout ?? false}
-                      hasCheckedInEarlier={hasCheckedInEarlier}
-                    />
+      {attendanceGroups.length > 0 &&
+        (isPanelLoading ?
+          <AttendanceListSkeleton showSearch={Boolean(currentGroup)} />
+        : <div className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
+            {visibleRecords.length > 0 ?
+              <>
+                {(() => {
+                  const checkedInSet = new Set<string>()
+                  const chronologicalRecords = [...processedRecords].sort(
+                    (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
                   )
-                })
-              })()}
 
-              {hasMore && (
-                <div className="px-2 py-2">
+                  const recordCheckInStatus = new Map<string, boolean>()
+
+                  chronologicalRecords.forEach((record) => {
+                    const personId = record.person_id
+                    const dateString = record.timestamp.toDateString()
+                    const key = `${personId}_${dateString}`
+
+                    if (!checkedInSet.has(key)) {
+                      checkedInSet.add(key)
+                      recordCheckInStatus.set(record.id, false)
+                    } else {
+                      recordCheckInStatus.set(record.id, true)
+                    }
+                  })
+
+                  return visibleRecords.map((record) => {
+                    const displayName = displayNameMap.get(record.person_id) || "Unknown"
+                    const hasCheckedInEarlier = recordCheckInStatus.get(record.id) ?? false
+                    const member = memberMap.get(record.person_id)
+
+                    return (
+                      <AttendanceRecordItem
+                        key={record.id}
+                        record={record}
+                        displayName={displayName}
+                        member={member}
+                        classStartTime={lateTrackingSettings.classStartTime}
+                        lateThresholdMinutes={lateTrackingSettings.lateThresholdMinutes}
+                        lateThresholdEnabled={lateTrackingSettings.lateThresholdEnabled}
+                        trackCheckoutEnabled={currentGroup?.settings?.track_checkout ?? false}
+                        hasCheckedInEarlier={hasCheckedInEarlier}
+                      />
+                    )
+                  })
+                })()}
+
+                {hasMore && (
+                  <div className="px-2 py-2">
+                    <button
+                      onClick={handleLoadMore}
+                      className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 text-xs text-white/70 transition-colors hover:bg-[rgba(28,35,44,0.82)]">
+                      Load More ({processedRecords.length - displayLimit} remaining)
+                    </button>
+                  </div>
+                )}
+              </>
+            : searchQuery ?
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <div className="text-center text-sm text-white/50">
+                  No results for &quot;{searchQuery}&quot;
+                </div>
+              </div>
+            : !currentGroup ?
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <div className="text-center text-xs text-white/40">
+                  Choose a group to see today&apos;s attendance logs
+                </div>
+              </div>
+            : groupMembers.length === 0 ?
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <div className="flex flex-col items-center justify-center space-y-3">
+                  <div className="text-center text-xs text-white/40">
+                    No members in this group yet
+                  </div>
                   <button
-                    onClick={handleLoadMore}
-                    className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 text-xs text-white/70 transition-colors hover:bg-[rgba(28,35,44,0.82)]">
-                    Load More ({processedRecords.length - displayLimit} remaining)
+                    onClick={handleOpenSettingsForRegistration}
+                    className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-xs text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
+                    <i className="fa-solid fa-user-plus text-xs"></i>
+                    Add Member
                   </button>
                 </div>
-              )}
-            </>
-          : searchQuery ?
-            <div className="flex min-h-0 flex-1 items-center justify-center">
-              <div className="text-center text-sm text-white/50">
-                No results for &quot;{searchQuery}&quot;
               </div>
-            </div>
-          : !currentGroup ?
-            <div className="flex min-h-0 flex-1 items-center justify-center">
-              <div className="text-center text-xs text-white/40">
-                Choose a group to see today&apos;s attendance logs
-              </div>
-            </div>
-          : groupMembers.length === 0 ?
-            <div className="flex min-h-0 flex-1 items-center justify-center">
-              <div className="flex flex-col items-center justify-center space-y-3">
-                <div className="text-center text-xs text-white/40">
-                  No members in this group yet
+            : !groupMembers.some((m) => m.has_face_data) ?
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <div className="flex flex-col items-center justify-center space-y-3 p-4 text-center">
+                  <div className="text-xs text-white/40">
+                    No face biometric data registered yet.
+                  </div>
+                  <button
+                    onClick={handleOpenSettingsForRegistration}
+                    className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-xs text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
+                    <i className="fa-solid fa-user-plus text-xs"></i>
+                    Register Face
+                  </button>
                 </div>
-                <button
-                  onClick={handleOpenSettingsForRegistration}
-                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-xs text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
-                  <i className="fa-solid fa-user-plus text-xs"></i>
-                  Add Member
-                </button>
               </div>
-            </div>
-          : !groupMembers.some((m) => m.has_face_data) ?
-            <div className="flex min-h-0 flex-1 items-center justify-center">
-              <div className="flex flex-col items-center justify-center space-y-3 p-4 text-center">
-                <div className="text-xs text-white/40">No face biometric data registered yet.</div>
-                <button
-                  onClick={handleOpenSettingsForRegistration}
-                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-xs text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
-                  <i className="fa-solid fa-user-plus text-xs"></i>
-                  Register Face
-                </button>
+            : <div className="flex min-h-0 flex-1 items-center justify-center">
+                <div className="text-center text-xs text-white/40">No attendance logs yet</div>
               </div>
-            </div>
-          : <div className="flex min-h-0 flex-1 items-center justify-center">
-              <div className="text-center text-xs text-white/40">No attendance logs yet</div>
-            </div>
-          }
-        </div>
-      )}
+            }
+          </div>)}
       <AnimatePresence>
         {showManualEntry && (
           <ManualEntryModal

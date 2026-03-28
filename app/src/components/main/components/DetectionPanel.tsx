@@ -5,6 +5,7 @@ import { createDisplayNameMap } from "@/utils"
 import type { DetectionResult, TrackedFace } from "@/components/main/types"
 import type { AttendanceMember } from "@/types/recognition"
 import type { ExtendedFaceRecognitionResponse } from "@/components/main/utils"
+import { useAttendanceStore } from "@/components/main/stores"
 
 interface DetectionPanelProps {
   currentDetections: DetectionResult | null
@@ -98,6 +99,7 @@ export function DetectionPanel({
   persistentCooldowns,
   currentGroupId,
 }: DetectionPanelProps) {
+  const isShellReady = useAttendanceStore((state) => state.isShellReady)
   const displayNameMap = useMemo(() => {
     return createDisplayNameMap(groupMembers)
   }, [groupMembers])
@@ -189,8 +191,14 @@ export function DetectionPanel({
             </div>
 
             <div
-              className={`text-[11px] font-bold transition-opacity duration-500 ${isStreaming ? "animate-pulse text-cyan-400/60" : "text-white/35"}`}>
-              {isVideoLoading ?
+              className={`text-[11px] font-bold transition-opacity duration-500 ${
+                !isShellReady ? "text-white/45"
+                : isStreaming ? "animate-pulse text-cyan-400/60"
+                : "text-white/35"
+              }`}>
+              {!isShellReady ?
+                "Loading"
+              : isVideoLoading ?
                 null
               : isStreaming ?
                 "Tracking"
