@@ -139,7 +139,7 @@ export function DetectionPanel({
   return (
     <>
       {!hasDetections ?
-        <div className="flex min-h-0 flex-1 items-center justify-center">
+        <div className="flex min-h-0 flex-1 items-center justify-center pl-[10px]">
           <div className="relative flex flex-col items-center gap-4">
             <div className="relative h-20 w-20">
               {isVideoLoading ?

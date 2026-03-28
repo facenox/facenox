@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, memo, useCallback } from "react"
+import type { ReactNode } from "react"
 import { AnimatePresence } from "framer-motion"
 import { createDisplayNameMap } from "@/utils"
 import { Dropdown, Tooltip, MemberTooltip } from "@/components/shared"
@@ -13,6 +14,16 @@ interface AttendancePanelProps {
 
 type SortField = "time" | "name"
 type SortOrder = "asc" | "desc"
+
+const ScrollCenteredEmptyState = memo(function ScrollCenteredEmptyState({
+  children,
+  className = "",
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return <div className={`flex min-h-0 flex-1 items-center justify-center pl-[10px] ${className}`}>{children}</div>
+})
 
 const SidebarTopSkeleton = memo(function SidebarTopSkeleton() {
   return (
@@ -522,19 +533,19 @@ export const AttendancePanel = memo(function AttendancePanel({
                 )}
               </>
             : searchQuery ?
-              <div className="flex min-h-0 flex-1 items-center justify-center">
+              <ScrollCenteredEmptyState>
                 <div className="text-center text-sm text-white/50">
                   No results for &quot;{searchQuery}&quot;
                 </div>
-              </div>
+              </ScrollCenteredEmptyState>
             : !currentGroup ?
-              <div className="flex min-h-0 flex-1 items-center justify-center">
+              <ScrollCenteredEmptyState>
                 <div className="text-center text-xs text-white/40">
                   Choose a group to see today&apos;s attendance logs
                 </div>
-              </div>
+              </ScrollCenteredEmptyState>
             : groupMembers.length === 0 ?
-              <div className="flex min-h-0 flex-1 items-center justify-center">
+              <ScrollCenteredEmptyState>
                 <div className="flex flex-col items-center justify-center space-y-3">
                   <div className="text-center text-xs text-white/40">
                     No members in this group yet
@@ -546,9 +557,9 @@ export const AttendancePanel = memo(function AttendancePanel({
                     Add Member
                   </button>
                 </div>
-              </div>
+              </ScrollCenteredEmptyState>
             : !groupMembers.some((m) => m.has_face_data) ?
-              <div className="flex min-h-0 flex-1 items-center justify-center">
+              <ScrollCenteredEmptyState>
                 <div className="flex flex-col items-center justify-center space-y-3 p-4 text-center">
                   <div className="text-xs text-white/40">
                     No face biometric data registered yet.
@@ -560,10 +571,10 @@ export const AttendancePanel = memo(function AttendancePanel({
                     Register Face
                   </button>
                 </div>
-              </div>
-            : <div className="flex min-h-0 flex-1 items-center justify-center">
+              </ScrollCenteredEmptyState>
+            : <ScrollCenteredEmptyState>
                 <div className="text-center text-xs text-white/40">No attendance logs yet</div>
-              </div>
+              </ScrollCenteredEmptyState>
             }
           </div>)}
       <AnimatePresence>
