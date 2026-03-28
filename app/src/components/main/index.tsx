@@ -58,6 +58,7 @@ export default function Main() {
   const lastDetectionRef = useRef<DetectionResult | null>(null)
   const lastFrameTimestampRef = useRef<number>(0)
   const processCurrentFrameRef = useRef<() => Promise<void>>(async () => {})
+  const previousTrackingGroupIdRef = useRef<string | null | undefined>(undefined)
 
   const backendServiceReadyRef = useRef(false)
   const isScanningRef = useRef(false)
@@ -360,13 +361,26 @@ export default function Main() {
   }, [isStreaming, animate])
 
   useEffect(() => {
+    const currentGroupId = currentGroup?.id ?? null
+
+    if (previousTrackingGroupIdRef.current === undefined) {
+      previousTrackingGroupIdRef.current = currentGroupId
+      return
+    }
+
+    if (previousTrackingGroupIdRef.current === currentGroupId) {
+      return
+    }
+
+    previousTrackingGroupIdRef.current = currentGroupId
+
     resetLastDetectionRef(lastDetectionRef)
     useDetectionStore.getState().resetDetectionState()
 
     if (isStreamingRef.current) {
       stopCamera(false)
     }
-  }, [currentGroup, stopCamera, isStreamingRef, lastDetectionRef])
+  }, [currentGroup?.id, stopCamera, isStreamingRef, lastDetectionRef])
 
   useEffect(() => {
     let cleanupExecuted = false

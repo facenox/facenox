@@ -196,12 +196,15 @@ export const drawOverlays = ({
     if (x2 <= x1 || y2 <= y1) return
 
     const trackId = face.track_id!
-    const recognitionResult = currentRecognitionResults.get(trackId)
+    const recognitionResult = currentRecognitionResults.get(trackId) ?? face.recognition
     const color = getFaceColor(recognitionResult || null, recognitionEnabled, face.liveness?.status)
 
     const isRecognized =
       recognitionEnabled && recognitionResult?.person_id && face.liveness?.status !== "spoof"
     const isBlocked = recognitionResult?.has_consent === false
+
+    ctx.save()
+    ctx.globalAlpha = face.renderOpacity ?? 1
 
     if (isBlocked) {
       ctx.save()
@@ -261,8 +264,6 @@ export const drawOverlays = ({
     }
 
     if (shouldShowLabel && recognitionResult) {
-      ctx.save()
-
       const isShield = recognitionResult.has_consent === false
       const text = label
       ctx.font = "bold 12px system-ui, sans-serif"
@@ -286,11 +287,10 @@ export const drawOverlays = ({
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
       ctx.fillText(text, badgeX + badgeW / 2, badgeY + badgeH / 2)
-
-      ctx.restore()
     }
 
     ctx.shadowBlur = 0
+    ctx.restore()
   })
 
   ctx.restore()

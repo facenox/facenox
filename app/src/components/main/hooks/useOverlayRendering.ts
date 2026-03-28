@@ -8,6 +8,20 @@ import {
   useUIStore,
 } from "@/components/main/stores"
 
+const BOX_OPACITY_LERP = 0.38
+const BOX_MISSING_HOLD_MS = 90
+const BOX_MIN_OPACITY = 0.04
+
+type DetectionFace = DetectionResult["faces"][number]
+
+interface VisibleFaceState {
+  key: string
+  face: DetectionFace
+  opacity: number
+  targetOpacity: number
+  lastSeenAt: number
+}
+
 interface UseOverlayRenderingOptions {
   videoRef: React.RefObject<HTMLVideoElement | null>
   overlayCanvasRef: React.RefObject<HTMLCanvasElement | null>
@@ -39,10 +53,17 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     offsetX: number
     offsetY: number
   }>({ scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 })
-  const lastDetectionHashRef = useRef<string>("")
-  const lastHashCalculationRef = useRef<number>(0)
-  const lastDetectionRef = useRef<DetectionResult | null>(null)
+  const visibleFacesRef = useRef<Map<string, VisibleFaceState>>(new Map())
   const animateRef = useRef<() => void>(() => {})
+
+  const getFaceKey = useCallback((face: DetectionFace, index: number) => {
+    if (face.track_id !== undefined && face.track_id !== null) {
+      return `track-${face.track_id}`
+    }
+
+    const { x, y, width, height } = face.bbox
+    return `face-${index}-${Math.round(x / 10)}-${Math.round(y / 10)}-${Math.round(width / 10)}-${Math.round(height / 10)}`
+  }, [])
 
   const getVideoRect = useCallback(() => {
     const video = videoRef.current
@@ -113,32 +134,34 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     return scaleFactorsRef.current
   }, [videoRef, overlayCanvasRef])
 
-  const handleDrawOverlays = useCallback(() => {
-    drawOverlays({
-      videoRef,
-      overlayCanvasRef,
-      currentDetections,
+  const handleDrawOverlays = useCallback(
+    (detections: DetectionResult | null) => {
+      drawOverlays({
+        videoRef,
+        overlayCanvasRef,
+        currentDetections: detections,
+        isStreaming,
+        currentRecognitionResults,
+        recognitionEnabled: true,
+        persistentCooldowns,
+        quickSettings,
+        getVideoRect,
+        calculateScaleFactors,
+        currentGroupId: currentGroup?.id,
+      })
+    },
+    [
       isStreaming,
       currentRecognitionResults,
-      recognitionEnabled: true,
       persistentCooldowns,
+      currentGroup,
       quickSettings,
       getVideoRect,
       calculateScaleFactors,
-      currentGroupId: currentGroup?.id,
-    })
-  }, [
-    currentDetections,
-    isStreaming,
-    currentRecognitionResults,
-    persistentCooldowns,
-    currentGroup,
-    quickSettings,
-    getVideoRect,
-    calculateScaleFactors,
-    videoRef,
-    overlayCanvasRef,
-  ])
+      videoRef,
+      overlayCanvasRef,
+    ],
+  )
 
   const animate = useCallback(() => {
     const detectionsToRender = currentDetections
@@ -159,72 +182,62 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
       return
     }
 
-    if (!detectionsToRender?.faces?.length) {
+    const now = performance.now()
+    const visibleFaces = visibleFacesRef.current
+    const seenKeys = new Set<string>()
+
+    if (detectionsToRender?.faces?.length) {
+      detectionsToRender.faces.forEach((face, index) => {
+        const key = getFaceKey(face, index)
+        seenKeys.add(key)
+
+        const existing = visibleFaces.get(key)
+        if (existing) {
+          existing.face = face
+          existing.targetOpacity = 1
+          existing.lastSeenAt = now
+        } else {
+          visibleFaces.set(key, {
+            key,
+            face,
+            opacity: 0,
+            targetOpacity: 1,
+            lastSeenAt: now,
+          })
+        }
+      })
+    }
+
+    const renderedFaces: DetectionFace[] = []
+
+    for (const [key, visibleFace] of visibleFaces) {
+      if (!seenKeys.has(key) && now - visibleFace.lastSeenAt > BOX_MISSING_HOLD_MS) {
+        visibleFace.targetOpacity = 0
+      }
+
+      visibleFace.opacity += (visibleFace.targetOpacity - visibleFace.opacity) * BOX_OPACITY_LERP
+
+      if (visibleFace.opacity <= BOX_MIN_OPACITY && visibleFace.targetOpacity === 0) {
+        visibleFaces.delete(key)
+        continue
+      }
+
+      renderedFaces.push({
+        ...visibleFace.face,
+        renderOpacity: visibleFace.opacity,
+      })
+    }
+
+    if (renderedFaces.length > 0) {
+      handleDrawOverlays({
+        faces: renderedFaces,
+        model_used: detectionsToRender?.model_used ?? "current",
+      })
+    } else {
       const ctx = overlayCanvas.getContext("2d", { willReadFrequently: false })
       if (ctx && overlayCanvas.width > 0 && overlayCanvas.height > 0) {
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height)
       }
-      lastDetectionHashRef.current = ""
-      if (isStreaming) {
-        animationFrameRef.current = requestAnimationFrame(animateRef.current)
-      }
-      return
-    }
-
-    const now = performance.now()
-    const recognitionForHash = currentRecognitionResults
-    let shouldRedraw = false
-
-    if (now - lastHashCalculationRef.current >= 16) {
-      const facesCount = detectionsToRender.faces.length
-      const recognitionCount = recognitionForHash.size
-
-      let hashSum = facesCount * 1000 + recognitionCount
-
-      const sampleCount = Math.min(3, detectionsToRender.faces.length)
-      for (let i = 0; i < sampleCount; i++) {
-        const face = detectionsToRender.faces[i]
-        hashSum += Math.round(face.bbox.x / 10) * 100
-        hashSum += Math.round(face.bbox.y / 10) * 10
-      }
-
-      let recIndex = 0
-      for (const [trackId, result] of recognitionForHash) {
-        if (recIndex >= 3) break
-        hashSum += trackId * 1000
-        if (result.person_id) {
-          hashSum += result.person_id.length * 100
-        }
-        recIndex++
-      }
-
-      // Include persistentCooldowns in hash to trigger redraw when cooldowns change
-      // This ensures the \"Done\" indicator appears/disappears correctly
-      hashSum += persistentCooldowns.size * 10000
-      let cooldownIndex = 0
-      for (const [personId, cooldownInfo] of persistentCooldowns) {
-        if (cooldownIndex >= 5) break
-        hashSum += personId.length * 1000
-        hashSum += Math.floor(cooldownInfo.startTime / 1000)
-        cooldownIndex++
-      }
-
-      const simpleHash = String(hashSum)
-
-      if (simpleHash !== lastDetectionHashRef.current) {
-        lastDetectionHashRef.current = simpleHash
-        shouldRedraw = true
-        lastHashCalculationRef.current = now
-      }
-    } else {
-      if (detectionsToRender !== lastDetectionRef.current) {
-        shouldRedraw = true
-        lastDetectionRef.current = detectionsToRender
-      }
-    }
-
-    if (shouldRedraw) {
-      handleDrawOverlays()
     }
 
     if (isStreaming) {
@@ -234,8 +247,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     isStreaming,
     handleDrawOverlays,
     currentDetections,
-    currentRecognitionResults,
-    persistentCooldowns,
+    getFaceKey,
     overlayCanvasRef,
     animationFrameRef,
   ])
@@ -245,10 +257,10 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
   }, [animate])
 
   const resetOverlayRefs = useCallback(() => {
-    lastDetectionHashRef.current = ""
     lastVideoSizeRef.current = { width: 0, height: 0 }
     lastCanvasSizeRef.current = { width: 0, height: 0 }
     scaleFactorsRef.current = { scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 }
+    visibleFacesRef.current.clear()
   }, [])
 
   return {

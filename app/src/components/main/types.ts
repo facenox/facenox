@@ -11,6 +11,7 @@ export interface DetectionResult {
       width: number
       height: number
     }
+    renderOpacity?: number
     confidence: number
     track_id?: number
     landmarks_5: number[][]
