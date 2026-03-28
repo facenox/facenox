@@ -1,7 +1,5 @@
 :root {
   --accent: #22d3ee;
-  --panel-bg: rgba(8, 12, 18, 0.94);
-  --panel-border: rgba(255, 255, 255, 0.08);
 }
 
 * {
@@ -40,7 +38,6 @@ body {
 }
 
 .ambient {
-  position: relative;
   position: absolute;
   border-radius: 999px;
   filter: blur(36px);
@@ -174,7 +171,6 @@ body {
     0 0,
     -64px 0;
   box-shadow: 0 0 12px rgba(34, 211, 238, 0.22);
-  transition: width 220ms ease;
   animation: progressFillShimmer 1.9s linear infinite;
 }
 
