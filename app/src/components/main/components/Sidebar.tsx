@@ -207,7 +207,8 @@ export const Sidebar = memo(function Sidebar({
           <div className="flex items-center justify-between gap-2">
             <Tooltip
               content={isCollapsed ? "Expand sidebar (Ctrl+B)" : "Collapse sidebar (Ctrl+B)"}
-              position="bottom">
+              position="right"
+              offset={-10}>
               <button
                 onClick={toggleSidebar}
                 className="sidebar-toggle-btn group flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] transition-all duration-200 hover:border-white/20 hover:bg-white/5 active:scale-95"
@@ -218,7 +219,8 @@ export const Sidebar = memo(function Sidebar({
 
             <Tooltip
               content={updateInfo?.hasUpdate ? "Update available! (Ctrl+,)" : "Settings (Ctrl+,)"}
-              position="bottom"
+              position="left"
+              offset={0}
               disabled={isCollapsed}>
               <motion.button
                 onClick={() => {

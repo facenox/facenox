@@ -17,6 +17,7 @@ interface TooltipProps {
   position?: TooltipPosition
   delay?: number
   disabled?: boolean
+  offset?: number
 }
 
 interface TooltipCoords {
@@ -34,6 +35,7 @@ function computeCoords(
   tw: number,
   th: number,
   preferred: TooltipPosition,
+  offset: number,
 ): { top: number; left: number; actualPosition: TooltipPosition } {
   const { innerWidth: vw, innerHeight: vh } = window
   const midX = triggerRect.left + triggerRect.width / 2
@@ -41,20 +43,20 @@ function computeCoords(
 
   const slots: Record<TooltipPosition, { top: number; left: number }> = {
     top: {
-      top: triggerRect.top - th - TOOLTIP_OFFSET - ARROW_SIZE,
+      top: triggerRect.top - th - offset - ARROW_SIZE,
       left: midX - tw / 2,
     },
     bottom: {
-      top: triggerRect.bottom + TOOLTIP_OFFSET + ARROW_SIZE,
+      top: triggerRect.bottom + offset + ARROW_SIZE,
       left: midX - tw / 2,
     },
     left: {
       top: midY - th / 2,
-      left: triggerRect.left - tw - TOOLTIP_OFFSET - ARROW_SIZE,
+      left: triggerRect.left - tw - offset - ARROW_SIZE,
     },
     right: {
       top: midY - th / 2,
-      left: triggerRect.right + TOOLTIP_OFFSET + ARROW_SIZE,
+      left: triggerRect.right + offset + ARROW_SIZE,
     },
   }
 
@@ -192,6 +194,7 @@ export function Tooltip({
   position = "top",
   delay = 500,
   disabled = false,
+  offset = TOOLTIP_OFFSET,
 }: TooltipProps) {
   const [visible, setVisible] = useState(false)
   const [coords, setCoords] = useState<TooltipCoords | null>(null)
@@ -234,7 +237,7 @@ export function Tooltip({
       const tw = tooltipRef.current.offsetWidth
       const th = tooltipRef.current.offsetHeight
 
-      const { top, left, actualPosition } = computeCoords(triggerRect, tw, th, position)
+      const { top, left, actualPosition } = computeCoords(triggerRect, tw, th, position, offset)
       const arrowStyle = buildArrowStyle(actualPosition, triggerRect, left, top)
       setCoords({ top, left, arrowStyle })
     }
@@ -251,7 +254,7 @@ export function Tooltip({
       window.removeEventListener("scroll", measure, true)
       window.removeEventListener("resize", measure)
     }
-  }, [visible, position, content])
+  }, [visible, position, content, offset])
 
   const child = React.Children.only(children)
   const isChildValid = React.isValidElement(child)
