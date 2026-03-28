@@ -58,6 +58,10 @@ declare global {
     minimize: () => Promise<boolean>
     maximize: () => Promise<boolean>
     close: () => Promise<boolean>
+    updateSplashProgress: (progress: number) => void
+    updateSplashDataStep: (step: number) => void
+    reportSplashRenderedProgress: (progress: number) => void
+    onSplashProgress: (callback: (update: { progress: number }) => void) => () => void
     onMaximize: (callback: () => void) => () => void
     onUnmaximize: (callback: () => void) => () => void
     getSystemStats: () => Promise<{

@@ -2,8 +2,6 @@ import { useEffect, useRef } from "react"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { bootstrapShellData } from "@/components/main/hooks/useAttendanceGroups"
 
-export const SHELL_REVEAL_TIMEOUT_MS = 1500
-
 export function useAttendanceBootstrap() {
   const isHydrated = useUIStore((state) => state.isHydrated)
   const setError = useUIStore((state) => state.setError)
@@ -21,12 +19,15 @@ export function useAttendanceBootstrap() {
     setShellBootstrapping(true)
     setShellReady(false)
     setShellBootstrapError(null)
+    window.facenoxElectron?.updateSplashDataStep(8)
 
     const bootstrap = async () => {
       try {
         await bootstrapShellData()
 
         if (cancelled) return
+
+        window.facenoxElectron?.updateSplashDataStep(9)
 
         setShellReady(true)
         setShellBootstrapping(false)

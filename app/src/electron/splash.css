@@ -1,5 +1,7 @@
 :root {
   --accent: #22d3ee;
+  --panel-bg: rgba(8, 12, 18, 0.94);
+  --panel-border: rgba(255, 255, 255, 0.08);
 }
 
 * {
@@ -16,23 +18,65 @@ body {
   -webkit-app-region: no-drag;
   pointer-events: none;
   user-select: none;
+  font-family:
+    "Segoe UI",
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
 }
 
 .splash-container {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   height: 100%;
-  background: transparent;
+  padding: 28px 26px 22px;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(34, 211, 238, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(8, 13, 20, 0.96), rgba(6, 10, 16, 0.98));
   overflow: hidden;
-  border-radius: 24px;
+}
+
+.ambient {
+  position: relative;
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(36px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.ambient-a {
+  top: 12%;
+  left: 18%;
+  width: 126px;
+  height: 126px;
+  background: rgba(34, 211, 238, 0.14);
+}
+
+.ambient-b {
+  right: 14%;
+  bottom: 18%;
+  width: 92px;
+  height: 92px;
+  background: rgba(34, 211, 238, 0.08);
+}
+
+.splash-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 .logo-wrapper {
   position: relative;
-  width: 140px;
-  height: 140px;
+  width: 114px;
+  height: 114px;
   animation: logoAppear 0.5s ease-out;
 }
 
@@ -50,104 +94,27 @@ body {
 
 .logo-glow {
   position: absolute;
-  inset: -25px;
+  inset: -26px;
   background: radial-gradient(
     circle at center,
-    rgba(34, 211, 238, 0.12) 0%,
-    rgba(34, 211, 238, 0.04) 50%,
-    transparent 70%
+    rgba(34, 211, 238, 0.14) 0%,
+    rgba(34, 211, 238, 0.045) 52%,
+    transparent 76%
   );
-  filter: blur(15px);
-  animation: glowBreath 3s ease-in-out infinite;
+  filter: blur(22px);
+  animation: glowBreath 2.8s ease-in-out infinite;
 }
 
 @keyframes glowBreath {
   0%,
   100% {
-    opacity: 0.5;
-    transform: scale(0.95);
+    opacity: 0.58;
+    transform: scale(0.98);
   }
 
   50% {
-    opacity: 1;
-    transform: scale(1.06);
-  }
-}
-
-.electric-hexagon {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  overflow: visible;
-}
-
-.bolt {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 4px #22d3ee) drop-shadow(0 0 12px rgba(34, 211, 238, 0.7));
-  opacity: 0;
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-}
-
-.edge-1 {
-  animation: energyFlow 3s linear infinite;
-  animation-delay: 0s;
-}
-
-.edge-2 {
-  animation: energyFlow 3s linear infinite;
-  animation-delay: 0.5s;
-}
-
-.edge-3 {
-  animation: energyFlow 3s linear infinite;
-  animation-delay: 1s;
-}
-
-.edge-4 {
-  animation: energyFlow 3s linear infinite;
-  animation-delay: 1.5s;
-}
-
-.edge-5 {
-  animation: energyFlow 3s linear infinite;
-  animation-delay: 2s;
-}
-
-.edge-6 {
-  animation: energyFlow 3s linear infinite;
-  animation-delay: 2.5s;
-}
-
-@keyframes energyFlow {
-  0% {
-    opacity: 0;
-    stroke-dashoffset: 100;
-  }
-
-  5% {
-    opacity: 1;
-  }
-
-  25% {
-    opacity: 1;
-    stroke-dashoffset: 0;
-  }
-
-  40% {
-    opacity: 0;
-    stroke-dashoffset: -50;
-  }
-
-  100% {
-    opacity: 0;
-    stroke-dashoffset: -100;
+    opacity: 0.92;
+    transform: scale(1.03);
   }
 }
 
@@ -157,35 +124,79 @@ body {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.25));
-  animation:
-    electricPulse 2.5s ease-in-out infinite,
-    logoFlicker 3s linear infinite;
+  filter: drop-shadow(0 0 16px rgba(34, 211, 238, 0.18));
   z-index: 1;
 }
 
-@keyframes electricPulse {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.2));
+.status-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  text-align: center;
+}
+
+.brand {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.progress-track {
+  position: relative;
+  z-index: 1;
+  margin-top: 22px;
+  width: 188px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 999px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.progress-track.is-visible {
+  opacity: 1;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background-image:
+    linear-gradient(90deg, rgba(34, 211, 238, 0.62), rgba(34, 211, 238, 0.94)),
+    linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.24) 45%, transparent 100%);
+  background-size:
+    100% 100%,
+    52px 100%;
+  background-repeat: no-repeat;
+  background-position:
+    0 0,
+    -64px 0;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.22);
+  transition: width 220ms ease;
+  animation: progressFillShimmer 1.9s linear infinite;
+}
+
+@keyframes progressFillShimmer {
+  from {
+    background-position:
+      0 0,
+      -64px 0;
   }
 
-  50% {
-    filter: drop-shadow(0 0 20px rgba(34, 211, 238, 0.4));
+  to {
+    background-position:
+      0 0,
+      160px 0;
   }
 }
 
-@keyframes logoFlicker {
-  0%,
-  23%,
-  27%,
-  40%,
-  100% {
-    opacity: 1;
-  }
-
-  25% {
-    opacity: 0.8;
-    filter: drop-shadow(0 0 30px rgba(34, 211, 238, 0.6));
+@media (prefers-reduced-motion: reduce) {
+  .logo-wrapper,
+  .logo-glow,
+  .progress-fill {
+    animation: none !important;
+    transition: none !important;
   }
 }

@@ -1,11 +1,12 @@
 import {
   BackendProcessManager,
   type BackendConfig,
+  type BackendStartupProgress,
   type BackendStatus,
 } from "./backend/BackendProcessManager.js"
 import { BackendClient, type ModelsResponse } from "./backend/BackendClient.js"
 
-export type { BackendConfig, BackendStatus, ModelsResponse }
+export type { BackendConfig, BackendStatus, ModelsResponse, BackendStartupProgress }
 
 export class BackendService {
   private config: BackendConfig
@@ -82,6 +83,10 @@ export class BackendService {
 
   async getModels(): Promise<ModelsResponse> {
     return this.client.getModels()
+  }
+
+  onStartupProgress(listener: (update: BackendStartupProgress) => void): () => void {
+    return this.processManager.onStartupProgress(listener)
   }
 }
 

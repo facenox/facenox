@@ -24,8 +24,19 @@ export function registerWindowHandlers() {
     return true
   })
 
+  ipcMain.on("splash:update-progress", (_event, progress: number) => {
+    WindowManager.updateSplashProgress(progress)
+  })
+
+  ipcMain.on("splash:update-data-step", (_event, step: number) => {
+    WindowManager.updateSplashDataStep(step)
+  })
+
+  ipcMain.on("splash:rendered-progress", (_event, progress: number) => {
+    WindowManager.handleSplashProgressRendered(progress)
+  })
+
   ipcMain.on("app:ready", () => {
-    WindowManager.destroySplash()
-    WindowManager.showMainWindow()
+    void WindowManager.revealMainWindowFromSplash()
   })
 }

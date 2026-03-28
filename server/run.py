@@ -12,6 +12,7 @@ from config.logging_config import get_logging_config
 from config.server import get_server_config
 from config.paths import BASE_DIR
 from database.migrate import run_migrations
+from startup_progress import emit_startup_progress
 
 sys.path.insert(0, str(BASE_DIR))
 
@@ -79,7 +80,9 @@ def main():
         print("Setup validation failed. Please check the configuration.")
         sys.exit(1)
 
+    emit_startup_progress(1, "Setup verified")
     run_migrations()
+    emit_startup_progress(2, "Migrations complete")
 
     server_config = config["server"].copy()
 

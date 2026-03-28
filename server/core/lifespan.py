@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from itertools import count
 
 from fastapi import FastAPI
 from sqlalchemy import select
@@ -18,6 +19,7 @@ from core.models import (
     FaceRecognizer,
 )
 from hooks import set_model_references
+from startup_progress import emit_startup_progress
 
 if not logging.getLogger().handlers:
     logging.basicConfig(level=logging.INFO)
@@ -37,6 +39,7 @@ async def lifespan(app: FastAPI):
         logger.info("Starting up backend server...")
 
         loop = asyncio.get_running_loop()
+        model_progress_steps = count(3)
 
         def _load_face_detector():
             return FaceDetector(
@@ -71,16 +74,22 @@ async def lifespan(app: FastAPI):
                 session_options=FACE_RECOGNIZER_CONFIG["session_options"],
             )
 
+        async def _load_with_progress(loader, detail: str):
+            result = await loop.run_in_executor(None, loader)
+            emit_startup_progress(next(model_progress_steps), detail)
+            return result
+
         # All 3 ONNX model constructors run in parallel — each calls
         # init_*_session() which is the heavyweight disk+memory operation
         face_detector, liveness_detector, face_recognizer = await asyncio.gather(
-            loop.run_in_executor(None, _load_face_detector),
-            loop.run_in_executor(None, _load_liveness_detector),
-            loop.run_in_executor(None, _load_face_recognizer),
+            _load_with_progress(_load_face_detector, "Face detector ready"),
+            _load_with_progress(_load_liveness_detector, "Liveness model ready"),
+            _load_with_progress(_load_face_recognizer, "Recognition model ready"),
         )
 
         # async-only step: DB migration + cache warm-up (must run after __init__)
         await face_recognizer.initialize()
+        emit_startup_progress(6, "Recognition data ready")
 
         set_model_references(liveness_detector, None, face_recognizer, face_detector)
 

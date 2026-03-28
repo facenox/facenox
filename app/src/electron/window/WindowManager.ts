@@ -7,12 +7,35 @@ import { persistentStore } from "../persistentStore.js"
 
 const window_filename = fileURLToPath(import.meta.url)
 const window_dirname = path.dirname(window_filename)
+const FINAL_SPLASH_HOLD_MS = 300
 
 export class WindowManager {
+  static progressFromStep(step: number, totalSteps = state.startupTotalSteps): number {
+    const safeTotalSteps = Math.max(1, totalSteps)
+    const safeStep = Math.max(0, Math.min(step, safeTotalSteps))
+    return Math.round((safeStep / safeTotalSteps) * 100)
+  }
+
   static createSplashWindow(): BrowserWindow {
+    state.startupTotalSteps = 9
+    state.splashProgress = {
+      progress: 0,
+    }
+    state.pendingSplashProgress = [state.splashProgress]
+    state.isSplashReady = false
+    state.isRevealingMainWindow = false
+    state.maxSplashProgressSeen = 0
+    state.splashRenderedProgress = 0
+    state.splashCompletedAt = 0
+    state.isSplashDataPhaseUnlocked = false
+    state.pendingDeferredSplashProgress = null
+    state.pendingRevealAfterSplashRender = false
+    state.splashRevealTimeout = null
+
     const splash = new BrowserWindow({
       width: 300,
       height: 280,
+      show: false,
       transparent: true,
       frame: false,
       alwaysOnTop: true,
@@ -23,6 +46,7 @@ export class WindowManager {
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
+        preload: path.join(window_dirname, "../preload/preload.js"),
       },
     })
 
@@ -31,6 +55,17 @@ export class WindowManager {
         path.join(app.getAppPath(), "out", "main", "splash.html")
       : path.join(window_dirname, "splash.html")
     splash.loadFile(splashPath)
+    splash.webContents.once("did-finish-load", () => {
+      state.isSplashReady = true
+      const initialUpdate =
+        state.pendingSplashProgress[state.pendingSplashProgress.length - 1] ?? state.splashProgress
+
+      state.pendingSplashProgress = []
+      splash.webContents.send("splash:progress", initialUpdate)
+      if (!splash.isDestroyed()) {
+        splash.show()
+      }
+    })
 
     state.splashWindow = splash
     return splash
@@ -41,6 +76,133 @@ export class WindowManager {
       state.splashWindow.destroy()
       state.splashWindow = null
     }
+    if (state.splashRevealTimeout) {
+      clearTimeout(state.splashRevealTimeout)
+      state.splashRevealTimeout = null
+    }
+    state.pendingSplashProgress = []
+    state.isSplashReady = false
+    state.isRevealingMainWindow = false
+    state.maxSplashProgressSeen = 0
+    state.splashRenderedProgress = 0
+    state.splashCompletedAt = 0
+    state.isSplashDataPhaseUnlocked = false
+    state.pendingDeferredSplashProgress = null
+    state.pendingRevealAfterSplashRender = false
+  }
+
+  static updateSplashProgress(progress: number): void {
+    const clampedProgress = Math.max(0, Math.min(100, progress))
+
+    if (clampedProgress < state.maxSplashProgressSeen) {
+      return
+    }
+
+    const update = {
+      progress: clampedProgress,
+    }
+
+    state.splashProgress = update
+    state.maxSplashProgressSeen = clampedProgress
+
+    if (!state.splashWindow || state.splashWindow.isDestroyed()) {
+      return
+    }
+
+    if (!state.isSplashReady) {
+      state.pendingSplashProgress.push(update)
+      return
+    }
+
+    state.splashWindow.webContents.send("splash:progress", update)
+  }
+
+  static updateSplashDataStep(step: number): void {
+    const clampedProgress = WindowManager.progressFromStep(step)
+
+    if (!state.isSplashDataPhaseUnlocked) {
+      state.pendingDeferredSplashProgress = clampedProgress
+      return
+    }
+
+    WindowManager.updateSplashProgress(clampedProgress)
+  }
+
+  static unlockSplashDataPhase(): void {
+    if (state.isSplashDataPhaseUnlocked) {
+      return
+    }
+
+    state.isSplashDataPhaseUnlocked = true
+
+    if (!state.pendingDeferredSplashProgress) {
+      return
+    }
+
+    const deferredProgress = state.pendingDeferredSplashProgress
+    state.pendingDeferredSplashProgress = null
+    WindowManager.updateSplashProgress(deferredProgress)
+  }
+
+  static handleSplashProgressRendered(progress: number): void {
+    const clampedProgress = Math.max(0, Math.min(100, progress))
+    state.splashRenderedProgress = Math.max(state.splashRenderedProgress, clampedProgress)
+    if (state.splashRenderedProgress >= 100 && state.splashCompletedAt === 0) {
+      state.splashCompletedAt = Date.now()
+    }
+
+    if (state.pendingRevealAfterSplashRender && state.splashRenderedProgress >= 100) {
+      WindowManager.scheduleSplashRevealAfterCompletion()
+    }
+  }
+
+  private static finalizeSplashReveal(): void {
+    WindowManager.destroySplash()
+    WindowManager.showMainWindow()
+  }
+
+  private static scheduleSplashRevealAfterCompletion(): void {
+    if (state.splashRevealTimeout) {
+      return
+    }
+
+    const completedAt = state.splashCompletedAt || Date.now()
+    const elapsed = Date.now() - completedAt
+    const remainingDelay = Math.max(0, FINAL_SPLASH_HOLD_MS - elapsed)
+
+    state.pendingRevealAfterSplashRender = false
+    state.splashRevealTimeout = setTimeout(() => {
+      state.splashRevealTimeout = null
+      WindowManager.finalizeSplashReveal()
+    }, remainingDelay)
+  }
+
+  static async revealMainWindowFromSplash(): Promise<void> {
+    if (state.isRevealingMainWindow) {
+      return
+    }
+
+    state.isRevealingMainWindow = true
+    if (
+      state.splashWindow &&
+      !state.splashWindow.isDestroyed() &&
+      state.maxSplashProgressSeen >= 100 &&
+      state.splashRenderedProgress < 100
+    ) {
+      state.pendingRevealAfterSplashRender = true
+      return
+    }
+
+    if (
+      state.splashWindow &&
+      !state.splashWindow.isDestroyed() &&
+      state.splashRenderedProgress >= 100
+    ) {
+      WindowManager.scheduleSplashRevealAfterCompletion()
+      return
+    }
+
+    WindowManager.finalizeSplashReveal()
   }
 
   static createWindow(): void {

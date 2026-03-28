@@ -66,6 +66,10 @@ protocol.registerSchemesAsPrivileged([
 app.whenReady().then(async () => {
   nativeTheme.themeSource = "dark"
   registerAllHandlers()
+  const unsubscribeStartupProgress = backendService.onStartupProgress((update) => {
+    state.startupTotalSteps = update.totalSteps
+    WindowManager.updateSplashProgress(update.progress)
+  })
 
   // Custom protocol for static file access
   protocol.registerFileProtocol("app", (request, callback) => {
@@ -133,6 +137,8 @@ app.whenReady().then(async () => {
   const [backendReady] = await Promise.all([backendPromise, windowPromise])
 
   if (backendReady) {
+    WindowManager.updateSplashProgress(WindowManager.progressFromStep(7))
+    WindowManager.unlockSplashDataPhase()
     syncManager.start()
   }
 
@@ -141,6 +147,8 @@ app.whenReady().then(async () => {
   if (!isDev()) {
     startBackgroundUpdateCheck(state.mainWindow, 60000)
   }
+
+  unsubscribeStartupProgress()
 })
 
 function cleanup() {

@@ -26,6 +26,13 @@ export interface BackendStatus {
   error?: string
 }
 
+export interface BackendStartupProgress {
+  step: number
+  totalSteps: number
+  progress: number
+  detail?: string
+}
+
 export class BackendProcessManager {
   private process: ChildProcess | null = null
   private config: BackendConfig
@@ -34,6 +41,8 @@ export class BackendProcessManager {
   private startupPromise: Promise<void> | null = null
   /** Session token injected into the Python process via FACENOX_API_TOKEN. */
   private token: string = ""
+  private stdoutBuffer = ""
+  private startupProgressListeners = new Set<(update: BackendStartupProgress) => void>()
 
   constructor(config: BackendConfig, status: BackendStatus) {
     this.config = config
@@ -43,6 +52,62 @@ export class BackendProcessManager {
   /** Return the per-session API token so callers can include it as X-Facenox-Token. */
   getToken(): string {
     return this.token
+  }
+
+  onStartupProgress(listener: (update: BackendStartupProgress) => void): () => void {
+    this.startupProgressListeners.add(listener)
+    return () => this.startupProgressListeners.delete(listener)
+  }
+
+  private emitStartupProgress(update: BackendStartupProgress): void {
+    for (const listener of this.startupProgressListeners) {
+      listener(update)
+    }
+  }
+
+  private isStartupProgressLine(line: string): boolean {
+    return line.trim().startsWith("FACENOX_STARTUP_PROGRESS:")
+  }
+
+  private handleStdoutChunk(chunk: string, logStream: fs.WriteStream): void {
+    this.stdoutBuffer += chunk
+    const lines = this.stdoutBuffer.split(/\r?\n/)
+    this.stdoutBuffer = lines.pop() ?? ""
+
+    for (const line of lines) {
+      logStream.write(`[STDOUT] ${line}\n`)
+      this.handleStdoutLine(line)
+      if (isDev() && line.trim() && !this.isStartupProgressLine(line)) {
+        console.log(`[Backend] ${line.trim()}`)
+      }
+    }
+  }
+
+  private handleStdoutLine(line: string): void {
+    const trimmedLine = line.trim()
+    const prefix = "FACENOX_STARTUP_PROGRESS:"
+
+    if (!trimmedLine.startsWith(prefix)) {
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(trimmedLine.slice(prefix.length)) as {
+        step: number
+        total_steps: number
+        progress: number
+        detail?: string
+      }
+
+      this.emitStartupProgress({
+        step: parsed.step,
+        totalSteps: parsed.total_steps,
+        progress: parsed.progress,
+        detail: parsed.detail,
+      })
+    } catch (error) {
+      console.warn("[BackendProcessManager] Failed to parse startup progress:", error)
+    }
   }
 
   async start(): Promise<void> {
@@ -96,9 +161,7 @@ export class BackendProcessManager {
       const logStream = fs.createWriteStream(logFile, { flags: "a" })
 
       this.process.stdout?.on("data", (data) => {
-        const str = data.toString()
-        logStream.write(`[STDOUT] ${str}`)
-        if (isDev()) console.log(`[Backend] ${str.trim()}`)
+        this.handleStdoutChunk(data.toString(), logStream)
       })
 
       this.process.stderr?.on("data", (data) => {
@@ -404,6 +467,7 @@ export class BackendProcessManager {
       clearInterval(this.healthCheckTimer)
       this.healthCheckTimer = null
     }
+    this.stdoutBuffer = ""
   }
 
   private getBackendExecutablePath(): string {

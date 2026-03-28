@@ -9,50 +9,112 @@
 
   <body>
     <div class="splash-container">
-      <div class="logo-wrapper">
-        <div class="logo-glow"></div>
+      <div class="ambient ambient-a"></div>
+      <div class="ambient ambient-b"></div>
 
-        <img
-          class="logo"
-          src="./logo.png"
-          onerror="
-            this.onerror = null
-            this.src = '../../public/icons/logo.png'
-          "
-          alt="FACENOX" />
+      <div class="splash-content">
+        <div class="logo-wrapper">
+          <div class="logo-glow"></div>
 
-        <?xml version="1.0" encoding="utf-8"?>
-        <svg class="electric-hexagon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
-          <g transform="matrix(1, 0, 0, 1, 32.6269989013673, -309.17401123046875)">
-            <path
-              class="bolt edge-1"
-              d="M 85.645 348.781 L 72.645 346.781 L 78.645 343.781 L 58.645 339.781 L 66.645 336.781 L 46.645 331.781 L 37.645 324.781"
-              style="stroke-width: 1; transform-origin: 61.645px 336.781px"
-              transform="matrix(-1, 0, 0, -1, 0.000042, -0.000013)" />
-            <path
-              class="bolt edge-2"
-              d="M 85.373 349.567 L 79.373 364.567 L 89.373 379.567 L 81.373 394.567 L 85.373 409.567"
-              style="stroke-width: 1" />
-            <path
-              class="bolt edge-3"
-              d="M 85.373 409.567 L 72.373 411.567 L 78.373 414.567 L 58.373 418.567 L 66.373 421.567 L 46.373 426.567 L 37.373 433.567"
-              style="stroke-width: 1" />
-            <path
-              class="bolt edge-4"
-              d="M 37.373 433.567 L 28.373 426.567 L 8.373 421.567 L 16.373 418.567 L -3.627 414.567 L 2.373 411.567 L -10.627 409.567"
-              style="stroke-width: 1" />
-            <path
-              class="bolt edge-5"
-              d="M -10.627 409.567 L -4.627 394.567 L -14.627 379.567 L -6.627 364.567 L -10.627 349.567"
-              style="stroke-width: 1" />
-            <path
-              class="bolt edge-6"
-              d="M 38.063 324.781 L 29.063 331.781 L 9.063 336.781 L 17.063 339.781 L -2.937 343.781 L 3.063 346.781 L -9.937 348.781"
-              style="stroke-width: 1; transform-origin: 14.063px 336.781px"
-              transform="matrix(-1, 0, 0, -1, 0.000028, -0.000013)" />
-          </g>
-        </svg>
+          <img
+            class="logo"
+            src="./logo.png"
+            onerror="
+              this.onerror = null
+              this.src = '../../public/icons/logo.png'
+            "
+            alt="FACENOX" />
+        </div>
+
+        <div class="status-block">
+          <div class="brand">Facenox</div>
+          <div class="progress-track" aria-hidden="true">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
       </div>
     </div>
+
+    <script>
+      const progressFill = document.getElementById("progress-fill")
+      const progressTrack = document.querySelector(".progress-track")
+      let currentProgress = 0
+      let targetProgress = 0
+      let animationFrameId = null
+      let lastAnimationTime = performance.now()
+      let hasShownProgress = false
+
+      const renderProgress = () => {
+        if (!progressFill) return
+        progressFill.style.width = `${currentProgress}%`
+      }
+
+      const animateProgress = (timestamp) => {
+        const deltaMs = Math.min(timestamp - lastAnimationTime, 48)
+        lastAnimationTime = timestamp
+        const distance = targetProgress - currentProgress
+
+        if (Math.abs(distance) < 0.15) {
+          currentProgress = targetProgress
+          renderProgress()
+          animationFrameId = null
+          return
+        }
+
+        const timeConstant = targetProgress === 100 ? 95 : 180
+        const smoothing = 1 - Math.exp(-deltaMs / timeConstant)
+        const nextProgress = currentProgress + distance * smoothing
+
+        currentProgress =
+          targetProgress > currentProgress ?
+            Math.min(nextProgress, targetProgress)
+          : Math.max(nextProgress, targetProgress)
+
+        renderProgress()
+        animationFrameId = window.requestAnimationFrame(animateProgress)
+      }
+
+      const startProgressAnimation = () => {
+        if (animationFrameId !== null) return
+        lastAnimationTime = performance.now()
+        animationFrameId = window.requestAnimationFrame(animateProgress)
+      }
+
+      const applyProgress = (progress) => {
+        if (typeof progress === "number") {
+          const clamped = Math.max(0, Math.min(100, progress))
+          if (clamped > 0 && !hasShownProgress) {
+            hasShownProgress = true
+            progressTrack?.classList.add("is-visible")
+          }
+          if (clamped === 100) {
+            targetProgress = 100
+            currentProgress = 100
+            if (animationFrameId !== null) {
+              window.cancelAnimationFrame(animationFrameId)
+              animationFrameId = null
+            }
+            renderProgress()
+            window.requestAnimationFrame(() => {
+              window.requestAnimationFrame(() => {
+                window.facenoxElectron?.reportSplashRenderedProgress?.(100)
+              })
+            })
+            return
+          }
+
+          targetProgress = clamped
+          startProgressAnimation()
+        }
+      }
+
+      renderProgress()
+
+      if (window.facenoxElectron?.onSplashProgress) {
+        window.facenoxElectron.onSplashProgress(({ progress }) => {
+          applyProgress(progress)
+        })
+      }
+    </script>
   </body>
 </html>
