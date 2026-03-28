@@ -41,14 +41,12 @@ export default function WindowBar() {
 
   return (
     <div
-      className="relative flex h-[32px] w-full shrink-0 items-center justify-between select-none"
+      className="relative flex h-[32px] w-full shrink-0 items-center justify-between select-none border-b border-white/8"
       style={
         {
           WebkitAppRegion: isMaximized ? "no-drag" : "drag",
         } as React.CSSProperties
       }>
-      <div className="pointer-events-none absolute inset-0 z-40 border-b border-white/8 bg-[rgba(11,15,20,0.92)]"></div>
-
       <div className="pointer-events-none relative z-40 ml-4 flex flex-1 items-center space-x-3">
         <img
           src="./icons/logo.png"
