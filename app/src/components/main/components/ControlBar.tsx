@@ -7,6 +7,8 @@ interface ControlBarProps {
   isStreaming: boolean
   startCamera: () => void
   stopCamera: (forceCleanup?: boolean) => void
+  isShellReady: boolean
+  hasGroups: boolean
   hasSelectedGroup: boolean
 }
 
@@ -17,6 +19,8 @@ export function ControlBar({
   isStreaming,
   startCamera,
   stopCamera,
+  isShellReady,
+  hasGroups,
   hasSelectedGroup,
 }: ControlBarProps) {
   const hasCameraDevices = cameraDevices.length > 0
@@ -40,13 +44,33 @@ export function ControlBar({
       }
     }
 
+    if (!isShellReady) {
+      return {
+        label: "Preparing...",
+        className:
+          "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/60 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/60",
+        tooltip: "Loading groups and settings",
+        enabled: false,
+      }
+    }
+
+    if (!hasGroups) {
+      return {
+        label: "Start Tracking",
+        className:
+          "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/70",
+        tooltip: "Create a group first to start tracking",
+        enabled: false,
+      }
+    }
+
     if (!hasSelectedGroup) {
       return {
         label: "Start Tracking",
         className:
-          "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/70 hover:bg-[rgba(28,35,44,0.82)] hover:text-white",
-        tooltip: "Create or select a group to start tracking",
-        enabled: true,
+          "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/70",
+        tooltip: "Select a group first to start tracking",
+        enabled: false,
       }
     }
 

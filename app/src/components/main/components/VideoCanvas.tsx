@@ -11,6 +11,7 @@ interface VideoCanvasProps {
   detectionFps: number
   isVideoLoading: boolean
   isStreaming: boolean
+  isShellReady: boolean
   hasSelectedGroup: boolean
   lateTrackingEnabled?: boolean
   classStartTime?: string
@@ -25,6 +26,7 @@ export const VideoCanvas = memo(function VideoCanvas({
   detectionFps,
   isVideoLoading,
   isStreaming,
+  isShellReady,
   hasSelectedGroup,
   lateTrackingEnabled,
   classStartTime,
@@ -127,7 +129,9 @@ export const VideoCanvas = memo(function VideoCanvas({
             </div>
             <div className="relative flex max-w-sm flex-col items-center gap-4 text-xs text-white/60">
               <p>
-                {hasSelectedGroup ?
+                {!isShellReady ?
+                  "Loading groups and settings..."
+                : hasSelectedGroup ?
                   "Select a camera, then press Start Tracking to begin attendance."
                 : "Create a group or choose one to start tracking attendance."}
               </p>

@@ -92,6 +92,7 @@ export default function Main() {
     currentGroup,
     setCurrentGroup,
     attendanceGroups,
+    isShellReady,
     showGroupManagement,
     setShowGroupManagement,
     showDeleteConfirmation,
@@ -285,14 +286,15 @@ export default function Main() {
   const requestGroupSelection = useCallback(() => {
     setSidebarCollapsed(false)
 
-    if (attendanceGroups.length === 0) {
-      setError("Create a group to start tracking.")
-      setShowGroupManagement(true)
+    if (!isShellReady) {
       return
     }
 
-    setError("Select a group from the sidebar to start tracking.")
-  }, [attendanceGroups.length, setError, setShowGroupManagement, setSidebarCollapsed])
+    if (attendanceGroups.length === 0) {
+      setShowGroupManagement(true)
+      return
+    }
+  }, [attendanceGroups.length, isShellReady, setShowGroupManagement, setSidebarCollapsed])
 
   const startCameraGuarded = useCallback(() => {
     if (!currentGroup) {
@@ -562,6 +564,7 @@ export default function Main() {
               detectionFps={detectionFps}
               isVideoLoading={isVideoLoading}
               isStreaming={isStreaming}
+              isShellReady={isShellReady}
               hasSelectedGroup={Boolean(currentGroup)}
               lateTrackingEnabled={!!currentGroup?.settings?.late_threshold_enabled}
               classStartTime={currentGroup?.settings?.class_start_time}
@@ -582,6 +585,8 @@ export default function Main() {
             isStreaming={isStreaming}
             startCamera={startCameraGuarded}
             stopCamera={stopCamera}
+            isShellReady={isShellReady}
+            hasGroups={attendanceGroups.length > 0}
             hasSelectedGroup={Boolean(currentGroup)}
           />
         </div>
