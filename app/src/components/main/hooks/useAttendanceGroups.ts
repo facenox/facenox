@@ -159,9 +159,7 @@ export function useAttendanceGroups() {
       }
 
       const shouldPreserveExisting =
-        currentGroupValue?.id === resolvedGroup.id &&
-        (useAttendanceStore.getState().groupMembers.length > 0 ||
-          useAttendanceStore.getState().recentAttendance.length > 0)
+        currentGroupValue?.id === resolvedGroup.id && !useAttendanceStore.getState().isPanelLoading
 
       await loadSelectedGroupData(resolvedGroup.id, {
         preserveExisting: shouldPreserveExisting,

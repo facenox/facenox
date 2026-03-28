@@ -6,13 +6,6 @@ import type { ExtendedFaceRecognitionResponse } from "@/components/main/utils"
 import { AttendancePanel } from "@/components/main/components/AttendancePanel"
 import { DetectionPanel } from "@/components/main/components/DetectionPanel"
 
-const getAssetPath = (assetName: string): string => {
-  return `./${assetName}`
-}
-
-const sidebarCollapseIcon = getAssetPath("sidebar-collapse.svg")
-const sidebarExpandIcon = getAssetPath("sidebar-expand.svg")
-
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { updaterService } from "@/services"
 import type { UpdateInfo } from "@/types/global"
@@ -31,6 +24,14 @@ interface SidebarProps {
 const MIN_WIDTH = 50
 const MIN_EXPANDED_WIDTH = 240
 const MAX_WIDTH = 340
+
+function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
+  return (
+    <i
+      className={`fa-solid inline-block ${collapsed ? "fa-chevron-left" : "fa-chevron-right"} text-[10px] text-white/70 transition-all duration-200 group-hover:text-white ${collapsed ? "" : "-translate-x-[6px]"}`}
+    />
+  )
+}
 
 export const Sidebar = memo(function Sidebar({
   currentDetections,
@@ -209,14 +210,9 @@ export const Sidebar = memo(function Sidebar({
               position="bottom">
               <button
                 onClick={toggleSidebar}
-                className="sidebar-toggle-btn group flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
+                className="sidebar-toggle-btn group flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] transition-all duration-200 hover:border-white/20 hover:bg-white/5 active:scale-95"
                 aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
-                <img
-                  src={sidebarCollapseIcon}
-                  alt=""
-                  className="h-5 w-5 transition-all duration-300 group-hover:opacity-100"
-                  style={{ filter: "brightness(0) invert(1)", opacity: 0.7 }}
-                />
+                <SidebarToggleIcon collapsed={false} />
               </button>
             </Tooltip>
 
@@ -297,14 +293,9 @@ export const Sidebar = memo(function Sidebar({
             <Tooltip content="Expand sidebar (Ctrl+B)" position="left">
               <button
                 onClick={toggleSidebar}
-                className="sidebar-toggle-btn group flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
+                className="sidebar-toggle-btn group flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] transition-all duration-200 hover:border-white/20 hover:bg-white/5 active:scale-95"
                 aria-label="Expand sidebar">
-                <img
-                  src={sidebarExpandIcon}
-                  alt=""
-                  className="h-5 w-5 transition-all group-hover:opacity-100"
-                  style={{ filter: "brightness(0) invert(1)", opacity: 0.7 }}
-                />
+                <SidebarToggleIcon collapsed={true} />
               </button>
             </Tooltip>
 
