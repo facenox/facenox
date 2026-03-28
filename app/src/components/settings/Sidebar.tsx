@@ -2,7 +2,6 @@ import React from "react"
 import { motion } from "framer-motion"
 import { Dropdown, Tooltip } from "@/components/shared"
 import type { AttendanceGroup } from "@/types/recognition"
-import { useGroupStore } from "@/components/group/stores"
 import type { GroupSection } from "@/components/group/types"
 
 interface SidebarProps {
@@ -35,8 +34,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   sections,
   groupSections,
 }) => {
-  const storeGroups = useGroupStore((state) => state.groups)
-
   return (
     <div className="flex w-[200px] shrink-0 flex-col border-r border-white/6 bg-[rgba(12,16,22,0.96)] sm:w-[240px] lg:w-[280px]">
       <div className="flex items-center justify-between px-3 pt-8 pb-4">
@@ -51,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           <div className="space-y-6">
             <div className="flex items-center px-1">
-              <div className="min-w-0 flex-1" key={storeGroups.length}>
+              <div className="min-w-0 flex-1" key={dropdownGroups.length}>
                 <Dropdown
                   options={dropdownGroups.map((group) => ({
                     value: group.id,
@@ -59,15 +56,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   }))}
                   value={dropdownValue}
                   onChange={(groupId) => {
-                    const groupStore = useGroupStore.getState()
                     if (groupId) {
                       const group = dropdownGroups.find((g) => g.id === groupId)
-                      if (group) {
-                        groupStore.setSelectedGroup(group)
-                        if (onGroupSelect) onGroupSelect(group)
-                      }
+                      if (group && onGroupSelect) onGroupSelect(group)
                     } else {
-                      groupStore.setSelectedGroup(null)
                       window.dispatchEvent(
                         new CustomEvent("selectGroup", {
                           detail: { group: null },

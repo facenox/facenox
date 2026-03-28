@@ -20,6 +20,8 @@ function GroupPanelComponent({
   initialGroup,
   onGroupsChanged,
   isEmbedded = false,
+  embeddedGroups = [],
+  embeddedMembers = [],
   triggerCreateGroup = 0,
   deselectMemberTrigger,
   onHasSelectedMemberChange,
@@ -39,34 +41,47 @@ function GroupPanelComponent({
   const openCreateGroup = useGroupUIStore((state) => state.openCreateGroup)
   const openAddMember = useGroupUIStore((state) => state.openAddMember)
 
-  useGroupData(initialGroup)
+  useGroupData(initialGroup, {
+    isEmbedded,
+    embeddedGroups,
+    embeddedMembers,
+  })
+
+  const notifyParentDataChanged = useCallback(
+    (newGroup?: AttendanceGroup) => {
+      onGroupsChanged?.(newGroup)
+    },
+    [onGroupsChanged],
+  )
 
   const handleMemberSuccess = useCallback(() => {
     const currentGroup = useGroupStore.getState().selectedGroup
-    if (currentGroup) {
+    if (!isEmbedded && currentGroup) {
       fetchGroupDetails(currentGroup.id)
     }
-  }, [fetchGroupDetails])
+    notifyParentDataChanged()
+  }, [fetchGroupDetails, isEmbedded, notifyParentDataChanged])
 
   const handleGroupSuccess = useCallback(
     (newGroup?: AttendanceGroup) => {
-      fetchGroups()
-      if (newGroup) {
+      if (!isEmbedded) {
+        fetchGroups()
+      }
+      if (newGroup && !isEmbedded) {
         setSelectedGroup(newGroup)
       }
 
-      if (onGroupsChanged) {
-        onGroupsChanged(newGroup)
-      }
+      notifyParentDataChanged(newGroup)
     },
-    [fetchGroups, setSelectedGroup, onGroupsChanged],
+    [fetchGroups, isEmbedded, setSelectedGroup, notifyParentDataChanged],
   )
 
   const handleMembersChange = useCallback(() => {
-    if (selectedGroup) {
+    if (!isEmbedded && selectedGroup) {
       fetchGroupDetails(selectedGroup.id)
     }
-  }, [selectedGroup, fetchGroupDetails])
+    notifyParentDataChanged()
+  }, [selectedGroup, fetchGroupDetails, isEmbedded, notifyParentDataChanged])
 
   useEffect(() => {
     if (initialSection) {
@@ -116,7 +131,11 @@ function GroupPanelComponent({
           />
         </div>
 
-        <GroupModals onMemberSuccess={handleMemberSuccess} onGroupSuccess={handleGroupSuccess} />
+        <GroupModals
+          isEmbedded={isEmbedded}
+          onMemberSuccess={handleMemberSuccess}
+          onGroupSuccess={handleGroupSuccess}
+        />
       </>
     )
   }
@@ -158,7 +177,11 @@ function GroupPanelComponent({
         />
       </main>
 
-      <GroupModals onMemberSuccess={handleMemberSuccess} onGroupSuccess={handleGroupSuccess} />
+      <GroupModals
+        isEmbedded={isEmbedded}
+        onMemberSuccess={handleMemberSuccess}
+        onGroupSuccess={handleGroupSuccess}
+      />
     </div>
   )
 }

@@ -22,6 +22,7 @@ interface ContentPanelProps {
   groupInitialSection: GroupSection | undefined
   setGroupInitialSection: (section: GroupSection) => void
   validInitialGroup: AttendanceGroup | null
+  currentGroupMembers: AttendanceMember[]
   triggerCreateGroup: number
   deselectMemberTrigger: number
   setDeselectMemberTrigger: (trigger: number) => void
@@ -58,6 +59,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   groupInitialSection,
   setGroupInitialSection,
   validInitialGroup,
+  currentGroupMembers,
   triggerCreateGroup,
   deselectMemberTrigger,
   setDeselectMemberTrigger,
@@ -211,6 +213,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   onBack={handleGroupBack}
                   initialSection={groupInitialSection}
                   initialGroup={validInitialGroup}
+                  embeddedGroups={dropdownGroups}
+                  embeddedMembers={currentGroupMembers}
                   triggerCreateGroup={triggerCreateGroup}
                   deselectMemberTrigger={deselectMemberTrigger}
                   onHasSelectedMemberChange={setHasSelectedMember}

@@ -5,11 +5,16 @@ import { useGroupModals } from "@/components/group/hooks"
 import { AddMember, CreateGroup, EditGroup, EditMember } from "@/components/group/modals"
 
 interface GroupModalsProps {
+  isEmbedded?: boolean
   onMemberSuccess: () => void
   onGroupSuccess: (group?: AttendanceGroup) => void
 }
 
-export function GroupModals({ onMemberSuccess, onGroupSuccess }: GroupModalsProps) {
+export function GroupModals({
+  isEmbedded = false,
+  onMemberSuccess,
+  onGroupSuccess,
+}: GroupModalsProps) {
   const { selectedGroup, fetchGroups, setSelectedGroup, members } = useGroupStore()
   const {
     showAddMemberModal,
@@ -41,8 +46,10 @@ export function GroupModals({ onMemberSuccess, onGroupSuccess }: GroupModalsProp
         <CreateGroup
           onClose={closeCreateGroup}
           onSuccess={(newGroup) => {
-            fetchGroups()
-            if (newGroup) {
+            if (!isEmbedded) {
+              fetchGroups()
+            }
+            if (newGroup && !isEmbedded) {
               setSelectedGroup(newGroup)
             }
             onGroupSuccess(newGroup)
@@ -55,7 +62,9 @@ export function GroupModals({ onMemberSuccess, onGroupSuccess }: GroupModalsProp
           group={selectedGroup}
           onClose={closeEditGroup}
           onSuccess={() => {
-            fetchGroups()
+            if (!isEmbedded) {
+              fetchGroups()
+            }
             onGroupSuccess()
           }}
         />

@@ -15,6 +15,7 @@ interface AttendanceState {
   shellBootstrapError: string | null
   isPanelLoading: boolean
   isPanelRefreshing: boolean
+  isPanelSwitchPending: boolean
 
   showGroupManagement: boolean
   showDeleteConfirmation: boolean
@@ -63,6 +64,7 @@ export const useAttendanceStore = create<AttendanceState>()(
     shellBootstrapError: null,
     isPanelLoading: false,
     isPanelRefreshing: false,
+    isPanelSwitchPending: false,
     showGroupManagement: false,
     showDeleteConfirmation: false,
     groupToDelete: null,

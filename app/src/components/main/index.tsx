@@ -86,6 +86,7 @@ export default function Main() {
     currentGroup,
     setCurrentGroup,
     attendanceGroups,
+    groupMembers,
     isShellReady,
     showGroupManagement,
     setShowGroupManagement,
@@ -724,6 +725,7 @@ export default function Main() {
             initialGroupSection={groupInitialSection}
             initialSection={settingsInitialSection}
             currentGroup={currentGroup}
+            currentGroupMembers={groupMembers}
             onGroupSelect={handleSelectGroup}
             onGroupsChanged={() => loadAttendanceDataRef.current()}
             initialGroups={attendanceGroups}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { backendService, attendanceManager } from "@/services"
 import { useDialog } from "@/components/shared"
-import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
+import { useGroupUIStore } from "@/components/group/stores"
 import type { GroupSection } from "@/components/group"
 import type {
   QuickSettings,
@@ -16,6 +16,7 @@ interface UseSettingsProps {
   initialSection?: string
   initialGroups: AttendanceGroup[]
   currentGroup: AttendanceGroup | null
+  currentGroupMembers: AttendanceMember[]
   onQuickSettingsChange: (settings: QuickSettings) => void
   onAudioSettingsChange: (settings: Partial<AudioSettings>) => void
   onAttendanceSettingsChange: (settings: Partial<AttendanceSettings>) => void
@@ -29,6 +30,7 @@ export const useSettings = ({
   initialSection,
   initialGroups,
   currentGroup,
+  currentGroupMembers,
   onQuickSettingsChange,
   onAudioSettingsChange,
   onAttendanceSettingsChange,
@@ -46,9 +48,7 @@ export const useSettings = ({
     totalMembers: 0,
     lastUpdated: new Date().toISOString(),
   })
-  const [groups, setGroups] = useState<AttendanceGroup[]>(initialGroups)
   const [isLoading, setIsLoading] = useState(false)
-  const [members, setMembers] = useState<AttendanceMember[]>([])
   const [triggerCreateGroup, setTriggerCreateGroup] = useState(0)
   const [deselectMemberTrigger, setDeselectMemberTrigger] = useState(0)
   const [hasSelectedMember, setHasSelectedMember] = useState(false)
@@ -57,12 +57,6 @@ export const useSettings = ({
   } | null>(null)
   const [addMemberHandler, setAddMemberHandler] = useState<(() => void) | null>(null)
   const [isGroupExpanded, setIsGroupExpanded] = useState(true)
-
-  const storeGroups = useGroupStore((state) => state.groups)
-  const storeSelectedGroup = useGroupStore((state) => state.selectedGroup)
-  const storeMembers = useGroupStore((state) => state.members)
-  const fetchGroups = useGroupStore((state) => state.fetchGroups)
-  const fetchGroupDetails = useGroupStore((state) => state.fetchGroupDetails)
 
   const registrationSource = useGroupUIStore((state) => state.lastRegistrationSource)
   const registrationMode = useGroupUIStore((state) => state.lastRegistrationMode)
@@ -83,90 +77,26 @@ export const useSettings = ({
 
   const loadSystemData = useCallback(async () => {
     try {
-      const [faceStats, attendanceStats, groupsData] = await Promise.all([
+      const [faceStats, attendanceStats] = await Promise.all([
         backendService.getDatabaseStats(),
         attendanceManager.getAttendanceStats(),
-        attendanceManager.getGroups(),
       ])
       setSystemData({
         totalPersons: faceStats.total_persons,
         totalMembers: attendanceStats.total_members,
         lastUpdated: new Date().toISOString(),
       })
-      setGroups(groupsData)
     } catch (error) {
       console.error("Failed to load system data:", error)
     }
   }, [])
 
   useEffect(() => {
-    // Defer heavy data loading until the mount animation settles (prevents "laggy" open)
     const timer = setTimeout(() => {
       loadSystemData()
     }, 250)
     return () => clearTimeout(timer)
   }, [loadSystemData])
-
-  useEffect(() => {
-    setGroups(initialGroups)
-  }, [initialGroups])
-
-  useEffect(() => {
-    if (currentGroup) {
-      const groupExists = groups.some((g) => g.id === currentGroup.id)
-      if (!groupExists) {
-        window.dispatchEvent(
-          new CustomEvent("selectGroup", {
-            detail: { group: null },
-          }),
-        )
-      }
-    }
-  }, [currentGroup, groups])
-
-  useEffect(() => {
-    if (currentGroup) {
-      if (storeSelectedGroup?.id === currentGroup.id) {
-        setMembers(storeMembers)
-      } else {
-        const fetchMembers = async () => {
-          try {
-            const groupMembers = await attendanceManager.getGroupMembers(currentGroup.id)
-            setMembers(groupMembers)
-          } catch (error) {
-            console.error("Failed to load members:", error)
-            setMembers([])
-          }
-        }
-        fetchMembers()
-      }
-    } else {
-      setMembers([])
-    }
-  }, [currentGroup, storeMembers, storeSelectedGroup])
-
-  useEffect(() => {
-    if (
-      activeSection === "group" &&
-      (groupInitialSection === "registration" || groupInitialSection === "members") &&
-      currentGroup
-    ) {
-      if (storeSelectedGroup?.id === currentGroup.id) {
-        fetchGroupDetails(currentGroup.id)
-      } else {
-        const fetchMembers = async () => {
-          try {
-            const groupMembers = await attendanceManager.getGroupMembers(currentGroup.id)
-            setMembers(groupMembers)
-          } catch (error) {
-            console.error("Failed to load members:", error)
-            setMembers([])
-          }
-        }
-        fetchMembers()
-      }
-    }
-  }, [activeSection, groupInitialSection, currentGroup, storeSelectedGroup, fetchGroupDetails])
 
   useEffect(() => {
     if (activeSection !== "group" || groupInitialSection !== "reports") {
@@ -210,45 +140,12 @@ export const useSettings = ({
     }
   }
 
-  const storeGroupsIds = useMemo(() => new Set(storeGroups.map((g) => g.id)), [storeGroups])
-
-  const [storeGroupsLoaded, setStoreGroupsLoaded] = useState(false)
-
-  useEffect(() => {
-    if (storeGroups.length === 0 && !storeGroupsLoaded) {
-      fetchGroups().then(() => {
-        setStoreGroupsLoaded(true)
-      })
-    } else if (storeGroups.length > 0) {
-      setStoreGroupsLoaded(true)
-    }
-  }, [storeGroups.length, storeGroupsLoaded, fetchGroups])
-
-  const dropdownGroups = storeGroupsLoaded ? storeGroups : groups
+  const dropdownGroups = useMemo(() => initialGroups, [initialGroups])
 
   const validInitialGroup = useMemo(() => {
     if (!currentGroup) return null
-    const groupsToCheck = storeGroupsLoaded ? storeGroups : groups
-    return groupsToCheck.some((g) => g.id === currentGroup.id) ? currentGroup : null
-  }, [currentGroup, storeGroups, storeGroupsLoaded, groups])
-
-  useEffect(() => {
-    const groupStore = useGroupStore.getState()
-    const currentGroups = groupStore.groups
-
-    if (validInitialGroup) {
-      const stillExists = currentGroups.some((g) => g.id === validInitialGroup.id)
-      if (stillExists && storeSelectedGroup?.id !== validInitialGroup.id) {
-        groupStore.setSelectedGroup(validInitialGroup)
-        fetchGroupDetails(validInitialGroup.id)
-      }
-    } else if (storeSelectedGroup && storeGroupsLoaded) {
-      const exists = currentGroups.some((g) => g.id === storeSelectedGroup.id)
-      if (!exists) {
-        groupStore.setSelectedGroup(null)
-      }
-    }
-  }, [validInitialGroup, storeSelectedGroup, storeGroupsLoaded, fetchGroupDetails])
+    return initialGroups.some((group) => group.id === currentGroup.id) ? currentGroup : null
+  }, [currentGroup, initialGroups])
 
   const handleGroupBack = useCallback(() => {
     setActiveSection("attendance")
@@ -264,75 +161,18 @@ export const useSettings = ({
 
   const handleGroupsChangedInternal = useCallback(
     async (newGroup?: AttendanceGroup) => {
-      try {
-        const groupStore = useGroupStore.getState()
-        await groupStore.fetchGroups()
-        const updatedGroups = groupStore.groups
-        setStoreGroupsLoaded(true)
-        setGroups(updatedGroups)
-
-        if (currentGroup && !updatedGroups.some((g) => g.id === currentGroup.id)) {
-          groupStore.setSelectedGroup(null)
-          groupStore.setMembers([])
-          window.dispatchEvent(
-            new CustomEvent("selectGroup", {
-              detail: { group: null },
-            }),
-          )
-        }
-      } catch (error) {
-        console.error("[Settings] Error updating groups:", error)
-      }
-
       await loadSystemData()
 
-      if (onGroupsChanged) {
-        onGroupsChanged()
-      }
       if (newGroup && onGroupSelect) {
         onGroupSelect(newGroup)
-        if (groupInitialSection === "registration" || groupInitialSection === "members") {
-          try {
-            await fetchGroupDetails(newGroup.id)
-          } catch (error) {
-            console.error("Failed to refresh members:", error)
-          }
-        }
-      } else if (
-        (groupInitialSection === "registration" || groupInitialSection === "members") &&
-        currentGroup
-      ) {
-        try {
-          await fetchGroupDetails(currentGroup.id)
-        } catch (error) {
-          console.error("Failed to refresh members:", error)
-        }
       }
+
+      onGroupsChanged?.()
     },
-    [
-      currentGroup,
-      groupInitialSection,
-      loadSystemData,
-      onGroupsChanged,
-      onGroupSelect,
-      fetchGroupDetails,
-    ],
+    [loadSystemData, onGroupSelect, onGroupsChanged],
   )
 
-  const dropdownValue = useMemo(() => {
-    if (storeSelectedGroup) {
-      const existsInStore = storeGroups.length > 0 && storeGroupsIds.has(storeSelectedGroup.id)
-      const existsInLocal = groups.some((g) => g.id === storeSelectedGroup.id)
-
-      if (existsInStore || (storeGroups.length === 0 && existsInLocal)) {
-        return storeSelectedGroup.id
-      }
-    }
-    if (validInitialGroup) {
-      return validInitialGroup.id
-    }
-    return null
-  }, [storeSelectedGroup, storeGroupsIds, storeGroups.length, groups, validInitialGroup])
+  const dropdownValue = validInitialGroup?.id ?? null
 
   return {
     activeSection,
@@ -340,9 +180,9 @@ export const useSettings = ({
     groupInitialSection,
     setGroupInitialSection,
     systemData,
-    groups,
+    groups: initialGroups,
     isLoading,
-    members,
+    members: currentGroupMembers,
     triggerCreateGroup,
     setTriggerCreateGroup,
     deselectMemberTrigger,
@@ -363,7 +203,7 @@ export const useSettings = ({
     handleGroupsChanged: handleGroupsChangedInternal,
     dropdownGroups,
     dropdownValue,
-    storeGroups,
+    validInitialGroup,
     loadSystemData,
     registrationSource,
     registrationMode,

@@ -1,4 +1,4 @@
-import type { AttendanceGroup } from "@/types/recognition"
+import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
 export type GroupSection = "overview" | "members" | "reports" | "registration" | "settings"
 
@@ -8,6 +8,8 @@ export interface GroupPanelProps {
   initialGroup?: AttendanceGroup | null // Pre-select this group when GroupPanel opens
   onGroupsChanged?: (newGroup?: AttendanceGroup) => void // Callback when groups are created/deleted, optionally with newly created group
   isEmbedded?: boolean // Whether GroupPanel is embedded in Settings or standalone
+  embeddedGroups?: AttendanceGroup[]
+  embeddedMembers?: AttendanceMember[]
   triggerCreateGroup?: number // When set to a timestamp, opens create group modal
   deselectMemberTrigger?: number // When this changes, deselect the member in FaceCapture
   onHasSelectedMemberChange?: (hasSelectedMember: boolean) => void // Callback when member selection changes

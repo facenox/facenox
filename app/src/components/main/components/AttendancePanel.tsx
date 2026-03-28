@@ -224,6 +224,7 @@ export const AttendancePanel = memo(function AttendancePanel({
     isShellReady,
     isPanelLoading,
     isPanelRefreshing,
+    isPanelSwitchPending,
     setShowGroupManagement,
   } = useAttendanceStore()
 
@@ -429,7 +430,7 @@ export const AttendancePanel = memo(function AttendancePanel({
         </div>
       }
 
-      {!isPanelLoading && recentAttendance.length > 0 && (
+      {!isPanelLoading && !isPanelSwitchPending && recentAttendance.length > 0 && (
         <div className="shrink-0 px-3 pb-3">
           <div className="flex items-center gap-2">
             <div className="group/search relative flex-1">
@@ -479,8 +480,8 @@ export const AttendancePanel = memo(function AttendancePanel({
       )}
 
       {attendanceGroups.length > 0 &&
-        (isPanelLoading ?
-          <AttendanceListSkeleton showSearch={Boolean(currentGroup)} />
+        (isPanelLoading ? <AttendanceListSkeleton showSearch={Boolean(currentGroup)} />
+        : isPanelSwitchPending ? <div className="flex min-h-0 flex-1" />
         : <div className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
             {visibleRecords.length > 0 ?
               <>

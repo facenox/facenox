@@ -4,7 +4,7 @@ import { useSettings } from "./hooks/useSettings"
 import { Sidebar } from "./Sidebar"
 import { ContentPanel } from "./ContentPanel"
 import type { QuickSettings, AttendanceSettings, AudioSettings } from "./types"
-import type { AttendanceGroup } from "@/types/recognition"
+import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import type { GroupSection } from "@/components/group"
 
 export type { QuickSettings, AttendanceSettings }
@@ -21,6 +21,7 @@ interface SettingsProps {
   onAttendanceSettingsChange: (settings: Partial<AttendanceSettings>) => void
   initialGroupSection?: GroupSection
   currentGroup?: AttendanceGroup | null
+  currentGroupMembers?: AttendanceMember[]
   onGroupSelect?: (group: AttendanceGroup) => void
   onGroupsChanged?: () => void
   initialGroups?: AttendanceGroup[]
@@ -31,6 +32,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
   const settings = useSettings({
     ...props,
     initialGroups: props.initialGroups || [],
+    currentGroupMembers: props.currentGroupMembers || [],
     currentGroup: props.currentGroup || null,
   })
 
@@ -78,7 +80,8 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         activeSection={settings.activeSection}
         groupInitialSection={settings.groupInitialSection}
         setGroupInitialSection={settings.setGroupInitialSection}
-        validInitialGroup={props.currentGroup || null}
+        validInitialGroup={settings.validInitialGroup}
+        currentGroupMembers={props.currentGroupMembers || []}
         triggerCreateGroup={settings.triggerCreateGroup}
         deselectMemberTrigger={settings.deselectMemberTrigger}
         setDeselectMemberTrigger={settings.setDeselectMemberTrigger}
