@@ -24,7 +24,7 @@
     "perMachine": false,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "deleteAppDataOnUninstall": false,
+    "deleteAppDataOnUninstall": true,
     "runAfterFinish": true,
     "artifactName": "Facenox-Setup-v${version}.${ext}"
   },
