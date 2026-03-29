@@ -62,10 +62,7 @@ export function useReportData(
       const endDateTime = new Date(endDate)
       endDateTime.setHours(23, 59, 59, 999)
 
-      const toLocalDateTimeParam = (d: Date) => {
-        const pad = (n: number, len = 2) => String(n).padStart(len, "0")
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`
-      }
+      const toApiDateTimeParam = (d: Date) => d.toISOString()
 
       const [generatedReport, loadedSessions, loadedMembers, loadedRecords] = await Promise.all([
         attendanceManager.generateReport(group.id, startDate, endDate),
@@ -77,8 +74,8 @@ export function useReportData(
         attendanceManager.getGroupMembers(group.id),
         attendanceManager.getRecords({
           group_id: group.id,
-          start_date: toLocalDateTimeParam(startDateTime),
-          end_date: toLocalDateTimeParam(endDateTime),
+          start_date: toApiDateTimeParam(startDateTime),
+          end_date: toApiDateTimeParam(endDateTime),
           limit: 1000, // Fetch up to 1k records for the report period to ensure accuracy
         }),
       ])

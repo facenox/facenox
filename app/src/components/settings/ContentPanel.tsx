@@ -14,6 +14,7 @@ import type {
   AttendanceSettings,
   AudioSettings,
   SettingsOverview,
+  TimeHealthOverview,
 } from "@/components/settings/types"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
@@ -39,6 +40,7 @@ interface ContentPanelProps {
   updateAttendanceSetting: (updates: Partial<AttendanceSettings>) => void
   dropdownValue: string | null
   systemData: SettingsOverview
+  timeHealthState: TimeHealthOverview
   groups: AttendanceGroup[]
   isLoading: boolean
   handleClearDatabase: () => void
@@ -76,6 +78,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   updateAttendanceSetting,
   dropdownValue,
   systemData,
+  timeHealthState,
   groups,
   isLoading,
   handleClearDatabase,
@@ -265,6 +268,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             {activeSection === "database" && (
               <Database
                 systemData={systemData}
+                timeHealthState={timeHealthState}
                 groups={groups}
                 isLoading={isLoading}
                 onClearDatabase={handleClearDatabase}

@@ -8,6 +8,7 @@ import type {
   AttendanceSettings,
   AudioSettings,
   SettingsOverview,
+  TimeHealthOverview,
 } from "@/components/settings/types"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
@@ -48,6 +49,10 @@ export const useSettings = ({
     totalMembers: null,
     lastUpdated: new Date().toISOString(),
   })
+  const [timeHealthState, setTimeHealthState] = useState<TimeHealthOverview>({
+    timeHealth: null,
+    loading: false,
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [triggerCreateGroup, setTriggerCreateGroup] = useState(0)
   const [deselectMemberTrigger, setDeselectMemberTrigger] = useState(0)
@@ -77,17 +82,24 @@ export const useSettings = ({
 
   const loadSystemData = useCallback(async () => {
     try {
-      const [faceStats, attendanceStats] = await Promise.all([
+      setTimeHealthState((prev) => ({ ...prev, loading: true }))
+      const [faceStats, attendanceStats, timeHealth] = await Promise.all([
         backendService.getDatabaseStats(),
         attendanceManager.getAttendanceStats(),
+        attendanceManager.getTimeHealth().catch(() => null),
       ])
       setSystemData({
         totalPersons: faceStats.total_persons,
         totalMembers: attendanceStats.total_members,
         lastUpdated: new Date().toISOString(),
       })
+      setTimeHealthState({
+        timeHealth,
+        loading: false,
+      })
     } catch (error) {
       console.error("Failed to load system data:", error)
+      setTimeHealthState((prev) => ({ ...prev, loading: false }))
     }
   }, [])
 
@@ -180,6 +192,7 @@ export const useSettings = ({
     groupInitialSection,
     setGroupInitialSection,
     systemData,
+    timeHealthState,
     groups: initialGroups,
     isLoading,
     members: currentGroupMembers,

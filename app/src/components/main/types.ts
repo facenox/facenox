@@ -74,6 +74,11 @@ export interface AttendanceEvent {
   check_in_time?: string
   check_out_time?: string
   total_hours?: number
+  time_health?: {
+    warning_message?: string
+    online_verification_status?: string
+    online_drift_seconds?: number
+  }
   member?: {
     name?: string
     role?: string

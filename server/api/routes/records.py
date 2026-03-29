@@ -13,6 +13,8 @@ from api.schemas import (
 from api.deps import get_repository
 from database.repository import AttendanceRepository
 from services.attendance_service import AttendanceService
+from services.time_authority_service import get_time_authority
+from time_utils import local_day_bounds, to_storage_local
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,11 @@ async def add_record(
         # Prepare record data
         service = AttendanceService(repo)
         record_id = service.generate_id()
-        timestamp = record_data.timestamp or datetime.now()
+        timestamp = (
+            to_storage_local(record_data.timestamp)
+            if record_data.timestamp
+            else to_storage_local(get_time_authority().current_time_local())
+        )
 
         db_record_data = {
             "id": record_id,
@@ -72,8 +78,8 @@ async def get_records(
         records = await repo.get_records(
             group_id=group_id,
             person_id=person_id,
-            start_date=start_date,
-            end_date=end_date,
+            start_date=to_storage_local(start_date) if start_date else None,
+            end_date=to_storage_local(end_date) if end_date else None,
             limit=limit,
         )
         return records
@@ -118,8 +124,7 @@ async def get_sessions(
             current_date = start_datetime
             while current_date <= end_datetime:
                 date_str = current_date.strftime("%Y-%m-%d")
-                day_start = current_date.replace(hour=0, minute=0, second=0)
-                day_end = current_date.replace(hour=23, minute=59, second=59)
+                day_start, day_end = local_day_bounds(date_str)
 
                 records = await repo.get_records(
                     group_id=group_id, start_date=day_start, end_date=day_end

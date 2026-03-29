@@ -178,6 +178,13 @@ export function useBackendService(options: UseBackendServiceOptions) {
         const { setSuccess } = useUIStore.getState()
         const { currentGroup } = useAttendanceStore.getState()
         const payload = data.data ?? data
+        if (payload.time_health?.warning_message) {
+          window.dispatchEvent(
+            new CustomEvent("facenox:clock-warning", {
+              detail: { message: payload.time_health.warning_message },
+            }),
+          )
+        }
 
         if (currentGroup && payload.group_id === currentGroup.id) {
           const member =

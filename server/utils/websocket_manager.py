@@ -6,11 +6,12 @@ import asyncio
 import json
 import logging
 from typing import Dict, Set, Optional
-from datetime import datetime
 
 from fastapi import WebSocket
 from core.models import FaceTracker
 from config.models import FACE_TRACKER_CONFIG
+from services.time_authority_service import get_time_authority
+from time_utils import local_now
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +43,8 @@ class ConnectionManager:
             await websocket.accept()
             self.active_connections[client_id] = websocket
             self.connection_metadata[client_id] = {
-                "connected_at": datetime.now(),
-                "last_activity": datetime.now(),
+                "connected_at": local_now(),
+                "last_activity": local_now(),
                 "message_count": 0,
                 "streaming": False,
             }
@@ -52,7 +53,7 @@ class ConnectionManager:
                 self.fps_tracking[client_id] = {
                     "timestamps": [],
                     "max_samples": 30,
-                    "last_update": datetime.now(),
+                    "last_update": local_now(),
                     "current_fps": 30,
                 }
 
@@ -69,7 +70,7 @@ class ConnectionManager:
                     "type": "connection",
                     "status": "connected",
                     "client_id": client_id,
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": get_time_authority().current_time_utc().isoformat(),
                 },
                 client_id,
             )
@@ -135,7 +136,7 @@ class ConnectionManager:
             await websocket.send_text(json.dumps(message))
 
             if client_id in self.connection_metadata:
-                self.connection_metadata[client_id]["last_activity"] = datetime.now()
+                self.connection_metadata[client_id]["last_activity"] = local_now()
                 self.connection_metadata[client_id]["message_count"] += 1
 
             return True
@@ -165,9 +166,7 @@ class ConnectionManager:
                 await websocket.send_text(json.dumps(message))
 
                 if client_id in self.connection_metadata:
-                    self.connection_metadata[client_id][
-                        "last_activity"
-                    ] = datetime.now()
+                    self.connection_metadata[client_id]["last_activity"] = local_now()
                     self.connection_metadata[client_id]["message_count"] += 1
 
             except Exception as e:
@@ -196,7 +195,7 @@ class ConnectionManager:
             "data": {
                 "message": error_message,
                 "code": error_code,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": get_time_authority().current_time_utc().isoformat(),
             },
         }
 
@@ -216,7 +215,7 @@ class ConnectionManager:
                 {
                     "type": "streaming",
                     "status": "started",
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": get_time_authority().current_time_utc().isoformat(),
                 },
                 client_id,
             )
@@ -239,7 +238,7 @@ class ConnectionManager:
                 {
                     "type": "streaming",
                     "status": "stopped",
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": get_time_authority().current_time_utc().isoformat(),
                 },
                 client_id,
             )
@@ -269,7 +268,7 @@ class ConnectionManager:
         if client_id not in self.fps_tracking:
             return 30
 
-        now = datetime.now()
+        now = local_now()
         tracking = self.fps_tracking[client_id]
         tracking["timestamps"].append(now)
 
@@ -324,7 +323,11 @@ async def handle_websocket_message(websocket: WebSocket, client_id: str, message
 
         if message_type == "ping":
             await manager.send_personal_message(
-                {"type": "pong", "timestamp": datetime.now().isoformat()}, client_id
+                {
+                    "type": "pong",
+                    "timestamp": get_time_authority().current_time_utc().isoformat(),
+                },
+                client_id,
             )
 
         elif message_type == "start_streaming":

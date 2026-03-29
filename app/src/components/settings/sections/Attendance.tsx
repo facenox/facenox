@@ -27,7 +27,6 @@ export function Attendance({
 }: AttendanceProps) {
   return (
     <div className="max-w-auto space-y-6 px-10 pt-4 pb-10">
-      {/* 1. Core Logic & Rules */}
       <div className="overflow-hidden">
         <div className="border-b border-white/5 py-2">
           <h3 className="flex items-center gap-2 text-[11px] font-medium text-cyan-400/50">
@@ -37,7 +36,6 @@ export function Attendance({
         </div>
 
         <div className="py-2">
-          {/* Time In & Time Out */}
           <div className="flex flex-col">
             <div className={`flex items-center gap-4 py-4 ${hasSelectedGroup ? "" : ""}`}>
               <div className="min-w-0 flex-1">
@@ -45,7 +43,7 @@ export function Attendance({
                   <div className="text-sm font-medium text-white/90">Time In & Time Out</div>
                   <InfoPopover
                     title="Time In & Time Out"
-                    description="When enabled, the system records two events per person per day — their first scan as arrival (Time In) and their most recent scan as departure (Time Out)."
+                    description="When enabled, the system records two events per person per day - their first scan as arrival (Time In) and their most recent scan as departure (Time Out)."
                     details={[
                       "Only 1 scan = Time In only, no Time Out.",
                       "Each scan after the first updates the Time Out.",
@@ -89,7 +87,6 @@ export function Attendance({
 
           <div className="h-px w-full bg-white/8" />
 
-          {/* Spam Filter */}
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
@@ -98,9 +95,9 @@ export function Attendance({
                   title="Spam Filter"
                   description="Prevents the same person from being logged again until the cooldown window expires. Applies to both Activity Log entries and the audio cue."
                   details={[
-                    "Cannot be disabled — fundamental to system integrity.",
-                    "Short window (5s–30s) = more detailed raw logs.",
-                    "Long window (1m–1h) = cleaner, session-style logs.",
+                    "Cannot be disabled - fundamental to system integrity.",
+                    "Short window (5s-30s) = more detailed raw logs.",
+                    "Long window (1m-1h) = cleaner, session-style logs.",
                   ]}
                   side="right"
                 />
@@ -135,7 +132,6 @@ export function Attendance({
 
           <div className="h-px w-full bg-white/8" />
 
-          {/* Recognition Load */}
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
@@ -175,9 +171,8 @@ export function Attendance({
 
           <div className="h-px w-full bg-white/8" />
 
-          {/* Late Tracking */}
           <div className="flex flex-col">
-            <div className={`flex items-center gap-4 py-4`}>
+            <div className="flex items-center gap-4 py-4">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <div className="text-sm font-medium text-white/90">Late Tracking</div>
@@ -262,7 +257,6 @@ export function Attendance({
         </div>
       </div>
 
-      {/* 2. Security & Compliance */}
       <div className="overflow-hidden">
         <div className="border-b border-white/5 py-2">
           <h3 className="flex items-center gap-2 text-[11px] font-medium text-cyan-400/50">
@@ -272,7 +266,6 @@ export function Attendance({
         </div>
 
         <div className="py-2">
-          {/* Anti-Spoof Detection */}
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
@@ -318,7 +311,6 @@ export function Attendance({
 
           <div className="h-px w-full bg-white/8" />
 
-          {/* Data Retention */}
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium text-white/90">Data Retention</div>

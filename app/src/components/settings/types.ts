@@ -1,3 +1,5 @@
+import type { AttendanceTimeHealth } from "@/types/recognition"
+
 // Settings types
 
 export interface QuickSettings {
@@ -27,4 +29,9 @@ export interface SettingsOverview {
   totalPersons: number | null
   totalMembers: number | null
   lastUpdated: string
+}
+
+export interface TimeHealthOverview {
+  timeHealth: AttendanceTimeHealth | null
+  loading: boolean
 }

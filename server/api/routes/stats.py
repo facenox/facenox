@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, Depends
 
@@ -10,6 +9,8 @@ from api.schemas import (
 from api.deps import get_repository
 from database.repository import AttendanceRepository
 from services.attendance_service import AttendanceService
+from services.time_authority_service import get_time_authority
+from time_utils import local_day_bounds, local_date_string
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,9 @@ async def get_group_stats(
         if not group:
             raise HTTPException(status_code=404, detail="Group not found")
 
-        target_date = date or datetime.now().date().strftime("%Y-%m-%d")
+        target_date = date or local_date_string(
+            get_time_authority().current_time_local()
+        )
 
         # Get group members
         members = await repo.get_group_members(group_id)
@@ -52,9 +55,7 @@ async def get_group_stats(
                     break
 
         if needs_recompute:
-            target_datetime = datetime.strptime(target_date, "%Y-%m-%d")
-            start_of_day = target_datetime.replace(hour=0, minute=0, second=0)
-            end_of_day = target_datetime.replace(hour=23, minute=59, second=59)
+            start_of_day, end_of_day = local_day_bounds(target_date)
 
             records = await repo.get_records(
                 group_id=group_id, start_date=start_of_day, end_date=end_of_day

@@ -2,8 +2,17 @@
 
 from datetime import datetime
 from typing import Dict, List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from enum import Enum
+
+from time_utils import to_api_utc
+
+
+def _normalize_api_datetime(value):
+    if value is None or not isinstance(value, datetime):
+        return value
+    return to_api_utc(value)
+
 
 # ============================================================================
 # Face Detection Schemas
@@ -82,6 +91,11 @@ class AttendanceGroupResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_validator("created_at", mode="before")
+    @classmethod
+    def _normalize_created_at(cls, value: Optional[datetime]) -> Optional[datetime]:
+        return _normalize_api_datetime(value)
+
 
 class AttendanceGroupRuleResponse(BaseModel):
     id: str
@@ -93,6 +107,11 @@ class AttendanceGroupRuleResponse(BaseModel):
     track_checkout: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("effective_from", mode="before")
+    @classmethod
+    def _normalize_effective_from(cls, value: Optional[datetime]) -> Optional[datetime]:
+        return _normalize_api_datetime(value)
 
 
 # Member Models
@@ -135,6 +154,13 @@ class AttendanceMemberResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_validator("joined_at", "consent_granted_at", mode="before")
+    @classmethod
+    def _normalize_member_datetimes(
+        cls, value: Optional[datetime]
+    ) -> Optional[datetime]:
+        return _normalize_api_datetime(value)
+
 
 # Record Models
 class AttendanceRecordCreate(BaseModel):
@@ -158,6 +184,11 @@ class AttendanceRecordResponse(BaseModel):
     is_manual: bool
     created_by: Optional[str]
 
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def _normalize_timestamp(cls, value: Optional[datetime]) -> Optional[datetime]:
+        return _normalize_api_datetime(value)
+
 
 # Session Models
 class AttendanceSessionResponse(BaseModel):
@@ -175,6 +206,41 @@ class AttendanceSessionResponse(BaseModel):
     notes: Optional[str]
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("check_in_time", "check_out_time", mode="before")
+    @classmethod
+    def _normalize_session_times(cls, value: Optional[datetime]) -> Optional[datetime]:
+        return _normalize_api_datetime(value)
+
+
+class AttendanceTimeHealthResponse(BaseModel):
+    source: str
+    current_time_utc: datetime
+    current_time_local: datetime
+    time_zone_name: str
+    os_clock_drift_seconds: float
+    os_clock_warning: Optional[str]
+    online_verification_status: str
+    online_reference_url: Optional[str]
+    online_checked_at: Optional[datetime]
+    online_reference_time: Optional[datetime]
+    online_drift_seconds: Optional[float]
+    warning_message: Optional[str]
+
+    @field_validator(
+        "current_time_utc",
+        "current_time_local",
+        "online_checked_at",
+        "online_reference_time",
+        mode="before",
+    )
+    @classmethod
+    def _normalize_time_health_datetimes(cls, value):
+        if value is None or not isinstance(value, datetime):
+            return value
+        if value.tzinfo is None:
+            return to_api_utc(value)
+        return value
 
 
 # Event Models
@@ -201,8 +267,16 @@ class AttendanceEventResponse(BaseModel):
     processed: bool
     event_type: Optional[str] = None  # "check_in" or "check_out"
     error: Optional[str]
+    time_health: Optional[AttendanceTimeHealthResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def _normalize_event_timestamp(
+        cls, value: Optional[datetime]
+    ) -> Optional[datetime]:
+        return _normalize_api_datetime(value)
 
 
 # Settings Models
@@ -302,6 +376,11 @@ class ExportDataResponse(BaseModel):
     sessions: List[AttendanceSessionResponse]
     settings: AttendanceSettingsResponse
     exported_at: datetime
+
+    @field_validator("exported_at", mode="before")
+    @classmethod
+    def _normalize_exported_at(cls, value: Optional[datetime]) -> Optional[datetime]:
+        return _normalize_api_datetime(value)
 
 
 class ImportDataRequest(BaseModel):

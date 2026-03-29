@@ -1,5 +1,5 @@
 import { useState } from "react"
-import type { SettingsOverview } from "@/components/settings/types"
+import type { SettingsOverview, TimeHealthOverview } from "@/components/settings/types"
 import type { AttendanceGroup } from "@/types/recognition"
 import { useDatabaseManagement } from "@/components/settings/sections/hooks/useDatabaseManagement"
 import { DatabaseStats } from "@/components/settings/sections/components/DatabaseStats"
@@ -13,6 +13,7 @@ type BackupStatus = { type: "idle" } | { type: "loading"; action: "export" | "im
 
 interface DatabaseProps {
   systemData: SettingsOverview
+  timeHealthState: TimeHealthOverview
   groups: AttendanceGroup[]
   isLoading: boolean
   onClearDatabase: () => void
@@ -21,6 +22,7 @@ interface DatabaseProps {
 
 export function Database({
   systemData,
+  timeHealthState,
   groups,
   isLoading,
   onClearDatabase,
@@ -143,6 +145,68 @@ export function Database({
     }
   }
 
+  const getFriendlyTimeZoneLabel = (): string => {
+    const health = timeHealthState.timeHealth
+    if (!health?.current_time_local) {
+      return "Local Time"
+    }
+
+    const localDate = new Date(health.current_time_local)
+    const offsetMinutes = -localDate.getTimezoneOffset()
+    const offsetSign = offsetMinutes >= 0 ? "+" : "-"
+    const absoluteOffset = Math.abs(offsetMinutes)
+    const offsetHours = String(Math.floor(absoluteOffset / 60)).padStart(2, "0")
+    const offsetRemainderMinutes = String(absoluteOffset % 60).padStart(2, "0")
+    const utcOffsetLabel = `UTC${offsetSign}${offsetHours}:${offsetRemainderMinutes}`
+
+    let ianaLabel: string | null
+    try {
+      ianaLabel = Intl.DateTimeFormat().resolvedOptions().timeZone || null
+    } catch {
+      ianaLabel = null
+    }
+
+    if (ianaLabel) {
+      return `${ianaLabel} (${utcOffsetLabel})`
+    }
+
+    if (health.time_zone_name?.trim()) {
+      return `${health.time_zone_name.trim()} (${utcOffsetLabel})`
+    }
+
+    return utcOffsetLabel
+  }
+
+  const timeHealth = timeHealthState.timeHealth
+  const timeHealthStatus = timeHealth?.online_verification_status ?? "unavailable"
+  const timeHealthTone =
+    timeHealthStatus === "verified" ? "text-cyan-400/80"
+    : timeHealthStatus === "drift_detected" ? "text-amber-400/90"
+    : "text-white/50"
+  const formattedLocalTime =
+    timeHealth?.current_time_local ?
+      new Date(timeHealth.current_time_local).toLocaleString([], {
+        hour: "numeric",
+        minute: "2-digit",
+        month: "short",
+        day: "numeric",
+      })
+    : null
+  const timeHealthSummary =
+    timeHealthState.loading ? "Checking your device time..."
+    : timeHealthStatus === "verified" ? "Time verified."
+    : timeHealthStatus === "drift_detected" ? "Your device time may need attention."
+    : timeHealthStatus === "offline" ? "Online time checking is unavailable right now."
+    : "Time status is unavailable right now."
+  const timeHealthDetails =
+    timeHealthState.loading ? "Please wait while Facenox checks the current time."
+    : timeHealthStatus === "verified" ? "Your device time is correct."
+    : timeHealthStatus === "drift_detected" ?
+      "Please check your computer's date, time, and timezone settings."
+    : timeHealthStatus === "offline" ?
+      "Facenox still works offline, but it cannot verify internet time right now."
+    : "Facenox could not read the current time status."
+
   return (
     <div className="max-w-auto space-y-6 px-10 pt-4 pb-10">
       {/* Statistics Overview */}
@@ -151,6 +215,50 @@ export function Database({
         totalMembers={systemData.totalMembers}
         totalPersons={systemData.totalPersons}
       />
+
+      <div className="overflow-hidden rounded-lg border border-white/10 bg-[rgba(17,22,29,0.96)]">
+        <div className="flex items-center justify-between gap-4 px-5 py-4">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center gap-2">
+              <i className="fa-solid fa-clock text-xs text-cyan-400" />
+              <h4 className="text-xs font-semibold text-white">Device Time</h4>
+            </div>
+            <p className={`text-[11px] leading-relaxed font-semibold ${timeHealthTone}`}>
+              {timeHealthSummary}
+            </p>
+            <p className="mt-1 text-[11px] leading-relaxed font-medium text-white/40">
+              {timeHealthDetails}
+            </p>
+            <p className="mt-1 text-[10px] leading-relaxed text-white/28">
+              {timeHealthState.loading ?
+                "Checking..."
+              : timeHealth ?
+                `${formattedLocalTime ?? "Current time unavailable"} • ${getFriendlyTimeZoneLabel()}`
+              : "Clock health unavailable right now."}
+            </p>
+          </div>
+
+          {!timeHealthState.loading && timeHealth && (
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <span className={`text-[11px] font-semibold ${timeHealthTone}`}>
+                {timeHealthStatus === "verified" ?
+                  "Verified"
+                : timeHealthStatus === "drift_detected" ?
+                  "Needs attention"
+                : timeHealthStatus === "offline" ?
+                  "Offline"
+                : "Unavailable"}
+              </span>
+              {timeHealthStatus === "drift_detected" &&
+                typeof timeHealth.online_drift_seconds === "number" && (
+                  <span className="text-[11px] text-white/45">
+                    {Math.abs(timeHealth.online_drift_seconds).toFixed(1)}s difference
+                  </span>
+                )}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Backup & Restore Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

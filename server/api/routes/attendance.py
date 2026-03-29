@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 
@@ -20,6 +18,7 @@ from database.models import (
     AttendanceSession,
 )
 from database.repository import AttendanceRepository
+from services.time_authority_service import get_time_authority
 
 from api.routes import (
     groups,
@@ -116,7 +115,7 @@ async def export_attendance_data(
             settings=AttendanceSettingsResponse.model_validate(
                 settings_orm, from_attributes=True
             ),
-            exported_at=datetime.now(),
+            exported_at=get_time_authority().current_time_local(),
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Export failed: {e}")

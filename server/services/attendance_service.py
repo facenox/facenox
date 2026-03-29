@@ -6,8 +6,17 @@ import ulid
 import numpy as np
 import cv2
 
-from api.schemas import AttendanceEventResponse
+from api.schemas import AttendanceEventResponse, AttendanceTimeHealthResponse
 from database.repository import AttendanceRepository
+from services.time_authority_service import get_time_authority
+from time_utils import (
+    ensure_local_aware,
+    from_storage_local,
+    local_date_string,
+    local_now,
+    to_api_utc,
+    to_storage_local,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +33,7 @@ class AttendanceService:
         self.face_detector = face_detector
         self.face_recognizer = face_recognizer
         self.ws_manager = ws_manager
-
-        # Security: Monotonic clock trackers to strictly prevent mid-class system clock tampering
-        import time
-
-        self._boot_time_wall = datetime.now()
-        self._boot_time_mono = time.monotonic()
+        self.time_authority = get_time_authority()
 
     def generate_id(self) -> str:
         """Generate a unique ID"""
@@ -68,8 +72,7 @@ class AttendanceService:
             return {
                 "id": None,
                 "late_threshold_minutes": late_threshold_minutes,
-                "class_start_time": class_start_time
-                or datetime.now().strftime("%H:%M"),
+                "class_start_time": class_start_time or local_now().strftime("%H:%M"),
                 "late_threshold_enabled": late_threshold_enabled,
                 "track_checkout": track_checkout,
             }
@@ -82,7 +85,7 @@ class AttendanceService:
             "class_start_time": getattr(
                 rule,
                 "class_start_time",
-                class_start_time or datetime.now().strftime("%H:%M"),
+                class_start_time or local_now().strftime("%H:%M"),
             ),
             "late_threshold_enabled": getattr(
                 rule, "late_threshold_enabled", late_threshold_enabled
@@ -115,9 +118,9 @@ class AttendanceService:
         if not rule.get("late_threshold_enabled"):
             return False, None
 
-        class_start_time = rule.get("class_start_time") or datetime.now().strftime(
-            "%H:%M"
-        )
+        localized_check_in = ensure_local_aware(from_storage_local(check_in_time))
+
+        class_start_time = rule.get("class_start_time") or local_now().strftime("%H:%M")
         try:
             start_hour, start_minute = [
                 int(part) for part in class_start_time.split(":")
@@ -127,18 +130,18 @@ class AttendanceService:
 
         late_threshold_minutes = int(rule.get("late_threshold_minutes") or 0)
 
-        check_in_hour = check_in_time.hour
+        check_in_hour = localized_check_in.hour
         is_early_morning_arrival = 0 <= check_in_hour < 4
         is_late_night_start = 20 <= start_hour <= 23
 
-        base_date = check_in_time
+        base_date = localized_check_in
         if is_early_morning_arrival and is_late_night_start:
-            base_date = check_in_time - timedelta(days=1)
+            base_date = localized_check_in - timedelta(days=1)
 
         day_start = base_date.replace(
             hour=start_hour, minute=start_minute, second=0, microsecond=0
         )
-        time_diff_minutes = (check_in_time - day_start).total_seconds() / 60
+        time_diff_minutes = (localized_check_in - day_start).total_seconds() / 60
         is_late = time_diff_minutes > late_threshold_minutes
         if not is_late:
             return False, None
@@ -191,7 +194,7 @@ class AttendanceService:
                     if joined_at_obj and target_date_obj < joined_at_obj:
                         continue
 
-                    today = datetime.now().date()
+                    today = local_now().date()
                     if joined_at_obj and joined_at_obj > today:
                         continue
                 except (ValueError, TypeError, AttributeError) as e:
@@ -306,19 +309,11 @@ class AttendanceService:
         """Process an attendance event"""
         cooldown_seconds = settings.attendance_cooldown_seconds or 10
 
-        import time
-
-        elapsed_seconds_since_boot = time.monotonic() - self._boot_time_mono
-        true_time = self._boot_time_wall + timedelta(seconds=elapsed_seconds_since_boot)
-
-        os_time = datetime.now()
-        time_drift = abs((os_time - true_time).total_seconds())
-        if time_drift > 60:
-            logger.warning(
-                f"System clock tampering detected. OS Time is {os_time}, but Monotonic True Time is {true_time}."
-            )
-
-        current_time = true_time
+        time_health = await self.time_authority.get_time_health()
+        time_health_payload = AttendanceTimeHealthResponse.model_validate(
+            time_health.__dict__
+        ).model_dump(mode="json")
+        current_time = to_storage_local(time_health.current_time_local)
         window_seconds = cooldown_seconds
 
         recent_records = await self.repo.get_records(
@@ -328,7 +323,7 @@ class AttendanceService:
             limit=20,
         )
 
-        today_str = current_time.strftime("%Y-%m-%d")
+        today_str = local_date_string(time_health.current_time_local)
 
         # Get group settings for late threshold and check-out tracking
         group = await self.repo.get_group(member.group_id)
@@ -351,6 +346,7 @@ class AttendanceService:
                         location=event_data.location,
                         processed=False,
                         error=f"Cooldown active. Wait {int(cooldown_seconds - time_diff)}s.",
+                        time_health=time_health_payload,
                     )
 
         record_id = self.generate_id()
@@ -390,7 +386,8 @@ class AttendanceService:
         normalized_rule = self._normalize_rule(
             session_rule,
             late_threshold_minutes=group.late_threshold_minutes or 15,
-            class_start_time=group.class_start_time or current_time.strftime("%H:%M"),
+            class_start_time=group.class_start_time
+            or time_health.current_time_local.strftime("%H:%M"),
             late_threshold_enabled=group.late_threshold_enabled or False,
             track_checkout=getattr(group, "track_checkout", False),
         )
@@ -441,17 +438,22 @@ class AttendanceService:
                     "id": record_id,
                     "person_id": event_data.person_id,
                     "group_id": member.group_id,
-                    "timestamp": timestamp.isoformat(),
+                    "timestamp": to_api_utc(timestamp).isoformat(),
                     "confidence": event_data.confidence,
                     "location": event_data.location,
                     "event_type": event_type,
                     "check_in_time": (
-                        check_in_time.isoformat() if check_in_time else None
+                        to_api_utc(check_in_time).isoformat() if check_in_time else None
                     ),
                     "check_out_time": (
-                        check_out_time.isoformat() if check_out_time else None
+                        to_api_utc(check_out_time).isoformat()
+                        if check_out_time
+                        else None
                     ),
                     "total_hours": total_hours,
+                    "time_health": (
+                        time_health_payload if time_health.warning_message else None
+                    ),
                     "member": {
                         "name": member.name,
                         "role": member.role,
@@ -470,6 +472,7 @@ class AttendanceService:
             processed=True,
             event_type=event_type,
             error=None,
+            time_health=time_health_payload,
         )
 
     async def register_face(

@@ -129,6 +129,11 @@ class LiveStreamService:
                 "confidence": event_result.confidence,
                 "location": event_result.location,
                 "event_type": event_result.event_type,
+                "time_health": (
+                    event_result.time_health.model_dump(mode="json")
+                    if event_result.time_health
+                    else None
+                ),
                 "member": {
                     "name": member_info.get("name"),
                     "role": member_info.get("role"),

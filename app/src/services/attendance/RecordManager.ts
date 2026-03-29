@@ -13,19 +13,22 @@ import type { HttpClient } from "./HttpClient"
 export class RecordManager {
   private httpClient: HttpClient
   private apiEndpoints: Record<string, string>
-  private toLocalDateTimeParam: (date: Date) => string
+  private toApiDateTimeParam: (date: Date) => string
   private warnIfSystemClockWentBackwards: () => void
+  private emitClockWarning: (message: string) => void
 
   constructor(
     httpClient: HttpClient,
     apiEndpoints: Record<string, string>,
-    toLocalDateTimeParam: (date: Date) => string,
+    toApiDateTimeParam: (date: Date) => string,
     warnIfSystemClockWentBackwards: () => void,
+    emitClockWarning: (message: string) => void,
   ) {
     this.httpClient = httpClient
     this.apiEndpoints = apiEndpoints
-    this.toLocalDateTimeParam = toLocalDateTimeParam
+    this.toApiDateTimeParam = toApiDateTimeParam
     this.warnIfSystemClockWentBackwards = warnIfSystemClockWentBackwards
+    this.emitClockWarning = emitClockWarning
   }
 
   async processAttendanceEvent(
@@ -50,6 +53,9 @@ export class RecordManager {
       }
 
       const event = await this.httpClient.post<AttendanceEvent>(this.apiEndpoints.events, eventData)
+      if (event.time_health?.warning_message) {
+        this.emitClockWarning(event.time_health.warning_message)
+      }
 
       return {
         ...event,
@@ -101,8 +107,8 @@ export class RecordManager {
         getGroupMembers(groupId),
         this.getRecords({
           group_id: groupId,
-          start_date: this.toLocalDateTimeParam(startDateTime),
-          end_date: this.toLocalDateTimeParam(endDateTime),
+          start_date: this.toApiDateTimeParam(startDateTime),
+          end_date: this.toApiDateTimeParam(endDateTime),
         }),
         this.getSessions({
           group_id: groupId,
@@ -209,7 +215,7 @@ export class RecordManager {
     try {
       const recordData = {
         ...record,
-        timestamp: record.timestamp ? this.toLocalDateTimeParam(record.timestamp) : undefined,
+        timestamp: record.timestamp ? this.toApiDateTimeParam(record.timestamp) : undefined,
         confidence: record.confidence ?? 1.0,
         is_manual: true,
       }

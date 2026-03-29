@@ -14,6 +14,7 @@ from database.models import (
     AuditLog,
     Face,
 )
+from time_utils import local_now, to_storage_local
 
 
 class AttendanceRepository:
@@ -55,11 +56,11 @@ class AttendanceRepository:
         return {
             "id": ulid.ulid(),
             "group_id": group_id,
-            "effective_from": effective_from or datetime.now(),
+            "effective_from": effective_from or to_storage_local(local_now()),
             "late_threshold_minutes": settings.get("late_threshold_minutes"),
             "late_threshold_enabled": settings.get("late_threshold_enabled", False),
             "class_start_time": settings.get(
-                "class_start_time", datetime.now().strftime("%H:%M")
+                "class_start_time", local_now().strftime("%H:%M")
             ),
             "track_checkout": settings.get("track_checkout", False),
             "organization_id": self.organization_id,
@@ -71,10 +72,11 @@ class AttendanceRepository:
         group = AttendanceGroup(
             id=group_data["id"],
             name=group_data["name"],
+            created_at=to_storage_local(local_now()),
             late_threshold_minutes=settings.get("late_threshold_minutes"),
             late_threshold_enabled=settings.get("late_threshold_enabled", False),
             class_start_time=settings.get(
-                "class_start_time", datetime.now().strftime("%H:%M")
+                "class_start_time", local_now().strftime("%H:%M")
             ),
             track_checkout=settings.get("track_checkout", False),
             organization_id=self.organization_id,
@@ -93,7 +95,7 @@ class AttendanceRepository:
                     "class_start_time": group.class_start_time,
                     "track_checkout": group.track_checkout,
                 },
-                effective_from=group.created_at,
+                effective_from=to_storage_local(local_now()),
             )
         )
         return group
@@ -255,7 +257,7 @@ class AttendanceRepository:
                 existing_member.email = member_data.get("email")
                 existing_member.has_consent = has_consent
                 existing_member.consent_granted_at = (
-                    datetime.utcnow() if has_consent else None
+                    to_storage_local(local_now()) if has_consent else None
                 )
                 existing_member.consent_granted_by = (
                     member_data.get("consent_granted_by", "admin")
@@ -277,8 +279,11 @@ class AttendanceRepository:
                 name=member_data["name"],
                 role=member_data.get("role"),
                 email=member_data.get("email"),
+                joined_at=to_storage_local(local_now()),
                 has_consent=has_consent,
-                consent_granted_at=datetime.utcnow() if has_consent else None,
+                consent_granted_at=(
+                    to_storage_local(local_now()) if has_consent else None
+                ),
                 consent_granted_by=(
                     member_data.get("consent_granted_by", "admin")
                     if has_consent
@@ -345,7 +350,7 @@ class AttendanceRepository:
         # Track consent changes for timestamp bookkeeping
         new_consent = updates.get("has_consent")
         if new_consent is True and not member.has_consent:
-            updates["consent_granted_at"] = datetime.utcnow()
+            updates["consent_granted_at"] = to_storage_local(local_now())
             if "consent_granted_by" not in updates:
                 updates["consent_granted_by"] = "admin"
         elif new_consent is False and member.has_consent:
@@ -588,6 +593,7 @@ class AttendanceRepository:
         """Record an immutable audit event for a sensitive administrative action."""
         log = AuditLog(
             id=ulid.ulid(),
+            timestamp=to_storage_local(local_now()),
             action=action,
             target_type=target_type,
             target_id=target_id,
@@ -658,7 +664,7 @@ class AttendanceRepository:
 
     async def cleanup_old_data(self, days: int) -> Dict[str, int]:
         """Delete records and sessions older than X days"""
-        cutoff_date = datetime.now() - timedelta(days=days)
+        cutoff_date = to_storage_local(local_now() - timedelta(days=days))
         cutoff_date_str = cutoff_date.strftime("%Y-%m-%d")
 
         # Delete records

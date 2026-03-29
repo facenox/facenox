@@ -3,7 +3,6 @@ import logging
 import os
 import time
 import hmac
-from datetime import datetime
 
 import cv2
 import numpy as np
@@ -19,6 +18,7 @@ from hooks import (
 )
 from utils.websocket_manager import manager, notification_manager
 from services.live_stream_service import LiveStreamService
+from time_utils import local_now
 
 if not logging.getLogger().handlers:
     logging.basicConfig(level=logging.INFO)
@@ -68,20 +68,20 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
     manager.active_connections[client_id] = websocket
     if client_id not in manager.connection_metadata:
         manager.connection_metadata[client_id] = {
-            "connected_at": datetime.now(),
-            "last_activity": datetime.now(),
+            "connected_at": local_now(),
+            "last_activity": local_now(),
             "message_count": 0,
             "streaming": False,
         }
     else:
-        manager.connection_metadata[client_id]["connected_at"] = datetime.now()
-        manager.connection_metadata[client_id]["last_activity"] = datetime.now()
+        manager.connection_metadata[client_id]["connected_at"] = local_now()
+        manager.connection_metadata[client_id]["last_activity"] = local_now()
 
     if client_id not in manager.fps_tracking:
         manager.fps_tracking[client_id] = {
             "timestamps": [],
             "max_samples": 30,
-            "last_update": datetime.now(),
+            "last_update": local_now(),
             "current_fps": 30,
         }
 
@@ -130,7 +130,7 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                         if client_id in manager.connection_metadata:
                             manager.connection_metadata[client_id][
                                 "last_activity"
-                            ] = datetime.now()
+                            ] = local_now()
                         await websocket.send_text(
                             json.dumps(
                                 {
@@ -169,7 +169,7 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                     if client_id in manager.connection_metadata:
                         manager.connection_metadata[client_id][
                             "last_activity"
-                        ] = datetime.now()
+                        ] = local_now()
                     start_time = time.time()
                     frame_bytes = message_data["bytes"]
 

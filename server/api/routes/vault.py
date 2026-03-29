@@ -2,7 +2,6 @@
 
 import base64
 import logging
-from datetime import datetime
 from typing import List, Optional
 
 import numpy as np
@@ -33,6 +32,8 @@ from api.schemas import (
     SuccessResponse,
 )
 from core.cipher import encrypt_local_data
+from services.time_authority_service import get_time_authority
+from time_utils import to_storage_local
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +143,7 @@ async def export_vault(
             settings=AttendanceSettingsResponse.model_validate(
                 settings_orm, from_attributes=True
             ),
-            exported_at=datetime.now(),
+            exported_at=get_time_authority().current_time_local(),
         )
 
         # Gather face embeddings
@@ -172,7 +173,7 @@ async def export_vault(
 
         return VaultExportResponse(
             version=1,
-            exported_at=datetime.now().isoformat(),
+            exported_at=get_time_authority().current_time_utc().isoformat(),
             attendance=attendance_data,
             biometrics=biometrics,
         )
@@ -187,7 +188,7 @@ async def export_vault(
             await repo.add_audit_log(
                 action="VAULT_EXPORTED",
                 target_type="vault",
-                details=f"exported_at={datetime.now().isoformat()}",
+                details=f"exported_at={get_time_authority().current_time_utc().isoformat()}",
             )
         except Exception as audit_err:
             logger.warning(f"[Vault] Failed to write audit log for export: {audit_err}")
@@ -272,7 +273,7 @@ async def import_vault(
                 GroupRuleModel(
                     id=rule.id,
                     group_id=rule.group_id,
-                    effective_from=rule.effective_from,
+                    effective_from=to_storage_local(rule.effective_from),
                     late_threshold_minutes=rule.late_threshold_minutes,
                     late_threshold_enabled=rule.late_threshold_enabled,
                     class_start_time=rule.class_start_time,
@@ -304,7 +305,11 @@ async def import_vault(
                         role=member.role,
                         email=member.email,
                         has_consent=member.has_consent,
-                        consent_granted_at=member.consent_granted_at,
+                        consent_granted_at=(
+                            to_storage_local(member.consent_granted_at)
+                            if member.consent_granted_at
+                            else None
+                        ),
                         consent_granted_by=member.consent_granted_by,
                         is_active=member.is_active,
                         is_deleted=False,
@@ -316,7 +321,11 @@ async def import_vault(
                 existing.role = member.role
                 existing.email = member.email
                 existing.has_consent = member.has_consent
-                existing.consent_granted_at = member.consent_granted_at
+                existing.consent_granted_at = (
+                    to_storage_local(member.consent_granted_at)
+                    if member.consent_granted_at
+                    else None
+                )
                 existing.consent_granted_by = member.consent_granted_by
                 existing.is_active = member.is_active
                 existing.is_deleted = False
@@ -341,7 +350,7 @@ async def import_vault(
                     person_id=record.person_id,
                     member_id=member.id,
                     group_id=record.group_id,
-                    timestamp=record.timestamp,
+                    timestamp=to_storage_local(record.timestamp),
                     confidence=record.confidence,
                     location=record.location,
                     notes=record.notes,
@@ -366,8 +375,16 @@ async def import_vault(
                     group_id=session.group_id,
                     applied_rule_id=session.applied_rule_id,
                     date=session.date,
-                    check_in_time=session.check_in_time,
-                    check_out_time=session.check_out_time,
+                    check_in_time=(
+                        to_storage_local(session.check_in_time)
+                        if session.check_in_time
+                        else None
+                    ),
+                    check_out_time=(
+                        to_storage_local(session.check_out_time)
+                        if session.check_out_time
+                        else None
+                    ),
                     total_hours=session.total_hours,
                     status=session.status,
                     is_late=session.is_late,
@@ -446,7 +463,7 @@ async def import_vault(
                 target_type="vault",
                 details=(
                     f"overwrite={payload.attendance.overwrite_existing}, "
-                    f"imported_at={datetime.now().isoformat()}"
+                    f"imported_at={get_time_authority().current_time_utc().isoformat()}"
                 ),
             )
         except Exception as audit_err:

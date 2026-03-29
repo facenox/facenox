@@ -7,6 +7,7 @@ import type {
   AttendanceReport,
   AttendanceSettings,
   AttendanceEvent,
+  AttendanceTimeHealth,
   BulkDetectResponse,
   BulkRegisterResponse,
 } from "../types/recognition"
@@ -47,8 +48,9 @@ export class AttendanceManager {
     this.recordManager = new RecordManager(
       this.httpClient,
       API_ENDPOINTS,
-      this.toLocalDateTimeParam.bind(this),
+      this.toApiDateTimeParam.bind(this),
       this.warnIfSystemClockWentBackwards.bind(this),
+      this.emitClockWarning.bind(this),
     )
   }
 
@@ -230,6 +232,10 @@ export class AttendanceManager {
     return { ...this.settings! }
   }
 
+  async getTimeHealth(): Promise<AttendanceTimeHealth> {
+    return this.httpClient.get<AttendanceTimeHealth>("/attendance/settings/time-health")
+  }
+
   async updateSettings(newSettings: Partial<AttendanceSettings>): Promise<void> {
     try {
       const updated = await this.httpClient.put<AttendanceSettings>(
@@ -320,9 +326,16 @@ export class AttendanceManager {
     }
   }
 
-  private toLocalDateTimeParam(date: Date): string {
-    const pad = (n: number, len = 2) => String(n).padStart(len, "0")
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${pad(date.getMilliseconds(), 3)}`
+  private emitClockWarning(message: string): void {
+    window.dispatchEvent(
+      new CustomEvent("facenox:clock-warning", {
+        detail: { message },
+      }),
+    )
+  }
+
+  private toApiDateTimeParam(date: Date): string {
+    return date.toISOString()
   }
 }
 

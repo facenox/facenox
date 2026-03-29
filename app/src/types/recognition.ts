@@ -217,6 +217,21 @@ export interface AttendanceSettings {
   data_retention_days?: number
 }
 
+export interface AttendanceTimeHealth {
+  source: string
+  current_time_utc: Date | string
+  current_time_local: Date | string
+  time_zone_name: string
+  os_clock_drift_seconds: number
+  os_clock_warning?: string
+  online_verification_status: string
+  online_reference_url?: string
+  online_checked_at?: Date | string
+  online_reference_time?: Date | string
+  online_drift_seconds?: number
+  warning_message?: string
+}
+
 export interface AttendanceEvent {
   id: string
   person_id: string
@@ -227,6 +242,7 @@ export interface AttendanceEvent {
   processed: boolean
   event_type?: "check_in" | "check_out"
   error?: string
+  time_health?: AttendanceTimeHealth
 }
 
 // Bulk Operations

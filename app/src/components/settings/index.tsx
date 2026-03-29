@@ -99,6 +99,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         updateAttendanceSetting={settings.updateAttendanceSetting}
         dropdownValue={settings.dropdownValue}
         systemData={settings.systemData}
+        timeHealthState={settings.timeHealthState}
         groups={settings.groups}
         isLoading={settings.isLoading}
         handleClearDatabase={settings.handleClearDatabase}

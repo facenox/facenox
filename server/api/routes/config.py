@@ -7,9 +7,11 @@ from fastapi.responses import StreamingResponse
 from api.schemas import (
     AttendanceSettingsUpdate,
     AttendanceSettingsResponse,
+    AttendanceTimeHealthResponse,
 )
 from api.deps import get_repository
 from database.repository import AttendanceRepository
+from services.time_authority_service import get_time_authority
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +27,16 @@ async def get_settings(repo: AttendanceRepository = Depends(get_repository)):
 
     except Exception as e:
         logger.error(f"Error getting settings: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get("/time-health", response_model=AttendanceTimeHealthResponse)
+async def get_time_health():
+    """Return backend time authority health and drift diagnostics."""
+    try:
+        return await get_time_authority().get_time_health(force_refresh=True)
+    except Exception as e:
+        logger.error(f"Error getting time health: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
