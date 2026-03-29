@@ -31,12 +31,13 @@ async function beforePack(context) {
   console.log(`Building backend executable for ${platform}...`)
 
   try {
-    if (
-      !fs.existsSync(path.join(backendDir, "node_modules")) &&
-      fs.existsSync(path.join(backendDir, "package.json"))
-    ) {
-      console.log("Installing backend dependencies...")
-      execSync("npm install", { stdio: "inherit", cwd: backendDir })
+    const pkgPath = path.join(backendDir, "package.json")
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"))
+      if (pkg.dependencies || pkg.devDependencies) {
+        console.log("Installing Node dependencies for backend...")
+        execSync("npm install", { stdio: "inherit", cwd: backendDir })
+      }
     }
 
     console.log("Installing Python dependencies...")
