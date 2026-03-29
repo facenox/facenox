@@ -4,7 +4,6 @@ import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import type { DialogAPI } from "@/components/shared"
 import type { CapturedFrame } from "@/components/group/sections/registration/types"
 import { makeId } from "@/components/group/sections/registration/hooks/useImageProcessing"
-import { useAttendanceStore } from "@/components/main/stores"
 import { dataUrlToBlob } from "@/utils/dataUrl"
 
 export function useFaceCapture(
@@ -13,7 +12,6 @@ export function useFaceCapture(
   onRefresh?: () => Promise<void> | void,
   dialog?: Pick<DialogAPI, "confirm">,
 ) {
-  const { enableSpoofDetection } = useAttendanceStore()
   const [frames, setFrames] = useState<CapturedFrame[]>([])
   const [globalError, setGlobalError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -98,7 +96,7 @@ export function useFaceCapture(
         }))
       }
     },
-    [updateFrame, enableSpoofDetection],
+    [updateFrame],
   )
 
   const handleRegister = useCallback(
@@ -168,7 +166,7 @@ export function useFaceCapture(
         setIsRegistering(false)
       }
     },
-    [group, frames, members, updateFrame, onRefresh, enableSpoofDetection],
+    [group, frames, members, updateFrame, onRefresh],
   )
 
   const handleRemoveFaceData = useCallback(

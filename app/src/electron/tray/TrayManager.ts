@@ -1,11 +1,7 @@
 import { Tray, Menu, nativeImage, app } from "electron"
-import isDev from "../util.js"
 import path from "path"
-import { fileURLToPath } from "node:url"
 import { state } from "../State.js"
 
-const tray_filename = fileURLToPath(import.meta.url)
-const tray_dirname = path.dirname(tray_filename)
 const FACENOX_TRAY_GUID = "7f6b1d4c-7f86-4c73-a9c1-6c7ef5dd8a52"
 
 export class TrayManager {
@@ -13,9 +9,9 @@ export class TrayManager {
     if (state.tray) return
 
     const iconPath =
-      isDev() ?
-        path.join(tray_dirname, "../../public/icons/logo.png")
-      : path.join(process.resourcesPath, "icons/logo.png")
+      !app.isPackaged ?
+        path.join(app.getAppPath(), "public/icons/logo.png")
+      : path.join(app.getAppPath(), "out/renderer/icons/logo.png")
 
     let image
     try {
