@@ -49,7 +49,7 @@ export default function WindowBar() {
       }>
       <div className="pointer-events-none relative z-40 ml-4 flex flex-1 items-center space-x-3">
         <img
-          src="./icons/logo.png"
+          src="./icons/logo-transparent.png"
           alt="Facenox"
           className="mr-1 -ml-2 h-5 w-5 object-contain opacity-90"
         />
