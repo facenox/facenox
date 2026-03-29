@@ -111,7 +111,7 @@ export class MemberManager {
     imageData: Blob | string,
     bbox: number[],
     landmarks_5: number[][],
-    enableLiveness: boolean = true,
+    enableLiveness: boolean = false, // liveness is an attendance-time check, not registration
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
       let imageBlob: Blob

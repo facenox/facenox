@@ -193,6 +193,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
         blob,
         bestFace.bbox,
         bestFace.landmarks_5,
+        false, // liveness check is NOT needed during registration
       )
 
       if (!result.success) {
