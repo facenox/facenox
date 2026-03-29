@@ -16,7 +16,8 @@
         "from": "public/icons",
         "to": "icons"
       }
-    ]
+    ],
+    "icon": "./public/icons/logo.ico"
   },
   "nsis": {
     "oneClick": false,
@@ -36,7 +37,8 @@
         "from": "../server/dist/server",
         "to": "server/server"
       }
-    ]
+    ],
+    "icon": "./public/icons/logo.png"
   },
   "mac": {
     "target": "dmg",
@@ -45,6 +47,7 @@
         "from": "../server/dist/server",
         "to": "server/server"
       }
-    ]
+    ],
+    "icon": "./public/icons/logo.icns"
   }
 }
