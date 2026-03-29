@@ -269,6 +269,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               <Database
                 systemData={systemData}
                 timeHealthState={timeHealthState}
+                onRefreshTimeHealth={loadSystemData}
                 groups={groups}
                 isLoading={isLoading}
                 onClearDatabase={handleClearDatabase}

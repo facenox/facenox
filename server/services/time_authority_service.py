@@ -68,6 +68,10 @@ class TimeAuthorityService:
     def current_time_local(self) -> datetime:
         return self.current_time_utc().astimezone(get_local_timezone())
 
+    def _rebase_to_utc(self, target_utc: datetime) -> None:
+        self._boot_time_utc = ensure_utc_aware(target_utc)
+        self._boot_time_mono = time.monotonic()
+
     async def get_time_health(
         self, *, force_refresh: bool = False
     ) -> TimeHealthSnapshot:
@@ -86,9 +90,41 @@ class TimeAuthorityService:
         online_result = await self._get_online_reference_result(
             force_refresh=force_refresh
         )
-        warning_message = os_clock_warning
         online_status = online_result["status"]
         online_drift_seconds = online_result.get("drift_seconds")
+
+        if (
+            force_refresh
+            and online_result.get("reference_time") is not None
+            and os_clock_drift_seconds > self._os_warning_threshold_seconds
+        ):
+            os_online_drift_seconds = (
+                os_time_utc - online_result["reference_time"]
+            ).total_seconds()
+            if abs(os_online_drift_seconds) <= self._online_warning_threshold_seconds:
+                self._rebase_to_utc(os_time_utc)
+                current_utc = self.current_time_utc()
+                current_local = current_utc.astimezone(get_local_timezone())
+                os_clock_drift_seconds = abs(
+                    (os_time_utc - current_utc).total_seconds()
+                )
+                os_clock_warning = None
+                online_drift_seconds = (
+                    current_utc - online_result["reference_time"]
+                ).total_seconds()
+                online_status = (
+                    "drift_detected"
+                    if abs(online_drift_seconds)
+                    > self._online_warning_threshold_seconds
+                    else "verified"
+                )
+                online_result = {
+                    **online_result,
+                    "status": online_status,
+                    "drift_seconds": online_drift_seconds,
+                }
+
+        warning_message = os_clock_warning
 
         if online_status == "drift_detected":
             warning_message = (

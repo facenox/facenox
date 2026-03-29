@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react"
+import { useEffect, useRef, useCallback, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Settings } from "@/components/settings"
 import { attendanceManager, WebSocketService } from "@/services"
@@ -34,6 +34,7 @@ import { DeleteConfirmationModal } from "@/components/main/components/DeleteConf
 import { CooldownOverlay } from "@/components/main/components/CooldownOverlay"
 import type { DetectionResult } from "@/components/main/types"
 import { soundEffects } from "@/services/SoundEffectsService"
+import type { AttendanceTimeHealth } from "@/types/recognition"
 
 export default function Main() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -59,6 +60,7 @@ export default function Main() {
   const lastFrameTimestampRef = useRef<number>(0)
   const processCurrentFrameRef = useRef<() => Promise<void>>(async () => {})
   const previousTrackingGroupIdRef = useRef<string | null | undefined>(undefined)
+  const [timeHealth, setTimeHealth] = useState<AttendanceTimeHealth | null>(null)
 
   const backendServiceReadyRef = useRef(false)
   const isScanningRef = useRef(false)
@@ -450,6 +452,44 @@ export default function Main() {
     }
   }, [setWarning])
 
+  useEffect(() => {
+    if (!isShellReady) return
+
+    let isCancelled = false
+
+    const loadTimeHealth = async () => {
+      try {
+        const health = await attendanceManager.getTimeHealth()
+        if (!isCancelled) {
+          setTimeHealth(health)
+        }
+      } catch {
+        if (!isCancelled) {
+          setTimeHealth(null)
+        }
+      }
+    }
+
+    void loadTimeHealth()
+    const interval = window.setInterval(
+      () => {
+        void loadTimeHealth()
+      },
+      5 * 60 * 1000,
+    )
+
+    return () => {
+      isCancelled = true
+      window.clearInterval(interval)
+    }
+  }, [isShellReady])
+
+  const handleOpenTimeSettings = useCallback(() => {
+    setSettingsInitialSection("database")
+    setGroupInitialSection(undefined)
+    setShowSettings(true)
+  }, [setGroupInitialSection, setSettingsInitialSection, setShowSettings])
+
   // Handle auto-pause on minimize
   const wasStreamingBeforeMinimize = useRef(false)
 
@@ -482,6 +522,19 @@ export default function Main() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[var(--bg-primary)] text-white">
+      {!showSettings && timeHealth?.online_verification_status === "drift_detected" && (
+        <div className="pointer-events-none absolute top-3 left-1/2 z-90 -translate-x-1/2">
+          <button
+            type="button"
+            onClick={handleOpenTimeSettings}
+            className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-[11px] font-medium text-amber-300/90 shadow-lg transition-all hover:bg-amber-500/15 hover:text-amber-200"
+            aria-label="Open device time settings">
+            <i className="fa-solid fa-triangle-exclamation text-[10px] text-amber-400" />
+            Device time needs attention
+          </button>
+        </div>
+      )}
+
       {/* Floating Alert System */}
       <div className="pointer-events-none absolute top-6 left-1/2 z-100 w-full max-w-xl -translate-x-1/2 px-4">
         <AnimatePresence>

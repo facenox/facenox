@@ -14,6 +14,7 @@ type BackupStatus = { type: "idle" } | { type: "loading"; action: "export" | "im
 interface DatabaseProps {
   systemData: SettingsOverview
   timeHealthState: TimeHealthOverview
+  onRefreshTimeHealth: () => void
   groups: AttendanceGroup[]
   isLoading: boolean
   onClearDatabase: () => void
@@ -23,6 +24,7 @@ interface DatabaseProps {
 export function Database({
   systemData,
   timeHealthState,
+  onRefreshTimeHealth,
   groups,
   isLoading,
   onClearDatabase,
@@ -238,25 +240,37 @@ export function Database({
             </p>
           </div>
 
-          {!timeHealthState.loading && timeHealth && (
-            <div className="flex shrink-0 flex-col items-end gap-1">
-              <span className={`text-[11px] font-semibold ${timeHealthTone}`}>
-                {timeHealthStatus === "verified" ?
-                  "Verified"
-                : timeHealthStatus === "drift_detected" ?
-                  "Needs attention"
-                : timeHealthStatus === "offline" ?
-                  "Offline"
-                : "Unavailable"}
-              </span>
-              {timeHealthStatus === "drift_detected" &&
-                typeof timeHealth.online_drift_seconds === "number" && (
-                  <span className="text-[11px] text-white/45">
-                    {Math.abs(timeHealth.online_drift_seconds).toFixed(1)}s difference
-                  </span>
-                )}
-            </div>
-          )}
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            <button
+              onClick={onRefreshTimeHealth}
+              disabled={timeHealthState.loading}
+              className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-1.5 text-[11px] font-medium text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40">
+              {timeHealthState.loading ?
+                <i className="fa-solid fa-circle-notch fa-spin text-[10px]" />
+              : <i className="fa-solid fa-rotate-right text-[10px]" />}
+              Check Again
+            </button>
+
+            {!timeHealthState.loading && timeHealth && (
+              <div className="flex flex-col items-end gap-1">
+                <span className={`text-[11px] font-semibold ${timeHealthTone}`}>
+                  {timeHealthStatus === "verified" ?
+                    "Verified"
+                  : timeHealthStatus === "drift_detected" ?
+                    "Needs attention"
+                  : timeHealthStatus === "offline" ?
+                    "Offline"
+                  : "Unavailable"}
+                </span>
+                {timeHealthStatus === "drift_detected" &&
+                  typeof timeHealth.online_drift_seconds === "number" && (
+                    <span className="text-[11px] text-white/45">
+                      {Math.abs(timeHealth.online_drift_seconds).toFixed(1)}s difference
+                    </span>
+                  )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
