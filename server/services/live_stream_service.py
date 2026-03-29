@@ -21,7 +21,7 @@ class LiveGroupContext:
     group_exists: bool = False
     allowed_person_ids: list[str] = field(default_factory=list)
     members_by_person_id: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    attendance_cooldown_seconds: int = 10
+    attendance_cooldown_seconds: int = 300
     max_recognition_faces_per_frame: int = 6
     loaded_at: float = 0.0
 
@@ -225,7 +225,7 @@ class LiveStreamService:
             group = await repo.get_group(config.active_group_id)
 
             group_context.attendance_cooldown_seconds = (
-                settings.attendance_cooldown_seconds or 10
+                settings.attendance_cooldown_seconds or 300
             )
             group_context.max_recognition_faces_per_frame = (
                 settings.max_recognition_faces_per_frame or 6
@@ -305,7 +305,7 @@ class LiveStreamService:
             ):
                 continue
 
-            cooldown_seconds = group_context.attendance_cooldown_seconds or 10
+            cooldown_seconds = group_context.attendance_cooldown_seconds or 300
             cooldown_key = f"{original_person_id}:{group_context.group_id}"
             now = time.time()
             if (

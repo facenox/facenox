@@ -61,22 +61,14 @@ export class TrayManager {
   private static toggleWindow(): void {
     if (!state.mainWindow) return
 
-    const isVisible = state.mainWindow.isVisible()
-    const isMinimized = state.mainWindow.isMinimized()
-    const isFocused = state.mainWindow.isFocused()
-
-    if (isMinimized || !isVisible) {
-      if (isMinimized) state.mainWindow.restore()
-      else state.mainWindow.show()
-
-      state.mainWindow.setSkipTaskbar(false)
+    if (!state.mainWindow.isVisible()) {
+      state.mainWindow.show()
       state.mainWindow.focus()
       return
     }
 
-    if (isFocused) {
-      state.mainWindow.minimize()
-      state.mainWindow.setSkipTaskbar(true)
+    if (state.mainWindow.isFocused()) {
+      state.mainWindow.hide()
     } else {
       state.mainWindow.focus()
     }

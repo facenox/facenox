@@ -56,7 +56,7 @@ export function useFaceCapture(
 
         const detection = await backendService.detectFaces(blob, {
           model_type: "face_detector",
-          enableLiveness: enableSpoofDetection,
+          enableLiveness: false, // Registration should not enforce liveness
         })
 
         if (!detection.faces || detection.faces.length === 0) {
@@ -136,7 +136,7 @@ export function useFaceCapture(
           blob,
           frame.bbox,
           frame.landmarks_5,
-          enableSpoofDetection,
+          false, // Registration should not enforce liveness
         )
 
         if (!result.success) {

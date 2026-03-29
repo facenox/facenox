@@ -307,7 +307,7 @@ class AttendanceService:
         self, event_data, member, settings
     ) -> AttendanceEventResponse:
         """Process an attendance event"""
-        cooldown_seconds = settings.attendance_cooldown_seconds or 10
+        cooldown_seconds = settings.attendance_cooldown_seconds or 300
 
         time_health = await self.time_authority.get_time_health()
         time_health_payload = AttendanceTimeHealthResponse.model_validate(
@@ -482,7 +482,7 @@ class AttendanceService:
         image: np.ndarray,
         bbox: List[float],
         landmarks_5: List[List[float]],
-        enable_liveness: bool = True,
+        enable_liveness: bool = False,  # liveness is enforcement at attendance-time, not enrollment
     ) -> Dict[str, Any]:
         """Register face for a person"""
         if not self.face_recognizer:

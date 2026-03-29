@@ -265,8 +265,7 @@ export class WindowManager {
 
       const dismissed = Boolean(persistentStore.get("ui.closeToTrayNoticeDismissed"))
       if (dismissed) {
-        mainWindow.minimize()
-        mainWindow.setSkipTaskbar(true)
+        mainWindow.hide()
         return
       }
 
@@ -296,8 +295,7 @@ export class WindowManager {
             return
           }
 
-          mainWindow.minimize()
-          mainWindow.setSkipTaskbar(true)
+          mainWindow.hide()
         })
         .finally(() => {
           isHandlingClose = false

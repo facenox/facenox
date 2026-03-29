@@ -231,7 +231,7 @@ class AttendanceSettings(Base, SyncMixin):
     confidence_threshold: Mapped[float] = mapped_column(
         Float, default=FACE_DETECTOR_CONFIG["score_threshold"]
     )
-    attendance_cooldown_seconds: Mapped[int] = mapped_column(Integer, default=10)
+    attendance_cooldown_seconds: Mapped[int] = mapped_column(Integer, default=300)
     # Longer anti-duplicate window (e.g., 30 minutes) to prevent re-logging.
     relog_cooldown_seconds: Mapped[int] = mapped_column(Integer, default=1800)
     enable_liveness_detection: Mapped[bool] = mapped_column(Boolean, default=True)

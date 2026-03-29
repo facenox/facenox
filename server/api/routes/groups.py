@@ -236,7 +236,9 @@ async def register_face_for_group_person(
             meta = json.loads(metadata)
             bbox = meta.get("bbox")
             landmarks_5 = meta.get("landmarks_5")
-            enable_liveness = meta.get("enable_liveness_detection", True)
+            enable_liveness = meta.get(
+                "enable_liveness_detection", False
+            )  # default off for enrollment
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid metadata format: {e}")
 
