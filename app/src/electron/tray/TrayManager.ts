@@ -1,9 +1,6 @@
-import { Tray, Menu, nativeImage, app } from "electron"
+import { Tray, Menu, app } from "electron"
 import path from "path"
-import fs from "fs"
 import { state } from "../State.js"
-
-const FACENOX_TRAY_GUID = "7f6b1d4c-7f86-4c73-a9c1-6c7ef5dd8a52"
 
 export class TrayManager {
   static createTray(): void {
@@ -12,27 +9,17 @@ export class TrayManager {
     const iconPath =
       !app.isPackaged ?
         path.join(app.getAppPath(), "public/icons/logo.png")
-      : path.join(app.getAppPath(), "out/renderer/icons/logo.png")
-
-    let image
-    try {
-      const iconBuffer = fs.readFileSync(iconPath)
-      image = nativeImage.createFromBuffer(iconBuffer)
-      if (image.isEmpty()) throw new Error("Icon image is empty")
-    } catch (e) {
-      console.warn("Failed to load tray icon:", e)
-      return
-    }
+      : path.join(process.resourcesPath, "icons/logo.png")
 
     try {
-      const tray = new Tray(image.resize({ width: 16, height: 16 }), FACENOX_TRAY_GUID)
+      const tray = new Tray(iconPath)
+
       tray.setToolTip("Facenox")
 
       const contextMenu = Menu.buildFromTemplate([
         {
           label: "Quit",
           click: () => {
-            state.isQuitting = true
             app.quit()
           },
         },
