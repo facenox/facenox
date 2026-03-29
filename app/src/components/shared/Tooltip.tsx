@@ -333,7 +333,7 @@ export function Tooltip({
                 left: coords?.left ?? -9999,
                 visibility: coords ? "visible" : "hidden",
               }}>
-              <div className="relative max-w-[280px] rounded-lg border border-white/10 bg-[rgba(15,19,25,0.98)] px-2.5 py-1.5 text-[11px] leading-relaxed font-medium whitespace-normal text-white/90 shadow-[0_10px_28px_rgba(0,0,0,0.38)]">
+              <div className="relative max-w-[280px] rounded-lg border border-white/10 bg-[rgba(15,19,25,0.98)] px-2.5 py-1.5 text-[11px] leading-relaxed font-medium whitespace-normal text-white/90">
                 {content}
                 {coords && <div style={coords.arrowStyle} />}
               </div>
