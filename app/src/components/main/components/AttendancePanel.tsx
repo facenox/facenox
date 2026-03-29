@@ -14,6 +14,7 @@ interface AttendancePanelProps {
 
 type SortField = "time" | "name"
 type SortOrder = "asc" | "desc"
+type RecordScope = "today" | "all"
 
 const ScrollCenteredEmptyState = memo(function ScrollCenteredEmptyState({
   children,
@@ -52,7 +53,8 @@ const AttendanceListSkeleton = memo(function AttendanceListSkeleton({
         <div className="shrink-0 px-3 pb-3">
           <div className="flex items-center">
             <div className="h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/4" />
-            <div className="h-9 w-11 rounded-r-lg border border-white/10 bg-white/4" />
+            <div className="h-9 w-9 border border-r-0 border-white/10 bg-white/4" />
+            <div className="h-9 w-9 rounded-r-lg border border-white/10 bg-white/4" />
           </div>
         </div>
       )}
@@ -267,6 +269,7 @@ export const AttendancePanel = memo(function AttendancePanel({
   }, [setGroupInitialSection, setShowSettings])
 
   const [searchQuery, setSearchQuery] = useState("")
+  const [recordScope, setRecordScope] = useState<RecordScope>("today")
   const [sortField, setSortField] = useState<SortField>("time")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
   const [displayLimit, setDisplayLimit] = useState(20)
@@ -283,6 +286,12 @@ export const AttendancePanel = memo(function AttendancePanel({
       } else if (field === "name") {
         setSortOrder("asc")
       }
+    }
+  }, [])
+
+  const handleRecordScopeChange = useCallback((scope: RecordScope | null) => {
+    if (scope) {
+      setRecordScope(scope)
     }
   }, [])
 
@@ -306,6 +315,11 @@ export const AttendancePanel = memo(function AttendancePanel({
     }
 
     let filtered = [...recentAttendance]
+
+    if (recordScope === "today") {
+      const today = new Date().toDateString()
+      filtered = filtered.filter((record) => record.timestamp.toDateString() === today)
+    }
 
     const normalizedQuery = searchQuery.trim().toLowerCase()
     const hasSearchQuery = normalizedQuery.length > 0
@@ -347,7 +361,7 @@ export const AttendancePanel = memo(function AttendancePanel({
     }
 
     return filtered
-  }, [recentAttendance, displayNameMap, searchQuery, sortField, sortOrder])
+  }, [recentAttendance, displayNameMap, recordScope, searchQuery, sortField, sortOrder])
 
   const visibleRecords = useMemo(() => {
     return processedRecords.slice(0, displayLimit)
@@ -358,7 +372,7 @@ export const AttendancePanel = memo(function AttendancePanel({
   useEffect(() => {
     const timer = setTimeout(() => setDisplayLimit(20), 0)
     return () => clearTimeout(timer)
-  }, [searchQuery, sortField, sortOrder])
+  }, [recordScope, searchQuery, sortField, sortOrder])
 
   if (!isShellReady) {
     return (
@@ -433,40 +447,73 @@ export const AttendancePanel = memo(function AttendancePanel({
       {!isPanelLoading && !isPanelSwitchPending && recentAttendance.length > 0 && (
         <div className="shrink-0 px-3 pb-3">
           <div className="flex items-center gap-2">
-            <div className="group/search relative flex-1">
-              <i className="fa-solid fa-magnifying-glass pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[10px] text-white/20 transition-colors group-focus-within/search:text-cyan-400/60" />
-              <input
-                type="text"
-                placeholder="Search name..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/10 bg-white/3 pr-3 pl-8 text-xs text-white transition-all placeholder:text-white/20 focus:border-white/20 focus:bg-white/6 focus:outline-none"
-              />
-            </div>
-
-            <div className="shrink-0">
-              <Tooltip content={`Sort: ${sortField === "time" ? "Newest" : "A-Z"}`} position="top">
-                <Dropdown
-                  className="w-11"
-                  options={[
-                    { value: "time", label: "Newest" },
-                    { value: "name", label: "A-Z" },
-                  ]}
-                  value={sortField}
-                  onChange={(val) => handleSortFieldChange(val as SortField)}
-                  trigger={
-                    <i
-                      className={`${
-                        sortField === "time" ? "fa-regular fa-clock" : "fa-solid fa-arrow-down-a-z"
-                      } pointer-events-auto text-xs text-white/30 transition-colors hover:text-cyan-400!`}
-                    />
-                  }
-                  menuWidth={110}
-                  buttonClassName="h-9 w-full bg-white/3 border border-l-0 border-white/10 rounded-r-lg rounded-l-none flex items-center justify-center hover:bg-white/[0.07] transition-all"
-                  showPlaceholderOption={false}
-                  allowClear={false}
+            <div className="flex min-w-0 flex-1 items-center">
+              <div className="group/search relative h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/3">
+                <i className="fa-solid fa-magnifying-glass pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[10px] text-white/20 transition-colors group-focus-within/search:text-cyan-400/60" />
+                <input
+                  type="text"
+                  placeholder="Search name..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="h-full w-full border-0 bg-transparent pr-3 pl-8 text-xs text-white transition-all placeholder:text-white/20 focus:bg-white/6 focus:outline-none"
                 />
-              </Tooltip>
+              </div>
+
+              <div className="shrink-0">
+                <Tooltip
+                  content={`Show: ${recordScope === "today" ? "Today" : "All records"}`}
+                  position="top">
+                  <Dropdown
+                    className="w-9"
+                    options={[
+                      { value: "today", label: "Today" },
+                      { value: "all", label: "All" },
+                    ]}
+                    value={recordScope}
+                    onChange={(val) => handleRecordScopeChange(val as RecordScope)}
+                    trigger={
+                      <span className="inline-flex h-4 w-4 items-center justify-center">
+                        <i className="fa-solid fa-calendar-day pointer-events-auto text-[11px] text-white/30 transition-colors hover:text-cyan-400!" />
+                      </span>
+                    }
+                    menuWidth={110}
+                    buttonClassName="h-9 w-full rounded-none border border-r-0 border-white/10 bg-white/3 flex items-center justify-center hover:bg-white/[0.07] transition-all"
+                    showPlaceholderOption={false}
+                    allowClear={false}
+                  />
+                </Tooltip>
+              </div>
+
+              <div className="shrink-0">
+                <Tooltip
+                  content={`Sort: ${sortField === "time" ? "Latest" : "Name"}`}
+                  position="top">
+                  <Dropdown
+                    className="w-9"
+                    options={[
+                      { value: "time", label: "Latest" },
+                      { value: "name", label: "Name" },
+                    ]}
+                    value={sortField}
+                    onChange={(val) => handleSortFieldChange(val as SortField)}
+                    trigger={
+                      <span className="inline-flex h-4 w-4 items-center justify-center">
+                        <i
+                          className={`${
+                            sortField === "time" ? "fa-regular fa-clock" : (
+                              "fa-solid fa-arrow-down-a-z"
+                            )
+                          } pointer-events-auto text-[11px] text-white/30 transition-colors hover:text-cyan-400!`}
+                        />
+                      </span>
+                    }
+                    menuWidth={110}
+                    buttonClassName="h-9 w-full rounded-r-lg rounded-l-none border border-white/10 bg-white/3 flex items-center justify-center hover:bg-white/[0.07] transition-all"
+                    showPlaceholderOption={false}
+                    allowClear={false}
+                  />
+                </Tooltip>
+              </div>
             </div>
 
             {isPanelRefreshing && (
@@ -547,6 +594,12 @@ export const AttendancePanel = memo(function AttendancePanel({
               <ScrollCenteredEmptyState>
                 <div className="text-center text-xs text-white/40">
                   Choose a group to see today&apos;s attendance logs
+                </div>
+              </ScrollCenteredEmptyState>
+            : recordScope === "today" ?
+              <ScrollCenteredEmptyState>
+                <div className="text-center text-xs text-white/40">
+                  No attendance logs for today
                 </div>
               </ScrollCenteredEmptyState>
             : groupMembers.length === 0 ?
