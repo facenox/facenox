@@ -262,20 +262,24 @@ export const About: React.FC = () => {
       {showPrivacyModal && <PrivacyModal onClose={() => setShowPrivacyModal(false)} />}
 
       <div className="mx-auto flex h-full max-w-lg flex-col items-center px-10 pt-4 pb-10 text-center">
-        <div className="w-full flex-1 space-y-12">
-          <div className="space-y-2">
+        <div className="w-full flex-1 space-y-9">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex h-22 w-22 items-center justify-center rounded-3xl border border-white/8 bg-[rgba(22,28,36,0.72)] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
+              <img
+                src="./icons/logo.png"
+                alt="Facenox logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
             <h1 className="text-4xl font-black tracking-[-0.04em] text-white">Facenox</h1>
-            <p className="text-[11px] font-medium text-white/40">AI Attendance Tracker</p>
+            <div className="flex min-h-7 items-center justify-center rounded-full border border-white/6 bg-[rgba(22,28,36,0.46)] px-2.5 py-0.5">
+              <span className="font-mono text-[10px] leading-none tracking-[0.02em] text-white/42">
+                {version || "-"}
+              </span>
+            </div>
           </div>
 
           <div className="w-full space-y-1 text-left">
-            <div className="flex items-center justify-between border-b border-white/5 py-3">
-              <span className="text-[11px] font-medium text-white/30">Version</span>
-              <div className="flex items-center justify-center px-3 py-1.5">
-                <span className="font-mono text-xs text-white/60">{version || "-"}</span>
-              </div>
-            </div>
-
             <div className="flex items-center justify-between border-b border-white/5 py-3">
               <span className="text-[11px] font-medium text-white/30">Updates</span>
               <UpdateStatus
@@ -317,8 +321,8 @@ export const About: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-auto w-full border-t border-white/5 pt-12 pb-4">
-          <div className="mb-6 flex items-center justify-center gap-6">
+        <div className="mt-auto w-full border-t border-white/5 pt-10 pb-4">
+          <div className="mb-5 flex items-center justify-center gap-6">
             <button
               onClick={openLink("https://github.com/facenox/facenox/releases")}
               className="text-[11px] font-semibold text-white/35 transition-colors hover:text-white/80">
