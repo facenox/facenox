@@ -1,5 +1,6 @@
 import { Tray, Menu, nativeImage, app } from "electron"
 import path from "path"
+import fs from "fs"
 import { state } from "../State.js"
 
 const FACENOX_TRAY_GUID = "7f6b1d4c-7f86-4c73-a9c1-6c7ef5dd8a52"
@@ -15,33 +16,38 @@ export class TrayManager {
 
     let image
     try {
-      image = nativeImage.createFromPath(iconPath)
+      const iconBuffer = fs.readFileSync(iconPath)
+      image = nativeImage.createFromBuffer(iconBuffer)
       if (image.isEmpty()) throw new Error("Icon image is empty")
     } catch (e) {
       console.warn("Failed to load tray icon:", e)
       return
     }
 
-    const tray = new Tray(image.resize({ width: 16, height: 16 }), FACENOX_TRAY_GUID)
-    tray.setToolTip("Facenox")
+    try {
+      const tray = new Tray(image.resize({ width: 16, height: 16 }), FACENOX_TRAY_GUID)
+      tray.setToolTip("Facenox")
 
-    const contextMenu = Menu.buildFromTemplate([
-      {
-        label: "Quit",
-        click: () => {
-          state.isQuitting = true
-          app.quit()
+      const contextMenu = Menu.buildFromTemplate([
+        {
+          label: "Quit",
+          click: () => {
+            state.isQuitting = true
+            app.quit()
+          },
         },
-      },
-    ])
+      ])
 
-    tray.setContextMenu(contextMenu)
+      tray.setContextMenu(contextMenu)
 
-    tray.on("click", () => {
-      this.toggleWindow()
-    })
+      tray.on("click", () => {
+        this.toggleWindow()
+      })
 
-    state.tray = tray
+      state.tray = tray
+    } catch (e) {
+      console.warn("Failed to instantiate Tray:", e)
+    }
   }
 
   static destroyTray(): void {
