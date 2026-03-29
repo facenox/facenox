@@ -103,13 +103,15 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     cloudsync: "Cloud Beta",
     about: "About",
   }
+  const isGroupSection = activeSection === "group"
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[var(--bg-secondary)]">
       {/* Section Header */}
       <div className="px-10 pt-10 pb-2">
-        <div className="mx-auto flex w-full max-w-[900px] items-center justify-between">
+        <div
+          className={`flex w-full items-center justify-between ${isGroupSection ? "" : "mx-auto max-w-[900px]"}`}>
           <h2 className="flex items-center text-xl font-semibold">
-            {activeSection === "group" ?
+            {isGroupSection ?
               <div className="flex flex-col">
                 <span className="mb-0.5 text-[11px] font-medium text-cyan-400/60">
                   {dropdownValue ?
@@ -200,7 +202,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
 
       {/* Section Content */}
       <div
-        className={`relative flex flex-1 flex-col ${activeSection === "group" ? "min-h-0 overflow-hidden" : "custom-scroll overflow-x-hidden overflow-y-auto"}`}>
+        className={`relative flex flex-1 flex-col ${isGroupSection ? "min-h-0 overflow-hidden" : "custom-scroll overflow-x-hidden overflow-y-auto"}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSection}

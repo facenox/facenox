@@ -1,58 +1,115 @@
+@property --sb-thumb {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(255, 255, 255, 0.09);
+}
+
+@property --sb-thumb-hover {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(255, 255, 255, 0.2);
+}
+
+.app-content-wrapper,
+.recent-logs-scroll,
+.live-detections,
+.sidebar,
+.custom-scroll,
+.hover-scrollbar,
+.settings-sidebar-scroll {
+  --sb-thumb: rgba(255, 255, 255, 0.09);
+  --sb-thumb-hover: rgba(255, 255, 255, 0.2);
+}
+
 .app-content-wrapper::-webkit-scrollbar,
 .recent-logs-scroll::-webkit-scrollbar,
 .live-detections::-webkit-scrollbar,
-.sidebar::-webkit-scrollbar {
-  width: 7px;
-  height: 8px;
+.sidebar::-webkit-scrollbar,
+.custom-scroll::-webkit-scrollbar,
+.hover-scrollbar::-webkit-scrollbar,
+.settings-sidebar-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
 .app-content-wrapper::-webkit-scrollbar-track,
 .recent-logs-scroll::-webkit-scrollbar-track,
 .live-detections::-webkit-scrollbar-track,
-.sidebar::-webkit-scrollbar-track {
-  background: none;
-  border-radius: 0 0 12px 0;
+.sidebar::-webkit-scrollbar-track,
+.custom-scroll::-webkit-scrollbar-track,
+.hover-scrollbar::-webkit-scrollbar-track,
+.settings-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .app-content-wrapper::-webkit-scrollbar-thumb,
 .recent-logs-scroll::-webkit-scrollbar-thumb,
 .live-detections::-webkit-scrollbar-thumb,
-.sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+.sidebar::-webkit-scrollbar-thumb,
+.custom-scroll::-webkit-scrollbar-thumb,
+.hover-scrollbar::-webkit-scrollbar-thumb,
+.settings-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb);
+  background-clip: padding-box;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-left: 4px solid transparent;
+  border-right: 2px solid transparent;
+  border-radius: 20px;
+  transition: background-color 0.15s ease;
 }
 
 .app-content-wrapper::-webkit-scrollbar-thumb:hover,
 .recent-logs-scroll::-webkit-scrollbar-thumb:hover,
 .live-detections::-webkit-scrollbar-thumb:hover,
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+.sidebar::-webkit-scrollbar-thumb:hover,
+.custom-scroll::-webkit-scrollbar-thumb:hover,
+.hover-scrollbar::-webkit-scrollbar-thumb:hover,
+.settings-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--sb-thumb-hover);
 }
 
-.custom-scroll::-webkit-scrollbar {
-  width: 7px;
-  height: 8px;
+.app-content-wrapper::-webkit-scrollbar-button,
+.recent-logs-scroll::-webkit-scrollbar-button,
+.live-detections::-webkit-scrollbar-button,
+.sidebar::-webkit-scrollbar-button,
+.custom-scroll::-webkit-scrollbar-button,
+.hover-scrollbar::-webkit-scrollbar-button,
+.settings-sidebar-scroll::-webkit-scrollbar-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
 }
 
-.custom-scroll::-webkit-scrollbar-track {
-  background: none;
-  border-radius: 0 0 12px 0;
+.app-content-wrapper::-webkit-scrollbar-button:start:decrement,
+.recent-logs-scroll::-webkit-scrollbar-button:start:decrement,
+.live-detections::-webkit-scrollbar-button:start:decrement,
+.sidebar::-webkit-scrollbar-button:start:decrement,
+.custom-scroll::-webkit-scrollbar-button:start:decrement,
+.hover-scrollbar::-webkit-scrollbar-button:start:decrement,
+.settings-sidebar-scroll::-webkit-scrollbar-button:start:decrement,
+.app-content-wrapper::-webkit-scrollbar-button:end:increment,
+.recent-logs-scroll::-webkit-scrollbar-button:end:increment,
+.live-detections::-webkit-scrollbar-button:end:increment,
+.sidebar::-webkit-scrollbar-button:end:increment,
+.custom-scroll::-webkit-scrollbar-button:end:increment,
+.hover-scrollbar::-webkit-scrollbar-button:end:increment,
+.settings-sidebar-scroll::-webkit-scrollbar-button:end:increment {
+  height: 0;
+  background: transparent;
 }
 
-.custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-
-.custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Hover-reveal Scrollbar Utility */
-@property --sb-thumb {
-  syntax: "<color>";
-  inherits: true;
-  initial-value: transparent;
+.app-content-wrapper::-webkit-scrollbar-corner,
+.recent-logs-scroll::-webkit-scrollbar-corner,
+.live-detections::-webkit-scrollbar-corner,
+.sidebar::-webkit-scrollbar-corner,
+.custom-scroll::-webkit-scrollbar-corner,
+.hover-scrollbar::-webkit-scrollbar-corner,
+.settings-sidebar-scroll::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .hover-scrollbar,
@@ -64,31 +121,5 @@
 
 .hover-scrollbar:hover,
 .settings-sidebar-scroll:hover {
-  --sb-thumb: rgba(255, 255, 255, 0.15);
-}
-
-.hover-scrollbar::-webkit-scrollbar,
-.settings-sidebar-scroll::-webkit-scrollbar {
-  width: 14px;
-}
-
-.hover-scrollbar::-webkit-scrollbar-track,
-.settings-sidebar-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.hover-scrollbar::-webkit-scrollbar-thumb,
-.settings-sidebar-scroll::-webkit-scrollbar-thumb {
-  background: var(--sb-thumb);
-  background-clip: padding-box;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  border-left: 6px solid transparent;
-  border-right: 4px solid transparent;
-  border-radius: 20px;
-}
-
-.hover-scrollbar::-webkit-scrollbar-thumb:hover,
-.settings-sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.25) !important;
+  --sb-thumb: rgba(255, 255, 255, 0.11);
 }

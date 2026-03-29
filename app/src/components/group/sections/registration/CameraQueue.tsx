@@ -364,7 +364,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
         </div>
       )}
 
-      <div className="scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent flex-1 overflow-y-auto px-6 py-6">
+      <div className="custom-scroll flex-1 overflow-y-auto px-6 py-6">
         {!queueStarted ?
           <div className="space-y-6">
             <div>
