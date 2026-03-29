@@ -8,7 +8,7 @@ interface NotificationsProps {
 
 export function Notifications({ audioSettings, onAudioSettingsChange }: NotificationsProps) {
   return (
-    <div className="max-w-auto space-y-4 px-10 pt-4 pb-10">
+    <div className="mx-auto w-full max-w-[900px] space-y-4 px-10 pt-4 pb-10">
       <div className="space-y-4">
         {/* Recognition sound */}
         <div className="flex items-center gap-4 border-b border-white/5 py-3">

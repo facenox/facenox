@@ -210,7 +210,7 @@ export function Database({
     : "Facenox could not read the current time status."
 
   return (
-    <div className="max-w-auto space-y-6 px-10 pt-4 pb-10">
+    <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-4 pb-10">
       {/* Statistics Overview */}
       <DatabaseStats
         groupsCount={groups.length}

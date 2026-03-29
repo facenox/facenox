@@ -107,7 +107,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     <div className="flex flex-1 flex-col overflow-hidden bg-[var(--bg-secondary)]">
       {/* Section Header */}
       <div className="px-10 pt-10 pb-2">
-        <div className="flex items-center justify-between">
+        <div className="mx-auto flex w-full max-w-[900px] items-center justify-between">
           <h2 className="flex items-center text-xl font-semibold">
             {activeSection === "group" ?
               <div className="flex flex-col">
