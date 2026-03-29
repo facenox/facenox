@@ -15,7 +15,7 @@ import type {
 } from "@/components/group/sections/reports/types"
 
 export function useReportTransform(
-  group: AttendanceGroup,
+  _group: AttendanceGroup,
   members: AttendanceMember[],
   sessions: AttendanceSession[],
   records: AttendanceRecord[],
@@ -138,42 +138,8 @@ export function useReportTransform(
           totalHours = recordStats.durationHrs
         }
 
-        // We override the backend's static "is_late" with a dynamic calculation based on current settings.
-        // This allows the user to change the Class Start Time and immediately see updated reports.
-
-        let isLate = finalSession?.is_late || false
-        let lateMinutes = finalSession?.late_minutes || 0
-
-        const isLateTrackingEnabled = group.settings?.late_threshold_enabled ?? false
-
-        if (!isLateTrackingEnabled) {
-          isLate = false
-          lateMinutes = 0
-        } else if (finalSession?.check_in_time && group.settings?.class_start_time) {
-          const checkIn = new Date(finalSession.check_in_time)
-          const [startHour, startMinute] = group.settings.class_start_time.split(":").map(Number)
-
-          if (!isNaN(startHour) && !isNaN(startMinute)) {
-            // Create "Class Start" date object for this specific day
-            const classStart = new Date(checkIn)
-            classStart.setHours(startHour, startMinute, 0, 0)
-
-            // Add Threshold (Grace Period)
-            const thresholdMinutes = group.settings.late_threshold_minutes || 0
-            const lateThresholdTime = new Date(classStart.getTime() + thresholdMinutes * 60000)
-
-            if (checkIn > lateThresholdTime) {
-              isLate = true
-              // Calculate raw minutes late (relative to start time, not threshold)
-              const diffMs = checkIn.getTime() - classStart.getTime()
-              lateMinutes = Math.floor(diffMs / 60000)
-            } else {
-              // If they are within threshold, they are NOT late (even if backend said so previously)
-              isLate = false
-              lateMinutes = 0
-            }
-          }
-        }
+        const isLate = finalSession?.is_late || false
+        const lateMinutes = finalSession?.late_minutes || 0
 
         rows.push({
           person_id: member.person_id,
@@ -221,7 +187,6 @@ export function useReportTransform(
       return true
     })
   }, [
-    group,
     sessionsMap,
     recordStatsMap,
     members,
@@ -255,10 +220,8 @@ export function useReportTransform(
   }, [report, startDateStr, endDateStr])
 
   const finalColumns = useMemo(() => {
-    const isLateTrackingEnabled = group.settings?.late_threshold_enabled ?? false
-    if (isLateTrackingEnabled) return ALL_COLUMNS
-    return ALL_COLUMNS.filter((c) => c.key !== "is_late" && c.key !== "late_minutes")
-  }, [group.settings?.late_threshold_enabled])
+    return ALL_COLUMNS
+  }, [])
 
   return {
     filteredRows,

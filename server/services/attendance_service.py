@@ -55,6 +55,97 @@ class AttendanceService:
 
         return person_id
 
+    @staticmethod
+    def _normalize_rule(
+        rule: Optional[Any],
+        *,
+        late_threshold_minutes: int,
+        class_start_time: Optional[str],
+        late_threshold_enabled: bool,
+        track_checkout: bool,
+    ) -> Dict[str, Any]:
+        if rule is None:
+            return {
+                "id": None,
+                "late_threshold_minutes": late_threshold_minutes,
+                "class_start_time": class_start_time
+                or datetime.now().strftime("%H:%M"),
+                "late_threshold_enabled": late_threshold_enabled,
+                "track_checkout": track_checkout,
+            }
+
+        return {
+            "id": getattr(rule, "id", None),
+            "late_threshold_minutes": getattr(
+                rule, "late_threshold_minutes", late_threshold_minutes
+            ),
+            "class_start_time": getattr(
+                rule,
+                "class_start_time",
+                class_start_time or datetime.now().strftime("%H:%M"),
+            ),
+            "late_threshold_enabled": getattr(
+                rule, "late_threshold_enabled", late_threshold_enabled
+            ),
+            "track_checkout": getattr(rule, "track_checkout", track_checkout),
+        }
+
+    @staticmethod
+    def _select_effective_rule(
+        rule_history: Optional[List[Any]],
+        effective_at: datetime,
+    ) -> Optional[Any]:
+        if not rule_history:
+            return None
+
+        selected_rule = None
+        for rule in rule_history:
+            rule_effective_from = getattr(rule, "effective_from", None)
+            if rule_effective_from is None or rule_effective_from <= effective_at:
+                selected_rule = rule
+            else:
+                break
+
+        return selected_rule or rule_history[0]
+
+    @staticmethod
+    def _calculate_late_status(
+        check_in_time: datetime, rule: Dict[str, Any]
+    ) -> tuple[bool, Optional[int]]:
+        if not rule.get("late_threshold_enabled"):
+            return False, None
+
+        class_start_time = rule.get("class_start_time") or datetime.now().strftime(
+            "%H:%M"
+        )
+        try:
+            start_hour, start_minute = [
+                int(part) for part in class_start_time.split(":")
+            ]
+        except (TypeError, ValueError, AttributeError):
+            start_hour, start_minute = 8, 0
+
+        late_threshold_minutes = int(rule.get("late_threshold_minutes") or 0)
+
+        check_in_hour = check_in_time.hour
+        is_early_morning_arrival = 0 <= check_in_hour < 4
+        is_late_night_start = 20 <= start_hour <= 23
+
+        base_date = check_in_time
+        if is_early_morning_arrival and is_late_night_start:
+            base_date = check_in_time - timedelta(days=1)
+
+        day_start = base_date.replace(
+            hour=start_hour, minute=start_minute, second=0, microsecond=0
+        )
+        time_diff_minutes = (check_in_time - day_start).total_seconds() / 60
+        is_late = time_diff_minutes > late_threshold_minutes
+        if not is_late:
+            return False, None
+
+        # Minutes late should reflect lateness against the scheduled start time.
+        return True, max(0, int(time_diff_minutes))
+
     def compute_sessions_from_records(
         self,
         records: List[Any],
@@ -65,8 +156,9 @@ class AttendanceService:
         late_threshold_enabled: bool = False,
         existing_sessions: Optional[List[Any]] = None,
         track_checkout: bool = False,
+        rule_history: Optional[List[Any]] = None,
     ) -> List[dict]:
-        """Compute attendance sessions from records using configurable late threshold"""
+        """Compute attendance sessions from records using effective-dated group rules."""
         sessions = []
 
         existing_sessions_map = {}
@@ -80,17 +172,6 @@ class AttendanceService:
             if person_id not in records_by_person:
                 records_by_person[person_id] = []
             records_by_person[person_id].append(record)
-
-        if not class_start_time:
-            class_start_time = datetime.now().strftime("%H:%M")
-
-        try:
-            time_parts = class_start_time.split(":")
-            day_start_hour = int(time_parts[0])
-            day_start_minute = int(time_parts[1])
-        except (ValueError, IndexError):
-            day_start_hour = 8
-            day_start_minute = 0
 
         try:
             target_date_obj = datetime.strptime(target_date, "%Y-%m-%d").date()
@@ -129,6 +210,7 @@ class AttendanceService:
                         ),
                         "person_id": person_id,
                         "group_id": member.group_id,
+                        "applied_rule_id": None,
                         "date": target_date,
                         "check_in_time": None,
                         "status": "absent",
@@ -143,24 +225,20 @@ class AttendanceService:
 
             first_record = person_records[0]
             timestamp = first_record.timestamp  # earliest check-in for the day
-
-            if late_threshold_enabled:
-                day_start = timestamp.replace(
-                    hour=day_start_hour,
-                    minute=day_start_minute,
-                    second=0,
-                    microsecond=0,
-                )
-                time_diff_minutes = (timestamp - day_start).total_seconds() / 60
-                is_late = time_diff_minutes >= late_threshold_minutes
-                late_minutes = (
-                    int(time_diff_minutes - late_threshold_minutes) if is_late else 0
-                )
-            else:
-                is_late = False
-                late_minutes = 0
+            selected_rule = self._select_effective_rule(rule_history, timestamp)
+            normalized_rule = self._normalize_rule(
+                selected_rule,
+                late_threshold_minutes=late_threshold_minutes,
+                class_start_time=class_start_time,
+                late_threshold_enabled=late_threshold_enabled,
+                track_checkout=track_checkout,
+            )
+            is_late, late_minutes = self._calculate_late_status(
+                timestamp, normalized_rule
+            )
 
             existing_session = existing_sessions_map.get(person_id)
+            should_track_checkout = bool(normalized_rule.get("track_checkout"))
             sessions.append(
                 {
                     "id": (
@@ -168,22 +246,23 @@ class AttendanceService:
                     ),
                     "person_id": person_id,
                     "group_id": member.group_id,
+                    "applied_rule_id": normalized_rule.get("id"),
                     "date": target_date,
                     "check_in_time": timestamp,
                     "check_out_time": (
                         person_records[-1].timestamp
-                        if track_checkout and len(person_records) > 1
+                        if should_track_checkout and len(person_records) > 1
                         else None
                     ),
                     "total_hours": (
                         (person_records[-1].timestamp - timestamp).total_seconds()
                         / 3600.0
-                        if track_checkout and len(person_records) > 1
+                        if should_track_checkout and len(person_records) > 1
                         else None
                     ),
                     "status": "present",
                     "is_late": is_late,
-                    "late_minutes": late_minutes if is_late else None,
+                    "late_minutes": late_minutes,
                     "notes": None,
                 }
             )
@@ -253,7 +332,6 @@ class AttendanceService:
 
         # Get group settings for late threshold and check-out tracking
         group = await self.repo.get_group(member.group_id)
-        track_checkout = getattr(group, "track_checkout", False)
 
         existing_session = await self.repo.get_session(event_data.person_id, today_str)
 
@@ -293,9 +371,29 @@ class AttendanceService:
         # Add record
         await self.repo.add_record(record_data)
 
-        late_threshold_minutes = group.late_threshold_minutes or 15
-        class_start_time = group.class_start_time or current_time.strftime("%H:%M")
-        late_threshold_enabled = group.late_threshold_enabled or False
+        session_rule = None
+        if existing_session and getattr(existing_session, "applied_rule_id", None):
+            session_rule = await self.repo.get_group_rule(
+                existing_session.applied_rule_id
+            )
+
+        if session_rule is None:
+            rule_effective_at = (
+                existing_session.check_in_time
+                if existing_session and existing_session.check_in_time
+                else current_time
+            )
+            session_rule = await self.repo.get_effective_group_rule(
+                member.group_id, rule_effective_at
+            )
+
+        normalized_rule = self._normalize_rule(
+            session_rule,
+            late_threshold_minutes=group.late_threshold_minutes or 15,
+            class_start_time=group.class_start_time or current_time.strftime("%H:%M"),
+            late_threshold_enabled=group.late_threshold_enabled or False,
+            track_checkout=getattr(group, "track_checkout", False),
+        )
 
         # Determine event type and session data
         event_type = "check_in"
@@ -305,7 +403,7 @@ class AttendanceService:
 
         if existing_session and existing_session.check_in_time:
             check_in_time = existing_session.check_in_time
-            if track_checkout:
+            if normalized_rule["track_checkout"]:
                 event_type = "check_out"
                 check_out_time = timestamp
                 # Calculate hours
@@ -315,49 +413,22 @@ class AttendanceService:
                 # Preserve earliest check-in if not tracking check-out
                 check_in_time = min(existing_session.check_in_time, timestamp)
 
-        if late_threshold_enabled:
-            try:
-                time_parts = class_start_time.split(":")
-                day_start_hour = int(time_parts[0])
-                day_start_minute = int(time_parts[1])
-            except (ValueError, IndexError):
-                day_start_hour = 8
-                day_start_minute = 0
-
-            # Calculate if late (based on earliest check-in)
-            check_in_hour = check_in_time.hour
-            is_early_morning_arrival = 0 <= check_in_hour < 4
-            is_late_night_start = 20 <= day_start_hour <= 23
-
-            base_date = check_in_time
-            if is_early_morning_arrival and is_late_night_start:
-                base_date = check_in_time - timedelta(days=1)
-
-            day_start = base_date.replace(
-                hour=day_start_hour, minute=day_start_minute, second=0, microsecond=0
-            )
-
-            # Recalculate diff with the adjusted day_start
-            time_diff_minutes = (check_in_time - day_start).total_seconds() / 60
-            is_late = time_diff_minutes >= late_threshold_minutes
-            late_minutes = (
-                int(time_diff_minutes - late_threshold_minutes) if is_late else 0
-            )
-        else:
-            is_late = False
-            late_minutes = 0
+        is_late, late_minutes = self._calculate_late_status(
+            check_in_time, normalized_rule
+        )
 
         session_data = {
             "id": (existing_session.id if existing_session else self.generate_id()),
             "person_id": event_data.person_id,
             "group_id": member.group_id,
+            "applied_rule_id": normalized_rule.get("id"),
             "date": today_str,
             "check_in_time": check_in_time,
             "check_out_time": check_out_time,
             "total_hours": total_hours,
             "status": "present",
             "is_late": is_late,
-            "late_minutes": late_minutes if is_late else None,
+            "late_minutes": late_minutes,
             "notes": None,
         }
 

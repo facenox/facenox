@@ -36,10 +36,7 @@ async def get_group_stats(
         # Get group members
         members = await repo.get_group_members(group_id)
 
-        # Get the group's late threshold and class start time settings
-        late_threshold_minutes = group.late_threshold_minutes or 15
-        class_start_time = group.class_start_time or datetime.now().strftime("%H:%M")
-        late_threshold_enabled = group.late_threshold_enabled or False
+        rule_history = await repo.get_group_rules(group_id)
 
         # Get existing sessions for the target date
         sessions = await repo.get_sessions(
@@ -67,11 +64,13 @@ async def get_group_stats(
             session_dicts = service.compute_sessions_from_records(
                 records=records,
                 members=members,
-                late_threshold_minutes=late_threshold_minutes,
+                late_threshold_minutes=group.late_threshold_minutes or 15,
                 target_date=target_date,
-                class_start_time=class_start_time,
-                late_threshold_enabled=late_threshold_enabled,
+                class_start_time=group.class_start_time,
+                late_threshold_enabled=group.late_threshold_enabled or False,
                 existing_sessions=sessions,
+                track_checkout=getattr(group, "track_checkout", False),
+                rule_history=rule_history,
             )
 
             for session_data in session_dicts:

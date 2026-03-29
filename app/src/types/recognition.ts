@@ -166,6 +166,7 @@ export interface AttendanceSession {
   id: string
   person_id: string
   group_id: string
+  applied_rule_id?: string
   date: string
   check_in_time?: Date
   check_out_time?: Date

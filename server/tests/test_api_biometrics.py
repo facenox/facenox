@@ -1,23 +1,12 @@
-import asyncio
 import json
-import os
-import tempfile
-import unittest
 from collections import defaultdict
-from contextlib import asynccontextmanager
 
 import cv2
 import numpy as np
-from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+import pytest
 
-from api.deps import get_db
-from database.models import Base
-import database.session as database_session
-from main import app
 import core.lifespan
 from hooks import face_processing
-from utils.websocket_manager import manager, notification_manager
 
 
 class DummyFaceRecognizer:
@@ -74,17 +63,15 @@ class DummyFaceRecognizer:
         allowed_person_ids: list[str],
         organization_id: str | None,
     ) -> list[dict]:
-        results = []
-        for _face in faces:
-            results.append(
-                await self.recognize_face(
-                    image,
-                    _face.get("landmarks_5", []),
-                    allowed_person_ids,
-                    organization_id,
-                )
+        return [
+            await self.recognize_face(
+                image,
+                face.get("landmarks_5", []),
+                allowed_person_ids,
+                organization_id,
             )
-        return results
+            for face in faces
+        ]
 
     async def remove_person(self, person_id: str, organization_id: str | None) -> dict:
         removed = self.registered[organization_id].pop(person_id, None)
@@ -182,634 +169,567 @@ class DummyTracker:
         return tracked
 
 
-class AttendanceBiometricsIntegrationTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.temp_dir = tempfile.TemporaryDirectory()
-        self.db_path = os.path.join(self.temp_dir.name, "attendance-biometrics.db")
-        self.engine = create_async_engine(
-            f"sqlite+aiosqlite:///{self.db_path}",
-            connect_args={"check_same_thread": False},
-        )
-        asyncio.run(self._create_schema())
-        self.Session = async_sessionmaker(self.engine, expire_on_commit=False)
+@pytest.fixture
+def biometrics_env(test_client, set_api_token, monkeypatch):
+    client, _session_factory = test_client
+    set_api_token("biometrics-token")
 
-        self.original_token = os.environ.get("FACENOX_API_TOKEN")
-        os.environ["FACENOX_API_TOKEN"] = "biometrics-token"
+    fake_recognizer = DummyFaceRecognizer()
+    fake_detector = DummyFaceDetector()
+    fake_liveness = DummyLivenessDetector()
 
-        self.original_session_local = database_session.AsyncSessionLocal
-        database_session.AsyncSessionLocal = self.Session
+    monkeypatch.setattr(core.lifespan, "face_recognizer", fake_recognizer)
+    monkeypatch.setattr(core.lifespan, "liveness_detector", fake_liveness)
+    monkeypatch.setattr(face_processing, "face_detector", fake_detector)
+    monkeypatch.setattr(face_processing, "liveness_detector", fake_liveness)
+    monkeypatch.setattr(face_processing, "face_recognizer", fake_recognizer)
 
-        self.original_lifespan = app.router.lifespan_context
+    return {
+        "client": client,
+        "recognizer": fake_recognizer,
+    }
 
-        @asynccontextmanager
-        async def no_op_lifespan(_app):
-            yield
 
-        app.router.lifespan_context = no_op_lifespan
+def _headers(organization_id: str) -> dict[str, str]:
+    return {
+        "X-Facenox-Token": "biometrics-token",
+        "X-Facenox-Organization": organization_id,
+    }
 
-        async def override_get_db():
-            async with self.Session() as session:
-                try:
-                    yield session
-                finally:
-                    await session.close()
 
-        app.dependency_overrides[get_db] = override_get_db
+def _make_image_bytes() -> bytes:
+    x = np.linspace(0, 255, 48, dtype=np.uint8)
+    image = np.tile(x, (48, 1))
+    image = np.stack([image, np.flipud(image), image], axis=-1)
+    ok, encoded = cv2.imencode(".jpg", image)
+    assert ok
+    return encoded.tobytes()
 
-        self.original_face_recognizer = core.lifespan.face_recognizer
-        self.original_liveness_detector = core.lifespan.liveness_detector
-        self.original_face_detector = face_processing.face_detector
-        self.original_processing_liveness = face_processing.liveness_detector
-        self.original_processing_recognizer = face_processing.face_recognizer
 
-        self.fake_recognizer = DummyFaceRecognizer()
-        self.fake_detector = DummyFaceDetector()
-        self.fake_liveness = DummyLivenessDetector()
+def _make_blank_image_bytes() -> bytes:
+    image = np.zeros((48, 48, 3), dtype=np.uint8)
+    ok, encoded = cv2.imencode(".jpg", image)
+    assert ok
+    return encoded.tobytes()
 
-        core.lifespan.face_recognizer = self.fake_recognizer
-        core.lifespan.liveness_detector = self.fake_liveness
-        face_processing.face_detector = self.fake_detector
-        face_processing.liveness_detector = self.fake_liveness
-        face_processing.face_recognizer = self.fake_recognizer
 
-        self.client = TestClient(app)
-        self.client.__enter__()
+def _create_group(client, headers: dict[str, str], name: str) -> str:
+    response = client.post("/attendance/groups", headers=headers, json={"name": name})
+    assert response.status_code == 200, response.text
+    return response.json()["id"]
 
-    def tearDown(self) -> None:
-        try:
-            self.client.__exit__(None, None, None)
-        finally:
-            app.dependency_overrides.clear()
-            app.router.lifespan_context = self.original_lifespan
-            database_session.AsyncSessionLocal = self.original_session_local
 
-            core.lifespan.face_recognizer = self.original_face_recognizer
-            core.lifespan.liveness_detector = self.original_liveness_detector
-            face_processing.face_detector = self.original_face_detector
-            face_processing.liveness_detector = self.original_processing_liveness
-            face_processing.face_recognizer = self.original_processing_recognizer
+def _create_member(
+    client,
+    headers: dict[str, str],
+    group_id: str,
+    person_id: str,
+    name: str,
+    *,
+    has_consent: bool,
+) -> None:
+    response = client.post(
+        "/attendance/members",
+        headers=headers,
+        json={
+            "person_id": person_id,
+            "group_id": group_id,
+            "name": name,
+            "has_consent": has_consent,
+            "consent_granted_by": "integration-test" if has_consent else None,
+        },
+    )
+    assert response.status_code == 200, response.text
 
-            if self.original_token is None:
-                os.environ.pop("FACENOX_API_TOKEN", None)
-            else:
-                os.environ["FACENOX_API_TOKEN"] = self.original_token
 
-            manager.active_connections.clear()
-            manager.connection_metadata.clear()
-            manager.streaming_tasks.clear()
-            manager.fps_tracking.clear()
-            manager.face_trackers.clear()
-            notification_manager.active_connections.clear()
-            notification_manager.connection_metadata.clear()
-            notification_manager.streaming_tasks.clear()
-            notification_manager.fps_tracking.clear()
-            notification_manager.face_trackers.clear()
-
-            asyncio.run(self.engine.dispose())
-            self.temp_dir.cleanup()
-
-    async def _create_schema(self) -> None:
-        async with self.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-    def _headers(self, organization_id: str) -> dict[str, str]:
-        return {
-            "X-Facenox-Token": "biometrics-token",
-            "X-Facenox-Organization": organization_id,
+def _register_metadata(enable_liveness_detection: bool = False) -> str:
+    return json.dumps(
+        {
+            "bbox": [8, 12, 42, 36],
+            "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
+            "enable_liveness_detection": enable_liveness_detection,
         }
+    )
 
-    def _make_image_bytes(self) -> bytes:
-        x = np.linspace(0, 255, 48, dtype=np.uint8)
-        image = np.tile(x, (48, 1))
-        image = np.stack([image, np.flipud(image), image], axis=-1)
-        ok, encoded = cv2.imencode(".jpg", image)
-        self.assertTrue(ok)
-        return encoded.tobytes()
 
-    def _make_blank_image_bytes(self) -> bytes:
-        image = np.zeros((48, 48, 3), dtype=np.uint8)
-        ok, encoded = cv2.imencode(".jpg", image)
-        self.assertTrue(ok)
-        return encoded.tobytes()
+def test_register_and_list_face_data_stays_org_scoped(biometrics_env) -> None:
+    client = biometrics_env["client"]
+    org_one_headers = _headers("org-one")
+    org_two_headers = _headers("org-two")
+    group_one_id = _create_group(client, org_one_headers, "Biometrics One")
+    group_two_id = _create_group(client, org_two_headers, "Biometrics Two")
 
-    def _create_group(self, headers: dict[str, str], name: str) -> str:
-        response = self.client.post(
-            "/attendance/groups",
+    _create_member(
+        client,
+        org_one_headers,
+        group_one_id,
+        "shared-person",
+        "Alice Org One",
+        has_consent=True,
+    )
+    _create_member(
+        client,
+        org_two_headers,
+        group_two_id,
+        "shared-person",
+        "Bob Org Two",
+        has_consent=True,
+    )
+
+    image_bytes = _make_image_bytes()
+    metadata = _register_metadata()
+
+    register_one = client.post(
+        f"/attendance/groups/{group_one_id}/persons/shared-person/register-face",
+        headers=org_one_headers,
+        data={"metadata": metadata},
+        files={"image": ("face-one.jpg", image_bytes, "image/jpeg")},
+    )
+    register_two = client.post(
+        f"/attendance/groups/{group_two_id}/persons/shared-person/register-face",
+        headers=org_two_headers,
+        data={"metadata": metadata},
+        files={"image": ("face-two.jpg", image_bytes, "image/jpeg")},
+    )
+    assert register_one.status_code == 200, register_one.text
+    assert register_two.status_code == 200, register_two.text
+
+    persons_one = client.get("/face/persons", headers=org_one_headers)
+    persons_two = client.get("/face/persons", headers=org_two_headers)
+    assert persons_one.status_code == 200, persons_one.text
+    assert persons_two.status_code == 200, persons_two.text
+    assert persons_one.json()["persons"] == ["shared-person"]
+    assert persons_two.json()["persons"] == ["shared-person"]
+    assert persons_one.json()["stats"]["total_persons"] == 1
+    assert persons_two.json()["stats"]["total_persons"] == 1
+
+    group_persons_one = client.get(
+        f"/attendance/groups/{group_one_id}/persons",
+        headers=org_one_headers,
+    )
+    group_persons_two = client.get(
+        f"/attendance/groups/{group_two_id}/persons",
+        headers=org_two_headers,
+    )
+    assert group_persons_one.status_code == 200, group_persons_one.text
+    assert group_persons_two.status_code == 200, group_persons_two.text
+    assert group_persons_one.json()[0]["has_face_data"] is True
+    assert group_persons_two.json()[0]["has_face_data"] is True
+
+
+def test_recognition_is_org_scoped_and_masks_nonconsenting_member(
+    biometrics_env,
+) -> None:
+    client = biometrics_env["client"]
+    fake_recognizer = biometrics_env["recognizer"]
+    org_one_headers = _headers("org-one")
+    org_two_headers = _headers("org-two")
+    group_one_id = _create_group(client, org_one_headers, "Recognition One")
+    group_two_id = _create_group(client, org_two_headers, "Recognition Two")
+
+    _create_member(
+        client,
+        org_one_headers,
+        group_one_id,
+        "shared-person",
+        "Alice Org One",
+        has_consent=True,
+    )
+    _create_member(
+        client,
+        org_two_headers,
+        group_two_id,
+        "shared-person",
+        "Bob Org Two",
+        has_consent=False,
+    )
+
+    image_bytes = _make_image_bytes()
+    register_metadata = _register_metadata()
+
+    for group_id, headers in (
+        (group_one_id, org_one_headers),
+        (group_two_id, org_two_headers),
+    ):
+        response = client.post(
+            f"/attendance/groups/{group_id}/persons/shared-person/register-face",
             headers=headers,
-            json={"name": name},
+            data={"metadata": register_metadata},
+            files={"image": ("face.jpg", image_bytes, "image/jpeg")},
         )
-        self.assertEqual(response.status_code, 200, response.text)
-        return response.json()["id"]
+        if headers is org_one_headers:
+            assert response.status_code == 200, response.text
+        else:
+            assert response.status_code == 403, response.text
 
-    def _create_member(
-        self,
-        headers: dict[str, str],
-        group_id: str,
-        person_id: str,
-        name: str,
-        *,
-        has_consent: bool,
-    ) -> None:
-        response = self.client.post(
-            "/attendance/members",
-            headers=headers,
-            json={
-                "person_id": person_id,
+    fake_recognizer.registered["org-two"]["shared-person"] = {"shape": (48, 48, 3)}
+
+    recognize_metadata_one = json.dumps(
+        {
+            "bbox": [8, 12, 42, 36],
+            "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
+            "group_id": group_one_id,
+            "enable_liveness_detection": False,
+        }
+    )
+    recognize_metadata_two = json.dumps(
+        {
+            "bbox": [8, 12, 42, 36],
+            "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
+            "group_id": group_two_id,
+            "enable_liveness_detection": False,
+        }
+    )
+
+    recognized_one = client.post(
+        "/face/recognize",
+        headers=org_one_headers,
+        data={"metadata": recognize_metadata_one},
+        files={"image": ("recognize-one.jpg", image_bytes, "image/jpeg")},
+    )
+    recognized_two = client.post(
+        "/face/recognize",
+        headers=org_two_headers,
+        data={"metadata": recognize_metadata_two},
+        files={"image": ("recognize-two.jpg", image_bytes, "image/jpeg")},
+    )
+    assert recognized_one.status_code == 200, recognized_one.text
+    assert recognized_two.status_code == 200, recognized_two.text
+    assert recognized_one.json()["success"] is True
+    assert recognized_one.json()["person_id"] == "shared-person"
+    assert recognized_two.json()["success"] is True
+    assert recognized_two.json()["person_id"] == "PROTECTED_IDENTITY"
+    assert recognized_two.json()["error"] == "Biometric consent missing"
+
+
+def test_detection_websocket_processes_frame_bytes(biometrics_env) -> None:
+    client = biometrics_env["client"]
+    org_headers = _headers("org-ws")
+    group_id = _create_group(client, org_headers, "WebSocket Group")
+    _create_member(
+        client, org_headers, group_id, "ws-person", "WebSocket Person", has_consent=True
+    )
+
+    from utils.websocket_manager import manager
+
+    client_id = "frame-client"
+    manager.face_trackers[client_id] = DummyTracker()
+    image_bytes = _make_image_bytes()
+
+    with client.websocket_connect(
+        f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-ws"
+    ) as websocket:
+        connected = websocket.receive_json()
+        assert connected["type"] == "connection"
+
+        websocket.send_bytes(image_bytes)
+        detection = websocket.receive_json()
+        assert detection["type"] == "detection_response"
+        assert detection["success"] is True
+        assert len(detection["faces"]) == 1
+        assert detection["faces"][0]["bbox"] == [0, 0, 48, 48]
+        assert detection["faces"][0]["track_id"] == 1
+        assert detection["faces"][0]["liveness"]["status"] == "real"
+
+        websocket.send_json({"type": "disconnect"})
+
+
+def test_detection_websocket_live_pipeline_embeds_recognition_and_logs_once(
+    biometrics_env,
+) -> None:
+    client = biometrics_env["client"]
+    org_headers = _headers("org-live")
+    group_id = _create_group(client, org_headers, "Live Group")
+    _create_member(
+        client, org_headers, group_id, "live-person", "Live Person", has_consent=True
+    )
+
+    image_bytes = _make_image_bytes()
+    register = client.post(
+        f"/attendance/groups/{group_id}/persons/live-person/register-face",
+        headers=org_headers,
+        data={"metadata": _register_metadata()},
+        files={"image": ("face.jpg", image_bytes, "image/jpeg")},
+    )
+    assert register.status_code == 200, register.text
+
+    from utils.websocket_manager import manager
+
+    client_id = "live-pipeline-client"
+    manager.face_trackers[client_id] = DummyTracker()
+
+    with client.websocket_connect(
+        f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-live"
+    ) as websocket:
+        connected = websocket.receive_json()
+        assert connected["type"] == "connection"
+
+        websocket.send_json({"type": "config", "group_id": group_id})
+        config_ack = websocket.receive_json()
+        assert config_ack["type"] == "config_ack"
+        assert config_ack["group_id"] == group_id
+
+        websocket.send_bytes(image_bytes)
+        detection = websocket.receive_json()
+        assert detection["type"] == "detection_response"
+        face = detection["faces"][0]
+        assert face["recognition"]["person_id"] == "live-person"
+        assert face["recognition"]["name"] == "Live Person"
+        assert face["recognition"]["has_consent"] is True
+
+        attendance_event = websocket.receive_json()
+        assert attendance_event["type"] == "attendance_event"
+        assert attendance_event["data"]["person_id"] == "live-person"
+        assert attendance_event["data"]["group_id"] == group_id
+
+        websocket.send_bytes(image_bytes)
+        second_detection = websocket.receive_json()
+        assert second_detection["type"] == "detection_response"
+
+        websocket.send_json({"type": "disconnect"})
+
+    records = client.get(
+        "/attendance/records",
+        headers=org_headers,
+        params={"group_id": group_id},
+    )
+    assert records.status_code == 200, records.text
+    assert len(records.json()) == 1
+
+
+def test_detection_websocket_group_switch_refreshes_live_recognition_context(
+    biometrics_env,
+) -> None:
+    client = biometrics_env["client"]
+    headers = _headers("org-switch")
+    first_group_id = _create_group(client, headers, "First Group")
+    second_group_id = _create_group(client, headers, "Second Group")
+
+    _create_member(
+        client,
+        headers,
+        second_group_id,
+        "switch-person",
+        "Switch Person",
+        has_consent=True,
+    )
+
+    image_bytes = _make_image_bytes()
+    register = client.post(
+        f"/attendance/groups/{second_group_id}/persons/switch-person/register-face",
+        headers=headers,
+        data={"metadata": _register_metadata()},
+        files={"image": ("face.jpg", image_bytes, "image/jpeg")},
+    )
+    assert register.status_code == 200, register.text
+
+    from utils.websocket_manager import manager
+
+    client_id = "group-switch-client"
+    manager.face_trackers[client_id] = DummyTracker()
+
+    with client.websocket_connect(
+        f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-switch"
+    ) as websocket:
+        assert websocket.receive_json()["type"] == "connection"
+
+        websocket.send_json({"type": "config", "group_id": first_group_id})
+        assert websocket.receive_json()["group_id"] == first_group_id
+        websocket.send_bytes(image_bytes)
+        first_detection = websocket.receive_json()
+        assert first_detection["type"] == "detection_response"
+        assert first_detection["faces"][0]["recognition"]["success"] is False
+        assert first_detection["faces"][0]["recognition"]["person_id"] is None
+
+        websocket.send_json({"type": "config", "group_id": second_group_id})
+        assert websocket.receive_json()["group_id"] == second_group_id
+        websocket.send_bytes(image_bytes)
+        second_detection = websocket.receive_json()
+        assert second_detection["type"] == "detection_response"
+        assert (
+            second_detection["faces"][0]["recognition"]["person_id"] == "switch-person"
+        )
+
+        websocket.send_json({"type": "disconnect"})
+
+
+def test_detection_websocket_requires_real_liveness_for_identity_when_enabled(
+    biometrics_env, monkeypatch
+) -> None:
+    client = biometrics_env["client"]
+    headers = _headers("org-strict-live")
+    group_id = _create_group(client, headers, "Strict Live Group")
+    _create_member(
+        client, headers, group_id, "strict-person", "Strict Person", has_consent=True
+    )
+
+    image_bytes = _make_image_bytes()
+    register = client.post(
+        f"/attendance/groups/{group_id}/persons/strict-person/register-face",
+        headers=headers,
+        data={"metadata": _register_metadata()},
+        files={"image": ("face.jpg", image_bytes, "image/jpeg")},
+    )
+    assert register.status_code == 200, register.text
+
+    suspicious_liveness = SuspiciousLivenessDetector()
+    monkeypatch.setattr(core.lifespan, "liveness_detector", suspicious_liveness)
+    monkeypatch.setattr(face_processing, "liveness_detector", suspicious_liveness)
+
+    from utils.websocket_manager import manager
+
+    client_id = "strict-live-client"
+    manager.face_trackers[client_id] = DummyTracker()
+
+    with client.websocket_connect(
+        f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-strict-live"
+    ) as websocket:
+        assert websocket.receive_json()["type"] == "connection"
+
+        websocket.send_json({"type": "config", "group_id": group_id})
+        config_ack = websocket.receive_json()
+        assert config_ack["type"] == "config_ack"
+
+        websocket.send_bytes(image_bytes)
+        detection = websocket.receive_json()
+        assert detection["type"] == "detection_response"
+        face = detection["faces"][0]
+        assert face["liveness"]["status"] == "move_closer"
+        assert "recognition" not in face
+
+        websocket.send_json({"type": "disconnect"})
+
+    records = client.get(
+        "/attendance/records",
+        headers=headers,
+        params={"group_id": group_id},
+    )
+    assert records.status_code == 200, records.text
+    assert len(records.json()) == 0
+
+
+def test_detection_websocket_logs_attendance_when_liveness_is_disabled(
+    biometrics_env,
+) -> None:
+    client = biometrics_env["client"]
+    headers = _headers("org-live-no-liveness")
+    group_id = _create_group(client, headers, "No Liveness Group")
+    _create_member(
+        client, headers, group_id, "no-live-person", "No Live Person", has_consent=True
+    )
+
+    image_bytes = _make_image_bytes()
+    register = client.post(
+        f"/attendance/groups/{group_id}/persons/no-live-person/register-face",
+        headers=headers,
+        data={"metadata": _register_metadata()},
+        files={"image": ("face.jpg", image_bytes, "image/jpeg")},
+    )
+    assert register.status_code == 200, register.text
+
+    from utils.websocket_manager import manager
+
+    client_id = "live-no-liveness-client"
+    manager.face_trackers[client_id] = DummyTracker()
+
+    with client.websocket_connect(
+        f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-live-no-liveness"
+    ) as websocket:
+        assert websocket.receive_json()["type"] == "connection"
+
+        websocket.send_json(
+            {
+                "type": "config",
                 "group_id": group_id,
-                "name": name,
-                "has_consent": has_consent,
-                "consent_granted_by": "integration-test" if has_consent else None,
-            },
-        )
-        self.assertEqual(response.status_code, 200, response.text)
-
-    def test_register_and_list_face_data_stays_org_scoped(self) -> None:
-        org_one_headers = self._headers("org-one")
-        org_two_headers = self._headers("org-two")
-        group_one_id = self._create_group(org_one_headers, "Biometrics One")
-        group_two_id = self._create_group(org_two_headers, "Biometrics Two")
-
-        self._create_member(
-            org_one_headers,
-            group_one_id,
-            "shared-person",
-            "Alice Org One",
-            has_consent=True,
-        )
-        self._create_member(
-            org_two_headers,
-            group_two_id,
-            "shared-person",
-            "Bob Org Two",
-            has_consent=True,
-        )
-
-        image_bytes = self._make_image_bytes()
-        metadata = json.dumps(
-            {
-                "bbox": [8, 12, 42, 36],
-                "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
                 "enable_liveness_detection": False,
             }
         )
+        config_ack = websocket.receive_json()
+        assert config_ack["type"] == "config_ack"
+        assert config_ack["group_id"] == group_id
 
-        register_one = self.client.post(
-            f"/attendance/groups/{group_one_id}/persons/shared-person/register-face",
-            headers=org_one_headers,
-            data={"metadata": metadata},
-            files={"image": ("face-one.jpg", image_bytes, "image/jpeg")},
-        )
-        register_two = self.client.post(
-            f"/attendance/groups/{group_two_id}/persons/shared-person/register-face",
-            headers=org_two_headers,
-            data={"metadata": metadata},
-            files={"image": ("face-two.jpg", image_bytes, "image/jpeg")},
-        )
-        self.assertEqual(register_one.status_code, 200, register_one.text)
-        self.assertEqual(register_two.status_code, 200, register_two.text)
+        websocket.send_bytes(image_bytes)
+        detection = websocket.receive_json()
+        assert detection["type"] == "detection_response"
+        face = detection["faces"][0]
+        assert face["recognition"]["person_id"] == "no-live-person"
+        assert "liveness" not in face
 
-        persons_one = self.client.get("/face/persons", headers=org_one_headers)
-        persons_two = self.client.get("/face/persons", headers=org_two_headers)
-        self.assertEqual(persons_one.status_code, 200, persons_one.text)
-        self.assertEqual(persons_two.status_code, 200, persons_two.text)
-        self.assertEqual(persons_one.json()["persons"], ["shared-person"])
-        self.assertEqual(persons_two.json()["persons"], ["shared-person"])
-        self.assertEqual(persons_one.json()["stats"]["total_persons"], 1)
-        self.assertEqual(persons_two.json()["stats"]["total_persons"], 1)
+        attendance_event = websocket.receive_json()
+        assert attendance_event["type"] == "attendance_event"
+        assert attendance_event["data"]["person_id"] == "no-live-person"
 
-        group_persons_one = self.client.get(
-            f"/attendance/groups/{group_one_id}/persons",
-            headers=org_one_headers,
-        )
-        group_persons_two = self.client.get(
-            f"/attendance/groups/{group_two_id}/persons",
-            headers=org_two_headers,
-        )
-        self.assertEqual(group_persons_one.status_code, 200, group_persons_one.text)
-        self.assertEqual(group_persons_two.status_code, 200, group_persons_two.text)
-        self.assertTrue(group_persons_one.json()[0]["has_face_data"])
-        self.assertTrue(group_persons_two.json()[0]["has_face_data"])
+        websocket.send_json({"type": "disconnect"})
 
-    def test_recognition_is_org_scoped_and_masks_nonconsenting_member(self) -> None:
-        org_one_headers = self._headers("org-one")
-        org_two_headers = self._headers("org-two")
-        group_one_id = self._create_group(org_one_headers, "Recognition One")
-        group_two_id = self._create_group(org_two_headers, "Recognition Two")
+    records = client.get(
+        "/attendance/records",
+        headers=headers,
+        params={"group_id": group_id},
+    )
+    assert records.status_code == 200, records.text
+    assert len(records.json()) == 1
 
-        self._create_member(
-            org_one_headers,
-            group_one_id,
-            "shared-person",
-            "Alice Org One",
-            has_consent=True,
-        )
-        self._create_member(
-            org_two_headers,
-            group_two_id,
-            "shared-person",
-            "Bob Org Two",
-            has_consent=False,
-        )
 
-        image_bytes = self._make_image_bytes()
-        register_metadata = json.dumps(
-            {
-                "bbox": [8, 12, 42, 36],
-                "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
-                "enable_liveness_detection": False,
-            }
-        )
+def test_biometric_endpoints_reject_images_without_detectable_face(
+    biometrics_env,
+) -> None:
+    client = biometrics_env["client"]
+    org_headers = _headers("org-hardening")
+    group_id = _create_group(client, org_headers, "Hardening Group")
+    _create_member(
+        client,
+        org_headers,
+        group_id,
+        "hardening-person",
+        "Hardening Person",
+        has_consent=True,
+    )
 
-        for group_id, headers in (
-            (group_one_id, org_one_headers),
-            (group_two_id, org_two_headers),
-        ):
-            response = self.client.post(
-                f"/attendance/groups/{group_id}/persons/shared-person/register-face",
-                headers=headers,
-                data={"metadata": register_metadata},
-                files={"image": ("face.jpg", image_bytes, "image/jpeg")},
-            )
-            if headers is org_one_headers:
-                self.assertEqual(response.status_code, 200, response.text)
-            else:
-                self.assertEqual(response.status_code, 403, response.text)
+    blank_image_bytes = _make_blank_image_bytes()
+    metadata = _register_metadata()
 
-        # Seed a biometric in org-two so recognition can return a person_id and hit the privacy mask.
-        self.fake_recognizer.registered["org-two"]["shared-person"] = {
-            "shape": (48, 48, 3)
-        }
+    register = client.post(
+        f"/attendance/groups/{group_id}/persons/hardening-person/register-face",
+        headers=org_headers,
+        data={"metadata": metadata},
+        files={"image": ("blank.jpg", blank_image_bytes, "image/jpeg")},
+    )
+    assert register.status_code == 400, register.text
+    assert "no detectable face found" in register.json()["detail"].lower()
 
-        recognize_metadata_one = json.dumps(
-            {
-                "bbox": [8, 12, 42, 36],
-                "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
-                "group_id": group_one_id,
-                "enable_liveness_detection": False,
-            }
-        )
-        recognize_metadata_two = json.dumps(
-            {
-                "bbox": [8, 12, 42, 36],
-                "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
-                "group_id": group_two_id,
-                "enable_liveness_detection": False,
-            }
-        )
-
-        recognized_one = self.client.post(
-            "/face/recognize",
-            headers=org_one_headers,
-            data={"metadata": recognize_metadata_one},
-            files={"image": ("recognize-one.jpg", image_bytes, "image/jpeg")},
-        )
-        recognized_two = self.client.post(
-            "/face/recognize",
-            headers=org_two_headers,
-            data={"metadata": recognize_metadata_two},
-            files={"image": ("recognize-two.jpg", image_bytes, "image/jpeg")},
-        )
-        self.assertEqual(recognized_one.status_code, 200, recognized_one.text)
-        self.assertEqual(recognized_two.status_code, 200, recognized_two.text)
-        self.assertTrue(recognized_one.json()["success"])
-        self.assertEqual(recognized_one.json()["person_id"], "shared-person")
-        self.assertTrue(recognized_two.json()["success"])
-        self.assertEqual(recognized_two.json()["person_id"], "PROTECTED_IDENTITY")
-        self.assertEqual(recognized_two.json()["error"], "Biometric consent missing")
-
-    def test_detection_websocket_processes_frame_bytes(self) -> None:
-        org_headers = self._headers("org-ws")
-        group_id = self._create_group(org_headers, "WebSocket Group")
-        self._create_member(
-            org_headers,
-            group_id,
-            "ws-person",
-            "WebSocket Person",
-            has_consent=True,
-        )
-
-        client_id = "frame-client"
-        manager.face_trackers[client_id] = DummyTracker()
-        image_bytes = self._make_image_bytes()
-
-        with self.client.websocket_connect(
-            f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-ws"
-        ) as websocket:
-            connected = websocket.receive_json()
-            self.assertEqual(connected["type"], "connection")
-
-            websocket.send_bytes(image_bytes)
-            detection = websocket.receive_json()
-            self.assertEqual(detection["type"], "detection_response")
-            self.assertTrue(detection["success"])
-            self.assertEqual(len(detection["faces"]), 1)
-            self.assertEqual(detection["faces"][0]["bbox"], [0, 0, 48, 48])
-            self.assertEqual(detection["faces"][0]["track_id"], 1)
-            self.assertEqual(detection["faces"][0]["liveness"]["status"], "real")
-
-            websocket.send_json({"type": "disconnect"})
-
-    def test_detection_websocket_live_pipeline_embeds_recognition_and_logs_once(
-        self,
-    ) -> None:
-        org_headers = self._headers("org-live")
-        group_id = self._create_group(org_headers, "Live Group")
-        self._create_member(
-            org_headers,
-            group_id,
-            "live-person",
-            "Live Person",
-            has_consent=True,
-        )
-
-        image_bytes = self._make_image_bytes()
-        register_metadata = json.dumps(
-            {
-                "bbox": [8, 12, 42, 36],
-                "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
-                "enable_liveness_detection": False,
-            }
-        )
-        register = self.client.post(
-            f"/attendance/groups/{group_id}/persons/live-person/register-face",
-            headers=org_headers,
-            data={"metadata": register_metadata},
-            files={"image": ("face.jpg", image_bytes, "image/jpeg")},
-        )
-        self.assertEqual(register.status_code, 200, register.text)
-
-        client_id = "live-pipeline-client"
-        manager.face_trackers[client_id] = DummyTracker()
-
-        with self.client.websocket_connect(
-            f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-live"
-        ) as websocket:
-            connected = websocket.receive_json()
-            self.assertEqual(connected["type"], "connection")
-
-            websocket.send_json({"type": "config", "group_id": group_id})
-            config_ack = websocket.receive_json()
-            self.assertEqual(config_ack["type"], "config_ack")
-            self.assertEqual(config_ack["group_id"], group_id)
-
-            websocket.send_bytes(image_bytes)
-            detection = websocket.receive_json()
-            self.assertEqual(detection["type"], "detection_response")
-            face = detection["faces"][0]
-            self.assertEqual(face["recognition"]["person_id"], "live-person")
-            self.assertEqual(face["recognition"]["name"], "Live Person")
-            self.assertTrue(face["recognition"]["has_consent"])
-
-            attendance_event = websocket.receive_json()
-            self.assertEqual(attendance_event["type"], "attendance_event")
-            self.assertEqual(attendance_event["data"]["person_id"], "live-person")
-            self.assertEqual(attendance_event["data"]["group_id"], group_id)
-
-            websocket.send_bytes(image_bytes)
-            second_detection = websocket.receive_json()
-            self.assertEqual(second_detection["type"], "detection_response")
-
-            websocket.send_json({"type": "disconnect"})
-
-        records = self.client.get(
-            "/attendance/records",
-            headers=org_headers,
-            params={"group_id": group_id},
-        )
-        self.assertEqual(records.status_code, 200, records.text)
-        self.assertEqual(len(records.json()), 1)
-
-    def test_detection_websocket_group_switch_refreshes_live_recognition_context(
-        self,
-    ) -> None:
-        headers = self._headers("org-switch")
-        first_group_id = self._create_group(headers, "First Group")
-        second_group_id = self._create_group(headers, "Second Group")
-
-        self._create_member(
-            headers,
-            second_group_id,
-            "switch-person",
-            "Switch Person",
-            has_consent=True,
-        )
-
-        image_bytes = self._make_image_bytes()
-        register_metadata = json.dumps(
-            {
-                "bbox": [8, 12, 42, 36],
-                "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
-                "enable_liveness_detection": False,
-            }
-        )
-        register = self.client.post(
-            f"/attendance/groups/{second_group_id}/persons/switch-person/register-face",
-            headers=headers,
-            data={"metadata": register_metadata},
-            files={"image": ("face.jpg", image_bytes, "image/jpeg")},
-        )
-        self.assertEqual(register.status_code, 200, register.text)
-
-        client_id = "group-switch-client"
-        manager.face_trackers[client_id] = DummyTracker()
-
-        with self.client.websocket_connect(
-            f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-switch"
-        ) as websocket:
-            self.assertEqual(websocket.receive_json()["type"], "connection")
-
-            websocket.send_json({"type": "config", "group_id": first_group_id})
-            self.assertEqual(websocket.receive_json()["group_id"], first_group_id)
-            websocket.send_bytes(image_bytes)
-            first_detection = websocket.receive_json()
-            self.assertEqual(first_detection["type"], "detection_response")
-            self.assertFalse(first_detection["faces"][0]["recognition"]["success"])
-            self.assertIsNone(first_detection["faces"][0]["recognition"]["person_id"])
-
-            websocket.send_json({"type": "config", "group_id": second_group_id})
-            self.assertEqual(websocket.receive_json()["group_id"], second_group_id)
-            websocket.send_bytes(image_bytes)
-            second_detection = websocket.receive_json()
-            self.assertEqual(second_detection["type"], "detection_response")
-            self.assertEqual(
-                second_detection["faces"][0]["recognition"]["person_id"],
-                "switch-person",
-            )
-
-            websocket.send_json({"type": "disconnect"})
-
-    def test_detection_websocket_requires_real_liveness_for_identity_when_enabled(
-        self,
-    ) -> None:
-        headers = self._headers("org-strict-live")
-        group_id = self._create_group(headers, "Strict Live Group")
-        self._create_member(
-            headers,
-            group_id,
-            "strict-person",
-            "Strict Person",
-            has_consent=True,
-        )
-
-        image_bytes = self._make_image_bytes()
-        register_metadata = json.dumps(
-            {
-                "bbox": [8, 12, 42, 36],
-                "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
-                "enable_liveness_detection": False,
-            }
-        )
-        register = self.client.post(
-            f"/attendance/groups/{group_id}/persons/strict-person/register-face",
-            headers=headers,
-            data={"metadata": register_metadata},
-            files={"image": ("face.jpg", image_bytes, "image/jpeg")},
-        )
-        self.assertEqual(register.status_code, 200, register.text)
-
-        suspicious_liveness = SuspiciousLivenessDetector()
-        original_lifespan_liveness = core.lifespan.liveness_detector
-        original_processing_liveness = face_processing.liveness_detector
-        core.lifespan.liveness_detector = suspicious_liveness
-        face_processing.liveness_detector = suspicious_liveness
-
-        client_id = "strict-live-client"
-        manager.face_trackers[client_id] = DummyTracker()
-
-        try:
-            with self.client.websocket_connect(
-                f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-strict-live"
-            ) as websocket:
-                self.assertEqual(websocket.receive_json()["type"], "connection")
-
-                websocket.send_json({"type": "config", "group_id": group_id})
-                config_ack = websocket.receive_json()
-                self.assertEqual(config_ack["type"], "config_ack")
-
-                websocket.send_bytes(image_bytes)
-                detection = websocket.receive_json()
-                self.assertEqual(detection["type"], "detection_response")
-                face = detection["faces"][0]
-                self.assertEqual(face["liveness"]["status"], "move_closer")
-                self.assertNotIn("recognition", face)
-
-                websocket.send_json({"type": "disconnect"})
-        finally:
-            core.lifespan.liveness_detector = original_lifespan_liveness
-            face_processing.liveness_detector = original_processing_liveness
-
-        records = self.client.get(
-            "/attendance/records",
-            headers=headers,
-            params={"group_id": group_id},
-        )
-        self.assertEqual(records.status_code, 200, records.text)
-        self.assertEqual(len(records.json()), 0)
-
-    def test_detection_websocket_logs_attendance_when_liveness_is_disabled(
-        self,
-    ) -> None:
-        headers = self._headers("org-live-no-liveness")
-        group_id = self._create_group(headers, "No Liveness Group")
-        self._create_member(
-            headers,
-            group_id,
-            "no-live-person",
-            "No Live Person",
-            has_consent=True,
-        )
-
-        image_bytes = self._make_image_bytes()
-        register_metadata = json.dumps(
-            {
-                "bbox": [8, 12, 42, 36],
-                "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
-                "enable_liveness_detection": False,
-            }
-        )
-        register = self.client.post(
-            f"/attendance/groups/{group_id}/persons/no-live-person/register-face",
-            headers=headers,
-            data={"metadata": register_metadata},
-            files={"image": ("face.jpg", image_bytes, "image/jpeg")},
-        )
-        self.assertEqual(register.status_code, 200, register.text)
-
-        client_id = "live-no-liveness-client"
-        manager.face_trackers[client_id] = DummyTracker()
-
-        with self.client.websocket_connect(
-            f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-live-no-liveness"
-        ) as websocket:
-            self.assertEqual(websocket.receive_json()["type"], "connection")
-
-            websocket.send_json(
+    recognize = client.post(
+        "/face/recognize",
+        headers=org_headers,
+        data={
+            "metadata": json.dumps(
                 {
-                    "type": "config",
+                    "bbox": [8, 12, 42, 36],
+                    "landmarks_5": [
+                        [10, 10],
+                        [30, 10],
+                        [20, 20],
+                        [12, 30],
+                        [28, 30],
+                    ],
                     "group_id": group_id,
                     "enable_liveness_detection": False,
                 }
             )
-            config_ack = websocket.receive_json()
-            self.assertEqual(config_ack["type"], "config_ack")
-            self.assertEqual(config_ack["group_id"], group_id)
+        },
+        files={"image": ("blank.jpg", blank_image_bytes, "image/jpeg")},
+    )
+    assert recognize.status_code == 200, recognize.text
+    assert recognize.json()["success"] is False
+    assert "no detectable face found" in recognize.json()["error"].lower()
 
-            websocket.send_bytes(image_bytes)
-            detection = websocket.receive_json()
-            self.assertEqual(detection["type"], "detection_response")
-            face = detection["faces"][0]
-            self.assertEqual(face["recognition"]["person_id"], "no-live-person")
-            self.assertNotIn("liveness", face)
-
-            attendance_event = websocket.receive_json()
-            self.assertEqual(attendance_event["type"], "attendance_event")
-            self.assertEqual(attendance_event["data"]["person_id"], "no-live-person")
-
-            websocket.send_json({"type": "disconnect"})
-
-        records = self.client.get(
-            "/attendance/records",
-            headers=headers,
-            params={"group_id": group_id},
-        )
-        self.assertEqual(records.status_code, 200, records.text)
-        self.assertEqual(len(records.json()), 1)
-
-    def test_biometric_endpoints_reject_images_without_detectable_face(self) -> None:
-        org_headers = self._headers("org-hardening")
-        group_id = self._create_group(org_headers, "Hardening Group")
-        self._create_member(
-            org_headers,
-            group_id,
-            "hardening-person",
-            "Hardening Person",
-            has_consent=True,
-        )
-
-        blank_image_bytes = self._make_blank_image_bytes()
-        metadata = json.dumps(
-            {
-                "bbox": [8, 12, 42, 36],
-                "landmarks_5": [[10, 10], [30, 10], [20, 20], [12, 30], [28, 30]],
-                "enable_liveness_detection": False,
-            }
-        )
-
-        register = self.client.post(
-            f"/attendance/groups/{group_id}/persons/hardening-person/register-face",
-            headers=org_headers,
-            data={"metadata": metadata},
-            files={"image": ("blank.jpg", blank_image_bytes, "image/jpeg")},
-        )
-        self.assertEqual(register.status_code, 400, register.text)
-        self.assertIn("no detectable face found", register.json()["detail"].lower())
-
-        recognize = self.client.post(
-            "/face/recognize",
-            headers=org_headers,
-            data={
-                "metadata": json.dumps(
+    bulk = client.post(
+        f"/attendance/groups/{group_id}/bulk-register-faces",
+        headers=org_headers,
+        data={
+            "metadata": json.dumps(
+                [
                     {
+                        "person_id": "hardening-person",
                         "bbox": [8, 12, 42, 36],
                         "landmarks_5": [
                             [10, 10],
@@ -818,48 +738,14 @@ class AttendanceBiometricsIntegrationTests(unittest.TestCase):
                             [12, 30],
                             [28, 30],
                         ],
-                        "group_id": group_id,
-                        "enable_liveness_detection": False,
+                        "filename": "blank.jpg",
                     }
-                )
-            },
-            files={"image": ("blank.jpg", blank_image_bytes, "image/jpeg")},
-        )
-        self.assertEqual(recognize.status_code, 200, recognize.text)
-        self.assertFalse(recognize.json()["success"])
-        self.assertIn("no detectable face found", recognize.json()["error"].lower())
-
-        bulk = self.client.post(
-            f"/attendance/groups/{group_id}/bulk-register-faces",
-            headers=org_headers,
-            data={
-                "metadata": json.dumps(
-                    [
-                        {
-                            "person_id": "hardening-person",
-                            "bbox": [8, 12, 42, 36],
-                            "landmarks_5": [
-                                [10, 10],
-                                [30, 10],
-                                [20, 20],
-                                [12, 30],
-                                [28, 30],
-                            ],
-                            "filename": "blank.jpg",
-                        }
-                    ]
-                )
-            },
-            files=[("images", ("blank.jpg", blank_image_bytes, "image/jpeg"))],
-        )
-        self.assertEqual(bulk.status_code, 200, bulk.text)
-        self.assertEqual(bulk.json()["success_count"], 0)
-        self.assertEqual(bulk.json()["failed_count"], 1)
-        self.assertIn(
-            "no detectable face found",
-            bulk.json()["results"][0]["error"].lower(),
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()
+                ]
+            )
+        },
+        files=[("images", ("blank.jpg", blank_image_bytes, "image/jpeg"))],
+    )
+    assert bulk.status_code == 200, bulk.text
+    assert bulk.json()["success_count"] == 0
+    assert bulk.json()["failed_count"] == 1
+    assert "no detectable face found" in bulk.json()["results"][0]["error"].lower()

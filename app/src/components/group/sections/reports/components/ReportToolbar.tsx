@@ -53,15 +53,13 @@ export function ReportToolbar({
   search,
   setSearch,
   allColumns,
-  lateTrackingEnabled = true,
 }: ReportToolbarProps) {
   const [showOptions, setShowOptions] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
   const optionsRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
 
-  const finalStatusOptions =
-    lateTrackingEnabled ? STATUS_OPTIONS : STATUS_OPTIONS.filter((s) => s.value !== "late")
+  const finalStatusOptions = STATUS_OPTIONS
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

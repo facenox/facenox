@@ -6,6 +6,7 @@ import ulid
 
 from database.models import (
     AttendanceGroup,
+    AttendanceGroupRule,
     AttendanceMember,
     AttendanceRecord,
     AttendanceSession,
@@ -45,6 +46,25 @@ class AttendanceRepository:
             "data_retention_days": source.data_retention_days,
         }
 
+    def _group_rule_payload(
+        self,
+        group_id: str,
+        settings: Dict[str, Any],
+        effective_from: Optional[datetime] = None,
+    ) -> Dict[str, Any]:
+        return {
+            "id": ulid.ulid(),
+            "group_id": group_id,
+            "effective_from": effective_from or datetime.now(),
+            "late_threshold_minutes": settings.get("late_threshold_minutes"),
+            "late_threshold_enabled": settings.get("late_threshold_enabled", False),
+            "class_start_time": settings.get(
+                "class_start_time", datetime.now().strftime("%H:%M")
+            ),
+            "track_checkout": settings.get("track_checkout", False),
+            "organization_id": self.organization_id,
+        }
+
     # Group Methods
     async def create_group(self, group_data: Dict[str, Any]) -> AttendanceGroup:
         settings = group_data.get("settings", {})
@@ -64,6 +84,18 @@ class AttendanceRepository:
         self.session.add(group)
         await self.session.commit()
         await self.session.refresh(group)
+        await self.add_group_rule(
+            self._group_rule_payload(
+                group.id,
+                {
+                    "late_threshold_minutes": group.late_threshold_minutes,
+                    "late_threshold_enabled": group.late_threshold_enabled,
+                    "class_start_time": group.class_start_time,
+                    "track_checkout": group.track_checkout,
+                },
+                effective_from=group.created_at,
+            )
+        )
         return group
 
     async def get_groups(self, active_only: bool = True) -> List[AttendanceGroup]:
@@ -85,12 +117,73 @@ class AttendanceRepository:
         result = await self.session.execute(query)
         return result.scalars().first()
 
+    async def add_group_rule(self, rule_data: Dict[str, Any]) -> AttendanceGroupRule:
+        rule = AttendanceGroupRule(**rule_data)
+        self.session.add(rule)
+        await self.session.commit()
+        await self.session.refresh(rule)
+        return rule
+
+    async def get_group_rule(self, rule_id: str) -> Optional[AttendanceGroupRule]:
+        query = select(AttendanceGroupRule).where(AttendanceGroupRule.id == rule_id)
+        query = self._apply_org_scope(query, AttendanceGroupRule)
+        result = await self.session.execute(query)
+        return result.scalars().first()
+
+    async def get_group_rules(self, group_id: str) -> List[AttendanceGroupRule]:
+        query = select(AttendanceGroupRule).where(
+            AttendanceGroupRule.group_id == group_id
+        )
+        query = self._apply_org_scope(query, AttendanceGroupRule)
+        query = query.order_by(
+            AttendanceGroupRule.effective_from.asc(), AttendanceGroupRule.id.asc()
+        )
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+    async def get_effective_group_rule(
+        self, group_id: str, effective_at: datetime
+    ) -> Optional[AttendanceGroupRule]:
+        query = (
+            select(AttendanceGroupRule)
+            .where(
+                AttendanceGroupRule.group_id == group_id,
+                AttendanceGroupRule.effective_from <= effective_at,
+            )
+            .order_by(
+                desc(AttendanceGroupRule.effective_from),
+                desc(AttendanceGroupRule.id),
+            )
+        )
+        query = self._apply_org_scope(query, AttendanceGroupRule)
+        result = await self.session.execute(query)
+        rule = result.scalars().first()
+        if rule:
+            return rule
+
+        fallback_query = select(AttendanceGroupRule).where(
+            AttendanceGroupRule.group_id == group_id
+        )
+        fallback_query = self._apply_org_scope(fallback_query, AttendanceGroupRule)
+        fallback_query = fallback_query.order_by(
+            AttendanceGroupRule.effective_from.asc(), AttendanceGroupRule.id.asc()
+        )
+        fallback_result = await self.session.execute(fallback_query)
+        return fallback_result.scalars().first()
+
     async def update_group(
         self, group_id: str, updates: Dict[str, Any]
     ) -> Optional[AttendanceGroup]:
         group = await self.get_group(group_id)
         if not group:
             return None
+
+        tracked_before = {
+            "late_threshold_minutes": group.late_threshold_minutes,
+            "late_threshold_enabled": group.late_threshold_enabled,
+            "class_start_time": group.class_start_time,
+            "track_checkout": group.track_checkout,
+        }
 
         for key, value in updates.items():
             if key == "settings":
@@ -107,6 +200,15 @@ class AttendanceRepository:
 
         await self.session.commit()
         await self.session.refresh(group)
+
+        tracked_after = {
+            "late_threshold_minutes": group.late_threshold_minutes,
+            "late_threshold_enabled": group.late_threshold_enabled,
+            "class_start_time": group.class_start_time,
+            "track_checkout": group.track_checkout,
+        }
+        if tracked_before != tracked_after:
+            await self.add_group_rule(self._group_rule_payload(group.id, tracked_after))
         return group
 
     async def delete_group(self, group_id: str) -> bool:
@@ -367,6 +469,7 @@ class AttendanceRepository:
         )
         if session_obj:
             session_obj.group_id = session_data["group_id"]
+            session_obj.applied_rule_id = session_data.get("applied_rule_id")
             session_obj.check_in_time = session_data.get("check_in_time")
             session_obj.check_out_time = session_data.get("check_out_time")
             session_obj.total_hours = session_data.get("total_hours")
@@ -380,6 +483,7 @@ class AttendanceRepository:
                 person_id=session_data["person_id"],
                 member_id=member.id,
                 group_id=session_data["group_id"],
+                applied_rule_id=session_data.get("applied_rule_id"),
                 date=session_data["date"],
                 check_in_time=session_data.get("check_in_time"),
                 check_out_time=session_data.get("check_out_time"),

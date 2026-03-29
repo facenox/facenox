@@ -6,13 +6,19 @@ from sqlalchemy import select
 from api.deps import get_repository
 from api.schemas import (
     AttendanceGroupResponse,
+    AttendanceGroupRuleResponse,
     AttendanceMemberResponse,
     AttendanceRecordResponse,
     AttendanceSessionResponse,
     AttendanceSettingsResponse,
     ExportDataResponse,
 )
-from database.models import AttendanceMember, AttendanceRecord, AttendanceSession
+from database.models import (
+    AttendanceGroupRule,
+    AttendanceMember,
+    AttendanceRecord,
+    AttendanceSession,
+)
 from database.repository import AttendanceRepository
 
 from api.routes import (
@@ -54,6 +60,18 @@ async def export_attendance_data(
         members_result = await repo.session.execute(members_query)
         members_orm = members_result.scalars().all()
 
+        group_rules_query = select(AttendanceGroupRule)
+        if repo.organization_id:
+            group_rules_query = group_rules_query.where(
+                AttendanceGroupRule.organization_id == repo.organization_id
+            )
+        group_rules_result = await repo.session.execute(
+            group_rules_query.order_by(
+                AttendanceGroupRule.group_id, AttendanceGroupRule.effective_from
+            )
+        )
+        group_rules_orm = group_rules_result.scalars().all()
+
         records_query = select(AttendanceRecord)
         if repo.organization_id:
             records_query = records_query.where(
@@ -78,6 +96,10 @@ async def export_attendance_data(
             groups=[
                 AttendanceGroupResponse.model_validate(g, from_attributes=True)
                 for g in groups_orm
+            ],
+            group_rules=[
+                AttendanceGroupRuleResponse.model_validate(r, from_attributes=True)
+                for r in group_rules_orm
             ],
             members=[
                 AttendanceMemberResponse.model_validate(m, from_attributes=True)

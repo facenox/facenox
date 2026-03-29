@@ -15,6 +15,7 @@ from api.deps import get_repository
 from database.repository import AttendanceRepository
 from database.models import (
     AttendanceGroup as GroupModel,
+    AttendanceGroupRule as GroupRuleModel,
     AttendanceMember as MemberModel,
     AttendanceRecord as RecordModel,
     AttendanceSession as SessionModel,
@@ -22,6 +23,7 @@ from database.models import (
 )
 from api.schemas import (
     AttendanceGroupResponse,
+    AttendanceGroupRuleResponse,
     AttendanceMemberResponse,
     AttendanceRecordResponse,
     AttendanceSessionResponse,
@@ -84,6 +86,18 @@ async def export_vault(
         members_result = await repo.session.execute(members_query)
         members_orm = members_result.scalars().all()
 
+        group_rules_query = select(GroupRuleModel)
+        if repo.organization_id:
+            group_rules_query = group_rules_query.where(
+                GroupRuleModel.organization_id == repo.organization_id
+            )
+        group_rules_result = await repo.session.execute(
+            group_rules_query.order_by(
+                GroupRuleModel.group_id, GroupRuleModel.effective_from
+            )
+        )
+        group_rules_orm = group_rules_result.scalars().all()
+
         records_query = select(RecordModel)
         if repo.organization_id:
             records_query = records_query.where(
@@ -108,6 +122,10 @@ async def export_vault(
             groups=[
                 AttendanceGroupResponse.model_validate(g, from_attributes=True)
                 for g in groups_orm
+            ],
+            group_rules=[
+                AttendanceGroupRuleResponse.model_validate(r, from_attributes=True)
+                for r in group_rules_orm
             ],
             members=[
                 AttendanceMemberResponse.model_validate(m, from_attributes=True)
@@ -239,6 +257,31 @@ async def import_vault(
                 existing.is_deleted = False
             imported_groups += 1
 
+        for rule in getattr(data, "group_rules", []):
+            existing_rule_result = await repo.session.execute(
+                select(GroupRuleModel).where(
+                    GroupRuleModel.id == rule.id,
+                    GroupRuleModel.organization_id == repo.organization_id,
+                )
+            )
+            existing_rule = existing_rule_result.scalars().first()
+            if existing_rule and not overwrite:
+                continue
+
+            await repo.session.merge(
+                GroupRuleModel(
+                    id=rule.id,
+                    group_id=rule.group_id,
+                    effective_from=rule.effective_from,
+                    late_threshold_minutes=rule.late_threshold_minutes,
+                    late_threshold_enabled=rule.late_threshold_enabled,
+                    class_start_time=rule.class_start_time,
+                    track_checkout=rule.track_checkout,
+                    organization_id=repo.organization_id,
+                    is_deleted=False,
+                )
+            )
+
         for member in data.members:
             existing_result = await repo.session.execute(
                 select(MemberModel).where(
@@ -321,6 +364,7 @@ async def import_vault(
                     person_id=session.person_id,
                     member_id=member.id,
                     group_id=session.group_id,
+                    applied_rule_id=session.applied_rule_id,
                     date=session.date,
                     check_in_time=session.check_in_time,
                     check_out_time=session.check_out_time,

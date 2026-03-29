@@ -83,6 +83,18 @@ class AttendanceGroupResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AttendanceGroupRuleResponse(BaseModel):
+    id: str
+    group_id: str
+    effective_from: datetime
+    late_threshold_minutes: Optional[int]
+    late_threshold_enabled: bool
+    class_start_time: str
+    track_checkout: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # Member Models
 class AttendanceMemberCreate(BaseModel):
     person_id: Optional[str] = Field(
@@ -152,6 +164,7 @@ class AttendanceSessionResponse(BaseModel):
     id: str
     person_id: str
     group_id: str
+    applied_rule_id: Optional[str] = None
     date: str  # YYYY-MM-DD format
     check_in_time: Optional[datetime]
     check_out_time: Optional[datetime] = None
@@ -272,7 +285,7 @@ class DatabaseStatsResponse(BaseModel):
 
 # Bulk Operations Models
 class BulkMemberCreate(BaseModel):
-    members: List[AttendanceMemberCreate] = Field(..., min_items=1, max_items=100)
+    members: List[AttendanceMemberCreate] = Field(..., min_length=1, max_length=100)
 
 
 class BulkMemberResponse(BaseModel):
@@ -283,6 +296,7 @@ class BulkMemberResponse(BaseModel):
 
 class ExportDataResponse(BaseModel):
     groups: List[AttendanceGroupResponse]
+    group_rules: List[AttendanceGroupRuleResponse] = []
     members: List[AttendanceMemberResponse]
     records: List[AttendanceRecordResponse]
     sessions: List[AttendanceSessionResponse]
