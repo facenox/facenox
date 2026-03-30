@@ -28,6 +28,7 @@ const CHECKOUT_DEFAULT_COLUMNS = [
   "check_out_time",
   "total_hours",
 ] as unknown as ColumnKey[]
+const DEFAULT_COLUMN_PRESETS = [DEFAULT_COLUMNS, CHECKOUT_DEFAULT_COLUMNS]
 
 export function Reports({
   group,
@@ -60,7 +61,7 @@ export function Reports({
     setStatusFilter,
     search,
     setSearch,
-  } = useReportViews(group.id, defaultColumns)
+  } = useReportViews(group.id, defaultColumns, DEFAULT_COLUMN_PRESETS)
 
   const { groupedRows, daysTracked, allColumns } = useReportTransform(
     group,

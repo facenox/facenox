@@ -34,6 +34,7 @@ export interface PersistentSettingsSchema {
       columns: string[]
       groupBy: string
       statusFilter: string
+      columnsFollowDefault?: boolean
     }
   >
 

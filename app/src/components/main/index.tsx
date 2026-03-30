@@ -25,6 +25,7 @@ import {
   useAttendanceStore,
   useUIStore,
 } from "@/components/main/stores"
+import { useGroupUIStore } from "@/components/group/stores"
 
 import { ControlBar } from "@/components/main/components/ControlBar"
 import { VideoCanvas } from "@/components/main/components/VideoCanvas"
@@ -88,6 +89,7 @@ export default function Main() {
     currentGroup,
     setCurrentGroup,
     attendanceGroups,
+    setAttendanceGroups,
     groupMembers,
     isShellReady,
     showGroupManagement,
@@ -126,6 +128,10 @@ export default function Main() {
     setAudioSettings,
     setSidebarCollapsed,
   } = useUIStore()
+  const showAddMemberModal = useGroupUIStore((state) => state.showAddMemberModal)
+  const showEditMemberModal = useGroupUIStore((state) => state.showEditMemberModal)
+  const showCreateGroupModal = useGroupUIStore((state) => state.showCreateGroupModal)
+  const showEditGroupModal = useGroupUIStore((state) => state.showEditGroupModal)
 
   // Preload sound to minimize delay on first recognition
   useEffect(() => {
@@ -297,6 +303,21 @@ export default function Main() {
     startCamera()
   }, [currentGroup, requestGroupSelection, startCamera])
 
+  const syncUpdatedGroupLocally = useCallback(
+    (updatedGroup: typeof currentGroup) => {
+      setCurrentGroup(updatedGroup)
+
+      if (!updatedGroup) {
+        return
+      }
+
+      setAttendanceGroups(
+        attendanceGroups.map((group) => (group.id === updatedGroup.id ? updatedGroup : group)),
+      )
+    },
+    [attendanceGroups, setAttendanceGroups, setCurrentGroup],
+  )
+
   // Handle start time changes from inline chip
   const handleStartTimeChange = useCallback(
     async (newTime: string) => {
@@ -310,7 +331,7 @@ export default function Main() {
         await attendanceManager.updateGroup(currentGroup.id, {
           settings: updatedSettings,
         })
-        setCurrentGroup({
+        syncUpdatedGroupLocally({
           ...currentGroup,
           settings: updatedSettings,
         })
@@ -318,7 +339,7 @@ export default function Main() {
         console.error("Failed to update start time:", error)
       }
     },
-    [currentGroup, setCurrentGroup],
+    [currentGroup, syncUpdatedGroupLocally],
   )
 
   // Set the ref after stopCamera is defined
@@ -492,6 +513,7 @@ export default function Main() {
 
   // Handle auto-pause on minimize
   const wasStreamingBeforeMinimize = useRef(false)
+  const wasStreamingBeforeBlockingGroupModal = useRef(false)
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -519,6 +541,29 @@ export default function Main() {
       if (cleanupRestore) cleanupRestore()
     }
   }, [stopCamera, startCameraGuarded])
+
+  const hasBlockingGroupModalOpen =
+    showAddMemberModal || showEditMemberModal || showCreateGroupModal || showEditGroupModal
+
+  useEffect(() => {
+    if (!showSettings) {
+      wasStreamingBeforeBlockingGroupModal.current = false
+      return
+    }
+
+    if (hasBlockingGroupModalOpen) {
+      if (isStreamingRef.current) {
+        wasStreamingBeforeBlockingGroupModal.current = true
+        stopCamera(false)
+      }
+      return
+    }
+
+    if (wasStreamingBeforeBlockingGroupModal.current) {
+      startCameraGuarded()
+      wasStreamingBeforeBlockingGroupModal.current = false
+    }
+  }, [hasBlockingGroupModalOpen, showSettings, startCameraGuarded, stopCamera])
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[var(--bg-primary)] text-white">
@@ -713,7 +758,7 @@ export default function Main() {
                   await attendanceManager.updateGroup(currentGroup.id, {
                     settings: updatedSettings,
                   })
-                  setCurrentGroup({
+                  syncUpdatedGroupLocally({
                     ...currentGroup,
                     settings: updatedSettings,
                   })
@@ -766,7 +811,7 @@ export default function Main() {
                   await attendanceManager.updateGroup(currentGroup.id, {
                     settings: updatedSettings,
                   })
-                  setCurrentGroup({
+                  syncUpdatedGroupLocally({
                     ...currentGroup,
                     settings: updatedSettings,
                   })

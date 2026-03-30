@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react"
+import { flushSync } from "react-dom"
 import { attendanceManager } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { FormInput, Modal } from "@/components/common"
@@ -10,6 +11,11 @@ interface AddMemberProps {
   onClose: () => void
   onSuccess: () => void
 }
+
+const waitForNextPaint = () =>
+  new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve())
+  })
 
 export function AddMember({ group, existingMembers = [], onClose, onSuccess }: AddMemberProps) {
   const [isBulkMode, setIsBulkMode] = useState(false)
@@ -28,6 +34,8 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
   const [hasBiometricConsent, setHasBiometricConsent] = useState(false)
 
   const nameInputRef = useRef<HTMLInputElement>(null)
+  const singleSubmitInFlightRef = useRef(false)
+  const bulkSubmitInFlightRef = useRef(false)
 
   const resetForm = () => {
     setNewMemberName("")
@@ -78,6 +86,10 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
   }, [newMemberName])
 
   const handleAddMember = async () => {
+    if (singleSubmitInFlightRef.current) {
+      return
+    }
+
     if (!newMemberName.trim()) {
       return
     }
@@ -87,8 +99,13 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
       return
     }
 
-    setLoading(true)
+    singleSubmitInFlightRef.current = true
+    flushSync(() => {
+      setLoading(true)
+    })
+
     try {
+      await waitForNextPaint()
       await attendanceManager.addMember(group.id, newMemberName.trim(), {
         role: newMemberRole.trim() || undefined,
         hasConsent: hasBiometricConsent,
@@ -100,19 +117,28 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
       console.error("Error adding member:", err)
       setError(err instanceof Error ? err.message : "Failed to add member")
     } finally {
+      singleSubmitInFlightRef.current = false
       setLoading(false)
     }
   }
 
   const handleBulkAddMembers = async () => {
+    if (bulkSubmitInFlightRef.current) {
+      return
+    }
+
     if (!bulkMembersText.trim()) {
       return
     }
 
-    setIsProcessingBulk(true)
+    bulkSubmitInFlightRef.current = true
+    flushSync(() => {
+      setIsProcessingBulk(true)
+    })
     setBulkResults(null)
 
     try {
+      await waitForNextPaint()
       const lines = bulkMembersText.split("\n").filter((line: string) => line.trim())
       let success = 0
       let failed = 0
@@ -156,6 +182,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
       console.error("Error bulk adding members:", err)
       setError(err instanceof Error ? err.message : "Failed to bulk add members")
     } finally {
+      bulkSubmitInFlightRef.current = false
       setIsProcessingBulk(false)
     }
   }

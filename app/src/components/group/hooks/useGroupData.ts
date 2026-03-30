@@ -53,7 +53,7 @@ export function useGroupData(
         return
       }
 
-      if (selectedGroup?.id !== nextSelected.id) {
+      if (selectedGroup !== nextSelected) {
         setSelectedGroup(nextSelected)
       }
       return
