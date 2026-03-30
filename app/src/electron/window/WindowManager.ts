@@ -277,7 +277,7 @@ export class WindowManager {
           message: "Facenox will keep running in your system tray.",
           detail:
             "You can fully close the app by right-clicking the tray icon and selecting 'Quit'.",
-          buttons: ["Got it", "Quit Facenox"],
+          buttons: ["Keep running", "Quit"],
           defaultId: 0,
           cancelId: 0,
           checkboxLabel: "Don't show this reminder again",
