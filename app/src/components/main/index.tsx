@@ -179,6 +179,7 @@ export default function Main() {
   const {
     currentGroupRef,
     memberCacheRef,
+    loadAttendanceData,
     loadAttendanceDataRef,
     handleSelectGroup,
     handleCreateGroup,
@@ -700,6 +701,7 @@ export default function Main() {
           isStreaming={isStreaming}
           isVideoLoading={isVideoLoading}
           handleSelectGroup={handleSelectGroup}
+          refreshAttendanceData={loadAttendanceData}
         />
       </div>
 

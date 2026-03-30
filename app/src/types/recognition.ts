@@ -160,6 +160,10 @@ export interface AttendanceRecord {
   is_manual: boolean
   event_type?: "check_in" | "check_out"
   created_by?: string
+  is_voided?: boolean
+  voided_at?: Date
+  voided_by?: string
+  void_reason?: string
 }
 
 export interface AttendanceSession {

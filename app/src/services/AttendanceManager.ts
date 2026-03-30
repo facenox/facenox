@@ -208,12 +208,17 @@ export class AttendanceManager {
     return this.recordManager.addRecord(record)
   }
 
+  async voidRecord(recordId: string, reason: string, voidedBy?: string): Promise<AttendanceRecord> {
+    return this.recordManager.voidRecord(recordId, reason, voidedBy)
+  }
+
   async getRecords(filters?: {
     group_id?: string
     person_id?: string
     start_date?: string
     end_date?: string
     limit?: number
+    include_voided?: boolean
   }): Promise<AttendanceRecord[]> {
     return this.recordManager.getRecords(filters)
   }

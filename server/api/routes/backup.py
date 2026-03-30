@@ -358,6 +358,14 @@ async def import_backup(
                     notes=record.notes,
                     is_manual=record.is_manual,
                     created_by=record.created_by,
+                    is_voided=getattr(record, "is_voided", False),
+                    voided_at=(
+                        to_storage_local(record.voided_at)
+                        if getattr(record, "voided_at", None)
+                        else None
+                    ),
+                    voided_by=getattr(record, "voided_by", None),
+                    void_reason=getattr(record, "void_reason", None),
                     organization_id=repo.organization_id,
                 )
             )

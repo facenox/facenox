@@ -428,12 +428,26 @@ class AttendanceRepository:
             notes=record_data.get("notes"),
             is_manual=record_data.get("is_manual", False),
             created_by=record_data.get("created_by"),
+            is_voided=record_data.get("is_voided", False),
+            voided_at=record_data.get("voided_at"),
+            voided_by=record_data.get("voided_by"),
+            void_reason=record_data.get("void_reason"),
             organization_id=self.organization_id,
         )
         self.session.add(record)
         await self.session.commit()
         await self.session.refresh(record)
         return record
+
+    async def get_record(
+        self, record_id: str, include_voided: bool = False
+    ) -> Optional[AttendanceRecord]:
+        query = select(AttendanceRecord).where(AttendanceRecord.id == record_id)
+        query = self._apply_org_scope(query, AttendanceRecord)
+        if not include_voided:
+            query = query.where(AttendanceRecord.is_voided.is_(False))
+        result = await self.session.execute(query)
+        return result.scalars().first()
 
     async def get_records(
         self,
@@ -442,6 +456,7 @@ class AttendanceRepository:
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         limit: Optional[int] = None,
+        include_voided: bool = False,
     ) -> List[AttendanceRecord]:
         query = select(AttendanceRecord)
         query = self._apply_org_scope(query, AttendanceRecord)
@@ -454,6 +469,8 @@ class AttendanceRepository:
             query = query.where(AttendanceRecord.timestamp >= start_date)
         if end_date:
             query = query.where(AttendanceRecord.timestamp <= end_date)
+        if not include_voided:
+            query = query.where(AttendanceRecord.is_voided.is_(False))
 
         query = query.order_by(desc(AttendanceRecord.timestamp))
 
@@ -462,6 +479,26 @@ class AttendanceRepository:
 
         result = await self.session.execute(query)
         return result.scalars().all()
+
+    async def void_record(
+        self,
+        record_id: str,
+        *,
+        voided_by: Optional[str],
+        void_reason: str,
+    ) -> Optional[AttendanceRecord]:
+        record = await self.get_record(record_id, include_voided=True)
+        if not record:
+            return None
+
+        record.is_voided = True
+        record.voided_at = to_storage_local(local_now())
+        record.voided_by = voided_by
+        record.void_reason = void_reason
+
+        await self.session.commit()
+        await self.session.refresh(record)
+        return record
 
     # Session Methods
     async def upsert_session(self, session_data: Dict[str, Any]) -> AttendanceSession:

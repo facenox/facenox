@@ -1,13 +1,13 @@
 import { useState, useMemo, useEffect } from "react"
 import { attendanceManager } from "@/services/AttendanceManager"
 import { Modal } from "@/components/common"
-import { Tooltip } from "@/components/shared"
+import { Tooltip, useDialog } from "@/components/shared"
 import { useAttendanceStore } from "@/components/main/stores"
 import type { AttendanceMember, AttendanceGroup } from "@/components/main/types"
 
 interface ManualEntryModalProps {
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: () => void | Promise<void>
   members: AttendanceMember[]
   presentPersonIds: Set<string>
   onAddMember: () => void
@@ -22,6 +22,7 @@ export const ManualEntryModal = ({
   onAddMember,
   currentGroup,
 }: ManualEntryModalProps) => {
+  const dialog = useDialog()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submittingId, setSubmittingId] = useState<string | null>(null)
@@ -54,6 +55,17 @@ export const ManualEntryModal = ({
   const handleManualEntry = async (personId: string) => {
     if (isSubmitting) return
 
+    const member = members.find((candidate) => candidate.person_id === personId)
+    const confirmed = await dialog.confirm({
+      title: "Confirm Manual Attendance",
+      message:
+        `Mark ${member?.name || "this member"} as present manually` +
+        `${currentGroup?.name ? ` for ${currentGroup.name}` : ""}?`,
+      confirmText: "Mark Present",
+      cancelText: "Cancel",
+    })
+    if (!confirmed) return
+
     setIsSubmitting(true)
     setSubmittingId(personId)
     setError(null)
@@ -64,12 +76,13 @@ export const ManualEntryModal = ({
         timestamp: new Date(),
         is_manual: true,
         notes: "Manual entry by admin",
+        created_by: "desktop_admin",
       })
 
       const store = useAttendanceStore.getState()
       store.setRecentAttendance([record, ...store.recentAttendance])
 
-      onSuccess()
+      await Promise.resolve(onSuccess())
       onClose()
     } catch (err) {
       setError("Failed to add record. Please try again.")

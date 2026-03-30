@@ -214,9 +214,33 @@ export class RecordManager {
         this.apiEndpoints.records,
         recordData,
       )
-      return { ...newRecord, timestamp: new Date(newRecord.timestamp) }
+      return {
+        ...newRecord,
+        timestamp: new Date(newRecord.timestamp),
+        voided_at: newRecord.voided_at ? new Date(newRecord.voided_at) : undefined,
+      }
     } catch (error) {
       console.error("Error adding record:", error)
+      throw error
+    }
+  }
+
+  async voidRecord(recordId: string, reason: string, voidedBy?: string): Promise<AttendanceRecord> {
+    try {
+      const updatedRecord = await this.httpClient.post<AttendanceRecord>(
+        `${this.apiEndpoints.records}/${recordId}/void`,
+        {
+          reason,
+          voided_by: voidedBy,
+        },
+      )
+      return {
+        ...updatedRecord,
+        timestamp: new Date(updatedRecord.timestamp),
+        voided_at: updatedRecord.voided_at ? new Date(updatedRecord.voided_at) : undefined,
+      }
+    } catch (error) {
+      console.error("Error voiding record:", error)
       throw error
     }
   }
@@ -227,6 +251,7 @@ export class RecordManager {
     start_date?: string
     end_date?: string
     limit?: number
+    include_voided?: boolean
   }): Promise<AttendanceRecord[]> {
     try {
       const params: Record<string, string> = {}
@@ -235,6 +260,7 @@ export class RecordManager {
       if (filters?.start_date) params.start_date = filters.start_date
       if (filters?.end_date) params.end_date = filters.end_date
       if (filters?.limit) params.limit = filters.limit.toString()
+      if (filters?.include_voided) params.include_voided = "true"
 
       const records = await this.httpClient.get<AttendanceRecord[]>(
         this.apiEndpoints.records,
@@ -243,6 +269,7 @@ export class RecordManager {
       return records.map((record) => ({
         ...record,
         timestamp: new Date(record.timestamp),
+        voided_at: record.voided_at ? new Date(record.voided_at) : undefined,
       }))
     } catch (error) {
       console.error("Error getting records:", error)

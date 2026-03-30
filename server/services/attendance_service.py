@@ -12,6 +12,7 @@ from services.time_authority_service import get_time_authority
 from time_utils import (
     ensure_local_aware,
     from_storage_local,
+    local_day_bounds,
     local_date_string,
     local_now,
     to_api_utc,
@@ -302,6 +303,58 @@ class AttendanceService:
             "absent_today": absent_today,
             "late_today": late_today,
         }
+
+    async def recompute_sessions_for_date(
+        self,
+        group_id: str,
+        target_date: str,
+        *,
+        person_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Rebuild derived sessions for a group/date after record corrections."""
+        group = await self.repo.get_group(group_id)
+        if not group:
+            raise ValueError("Group not found")
+
+        if person_id:
+            member = await self.repo.get_member(person_id)
+            if not member or member.group_id != group_id:
+                raise ValueError("Member not found")
+            members = [member]
+        else:
+            members = await self.repo.get_group_members(group_id)
+
+        existing_sessions = await self.repo.get_sessions(
+            group_id=group_id,
+            person_id=person_id,
+            start_date=target_date,
+            end_date=target_date,
+        )
+        rule_history = await self.repo.get_group_rules(group_id)
+        start_of_day, end_of_day = local_day_bounds(target_date)
+        records = await self.repo.get_records(
+            group_id=group_id,
+            person_id=person_id,
+            start_date=start_of_day,
+            end_date=end_of_day,
+        )
+
+        session_dicts = self.compute_sessions_from_records(
+            records=records,
+            members=members,
+            late_threshold_minutes=group.late_threshold_minutes or 15,
+            target_date=target_date,
+            class_start_time=group.class_start_time,
+            late_threshold_enabled=group.late_threshold_enabled or False,
+            existing_sessions=existing_sessions,
+            track_checkout=getattr(group, "track_checkout", False),
+            rule_history=rule_history,
+        )
+
+        for session_data in session_dicts:
+            await self.repo.upsert_session(session_data)
+
+        return session_dicts
 
     async def process_event(
         self, event_data, member, settings

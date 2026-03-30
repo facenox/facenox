@@ -138,6 +138,10 @@ class AttendanceRecord(Base, SyncMixin):
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     is_manual: Mapped[bool] = mapped_column(Boolean, default=False)
     created_by: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    is_voided: Mapped[bool] = mapped_column(Boolean, default=False)
+    voided_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    voided_by: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    void_reason: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     member: Mapped["AttendanceMember"] = relationship(back_populates="records")
     group: Mapped["AttendanceGroup"] = relationship(back_populates="records")

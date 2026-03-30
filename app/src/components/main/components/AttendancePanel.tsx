@@ -1,15 +1,17 @@
 import { useState, useMemo, useEffect, memo, useCallback } from "react"
 import type { ReactNode } from "react"
-import { AnimatePresence } from "framer-motion"
-import { createDisplayNameMap } from "@/utils"
+import { AnimatePresence, motion } from "framer-motion"
+import { createDisplayNameMap, getLocalDateString } from "@/utils"
 import { Dropdown, Tooltip, MemberTooltip } from "@/components/shared"
 import type { AttendanceGroup, AttendanceRecord, AttendanceMember } from "@/components/main/types"
 
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { ManualEntryModal } from "./ManualEntryModal"
+import { ManualCorrectionModal } from "./ManualCorrectionModal"
 
 interface AttendancePanelProps {
   handleSelectGroup: (group: AttendanceGroup) => void
+  refreshAttendanceData: () => Promise<void>
 }
 
 type SortField = "time" | "name"
@@ -86,6 +88,7 @@ const AttendanceRecordItem = memo(
     lateThresholdEnabled,
     trackCheckoutEnabled,
     hasCheckedInEarlier,
+    onVoidManual,
   }: {
     record: AttendanceRecord
     displayName: string
@@ -95,7 +98,10 @@ const AttendanceRecordItem = memo(
     lateThresholdEnabled: boolean
     trackCheckoutEnabled: boolean
     hasCheckedInEarlier: boolean
+    onVoidManual?: (record: AttendanceRecord) => void
   }) => {
+    const [isHovered, setIsHovered] = useState(false)
+
     const calculateTimeStatus = () => {
       try {
         if (!classStartTime && !record.event_type) return null
@@ -167,7 +173,7 @@ const AttendanceRecordItem = memo(
           label:
             trackCheckoutEnabled ? "TIME IN"
             : lateThresholdEnabled ? "ON TIME"
-            : "PRESENT",
+            : "",
           color: "text-white/40",
           pillColor: "bg-[rgba(22,28,36,0.62)] text-white/40 border-white/10",
           borderColor: "border-l-transparent",
@@ -186,6 +192,12 @@ const AttendanceRecordItem = memo(
         position="right"
         role={record.event_type === "check_out" ? "Exiting" : "Present"}>
         <div
+          onMouseEnter={() => {
+            if (onVoidManual) {
+              setIsHovered(true)
+            }
+          }}
+          onMouseLeave={() => setIsHovered(false)}
           className={`group relative border-b border-l-2 border-white/5 py-2.5 pr-3 pl-4 transition-colors hover:bg-[rgba(22,28,36,0.52)] ${timeStatus?.borderColor || "border-l-transparent"}`}>
           <div className="flex items-center gap-3 py-0.5">
             <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-white/90">
@@ -199,12 +211,44 @@ const AttendanceRecordItem = memo(
                   {timeStatus.label}
                 </span>
               )}
-              <span className="font-mono text-[11px] text-white/40 tabular-nums">
-                {record.timestamp.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
+              {onVoidManual ?
+                <div className="relative flex h-6 w-[54px] items-center justify-end overflow-visible">
+                  <AnimatePresence initial={false}>
+                    {isHovered && (
+                      <motion.div
+                        key="remove-action"
+                        initial={{ opacity: 0, x: 6, scale: 0.92 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        exit={{ opacity: 0, x: 6, scale: 0.92 }}
+                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute top-0 right-[58px]">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onVoidManual(record)
+                          }}
+                          className="flex h-6 w-6 items-center justify-center rounded-full border border-red-500/18 bg-red-500/8 text-red-300/88 shadow-[0_4px_14px_rgba(127,29,29,0.18)] transition-all hover:border-red-500/28 hover:bg-red-500/14 hover:text-red-200"
+                          aria-label={`Remove manual attendance for ${displayName}`}>
+                          <i className="fa-regular fa-trash-can text-[10px]"></i>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <span className="block w-[54px] text-right font-mono text-[11px] text-white/40 tabular-nums">
+                    {record.timestamp.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              : <span className="font-mono text-[11px] text-white/40 tabular-nums">
+                  {record.timestamp.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              }
             </div>
           </div>
         </div>
@@ -217,6 +261,7 @@ AttendanceRecordItem.displayName = "AttendanceRecordItem"
 
 export const AttendancePanel = memo(function AttendancePanel({
   handleSelectGroup,
+  refreshAttendanceData,
 }: AttendancePanelProps) {
   const {
     attendanceGroups,
@@ -232,9 +277,15 @@ export const AttendancePanel = memo(function AttendancePanel({
 
   const { setShowSettings, setGroupInitialSection } = useUIStore()
   const [showManualEntry, setShowManualEntry] = useState(false)
+  const [recordToVoid, setRecordToVoid] = useState<AttendanceRecord | null>(null)
 
-  const presentPersonIds = useMemo(() => {
-    return new Set(recentAttendance.map((r) => r.person_id))
+  const todayPresentPersonIds = useMemo(() => {
+    const today = getLocalDateString()
+    return new Set(
+      recentAttendance
+        .filter((record) => !record.is_voided && getLocalDateString(record.timestamp) === today)
+        .map((record) => record.person_id),
+    )
   }, [recentAttendance])
 
   const lateTrackingSettings = useMemo(() => {
@@ -569,6 +620,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                         lateThresholdEnabled={lateTrackingSettings.lateThresholdEnabled}
                         trackCheckoutEnabled={currentGroup?.settings?.track_checkout ?? false}
                         hasCheckedInEarlier={hasCheckedInEarlier}
+                        onVoidManual={setRecordToVoid}
                       />
                     )
                   })
@@ -639,14 +691,19 @@ export const AttendancePanel = memo(function AttendancePanel({
         {showManualEntry && (
           <ManualEntryModal
             onClose={() => setShowManualEntry(false)}
-            onSuccess={() => {
-              // Optional: refreshed logic handled by store/websocket usually,
-              // but we can force refresh if needed.
-            }}
+            onSuccess={refreshAttendanceData}
             members={groupMembers}
-            presentPersonIds={presentPersonIds}
+            presentPersonIds={todayPresentPersonIds}
             onAddMember={handleOpenSettingsForRegistration}
             currentGroup={currentGroup}
+          />
+        )}
+        {recordToVoid && (
+          <ManualCorrectionModal
+            record={recordToVoid}
+            displayName={displayNameMap.get(recordToVoid.person_id) || "Member"}
+            onClose={() => setRecordToVoid(null)}
+            onVoided={refreshAttendanceData}
           />
         )}
       </AnimatePresence>

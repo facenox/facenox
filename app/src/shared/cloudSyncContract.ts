@@ -40,6 +40,10 @@ export const attendanceRecordSchema = z.object({
   notes: z.string().nullable().optional(),
   is_manual: z.boolean(),
   created_by: z.string().nullable().optional(),
+  is_voided: z.boolean().default(false),
+  voided_at: z.string().datetime().nullable().optional(),
+  voided_by: z.string().nullable().optional(),
+  void_reason: z.string().nullable().optional(),
 })
 
 export const attendanceSessionSchema = z.object({

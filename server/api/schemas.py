@@ -183,11 +183,20 @@ class AttendanceRecordResponse(BaseModel):
     notes: Optional[str]
     is_manual: bool
     created_by: Optional[str]
+    is_voided: bool = False
+    voided_at: Optional[datetime] = None
+    voided_by: Optional[str] = None
+    void_reason: Optional[str] = None
 
-    @field_validator("timestamp", mode="before")
+    @field_validator("timestamp", "voided_at", mode="before")
     @classmethod
     def _normalize_timestamp(cls, value: Optional[datetime]) -> Optional[datetime]:
         return _normalize_api_datetime(value)
+
+
+class AttendanceRecordVoidRequest(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=500)
+    voided_by: Optional[str] = Field(None, max_length=100)
 
 
 # Session Models

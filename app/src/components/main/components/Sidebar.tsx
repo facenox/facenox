@@ -19,6 +19,7 @@ interface SidebarProps {
   isVideoLoading: boolean
 
   handleSelectGroup: (group: AttendanceGroup) => void
+  refreshAttendanceData: () => Promise<void>
 }
 
 const MIN_WIDTH = 50
@@ -41,6 +42,7 @@ export const Sidebar = memo(function Sidebar({
   isStreaming,
   isVideoLoading,
   handleSelectGroup,
+  refreshAttendanceData,
 }: SidebarProps) {
   const { groupMembers, persistentCooldowns, currentGroup } = useAttendanceStore()
   const {
@@ -272,7 +274,10 @@ export const Sidebar = memo(function Sidebar({
           )}
 
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <AttendancePanel handleSelectGroup={handleSelectGroup} />
+            <AttendancePanel
+              handleSelectGroup={handleSelectGroup}
+              refreshAttendanceData={refreshAttendanceData}
+            />
           </div>
 
           <div className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto border-t border-white/10 bg-[rgba(10,13,18,0.96)]">

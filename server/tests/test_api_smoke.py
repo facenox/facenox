@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from starlette.websockets import WebSocketDisconnect
 
 
@@ -168,3 +170,169 @@ def test_detect_websocket_requires_token_and_accepts_scoped_client(
         websocket.send_json({"type": "disconnect"})
 
     assert client_id not in manager.active_connections
+
+
+def test_manual_attendance_record_can_be_voided_and_recomputes_sessions(
+    test_client, set_api_token
+) -> None:
+    client, _session_factory = test_client
+    set_api_token("smoke-token")
+    headers = _headers("org-void")
+
+    group = client.post(
+        "/attendance/groups",
+        headers=headers,
+        json={"name": "Correction Group"},
+    )
+    assert group.status_code == 200, group.text
+    group_id = group.json()["id"]
+
+    member = client.post(
+        "/attendance/members",
+        headers=headers,
+        json={
+            "person_id": "manual-person",
+            "group_id": group_id,
+            "name": "Manual Member",
+            "has_consent": True,
+            "consent_granted_by": "smoke-test",
+        },
+    )
+    assert member.status_code == 200, member.text
+
+    manual_timestamp = (
+        datetime.now().astimezone().replace(hour=12, minute=0, second=0, microsecond=0)
+    )
+    date_str = manual_timestamp.strftime("%Y-%m-%d")
+
+    created_record = client.post(
+        "/attendance/records",
+        headers=headers,
+        json={
+            "person_id": "manual-person",
+            "timestamp": manual_timestamp.isoformat(),
+            "is_manual": True,
+            "created_by": "smoke-admin",
+            "notes": "Manual attendance for smoke test",
+        },
+    )
+    assert created_record.status_code == 200, created_record.text
+    created_payload = created_record.json()
+    assert created_payload["is_manual"] is True
+    assert created_payload["is_voided"] is False
+    assert created_payload["created_by"] == "smoke-admin"
+
+    active_records = client.get("/attendance/records", headers=headers)
+    assert active_records.status_code == 200, active_records.text
+    assert len(active_records.json()) == 1
+
+    sessions_before_void = client.get(
+        f"/attendance/sessions?group_id={group_id}&start_date={date_str}&end_date={date_str}",
+        headers=headers,
+    )
+    assert sessions_before_void.status_code == 200, sessions_before_void.text
+    assert sessions_before_void.json()[0]["status"] == "present"
+
+    voided_record = client.post(
+        f"/attendance/records/{created_payload['id']}/void",
+        headers=headers,
+        json={
+            "reason": "Wrong member selected",
+            "voided_by": "smoke-admin",
+        },
+    )
+    assert voided_record.status_code == 200, voided_record.text
+    voided_payload = voided_record.json()
+    assert voided_payload["is_voided"] is True
+    assert voided_payload["voided_by"] == "smoke-admin"
+    assert voided_payload["void_reason"] == "Wrong member selected"
+
+    active_records_after_void = client.get("/attendance/records", headers=headers)
+    assert active_records_after_void.status_code == 200, active_records_after_void.text
+    assert active_records_after_void.json() == []
+
+    all_records_after_void = client.get(
+        "/attendance/records?include_voided=true",
+        headers=headers,
+    )
+    assert all_records_after_void.status_code == 200, all_records_after_void.text
+    assert len(all_records_after_void.json()) == 1
+    assert all_records_after_void.json()[0]["is_voided"] is True
+
+    sessions_after_void = client.get(
+        f"/attendance/sessions?group_id={group_id}&start_date={date_str}&end_date={date_str}",
+        headers=headers,
+    )
+    assert sessions_after_void.status_code == 200, sessions_after_void.text
+    assert sessions_after_void.json()[0]["status"] == "absent"
+
+    audit_log = client.get("/attendance/settings/audit-log", headers=headers)
+    assert audit_log.status_code == 200, audit_log.text
+    audit_csv = audit_log.text
+    assert "MANUAL_ATTENDANCE_RECORDED" in audit_csv
+    assert "ATTENDANCE_RECORD_VOIDED" in audit_csv
+
+
+def test_auto_attendance_record_can_be_voided(test_client, set_api_token) -> None:
+    client, _session_factory = test_client
+    set_api_token("smoke-token")
+    headers = _headers("org-auto-void")
+
+    group = client.post(
+        "/attendance/groups",
+        headers=headers,
+        json={"name": "Auto Correction Group"},
+    )
+    assert group.status_code == 200, group.text
+    group_id = group.json()["id"]
+
+    member = client.post(
+        "/attendance/members",
+        headers=headers,
+        json={
+            "person_id": "auto-person",
+            "group_id": group_id,
+            "name": "Auto Member",
+            "has_consent": True,
+            "consent_granted_by": "smoke-test",
+        },
+    )
+    assert member.status_code == 200, member.text
+
+    auto_event = client.post(
+        "/attendance/events",
+        headers=headers,
+        json={
+            "person_id": "auto-person",
+            "confidence": 0.98,
+            "location": "camera-auto",
+        },
+    )
+    assert auto_event.status_code == 200, auto_event.text
+
+    active_records = client.get("/attendance/records", headers=headers)
+    assert active_records.status_code == 200, active_records.text
+    assert len(active_records.json()) == 1
+    record_payload = active_records.json()[0]
+    assert record_payload["is_manual"] is False
+
+    voided_record = client.post(
+        f"/attendance/records/{record_payload['id']}/void",
+        headers=headers,
+        json={
+            "reason": "Recognition matched the wrong person",
+            "voided_by": "smoke-admin",
+        },
+    )
+    assert voided_record.status_code == 200, voided_record.text
+    voided_payload = voided_record.json()
+    assert voided_payload["is_voided"] is True
+    assert voided_payload["is_manual"] is False
+
+    active_records_after_void = client.get("/attendance/records", headers=headers)
+    assert active_records_after_void.status_code == 200, active_records_after_void.text
+    assert active_records_after_void.json() == []
+
+    audit_log = client.get("/attendance/settings/audit-log", headers=headers)
+    assert audit_log.status_code == 200, audit_log.text
+    assert "ATTENDANCE_RECORD_VOIDED" in audit_log.text
