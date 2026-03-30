@@ -17,6 +17,12 @@ const waitForNextPaint = () =>
     requestAnimationFrame(() => resolve())
   })
 
+const consentPopoverContent = {
+  title: "Biometric Privacy",
+  description:
+    "Only add people who have given biometric consent. Face data stays encrypted on this device.",
+}
+
 export function AddMember({ group, existingMembers = [], onClose, onSuccess }: AddMemberProps) {
   const [isBulkMode, setIsBulkMode] = useState(false)
   const [newMemberName, setNewMemberName] = useState("")
@@ -79,6 +85,8 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
     const normalizedName = newMemberName.trim().toLowerCase()
     return existingMembers.some((m) => m.name.toLowerCase() === normalizedName)
   }, [newMemberName, existingMembers])
+
+  const modalSubtitle = isBulkMode ? "Import people into" : "Add a person to"
 
   // Reset confirmation when name changes
   useEffect(() => {
@@ -187,6 +195,35 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
     }
   }
 
+  const renderConsentRow = (label: string) => (
+    <div
+      className={`rounded-lg transition-all duration-300 ${
+        hasBiometricConsent ? "bg-cyan-500/6" : "bg-[rgba(13,17,23,0.82)]"
+      }`}>
+      <label className="group flex cursor-pointer items-center gap-3 px-3.5 py-3">
+        <div className="relative flex h-4.5 w-4.5 shrink-0 items-center justify-center">
+          <input
+            type="checkbox"
+            checked={hasBiometricConsent}
+            onChange={(e) => setHasBiometricConsent(e.target.checked)}
+            className="peer sr-only"
+          />
+          <div className="h-4.5 w-4.5 rounded-md border border-white/20 bg-[rgba(22,28,36,0.62)] transition-all duration-200 group-hover:border-white/40 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10" />
+          <i className="fa-solid fa-check absolute text-[9px] text-cyan-400 opacity-0 transition-all duration-200 peer-checked:opacity-100" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium tracking-tight text-white/85">{label}</span>
+            <InfoPopover
+              title={consentPopoverContent.title}
+              description={consentPopoverContent.description}
+            />
+          </div>
+        </div>
+      </label>
+    </div>
+  )
+
   return (
     <Modal
       isOpen={true}
@@ -198,42 +235,58 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
         <div>
           <h3 className="mb-1 text-xl font-semibold tracking-tight">Add Members</h3>
           <p className="text-[11px] font-normal text-white/50">
-            Enroll new people into{" "}
-            <span className="font-medium text-cyan-400/80">{group.name}</span>
+            {modalSubtitle} <span className="font-medium text-cyan-400/80">{group.name}</span>
           </p>
         </div>
       }
       maxWidth="lg">
       <div className="-m-5 mt-2 max-h-[90vh] overflow-y-auto p-5">
-        {/* Tab selector */}
-        <div className="mb-4 flex gap-2 border-b border-white/10 pb-2">
-          <button
-            onClick={() => {
-              setIsBulkMode(false)
-              setBulkMembersText("")
-              setConfirmDuplicate(false)
-            }}
-            className={`rounded-lg px-4 py-2 text-[11px] font-medium transition ${
-              !isBulkMode ?
-                "bg-cyan-500/20 text-cyan-200"
-              : "text-white/40 hover:bg-white/10 hover:text-white/80"
-            }`}>
-            One person
-          </button>
-          <button
-            onClick={() => {
-              setIsBulkMode(true)
-              setNewMemberName("")
-              setNewMemberRole("")
-              setConfirmDuplicate(false)
-            }}
-            className={`rounded-lg px-4 py-2 text-[11px] font-medium transition ${
-              isBulkMode ?
-                "bg-cyan-500/20 text-cyan-200"
-              : "text-white/40 hover:bg-white/10 hover:text-white/80"
-            }`}>
-            Bulk Add
-          </button>
+        {/* Mode selector */}
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setIsBulkMode(false)
+                setBulkMembersText("")
+                setConfirmDuplicate(false)
+              }}
+              className={`rounded-lg px-4 py-2 text-[11px] font-medium transition ${
+                !isBulkMode ?
+                  "bg-cyan-500/18 text-cyan-100"
+                : "text-white/40 hover:bg-white/10 hover:text-white/80"
+              }`}>
+              Single
+            </button>
+            <button
+              onClick={() => {
+                setIsBulkMode(true)
+                setNewMemberName("")
+                setNewMemberRole("")
+                setConfirmDuplicate(false)
+              }}
+              className={`rounded-lg px-4 py-2 text-[11px] font-medium transition ${
+                isBulkMode ?
+                  "bg-cyan-500/18 text-cyan-100"
+                : "text-white/40 hover:bg-white/10 hover:text-white/80"
+              }`}>
+              Bulk Import
+            </button>
+          </div>
+          {isBulkMode && (
+            <label className="cursor-pointer rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-3 py-1.5 text-xs text-cyan-200 transition hover:bg-cyan-500/30">
+              Import File
+              <input
+                type="file"
+                accept=".txt,.csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) void handleFileUpload(file)
+                  e.target.value = ""
+                }}
+              />
+            </label>
+          )}
         </div>
 
         {error && (
@@ -250,7 +303,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
                 ref={nameInputRef}
                 value={newMemberName}
                 onChange={(event) => setNewMemberName(event.target.value)}
-                placeholder="Enter Name"
+                placeholder="Full Name"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleAddMember()
                 }}
@@ -270,7 +323,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
               <FormInput
                 value={newMemberRole}
                 onChange={(event) => setNewMemberRole(event.target.value)}
-                placeholder="Enter Role (Optional)"
+                placeholder="Role (Optional)"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleAddMember()
                 }}
@@ -278,35 +331,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
               />
             </label>
 
-            {/* Consent Toggle */}
-            <div
-              className={`rounded-xl transition-all duration-300 ${
-                hasBiometricConsent ? "bg-[rgba(18,24,31,0.94)]" : "bg-[rgba(13,17,23,0.82)]"
-              }`}>
-              <label className="group flex cursor-pointer items-center gap-4 p-4">
-                <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
-                  <input
-                    type="checkbox"
-                    checked={hasBiometricConsent}
-                    onChange={(e) => setHasBiometricConsent(e.target.checked)}
-                    className="peer sr-only"
-                  />
-                  <div className="h-5 w-5 rounded-md border border-white/20 bg-[rgba(22,28,36,0.62)] transition-all duration-200 group-hover:border-white/40 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10" />
-                  <i className="fa-solid fa-check absolute text-[9px] text-cyan-400 opacity-0 transition-all duration-200 peer-checked:opacity-100" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold tracking-tight text-white/90">
-                      I confirm that this member has provided informed biometric consent.
-                    </span>
-                    <InfoPopover
-                      title="Privacy First"
-                      description="Facial features will be encrypted and stored strictly on this device. Facenox does not upload biometric data to any cloud servers."
-                    />
-                  </div>
-                </div>
-              </label>
-            </div>
+            {renderConsentRow("I confirm that this member has given biometric consent.")}
           </div>
         )}
 
@@ -314,65 +339,20 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
         {isBulkMode && (
           <div className="space-y-4">
             <div>
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm text-white/60">Upload CSV/TXT file or paste below</span>
-                <label className="cursor-pointer rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-3 py-1 text-xs text-cyan-200 transition hover:bg-cyan-500/30">
-                  Upload File
-                  <input
-                    type="file"
-                    accept=".txt,.csv"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) void handleFileUpload(file)
-                      e.target.value = ""
-                    }}
-                  />
-                </label>
-              </div>
               <textarea
                 value={bulkMembersText}
                 onChange={(event) => setBulkMembersText(event.target.value)}
-                className="min-h-[200px] w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-3 font-mono text-sm transition-all duration-300 outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
-                placeholder="Enter one member per line. Format:&#10;Name, Role (optional)&#10;&#10;Example:&#10;John Doe, Student&#10;Jane Smith, Teacher&#10;Bob Johnson"
+                className="min-h-[132px] w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-3 font-mono text-sm transition-all duration-300 outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
+                placeholder="Enter one member per line"
               />
               <div className="mt-2 text-[11px] text-white/30">
-                Format: <span className="font-mono text-white/50">Name, Role</span> (one per line,
-                role is optional)
+                Format: <span className="font-mono text-white/50">Name, Role</span>
               </div>
             </div>
 
-            {/* Consent Toggle (Bulk) */}
-            <div
-              className={`rounded-xl border transition-all duration-300 ${
-                hasBiometricConsent ?
-                  "border-cyan-500/30 bg-[rgba(18,24,31,0.94)]"
-                : "border-white/10 bg-[rgba(13,17,23,0.82)]"
-              }`}>
-              <label className="group flex cursor-pointer items-start gap-4 p-4">
-                <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
-                  <input
-                    type="checkbox"
-                    checked={hasBiometricConsent}
-                    onChange={(e) => setHasBiometricConsent(e.target.checked)}
-                    className="peer sr-only"
-                  />
-                  <div className="h-5 w-5 rounded-md border border-white/20 bg-[rgba(22,28,36,0.62)] transition-all duration-200 group-hover:border-white/40 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10" />
-                  <i className="fa-solid fa-check absolute text-[9px] text-cyan-400 opacity-0 transition-all duration-200 peer-checked:opacity-100" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold tracking-tight text-white/90">
-                      I verify that all members in this list have provided explicit consent.
-                    </span>
-                    <InfoPopover
-                      title="Administrative Responsibility"
-                      description="As an administrator, you are responsible for ensuring offline consent records are maintained. All data remains within your local encrypted vault."
-                    />
-                  </div>
-                </div>
-              </label>
-            </div>
+            {renderConsentRow(
+              "I confirm that all members in this list have given biometric consent.",
+            )}
 
             {/* Bulk Results */}
             {bulkResults && (
@@ -438,7 +418,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
               "Add Anyway"
             : isBulkMode ?
               "Add Members"
-            : "Create Member"}
+            : "Add Member"}
           </button>
         </div>
       </div>

@@ -116,7 +116,7 @@ export function InfoPopover({
                 left: pos?.left ?? -9999,
                 visibility: pos ? "visible" : "hidden",
               }}>
-              <div className="overflow-hidden rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] shadow-[0_12px_28px_rgba(0,0,0,0.34)]">
+              <div className="overflow-hidden rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)]">
                 {media && (
                   <div className="relative w-full overflow-hidden bg-black/40">
                     {media.type === "image" ?
