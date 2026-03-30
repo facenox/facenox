@@ -41,8 +41,12 @@ export function Reports({
   const [reportStartDate, setReportStartDate] = useState<string>(getLocalDateString())
   const [reportEndDate, setReportEndDate] = useState<string>(getLocalDateString())
 
-  const { report, sessions, attendanceRecords, members, loading, error, generateReport } =
-    useReportData(group, storeMembers, reportStartDate, reportEndDate)
+  const { report, sessions, members, loading, error, generateReport } = useReportData(
+    group,
+    storeMembers,
+    reportStartDate,
+    reportEndDate,
+  )
 
   const {
     visibleColumns,
@@ -59,7 +63,6 @@ export function Reports({
     group,
     members,
     sessions,
-    attendanceRecords || [],
     report,
     reportStartDate,
     reportEndDate,
@@ -168,8 +171,6 @@ export function Reports({
                 search={search}
                 setSearch={setSearch}
                 allColumns={allColumns}
-                defaultColumns={DEFAULT_COLUMNS}
-                lateTrackingEnabled={true}
               />
 
               <ReportTable

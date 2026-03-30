@@ -22,8 +22,6 @@ interface ReportToolbarProps {
   setSearch: (val: string) => void
 
   allColumns: readonly { key: ColumnKey; label: string }[]
-  defaultColumns: ColumnKey[]
-  lateTrackingEnabled?: boolean
 }
 
 const STATUS_OPTIONS = [

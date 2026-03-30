@@ -97,19 +97,9 @@ export class RecordManager {
     getGroupMembers: (id: string) => Promise<AttendanceMember[]>,
   ): Promise<AttendanceReport> {
     try {
-      const startDateTime = new Date(startDate)
-      startDateTime.setHours(0, 0, 0, 0)
-      const endDateTime = new Date(endDate)
-      endDateTime.setHours(23, 59, 59, 999)
-
-      const [group, members, , sessions] = await Promise.all([
+      const [group, members, sessions] = await Promise.all([
         getGroup(groupId),
         getGroupMembers(groupId),
-        this.getRecords({
-          group_id: groupId,
-          start_date: this.toApiDateTimeParam(startDateTime),
-          end_date: this.toApiDateTimeParam(endDateTime),
-        }),
         this.getSessions({
           group_id: groupId,
           start_date: getLocalDateString(startDate),

@@ -5,9 +5,7 @@ import type {
   AttendanceMember,
   AttendanceGroup,
   AttendanceReport,
-  AttendanceRecord,
 } from "@/types/recognition"
-import { getLocalDateString } from "@/utils"
 import type {
   RowData,
   GroupByKey,
@@ -18,7 +16,6 @@ export function useReportTransform(
   _group: AttendanceGroup,
   members: AttendanceMember[],
   sessions: AttendanceSession[],
-  records: AttendanceRecord[],
   report: AttendanceReport | null,
   startDateStr: string,
   endDateStr: string,
@@ -40,39 +37,6 @@ export function useReportTransform(
     })
     return map
   }, [sessions])
-
-  const recordStatsMap = useMemo(() => {
-    // Key: personId_dateString
-    // Value: { min: Date, max: Date, durationStr: string }
-    const map = new Map<string, { min: Date; max: Date; durationHrs: number }>()
-
-    records.forEach((r) => {
-      const dateStr = getLocalDateString(new Date(r.timestamp)) // YYYY-MM-DD
-      const key = `${r.person_id}_${dateStr}`
-      const ts = new Date(r.timestamp)
-
-      if (!map.has(key)) {
-        map.set(key, { min: ts, max: ts, durationHrs: 0 })
-      } else {
-        const current = map.get(key)!
-        if (ts < current.min) current.min = ts
-        if (ts > current.max) current.max = ts
-      }
-    })
-
-    // Calculate durations
-    map.forEach((value) => {
-      // Only count duration if gap is > 60 seconds (prevents accidental double scan counting)
-      const diffMs = value.max.getTime() - value.min.getTime()
-      if (diffMs > 60000) {
-        value.durationHrs = diffMs / (1000 * 60 * 60)
-      } else {
-        value.durationHrs = 0 // Not enough time to count as a "shift"
-      }
-    })
-
-    return map
-  }, [records])
 
   const filteredRows = useMemo(() => {
     const allDates = generateDateRange(startDateStr, endDateStr)
@@ -127,17 +91,6 @@ export function useReportTransform(
           status = finalSession.status as ReportStatusFilter
         }
 
-        const recordStats = recordStatsMap.get(sessionKey)
-
-        let checkOutTime = finalSession?.check_out_time
-        let totalHours = finalSession?.total_hours
-
-        // Fallback to client-side calculation if backend didn't provide it (e.g. older sessions)
-        if (!checkOutTime && !totalHours && recordStats && recordStats.durationHrs > 0) {
-          checkOutTime = recordStats.max
-          totalHours = recordStats.durationHrs
-        }
-
         const isLate = finalSession?.is_late || false
         const lateMinutes = finalSession?.late_minutes || 0
 
@@ -146,8 +99,8 @@ export function useReportTransform(
           name: displayNameMap.get(member.person_id) || "Unknown",
           date: date,
           check_in_time: finalSession?.check_in_time,
-          check_out_time: checkOutTime,
-          total_hours: totalHours,
+          check_out_time: finalSession?.check_out_time,
+          total_hours: finalSession?.total_hours,
           status: status,
           is_late: isLate,
           late_minutes: lateMinutes,
@@ -186,16 +139,7 @@ export function useReportTransform(
       }
       return true
     })
-  }, [
-    sessionsMap,
-    recordStatsMap,
-    members,
-    displayNameMap,
-    statusFilter,
-    search,
-    startDateStr,
-    endDateStr,
-  ])
+  }, [sessionsMap, members, displayNameMap, statusFilter, search, startDateStr, endDateStr])
 
   const groupedRows = useMemo(() => {
     if (groupBy === "none") return { __all__: filteredRows } as Record<string, typeof filteredRows>
