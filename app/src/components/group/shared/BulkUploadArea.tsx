@@ -1,3 +1,5 @@
+import { Tooltip } from "@/components/shared"
+
 interface BulkUploadAreaProps {
   uploadedCount: number
   isDetecting: boolean
@@ -37,13 +39,14 @@ export function BulkUploadArea({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={onClear}
-              disabled={isDetecting}
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-500/20 text-red-200 transition hover:bg-red-500/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-              title="Clear all files">
-              <i className="fa-solid fa-trash text-sm"></i>
-            </button>
+            <Tooltip content="Clear all files" position="top">
+              <button
+                onClick={onClear}
+                disabled={isDetecting}
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-500/20 text-red-200 transition hover:bg-red-500/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-50">
+                <i className="fa-solid fa-trash text-sm"></i>
+              </button>
+            </Tooltip>
 
             <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-xs font-medium text-white transition hover:bg-[rgba(28,35,44,0.82)]">
               <input

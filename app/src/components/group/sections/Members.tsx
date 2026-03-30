@@ -4,6 +4,7 @@ import { useGroupUIStore } from "@/components/group/stores"
 import { generateDisplayNames } from "@/utils"
 import type { AttendanceMember } from "@/types/recognition"
 import { EmptyState } from "@/components/group/shared/EmptyState"
+import { Tooltip } from "@/components/shared"
 import { DeleteMemberModal } from "./DeleteMemberModal"
 import { BulkConsentModal } from "./BulkConsentModal"
 
@@ -231,18 +232,20 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
                       </div>
                     )}
                     <div className="flex translate-x-1 items-center gap-1.5 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100">
-                      <button
-                        onClick={() => onEdit(member)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition-all hover:bg-white/10 hover:text-white"
-                        title="Edit">
-                        <i className="fa-solid fa-pen-to-square text-xs"></i>
-                      </button>
-                      <button
-                        onClick={() => setMemberToDelete(member)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition-all hover:bg-red-500/10 hover:text-red-400"
-                        title="Delete">
-                        <i className="fa-solid fa-trash-can text-xs"></i>
-                      </button>
+                      <Tooltip content="Edit member" position="top">
+                        <button
+                          onClick={() => onEdit(member)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition-all hover:bg-white/10 hover:text-white">
+                          <i className="fa-solid fa-pen-to-square text-xs"></i>
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Delete member" position="top">
+                        <button
+                          onClick={() => setMemberToDelete(member)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition-all hover:bg-red-500/10 hover:text-red-400">
+                          <i className="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                      </Tooltip>
                     </div>
 
                     {!isRegistered ?

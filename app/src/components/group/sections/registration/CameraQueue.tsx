@@ -3,7 +3,7 @@ import { attendanceManager, backendService } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { useCamera } from "@/components/group/sections/registration/hooks/useCamera"
 import { useGroupUIStore } from "@/components/group/stores/groupUIStore"
-import { Dropdown } from "@/components/shared"
+import { Dropdown, Tooltip } from "@/components/shared"
 import { dataUrlToBlob } from "@/utils/dataUrl"
 
 type CaptureStatus = "pending" | "capturing" | "processing" | "completed" | "skipped" | "error"
@@ -337,12 +337,13 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
             with third parties. Individuals may withdraw consent and request deletion at any time by
             contacting the administrator.
           </div>
-          <button
-            onClick={() => setShowPrivacyNotice(false)}
-            title="Dismiss notice"
-            className="shrink-0 border-none bg-transparent p-0 text-blue-200/40 transition hover:text-blue-100">
-            <i className="fa fa-times text-xs"></i>
-          </button>
+          <Tooltip content="Dismiss notice" position="top">
+            <button
+              onClick={() => setShowPrivacyNotice(false)}
+              className="shrink-0 border-none bg-transparent p-0 text-blue-200/40 transition hover:text-blue-100">
+              <i className="fa fa-times text-xs"></i>
+            </button>
+          </Tooltip>
         </div>
       )}
 

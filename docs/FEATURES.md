@@ -30,8 +30,8 @@ This page covers the shipped desktop feature set and the scope of the current Cl
 
 - The local database stores groups, members, attendance, settings, and audit data.
 - Biometric templates are encrypted at rest in the local store.
-- Vault exports create password-protected `.facenox` backup files.
-- Vault imports can restore attendance data and biometric templates when consent is present in the imported data.
+- Backup exports create password-protected `.facenox` files.
+- Backup imports can restore attendance data and biometric templates when consent is present in the imported data.
 
 ### Operational features
 

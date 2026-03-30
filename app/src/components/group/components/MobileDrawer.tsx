@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from "react"
-import { Dropdown } from "@/components/shared"
+import { Dropdown, Tooltip } from "@/components/shared"
 
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { useGroupModals } from "@/components/group/hooks"
@@ -96,13 +96,14 @@ export function MobileDrawer() {
                   allowClear={true}
                 />
               </div>
-              <button
-                onClick={openCreateGroup}
-                className="h-10 shrink-0 rounded-lg border border-white/10 px-3 text-sm font-medium text-white/80 transition-colors hover:bg-[rgba(24,30,38,0.85)] hover:text-white"
-                aria-label="New Group"
-                title="New Group">
-                Add
-              </button>
+              <Tooltip content="New Group" position="top">
+                <button
+                  onClick={openCreateGroup}
+                  className="h-10 shrink-0 rounded-lg border border-white/10 px-3 text-sm font-medium text-white/80 transition-colors hover:bg-[rgba(24,30,38,0.85)] hover:text-white"
+                  aria-label="New Group">
+                  Add
+                </button>
+              </Tooltip>
             </div>
           </div>
 

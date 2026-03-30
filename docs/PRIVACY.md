@@ -46,11 +46,11 @@ These controls help enforce a narrow recognition scope inside the application. T
 
 ## Backups and Restore
 
-- Vault exports are password-protected `.facenox` files.
-- Vault exports can include biometric templates so a restore does not require full re-enrollment.
+- Backup exports are password-protected `.facenox` files.
+- Backup exports can include biometric templates so a restore does not require full re-enrollment.
 - Restores still depend on the consent information present in the imported data.
 
-If you export a vault, treat the backup file as sensitive data.
+If you export a backup, treat the backup file as sensitive data.
 
 ## Telemetry
 
@@ -85,14 +85,14 @@ The core desktop workflow remains offline-capable:
 - enrollment works locally
 - recognition works locally
 - attendance capture works locally
-- local settings and vault operations work locally
+- local settings and backup operations work locally
 
 If the internet is unavailable, Cloud Beta stops updating until connectivity returns, but local attendance continues.
 
 ## Security Notes
 
 - Biometric templates are encrypted in local storage.
-- Vault backups are password-protected before they are written to disk.
+- Backups are password-protected before they are written to disk.
 - Physical device security still matters. If the machine is compromised, software controls alone are not enough.
 - Full-disk encryption at the OS level is strongly recommended for real deployments.
 

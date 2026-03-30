@@ -130,6 +130,11 @@ export const useSettings = ({
       confirmText: "Clear data",
       cancelText: "Cancel",
       confirmVariant: "danger",
+      requireTypedConfirmation: {
+        label: 'Type "CLEAR FACE DATA" to continue',
+        placeholder: "CLEAR FACE DATA",
+        value: "CLEAR FACE DATA",
+      },
     })
     if (!ok) return
     setIsLoading(true)

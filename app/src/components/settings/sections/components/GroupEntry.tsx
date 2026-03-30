@@ -6,6 +6,7 @@ import type {
   GroupField,
 } from "@/components/settings/sections/types"
 import { MemberEntry } from "@/components/settings/sections/components/MemberEntry"
+import { Tooltip } from "@/components/shared"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
 interface GroupEntryProps {
@@ -117,17 +118,18 @@ export function GroupEntry({
             )}
           </div>
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onDeleteGroup(group.id)
-            }}
-            disabled={deletingGroup === group.id || deletingGroup === "all"}
-            className="flex h-6 w-6 items-center justify-center rounded-lg text-white/30 opacity-0 transition-all group-hover/row:opacity-100 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
-            title="Delete group">
-            <i
-              className={`fa-solid ${deletingGroup === group.id ? "fa-spinner fa-spin" : "fa-trash-can"} text-[10px]`}></i>
-          </button>
+          <Tooltip content="Delete group" position="top">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDeleteGroup(group.id)
+              }}
+              disabled={deletingGroup === group.id || deletingGroup === "all"}
+              className="flex h-6 w-6 items-center justify-center rounded-lg text-white/30 opacity-0 transition-all group-hover/row:opacity-100 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50">
+              <i
+                className={`fa-solid ${deletingGroup === group.id ? "fa-spinner fa-spin" : "fa-trash-can"} text-[10px]`}></i>
+            </button>
+          </Tooltip>
         </div>
       </div>
 

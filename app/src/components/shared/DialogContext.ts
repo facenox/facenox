@@ -15,6 +15,11 @@ export interface ConfirmDialogOptions {
   confirmText?: string
   cancelText?: string
   confirmVariant?: DialogVariant
+  requireTypedConfirmation?: {
+    label?: string
+    placeholder?: string
+    value: string
+  }
 }
 
 export interface DialogAPI {

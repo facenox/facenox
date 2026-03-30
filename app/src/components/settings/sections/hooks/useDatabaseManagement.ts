@@ -320,6 +320,11 @@ export function useDatabaseManagement(
         confirmText: "Delete all",
         cancelText: "Cancel",
         confirmVariant: "danger",
+        requireTypedConfirmation: {
+          label: 'Type "DELETE ALL GROUPS" to continue',
+          placeholder: "DELETE ALL GROUPS",
+          value: "DELETE ALL GROUPS",
+        },
       })
       if (!ok) return
     } else {

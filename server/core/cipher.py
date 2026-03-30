@@ -34,7 +34,7 @@ def _derive_key(password: str, salt: bytes) -> bytes:
     )
 
 
-def encrypt_vault(plaintext: bytes, password: str) -> bytes:
+def encrypt_backup(plaintext: bytes, password: str) -> bytes:
     """Encrypt plaintext. Returns a self-contained blob ready to write to disk."""
     salt = os.urandom(SALT_SIZE)
     iv = os.urandom(IV_SIZE)
@@ -42,7 +42,7 @@ def encrypt_vault(plaintext: bytes, password: str) -> bytes:
     return FACENOX_MAGIC + salt + iv + encrypted
 
 
-def decrypt_vault(blob: bytes, password: str) -> bytes:
+def decrypt_backup(blob: bytes, password: str) -> bytes:
     """
     Decrypt a .facenox blob. Raises ValueError on bad format,
     InvalidTag on wrong password or tampered data.

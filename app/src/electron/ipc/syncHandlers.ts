@@ -91,7 +91,7 @@ function deriveKey(password: string, salt: Buffer): Buffer {
 }
 
 // Encrypt
-function encryptVault(plaintext: Buffer, password: string): Buffer {
+function encryptBackup(plaintext: Buffer, password: string): Buffer {
   const salt = crypto.randomBytes(SALT_SIZE)
   const iv = crypto.randomBytes(IV_SIZE)
   const key = deriveKey(password, salt)
@@ -104,17 +104,17 @@ function encryptVault(plaintext: Buffer, password: string): Buffer {
 }
 
 // Decrypt
-function decryptVault(blob: Buffer, password: string): Buffer {
+function decryptBackup(blob: Buffer, password: string): Buffer {
   const magicLen = FACENOX_MAGIC.length
   const minLen = magicLen + SALT_SIZE + IV_SIZE + TAG_SIZE + 1
 
   if (blob.length < minLen) {
-    throw new Error("File is too short to be a valid .facenox vault.")
+    throw new Error("File is too short to be a valid .facenox backup.")
   }
 
   const magic = blob.subarray(0, magicLen)
   if (!crypto.timingSafeEqual(magic, FACENOX_MAGIC)) {
-    throw new Error("Invalid file format. This file is not a Facenox vault (.facenox).")
+    throw new Error("Invalid file format. This file is not a Facenox backup (.facenox).")
   }
 
   let offset = magicLen
@@ -328,10 +328,10 @@ export function registerSyncHandlers() {
   ipcMain.handle("sync:pick-import-file", async () => {
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
-        title: "Open Facenox Vault",
-        filters: [{ name: "Facenox Vault", extensions: ["facenox"] }],
+        title: "Open Facenox Backup",
+        filters: [{ name: "Facenox Backup", extensions: ["facenox"] }],
         properties: ["openFile"],
-        buttonLabel: "Open Vault",
+        buttonLabel: "Open Backup",
       })
 
       if (canceled || filePaths.length === 0) {
@@ -340,7 +340,7 @@ export function registerSyncHandlers() {
 
       return { canceled: false, filePath: filePaths[0] }
     } catch (error) {
-      console.error("[Vault] Picking file failed:", error)
+      console.error("[Backup] Picking file failed:", error)
       return {
         canceled: true,
         error: error instanceof Error ? error.message : String(error),
@@ -351,10 +351,10 @@ export function registerSyncHandlers() {
   ipcMain.handle("sync:export-data", async (_event, password?: string) => {
     try {
       if (!password) {
-        throw new Error("Password is required to export vault.")
+        throw new Error("Password is required to export a backup.")
       }
 
-      const exportUrl = `${backendService.getUrl()}/vault/export`
+      const exportUrl = `${backendService.getUrl()}/backup/export`
       const exportRes = await fetch(exportUrl, {
         method: "POST",
         headers: authHeaders({ "Content-Type": "application/json" }),
@@ -363,27 +363,27 @@ export function registerSyncHandlers() {
 
       if (!exportRes.ok) {
         const errText = await exportRes.text()
-        throw new Error(`Vault export failed: HTTP ${exportRes.status} — ${errText}`)
+        throw new Error(`Backup export failed: HTTP ${exportRes.status}: ${errText}`)
       }
 
-      const vaultPayload = await exportRes.json()
+      const backupPayload = await exportRes.json()
 
       const { canceled, filePath } = await dialog.showSaveDialog({
-        title: "Save Facenox Vault",
-        defaultPath: `facenox-vault-${new Date().toISOString().slice(0, 10)}.facenox`,
-        filters: [{ name: "Facenox Vault", extensions: ["facenox"] }],
-        buttonLabel: "Save Vault",
+        title: "Save Facenox Backup",
+        defaultPath: `facenox-backup-${new Date().toISOString().slice(0, 10)}.facenox`,
+        filters: [{ name: "Facenox Backup", extensions: ["facenox"] }],
+        buttonLabel: "Save Backup",
       })
 
       if (canceled || !filePath) return { success: false, canceled: true }
 
-      const plaintext = Buffer.from(JSON.stringify(vaultPayload), "utf-8")
-      const encrypted = encryptVault(plaintext, password)
+      const plaintext = Buffer.from(JSON.stringify(backupPayload), "utf-8")
+      const encrypted = encryptBackup(plaintext, password)
       await fs.writeFile(filePath, encrypted)
 
       return { success: true, filePath }
     } catch (error) {
-      console.error("[Vault] Export failed:", error)
+      console.error("[Backup] Export failed:", error)
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -396,18 +396,18 @@ export function registerSyncHandlers() {
     async (_event, password?: string, filePath?: string, overwrite = false) => {
       try {
         if (!password) {
-          throw new Error("Password is required to restore vault.")
+          throw new Error("Password is required to restore a backup.")
         }
 
         if (!filePath) {
-          throw new Error("File path is required to restore vault.")
+          throw new Error("File path is required to restore a backup.")
         }
 
         // 3. Read encrypted file and decrypt
         const encryptedBlob = await fs.readFile(filePath)
         let plaintext: Buffer
         try {
-          plaintext = decryptVault(encryptedBlob, password)
+          plaintext = decryptBackup(encryptedBlob, password)
         } catch (decryptErr) {
           return {
             success: false,
@@ -415,22 +415,22 @@ export function registerSyncHandlers() {
           }
         }
 
-        // 4. Parse vault structure
-        const vaultPayload = JSON.parse(plaintext.toString("utf-8"))
+        // 4. Parse backup structure
+        const backupPayload = JSON.parse(plaintext.toString("utf-8"))
 
         // 5. Send to Python backend for full restoration (attendance + biometrics)
-        const importUrl = `${backendService.getUrl()}/vault/import`
+        const importUrl = `${backendService.getUrl()}/backup/import`
         const importRes = await fetch(importUrl, {
           method: "POST",
           headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({
-            version: vaultPayload.version ?? 1,
-            exported_at: vaultPayload.exported_at,
+            version: backupPayload.version ?? 1,
+            exported_at: backupPayload.exported_at,
             attendance: {
-              data: vaultPayload.attendance,
+              data: backupPayload.attendance,
               overwrite_existing: overwrite,
             },
-            biometrics: vaultPayload.biometrics ?? [],
+            biometrics: backupPayload.biometrics ?? [],
           }),
           signal: AbortSignal.timeout(120_000),
         })
@@ -443,7 +443,7 @@ export function registerSyncHandlers() {
         const result = (await importRes.json()) as { message?: string }
         return { success: true, message: result.message }
       } catch (error) {
-        console.error("[Vault] Import failed:", error)
+        console.error("[Backup] Import failed:", error)
         return {
           success: false,
           error: error instanceof Error ? error.message : String(error),

@@ -44,7 +44,7 @@ Most face recognition attendance systems rely on cloud-based biometrics. Facenox
 
 | Local-first                                     | Offline-ready                                            | Consent-aware                                      | Encrypted                                                                                                                  |
 | ----------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Recognition and attendance stay on the desktop. | Core attendance workflows keep working without internet. | Enrollment and matching respect biometric consent. | Biometric templates are encrypted locally, and moving them between devices requires an encrypted vault backup and restore. |
+| Recognition and attendance stay on the desktop. | Core attendance workflows keep working without internet. | Enrollment and matching respect biometric consent. | Biometric templates are encrypted locally, and moving them between devices requires encrypted backup and restore. |
 
 ## Features
 
@@ -53,7 +53,7 @@ Most face recognition attendance systems rely on cloud-based biometrics. Facenox
 - Attendance records, sessions, and exports
 - Consent-aware biometric enrollment and deletion
 - Encrypted local biometric storage
-- Password-protected `.facenox` vault backup and restore
+- Password-protected `.facenox` backup and restore
 - Optional Cloud Beta pairing with manual and background sync
 
 ## Performance
@@ -74,7 +74,7 @@ Facenox Cloud is an optional companion service for:
 
 Facenox Cloud is separate from this open source desktop repository. The desktop app in this repo remains usable without the hosted cloud service.
 
-The desktop app pushes attendance snapshots to the cloud. Cloud Beta does not upload raw face images or face embeddings, and biometric matching stays local. To move biometric profiles between devices, use encrypted vault backup and restore.
+The desktop app pushes attendance snapshots to the cloud. Cloud Beta does not upload raw face images or face embeddings, and biometric matching stays local. To move biometric profiles between devices, use encrypted backup and restore.
 
 ## Offline-First Behavior
 
@@ -82,7 +82,7 @@ Facenox Desktop continues to work locally when internet access is unavailable:
 
 - recognition still works
 - attendance is still recorded locally
-- local settings and vault operations still work
+- local settings and backup operations still work
 
 Cloud pairing, cloud sync, and cloud dashboard updates resume when connectivity returns.
 

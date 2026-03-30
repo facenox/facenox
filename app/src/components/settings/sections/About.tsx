@@ -54,7 +54,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
             Facenox can pair with a separate Facenox Cloud deployment for reporting and device sync.
             Cloud sync does not upload face embeddings or raw face images, and biometric matching
             stays local to the desktop app. To move biometric profiles between devices, use an
-            encrypted vault backup and restore.
+            encrypted backup and restore.
           </p>
         </section>
 

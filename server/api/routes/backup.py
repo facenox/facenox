@@ -37,7 +37,7 @@ from time_utils import to_storage_local
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/vault", tags=["vault"])
+router = APIRouter(prefix="/backup", tags=["backup"])
 
 
 # Schemas
@@ -49,14 +49,14 @@ class BiometricEntry(BaseModel):
     embedding_dim: int
 
 
-class VaultExportResponse(BaseModel):
+class BackupExportResponse(BaseModel):
     version: int = 1
     exported_at: str
     attendance: ExportDataResponse
     biometrics: List[BiometricEntry]
 
 
-class VaultImportRequest(BaseModel):
+class BackupImportRequest(BaseModel):
     version: int = 1
     exported_at: Optional[str] = None
     attendance: ImportDataRequest
@@ -66,8 +66,8 @@ class VaultImportRequest(BaseModel):
 # Routes
 
 
-@router.post("/export", response_model=VaultExportResponse)
-async def export_vault(
+@router.post("/export", response_model=BackupExportResponse)
+async def export_backup(
     repo: AttendanceRepository = Depends(get_repository),
 ):
     """
@@ -168,10 +168,10 @@ async def export_vault(
                     )
         except Exception as bio_err:
             logger.warning(
-                f"[Vault] Could not export biometrics (non-fatal): {bio_err}"
+                f"[Backup] Could not export biometrics (non-fatal): {bio_err}"
             )
 
-        return VaultExportResponse(
+        return BackupExportResponse(
             version=1,
             exported_at=get_time_authority().current_time_utc().isoformat(),
             attendance=attendance_data,
@@ -179,28 +179,30 @@ async def export_vault(
         )
 
     except Exception as e:
-        logger.error(f"[Vault] Export failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Vault export failed: {e}")
+        logger.error(f"[Backup] Export failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Backup export failed: {e}")
 
     finally:
         # Audit log is written even if export partially succeeded
         try:
             await repo.add_audit_log(
-                action="VAULT_EXPORTED",
-                target_type="vault",
+                action="BACKUP_EXPORTED",
+                target_type="backup",
                 details=f"exported_at={get_time_authority().current_time_utc().isoformat()}",
             )
         except Exception as audit_err:
-            logger.warning(f"[Vault] Failed to write audit log for export: {audit_err}")
+            logger.warning(
+                f"[Backup] Failed to write audit log for export: {audit_err}"
+            )
 
 
 @router.post("/import", response_model=SuccessResponse)
-async def import_vault(
-    payload: VaultImportRequest,
+async def import_backup(
+    payload: BackupImportRequest,
     repo: AttendanceRepository = Depends(get_repository),
 ):
     """
-    Import complete system state from a decrypted vault payload.
+    Import complete system state from a decrypted backup payload.
     Restores attendance data AND face embeddings so re-registration is not needed.
     """
     try:
@@ -453,18 +455,20 @@ async def import_vault(
         )
 
     except Exception as e:
-        logger.error(f"Import failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Vault import failed: {e}")
+        logger.error(f"[Backup] Import failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Backup import failed: {e}")
 
     finally:
         try:
             await repo.add_audit_log(
-                action="VAULT_IMPORTED",
-                target_type="vault",
+                action="BACKUP_IMPORTED",
+                target_type="backup",
                 details=(
                     f"overwrite={payload.attendance.overwrite_existing}, "
                     f"imported_at={get_time_authority().current_time_utc().isoformat()}"
                 ),
             )
         except Exception as audit_err:
-            logger.warning(f"[Vault] Failed to write audit log for import: {audit_err}")
+            logger.warning(
+                f"[Backup] Failed to write audit log for import: {audit_err}"
+            )

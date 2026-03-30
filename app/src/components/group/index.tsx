@@ -6,6 +6,7 @@ import type { AttendanceGroup } from "@/types/recognition"
 
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { useGroupData } from "@/components/group/hooks"
+import { Tooltip } from "@/components/shared"
 import {
   ErrorBanner,
   GroupContent,
@@ -146,13 +147,14 @@ function GroupPanelComponent({
 
       <div className="fixed inset-x-0 top-9 z-30 lg:hidden">
         <div className="flex h-12 items-center justify-between border-b border-white/10 bg-[rgba(17,22,29,0.96)] px-3">
-          <button
-            onClick={() => setIsMobileDrawerOpen(true)}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-            aria-label="Open menu"
-            title="Open menu">
-            Menu
-          </button>
+          <Tooltip content="Open menu" position="bottom">
+            <button
+              onClick={() => setIsMobileDrawerOpen(true)}
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label="Open menu">
+              Menu
+            </button>
+          </Tooltip>
           <div className="min-w-0 flex-1 text-right">
             <div className="truncate text-xs text-white/50">
               {selectedGroup ? selectedGroup.name : "No group selected"}

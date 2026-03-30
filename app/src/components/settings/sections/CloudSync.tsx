@@ -250,7 +250,7 @@ export function CloudSync() {
             <i className="fa-solid fa-link text-sm text-cyan-400" />
             <h4 className="text-base font-semibold text-white">Connect this desktop</h4>
             <Tooltip
-              content="Cloud Beta sync does not upload face embeddings or raw face images. Biometric matching stays local on this desktop. To move biometric profiles between devices, use encrypted vault backup and restore."
+              content="Cloud Beta sync does not upload face embeddings or raw face images. Biometric matching stays local on this desktop. To move biometric profiles between devices, use encrypted backup and restore."
               position="bottom">
               <button
                 type="button"
@@ -464,8 +464,8 @@ export function CloudSync() {
           <li>Device identity, sync status, and admin-facing reporting data.</li>
           <li>Cloud Beta sync does not send face embeddings or raw face images.</li>
           <li>
-            Biometric matching stays local. To move biometric profiles, use encrypted vault backup
-            and restore.
+            Biometric matching stays local. To move biometric profiles, use encrypted backup and
+            restore.
           </li>
         </ul>
       </section>
