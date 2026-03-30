@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useGroupStore } from "@/components/group/stores"
 import { getLocalDateString } from "@/utils"
@@ -21,11 +21,10 @@ interface ReportsProps {
   onAddMember?: () => void
 }
 
-const DEFAULT_COLUMNS = [
-  "name",
-  "date",
-  "status",
-  "check_in_time",
+const DEFAULT_COLUMNS = ["name", "date", "status", "check_in_time"] as unknown as ColumnKey[]
+
+const CHECKOUT_DEFAULT_COLUMNS = [
+  ...DEFAULT_COLUMNS,
   "check_out_time",
   "total_hours",
 ] as unknown as ColumnKey[]
@@ -37,6 +36,10 @@ export function Reports({
   onAddMember,
 }: ReportsProps) {
   const storeMembers = useGroupStore((state) => state.members)
+  const defaultColumns = useMemo(
+    () => (group.settings?.track_checkout ? CHECKOUT_DEFAULT_COLUMNS : DEFAULT_COLUMNS),
+    [group.settings?.track_checkout],
+  )
 
   const [reportStartDate, setReportStartDate] = useState<string>(getLocalDateString())
   const [reportEndDate, setReportEndDate] = useState<string>(getLocalDateString())
@@ -57,7 +60,7 @@ export function Reports({
     setStatusFilter,
     search,
     setSearch,
-  } = useReportViews(group.id, DEFAULT_COLUMNS)
+  } = useReportViews(group.id, defaultColumns)
 
   const { groupedRows, daysTracked, allColumns } = useReportTransform(
     group,

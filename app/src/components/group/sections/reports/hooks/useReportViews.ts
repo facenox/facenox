@@ -31,6 +31,9 @@ export function useReportViews(groupId: string, defaultColumns: ColumnKey[]) {
           if (Array.isArray(s.columns)) setVisibleColumns(s.columns as ColumnKey[])
           if (s.groupBy) setGroupBy(s.groupBy as GroupByKey)
           // Note: statusFilter and search are ephemeral by design
+        } else {
+          setVisibleColumns(defaultColumns)
+          setGroupBy("none")
         }
       } catch (err) {
         console.error("Failed to load report settings:", err)
@@ -39,7 +42,7 @@ export function useReportViews(groupId: string, defaultColumns: ColumnKey[]) {
       }
     }
     loadSettings()
-  }, [groupId])
+  }, [groupId, defaultColumns])
 
   // Save Settings automatically on change
   useEffect(() => {
