@@ -11,8 +11,15 @@ export function exportReportToCSV(
 ) {
   try {
     const pad = (n: number, len = 2) => String(n).padStart(len, "0")
-    const formatLocalDateTime = (d: Date): string => {
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+    const formatDateOnly = (d: Date): string => {
+      return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`
+    }
+    const formatTimeOnly = (d: Date): string => {
+      const hours = d.getHours()
+      const minutes = pad(d.getMinutes())
+      const period = hours >= 12 ? "PM" : "AM"
+      const displayHours = hours % 12 || 12
+      return `${displayHours}:${minutes} ${period}`
     }
 
     const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, "_").trim()
@@ -31,9 +38,17 @@ export function exportReportToCSV(
             return `${hrs > 0 ? `${hrs}h ` : ""}${mins > 0 || hrs === 0 ? `${mins}m` : ""}`.trim()
           }
 
+          if (c.key === "date" && typeof v === "string") {
+            return formatDateOnly(parseLocalDate(v))
+          }
+
+          if ((c.key === "check_in_time" || c.key === "check_out_time") && v instanceof Date) {
+            return formatTimeOnly(v)
+          }
+
           if (typeof v === "boolean") return v ? "true" : "false"
           if (typeof v === "number") return String(v)
-          if (v instanceof Date) return formatLocalDateTime(v)
+          if (v instanceof Date) return formatDateOnly(v)
           return v ?? ""
         })
         rows.push(row)

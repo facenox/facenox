@@ -22,7 +22,7 @@ MODEL_CONFIGS = {
     "face_recognizer": {
         "model_path": MODELS_DIR / "recognizer.onnx",
         "input_size": (112, 112),
-        "similarity_threshold": 0.5,
+        "similarity_threshold": 0.45,
         "providers": OPTIMIZED_PROVIDERS,
         "session_options": OPTIMIZED_SESSION_OPTIONS,
         "embedding_dimension": 512,
