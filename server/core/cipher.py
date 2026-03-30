@@ -5,7 +5,7 @@ Blob layout: MAGIC(6) | SALT(16) | IV(12) | TAG(16) | CIPHERTEXT
 Key derivation: PBKDF2-HMAC-SHA256, 480k iterations.
 
 Machine key storage (encrypt_local_data / decrypt_local_data):
-  Windows : DPAPI (CryptProtectData) — tied to the Windows user login.
+  Windows : DPAPI (CryptProtectData) tied to the Windows user login.
   macOS   : macOS Keychain via the `security` CLI.
   Linux   : File-based fallback with 0600 permissions.
 """
@@ -63,9 +63,9 @@ def get_machine_key() -> bytes:
     """Get or create the machine-specific AES key for local database encryption.
 
     Delegates to the OS-appropriate secure store:
-      Windows  → DPAPI (CryptProtectData/CryptUnprotectData)
-      macOS    → macOS Keychain via the `security` CLI
-      Linux    → 0600-mode file fallback
+      Windows  -> DPAPI (CryptProtectData/CryptUnprotectData)
+      macOS    -> macOS Keychain via the `security` CLI
+      Linux    -> 0600-mode file fallback
     """
     system = platform.system()
     if system == "Windows":
@@ -105,7 +105,7 @@ def _machine_key_windows() -> bytes:
             ctypes.byref(enc_blob), None, None, None, None, 0, ctypes.byref(dec_blob)
         ):
             raise RuntimeError(
-                "DPAPI: failed to decrypt machine key — wrong user or corrupted file."
+                "DPAPI: failed to decrypt machine key - wrong user or corrupted file."
             )
         key = bytes(ctypes.string_at(dec_blob.pbData, dec_blob.cbData))
         ctypes.windll.kernel32.LocalFree(dec_blob.pbData)
@@ -211,7 +211,7 @@ def decrypt_local_data(blob: bytes) -> bytes:
         # Fallback for backwards compatibility with unencrypted legacy databases.
         # Log clearly so operators are aware unencrypted data is present.
         logger.warning(
-            "decrypt_local_data: decryption failed — returning raw blob. "
+            "decrypt_local_data: decryption failed - returning raw blob. "
             "This is expected only during first-run migration of legacy unencrypted data. "
             "If this message persists, the local database may be corrupted or tampered."
         )

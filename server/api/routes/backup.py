@@ -1,4 +1,4 @@
-"""Backup export / import routes — attendance data + face embeddings. Encryption is handled by the Electron layer."""
+"""Backup export/import routes for attendance data and face embeddings."""
 
 import base64
 import logging
@@ -72,7 +72,7 @@ async def export_backup(
 ):
     """
     Export complete system state: attendance data + face embeddings.
-    Returns plain JSON — encryption is handled by the Electron layer.
+    Returns plain JSON. Encryption is handled by the Electron layer.
     """
     try:
         # Gather attendance data
@@ -412,7 +412,7 @@ async def import_backup(
                 continue
 
             raw_bytes = base64.b64decode(entry.embedding_b64)
-            # Encrypt before persisting — same as the normal registration path.
+            # Encrypt before persisting, same as the normal registration path.
             encrypted_bytes = encrypt_local_data(raw_bytes)
             existing_face_result = await repo.session.execute(
                 select(FaceModel).where(
