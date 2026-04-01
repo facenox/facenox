@@ -60,7 +60,7 @@ const pairingSteps = [
 
 export function CloudSync() {
   const [config, setConfig] = useState<CloudConfig>(defaultConfig)
-  const [cloudBaseUrl, setCloudBaseUrl] = useState(DEFAULT_CLOUD_BASE_URL)
+  const [cloudBaseUrl, setCloudBaseUrl] = useState("")
   const [deviceName, setDeviceName] = useState("Facenox Desktop")
   const [pairingCode, setPairingCode] = useState("")
   const [intervalMinutes, setIntervalMinutes] = useState(DEFAULT_SYNC_INTERVAL_MINUTES)
@@ -75,7 +75,7 @@ export function CloudSync() {
     const nextCloudBaseUrl = nextConfig.cloudBaseUrl || DEFAULT_CLOUD_BASE_URL
 
     setConfig(nextConfig)
-    setCloudBaseUrl(nextCloudBaseUrl)
+    setCloudBaseUrl(nextCloudBaseUrl === DEFAULT_CLOUD_BASE_URL ? "" : nextCloudBaseUrl)
     setDeviceName(nextConfig.deviceName || "Facenox Desktop")
     setIntervalMinutes(nextConfig.intervalMinutes || DEFAULT_SYNC_INTERVAL_MINUTES)
     setEnabled(nextConfig.enabled)
@@ -96,7 +96,7 @@ export function CloudSync() {
     setBanner({ type: "idle" })
     try {
       const nextConfig = await window.electronAPI.sync.updateConfig({
-        cloudBaseUrl,
+        cloudBaseUrl: cloudBaseUrl.trim(),
         deviceName,
         intervalMinutes,
         enabled,
@@ -124,7 +124,7 @@ export function CloudSync() {
     setBanner({ type: "idle" })
     try {
       const result = await window.electronAPI.sync.pairDevice({
-        cloudBaseUrl: cloudBaseUrl || DEFAULT_CLOUD_BASE_URL,
+        cloudBaseUrl: cloudBaseUrl.trim() || DEFAULT_CLOUD_BASE_URL,
         pairingCode,
         deviceName,
       })
@@ -380,15 +380,15 @@ export function CloudSync() {
                   <span className="text-[11px] font-medium text-white/30">Custom Server URL</span>
                   <input
                     type="url"
-                    placeholder={DEFAULT_CLOUD_BASE_URL}
+                    placeholder="Optional custom deployment URL"
                     value={cloudBaseUrl}
                     disabled={config.connected}
                     onChange={(e) => setCloudBaseUrl(e.target.value)}
                     className="h-10 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5 disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   <div className="text-[11px] text-white/35">
-                    Leave this unchanged unless you&apos;re connecting to a self-hosted or custom
-                    deployment.
+                    Leave this empty to use the hosted Facenox Cloud server. Only enter a value for
+                    self-hosted or custom deployments.
                   </div>
                 </label>
                 <label className="space-y-2">

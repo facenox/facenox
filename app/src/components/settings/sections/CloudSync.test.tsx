@@ -182,4 +182,16 @@ describe("CloudSync", () => {
 
     expect(screen.getByPlaceholderText("Front Desk Desktop")).toHaveValue("Reception Desk")
   })
+
+  it("keeps the hosted server URL hidden unless a custom override is being used", async () => {
+    const { user } = renderWithProviders(<CloudSync />)
+
+    await user.click(await screen.findByRole("button", { name: /Show advanced settings/i }))
+
+    const serverUrlInput = screen.getByPlaceholderText("Optional custom deployment URL")
+    expect(serverUrlInput).toHaveValue("")
+    expect(
+      screen.getByText(/Leave this empty to use the hosted Facenox Cloud server/i),
+    ).toBeInTheDocument()
+  })
 })
