@@ -1,6 +1,6 @@
 # Testing
 
-This guide covers the frontend test setup used in `app/`.
+Use this guide for the frontend and Electron test setup inside `app/`.
 
 The current stack is:
 
@@ -21,12 +21,15 @@ pnpm test:coverage
 pnpm test:smoke
 ```
 
-`pnpm test` is the default local check. Use `pnpm test:coverage` when you want a coverage report before opening a pull request.
+Use `pnpm test` as the default local check.
+
+Use `pnpm test:coverage` when you want a coverage report before opening a pull request.
+
 Use `pnpm test:smoke` when you want a thin browser-level startup and shell check against the built renderer.
 
 ## Test Layout
 
-Frontend tests are intentionally split between colocated test files and shared test support.
+Split frontend tests between colocated test files and shared test support.
 
 ### Colocated tests
 
@@ -61,7 +64,7 @@ src/
     utils/
 ```
 
-Current shared pieces:
+Use these shared pieces today:
 
 - `src/test/setup.ts`: global test setup
 - `src/test/mocks/`: Electron and window bridge mocks
@@ -78,9 +81,11 @@ e2e/
 
 These tests run against the built renderer with Playwright. They are intentionally thin and focus on startup and top-level shell confidence.
 
+They do not launch the real Electron desktop process. They run the built renderer in Chromium with injected Electron, backend, camera, and WebSocket mocks.
+
 ## What We Test
 
-The current frontend suite focuses on:
+Focus frontend tests on:
 
 - pure utilities
 - stores and state transitions
@@ -88,8 +93,9 @@ The current frontend suite focuses on:
 - key renderer components
 - Electron-facing wrappers that can be tested without launching the real app
 
-This is a unit and component test setup. It is not an end-to-end browser suite.
-There is now also a thin smoke suite for startup and shell behavior, but it is still not a full desktop end-to-end harness.
+Most of this setup is unit and component testing.
+
+Use the smoke suite for startup and shell confidence, not as a full desktop end-to-end harness.
 
 ## Writing Tests Here
 
@@ -147,7 +153,7 @@ The default setup stubs:
 
 If a test needs custom Electron behavior, override the relevant mock in the test instead of bypassing the shared setup.
 
-Smoke tests do the same thing at the browser level by injecting Electron-style globals before the app boots.
+Smoke tests follow the same rule at the browser level by injecting Electron-style globals before the app boots.
 
 ## Conventions
 
@@ -172,6 +178,6 @@ If a bug was fixed, prefer adding a regression test in the same pull request.
 
 ## Current Boundary
 
-This setup is intentionally focused on fast local feedback inside `app/`.
+Keep this setup focused on fast local feedback inside `app/`.
 
 If we add broader browser or desktop flow testing later, that should live in a separate end-to-end test layer rather than being mixed into the current Vitest suite.
