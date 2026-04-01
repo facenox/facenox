@@ -18,6 +18,15 @@ type SortField = "time" | "name"
 type SortOrder = "asc" | "desc"
 type RecordScope = "today" | "all"
 
+const sidebarActionButtonClassName =
+  "flex h-9 w-9 shrink-0 items-center justify-center border border-white/10 bg-[rgba(22,28,36,0.68)] text-white/45 transition-all duration-200 hover:bg-[rgba(28,35,44,0.82)] hover:text-white focus:border-white/20 focus:text-white focus:outline-none"
+
+const sidebarDropdownIconButtonClassName =
+  "h-9 w-full border border-white/10 bg-[rgba(22,28,36,0.68)] px-0 text-white/45 transition-all duration-200 hover:bg-[rgba(28,35,44,0.82)] hover:text-white focus:border-white/20 focus:text-white focus:outline-none"
+
+const sidebarActionIconClassName =
+  "pointer-events-none text-sm text-current transition-colors duration-200"
+
 const ScrollCenteredEmptyState = memo(function ScrollCenteredEmptyState({
   children,
   className = "",
@@ -467,17 +476,17 @@ export const AttendancePanel = memo(function AttendancePanel({
             <Tooltip content="Create Group" position="top">
               <button
                 onClick={() => setShowGroupManagement(true)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none border border-r-0 border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white focus:outline-none"
+                className={`${sidebarActionButtonClassName} rounded-none border-r-0`}
                 aria-label="Create Group">
-                <i className="fa-solid fa-plus text-sm"></i>
+                <i className={`fa-solid fa-plus ${sidebarActionIconClassName}`}></i>
               </button>
             </Tooltip>
             <Tooltip content="Members" position="top">
               <button
                 onClick={() => setShowManualEntry(true)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-lg border border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white focus:outline-none"
+                className={`${sidebarActionButtonClassName} rounded-l-none rounded-r-lg`}
                 aria-label="Members">
-                <i className="fa-solid fa-users text-sm"></i>
+                <i className={`fa-solid fa-users ${sidebarActionIconClassName}`}></i>
               </button>
             </Tooltip>
           </div>
@@ -524,11 +533,11 @@ export const AttendancePanel = memo(function AttendancePanel({
                     onChange={(val) => handleRecordScopeChange(val as RecordScope)}
                     trigger={
                       <span className="inline-flex h-4 w-4 items-center justify-center">
-                        <i className="fa-solid fa-calendar-day pointer-events-auto text-[11px] text-white/30 transition-colors hover:text-cyan-400!" />
+                        <i className={`fa-solid fa-calendar-day ${sidebarActionIconClassName}`} />
                       </span>
                     }
                     menuWidth={110}
-                    buttonClassName="h-9 w-full rounded-none border border-r-0 border-white/10 bg-white/3 flex items-center justify-center hover:bg-white/[0.07] transition-all"
+                    buttonClassName={`${sidebarDropdownIconButtonClassName} rounded-none border-r-0`}
                     showPlaceholderOption={false}
                     allowClear={false}
                   />
@@ -551,15 +560,15 @@ export const AttendancePanel = memo(function AttendancePanel({
                       <span className="inline-flex h-4 w-4 items-center justify-center">
                         <i
                           className={`${
-                            sortField === "time" ? "fa-regular fa-clock" : (
+                            sortField === "time" ? "fa-solid fa-clock" : (
                               "fa-solid fa-arrow-down-a-z"
                             )
-                          } pointer-events-auto text-[11px] text-white/30 transition-colors hover:text-cyan-400!`}
+                          } ${sidebarActionIconClassName}`}
                         />
                       </span>
                     }
                     menuWidth={110}
-                    buttonClassName="h-9 w-full rounded-r-lg rounded-l-none border border-white/10 bg-white/3 flex items-center justify-center hover:bg-white/[0.07] transition-all"
+                    buttonClassName={`${sidebarDropdownIconButtonClassName} rounded-r-lg rounded-l-none`}
                     showPlaceholderOption={false}
                     allowClear={false}
                   />
