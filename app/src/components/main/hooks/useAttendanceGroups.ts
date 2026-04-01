@@ -34,7 +34,7 @@ export async function bootstrapShellData(): Promise<void> {
 
   useAttendanceStore.setState({
     attendanceCooldownSeconds: settings.attendance_cooldown_seconds ?? 300,
-    enableSpoofDetection: settings.enable_liveness_detection ?? true,
+    enableSpoofDetection: settings.enable_liveness_detection ?? false,
     maxRecognitionFacesPerFrame: settings.max_recognition_faces_per_frame ?? 6,
     dataRetentionDays: settings.data_retention_days ?? 0,
     attendanceGroups: groups,

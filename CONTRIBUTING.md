@@ -102,6 +102,8 @@ pnpm format
 pnpm build
 ```
 
+Frontend and Electron test conventions live in [app/TESTING.md](app/TESTING.md).
+
 ### Python backend
 
 ```bash

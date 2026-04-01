@@ -134,6 +134,7 @@ If macOS blocks the app because the developer is unidentified:
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): common setup and runtime issues
 - [docs/PRIVACY.md](docs/PRIVACY.md): data handling, consent, backups, and cloud sync boundaries
 - [SECURITY.md](SECURITY.md): supported version policy and vulnerability reporting
+- [app/TESTING.md](app/TESTING.md): frontend and Electron app testing conventions
 
 ## Tech Stack
 

@@ -72,7 +72,7 @@ export const useAttendanceStore = create<AttendanceState>()(
     persistentCooldowns: new Map(),
 
     attendanceCooldownSeconds: 8,
-    enableSpoofDetection: true,
+    enableSpoofDetection: false,
     maxRecognitionFacesPerFrame: 6,
     dataRetentionDays: 0,
 

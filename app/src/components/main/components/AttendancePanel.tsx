@@ -4,6 +4,14 @@ import { AnimatePresence, motion } from "framer-motion"
 import { createDisplayNameMap, getLocalDateString } from "@/utils"
 import { Dropdown, Tooltip, MemberTooltip } from "@/components/shared"
 import type { AttendanceGroup, AttendanceRecord, AttendanceMember } from "@/components/main/types"
+import {
+  buildRecordCheckInStatusMap,
+  limitAttendanceRecords,
+  processAttendanceRecords,
+  type AttendanceRecordScope,
+  type AttendanceSortField,
+  type AttendanceSortOrder,
+} from "@/components/main/components/attendancePanelUtils"
 
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { ManualEntryModal } from "./ManualEntryModal"
@@ -13,10 +21,6 @@ interface AttendancePanelProps {
   handleSelectGroup: (group: AttendanceGroup) => void
   refreshAttendanceData: () => Promise<void>
 }
-
-type SortField = "time" | "name"
-type SortOrder = "asc" | "desc"
-type RecordScope = "today" | "all"
 
 const sidebarActionButtonClassName =
   "flex h-9 w-9 shrink-0 items-center justify-center border border-white/10 bg-[rgba(22,28,36,0.68)] text-white/45 transition-all duration-200 hover:bg-[rgba(28,35,44,0.82)] hover:text-white focus:border-white/20 focus:text-white focus:outline-none"
@@ -43,7 +47,7 @@ const ScrollCenteredEmptyState = memo(function ScrollCenteredEmptyState({
 
 const SidebarTopSkeleton = memo(function SidebarTopSkeleton() {
   return (
-    <div className="shrink-0 px-3 py-2 pb-1.5">
+    <div className="shrink-0 px-3 py-2 pb-1.5" data-testid="attendance-panel-shell-skeleton">
       <div className="flex items-center gap-0">
         <div className="h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/5" />
         <div className="h-9 w-9 border border-r-0 border-white/10 bg-white/5" />
@@ -61,7 +65,7 @@ const AttendanceListSkeleton = memo(function AttendanceListSkeleton({
   return (
     <>
       {showSearch && (
-        <div className="shrink-0 px-3 pb-3">
+        <div className="shrink-0 px-3 pb-3" data-testid="attendance-panel-search-skeleton">
           <div className="flex items-center">
             <div className="h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/4" />
             <div className="h-9 w-9 border border-r-0 border-white/10 bg-white/4" />
@@ -329,16 +333,18 @@ export const AttendancePanel = memo(function AttendancePanel({
   }, [setGroupInitialSection, setShowSettings])
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [recordScope, setRecordScope] = useState<RecordScope>("today")
-  const [sortField, setSortField] = useState<SortField>("time")
-  const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
+  const [recordScope, setRecordScope] = useState<AttendanceRecordScope>("today")
+  const [sortField, setSortField] = useState<AttendanceSortField>("time")
+  const [sortOrder, setSortOrder] = useState<AttendanceSortOrder>("desc")
   const [displayLimit, setDisplayLimit] = useState(20)
+  const effectiveRecordScope: AttendanceRecordScope =
+    recentAttendance.length === 0 ? "all" : recordScope
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
   }, [])
 
-  const handleSortFieldChange = useCallback((field: SortField | null) => {
+  const handleSortFieldChange = useCallback((field: AttendanceSortField | null) => {
     if (field) {
       setSortField(field)
       if (field === "time") {
@@ -349,7 +355,7 @@ export const AttendancePanel = memo(function AttendancePanel({
     }
   }, [])
 
-  const handleRecordScopeChange = useCallback((scope: RecordScope | null) => {
+  const handleRecordScopeChange = useCallback((scope: AttendanceRecordScope | null) => {
     if (scope) {
       setRecordScope(scope)
     }
@@ -370,61 +376,18 @@ export const AttendancePanel = memo(function AttendancePanel({
   }, [groupMembers])
 
   const processedRecords = useMemo(() => {
-    if (!recentAttendance.length) {
-      return []
-    }
-
-    let filtered = [...recentAttendance]
-
-    if (recordScope === "today") {
-      const today = new Date().toDateString()
-      filtered = filtered.filter((record) => record.timestamp.toDateString() === today)
-    }
-
-    const normalizedQuery = searchQuery.trim().toLowerCase()
-    const hasSearchQuery = normalizedQuery.length > 0
-
-    if (hasSearchQuery) {
-      const filteredArray: typeof filtered = []
-      for (let i = 0; i < filtered.length; i++) {
-        const record = filtered[i]
-        const displayName = (displayNameMap.get(record.person_id) || "Unknown").toLowerCase()
-        if (displayName.includes(normalizedQuery)) {
-          filteredArray.push(record)
-        }
-      }
-      filtered = filteredArray
-    }
-
-    if (sortField === "time") {
-      filtered.sort((a, b) => {
-        const timeA = a.timestamp.getTime()
-        const timeB = b.timestamp.getTime()
-        return sortOrder === "asc" ? timeA - timeB : timeB - timeA
-      })
-    } else if (sortField === "name") {
-      const nameCache = new Map<string, string>()
-      filtered.sort((a, b) => {
-        let nameA = nameCache.get(a.person_id)
-        if (!nameA) {
-          nameA = (displayNameMap.get(a.person_id) || "Unknown").toLowerCase()
-          nameCache.set(a.person_id, nameA)
-        }
-        let nameB = nameCache.get(b.person_id)
-        if (!nameB) {
-          nameB = (displayNameMap.get(b.person_id) || "Unknown").toLowerCase()
-          nameCache.set(b.person_id, nameB)
-        }
-        const comparison = nameA.localeCompare(nameB)
-        return sortOrder === "asc" ? comparison : -comparison
-      })
-    }
-
-    return filtered
-  }, [recentAttendance, displayNameMap, recordScope, searchQuery, sortField, sortOrder])
+    return processAttendanceRecords({
+      recentAttendance,
+      displayNameMap,
+      recordScope: effectiveRecordScope,
+      searchQuery,
+      sortField,
+      sortOrder,
+    })
+  }, [recentAttendance, displayNameMap, effectiveRecordScope, searchQuery, sortField, sortOrder])
 
   const visibleRecords = useMemo(() => {
-    return processedRecords.slice(0, displayLimit)
+    return limitAttendanceRecords(processedRecords, displayLimit)
   }, [processedRecords, displayLimit])
 
   const hasMore = processedRecords.length > displayLimit
@@ -530,7 +493,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                       { value: "all", label: "All" },
                     ]}
                     value={recordScope}
-                    onChange={(val) => handleRecordScopeChange(val as RecordScope)}
+                    onChange={(val) => handleRecordScopeChange(val as AttendanceRecordScope)}
                     trigger={
                       <span className="inline-flex h-4 w-4 items-center justify-center">
                         <i className={`fa-solid fa-calendar-day ${sidebarActionIconClassName}`} />
@@ -555,7 +518,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                       { value: "name", label: "Name" },
                     ]}
                     value={sortField}
-                    onChange={(val) => handleSortFieldChange(val as SortField)}
+                    onChange={(val) => handleSortFieldChange(val as AttendanceSortField)}
                     trigger={
                       <span className="inline-flex h-4 w-4 items-center justify-center">
                         <i
@@ -593,25 +556,7 @@ export const AttendancePanel = memo(function AttendancePanel({
             {visibleRecords.length > 0 ?
               <>
                 {(() => {
-                  const checkedInSet = new Set<string>()
-                  const chronologicalRecords = [...processedRecords].sort(
-                    (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
-                  )
-
-                  const recordCheckInStatus = new Map<string, boolean>()
-
-                  chronologicalRecords.forEach((record) => {
-                    const personId = record.person_id
-                    const dateString = record.timestamp.toDateString()
-                    const key = `${personId}_${dateString}`
-
-                    if (!checkedInSet.has(key)) {
-                      checkedInSet.add(key)
-                      recordCheckInStatus.set(record.id, false)
-                    } else {
-                      recordCheckInStatus.set(record.id, true)
-                    }
-                  })
+                  const recordCheckInStatus = buildRecordCheckInStatusMap(processedRecords)
 
                   return visibleRecords.map((record) => {
                     const displayName = displayNameMap.get(record.person_id) || "Unknown"
@@ -657,7 +602,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                   Choose a group to see today&apos;s attendance logs
                 </div>
               </ScrollCenteredEmptyState>
-            : recordScope === "today" ?
+            : effectiveRecordScope === "today" ?
               <ScrollCenteredEmptyState>
                 <div className="text-center text-xs text-white/40">
                   No attendance logs for today
