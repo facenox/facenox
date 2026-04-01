@@ -25,6 +25,8 @@ interface InfoPopoverProps {
 
 const OFFSET = 12
 const SCREEN_PAD = 8
+const POPOVER_OPEN_DELAY = 200
+const POPOVER_ANIMATION_DURATION = 0.15
 
 export function InfoPopover({
   title,
@@ -78,7 +80,7 @@ export function InfoPopover({
   }, [open, measure])
 
   const show = useCallback(() => {
-    timerRef.current = setTimeout(() => setOpen(true), 200)
+    timerRef.current = setTimeout(() => setOpen(true), POPOVER_OPEN_DELAY)
   }, [])
 
   const hide = useCallback(() => {
@@ -109,7 +111,7 @@ export function InfoPopover({
               initial={{ opacity: 0, scale: 0.96, y: 4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 4 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
+              transition={{ duration: POPOVER_ANIMATION_DURATION, ease: "easeOut" }}
               className="pointer-events-none fixed z-99999 w-64"
               style={{
                 top: pos?.top ?? -9999,

@@ -18,6 +18,8 @@ import type {
 } from "@/components/settings/types"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
+const SETTINGS_SECTION_TRANSITION_DURATION = 0.18
+
 interface ContentPanelProps {
   activeSection: string
   groupInitialSection: GroupSection | undefined
@@ -209,7 +211,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             initial={{ opacity: 0, scale: 0.995 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.995 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
+            transition={{ duration: SETTINGS_SECTION_TRANSITION_DURATION, ease: "easeOut" }}
             style={{ willChange: "opacity, transform" }}
             className="relative flex min-h-0 w-full flex-1 flex-col">
             {activeSection === "group" && (

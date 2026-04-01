@@ -34,6 +34,23 @@ function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
   )
 }
 
+function SettingsIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true">
+      <path d="M10.31 4.84 9.74 6.4a1 1 0 0 1-.95.66H7.13a1 1 0 0 0-.86.5l-.82 1.43a1 1 0 0 0 .05 1.01l.96 1.36a1 1 0 0 1 0 1.16l-.96 1.36a1 1 0 0 0-.05 1.01l.82 1.43a1 1 0 0 0 .86.5h1.66a1 1 0 0 1 .95.66l.57 1.56a1 1 0 0 0 .94.66h1.65a1 1 0 0 0 .94-.66l.57-1.56a1 1 0 0 1 .95-.66h1.66a1 1 0 0 0 .86-.5l.82-1.43a1 1 0 0 0-.05-1.01l-.96-1.36a1 1 0 0 1 0-1.16l.96-1.36a1 1 0 0 0 .05-1.01l-.82-1.43a1 1 0 0 0-.86-.5h-1.66a1 1 0 0 1-.95-.66l-.57-1.56a1 1 0 0 0-.94-.66h-1.65a1 1 0 0 0-.94.66Z" />
+      <circle cx="12" cy="12" r="2.6" />
+    </svg>
+  )
+}
+
 export const Sidebar = memo(function Sidebar({
   currentDetections,
   currentRecognitionResults,
@@ -208,7 +225,7 @@ export const Sidebar = memo(function Sidebar({
           style={{ minWidth: isResizing ? undefined : sidebarWidth }}>
           <div className="flex items-center justify-between gap-2">
             <Tooltip
-              content={isCollapsed ? "Expand sidebar (Ctrl+B)" : "Collapse sidebar (Ctrl+B)"}
+              content={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               position="right"
               offset={-10}>
               <button
@@ -220,7 +237,7 @@ export const Sidebar = memo(function Sidebar({
             </Tooltip>
 
             <Tooltip
-              content={updateInfo?.hasUpdate ? "Update available! (Ctrl+,)" : "Settings (Ctrl+,)"}
+              content={updateInfo?.hasUpdate ? "Update available!" : "Settings"}
               position="left"
               offset={0}
               disabled={isCollapsed}>
@@ -236,13 +253,15 @@ export const Sidebar = memo(function Sidebar({
                 aria-label="Open Settings"
                 initial="initial"
                 whileHover="hover">
-                <motion.i
-                  className="fa-solid fa-gear text-base text-white/50 transition-colors group-hover:text-white"
+                <motion.div
+                  className="text-white/50 transition-colors group-hover:text-white"
                   variants={{
                     initial: { rotate: 0 },
                     hover: { rotate: 90 },
                   }}
-                  transition={{ type: "spring", stiffness: 260, damping: 20 }}></motion.i>
+                  transition={{ type: "spring", stiffness: 260, damping: 20 }}>
+                  <SettingsIcon className="h-[20px] w-[20px]" />
+                </motion.div>
 
                 {updateInfo?.hasUpdate && (
                   <div className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full border border-black bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.6)]"></div>
@@ -297,7 +316,7 @@ export const Sidebar = memo(function Sidebar({
 
         {isCollapsed && (
           <div className="absolute inset-0 flex flex-col items-center gap-3 py-3">
-            <Tooltip content="Expand sidebar (Ctrl+B)" position="left">
+            <Tooltip content="Expand sidebar" position="left">
               <button
                 onClick={toggleSidebar}
                 className="sidebar-toggle-btn group flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] transition-all duration-200 hover:border-white/20 hover:bg-white/5 active:scale-95"
@@ -309,7 +328,7 @@ export const Sidebar = memo(function Sidebar({
             <div className="my-1 h-px w-8 bg-white/6"></div>
 
             <Tooltip
-              content={updateInfo?.hasUpdate ? "Update available! (Ctrl+,)" : "Settings (Ctrl+,)"}
+              content={updateInfo?.hasUpdate ? "Update available!" : "Settings"}
               position="left">
               <motion.button
                 onClick={() => {
@@ -322,13 +341,15 @@ export const Sidebar = memo(function Sidebar({
                 aria-label="Open Settings"
                 initial="initial"
                 whileHover="hover">
-                <motion.i
-                  className="fa-solid fa-gear text-base text-white/70 transition-colors group-hover:text-white"
+                <motion.div
+                  className="text-white/70 transition-colors group-hover:text-white"
                   variants={{
                     initial: { rotate: 0 },
                     hover: { rotate: 90 },
                   }}
-                  transition={{ type: "spring", stiffness: 260, damping: 20 }}></motion.i>
+                  transition={{ type: "spring", stiffness: 260, damping: 20 }}>
+                  <SettingsIcon className="h-[20px] w-[20px]" />
+                </motion.div>
 
                 {/* Update Badge */}
                 {updateInfo?.hasUpdate && (

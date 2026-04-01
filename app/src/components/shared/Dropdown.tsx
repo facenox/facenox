@@ -256,7 +256,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                               : option.disabled ? "cursor-not-allowed text-white/30"
                               : "text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white"
                             } ${optionClassName}`}>
-                            <Tooltip content={option.label} delay={150}>
+                            <Tooltip content={option.label}>
                               <span className="block truncate">{option.label}</span>
                             </Tooltip>
                           </button>

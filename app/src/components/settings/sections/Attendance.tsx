@@ -14,6 +14,10 @@ interface AttendanceProps {
   hasSelectedGroup?: boolean
 }
 
+const SETTINGS_STATUS_SWAP_DURATION = 0.14
+const SETTINGS_PANEL_ANIMATION_DURATION = 0.18
+const SETTINGS_TOGGLE_DURATION_CLASS = "duration-200"
+
 export function Attendance({
   attendanceSettings,
   onLateThresholdChange,
@@ -59,7 +63,7 @@ export function Attendance({
                       initial={{ opacity: 0, y: -2 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
-                      transition={{ duration: 0.15 }}
+                      transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                       className="text-xs font-normal text-white/40">
                       {!hasSelectedGroup ?
                         "Select a group to enable this feature"
@@ -74,11 +78,11 @@ export function Attendance({
               <button
                 onClick={() => onTrackCheckoutToggle(!attendanceSettings.trackCheckout)}
                 disabled={!hasSelectedGroup}
-                className={`relative ml-auto flex h-5.5 w-10 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none ${
+                className={`relative ml-auto flex h-5.5 w-10 shrink-0 items-center rounded-full transition-colors ${SETTINGS_TOGGLE_DURATION_CLASS} focus:outline-none ${
                   attendanceSettings.trackCheckout ? "bg-cyan-500/30" : "bg-white/10"
                 } group/toggle disabled:cursor-not-allowed disabled:opacity-50`}>
                 <div
-                  className={`absolute left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                  className={`absolute left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-sm transition-transform ${SETTINGS_TOGGLE_DURATION_CLASS} ${
                     attendanceSettings.trackCheckout ? "translate-x-4.5" : "translate-x-0"
                   }`}></div>
               </button>
@@ -194,7 +198,7 @@ export function Attendance({
                       initial={{ opacity: 0, y: -2 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
-                      transition={{ duration: 0.15 }}
+                      transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                       className="text-xs font-normal text-white/40">
                       {!hasSelectedGroup ?
                         "Select a group to enable late tracking"
@@ -209,11 +213,11 @@ export function Attendance({
               <button
                 onClick={() => onLateThresholdToggle(!attendanceSettings.lateThresholdEnabled)}
                 disabled={!hasSelectedGroup}
-                className={`relative ml-auto flex h-5.5 w-10 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none ${
+                className={`relative ml-auto flex h-5.5 w-10 shrink-0 items-center rounded-full transition-colors ${SETTINGS_TOGGLE_DURATION_CLASS} focus:outline-none ${
                   attendanceSettings.lateThresholdEnabled ? "bg-cyan-500/30" : "bg-white/10"
                 } group/toggle disabled:cursor-not-allowed disabled:opacity-50`}>
                 <div
-                  className={`absolute left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                  className={`absolute left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-md transition-transform ${SETTINGS_TOGGLE_DURATION_CLASS} ${
                     attendanceSettings.lateThresholdEnabled ? "translate-x-4.5" : "translate-x-0"
                   }`}></div>
               </button>
@@ -225,7 +229,7 @@ export function Attendance({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
                   className="overflow-hidden">
                   <div className="relative flex items-center gap-4 pt-1 pb-5 pl-4">
                     <div className="absolute top-0 bottom-1/2 left-0 w-px rounded-bl-xs bg-white/10"></div>
@@ -287,7 +291,7 @@ export function Attendance({
                     initial={{ opacity: 0, y: -2 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 2 }}
-                    transition={{ duration: 0.15 }}
+                    transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                     className="text-xs font-normal text-white/40">
                     {attendanceSettings.enableSpoofDetection ?
                       "ON: Requires a live face before showing identity or recording attendance."
@@ -299,11 +303,11 @@ export function Attendance({
 
             <button
               onClick={() => onSpoofDetectionToggle(!attendanceSettings.enableSpoofDetection)}
-              className={`relative ml-auto flex h-5.5 w-10 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none ${
+              className={`relative ml-auto flex h-5.5 w-10 shrink-0 items-center rounded-full transition-colors ${SETTINGS_TOGGLE_DURATION_CLASS} focus:outline-none ${
                 attendanceSettings.enableSpoofDetection ? "bg-cyan-500/30" : "bg-white/10"
               } group/toggle disabled:cursor-not-allowed disabled:opacity-50`}>
               <div
-                className={`absolute left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                className={`absolute left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-sm transition-transform ${SETTINGS_TOGGLE_DURATION_CLASS} ${
                   attendanceSettings.enableSpoofDetection ? "translate-x-4.5" : "translate-x-0"
                 }`}></div>
             </button>
