@@ -34,6 +34,8 @@ app/.tmp/
 app/*.tsbuildinfo
 app/.electron-vite/
 app/electron.vite.config.*.mjs
+app/test-results/
+app/playwright-report/
 
 .env
 .env*
