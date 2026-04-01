@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, forwardRef } from "react"
+import { useState, useEffect, useRef, forwardRef, useLayoutEffect, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
+import { Tooltip } from "@/components/shared/Tooltip"
 
 export interface DropdownOption<T = string> {
   value: T
@@ -54,10 +55,11 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
       left: number
       width: number
       buttonRight: number
-      buttonTop: number
+      opensUp: boolean
     } | null>(null)
     const internalRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLButtonElement>(null)
+    const menuRef = useRef<HTMLDivElement>(null)
 
     // Combine refs
     useEffect(() => {
@@ -71,6 +73,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
 
     const selectedOption = options.find((opt) => opt.value === value)
     const displayText = selectedOption?.label || placeholder
+    const shouldShowCustomTooltip = (text: string) => text.length > 24
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -98,26 +101,50 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
       return () => window.removeEventListener("keydown", handleEscape)
     }, [isOpen])
 
-    useEffect(() => {
-      if (isOpen && buttonRef.current) {
-        const buttonRect = buttonRef.current.getBoundingClientRect()
-        const spaceBelow = window.innerHeight - buttonRect.bottom
-        const spaceAbove = buttonRect.top
-        const estimatedHeight = Math.min(maxHeight, options.length * 36 + 20)
+    const updateMenuPosition = useCallback(() => {
+      if (!buttonRef.current) return
 
-        const shouldOpenUp = spaceBelow < estimatedHeight && spaceAbove > spaceBelow
+      const buttonRect = buttonRef.current.getBoundingClientRect()
+      const estimatedHeight = Math.min(
+        maxHeight,
+        options.length * 36 + (showPlaceholderOption && allowClear ? 44 : 0) + 12,
+      )
+      const measuredHeight = menuRef.current?.offsetHeight ?? estimatedHeight
+      const spaceBelow = window.innerHeight - buttonRect.bottom
+      const spaceAbove = buttonRect.top
+      const shouldOpenUp = spaceBelow < measuredHeight && spaceAbove > spaceBelow
+      const viewportPadding = 8
+      const gap = 4
 
-        setMenuPosition({
-          top: shouldOpenUp ? buttonRect.top - estimatedHeight - 4 : buttonRect.bottom + 4,
-          left: buttonRect.left,
-          width: buttonRect.width,
-          buttonRight: buttonRect.right,
-          buttonTop: buttonRect.top,
-        })
-      } else {
-        setMenuPosition(null)
+      setMenuPosition({
+        top:
+          shouldOpenUp ?
+            Math.max(viewportPadding, buttonRect.top - measuredHeight - gap)
+          : Math.min(
+              window.innerHeight - measuredHeight - viewportPadding,
+              buttonRect.bottom + gap,
+            ),
+        left: buttonRect.left,
+        width: buttonRect.width,
+        buttonRight: buttonRect.right,
+        opensUp: shouldOpenUp,
+      })
+    }, [allowClear, maxHeight, options.length, showPlaceholderOption])
+
+    useLayoutEffect(() => {
+      if (!isOpen) return
+
+      updateMenuPosition()
+
+      const handleViewportChange = () => updateMenuPosition()
+      window.addEventListener("resize", handleViewportChange)
+      window.addEventListener("scroll", handleViewportChange, true)
+
+      return () => {
+        window.removeEventListener("resize", handleViewportChange)
+        window.removeEventListener("scroll", handleViewportChange, true)
       }
-    }, [isOpen, maxHeight, options.length])
+    }, [isOpen, updateMenuPosition])
 
     const handleSelect = (optionValue: string | number) => {
       const option = options.find((opt) => opt.value === optionValue)
@@ -138,7 +165,9 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
           {trigger ?
             trigger
           : <>
-              <span className="min-w-0 flex-1 truncate text-left">{displayText}</span>
+              <Tooltip content={displayText} disabled={!shouldShowCustomTooltip(displayText)}>
+                <span className="min-w-0 flex-1 truncate text-left">{displayText}</span>
+              </Tooltip>
               <i
                 className={`fa-solid fa-chevron-down ms-2 shrink-0 text-xs text-white/50 transition-transform duration-200 ${
                   isOpen ? "rotate-180" : ""
@@ -149,7 +178,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
 
         {createPortal(
           <AnimatePresence>
-            {isOpen && !disabled && menuPosition && (
+            {isOpen && !disabled && (
               <>
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -162,6 +191,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                 />
 
                 <motion.div
+                  ref={menuRef}
                   initial={{ opacity: 0, scale: 0.95, y: -5 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -5 }}
@@ -169,17 +199,24 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                   className="fixed z-9999 overflow-hidden rounded-lg border border-white/10 bg-[rgba(15,19,25,0.98)] shadow-xl"
                   onMouseDown={(e) => e.stopPropagation()}
                   style={{
-                    top: `${menuPosition.top}px`,
-                    left: menuWidth ? undefined : `${menuPosition.left}px`,
-                    right: menuWidth ? window.innerWidth - menuPosition.buttonRight : undefined,
+                    top: menuPosition ? `${menuPosition.top}px` : "-9999px",
+                    left:
+                      menuWidth ? undefined
+                      : menuPosition ? `${menuPosition.left}px`
+                      : "0px",
+                    right:
+                      menuWidth && menuPosition ?
+                        window.innerWidth - menuPosition.buttonRight
+                      : undefined,
                     width:
                       menuWidth ?
                         typeof menuWidth === "number" ?
                           `${menuWidth}px`
                         : menuWidth
-                      : `${menuPosition.width}px`,
-                    transformOrigin:
-                      menuPosition.top < menuPosition.buttonTop ? "bottom right" : "top right",
+                      : menuPosition ? `${menuPosition.width}px`
+                      : undefined,
+                    transformOrigin: menuPosition?.opensUp ? "bottom right" : "top right",
+                    visibility: menuPosition ? "visible" : "hidden",
                   }}>
                   <div
                     className="custom-scroll overflow-y-auto"
@@ -218,9 +255,10 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                               value === option.value ? "bg-[rgba(28,35,44,0.88)] text-white"
                               : option.disabled ? "cursor-not-allowed text-white/30"
                               : "text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white"
-                            } ${optionClassName}`}
-                            title={option.label}>
-                            {option.label}
+                            } ${optionClassName}`}>
+                            <Tooltip content={option.label} delay={150}>
+                              <span className="block truncate">{option.label}</span>
+                            </Tooltip>
                           </button>
                         ))}
                       </>
