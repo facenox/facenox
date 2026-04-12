@@ -57,6 +57,33 @@ Try the following:
 Official Microsoft download page:
 https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist
 
+## `ImportError: libgthread-2.0.so.0` on Linux
+
+This means the Python `opencv-python` package imported successfully enough to load its native extension, but your OS is missing the GLib thread runtime that OpenCV expects.
+
+Install the system package that provides `libgthread-2.0.so.0`, then restart the app.
+
+Examples:
+
+```bash
+# openSUSE Tumbleweed
+sudo zypper install libgthread-2_0-0
+
+# Debian / Ubuntu
+sudo apt install libglib2.0-0
+
+# Fedora
+sudo dnf install glib2
+```
+
+After installing the package, verify the backend dependency directly:
+
+```bash
+cd server
+source venv/bin/activate
+python -c "import cv2; print(cv2.__version__)"
+```
+
 ## Camera access fails
 
 Check these basics first:
@@ -66,6 +93,71 @@ Check these basics first:
 - the selected camera in Facenox still exists
 
 If the wrong device is selected, switch cameras in the desktop settings and retry.
+
+## Camera preview is green or looks like static on Linux
+
+If the preview is bright green, striped, or looks like random sensor noise, the camera is usually opening with the wrong pixel format rather than failing completely.
+
+This is common on Linux laptops that expose several `/dev/video*` nodes for one physical webcam. Some nodes are:
+
+- the normal RGB camera feed
+- IR or depth-related feeds
+- metadata or motion-raw nodes that should not be used as a normal webcam
+
+Facenox currently relies on Electron/Chromium camera selection, so it can only show the logical camera devices that the browser stack exposes. That is why you may only see one or two options in the app even when Linux shows more `/dev/video*` entries.
+
+### openSUSE Tumbleweed checks
+
+Install the basic V4L inspection tools:
+
+```bash
+sudo zypper install v4l-utils ffmpeg
+```
+
+List the camera groups and their backing device nodes:
+
+```bash
+v4l2-ctl --list-devices
+```
+
+Then inspect the formats for each candidate node:
+
+```bash
+v4l2-ctl -d /dev/video0 --list-formats-ext
+v4l2-ctl -d /dev/video1 --list-formats-ext
+```
+
+What to look for:
+
+- `MJPG` or `YUYV` usually means a normal webcam format
+- `GREY`, `BA81`, `GBRG`, `RGGB`, or similar Bayer/raw formats often produce green or noisy output in apps that expect a regular color stream
+
+Try the same node in a native viewer to see whether the issue is system-wide or Electron-specific:
+
+```bash
+ffplay -f v4l2 -input_format mjpeg /dev/video0
+ffplay -f v4l2 -input_format yuyv422 /dev/video0
+```
+
+Interpret the result like this:
+
+- If `ffplay`, Cheese, or another native camera app also shows green output, the problem is in the Linux camera stack or driver negotiation.
+- If native apps look correct but Facenox stays green, Electron/Chromium is likely picking a bad format for that device.
+
+### Practical workarounds
+
+- Switch to the other camera option in Facenox if one entry is the RGB node and the other is an IR/raw node.
+- Test the camera in another Linux app first to identify which device node is the usable one.
+- On rolling distros like Tumbleweed, try a newer or older kernel if the issue started after an update.
+- If your laptop uses Intel IPU/MIPI hardware, check whether the system is routing the camera through `libcamera` or exposing incomplete V4L compatibility nodes.
+
+When reporting this issue, include:
+
+- distro and version, for example `openSUSE Tumbleweed`
+- desktop session, for example Wayland or X11
+- output of `v4l2-ctl --list-devices`
+- output of `v4l2-ctl -d /dev/videoX --list-formats-ext` for the affected node
+- whether native apps also show the same green preview
 
 ## Recognition works slowly
 

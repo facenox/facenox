@@ -55,6 +55,21 @@ Install backend dependencies:
 pip install -r requirements.txt
 ```
 
+On Linux, `opencv-python` also depends on system GLib libraries that are not bundled in the Python wheel. If backend startup fails with an error like `ImportError: libgthread-2.0.so.0: cannot open shared object file`, install the GLib runtime from your distro first.
+
+Examples:
+
+```bash
+# openSUSE Tumbleweed
+sudo zypper install libgthread-2_0-0
+
+# Debian / Ubuntu
+sudo apt install libglib2.0-0
+
+# Fedora
+sudo dnf install glib2
+```
+
 Optional dependency sets:
 
 ```bash

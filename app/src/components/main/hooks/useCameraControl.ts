@@ -6,6 +6,7 @@ import {
   resetFrameCounters,
   resetLastDetectionRef,
 } from "@/components/main/utils"
+import { buildCameraConstraints } from "@/utils/cameraConstraints"
 import { useDetectionStore } from "@/components/main/stores"
 import type { WebSocketService } from "@/services/WebSocketService"
 import type { DetectionResult } from "@/components/main/types"
@@ -159,10 +160,7 @@ export function useCameraControl({
         )
       }
 
-      const constraints: MediaStreamConstraints = {
-        video: deviceIdToUse ? { deviceId: { ideal: deviceIdToUse } } : undefined,
-        audio: false,
-      }
+      const constraints = buildCameraConstraints(deviceIdToUse)
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints)
       streamRef.current = stream
@@ -252,10 +250,7 @@ export function useCameraControl({
             "Your camera doesn't support the requested settings. Trying to start with default settings..."
           // ... rest of the fallback logic ...
           try {
-            const fallbackConstraints: MediaStreamConstraints = {
-              video: true,
-              audio: false,
-            }
+            const fallbackConstraints = buildCameraConstraints()
             const fallbackStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints)
             streamRef.current = fallbackStream
             if (videoRef.current) {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { persistentSettings } from "@/services"
+import { buildCameraConstraints } from "@/utils/cameraConstraints"
 
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -104,10 +105,7 @@ export function useCamera() {
         throw new Error("No valid camera device found.")
       }
 
-      const constraints: MediaStreamConstraints = {
-        video: { deviceId: { ideal: deviceIdToUse } },
-        audio: false,
-      }
+      const constraints = buildCameraConstraints(deviceIdToUse)
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints)
       streamRef.current = stream
