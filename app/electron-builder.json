@@ -36,9 +36,13 @@
       {
         "from": "../server/dist/server",
         "to": "server/server"
+      },
+      {
+        "from": "public/icons",
+        "to": "icons"
       }
     ],
-    "icon": "./public/icons/logo.png"
+    "icon": "./public/icons/logo-transparent.png"
   },
   "mac": {
     "target": "dmg",

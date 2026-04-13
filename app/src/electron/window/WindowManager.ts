@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 import isDev from "../util.js"
 import { state } from "../State.js"
 import { persistentStore } from "../persistentStore.js"
+import { getWindowIconPath } from "../iconPaths.js"
 
 const window_filename = fileURLToPath(import.meta.url)
 const window_dirname = path.dirname(window_filename)
@@ -43,6 +44,7 @@ export class WindowManager {
       resizable: false,
       center: true,
       backgroundColor: "#00000000",
+      icon: getWindowIconPath(),
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
@@ -225,6 +227,7 @@ export class WindowManager {
       titleBarStyle: "hidden",
       transparent: false,
       backgroundColor: "#000000",
+      icon: getWindowIconPath(),
     })
 
     state.mainWindow = mainWindow
@@ -242,14 +245,15 @@ export class WindowManager {
 
     mainWindow.on("maximize", () => {
       mainWindow.webContents.send("window:maximized")
-      mainWindow.setResizable(false)
       if (process.platform === "win32") {
-        // No shape workaround needed
+        mainWindow.setResizable(false)
       }
     })
 
     mainWindow.on("unmaximize", () => {
-      mainWindow.setResizable(true)
+      if (process.platform === "win32") {
+        mainWindow.setResizable(true)
+      }
       mainWindow.webContents.send("window:unmaximized")
     })
 

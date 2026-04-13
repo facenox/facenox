@@ -157,7 +157,7 @@ export class BackendService {
       formData.append("model_type", options.model_type || "face_detector")
       formData.append("confidence_threshold", (options.confidence_threshold ?? 0.8).toString())
       formData.append("nms_threshold", (options.nms_threshold ?? 0.3).toString())
-      formData.append("enable_liveness_detection", (options.enableLiveness ?? true).toString())
+      formData.append("enable_liveness_detection", (options.enableLiveness ?? false).toString())
 
       const token = await this.getApiToken()
       const headers: Record<string, string> = {}

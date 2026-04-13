@@ -80,6 +80,7 @@ export function useCameraControl({
 }: CameraControlProps) {
   const startCamera = useCallback(async () => {
     let deviceIdToUse: string | undefined = undefined
+    const hadExplicitSelection = Boolean(selectedCamera && selectedCamera.trim())
     try {
       const now = Date.now()
       const timeSinceLastStart = now - lastStartTimeRef.current
@@ -246,30 +247,34 @@ export function useCameraControl({
           errorName === "OverconstrainedError" ||
           errorName === "ConstraintNotSatisfiedError"
         ) {
-          errorMessage =
-            "Your camera doesn't support the requested settings. Trying to start with default settings..."
-          // ... rest of the fallback logic ...
-          try {
-            const fallbackConstraints = buildCameraConstraints()
-            const fallbackStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints)
-            streamRef.current = fallbackStream
-            if (videoRef.current) {
-              videoRef.current.srcObject = fallbackStream
-              await videoRef.current.play()
-              setIsVideoLoading(false)
-              setCameraActive(true)
-              isStreamingRef.current = true
-              setIsStreaming(true)
-              isScanningRef.current = true
-              backendServiceReadyRef.current = true
-              setError(null)
-              isStartingRef.current = false
-              return
-            }
-          } catch (fallbackErr) {
-            console.error("Fallback camera start also failed:", fallbackErr)
+          if (hadExplicitSelection) {
             errorMessage =
-              "The camera could not be started. This usually happens if the hardware is busy or malfunctioning. Please try re-plugging your camera."
+              "The selected camera could not be started with its current settings. Please reselect a camera or reconnect the device."
+          } else {
+            errorMessage =
+              "Your camera doesn't support the requested settings. Trying to start with default settings..."
+            try {
+              const fallbackConstraints = buildCameraConstraints()
+              const fallbackStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints)
+              streamRef.current = fallbackStream
+              if (videoRef.current) {
+                videoRef.current.srcObject = fallbackStream
+                await videoRef.current.play()
+                setIsVideoLoading(false)
+                setCameraActive(true)
+                isStreamingRef.current = true
+                setIsStreaming(true)
+                isScanningRef.current = true
+                backendServiceReadyRef.current = true
+                setError(null)
+                isStartingRef.current = false
+                return
+              }
+            } catch (fallbackErr) {
+              console.error("Fallback camera start also failed:", fallbackErr)
+              errorMessage =
+                "The camera could not be started. This usually happens if the hardware is busy or malfunctioning. Please try re-plugging your camera."
+            }
           }
         } else {
           errorMessage =

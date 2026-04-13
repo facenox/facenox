@@ -1,18 +1,14 @@
-import { Tray, Menu, app } from "electron"
-import path from "path"
+import { Tray, Menu, app, nativeImage } from "electron"
 import { state } from "../State.js"
+import { getTrayIconPath } from "../iconPaths.js"
 
 export class TrayManager {
   static createTray(): void {
     if (state.tray) return
 
-    const iconPath =
-      !app.isPackaged ?
-        path.join(app.getAppPath(), "public/icons/logo.png")
-      : path.join(process.resourcesPath, "icons/logo.png")
-
     try {
-      const tray = new Tray(iconPath)
+      const icon = nativeImage.createFromPath(getTrayIconPath())
+      const tray = new Tray(icon)
 
       tray.setToolTip("Facenox")
 

@@ -71,7 +71,7 @@ async def detect_faces(
     model_type: str = Form("face_detector"),
     confidence_threshold: float = Form(FACE_DETECTOR_CONFIG["score_threshold"]),
     nms_threshold: float = Form(FACE_DETECTOR_CONFIG["nms_threshold"]),
-    enable_liveness_detection: bool = Form(True),
+    enable_liveness_detection: bool = Form(False),
 ):
     """
     Detect faces in a single binary image (Multipart)

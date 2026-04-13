@@ -28,7 +28,7 @@ class LiveGroupContext:
 
 @dataclass
 class LiveSessionConfig:
-    enable_liveness_detection: bool = True
+    enable_liveness_detection: bool = False
     active_group_id: Optional[str] = None
     max_recognition_faces_per_frame: int = 6
     group_context: LiveGroupContext = field(default_factory=LiveGroupContext)
