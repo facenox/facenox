@@ -2,7 +2,7 @@
 
 Facenox includes open-source frameworks and bundled model components.
 
-Some packaged model files in this repository use generic integration names such as `recognizer.onnx`, `detector.onnx`, `liveness.onnx`, and `tracker.onnx`. Those filenames are Facenox integration names only. They do not change the original authorship or license of the upstream work described below.
+Some packaged model files in this repository use generic integration names such as `recognizer.onnx`, `detector.onnx`, and `liveness.onnx`. Those filenames are Facenox integration names only. They do not change the original authorship or license of the upstream work described below.
 
 ## Core Frameworks and Runtimes
 
@@ -61,7 +61,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### Object Tracking
 
-- Facenox includes a tracker deployment artifact at `server/assets/models/tracker.onnx` for model packaging consistency.
 - The local face tracking pipeline itself is implemented around ByteTrack in `server/core/models/tracker`.
 - Upstream project: https://github.com/FoundationVision/ByteTrack
 - Upstream license: MIT

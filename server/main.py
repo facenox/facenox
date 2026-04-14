@@ -196,7 +196,6 @@ async def get_available_models():
     models_info["face_tracker"] = {
         "available": True,
         "info": {
-            "model_path": str(FACE_TRACKER_CONFIG["model_path"]),
             "track_thresh": FACE_TRACKER_CONFIG["track_thresh"],
             "match_thresh": FACE_TRACKER_CONFIG["match_thresh"],
             "track_buffer": FACE_TRACKER_CONFIG["track_buffer"],

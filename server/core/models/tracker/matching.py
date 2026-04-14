@@ -1,4 +1,5 @@
 import numpy as np
+import lap
 
 
 def bbox_ious(atlbrs, btlbrs):
@@ -26,48 +27,23 @@ def bbox_ious(atlbrs, btlbrs):
 
 
 def linear_assignment(cost_matrix, thresh):
-    """
-    Simple pure-Python linear assignment implementation.
-    Gives priority to the smallest costs (greedy).
-    For small matrices (attendance tracking), this is virtually identical to LAPJV
-    but removes the binary 'lap' dependency.
-    """
     if cost_matrix.size == 0:
         return (
             np.empty((0, 2), dtype=int),
             tuple(range(cost_matrix.shape[0])),
             tuple(range(cost_matrix.shape[1])),
         )
-
     matches, unmatched_a, unmatched_b = [], [], []
-
-    # Simple greedy assignment
-    # 1. Get all pairs and sort by cost
-    rows, cols = cost_matrix.shape
-    indices = np.where(cost_matrix <= thresh)
-    potential_matches = []
-    for r, c in zip(indices[0], indices[1]):
-        potential_matches.append((r, c, cost_matrix[r, c]))
-
-    # Sort by cost ascending
-    potential_matches.sort(key=lambda x: x[2])
-
-    matched_a = set()
-    matched_b = set()
-
-    for r, c, cost in potential_matches:
-        if r not in matched_a and c not in matched_b:
-            matched_a.add(r)
-            matched_b.add(c)
-            matches.append([r, c])
-
-    unmatched_a = [r for r in range(rows) if r not in matched_a]
-    unmatched_b = [c for c in range(cols) if c not in matched_b]
-
+    _, x, y = lap.lapjv(cost_matrix, extend_cost=True, cost_limit=thresh)
+    for ix, mx in enumerate(x):
+        if mx >= 0:
+            matches.append([ix, mx])
+    unmatched_a = np.where(x < 0)[0]
+    unmatched_b = np.where(y < 0)[0]
     return (
-        np.array(matches) if matches else np.empty((0, 2), dtype=int),
-        np.array(unmatched_a),
-        np.array(unmatched_b),
+        np.asarray(matches) if matches else np.empty((0, 2), dtype=int),
+        unmatched_a,
+        unmatched_b,
     )
 
 

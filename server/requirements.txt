@@ -9,6 +9,7 @@ uvicorn[standard]==0.42.0
 opencv-python==4.13.0.92
 numpy==2.4.3
 onnxruntime==1.24.4
+lap==0.5.13
 
 # Data validation and storage
 pydantic==2.12.5

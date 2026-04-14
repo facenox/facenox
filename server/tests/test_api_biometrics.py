@@ -422,6 +422,10 @@ def test_detection_websocket_processes_frame_bytes(biometrics_env) -> None:
         connected = websocket.receive_json()
         assert connected["type"] == "connection"
 
+        websocket.send_json({"type": "config", "enable_liveness_detection": True})
+        config_ack = websocket.receive_json()
+        assert config_ack["type"] == "config_ack"
+
         websocket.send_bytes(image_bytes)
         detection = websocket.receive_json()
         assert detection["type"] == "detection_response"
@@ -586,7 +590,13 @@ def test_detection_websocket_requires_real_liveness_for_identity_when_enabled(
     ) as websocket:
         assert websocket.receive_json()["type"] == "connection"
 
-        websocket.send_json({"type": "config", "group_id": group_id})
+        websocket.send_json(
+            {
+                "type": "config",
+                "group_id": group_id,
+                "enable_liveness_detection": True,
+            }
+        )
         config_ack = websocket.receive_json()
         assert config_ack["type"] == "config_ack"
 

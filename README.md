@@ -17,7 +17,7 @@
 
 </div>
 
-Facenox is an offline-first face recognition system that performs real-time face detection, recognition, and liveness checks locally. No cloud required.
+Facenox is an offline-first face recognition system that performs real-time face detection, ByteTrack-based face tracking over detector outputs, recognition, and liveness checks locally. No cloud required.
 
 Built for privacy-conscious teams, it keeps biometric matching local while optionally syncing attendance data to a cloud dashboard.
 

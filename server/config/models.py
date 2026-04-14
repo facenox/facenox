@@ -29,7 +29,6 @@ MODEL_CONFIGS = {
         "database_path": DATA_DIR / "face_database.db",
     },
     "face_tracker": {
-        "model_path": MODELS_DIR / "tracker.onnx",
         "track_thresh": 0.5,
         "match_thresh": 0.8,
         "track_buffer": 30,
@@ -42,7 +41,6 @@ FACE_DETECTOR_CONFIG = MODEL_CONFIGS["face_detector"]
 LIVENESS_DETECTOR_CONFIG = MODEL_CONFIGS["liveness_detector"]
 FACE_RECOGNIZER_MODEL_PATH = MODEL_CONFIGS["face_recognizer"]["model_path"]
 FACE_RECOGNIZER_CONFIG = MODEL_CONFIGS["face_recognizer"]
-FACE_TRACKER_MODEL_PATH = MODEL_CONFIGS["face_tracker"]["model_path"]
 FACE_TRACKER_CONFIG = MODEL_CONFIGS["face_tracker"]
 
 

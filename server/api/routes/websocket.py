@@ -90,7 +90,6 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
 
     if client_id not in manager.face_trackers:
         manager.face_trackers[client_id] = FaceTracker(
-            model_path=str(FACE_TRACKER_CONFIG["model_path"]),
             track_thresh=FACE_TRACKER_CONFIG["track_thresh"],
             match_thresh=FACE_TRACKER_CONFIG["match_thresh"],
             track_buffer=FACE_TRACKER_CONFIG["track_buffer"],

@@ -2,7 +2,7 @@ import logging
 from typing import List, Dict, Optional
 import numpy as np
 from .byte_tracker import BYTETracker
-from .utils import iou_batch
+from . import matching
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +20,10 @@ class ByteTrackArgs:
 
 
 class FaceTracker:
-    """Wrapper around tracker for face tracking"""
+    """Wrapper around ByteTrack for face tracking."""
 
     def __init__(
         self,
-        model_path: str,
         track_thresh: float = 0.5,
         match_thresh: float = 0.8,
         track_buffer: int = 30,
@@ -34,13 +33,11 @@ class FaceTracker:
         Initialize face tracker.
 
         Args:
-            model_path: Path to tracker model file (for consistency with other models)
             track_thresh: Detection confidence threshold (ByteTrack default: 0.5)
             match_thresh: Matching threshold for association (ByteTrack default: 0.8)
             track_buffer: Buffer size for lost tracks (ByteTrack default: 30)
             frame_rate: Frame rate for tracking (can be updated dynamically)
         """
-        self.model_path = model_path
         self.args = ByteTrackArgs(
             track_thresh=track_thresh,
             match_thresh=match_thresh,
@@ -49,9 +46,6 @@ class FaceTracker:
         )
         self.tracker = BYTETracker(self.args, frame_rate=frame_rate)
         self.frame_rate = frame_rate
-        # Derive minimum IoU from match_thresh: match_thresh is IoU distance (1 - IoU)
-        # So min_iou = 1.0 - match_thresh (e.g., 0.8 -> 0.2 minimum IoU)
-        self.min_iou = 1.0 - match_thresh
 
     def update_frame_rate(self, frame_rate: int):
         """
@@ -90,7 +84,9 @@ class FaceTracker:
             return []
 
         dets = []
-        for face in face_detections:
+        valid_faces = []
+        valid_original_indices = []
+        for original_idx, face in enumerate(face_detections):
             bbox = face.get("bbox", {})
 
             if not isinstance(bbox, dict):
@@ -113,6 +109,8 @@ class FaceTracker:
             score = face.get("confidence", 1.0)
 
             dets.append([x1, y1, x2, y2, score])
+            valid_faces.append(face)
+            valid_original_indices.append(original_idx)
 
         if not dets:
             output_results = np.empty((0, 5), dtype=np.float32)
@@ -129,57 +127,35 @@ class FaceTracker:
 
         output_stracks = self.tracker.update(output_results, img_info, img_size)
 
-        # Convert STrack objects to face detection format
-        result = []
-        matched_detection_indices = set()
-
-        if len(output_stracks) > 0:
-            # Create mapping from track bboxes to detections
-            track_bboxes = []
-            for track in output_stracks:
-                tlbr = track.tlbr  # [x1, y1, x2, y2]
-                track_bboxes.append(tlbr)
-
-            track_bboxes = np.array(track_bboxes)
+        result_by_index: dict[int, Dict] = {}
+        if output_stracks and len(valid_faces) > 0:
+            track_bboxes = np.asarray(
+                [track.tlbr for track in output_stracks], dtype=np.float32
+            )
             det_bboxes = dets_array[:, :4]
+            cost_matrix = matching.iou_distance(track_bboxes, det_bboxes)
+            matches, _, _ = matching.linear_assignment(
+                cost_matrix, thresh=self.args.match_thresh
+            )
 
-            if len(track_bboxes) > 0 and len(det_bboxes) > 0:
-                iou_matrix = iou_batch(track_bboxes, det_bboxes)
+            for track_idx, det_idx in matches:
+                if track_idx >= len(output_stracks) or det_idx >= len(valid_faces):
+                    continue
+                original_idx = valid_original_indices[det_idx]
+                face_result = valid_faces[det_idx].copy()
+                face_result["track_id"] = int(output_stracks[track_idx].track_id)
+                result_by_index[original_idx] = face_result
 
-                if iou_matrix.shape[0] != len(output_stracks) or iou_matrix.shape[
-                    1
-                ] != len(face_detections):
-                    logger.warning(
-                        f"IoU matrix shape mismatch: {iou_matrix.shape} vs "
-                        f"expected ({len(output_stracks)}, {len(face_detections)})"
-                    )
-                else:
-                    for track_idx, track in enumerate(output_stracks):
-                        if track_idx >= iou_matrix.shape[0]:
-                            continue
-                        best_det_idx = np.argmax(iou_matrix[track_idx])
+        # Preserve original ordering and assign negative IDs to any detection
+        # the tracker did not confidently match back to a returned track.
+        result: List[Dict] = []
+        for original_idx, face in enumerate(face_detections):
+            if original_idx in result_by_index:
+                result.append(result_by_index[original_idx])
+                continue
 
-                        if best_det_idx >= len(face_detections) or best_det_idx < 0:
-                            continue
-
-                        best_iou = iou_matrix[track_idx, best_det_idx]
-
-                        if best_iou >= self.min_iou:
-                            face_result = face_detections[best_det_idx].copy()
-                            face_result["track_id"] = int(track.track_id)
-
-                            result.append(face_result)
-                            matched_detection_indices.add(best_det_idx)
-
-                            # Mark this detection as used
-                            iou_matrix[:, best_det_idx] = 0
-
-        # Add unmatched detections with negative track IDs
-        for det_idx, face in enumerate(face_detections):
-            if det_idx not in matched_detection_indices:
-                face_result = face.copy()
-                face_result["track_id"] = -(det_idx + 1)
-
-                result.append(face_result)
+            face_result = face.copy()
+            face_result["track_id"] = -(original_idx + 1)
+            result.append(face_result)
 
         return result
