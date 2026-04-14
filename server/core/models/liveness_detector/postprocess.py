@@ -2,8 +2,19 @@ import numpy as np
 from typing import Dict, List, Tuple, Optional
 from .preprocess import preprocess_batch
 
+GUIDANCE_STATUSES = {"move_closer", "center_face"}
+
 
 def validate_detection(detection: Dict) -> Tuple[bool, Optional[Dict]]:
+    liveness = detection.get("liveness")
+    if isinstance(liveness, dict):
+        status = liveness.get("status")
+        if status in GUIDANCE_STATUSES:
+            normalized_liveness = dict(liveness)
+            normalized_liveness.setdefault("is_real", None)
+            normalized_liveness.setdefault("confidence", 0.0)
+            detection["liveness"] = normalized_liveness
+            return False, normalized_liveness
 
     bbox = detection.get("bbox", {})
     if not isinstance(bbox, dict):

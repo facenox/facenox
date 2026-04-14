@@ -16,14 +16,6 @@ def process_detection(
     if x < 0 or y < 0 or x + w > img_width or y + h > img_height:
         return None
 
-    if edge_margin > 0:
-        dist_left = x
-        dist_right = img_width - (x + w)
-        dist_top = y
-        dist_bottom = img_height - (y + h)
-        if min(dist_left, dist_right, dist_top, dist_bottom) < edge_margin:
-            return None
-
     detection = {
         "bbox": {
             "x": float(x),
@@ -35,10 +27,26 @@ def process_detection(
         "landmarks_5": landmarks_5.tolist(),
     }
 
+    if edge_margin > 0:
+        dist_left = x
+        dist_right = img_width - (x + w)
+        dist_top = y
+        dist_bottom = img_height - (y + h)
+        if min(dist_left, dist_right, dist_top, dist_bottom) < edge_margin:
+            detection["liveness"] = {
+                "is_real": None,
+                "status": "center_face",
+                "confidence": 0.0,
+                "message": "Center your face",
+            }
+            return detection
+
     if min_face_size > 0 and (w < min_face_size or h < min_face_size):
         detection["liveness"] = {
             "is_real": None,
-            "status": "unknown",
+            "status": "move_closer",
+            "confidence": 0.0,
+            "message": "Move closer",
         }
 
     return detection

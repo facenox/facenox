@@ -159,6 +159,39 @@ class SuspiciousLivenessDetector:
         return enriched
 
 
+class PreserveGuidanceLivenessDetector:
+    def detect_faces(self, _image: np.ndarray, faces: list[dict]) -> list[dict]:
+        enriched = []
+        for face in faces:
+            current = dict(face)
+            current_liveness = current.get("liveness") or {}
+            if current_liveness.get("status") in {"move_closer", "center_face"}:
+                enriched.append(current)
+                continue
+
+            current["liveness"] = {
+                "status": "real",
+                "is_real": True,
+                "confidence": 0.99,
+            }
+            enriched.append(current)
+        return enriched
+
+
+class CenterFaceDetector(DummyFaceDetector):
+    def detect_faces(
+        self, image: np.ndarray, enable_liveness: bool = False
+    ) -> list[dict]:
+        faces = super().detect_faces(image, enable_liveness=False)
+        if enable_liveness and faces:
+            faces[0]["liveness"] = {
+                "status": "center_face",
+                "is_real": None,
+                "confidence": 0.0,
+            }
+        return faces
+
+
 class DummyTracker:
     def update(self, faces: list[dict], _frame_rate: int | None) -> list[dict]:
         tracked = []
@@ -605,6 +638,71 @@ def test_detection_websocket_requires_real_liveness_for_identity_when_enabled(
         assert detection["type"] == "detection_response"
         face = detection["faces"][0]
         assert face["liveness"]["status"] == "move_closer"
+        assert "recognition" not in face
+
+        websocket.send_json({"type": "disconnect"})
+
+    records = client.get(
+        "/attendance/records",
+        headers=headers,
+        params={"group_id": group_id},
+    )
+    assert records.status_code == 200, records.text
+    assert len(records.json()) == 0
+
+
+def test_detection_websocket_blocks_identity_when_face_must_be_centered(
+    biometrics_env, monkeypatch
+) -> None:
+    client = biometrics_env["client"]
+    headers = _headers("org-center-live")
+    group_id = _create_group(client, headers, "Center Live Group")
+    _create_member(
+        client, headers, group_id, "center-person", "Center Person", has_consent=True
+    )
+
+    image_bytes = _make_image_bytes()
+    register = client.post(
+        f"/attendance/groups/{group_id}/persons/center-person/register-face",
+        headers=headers,
+        data={"metadata": _register_metadata()},
+        files={"image": ("face.jpg", image_bytes, "image/jpeg")},
+    )
+    assert register.status_code == 200, register.text
+
+    center_face_detector = CenterFaceDetector()
+    preserve_guidance_liveness = PreserveGuidanceLivenessDetector()
+    monkeypatch.setattr(face_processing, "face_detector", center_face_detector)
+    monkeypatch.setattr(core.lifespan, "liveness_detector", preserve_guidance_liveness)
+    monkeypatch.setattr(
+        face_processing, "liveness_detector", preserve_guidance_liveness
+    )
+
+    from utils.websocket_manager import manager
+
+    client_id = "center-live-client"
+    manager.face_trackers[client_id] = DummyTracker()
+
+    with client.websocket_connect(
+        f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-center-live"
+    ) as websocket:
+        assert websocket.receive_json()["type"] == "connection"
+
+        websocket.send_json(
+            {
+                "type": "config",
+                "group_id": group_id,
+                "enable_liveness_detection": True,
+            }
+        )
+        config_ack = websocket.receive_json()
+        assert config_ack["type"] == "config_ack"
+
+        websocket.send_bytes(image_bytes)
+        detection = websocket.receive_json()
+        assert detection["type"] == "detection_response"
+        face = detection["faces"][0]
+        assert face["liveness"]["status"] == "center_face"
         assert "recognition" not in face
 
         websocket.send_json({"type": "disconnect"})

@@ -2,6 +2,11 @@ import { useRef, useCallback, useEffect } from "react"
 import type { DetectionResult } from "@/components/main/types"
 import { drawOverlays } from "@/components/main/utils"
 import {
+  getOverlayGuidance,
+  updateHoldStillCache,
+  type HoldStillCacheEntry,
+} from "@/components/main/utils/overlayGuidance"
+import {
   useDetectionStore,
   useCameraStore,
   useAttendanceStore,
@@ -36,7 +41,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
 
   const { currentDetections, currentRecognitionResults } = useDetectionStore()
   const { isStreaming } = useCameraStore()
-  const { persistentCooldowns, currentGroup } = useAttendanceStore()
+  const { persistentCooldowns, currentGroup, enableSpoofDetection } = useAttendanceStore()
   const { quickSettings } = useUIStore()
 
   const lastCanvasSizeRef = useRef<{ width: number; height: number }>({
@@ -54,6 +59,8 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     offsetY: number
   }>({ scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 })
   const visibleFacesRef = useRef<Map<string, VisibleFaceState>>(new Map())
+  const holdStillCacheRef = useRef<Map<string, HoldStillCacheEntry>>(new Map())
+  const nextAnonymousGuidanceKeyRef = useRef(0)
   const animateRef = useRef<() => void>(() => {})
 
   const getFaceKey = useCallback((face: DetectionFace, index: number) => {
@@ -145,6 +152,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
         recognitionEnabled: true,
         persistentCooldowns,
         quickSettings,
+        enableSpoofDetection,
         getVideoRect,
         calculateScaleFactors,
         currentGroupId: currentGroup?.id,
@@ -156,6 +164,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
       persistentCooldowns,
       currentGroup,
       quickSettings,
+      enableSpoofDetection,
       getVideoRect,
       calculateScaleFactors,
       videoRef,
@@ -176,6 +185,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
           ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height)
         }
       }
+      holdStillCacheRef.current.clear()
       if (isStreaming) {
         animationFrameRef.current = requestAnimationFrame(animateRef.current)
       }
@@ -229,11 +239,51 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     }
 
     if (renderedFaces.length > 0) {
+      const { nextCache, activeKeys, faceKeyByIndex, nextAnonymousSeed } = updateHoldStillCache(
+        renderedFaces,
+        holdStillCacheRef.current,
+        now,
+        nextAnonymousGuidanceKeyRef.current,
+        {
+          enableSpoofDetection,
+          recognitionEnabled: true,
+          currentRecognitionResults,
+        },
+      )
+
+      holdStillCacheRef.current = nextCache
+      nextAnonymousGuidanceKeyRef.current = nextAnonymousSeed
+
+      const guidedFaces = renderedFaces.map((face, index) => {
+        const trackId = face.track_id
+        const recognitionResult =
+          (trackId !== undefined ? currentRecognitionResults.get(trackId) : undefined) ??
+          face.recognition ??
+          null
+        const holdStillKey = faceKeyByIndex.get(index)
+        const overlayGuidance = getOverlayGuidance(face, {
+          enableSpoofDetection,
+          recognitionEnabled: true,
+          recognitionResult,
+          holdStillActive: holdStillKey ? activeKeys.has(holdStillKey) : false,
+        })
+
+        if (!overlayGuidance) {
+          return face
+        }
+
+        return {
+          ...face,
+          overlayGuidance,
+        }
+      })
+
       handleDrawOverlays({
-        faces: renderedFaces,
+        faces: guidedFaces,
         model_used: detectionsToRender?.model_used ?? "current",
       })
     } else {
+      holdStillCacheRef.current.clear()
       const ctx = overlayCanvas.getContext("2d", { willReadFrequently: false })
       if (ctx && overlayCanvas.width > 0 && overlayCanvas.height > 0) {
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height)
@@ -247,6 +297,8 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     isStreaming,
     handleDrawOverlays,
     currentDetections,
+    currentRecognitionResults,
+    enableSpoofDetection,
     getFaceKey,
     overlayCanvasRef,
     animationFrameRef,
@@ -261,6 +313,8 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     lastCanvasSizeRef.current = { width: 0, height: 0 }
     scaleFactorsRef.current = { scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 }
     visibleFacesRef.current.clear()
+    holdStillCacheRef.current.clear()
+    nextAnonymousGuidanceKeyRef.current = 0
   }, [])
 
   return {

@@ -92,6 +92,7 @@ interface DrawOverlaysParams {
     }
   >
   quickSettings: QuickSettings
+  enableSpoofDetection: boolean
   getVideoRect: () => DOMRect | null
   calculateScaleFactors: () => {
     scaleX: number
@@ -111,6 +112,7 @@ export const drawOverlays = ({
   recognitionEnabled,
   persistentCooldowns,
   quickSettings,
+  enableSpoofDetection,
   getVideoRect,
   calculateScaleFactors,
   currentGroupId,
@@ -251,6 +253,7 @@ export const drawOverlays = ({
     const isActuallyRecognized = isRecognized && !!recognitionResult?.person_id
     let label = ""
     let shouldShowLabel = false
+    let labelTone: "recognition" | "guidance-warning" | "guidance-failure" = "recognition"
 
     if (isActuallyRecognized && recognitionResult && quickSettings.showRecognitionNames) {
       if (recognitionResult.has_consent === false) {
@@ -263,8 +266,14 @@ export const drawOverlays = ({
       shouldShowLabel = !!label
     }
 
-    if (shouldShowLabel && recognitionResult) {
-      const isShield = recognitionResult.has_consent === false
+    if (!shouldShowLabel && enableSpoofDetection && face.overlayGuidance) {
+      label = face.overlayGuidance.label
+      labelTone = face.overlayGuidance.tone === "failure" ? "guidance-failure" : "guidance-warning"
+      shouldShowLabel = true
+    }
+
+    if (shouldShowLabel) {
+      const isShield = labelTone === "recognition" && recognitionResult?.has_consent === false
       const text = label
       ctx.font = "bold 12px system-ui, sans-serif"
       const textWidth = ctx.measureText(text).width
@@ -273,17 +282,21 @@ export const drawOverlays = ({
       const badgeH = 20
 
       const badgeX = x1 + (width - badgeW) / 2
-      const badgeY = y1 - 25
+      const badgeY = Math.max(6, y1 - 25)
 
       if (isShield) {
         ctx.fillStyle = "#818cf8"
+      } else if (labelTone === "guidance-failure") {
+        ctx.fillStyle = "rgba(146, 112, 52, 0.94)"
+      } else if (labelTone === "guidance-warning") {
+        ctx.fillStyle = "rgba(100, 116, 139, 0.94)"
       } else {
         ctx.fillStyle = color
       }
       drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 10)
       ctx.fill()
 
-      ctx.fillStyle = "#000000"
+      ctx.fillStyle = isShield ? "#000000" : "#f8fafc"
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
       ctx.fillText(text, badgeX + badgeW / 2, badgeY + badgeH / 2)
