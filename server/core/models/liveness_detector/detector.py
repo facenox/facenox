@@ -122,7 +122,7 @@ class LivenessDetector:
                 namespace=tracking_namespace,
             )
 
-        self.track_memory.cleanup_stale_tracks()
+        self.track_memory.cleanup_stale_tracks(namespace=tracking_namespace)
 
         return results
 

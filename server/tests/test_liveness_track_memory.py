@@ -13,7 +13,7 @@ def _liveness(status: str, is_real: bool) -> dict:
 
 
 def test_track_liveness_memory_requires_recent_real_evidence_before_passing():
-    memory = TrackLivenessMemory(required_real_frames=2, history_size=5)
+    memory = TrackLivenessMemory(required_real_frames=2)
 
     first = memory.stabilize(
         1, _liveness("real", True), frame_number=1, namespace="cam"
@@ -31,7 +31,6 @@ def test_track_liveness_memory_requires_recent_real_evidence_before_passing():
 def test_track_liveness_memory_keeps_locked_real_despite_spoof_until_gap_reset():
     memory = TrackLivenessMemory(
         required_real_frames=2,
-        history_size=5,
     )
 
     for frame_number in range(1, 3):
@@ -56,7 +55,7 @@ def test_track_liveness_memory_keeps_locked_real_despite_spoof_until_gap_reset()
 
 
 def test_track_liveness_memory_is_isolated_per_namespace():
-    memory = TrackLivenessMemory(required_real_frames=2, history_size=5)
+    memory = TrackLivenessMemory(required_real_frames=2)
 
     for frame_number in range(1, 3):
         cam_a_result = memory.stabilize(
@@ -73,10 +72,31 @@ def test_track_liveness_memory_is_isolated_per_namespace():
     assert cam_b_first["is_real"] is False
 
 
+def test_track_liveness_memory_namespace_frame_progress_does_not_reset_other_namespaces():
+    memory = TrackLivenessMemory(required_real_frames=1, reset_after_gap_frames=2)
+
+    cam_a_first = memory.stabilize(
+        1, _liveness("real", True), frame_number=1, namespace="cam-a"
+    )
+    assert cam_a_first["status"] == "real"
+
+    for frame_number in range(2, 10):
+        memory.stabilize(
+            2, _liveness("real", True), frame_number=frame_number, namespace="cam-b"
+        )
+
+    cam_a_follow_up = memory.stabilize(
+        1, _liveness("spoof", False), frame_number=2, namespace="cam-a"
+    )
+
+    # With namespace-scoped frame tracking, cam-a should not be aged/reset by cam-b traffic.
+    assert cam_a_follow_up["status"] == "real"
+    assert cam_a_follow_up["is_real"] is True
+
+
 def test_track_liveness_memory_resets_stable_state_after_long_gap():
     memory = TrackLivenessMemory(
         required_real_frames=2,
-        history_size=5,
         reset_after_gap_frames=2,
     )
 
