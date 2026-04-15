@@ -39,6 +39,7 @@ describe("overlayGuidance", () => {
         recognitionEnabled: true,
         recognitionResult: null,
         holdStillActive: false,
+        verifyingHintActive: false,
       }),
     ).toEqual({
       label: "Center your face",
@@ -60,6 +61,7 @@ describe("overlayGuidance", () => {
         recognitionEnabled: true,
         recognitionResult: null,
         holdStillActive: false,
+        verifyingHintActive: false,
       }),
     ).toEqual({
       label: "Move closer",
@@ -81,9 +83,54 @@ describe("overlayGuidance", () => {
         recognitionEnabled: true,
         recognitionResult: null,
         holdStillActive: false,
+        verifyingHintActive: false,
       }),
     ).toEqual({
       label: "Verifying...",
+      tone: "warning",
+    })
+  })
+
+  it("maps candidate_real to the same temporary verifying prompt", () => {
+    const face = baseFace({
+      liveness: {
+        is_real: false,
+        status: "candidate_real",
+      },
+    })
+
+    expect(
+      getOverlayGuidance(face, {
+        enableSpoofDetection: true,
+        recognitionEnabled: true,
+        recognitionResult: null,
+        holdStillActive: false,
+        verifyingHintActive: false,
+      }),
+    ).toEqual({
+      label: "Verifying...",
+      tone: "warning",
+    })
+  })
+
+  it("shows a more helpful delayed hint when verifying stays stuck", () => {
+    const face = baseFace({
+      liveness: {
+        is_real: false,
+        status: "spoof",
+      },
+    })
+
+    expect(
+      getOverlayGuidance(face, {
+        enableSpoofDetection: true,
+        recognitionEnabled: true,
+        recognitionResult: null,
+        holdStillActive: false,
+        verifyingHintActive: true,
+      }),
+    ).toEqual({
+      label: "Try better lighting or a clearer camera view.",
       tone: "warning",
     })
   })
@@ -102,6 +149,7 @@ describe("overlayGuidance", () => {
         recognitionEnabled: true,
         recognitionResult: null,
         holdStillActive: false,
+        verifyingHintActive: false,
       }),
     ).toBeNull()
   })
@@ -128,6 +176,7 @@ describe("overlayGuidance", () => {
           error: null,
         },
         holdStillActive: false,
+        verifyingHintActive: false,
       }),
     ).toBeNull()
   })

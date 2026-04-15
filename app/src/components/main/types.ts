@@ -21,7 +21,14 @@ export interface DetectionResult {
       logit_diff?: number
       real_logit?: number
       spoof_logit?: number
-      status: "real" | "spoof" | "error" | "move_closer" | "center_face"
+      status:
+        | "real"
+        | "spoof"
+        | "candidate_real"
+        | "unknown"
+        | "error"
+        | "move_closer"
+        | "center_face"
       attack_type?: string
       message?: string
     }
@@ -45,7 +52,14 @@ export interface WebSocketFaceData {
     logit_diff?: number
     real_logit?: number
     spoof_logit?: number
-    status?: "real" | "spoof" | "error" | "move_closer" | "center_face"
+    status?:
+      | "real"
+      | "spoof"
+      | "candidate_real"
+      | "unknown"
+      | "error"
+      | "move_closer"
+      | "center_face"
     attack_type?: string
     message?: string
   }
@@ -120,7 +134,14 @@ export interface TrackedFace {
   personId?: string
   occlusionCount: number
   angleConsistency: number
-  livenessStatus?: "real" | "spoof" | "error" | "move_closer" | "center_face"
+  livenessStatus?:
+    | "real"
+    | "spoof"
+    | "candidate_real"
+    | "unknown"
+    | "error"
+    | "move_closer"
+    | "center_face"
   unknownFramesCount?: number
 }
 

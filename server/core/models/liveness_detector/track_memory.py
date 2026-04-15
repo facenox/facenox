@@ -1,32 +1,41 @@
-from collections import defaultdict
-from typing import Tuple
+from collections import defaultdict, deque
+from typing import Dict
 
 
-class TemporalSmoother:
+class TrackLivenessMemory:
     def __init__(
-        self, alpha: float, max_stale_frames: int = 30, cleanup_interval: int = 10
+        self,
+        required_real_frames: int = 2,
+        history_size: int = 5,
+        max_stale_frames: int = 30,
+        cleanup_interval: int = 10,
     ):
-        self.alpha = max(0.0, min(1.0, alpha))
+        self.required_real_frames = max(1, required_real_frames)
+        self.history_size = max(self.required_real_frames, history_size)
         self.max_stale_frames = max_stale_frames
         self.cleanup_interval = cleanup_interval
         self.current_frame = 0
         self.last_cleanup_frame = 0
         self.track_states = defaultdict(
-            lambda: {"live": None, "spoof": None, "last_frame": -1}
+            lambda: {
+                "recent_statuses": deque(maxlen=self.history_size),
+                "consecutive_real_frames": 0,
+                "stable_real": False,
+                "last_frame": -1,
+            }
         )
 
     @staticmethod
     def _normalize_namespace(namespace: str | None) -> str:
         return namespace or "__global__"
 
-    def smooth(
+    def stabilize(
         self,
         track_id: int,
-        real_score: float,
-        spoof_score: float,
+        liveness: Dict,
         frame_number: int,
         namespace: str | None = None,
-    ) -> Tuple[float, float]:
+    ) -> Dict:
         if frame_number < 0:
             frame_number = 0
 
@@ -34,22 +43,39 @@ class TemporalSmoother:
             frame_number = self.current_frame
 
         self.current_frame = frame_number
+
+        raw_status = liveness.get("status")
+        if track_id <= 0 or raw_status not in {"real", "spoof"}:
+            return liveness
+
         state = self.track_states[(self._normalize_namespace(namespace), track_id)]
-
-        if state["live"] is None or state["spoof"] is None:
-            smoothed_live = real_score
-            smoothed_spoof = spoof_score
-        else:
-            smoothed_live = self.alpha * real_score + (1 - self.alpha) * state["live"]
-            smoothed_spoof = (
-                self.alpha * spoof_score + (1 - self.alpha) * state["spoof"]
-            )
-
-        state["live"] = smoothed_live
-        state["spoof"] = smoothed_spoof
+        recent_statuses = state["recent_statuses"]
+        recent_statuses.append(raw_status)
         state["last_frame"] = frame_number
 
-        return smoothed_live, smoothed_spoof
+        stabilized = dict(liveness)
+
+        if raw_status == "spoof":
+            state["consecutive_real_frames"] = 0
+            state["stable_real"] = False
+            stabilized["status"] = "spoof"
+            stabilized["is_real"] = False
+            return stabilized
+
+        state["consecutive_real_frames"] += 1
+
+        if (
+            state["stable_real"]
+            or state["consecutive_real_frames"] >= self.required_real_frames
+        ):
+            state["stable_real"] = True
+            stabilized["status"] = "real"
+            stabilized["is_real"] = True
+            return stabilized
+
+        stabilized["status"] = "candidate_real"
+        stabilized["is_real"] = False
+        return stabilized
 
     def clear_namespace(self, namespace: str | None):
         namespace_key = self._normalize_namespace(namespace)

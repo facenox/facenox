@@ -5,10 +5,13 @@ import type { QuickSettings } from "@/components/settings"
 export const getFaceColor = (
   recognitionResult: ExtendedFaceRecognitionResponse | null,
   recognitionEnabled: boolean,
+  enableSpoofDetection: boolean,
   livenessStatus?: string,
 ) => {
   const isRecognized =
-    recognitionEnabled && recognitionResult?.person_id && livenessStatus !== "spoof"
+    recognitionEnabled &&
+    recognitionResult?.person_id &&
+    (!enableSpoofDetection || livenessStatus === "real")
 
   if (isRecognized) {
     if (recognitionResult?.has_consent === false) return "#6366f1"
@@ -199,10 +202,17 @@ export const drawOverlays = ({
 
     const trackId = face.track_id!
     const recognitionResult = currentRecognitionResults.get(trackId) ?? face.recognition
-    const color = getFaceColor(recognitionResult || null, recognitionEnabled, face.liveness?.status)
+    const color = getFaceColor(
+      recognitionResult || null,
+      recognitionEnabled,
+      enableSpoofDetection,
+      face.liveness?.status,
+    )
 
     const isRecognized =
-      recognitionEnabled && recognitionResult?.person_id && face.liveness?.status !== "spoof"
+      recognitionEnabled &&
+      recognitionResult?.person_id &&
+      (!enableSpoofDetection || face.liveness?.status === "real")
     const isBlocked = recognitionResult?.has_consent === false
 
     ctx.save()

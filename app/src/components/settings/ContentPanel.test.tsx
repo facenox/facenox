@@ -93,8 +93,8 @@ describe("ContentPanel anti-spoof prompt", () => {
 
     fireEvent.click(screen.getByLabelText("Toggle anti-spoof detection"))
 
-    expect(screen.getByText("Check Setup Before Enabling Anti-Spoof")).toBeInTheDocument()
-    expect(screen.getByText("Check lighting first")).toBeInTheDocument()
+    expect(screen.getByText("Before Enabling Anti-Spoof")).toBeInTheDocument()
+    expect(screen.getByText("Use balanced lighting")).toBeInTheDocument()
     expect(updateAttendanceSetting).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole("button", { name: "Enable" }))
@@ -109,20 +109,29 @@ describe("ContentPanel anti-spoof prompt", () => {
 
     fireEvent.click(screen.getByLabelText("Toggle anti-spoof detection"))
 
-    expect(screen.getByText("Check lighting first")).toBeInTheDocument()
+    expect(screen.getByText("Use balanced lighting")).toBeInTheDocument()
 
     fireEvent.click(screen.getByLabelText("Next section"))
 
-    expect(await screen.findByText("Check framing and distance")).toBeInTheDocument()
+    expect(await screen.findByText("Frame the face properly")).toBeInTheDocument()
     expect(
       await screen.findByAltText(
         "Admin setup slide showing proper face framing and camera distance.",
       ),
     ).toBeInTheDocument()
 
+    fireEvent.click(screen.getByLabelText("Next section"))
+
+    expect(await screen.findByText("Keep the camera clear")).toBeInTheDocument()
+    expect(
+      await screen.findByAltText(
+        "Admin setup slide showing a clear camera lens and sharp face preview for anti-spoof setup.",
+      ),
+    ).toBeInTheDocument()
+
     fireEvent.click(screen.getByLabelText("Previous section"))
 
-    expect(await screen.findByText("Check lighting first")).toBeInTheDocument()
+    expect(await screen.findByText("Frame the face properly")).toBeInTheDocument()
   })
 
   it("persists the do-not-show-again choice after confirmation", () => {
@@ -146,7 +155,7 @@ describe("ContentPanel anti-spoof prompt", () => {
 
     fireEvent.click(screen.getByLabelText("Toggle anti-spoof detection"))
 
-    expect(screen.queryByText("Check Setup Before Enabling Anti-Spoof")).not.toBeInTheDocument()
+    expect(screen.queryByText("Before Enabling Anti-Spoof")).not.toBeInTheDocument()
     expect(updateAttendanceSetting).toHaveBeenCalledWith({ enableSpoofDetection: true })
   })
 })

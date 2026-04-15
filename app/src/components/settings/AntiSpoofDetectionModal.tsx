@@ -19,20 +19,26 @@ export function AntiSpoofDetectionModal({
 }: AntiSpoofDetectionModalProps) {
   const slides = [
     {
-      eyebrow: "Setup 1",
-      title: "Check lighting first",
+      title: "Use balanced lighting",
       description:
         "Use even front lighting before enabling anti-spoof. Avoid dim rooms and strong backlight that can make a real face fail liveness.",
       imageSrc: "/assets/anti-spoof/check-lighting.png",
       imageAlt: "Admin setup slide showing balanced face lighting for anti-spoof setup.",
     },
     {
-      eyebrow: "Setup 2",
-      title: "Check framing and distance",
+      title: "Frame the face properly",
       description:
         "Make sure the face is large enough and centered in the camera view, so users are less likely to get stuck on move-closer or centering prompts.",
       imageSrc: "/assets/anti-spoof/check-framing.png",
       imageAlt: "Admin setup slide showing proper face framing and camera distance.",
+    },
+    {
+      title: "Keep the camera clear",
+      description:
+        "Make sure the camera looks sharp and not blurry. If the image seems soft or hazy, wipe the lens first so the face stays clear during verification.",
+      imageSrc: "/assets/anti-spoof/check-camera-clarity.png",
+      imageAlt:
+        "Admin setup slide showing a clear camera lens and sharp face preview for anti-spoof setup.",
     },
   ] as const
   const [step, setStep] = useState(0)
@@ -46,6 +52,24 @@ export function AntiSpoofDetectionModal({
   const slideTransition = {
     duration: 0.28,
     ease: [0.22, 1, 0.36, 1] as const,
+  }
+
+  const imageVariants = {
+    enter: (currentDirection: number) => ({
+      opacity: 0,
+      x: currentDirection > 0 ? 28 : -28,
+      scale: 0.985,
+    }),
+    center: {
+      opacity: 1,
+      x: 0,
+      scale: 1,
+    },
+    exit: (currentDirection: number) => ({
+      opacity: 0,
+      x: currentDirection > 0 ? -28 : 28,
+      scale: 0.985,
+    }),
   }
 
   const navigateToStep = (nextStep: number) => {
@@ -74,7 +98,7 @@ export function AntiSpoofDetectionModal({
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="max-w-[720px]"
-      title="Check Setup Before Enabling Anti-Spoof"
+      title="Before Enabling Anti-Spoof"
       icon={<i className="fa-solid fa-shield-halved text-sm text-cyan-400/80" />}>
       <div className="space-y-3">
         <div className="overflow-hidden rounded-2xl border border-cyan-400/10 bg-[linear-gradient(180deg,rgba(20,32,40,0.92),rgba(13,18,24,0.96))]">
@@ -87,17 +111,10 @@ export function AntiSpoofDetectionModal({
                     custom={direction}
                     src={currentSlide.imageSrc}
                     alt={currentSlide.imageAlt}
-                    initial={(currentDirection: number) => ({
-                      opacity: 0,
-                      x: currentDirection > 0 ? 28 : -28,
-                      scale: 0.985,
-                    })}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    exit={(currentDirection: number) => ({
-                      opacity: 0,
-                      x: currentDirection > 0 ? -28 : 28,
-                      scale: 0.985,
-                    })}
+                    variants={imageVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
                     transition={slideTransition}
                     className="absolute inset-0 block h-[220px] w-full object-cover"
                   />
@@ -106,9 +123,6 @@ export function AntiSpoofDetectionModal({
 
               <div className="flex min-h-[220px] min-w-0 flex-1 flex-col justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="mb-1 text-[9px] font-semibold tracking-[0.18em] text-cyan-400/65 uppercase">
-                    {currentSlide.eyebrow}
-                  </div>
                   <div className="mb-1.5 text-[15px] font-semibold text-white/92">
                     {currentSlide.title}
                   </div>

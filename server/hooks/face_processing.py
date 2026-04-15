@@ -71,7 +71,7 @@ async def process_face_detection(
 
 
 async def process_liveness_detection(
-    faces: List[Dict], image: np.ndarray, enable: bool, smoothing_namespace: str = None
+    faces: List[Dict], image: np.ndarray, enable: bool, tracking_namespace: str = None
 ) -> List[Dict]:
     if not (enable and faces and liveness_detector):
         return faces
@@ -81,13 +81,13 @@ async def process_liveness_detection(
 
         def detector_call():
             return liveness_detector.detect_faces(
-                image, faces, smoothing_namespace=smoothing_namespace
+                image, faces, tracking_namespace=tracking_namespace
             )
 
         try:
             faces_with_liveness = await loop.run_in_executor(None, detector_call)
         except TypeError as exc:
-            if "smoothing_namespace" not in str(exc):
+            if "tracking_namespace" not in str(exc):
                 raise
 
             def detector_call_without_namespace():

@@ -16,6 +16,13 @@ export interface HoldStillCacheEntry {
   consecutiveFrames: number
 }
 
+export interface VerifyingHintCacheEntry {
+  bbox: FaceBbox
+  firstSeenAt: number
+  lastSeenAt: number
+  consecutiveFrames: number
+}
+
 interface HoldStillCacheOptions {
   enableSpoofDetection: boolean
   recognitionEnabled: boolean
@@ -24,9 +31,17 @@ interface HoldStillCacheOptions {
   minDurationMs?: number
 }
 
+interface VerifyingHintCacheOptions {
+  enableSpoofDetection: boolean
+  recognitionEnabled: boolean
+  currentRecognitionResults: Map<number, ExtendedFaceRecognitionResponse>
+  minDurationMs?: number
+}
+
 const HOLD_STILL_IOU_THRESHOLD = 0.3
 const DEFAULT_MIN_FRAMES = 2
 const DEFAULT_MIN_DURATION_MS = 250
+const DEFAULT_VERIFYING_HINT_MIN_DURATION_MS = 5000
 
 const hasPositiveTrackId = (trackId: number | undefined): boolean =>
   typeof trackId === "number" && trackId > 0
@@ -48,7 +63,7 @@ export const isRecognizedLiveFace = (
   recognitionResult: ExtendedFaceRecognitionResponse | null,
 ): boolean => {
   return Boolean(
-    recognitionEnabled && recognitionResult?.person_id && face.liveness?.status !== "spoof",
+    recognitionEnabled && recognitionResult?.person_id && face.liveness?.status === "real",
   )
 }
 
@@ -75,6 +90,9 @@ const hasHigherPriorityGuidance = (face: Face): boolean => {
   const status = face.liveness?.status
   return status === "center_face" || status === "move_closer"
 }
+
+const isVerifyingStatus = (status: Face["liveness"] extends { status: infer T } ? T : never) =>
+  status === "spoof" || status === "candidate_real" || status === "unknown"
 
 const isHoldStillCandidate = (
   face: Face,
@@ -131,14 +149,36 @@ const findBestCacheKey = (
 
 const buildPersistenceCacheEntry = (
   face: Face,
-  previousEntry: HoldStillCacheEntry | undefined,
+  previousEntry: HoldStillCacheEntry | VerifyingHintCacheEntry | undefined,
   now: number,
-): HoldStillCacheEntry => ({
+): HoldStillCacheEntry | VerifyingHintCacheEntry => ({
   bbox: face.bbox,
   firstSeenAt: previousEntry?.firstSeenAt ?? now,
   lastSeenAt: now,
   consecutiveFrames: (previousEntry?.consecutiveFrames ?? 0) + 1,
 })
+
+const isVerifyingHintCandidate = (
+  face: Face,
+  currentRecognitionResults: Map<number, ExtendedFaceRecognitionResponse>,
+  recognitionEnabled: boolean,
+  enableSpoofDetection: boolean,
+): boolean => {
+  if (!enableSpoofDetection) {
+    return false
+  }
+
+  const recognitionResult = getRecognitionResult(face, currentRecognitionResults)
+  if (isRecognizedLiveFace(face, recognitionEnabled, recognitionResult)) {
+    return false
+  }
+
+  if (hasHigherPriorityGuidance(face)) {
+    return false
+  }
+
+  return isVerifyingStatus(face.liveness?.status)
+}
 
 export const updateHoldStillCache = (
   faces: Face[],
@@ -208,6 +248,77 @@ export const updateHoldStillCache = (
   }
 }
 
+export const updateVerifyingHintCache = (
+  faces: Face[],
+  previousCache: Map<string, VerifyingHintCacheEntry>,
+  now: number,
+  nextAnonymousSeed: number,
+  options: VerifyingHintCacheOptions,
+): {
+  nextCache: Map<string, VerifyingHintCacheEntry>
+  activeKeys: Set<string>
+  faceKeyByIndex: Map<number, string>
+  nextAnonymousSeed: number
+} => {
+  const {
+    enableSpoofDetection,
+    recognitionEnabled,
+    currentRecognitionResults,
+    minDurationMs = DEFAULT_VERIFYING_HINT_MIN_DURATION_MS,
+  } = options
+
+  if (!enableSpoofDetection || faces.length === 0) {
+    return {
+      nextCache: new Map(),
+      activeKeys: new Set(),
+      faceKeyByIndex: new Map(),
+      nextAnonymousSeed,
+    }
+  }
+
+  const nextCache = new Map<string, VerifyingHintCacheEntry>()
+  const activeKeys = new Set<string>()
+  const faceKeyByIndex = new Map<number, string>()
+  const usedKeys = new Set<string>()
+
+  faces.forEach((face, index) => {
+    if (
+      !isVerifyingHintCandidate(
+        face,
+        currentRecognitionResults,
+        recognitionEnabled,
+        enableSpoofDetection,
+      )
+    ) {
+      return
+    }
+
+    const matchedKey = findBestCacheKey(face, previousCache, usedKeys)
+    const key = matchedKey ?? `verify-${nextAnonymousSeed++}`
+    const previousEntry = matchedKey ? previousCache.get(matchedKey) : undefined
+    const nextEntry = buildPersistenceCacheEntry(
+      face,
+      previousEntry,
+      now,
+    ) as VerifyingHintCacheEntry
+
+    nextCache.set(key, nextEntry)
+    usedKeys.add(key)
+    faceKeyByIndex.set(index, key)
+
+    if (now - nextEntry.firstSeenAt >= minDurationMs) {
+      activeKeys.add(key)
+    }
+  })
+
+  return {
+    nextCache,
+    activeKeys,
+    faceKeyByIndex,
+    nextAnonymousSeed,
+  }
+}
+
 export const getOverlayGuidance = (
   face: Face,
   options: {
@@ -215,9 +326,16 @@ export const getOverlayGuidance = (
     recognitionEnabled: boolean
     recognitionResult: ExtendedFaceRecognitionResponse | null
     holdStillActive: boolean
+    verifyingHintActive: boolean
   },
 ): OverlayGuidance | null => {
-  const { enableSpoofDetection, recognitionEnabled, recognitionResult, holdStillActive } = options
+  const {
+    enableSpoofDetection,
+    recognitionEnabled,
+    recognitionResult,
+    holdStillActive,
+    verifyingHintActive,
+  } = options
 
   if (!enableSpoofDetection) {
     return null
@@ -241,7 +359,13 @@ export const getOverlayGuidance = (
     return { label: "Hold still", tone: "warning" }
   }
 
-  if (status === "spoof") {
+  if (status === "spoof" || status === "candidate_real" || status === "unknown") {
+    if (verifyingHintActive) {
+      return {
+        label: "Try better lighting or a clearer camera view.",
+        tone: "warning",
+      }
+    }
     return { label: "Verifying...", tone: "warning" }
   }
 

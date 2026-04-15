@@ -58,9 +58,6 @@ def assemble_liveness_results(
     raw_logits: List[np.ndarray],
     logit_threshold: float,
     results: List[Dict],
-    temporal_smoother=None,
-    frame_number: int = 0,
-    namespace: Optional[str] = None,
 ) -> List[Dict]:
     if len(valid_detections) != len(raw_logits):
         raise ValueError(
@@ -71,17 +68,6 @@ def assemble_liveness_results(
     for detection, logits in zip(valid_detections, raw_logits):
         real_logit = float(logits[0])
         spoof_logit = float(logits[1])
-
-        if temporal_smoother:
-            track_id = detection.get("track_id")
-            if track_id is not None and track_id > 0:
-                real_logit, spoof_logit = temporal_smoother.smooth(
-                    track_id,
-                    real_logit,
-                    spoof_logit,
-                    frame_number,
-                    namespace=namespace,
-                )
 
         logit_diff = real_logit - spoof_logit
         is_real = logit_diff >= logit_threshold

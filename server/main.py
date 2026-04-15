@@ -161,10 +161,6 @@ async def get_available_models():
                     LIVENESS_DETECTOR_CONFIG["confidence_threshold"],
                 ),
                 "bbox_inc": LIVENESS_DETECTOR_CONFIG["bbox_inc"],
-                "temporal_alpha": LIVENESS_DETECTOR_CONFIG["temporal_alpha"],
-                "enable_temporal_smoothing": LIVENESS_DETECTOR_CONFIG[
-                    "enable_temporal_smoothing"
-                ],
             },
         }
     else:

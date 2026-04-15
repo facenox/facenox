@@ -100,6 +100,7 @@ export function DetectionPanel({
   currentGroupId,
 }: DetectionPanelProps) {
   const isShellReady = useAttendanceStore((state) => state.isShellReady)
+  const enableSpoofDetection = useAttendanceStore((state) => state.enableSpoofDetection)
   const displayNameMap = useMemo(() => {
     return createDisplayNameMap(groupMembers)
   }, [groupMembers])
@@ -122,7 +123,7 @@ export function DetectionPanel({
       .filter((f) => {
         const trackId = f.track_id!
         const rec = currentRecognitionResults.get(trackId)
-        return f.liveness?.status !== "spoof" && !!rec?.person_id
+        return (!enableSpoofDetection || f.liveness?.status === "real") && !!rec?.person_id
       })
       .sort((a, b) => {
         const aIsLive = a.liveness?.status === "real"
@@ -132,7 +133,7 @@ export function DetectionPanel({
         if (!aIsLive && bIsLive) return 1
         return 0
       })
-  }, [currentDetections, currentRecognitionResults])
+  }, [currentDetections, currentRecognitionResults, enableSpoofDetection])
 
   const hasDetections = filteredFaces.length > 0
 

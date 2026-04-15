@@ -203,7 +203,7 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                         faces,
                         image,
                         live_session_config.enable_liveness_detection,
-                        smoothing_namespace=client_id,
+                        tracking_namespace=client_id,
                     )
 
                     attendance_messages = (

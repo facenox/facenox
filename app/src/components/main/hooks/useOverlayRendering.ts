@@ -4,7 +4,9 @@ import { drawOverlays } from "@/components/main/utils"
 import {
   getOverlayGuidance,
   updateHoldStillCache,
+  updateVerifyingHintCache,
   type HoldStillCacheEntry,
+  type VerifyingHintCacheEntry,
 } from "@/components/main/utils/overlayGuidance"
 import {
   useDetectionStore,
@@ -60,7 +62,9 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
   }>({ scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 })
   const visibleFacesRef = useRef<Map<string, VisibleFaceState>>(new Map())
   const holdStillCacheRef = useRef<Map<string, HoldStillCacheEntry>>(new Map())
+  const verifyingHintCacheRef = useRef<Map<string, VerifyingHintCacheEntry>>(new Map())
   const nextAnonymousGuidanceKeyRef = useRef(0)
+  const nextAnonymousVerifyingKeyRef = useRef(0)
   const animateRef = useRef<() => void>(() => {})
 
   const getFaceKey = useCallback((face: DetectionFace, index: number) => {
@@ -186,6 +190,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
         }
       }
       holdStillCacheRef.current.clear()
+      verifyingHintCacheRef.current.clear()
       if (isStreaming) {
         animationFrameRef.current = requestAnimationFrame(animateRef.current)
       }
@@ -254,6 +259,26 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
       holdStillCacheRef.current = nextCache
       nextAnonymousGuidanceKeyRef.current = nextAnonymousSeed
 
+      const {
+        nextCache: nextVerifyingHintCache,
+        activeKeys: activeVerifyingHintKeys,
+        faceKeyByIndex: verifyingHintKeyByIndex,
+        nextAnonymousSeed: nextVerifyingAnonymousSeed,
+      } = updateVerifyingHintCache(
+        renderedFaces,
+        verifyingHintCacheRef.current,
+        now,
+        nextAnonymousVerifyingKeyRef.current,
+        {
+          enableSpoofDetection,
+          recognitionEnabled: true,
+          currentRecognitionResults,
+        },
+      )
+
+      verifyingHintCacheRef.current = nextVerifyingHintCache
+      nextAnonymousVerifyingKeyRef.current = nextVerifyingAnonymousSeed
+
       const guidedFaces = renderedFaces.map((face, index) => {
         const trackId = face.track_id
         const recognitionResult =
@@ -261,11 +286,14 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
           face.recognition ??
           null
         const holdStillKey = faceKeyByIndex.get(index)
+        const verifyingHintKey = verifyingHintKeyByIndex.get(index)
         const overlayGuidance = getOverlayGuidance(face, {
           enableSpoofDetection,
           recognitionEnabled: true,
           recognitionResult,
           holdStillActive: holdStillKey ? activeKeys.has(holdStillKey) : false,
+          verifyingHintActive:
+            verifyingHintKey ? activeVerifyingHintKeys.has(verifyingHintKey) : false,
         })
 
         if (!overlayGuidance) {
@@ -284,6 +312,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
       })
     } else {
       holdStillCacheRef.current.clear()
+      verifyingHintCacheRef.current.clear()
       const ctx = overlayCanvas.getContext("2d", { willReadFrequently: false })
       if (ctx && overlayCanvas.width > 0 && overlayCanvas.height > 0) {
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height)
@@ -315,6 +344,8 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     visibleFacesRef.current.clear()
     holdStillCacheRef.current.clear()
     nextAnonymousGuidanceKeyRef.current = 0
+    verifyingHintCacheRef.current.clear()
+    nextAnonymousVerifyingKeyRef.current = 0
   }, [])
 
   return {

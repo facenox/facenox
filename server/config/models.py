@@ -16,8 +16,6 @@ MODEL_CONFIGS = {
         "confidence_threshold": 0.6,
         "bbox_inc": 1.5,
         "model_img_size": 128,
-        "temporal_alpha": 0.5,
-        "enable_temporal_smoothing": True,
     },
     "face_recognizer": {
         "model_path": MODELS_DIR / "recognizer.onnx",

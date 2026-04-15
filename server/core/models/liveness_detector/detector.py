@@ -11,7 +11,7 @@ from .postprocess import (
     run_batch_inference,
     assemble_liveness_results,
 )
-from .temporal_smoothing import TemporalSmoother
+from .track_memory import TrackLivenessMemory
 
 
 def probability_to_logit_threshold(p: float) -> float:
@@ -26,25 +26,14 @@ class LivenessDetector:
         model_img_size: int,
         confidence_threshold: float,
         bbox_inc: float,
-        temporal_alpha: Optional[float] = None,
-        enable_temporal_smoothing: bool = True,
     ):
         self.model_img_size = model_img_size
         self.bbox_inc = bbox_inc
-        self.enable_temporal_smoothing = enable_temporal_smoothing
         self.confidence_threshold = confidence_threshold
         self.logit_threshold = probability_to_logit_threshold(confidence_threshold)
 
         self.ort_session, self.input_name = self._init_session_(model_path)
-
-        if self.enable_temporal_smoothing:
-            if temporal_alpha is None:
-                raise ValueError(
-                    "temporal_alpha must be provided from config when enable_temporal_smoothing is True"
-                )
-            self.temporal_smoother = TemporalSmoother(alpha=temporal_alpha)
-        else:
-            self.temporal_smoother = None
+        self.track_memory = TrackLivenessMemory()
 
         self.frame_counter = 0
 
@@ -60,7 +49,7 @@ class LivenessDetector:
         self,
         image: np.ndarray,
         face_detections: List[Dict],
-        smoothing_namespace: Optional[str] = None,
+        tracking_namespace: Optional[str] = None,
     ) -> List[Dict]:
         if not face_detections:
             return []
@@ -119,16 +108,23 @@ class LivenessDetector:
             raw_logits,
             self.logit_threshold,
             results,
-            self.temporal_smoother,
-            self.frame_counter,
-            namespace=smoothing_namespace,
         )
 
-        if self.temporal_smoother:
-            self.temporal_smoother.cleanup_stale_tracks()
+        for detection in results:
+            track_id = detection.get("track_id")
+            liveness = detection.get("liveness")
+            if not isinstance(liveness, dict) or track_id is None:
+                continue
+            detection["liveness"] = self.track_memory.stabilize(
+                track_id,
+                liveness,
+                self.frame_counter,
+                namespace=tracking_namespace,
+            )
+
+        self.track_memory.cleanup_stale_tracks()
 
         return results
 
     def clear_namespace(self, namespace: Optional[str]):
-        if self.temporal_smoother:
-            self.temporal_smoother.clear_namespace(namespace)
+        self.track_memory.clear_namespace(namespace)
