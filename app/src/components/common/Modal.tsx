@@ -23,6 +23,7 @@ export function Modal({
   hideCloseButton = false,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
+  const windowBarHeightPx = 32
 
   useEffect(() => {
     if (!isOpen || !onClose) return
@@ -50,7 +51,9 @@ export function Modal({
   if (!isOpen) return null
 
   const modalContent = (
-    <div className="fixed inset-0 z-100 flex items-center justify-center overflow-hidden px-4">
+    <div
+      className="fixed right-0 bottom-0 left-0 z-100 flex items-center justify-center overflow-hidden px-4"
+      style={{ top: `${windowBarHeightPx}px` }}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

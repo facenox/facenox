@@ -18,6 +18,7 @@ interface UIState {
   groupInitialSection: GroupSection | undefined
   settingsInitialSection: string | undefined
   hasSeenIntro: boolean
+  antiSpoofDetectionInfoDismissed: boolean
   isHydrated: boolean
 
   // Sidebar state
@@ -38,6 +39,7 @@ interface UIState {
   setGroupInitialSection: (section: GroupSection | undefined) => void
   setSettingsInitialSection: (section: string | undefined) => void
   setHasSeenIntro: (seen: boolean) => void
+  setAntiSpoofDetectionInfoDismissed: (dismissed: boolean) => void
   setSidebarCollapsed: (collapsed: boolean) => void
   setSidebarWidth: (width: number) => void
   setQuickSettings: (settings: QuickSettings | ((prev: QuickSettings) => QuickSettings)) => void
@@ -58,6 +60,7 @@ const loadInitialSettings = async () => {
     quickSettings,
     audioSettings,
     hasSeenIntro: uiState.hasSeenIntro,
+    antiSpoofDetectionInfoDismissed: uiState.antiSpoofDetectionInfoDismissed,
     sidebarCollapsed: uiState.sidebarCollapsed,
     sidebarWidth: uiState.sidebarWidth,
   }
@@ -72,6 +75,7 @@ export const useUIStore = create<UIState>((set) => ({
   groupInitialSection: undefined,
   settingsInitialSection: undefined,
   hasSeenIntro: false, // Default to false
+  antiSpoofDetectionInfoDismissed: false,
   isHydrated: false, // Wait for hydration before rendering decisions
 
   sidebarCollapsed: false,
@@ -97,6 +101,8 @@ export const useUIStore = create<UIState>((set) => ({
   setSettingsInitialSection: (section) => set({ settingsInitialSection: section }),
 
   setHasSeenIntro: (seen) => set({ hasSeenIntro: seen }),
+  setAntiSpoofDetectionInfoDismissed: (dismissed) =>
+    set({ antiSpoofDetectionInfoDismissed: dismissed }),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
   setSidebarWidth: (width) => set({ sidebarWidth: width }),
 
@@ -125,6 +131,14 @@ useUIStore.subscribe((state, prevState) => {
     persistentSettings.setUIState({ hasSeenIntro: state.hasSeenIntro }).catch(console.error)
   }
 
+  if (state.antiSpoofDetectionInfoDismissed !== prevState.antiSpoofDetectionInfoDismissed) {
+    persistentSettings
+      .setUIState({
+        antiSpoofDetectionInfoDismissed: state.antiSpoofDetectionInfoDismissed,
+      })
+      .catch(console.error)
+  }
+
   if (state.sidebarCollapsed !== prevState.sidebarCollapsed) {
     persistentSettings.setUIState({ sidebarCollapsed: state.sidebarCollapsed }).catch(console.error)
   }
@@ -145,11 +159,19 @@ useUIStore.subscribe((state, prevState) => {
 // Load Settings from store on initialization
 if (typeof window !== "undefined") {
   loadInitialSettings().then(
-    ({ quickSettings, audioSettings, hasSeenIntro, sidebarCollapsed, sidebarWidth }) => {
+    ({
+      quickSettings,
+      audioSettings,
+      hasSeenIntro,
+      antiSpoofDetectionInfoDismissed,
+      sidebarCollapsed,
+      sidebarWidth,
+    }) => {
       useUIStore.setState({
         quickSettings,
         audioSettings,
         hasSeenIntro,
+        antiSpoofDetectionInfoDismissed,
         sidebarCollapsed: sidebarCollapsed ?? false,
         sidebarWidth: sidebarWidth ?? 300,
         isHydrated: true,

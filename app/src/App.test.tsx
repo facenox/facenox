@@ -41,6 +41,7 @@ function resetStores() {
     groupInitialSection: undefined,
     settingsInitialSection: undefined,
     hasSeenIntro: false,
+    antiSpoofDetectionInfoDismissed: false,
     isHydrated: false,
     sidebarCollapsed: false,
     sidebarWidth: 300,

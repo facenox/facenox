@@ -34,6 +34,7 @@ describe("uiStore", () => {
     })
     mockPersistentSettings.getUIState.mockResolvedValue({
       hasSeenIntro: false,
+      antiSpoofDetectionInfoDismissed: false,
       sidebarCollapsed: false,
       sidebarWidth: 300,
     })
@@ -83,6 +84,7 @@ describe("uiStore", () => {
 
     const useUIStore = await loadStore()
     useUIStore.getState().setHasSeenIntro(true)
+    useUIStore.getState().setAntiSpoofDetectionInfoDismissed(true)
     useUIStore.getState().setSidebarCollapsed(true)
     useUIStore.getState().setQuickSettings({
       cameraMirrored: false,
@@ -109,6 +111,7 @@ describe("uiStore", () => {
     mockPersistentSettings.setAudioSettings.mockClear()
 
     useUIStore.getState().setHasSeenIntro(true)
+    useUIStore.getState().setAntiSpoofDetectionInfoDismissed(true)
     useUIStore.getState().setSidebarCollapsed(true)
     useUIStore.getState().setSidebarWidth(360)
     useUIStore.getState().setQuickSettings({
@@ -123,6 +126,9 @@ describe("uiStore", () => {
     await waitFor(() => {
       expect(mockPersistentSettings.setUIState).toHaveBeenCalledWith({
         hasSeenIntro: true,
+      })
+      expect(mockPersistentSettings.setUIState).toHaveBeenCalledWith({
+        antiSpoofDetectionInfoDismissed: true,
       })
       expect(mockPersistentSettings.setUIState).toHaveBeenCalledWith({
         sidebarCollapsed: true,

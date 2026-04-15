@@ -26,6 +26,7 @@ export interface PersistentSettingsSchema {
     hasSeenIntro: boolean
     activeGroupSection: string | null
     closeToTrayNoticeDismissed: boolean
+    antiSpoofDetectionInfoDismissed: boolean
   }
 
   reportScratchpad: Record<
@@ -88,6 +89,7 @@ export const defaultSettings: PersistentSettingsSchema = {
     hasSeenIntro: false,
     activeGroupSection: null,
     closeToTrayNoticeDismissed: false,
+    antiSpoofDetectionInfoDismissed: false,
   },
   reportScratchpad: {},
   reportViews: {},

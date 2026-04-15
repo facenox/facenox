@@ -279,6 +279,8 @@ export function Attendance({
                   description="Requires a live face before showing identity or recording attendance, helping block photo and screen replay attempts."
                   details={[
                     "Uses liveness detection under the hood.",
+                    "Can show guidance like Center your face, Move closer, or Verifying....",
+                    "Works best with balanced lighting and a clear front-facing view.",
                     "May slightly reduce recognition speed when enabled.",
                   ]}
                   side="right"
@@ -303,6 +305,7 @@ export function Attendance({
 
             <button
               onClick={() => onSpoofDetectionToggle(!attendanceSettings.enableSpoofDetection)}
+              aria-label="Toggle anti-spoof detection"
               className={`relative ml-auto flex h-5.5 w-10 shrink-0 items-center rounded-full transition-colors ${SETTINGS_TOGGLE_DURATION_CLASS} focus:outline-none ${
                 attendanceSettings.enableSpoofDetection ? "bg-cyan-500/30" : "bg-white/10"
               } group/toggle disabled:cursor-not-allowed disabled:opacity-50`}>
