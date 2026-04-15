@@ -92,6 +92,7 @@ describe("groupUIStore", () => {
   })
 
   it("opens and closes member edit state correctly", async () => {
+    vi.useFakeTimers()
     const useGroupUIStore = await loadStore()
     const member = {
       person_id: "member-1",
@@ -107,7 +108,11 @@ describe("groupUIStore", () => {
     expect(useGroupUIStore.getState().showEditMemberModal).toBe(true)
 
     useGroupUIStore.getState().closeEditMember()
-    expect(useGroupUIStore.getState().editingMember).toBeNull()
     expect(useGroupUIStore.getState().showEditMemberModal).toBe(false)
+    expect(useGroupUIStore.getState().editingMember).toEqual(member)
+
+    vi.advanceTimersByTime(260)
+    expect(useGroupUIStore.getState().editingMember).toBeNull()
+    vi.useRealTimers()
   })
 })
