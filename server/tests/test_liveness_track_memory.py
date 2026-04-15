@@ -63,3 +63,33 @@ def test_track_liveness_memory_is_isolated_per_namespace():
     assert cam_a_result["is_real"] is True
     assert cam_b_first["status"] == "candidate_real"
     assert cam_b_first["is_real"] is False
+
+
+def test_track_liveness_memory_resets_stable_state_after_long_gap():
+    memory = TrackLivenessMemory(
+        required_real_frames=2,
+        history_size=5,
+        reset_after_gap_frames=2,
+    )
+
+    warmup_1 = memory.stabilize(
+        10, _liveness("real", True), frame_number=1, namespace="cam"
+    )
+    warmup_2 = memory.stabilize(
+        10, _liveness("real", True), frame_number=2, namespace="cam"
+    )
+
+    assert warmup_1["status"] == "candidate_real"
+    assert warmup_2["status"] == "real"
+
+    after_gap = memory.stabilize(
+        10, _liveness("real", True), frame_number=8, namespace="cam"
+    )
+    reconfirmed = memory.stabilize(
+        10, _liveness("real", True), frame_number=9, namespace="cam"
+    )
+
+    assert after_gap["status"] == "candidate_real"
+    assert after_gap["is_real"] is False
+    assert reconfirmed["status"] == "real"
+    assert reconfirmed["is_real"] is True

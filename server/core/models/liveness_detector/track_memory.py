@@ -5,15 +5,17 @@ from typing import Dict
 class TrackLivenessMemory:
     def __init__(
         self,
-        required_real_frames: int = 2,
+        required_real_frames: int = 1,
         history_size: int = 5,
         max_stale_frames: int = 30,
         cleanup_interval: int = 10,
+        reset_after_gap_frames: int = 5,
     ):
         self.required_real_frames = max(1, required_real_frames)
         self.history_size = max(self.required_real_frames, history_size)
         self.max_stale_frames = max_stale_frames
         self.cleanup_interval = cleanup_interval
+        self.reset_after_gap_frames = max(1, reset_after_gap_frames)
         self.current_frame = 0
         self.last_cleanup_frame = 0
         self.track_states = defaultdict(
@@ -49,6 +51,15 @@ class TrackLivenessMemory:
             return liveness
 
         state = self.track_states[(self._normalize_namespace(namespace), track_id)]
+        last_seen_frame = state["last_frame"]
+        if (
+            last_seen_frame >= 0
+            and (frame_number - last_seen_frame) > self.reset_after_gap_frames
+        ):
+            state["consecutive_real_frames"] = 0
+            state["stable_real"] = False
+            state["recent_statuses"].clear()
+
         recent_statuses = state["recent_statuses"]
         recent_statuses.append(raw_status)
         state["last_frame"] = frame_number
