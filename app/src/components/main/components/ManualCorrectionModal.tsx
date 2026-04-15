@@ -6,6 +6,7 @@ import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import type { AttendanceRecord } from "@/components/main/types"
 
 interface ManualCorrectionModalProps {
+  isOpen: boolean
   record: AttendanceRecord
   displayName: string
   onClose: () => void
@@ -13,6 +14,7 @@ interface ManualCorrectionModalProps {
 }
 
 export function ManualCorrectionModal({
+  isOpen,
   record,
   displayName,
   onClose,
@@ -23,6 +25,13 @@ export function ManualCorrectionModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const trimmedReason = reason.trim()
+
+  const handleClose = () => {
+    setReason("")
+    setError(null)
+    setIsSubmitting(false)
+    onClose()
+  }
 
   const handleSubmit = async () => {
     if (!trimmedReason || isSubmitting) {
@@ -41,7 +50,7 @@ export function ManualCorrectionModal({
       store.setRecentAttendance(store.recentAttendance.filter((item) => item.id !== record.id))
       setSuccess(`${displayName} attendance entry removed`)
       await Promise.resolve(onVoided())
-      onClose()
+      handleClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove attendance entry.")
     } finally {
@@ -51,9 +60,9 @@ export function ManualCorrectionModal({
 
   return (
     <Modal
-      isOpen={true}
+      isOpen={isOpen}
       onClose={() => {
-        if (!isSubmitting) onClose()
+        if (!isSubmitting) handleClose()
       }}
       title={<span className="text-[15px] font-semibold text-white/92">Remove Attendance</span>}
       maxWidth="sm">
@@ -96,7 +105,7 @@ export function ManualCorrectionModal({
         <div className="flex justify-end gap-3 pt-1">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isSubmitting}
             className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-[11px] font-medium text-white/55 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
             Cancel

@@ -290,6 +290,7 @@ export const AttendancePanel = memo(function AttendancePanel({
 
   const { setShowSettings, setGroupInitialSection } = useUIStore()
   const [showManualEntry, setShowManualEntry] = useState(false)
+  const [isManualCorrectionOpen, setIsManualCorrectionOpen] = useState(false)
   const [recordToVoid, setRecordToVoid] = useState<AttendanceRecord | null>(null)
 
   const todayPresentPersonIds = useMemo(() => {
@@ -574,7 +575,10 @@ export const AttendancePanel = memo(function AttendancePanel({
                         lateThresholdEnabled={lateTrackingSettings.lateThresholdEnabled}
                         trackCheckoutEnabled={currentGroup?.settings?.track_checkout ?? false}
                         hasCheckedInEarlier={hasCheckedInEarlier}
-                        onVoidManual={setRecordToVoid}
+                        onVoidManual={(record) => {
+                          setRecordToVoid(record)
+                          setIsManualCorrectionOpen(true)
+                        }}
                       />
                     )
                   })
@@ -641,26 +645,29 @@ export const AttendancePanel = memo(function AttendancePanel({
               </ScrollCenteredEmptyState>
             }
           </div>)}
-      <AnimatePresence>
-        {showManualEntry && (
-          <ManualEntryModal
-            onClose={() => setShowManualEntry(false)}
-            onSuccess={refreshAttendanceData}
-            members={groupMembers}
-            presentPersonIds={todayPresentPersonIds}
-            onAddMember={handleOpenSettingsForRegistration}
-            currentGroup={currentGroup}
-          />
-        )}
-        {recordToVoid && (
-          <ManualCorrectionModal
-            record={recordToVoid}
-            displayName={displayNameMap.get(recordToVoid.person_id) || "Member"}
-            onClose={() => setRecordToVoid(null)}
-            onVoided={refreshAttendanceData}
-          />
-        )}
-      </AnimatePresence>
+      <ManualEntryModal
+        isOpen={showManualEntry}
+        onClose={() => setShowManualEntry(false)}
+        onSuccess={refreshAttendanceData}
+        members={groupMembers}
+        presentPersonIds={todayPresentPersonIds}
+        onAddMember={handleOpenSettingsForRegistration}
+        currentGroup={currentGroup}
+      />
+      {recordToVoid && (
+        <ManualCorrectionModal
+          isOpen={isManualCorrectionOpen}
+          record={recordToVoid}
+          displayName={displayNameMap.get(recordToVoid.person_id) || "Member"}
+          onClose={() => {
+            setIsManualCorrectionOpen(false)
+            setTimeout(() => {
+              setRecordToVoid(null)
+            }, 260)
+          }}
+          onVoided={refreshAttendanceData}
+        />
+      )}
     </div>
   )
 })

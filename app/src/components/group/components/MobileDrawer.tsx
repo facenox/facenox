@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import { Dropdown, Tooltip } from "@/components/shared"
 
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
@@ -34,89 +35,99 @@ export function MobileDrawer() {
     return () => window.removeEventListener("keydown", handleEscape)
   }, [isMobileDrawerOpen, onClose])
 
-  if (!isMobileDrawerOpen) return null
-
   return (
-    <>
-      <div
-        className="animate-in fade-in fixed inset-0 z-40 bg-black/60 duration-200 lg:hidden"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] transform border-r border-white/10 bg-[rgba(12,16,22,0.97)] transition-transform duration-300 ease-out lg:hidden ${isMobileDrawerOpen ? "translate-x-0" : "-translate-x-full"} `}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Navigation menu">
-        <div className="flex h-full flex-col pt-12 pb-5">
-          <button
+    <AnimatePresence>
+      {isMobileDrawerOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="fixed inset-0 z-40 bg-black/60 lg:hidden"
             onClick={onClose}
-            className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg border-none bg-transparent p-0 text-white/70 shadow-none transition-all hover:bg-white/10 hover:text-white"
-            aria-label="Close menu">
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+            aria-hidden="true"
+          />
 
-          <div className="border-b border-white/10 px-4 pt-1 pb-3">
-            <div className="flex items-center gap-2">
-              <img src="./icons/logo-transparent.png" alt="Facenox" className="h-9 w-9" />
-              <h1 className="text-lg font-semibold text-white">Menu</h1>
-            </div>
-          </div>
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] border-r border-white/10 bg-[rgba(12,16,22,0.97)] lg:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu">
+            <div className="flex h-full flex-col pt-12 pb-5">
+              <button
+                onClick={onClose}
+                className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg border-none bg-transparent p-0 text-white/70 shadow-none transition-all hover:bg-white/10 hover:text-white"
+                aria-label="Close menu">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
 
-          <div className="border-b border-white/10 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <div className="min-w-0 flex-1">
-                <Dropdown
-                  options={groups.map((group) => ({
-                    value: group.id,
-                    label: group.name,
-                  }))}
-                  value={selectedGroup?.id ?? null}
-                  onChange={(value: string | number | null) => {
-                    const groupId = value as string | null
-                    if (groupId) {
-                      const group = groups.find((g) => g.id === groupId)
-                      setSelectedGroup(group ?? null)
-                    } else {
-                      setSelectedGroup(null)
-                    }
-                  }}
-                  placeholder="Select group..."
-                  emptyMessage="No groups available"
-                  maxHeight={256}
-                  buttonClassName="h-10"
-                  allowClear={true}
+              <div className="border-b border-white/10 px-4 pt-1 pb-3">
+                <div className="flex items-center gap-2">
+                  <img src="./icons/logo-transparent.png" alt="Facenox" className="h-9 w-9" />
+                  <h1 className="text-lg font-semibold text-white">Menu</h1>
+                </div>
+              </div>
+
+              <div className="border-b border-white/10 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Dropdown
+                      options={groups.map((group) => ({
+                        value: group.id,
+                        label: group.name,
+                      }))}
+                      value={selectedGroup?.id ?? null}
+                      onChange={(value: string | number | null) => {
+                        const groupId = value as string | null
+                        if (groupId) {
+                          const group = groups.find((g) => g.id === groupId)
+                          setSelectedGroup(group ?? null)
+                        } else {
+                          setSelectedGroup(null)
+                        }
+                      }}
+                      placeholder="Select group..."
+                      emptyMessage="No groups available"
+                      maxHeight={256}
+                      buttonClassName="h-10"
+                      allowClear={true}
+                    />
+                  </div>
+                  <Tooltip content="New Group" position="top">
+                    <button
+                      onClick={openCreateGroup}
+                      className="h-10 shrink-0 rounded-lg border border-white/10 px-3 text-sm font-medium text-white/80 transition-colors hover:bg-[rgba(24,30,38,0.85)] hover:text-white"
+                      aria-label="New Group">
+                      Add
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+
+              <div className="min-h-0 flex-1">
+                <MobileNav
+                  activeSection={activeSection}
+                  onSectionChange={setActiveSection}
+                  selectedGroup={selectedGroup}
+                  onClose={onClose}
                 />
               </div>
-              <Tooltip content="New Group" position="top">
-                <button
-                  onClick={openCreateGroup}
-                  className="h-10 shrink-0 rounded-lg border border-white/10 px-3 text-sm font-medium text-white/80 transition-colors hover:bg-[rgba(24,30,38,0.85)] hover:text-white"
-                  aria-label="New Group">
-                  Add
-                </button>
-              </Tooltip>
             </div>
-          </div>
-
-          <div className="min-h-0 flex-1">
-            <MobileNav
-              activeSection={activeSection}
-              onSectionChange={setActiveSection}
-              selectedGroup={selectedGroup}
-              onClose={onClose}
-            />
-          </div>
-        </div>
-      </div>
-    </>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   )
 }

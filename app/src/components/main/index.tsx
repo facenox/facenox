@@ -705,17 +705,13 @@ export default function Main() {
         />
       </div>
 
-      <AnimatePresence>
-        {showGroupManagement && (
-          <GroupManagementModal
-            showGroupManagement={showGroupManagement}
-            setShowGroupManagement={setShowGroupManagement}
-            newGroupName={newGroupName}
-            setNewGroupName={setNewGroupName}
-            handleCreateGroup={handleCreateGroup}
-          />
-        )}
-      </AnimatePresence>
+      <GroupManagementModal
+        showGroupManagement={showGroupManagement}
+        setShowGroupManagement={setShowGroupManagement}
+        newGroupName={newGroupName}
+        setNewGroupName={setNewGroupName}
+        handleCreateGroup={handleCreateGroup}
+      />
 
       <AnimatePresence>
         {showSettings && (
@@ -833,17 +829,13 @@ export default function Main() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showDeleteConfirmation && (
-          <DeleteConfirmationModal
-            showDeleteConfirmation={showDeleteConfirmation}
-            groupToDelete={groupToDelete}
-            currentGroup={currentGroup}
-            cancelDeleteGroup={cancelDeleteGroup}
-            confirmDeleteGroup={confirmDeleteGroup}
-          />
-        )}
-      </AnimatePresence>
+      <DeleteConfirmationModal
+        showDeleteConfirmation={showDeleteConfirmation}
+        groupToDelete={groupToDelete}
+        currentGroup={currentGroup}
+        cancelDeleteGroup={cancelDeleteGroup}
+        confirmDeleteGroup={confirmDeleteGroup}
+      />
     </div>
   )
 }

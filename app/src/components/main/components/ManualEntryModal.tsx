@@ -6,6 +6,7 @@ import { useAttendanceStore } from "@/components/main/stores"
 import type { AttendanceMember, AttendanceGroup } from "@/components/main/types"
 
 interface ManualEntryModalProps {
+  isOpen: boolean
   onClose: () => void
   onSuccess: () => void | Promise<void>
   members: AttendanceMember[]
@@ -15,6 +16,7 @@ interface ManualEntryModalProps {
 }
 
 export const ManualEntryModal = ({
+  isOpen,
   onClose,
   onSuccess,
   members,
@@ -52,6 +54,14 @@ export const ManualEntryModal = ({
       .length
   }, [sortedAllMembers, faceDataMap])
 
+  const handleClose = () => {
+    setSearchQuery("")
+    setError(null)
+    setIsSubmitting(false)
+    setSubmittingId(null)
+    onClose()
+  }
+
   const handleManualEntry = async (personId: string) => {
     if (isSubmitting) return
 
@@ -83,7 +93,7 @@ export const ManualEntryModal = ({
       store.setRecentAttendance([record, ...store.recentAttendance])
 
       await Promise.resolve(onSuccess())
-      onClose()
+      handleClose()
     } catch (err) {
       setError("Failed to add record. Please try again.")
       console.error(err)
@@ -95,8 +105,8 @@ export const ManualEntryModal = ({
 
   return (
     <Modal
-      isOpen={true}
-      onClose={onClose}
+      isOpen={isOpen}
+      onClose={handleClose}
       title={
         <div className="-mt-0.5 flex flex-col">
           <div className="flex items-center gap-2">
@@ -135,7 +145,7 @@ export const ManualEntryModal = ({
           <Tooltip content="Add member" position="top">
             <button
               onClick={() => {
-                onClose()
+                handleClose()
                 onAddMember()
               }}
               className="group/add flex h-9 w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-lg border border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white focus:outline-none">

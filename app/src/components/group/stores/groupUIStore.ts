@@ -66,6 +66,9 @@ const initialState = {
   lastRegistrationMode: null as "single" | "bulk" | "queue" | null,
 }
 
+const MODAL_EXIT_DURATION_MS = 260
+let editMemberClearTimer: ReturnType<typeof setTimeout> | null = null
+
 export const useGroupUIStore = create<GroupUIState>((set, get) => ({
   ...initialState,
 
@@ -100,7 +103,16 @@ export const useGroupUIStore = create<GroupUIState>((set, get) => ({
   },
 
   openEditMember: (member) => set({ editingMember: member, showEditMemberModal: true }),
-  closeEditMember: () => set({ editingMember: null, showEditMemberModal: false }),
+  closeEditMember: () => {
+    if (editMemberClearTimer) {
+      clearTimeout(editMemberClearTimer)
+    }
+    set({ showEditMemberModal: false })
+    editMemberClearTimer = setTimeout(() => {
+      set({ editingMember: null })
+      editMemberClearTimer = null
+    }, MODAL_EXIT_DURATION_MS)
+  },
 
   openCreateGroup: () => set({ showCreateGroupModal: true }),
   closeCreateGroup: () => set({ showCreateGroupModal: false }),

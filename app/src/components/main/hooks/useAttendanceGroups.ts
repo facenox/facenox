@@ -5,6 +5,7 @@ import type { AttendanceGroup, AttendanceMember, AttendanceRecord } from "@/type
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 
 const PANEL_SWITCH_SKELETON_DELAY_MS = 120
+const MODAL_EXIT_DURATION_MS = 260
 
 interface PanelDataCacheEntry {
   members: AttendanceMember[]
@@ -330,7 +331,9 @@ export function useAttendanceGroups() {
       setError("Failed to delete group")
     } finally {
       setShowDeleteConfirmation(false)
-      setGroupToDelete(null)
+      setTimeout(() => {
+        setGroupToDelete(null)
+      }, MODAL_EXIT_DURATION_MS)
     }
   }, [
     groupToDelete,
@@ -344,7 +347,9 @@ export function useAttendanceGroups() {
 
   const cancelDeleteGroup = useCallback(() => {
     setShowDeleteConfirmation(false)
-    setGroupToDelete(null)
+    setTimeout(() => {
+      setGroupToDelete(null)
+    }, MODAL_EXIT_DURATION_MS)
   }, [setGroupToDelete, setShowDeleteConfirmation])
 
   useEffect(() => {

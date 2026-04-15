@@ -4,13 +4,14 @@ import type { UpdateInfo } from "@/types/global"
 import { Modal } from "@/components/common"
 
 interface PrivacyModalProps {
+  isOpen: boolean
   onClose: () => void
 }
 
-const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
+const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
   return (
     <Modal
-      isOpen={true}
+      isOpen={isOpen}
       onClose={onClose}
       title={
         <div>
@@ -259,7 +260,7 @@ export const About: React.FC = () => {
 
   return (
     <div className="custom-scroll relative h-full overflow-y-auto">
-      {showPrivacyModal && <PrivacyModal onClose={() => setShowPrivacyModal(false)} />}
+      <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
 
       <div className="mx-auto flex h-full max-w-lg flex-col items-center px-10 pt-4 pb-10 text-center">
         <div className="w-full flex-1 space-y-9">

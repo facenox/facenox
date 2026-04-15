@@ -1,5 +1,5 @@
 import type { AttendanceGroup } from "@/types/recognition"
-
+import { AnimatePresence } from "framer-motion"
 import { useGroupStore } from "@/components/group/stores"
 import { useGroupModals } from "@/components/group/hooks"
 import { AddMember, CreateGroup, EditGroup, EditMember } from "@/components/group/modals"
@@ -29,8 +29,9 @@ export function GroupModals({
   } = useGroupModals()
   return (
     <>
-      {showAddMemberModal && selectedGroup && (
+      {selectedGroup && (
         <AddMember
+          isOpen={showAddMemberModal}
           group={selectedGroup}
           existingMembers={members}
           onClose={closeAddMember}
@@ -38,27 +39,34 @@ export function GroupModals({
         />
       )}
 
-      {showEditMemberModal && editingMember && (
-        <EditMember member={editingMember} onClose={closeEditMember} onSuccess={onMemberSuccess} />
-      )}
+      <AnimatePresence>
+        {editingMember && (
+          <EditMember
+            isOpen={showEditMemberModal}
+            member={editingMember}
+            onClose={closeEditMember}
+            onSuccess={onMemberSuccess}
+          />
+        )}
+      </AnimatePresence>
 
-      {showCreateGroupModal && (
-        <CreateGroup
-          onClose={closeCreateGroup}
-          onSuccess={(newGroup) => {
-            if (!isEmbedded) {
-              fetchGroups()
-            }
-            if (newGroup && !isEmbedded) {
-              setSelectedGroup(newGroup)
-            }
-            onGroupSuccess(newGroup)
-          }}
-        />
-      )}
+      <CreateGroup
+        isOpen={showCreateGroupModal}
+        onClose={closeCreateGroup}
+        onSuccess={(newGroup) => {
+          if (!isEmbedded) {
+            fetchGroups()
+          }
+          if (newGroup && !isEmbedded) {
+            setSelectedGroup(newGroup)
+          }
+          onGroupSuccess(newGroup)
+        }}
+      />
 
-      {showEditGroupModal && selectedGroup && (
+      {selectedGroup && (
         <EditGroup
+          isOpen={showEditGroupModal}
           group={selectedGroup}
           onClose={closeEditGroup}
           onSuccess={() => {

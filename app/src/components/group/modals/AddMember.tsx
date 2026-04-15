@@ -6,6 +6,7 @@ import { FormInput, Modal } from "@/components/common"
 import { InfoPopover } from "@/components/shared"
 
 interface AddMemberProps {
+  isOpen: boolean
   group: AttendanceGroup
   existingMembers?: AttendanceMember[]
   onClose: () => void
@@ -23,7 +24,13 @@ const consentPopoverContent = {
     "Only add people who have given biometric consent. Face data stays encrypted on this device.",
 }
 
-export function AddMember({ group, existingMembers = [], onClose, onSuccess }: AddMemberProps) {
+export function AddMember({
+  isOpen,
+  group,
+  existingMembers = [],
+  onClose,
+  onSuccess,
+}: AddMemberProps) {
   const [isBulkMode, setIsBulkMode] = useState(false)
   const [newMemberName, setNewMemberName] = useState("")
   const [newMemberRole, setNewMemberRole] = useState("")
@@ -226,7 +233,7 @@ export function AddMember({ group, existingMembers = [], onClose, onSuccess }: A
 
   return (
     <Modal
-      isOpen={true}
+      isOpen={isOpen}
       onClose={() => {
         resetForm()
         onClose()

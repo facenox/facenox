@@ -4,14 +4,22 @@ import type { AttendanceGroup } from "@/types/recognition"
 import { ErrorMessage, FormInput, Modal } from "@/components/common"
 
 interface CreateGroupProps {
+  isOpen: boolean
   onClose: () => void
   onSuccess: (group: AttendanceGroup) => void
 }
 
-export function CreateGroup({ onClose, onSuccess }: CreateGroupProps) {
+export function CreateGroup({ isOpen, onClose, onSuccess }: CreateGroupProps) {
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const handleClose = () => {
+    setName("")
+    setLoading(false)
+    setError(null)
+    onClose()
+  }
 
   const handleCreate = async () => {
     if (!name.trim()) {
@@ -22,7 +30,7 @@ export function CreateGroup({ onClose, onSuccess }: CreateGroupProps) {
     try {
       const newGroup = await attendanceManager.createGroup(name.trim())
       onSuccess(newGroup)
-      onClose()
+      handleClose()
     } catch (err) {
       console.error("Error creating group:", err)
       setError(err instanceof Error ? err.message : "Failed to create group")
@@ -33,8 +41,8 @@ export function CreateGroup({ onClose, onSuccess }: CreateGroupProps) {
 
   return (
     <Modal
-      isOpen={true}
-      onClose={onClose}
+      isOpen={isOpen}
+      onClose={handleClose}
       title={
         <div>
           <h3 className="mb-2 text-xl font-semibold">Create Group</h3>
@@ -55,7 +63,7 @@ export function CreateGroup({ onClose, onSuccess }: CreateGroupProps) {
 
         <div className="mt-8 flex justify-end gap-3">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-[11px] font-medium text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
             Cancel
           </button>

@@ -5,12 +5,13 @@ import { FormInput, Modal } from "@/components/common"
 import { InfoPopover } from "@/components/shared"
 
 interface EditMemberProps {
+  isOpen: boolean
   member: AttendanceMember
   onClose: () => void
   onSuccess: () => void
 }
 
-export function EditMember({ member, onClose, onSuccess }: EditMemberProps) {
+export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberProps) {
   const [name, setName] = useState(member.name)
   const [role, setRole] = useState(member.role || "")
   const [hasBiometricConsent, setHasBiometricConsent] = useState(member.has_consent || false)
@@ -34,6 +35,15 @@ export function EditMember({ member, onClose, onSuccess }: EditMemberProps) {
     }
   }, [])
 
+  const handleClose = () => {
+    setName(member.name)
+    setRole(member.role || "")
+    setHasBiometricConsent(member.has_consent || false)
+    setError(null)
+    setLoading(false)
+    onClose()
+  }
+
   const handleSave = async () => {
     if (!name.trim()) {
       return
@@ -49,7 +59,7 @@ export function EditMember({ member, onClose, onSuccess }: EditMemberProps) {
 
       await attendanceManager.updateMember(member.person_id, updates)
       onSuccess()
-      onClose()
+      handleClose()
     } catch (err) {
       console.error("Error updating member:", err)
       setError(err instanceof Error ? err.message : "Failed to update member")
@@ -60,8 +70,8 @@ export function EditMember({ member, onClose, onSuccess }: EditMemberProps) {
 
   return (
     <Modal
-      isOpen={true}
-      onClose={onClose}
+      isOpen={isOpen}
+      onClose={handleClose}
       title={
         <div>
           <h3 className="mb-1 text-xl font-bold tracking-tight text-white">Edit Member</h3>
@@ -129,7 +139,7 @@ export function EditMember({ member, onClose, onSuccess }: EditMemberProps) {
         </div>
         <div className="mt-8 flex justify-end gap-3">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-[11px] font-medium text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
             Cancel
           </button>

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react"
+import { AnimatePresence } from "framer-motion"
 import { attendanceManager } from "@/services"
 import { useGroupUIStore } from "@/components/group/stores"
 import { generateDisplayNames } from "@/utils"
@@ -302,12 +303,16 @@ export function Members({ members, onMembersChange, onEdit, onAdd }: MembersProp
           </div>
         )}
 
-        <DeleteMemberModal
-          isOpen={!!memberToDelete}
-          member={memberToDelete}
-          onClose={() => setMemberToDelete(null)}
-          onConfirm={confirmRemoveMember}
-        />
+        <AnimatePresence>
+          {memberToDelete && (
+            <DeleteMemberModal
+              isOpen={true}
+              member={memberToDelete}
+              onClose={() => setMemberToDelete(null)}
+              onConfirm={confirmRemoveMember}
+            />
+          )}
+        </AnimatePresence>
 
         <BulkConsentModal
           isOpen={isBulkConsentModalOpen}
