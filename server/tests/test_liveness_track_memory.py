@@ -28,8 +28,11 @@ def test_track_liveness_memory_requires_recent_real_evidence_before_passing():
     assert second["is_real"] is True
 
 
-def test_track_liveness_memory_drops_back_to_spoof_on_a_fresh_spoof_frame():
-    memory = TrackLivenessMemory(required_real_frames=2, history_size=5)
+def test_track_liveness_memory_keeps_locked_real_despite_spoof_until_gap_reset():
+    memory = TrackLivenessMemory(
+        required_real_frames=2,
+        history_size=5,
+    )
 
     for frame_number in range(1, 3):
         stabilized = memory.stabilize(
@@ -39,12 +42,17 @@ def test_track_liveness_memory_drops_back_to_spoof_on_a_fresh_spoof_frame():
     assert stabilized["status"] == "real"
     assert stabilized["is_real"] is True
 
-    spoof_frame = memory.stabilize(
+    first_spoof_frame = memory.stabilize(
         7, _liveness("spoof", False), frame_number=4, namespace="cam"
     )
+    second_spoof_frame = memory.stabilize(
+        7, _liveness("spoof", False), frame_number=5, namespace="cam"
+    )
 
-    assert spoof_frame["status"] == "spoof"
-    assert spoof_frame["is_real"] is False
+    assert first_spoof_frame["status"] == "real"
+    assert first_spoof_frame["is_real"] is True
+    assert second_spoof_frame["status"] == "real"
+    assert second_spoof_frame["is_real"] is True
 
 
 def test_track_liveness_memory_is_isolated_per_namespace():

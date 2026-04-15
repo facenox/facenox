@@ -9,8 +9,6 @@ export interface ModelInfo {
   top_k?: number
   confidence_threshold?: number
   bbox_inc?: number
-  temporal_alpha?: number
-  enable_temporal_smoothing?: boolean
   backend_id?: number
   target_id?: number
   embedding_dimension?: number

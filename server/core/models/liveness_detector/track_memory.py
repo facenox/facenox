@@ -5,7 +5,7 @@ from typing import Dict
 class TrackLivenessMemory:
     def __init__(
         self,
-        required_real_frames: int = 1,
+        required_real_frames: int = 2,
         history_size: int = 5,
         max_stale_frames: int = 30,
         cleanup_interval: int = 10,
@@ -68,6 +68,12 @@ class TrackLivenessMemory:
 
         if raw_status == "spoof":
             state["consecutive_real_frames"] = 0
+
+            if state["stable_real"]:
+                stabilized["status"] = "real"
+                stabilized["is_real"] = True
+                return stabilized
+
             state["stable_real"] = False
             stabilized["status"] = "spoof"
             stabilized["is_real"] = False
