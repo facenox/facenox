@@ -1,5 +1,4 @@
 import React from "react"
-import { motion } from "framer-motion"
 import { Dropdown, Tooltip } from "@/components/shared"
 import type { AttendanceGroup } from "@/types/recognition"
 import type { GroupSection } from "@/components/group/types"
@@ -35,60 +34,61 @@ export const Sidebar: React.FC<SidebarProps> = ({
   groupSections,
 }) => {
   return (
-    <div className="flex w-[200px] shrink-0 flex-col border-r border-white/6 bg-[rgba(12,16,22,0.96)] sm:w-[240px] lg:w-[280px]">
-      <div className="flex items-center justify-between px-3 pt-8 pb-4">
-        <h1 className="text-[11px] font-medium text-white/30">Settings</h1>
+    <div className="flex w-[200px] shrink-0 flex-col border-r border-white/5 bg-[#0a0c10] sm:w-[240px] lg:w-[260px]">
+      {/* Workspace Switcher Header */}
+      <div className="px-3 pt-6 pb-2">
+        <div className="flex items-center gap-1">
+          <div className="min-w-0 flex-1" key={dropdownGroups.length}>
+            <Dropdown
+              options={dropdownGroups.map((group) => ({
+                value: group.id,
+                label: group.name,
+              }))}
+              value={dropdownValue}
+              onChange={(groupId) => {
+                if (groupId) {
+                  const group = dropdownGroups.find((g) => g.id === groupId)
+                  if (group && onGroupSelect) onGroupSelect(group)
+                } else {
+                  window.dispatchEvent(
+                    new CustomEvent("selectGroup", {
+                      detail: { group: null },
+                    }),
+                  )
+                }
+              }}
+              placeholder="Select group..."
+              emptyMessage="No groups available"
+              maxHeight={256}
+              buttonClassName="!h-8 !w-full !rounded-md border-transparent! bg-transparent! !px-2 !text-sm !font-semibold !text-white !transition-colors hover:bg-white/10! focus:ring-0! shadow-none!"
+              showPlaceholderOption={false}
+            />
+          </div>
+          <Tooltip content="Create Group" position="bottom">
+            <button
+              onClick={() => {
+                setActiveSection("group")
+                if (activeSection !== "group") {
+                  setGroupInitialSection("overview")
+                }
+                setTriggerCreateGroup(Date.now())
+              }}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-0 bg-transparent text-white/50 transition-colors hover:bg-white/10 hover:text-white">
+              <i className="fa-solid fa-plus text-[11px]"></i>
+            </button>
+          </Tooltip>
+        </div>
       </div>
 
-      <div className="hover-scrollbar settings-sidebar-scroll flex-1 space-y-10 overflow-y-auto pr-1 pb-6 pl-3">
+      <div className="hover-scrollbar settings-sidebar-scroll flex-1 space-y-6 overflow-y-auto px-3 pt-4 pb-6">
         <section>
-          <div className="mb-4 flex items-center justify-between px-3">
-            <h2 className="text-[11px] font-medium text-white/30">Group Management</h2>
+          <div className="mb-2 px-2">
+            <h2 className="text-[11px] font-bold tracking-wider text-white/40 uppercase">
+              Group Management
+            </h2>
           </div>
 
-          <div className="space-y-6">
-            <div className="flex items-center px-1">
-              <div className="min-w-0 flex-1" key={dropdownGroups.length}>
-                <Dropdown
-                  options={dropdownGroups.map((group) => ({
-                    value: group.id,
-                    label: group.name,
-                  }))}
-                  value={dropdownValue}
-                  onChange={(groupId) => {
-                    if (groupId) {
-                      const group = dropdownGroups.find((g) => g.id === groupId)
-                      if (group && onGroupSelect) onGroupSelect(group)
-                    } else {
-                      window.dispatchEvent(
-                        new CustomEvent("selectGroup", {
-                          detail: { group: null },
-                        }),
-                      )
-                    }
-                  }}
-                  placeholder="Select group..."
-                  emptyMessage="No groups available"
-                  maxHeight={256}
-                  buttonClassName="h-9 border-r-0 rounded-r-none focus:ring-0! focus:border-white/20!"
-                  showPlaceholderOption={false}
-                />
-              </div>
-              <Tooltip content="Create Group" position="top">
-                <button
-                  onClick={() => {
-                    setActiveSection("group")
-                    if (activeSection !== "group") {
-                      setGroupInitialSection("overview")
-                    }
-                    setTriggerCreateGroup(Date.now())
-                  }}
-                  className="group/btn flex h-9 w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-lg border border-white/10 bg-[rgba(20,25,32,0.78)] text-white/40 transition-all hover:bg-[rgba(28,35,44,0.92)] hover:text-cyan-400 focus:outline-none">
-                  <i className="fa-solid fa-plus text-xs transition-transform group-hover/btn:scale-110"></i>
-                </button>
-              </Tooltip>
-            </div>
-
+          <div className="space-y-3">
             <div
               className={`space-y-0.5 ${!dropdownValue ? "pointer-events-none opacity-40 grayscale" : ""}`}>
               {groupSections.map((subsection) => {
@@ -104,19 +104,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         setRegistrationState(null, null)
                       }
                     }}
-                    className={`group/item relative flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left text-[14px] font-medium transition-all ${
-                      isActive ?
-                        "bg-[rgba(27,34,43,0.95)] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
-                      : "text-white/60 hover:bg-[rgba(20,25,32,0.78)] hover:text-white"
+                    className={`group/item flex w-full items-center gap-3 rounded-md border-0 bg-transparent px-3 py-2 text-left text-[13px] font-medium transition-colors ${
+                      isActive ? "!bg-white/10 text-white" : (
+                        "text-white/60 hover:!bg-white/5 hover:text-white"
+                      )
                     }`}>
-                    {isActive && (
-                      <motion.div
-                        layoutId="active-indicator-group"
-                        className="absolute top-1/2 left-[-8px] h-6 w-1 -translate-y-1/2 rounded-r-full bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.4)]"
-                      />
-                    )}
                     <i
-                      className={`${subsection.icon} w-4 text-xs transition-transform group-hover/item:scale-105 ${isActive ? "text-cyan-400" : "text-white/50"}`}></i>
+                      className={`${subsection.icon} w-4 text-[13px] ${isActive ? "text-cyan-400" : "text-white/40 group-hover/item:text-white/70"}`}></i>
                     {subsection.label}
                   </button>
                 )
@@ -126,8 +120,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </section>
 
         <section>
-          <div className="mb-4 px-3">
-            <h2 className="text-[11px] font-medium text-white/30">General</h2>
+          <div className="mb-2 px-2">
+            <h2 className="text-[11px] font-bold tracking-wider text-white/40 uppercase">
+              General
+            </h2>
           </div>
 
           <div className="space-y-0.5">
@@ -137,19 +133,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
-                  className={`group/item relative flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left text-[14px] font-medium transition-all ${
-                    isActive ?
-                      "bg-[rgba(27,34,43,0.95)] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
-                    : "text-white/60 hover:bg-[rgba(20,25,32,0.78)] hover:text-white"
+                  className={`group/item flex w-full items-center gap-3 rounded-md border-0 bg-transparent px-3 py-2 text-left text-[13px] font-medium transition-colors ${
+                    isActive ? "!bg-white/10 text-white" : (
+                      "text-white/60 hover:!bg-white/5 hover:text-white"
+                    )
                   }`}>
-                  {isActive && (
-                    <motion.div
-                      layoutId="active-indicator-general"
-                      className="absolute top-1/2 left-[-8px] h-6 w-1 -translate-y-1/2 rounded-r-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.2)]"
-                    />
-                  )}
                   <i
-                    className={`${section.icon} w-4 text-xs transition-transform group-hover/item:scale-105 ${isActive ? "text-white" : "text-white/70"}`}></i>
+                    className={`${section.icon} w-4 text-[13px] ${isActive ? "text-white" : "text-white/40 group-hover/item:text-white/70"}`}></i>
                   {section.label}
                 </button>
               )

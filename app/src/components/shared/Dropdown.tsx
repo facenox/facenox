@@ -196,7 +196,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -5 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
-                  className="fixed z-9999 overflow-hidden rounded-lg border border-white/10 bg-[rgba(15,19,25,0.98)] shadow-xl"
+                  className="fixed z-9999 overflow-hidden rounded-lg border border-white/10 bg-[rgba(15,19,25,0.98)]"
                   onMouseDown={(e) => e.stopPropagation()}
                   style={{
                     top: menuPosition ? `${menuPosition.top}px` : "-9999px",
