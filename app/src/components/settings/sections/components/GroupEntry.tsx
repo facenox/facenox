@@ -7,6 +7,7 @@ import type {
 } from "@/components/settings/sections/types"
 import { MemberEntry } from "@/components/settings/sections/components/MemberEntry"
 import { Tooltip } from "@/components/shared"
+import { Modal } from "@/components/common/Modal"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
 interface GroupEntryProps {
@@ -62,16 +63,18 @@ export function GroupEntry({
   }
 
   return (
-    <div className="group/row overflow-hidden rounded-lg border border-white/10 bg-[rgba(17,22,29,0.96)] font-sans transition-all hover:bg-[rgba(22,28,36,0.52)]">
+    <div
+      className={`group/row flex flex-col rounded-lg border transition-colors ${isExpanded ? "border-white/10 bg-white/[0.02]" : "border-transparent bg-transparent hover:bg-white/[0.02]"}`}>
       {/* Group Header */}
-      <div
-        onClick={() => onToggle(group.id)}
-        className="flex w-full cursor-pointer items-center justify-between px-3 py-2 transition-colors">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <i
-            className={`fa-solid fa-chevron-right text-[10px] text-white/40 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""} w-3 text-center group-hover/row:text-white/70`}></i>
+      <div className="flex w-full items-center justify-between p-4 transition-colors">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <button
+            onClick={() => onToggle(group.id)}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 text-white/40 transition-colors hover:bg-white/10 hover:text-white ${isExpanded ? "bg-white/10 text-white" : ""}`}>
+            <i className={`fa-solid fa-users text-[11px]`}></i>
+          </button>
 
-          <div className="flex min-w-0 flex-1 items-baseline gap-3">
+          <div className="flex min-w-0 flex-col">
             {/* Group Name */}
             {editingGroup?.groupId === group.id && editingGroup.field === "name" ?
               <input
@@ -83,39 +86,42 @@ export function GroupEntry({
                 onClick={(e) => e.stopPropagation()}
                 autoFocus
                 disabled={savingGroup === group.id}
-                className="h-6 rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-xs font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
+                className="h-6 rounded-md border-0 bg-white/10 px-2 py-0.5 text-[14px] font-medium text-white transition-all outline-none focus:ring-1 focus:ring-white/20"
               />
             : <div
                 onClick={(e) => {
                   e.stopPropagation()
                   onStartEditingGroup(group, "name")
                 }}
-                className="flex items-center gap-2 truncate text-xs font-bold text-white transition-colors hover:text-cyan-400">
+                className="flex items-center gap-2 truncate text-[14px] font-medium text-white transition-colors hover:text-white/70">
                 {group.name}
                 {savingGroup === group.id && (
-                  <i className="fa-solid fa-spinner fa-spin text-[9px] text-cyan-400/50"></i>
+                  <i className="fa-solid fa-spinner fa-spin text-[10px] text-white/40"></i>
                 )}
               </div>
             }
-
-            {/* Combined Metadata */}
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="shrink-0 text-[9px] font-medium text-white/5">·</span>
-              <div className="text-[11px] font-bold text-white/35">Group ID: {group.id}</div>
+            <div className="mt-0.5 hidden truncate font-mono text-[11px] text-white/30 sm:block">
+              Group ID: {group.id}
             </div>
           </div>
         </div>
 
         <div className="ml-4 flex shrink-0 items-center gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="text-[11px] font-bold text-white/35">
+          <div className="flex items-center gap-3">
+            <span className="text-[12px] font-medium text-white/50">
               {memberCount} {memberCount === 1 ? "Member" : "Members"}
-            </div>
+            </span>
             {registeredCount > 0 && (
-              <div className="text-[11px] font-bold text-cyan-400/80">
+              <span className="rounded-md bg-cyan-500/10 px-2 py-1 text-[11px] font-semibold text-cyan-400">
                 {registeredCount} Registered
-              </div>
+              </span>
             )}
+
+            <button
+              onClick={() => onToggle(group.id)}
+              className="ml-2 rounded-md bg-white/10 px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-white/15">
+              Manage
+            </button>
           </div>
 
           <Tooltip content="Delete group" position="top">
@@ -125,22 +131,26 @@ export function GroupEntry({
                 onDeleteGroup(group.id)
               }}
               disabled={deletingGroup === group.id || deletingGroup === "all"}
-              className="flex h-6 w-6 items-center justify-center rounded-lg text-white/30 opacity-0 transition-all group-hover/row:opacity-100 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50">
+              className="flex h-7 w-7 items-center justify-center rounded-md text-white/20 transition-all hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50">
               <i
-                className={`fa-solid ${deletingGroup === group.id ? "fa-spinner fa-spin" : "fa-trash-can"} text-[10px]`}></i>
+                className={`fa-solid ${deletingGroup === group.id ? "fa-spinner fa-spin" : "fa-trash-can opacity-0 group-hover/row:opacity-100"} text-[13px]`}></i>
             </button>
           </Tooltip>
         </div>
       </div>
 
-      {/* Members List */}
-      {isExpanded && (
-        <div className="border-t border-white/10 bg-[rgba(22,28,36,0.44)]">
+      {/* Members Modal */}
+      <Modal
+        isOpen={isExpanded}
+        onClose={() => onToggle(group.id)}
+        title={`${group.name} Members`}
+        maxWidth="max-w-3xl">
+        <div className="p-1">
           {group.members.length === 0 ?
-            <div className="px-4 py-8 text-center text-sm text-white/40">
+            <div className="px-4 py-8 text-center text-[13px] text-white/30">
               No members in this group
             </div>
-          : <div className="space-y-1 p-2">
+          : <div className="max-h-[60vh] space-y-1 overflow-y-auto pr-1">
               {group.members.map((member) => (
                 <MemberEntry
                   key={member.person_id}
@@ -159,7 +169,7 @@ export function GroupEntry({
             </div>
           }
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

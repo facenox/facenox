@@ -265,7 +265,7 @@ export const About: React.FC = () => {
       <div className="mx-auto flex h-full max-w-lg flex-col items-center px-10 pt-4 pb-10 text-center">
         <div className="w-full flex-1 space-y-9">
           <div className="flex flex-col items-center gap-3">
-            <div className="flex h-22 w-22 items-center justify-center rounded-3xl border border-white/8 bg-[rgba(22,28,36,0.72)] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
+            <div className="flex h-22 w-22 items-center justify-center rounded-3xl border border-white/8 bg-[rgba(22,28,36,0.72)] p-4">
               <img
                 src="./icons/logo-transparent.png"
                 alt="Facenox logo"

@@ -41,8 +41,8 @@ export function MemberEntry({
   const showEmailField = isEditing("email") || Boolean(member.email)
 
   return (
-    <div className="group/member relative rounded-lg border border-transparent bg-[rgba(17,22,29,0.84)] px-3 py-1.5 transition-all hover:border-white/10 hover:bg-[rgba(22,28,36,0.52)]">
-      <div className="flex items-center justify-between gap-3">
+    <div className="group/member relative flex items-center justify-between rounded-md border border-white/[0.01] bg-white/[0.015] p-3 transition-colors hover:border-white/5 hover:bg-white/[0.03]">
+      <div className="flex min-w-0 flex-1 items-center gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <div className="shrink-0 font-sans">
             {isEditing("name") ?
@@ -54,19 +54,19 @@ export function MemberEntry({
                 onKeyDown={(e) => handleKeyDown(e, "name")}
                 autoFocus
                 disabled={savingMember === member.person_id}
-                className="h-5 rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-[11px] font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
+                className="h-6 rounded-md border-0 bg-white/10 px-2 py-0.5 text-[13px] font-medium text-white transition-all outline-none focus:ring-1 focus:ring-white/20"
               />
             : <div
                 onClick={() => onStartEditing(member, "name")}
-                className="cursor-pointer truncate text-[11px] font-bold text-white/90 transition-colors hover:text-cyan-400">
+                className="cursor-pointer truncate text-[13px] font-medium text-white/90 transition-colors hover:text-white">
                 {member.name}
               </div>
             }
           </div>
 
-          <span className="shrink-0 text-[9px] font-medium text-white/5 select-none">/</span>
+          <span className="shrink-0 text-[10px] font-medium text-white/10 select-none">/</span>
 
-          <div className="flex min-w-0 flex-1 items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             {isEditing("role") ?
               <input
                 type="text"
@@ -77,14 +77,14 @@ export function MemberEntry({
                 autoFocus
                 disabled={savingMember === member.person_id}
                 placeholder="Role"
-                className="h-5 max-w-[100px] rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-[10px] text-white/70 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
+                className="h-6 w-24 rounded-md border-0 bg-white/10 px-2 py-0.5 text-[12px] text-white/70 transition-all outline-none focus:ring-1 focus:ring-white/20"
               />
             : <div
                 onClick={() => onStartEditing(member, "role")}
-                className={`cursor-pointer truncate text-[11px] font-bold transition-colors ${
+                className={`cursor-pointer truncate text-[12px] font-medium transition-colors ${
                   member.role ?
-                    "text-white/45 hover:text-white/80"
-                  : "text-white/20 italic hover:text-white/40"
+                    "text-white/40 hover:text-white/70"
+                  : "text-white/10 italic hover:text-white/30"
                 }`}>
                 {member.role || "No role"}
               </div>
@@ -92,7 +92,7 @@ export function MemberEntry({
 
             {showEmailField && (
               <>
-                <span className="shrink-0 text-[9px] font-black text-white/10 select-none">/</span>
+                <span className="shrink-0 text-[10px] font-bold text-white/10 select-none">/</span>
 
                 {isEditing("email") ?
                   <input
@@ -104,11 +104,11 @@ export function MemberEntry({
                     autoFocus
                     disabled={savingMember === member.person_id}
                     placeholder="Email"
-                    className="h-5 max-w-[150px] rounded border border-white/10 bg-[rgba(22,28,36,0.68)] px-1.5 py-0.5 text-[10px] text-white/70 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
+                    className="h-6 w-32 rounded-md border-0 bg-white/10 px-2 py-0.5 text-[12px] text-white/70 transition-all outline-none focus:ring-1 focus:ring-white/20"
                   />
                 : <div
                     onClick={() => onStartEditing(member, "email")}
-                    className="cursor-pointer truncate text-[11px] font-bold text-white/40 transition-colors hover:text-white/70">
+                    className="cursor-pointer truncate text-[12px] font-medium text-white/30 transition-colors hover:text-white/50">
                     {member.email}
                   </div>
                 }
@@ -116,27 +116,32 @@ export function MemberEntry({
             )}
           </div>
         </div>
+      </div>
 
-        <div className="flex shrink-0 items-center gap-3">
-          <div className="flex items-center gap-2">
-            {member.has_face_data ?
-              <div className="text-[11px] font-bold text-cyan-400/80">Face</div>
-            : <div className="text-[11px] font-bold text-amber-500/50">Empty</div>}
+      <div className="ml-4 flex min-w-[120px] shrink-0 items-center justify-end gap-4">
+        <div className="flex items-center gap-3">
+          {member.has_face_data ?
+            <div className="rounded-md bg-cyan-500/10 px-2 py-1 text-[11px] font-semibold text-cyan-400">
+              Face Configured
+            </div>
+          : <div className="rounded-md bg-amber-500/10 px-2 py-1 text-[11px] font-semibold text-amber-500">
+              No Face Data
+            </div>
+          }
 
-            <Tooltip content="Delete member" position="top">
-              <button
-                onClick={() => onDeleteMember(member.person_id, member.name)}
-                disabled={deletingMember === member.person_id}
-                className="flex h-5 w-5 items-center justify-center rounded-lg text-white/20 opacity-0 transition-all group-hover/member:opacity-100 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50">
-                <i
-                  className={`fa-solid ${deletingMember === member.person_id ? "fa-spinner fa-spin" : "fa-trash-can"} text-[9px]`}></i>
-              </button>
-            </Tooltip>
-          </div>
-          {savingMember === member.person_id && (
-            <i className="fa-solid fa-spinner fa-spin text-[9px] text-cyan-400/60"></i>
-          )}
+          <Tooltip content="Delete member" position="top">
+            <button
+              onClick={() => onDeleteMember(member.person_id, member.name)}
+              disabled={deletingMember === member.person_id}
+              className="flex h-7 w-7 items-center justify-center rounded-md text-white/20 transition-all hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50">
+              <i
+                className={`fa-solid ${deletingMember === member.person_id ? "fa-spinner fa-spin" : "fa-trash-can opacity-0 group-hover/member:opacity-100"} text-[13px]`}></i>
+            </button>
+          </Tooltip>
         </div>
+        {savingMember === member.person_id && (
+          <i className="fa-solid fa-spinner fa-spin absolute right-2 text-[10px] text-white/40"></i>
+        )}
       </div>
     </div>
   )

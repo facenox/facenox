@@ -211,146 +211,140 @@ export function Database({
     : "Facenox could not read the current time status."
 
   return (
-    <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-4 pb-10">
+    <div className="mx-auto w-full max-w-[800px] space-y-12 px-6 pt-8 pb-16">
       {/* Statistics Overview */}
-      <DatabaseStats
-        groupsCount={groups.length}
-        totalMembers={systemData.totalMembers}
-        totalPersons={systemData.totalPersons}
-      />
+      <section>
+        <DatabaseStats
+          groupsCount={groups.length}
+          totalMembers={systemData.totalMembers}
+          totalPersons={systemData.totalPersons}
+        />
+      </section>
 
-      <div className="overflow-hidden rounded-lg border border-white/8 bg-[rgba(17,22,29,0.96)]">
-        <div className="flex items-center justify-between gap-4 px-5 py-4">
+      <hr className="border-white/5" />
+
+      {/* Device Time */}
+      <section>
+        <div className="mb-6">
+          <h2 className="text-[14px] font-semibold text-white">Device Time & Status</h2>
+          <p className="mt-1 text-[13px] text-white/40">
+            Check if your local system time is accurate for logging.
+          </p>
+        </div>
+
+        <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="mb-1 flex items-center gap-2">
-              <i className="fa-solid fa-clock text-xs text-cyan-400" />
-              <h4 className="text-xs font-semibold text-white">Device Time</h4>
-            </div>
-            <p className={`text-[11px] leading-relaxed font-semibold ${timeHealthTone}`}>
-              {timeHealthSummary}
-            </p>
-            <p className="mt-1 text-[11px] leading-relaxed font-medium text-white/40">
-              {timeHealthDetails}
-            </p>
-            <p className="mt-1 text-[10px] leading-relaxed text-white/28">
+            <h4 className={`text-[13px] font-medium ${timeHealthTone}`}>{timeHealthSummary}</h4>
+            <p className="mt-1 text-[13px] text-white/40">{timeHealthDetails}</p>
+            <p className="mt-1.5 font-mono text-[11px] text-white/30">
               {timeHealthState.loading ?
                 "Checking..."
               : timeHealth ?
-                `${formattedLocalTime ?? "Current time unavailable"} • ${getFriendlyTimeZoneLabel()}`
-              : "Clock health unavailable right now."}
+                `${formattedLocalTime ?? "Unavailable"} • ${getFriendlyTimeZoneLabel()}`
+              : "Clock health unavailable."}
             </p>
           </div>
 
-          <div className="flex shrink-0 flex-col items-end gap-2">
+          <div className="flex shrink-0 flex-col items-end gap-3">
             <button
               onClick={onRefreshTimeHealth}
               disabled={timeHealthState.loading}
-              className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-1.5 text-[11px] font-medium text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40">
+              className="flex items-center gap-2 rounded-md border border-white/10 bg-transparent px-3 py-1.5 text-[12px] font-medium text-white/60 transition-colors hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
               {timeHealthState.loading ?
-                <i className="fa-solid fa-circle-notch fa-spin text-[10px]" />
-              : <i className="fa-solid fa-rotate-right text-[10px]" />}
+                <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
+              : <i className="fa-solid fa-rotate-right text-[11px]" />}
               Check Again
             </button>
 
-            {!timeHealthState.loading && timeHealth && (
-              <div className="flex flex-col items-end gap-1">
-                <span className={`text-[11px] font-semibold ${timeHealthTone}`}>
-                  {timeHealthStatus === "verified" ?
-                    "Verified"
-                  : timeHealthStatus === "drift_detected" ?
-                    "Needs attention"
-                  : timeHealthStatus === "offline" ?
-                    "Offline"
-                  : "Unavailable"}
+            {!timeHealthState.loading &&
+              timeHealth &&
+              timeHealthStatus === "drift_detected" &&
+              typeof timeHealth.online_drift_seconds === "number" && (
+                <span className="text-[11px] text-white/45">
+                  {Math.abs(timeHealth.online_drift_seconds).toFixed(1)}s difference
                 </span>
-                {timeHealthStatus === "drift_detected" &&
-                  typeof timeHealth.online_drift_seconds === "number" && (
-                    <span className="text-[11px] text-white/45">
-                      {Math.abs(timeHealth.online_drift_seconds).toFixed(1)}s difference
-                    </span>
-                  )}
-              </div>
-            )}
+              )}
           </div>
         </div>
-      </div>
+      </section>
+
+      <hr className="border-white/5" />
 
       {/* Backup & Restore */}
-      <div className="overflow-hidden rounded-lg border border-white/8 bg-[rgba(17,22,29,0.96)]">
-        <div className="px-5 pt-4 pb-2">
-          <h4 className="text-[10px] font-semibold tracking-[0.18em] text-white/38 uppercase">
-            Backup & Restore
-          </h4>
+      <section>
+        <div className="mb-6">
+          <h2 className="text-[14px] font-semibold text-white">Data Management</h2>
+          <p className="mt-1 text-[13px] text-white/40">
+            Securely backup your configuration, or export activity logs.
+          </p>
         </div>
 
-        <div className="divide-y divide-white/6">
-          <div className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-6">
+          {/* Export */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <div className="mb-1 flex items-center gap-2">
-                <i className="fa-solid fa-download text-xs text-cyan-400" />
-                <h4 className="text-xs font-semibold text-white">Export Database</h4>
-              </div>
-              <p className="text-[11px] leading-relaxed font-medium text-white/40">
-                Save an encrypted <code className="font-mono text-cyan-400/50">.facenox</code>{" "}
+              <h4 className="text-[13px] font-medium text-white">Export Database</h4>
+              <p className="mt-1 text-[13px] text-white/40">
+                Save an encrypted{" "}
+                <code className="rounded bg-white/5 px-1 py-0.5 font-mono text-[11px]">
+                  .facenox
+                </code>{" "}
                 backup with members, history, and biometric profiles.
               </p>
             </div>
             <button
               onClick={() => setPasswordModal({ isOpen: true, action: "export" })}
               disabled={isBackingUp}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-40">
+              className="flex shrink-0 items-center justify-center gap-2 rounded-md bg-white/10 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-white/15 disabled:opacity-40">
               {isBackingUp && status.action === "export" ?
                 <i className="fa-solid fa-circle-notch fa-spin" />
-              : <i className="fa-solid fa-file-export" />}
+              : null}
               Export
             </button>
           </div>
 
-          <div className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between">
+          {/* Import */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <div className="mb-1 flex items-center gap-2">
-                <i className="fa-solid fa-upload text-xs text-cyan-400" />
-                <h4 className="text-xs font-semibold text-white">Import Database</h4>
-              </div>
-              <p className="text-[11px] leading-relaxed font-medium text-white/40">
-                Restore from a <code className="font-mono text-cyan-400/50">.facenox</code> backup
-                file using its original password.
+              <h4 className="text-[13px] font-medium text-white">Import Database</h4>
+              <p className="mt-1 text-[13px] text-white/40">
+                Restore from a backup file using its original encryption password.
               </p>
             </div>
             <button
               onClick={startImportFlow}
               disabled={isBackingUp}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-40">
+              className="flex shrink-0 items-center justify-center gap-2 rounded-md bg-white/10 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-white/15 disabled:opacity-40">
               {isBackingUp && status.action === "import" ?
                 <i className="fa-solid fa-circle-notch fa-spin" />
-              : <i className="fa-solid fa-file-import" />}
+              : null}
               Import
             </button>
           </div>
 
-          <div className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between">
+          {/* Audit Log */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <div className="mb-1 flex items-center gap-2">
-                <i className="fa-solid fa-shield-halved text-xs text-cyan-400" />
-                <h4 className="text-xs font-semibold text-white">Audit Log</h4>
-              </div>
-              <p className="text-[11px] leading-relaxed font-medium text-white/40">
+              <h4 className="text-[13px] font-medium text-white">Export Audit Log</h4>
+              <p className="mt-1 text-[13px] text-white/40">
                 Download a CSV of admin actions, including consent changes, deletions, and backup
-                imports or exports.
+                activity.
               </p>
             </div>
             <button
               onClick={handleExportAuditLog}
               disabled={isExportingAuditLog}
-              className="flex shrink-0 items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white active:scale-95 disabled:opacity-40">
+              className="flex shrink-0 items-center gap-2 rounded-md border border-white/10 bg-transparent px-4 py-2 text-[12px] font-medium text-white/60 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-40">
               {isExportingAuditLog ?
                 <i className="fa-solid fa-circle-notch fa-spin" />
-              : <i className="fa-solid fa-file-csv" />}
-              Export CSV
+              : <i className="fa-solid fa-download" />}
+              CSV Log
             </button>
           </div>
         </div>
-      </div>
+      </section>
+
+      <hr className="border-white/5" />
 
       {/* Password Prompt Modal */}
       <Modal
@@ -427,129 +421,122 @@ export function Database({
         </div>
       </Modal>
 
-      {/* Groups */}
-      <div className="overflow-hidden rounded-lg border border-white/8 bg-[rgba(17,22,29,0.96)]">
-        <div className="flex flex-col gap-3 px-5 pt-4 pb-3 md:flex-row md:items-center md:justify-between">
+      {/* Groups Section */}
+      <section>
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h4 className="text-[10px] font-semibold tracking-[0.18em] text-white/38 uppercase">
-              Groups
-            </h4>
-            <p className="mt-1 text-[11px] font-medium text-white/28">
+            <h2 className="text-[14px] font-semibold text-white">Groups</h2>
+            <p className="mt-1 text-[13px] text-white/40">
               Browse stored groups and manage their members.
             </p>
           </div>
 
           <div className="group/search relative w-full max-w-sm">
-            <div className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-white/35 transition-colors group-focus-within/search:text-cyan-400">
-              <i className="fa-solid fa-magnifying-glass text-[11px]"></i>
+            <div className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-white/30 transition-colors group-focus-within/search:text-white/60">
+              <i className="fa-solid fa-magnifying-glass text-[12px]"></i>
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search members or groups..."
-              className="w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 pr-8 pl-9 text-[11px] font-medium text-white placeholder-white/25 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
+              className="w-full rounded-md border-0 bg-white/5 py-2 pr-8 pl-8 text-[13px] font-medium text-white placeholder-white/30 transition-all outline-none focus:bg-white/10 focus:ring-1 focus:ring-white/20"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute top-1/2 right-2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border-none bg-transparent p-0 text-white/30 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white/70">
-                <i className="fa-solid fa-xmark text-[9px]"></i>
+                className="absolute top-1/2 right-2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-sm text-white/30 hover:bg-white/10 hover:text-white">
+                <i className="fa-solid fa-xmark text-[10px]"></i>
               </button>
             )}
           </div>
         </div>
 
-        <div className="px-3 pb-4">
-          <div className={`${filteredData.length === 0 ? "h-32" : "h-auto"} space-y-2`}>
-            {filteredData.length === 0 ?
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/6 bg-[rgba(22,28,36,0.52)] py-12 text-white/20">
-                <i className="fa-solid fa-ghost mb-3 text-2xl opacity-50" />
-                <div className="text-[11px] font-medium">No results found</div>
-                {groups.length === 0 && (
-                  <div className="mt-1 text-[10px] italic">
-                    Create a group to begin managing members.
-                  </div>
-                )}
-              </div>
-            : filteredData.map((group) => (
-                <GroupEntry
-                  key={group.id}
-                  group={group}
-                  isExpanded={expandedGroups.has(group.id)}
-                  editingGroup={editingGroup}
-                  editingMember={editingMember}
-                  editValue={editValue}
-                  savingGroup={savingGroup}
-                  savingMember={savingMember}
-                  deletingGroup={deletingGroup}
-                  deletingMember={deletingMember}
-                  onToggle={toggleGroup}
-                  onStartEditingGroup={startEditingGroup}
-                  onStartEditingMember={startEditing}
-                  onEditValueChange={setEditValue}
-                  onSaveGroupEdit={saveGroupEdit}
-                  onSaveMemberEdit={saveEdit}
-                  onCancelEditing={cancelEditing}
-                  onDeleteGroup={handleDeleteGroup}
-                  onDeleteMember={handleDeleteMember}
-                />
-              ))
-            }
-          </div>
+        <div className={`${filteredData.length === 0 ? "h-32" : "h-auto"} space-y-1`}>
+          {filteredData.length === 0 ?
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-transparent py-12 text-white/30">
+              <i className="fa-solid fa-ghost mb-3 text-2xl" />
+              <div className="text-[12px] font-medium">No results found</div>
+              {groups.length === 0 && (
+                <div className="mt-1 text-[11px]">Create a group to begin managing members.</div>
+              )}
+            </div>
+          : filteredData.map((group) => (
+              <GroupEntry
+                key={group.id}
+                group={group}
+                isExpanded={expandedGroups.has(group.id)}
+                editingGroup={editingGroup}
+                editingMember={editingMember}
+                editValue={editValue}
+                savingGroup={savingGroup}
+                savingMember={savingMember}
+                deletingGroup={deletingGroup}
+                deletingMember={deletingMember}
+                onToggle={toggleGroup}
+                onStartEditingGroup={startEditingGroup}
+                onStartEditingMember={startEditing}
+                onEditValueChange={setEditValue}
+                onSaveGroupEdit={saveGroupEdit}
+                onSaveMemberEdit={saveEdit}
+                onCancelEditing={cancelEditing}
+                onDeleteGroup={handleDeleteGroup}
+                onDeleteMember={handleDeleteMember}
+              />
+            ))
+          }
         </div>
-      </div>
+      </section>
+
+      <hr className="border-white/5" />
 
       {/* Clear Actions */}
-      <div className="overflow-hidden">
+      <section>
         <button
           type="button"
           onClick={() => setIsDangerZoneOpen((current) => !current)}
-          className="flex w-full items-center justify-between border-t border-none border-white/5 bg-transparent px-0 py-2 text-left transition-colors hover:text-white">
-          <span className="flex items-center gap-2 text-[11px] font-bold tracking-wider text-red-500/60">
-            <i className="fa-solid fa-triangle-exclamation text-[10px]"></i>
+          className="group flex w-full items-center justify-between text-left transition-colors">
+          <span className="text-[14px] font-semibold text-red-500/80 group-hover:text-red-500">
             Danger Zone
           </span>
-          <span className="flex items-center gap-2 text-[11px] font-medium text-white/30">
-            <span>{isDangerZoneOpen ? "Hide" : "Show"}</span>
+          <span className="flex items-center gap-1.5 text-[12px] font-medium text-white/30 group-hover:text-white/50">
+            {isDangerZoneOpen ? "Hide" : "Show"}
             <i className={`fa-solid fa-chevron-${isDangerZoneOpen ? "up" : "down"} text-[10px]`} />
           </span>
         </button>
-        {isDangerZoneOpen && (
-          <div className="flex items-center justify-between gap-4 py-4">
+
+        {isDangerZoneOpen ?
+          <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex-1">
-              <p className="mt-1 text-[11px] leading-relaxed font-bold tracking-tight text-white/35">
+              <p className="text-[13px] text-white/40">
                 Deleting groups is permanent. Face data is managed separately from records.
               </p>
             </div>
 
-            <div className="flex shrink-0 gap-2">
+            <div className="flex shrink-0 gap-3">
               <button
                 onClick={handleClearAllGroups}
                 disabled={isLoading || deletingGroup === "all" || groups.length === 0}
-                className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-[11px] font-black tracking-wider text-red-400 transition-all hover:bg-red-500/15 active:scale-95 disabled:opacity-20">
+                className="flex items-center gap-2 rounded-md bg-red-500/10 px-4 py-2 text-[12px] font-semibold text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-40">
                 {deletingGroup === "all" ?
                   <i className="fa-solid fa-spinner fa-spin"></i>
-                : <i className="fa-solid fa-layer-group"></i>}
+                : null}
                 Clear Groups
               </button>
 
               <button
                 onClick={onClearDatabase}
                 disabled={isLoading}
-                className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-1.5 text-[11px] font-black tracking-wider text-amber-500/70 transition-all hover:bg-amber-500/15 hover:text-amber-500 active:scale-95 disabled:opacity-20">
-                <i className="fa-solid fa-user-slash"></i>
+                className="flex items-center gap-2 rounded-md bg-amber-500/10 px-4 py-2 text-[12px] font-semibold text-amber-500 transition-colors hover:bg-amber-500/20 disabled:opacity-40">
                 Clear Face Data
               </button>
             </div>
           </div>
-        )}
-        {!isDangerZoneOpen && (
-          <p className="pb-2 text-[11px] font-medium text-white/22">
+        : <p className="mt-1 text-[13px] text-white/20">
             Destructive actions are hidden by default.
           </p>
-        )}
-      </div>
+        }
+      </section>
     </div>
   )
 }

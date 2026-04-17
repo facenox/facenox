@@ -43,18 +43,18 @@ const defaultConfig: CloudConfig = {
 const pairingSteps = [
   {
     label: "Step 1",
-    title: "Generate a pairing code",
-    body: "Sign in to Facenox Cloud, choose the site, and create a short-lived pairing code.",
+    title: "Generate Code",
+    body: "Get a short-lived pairing code from your Facenox Cloud dashboard.",
   },
   {
     label: "Step 2",
-    title: "Paste the code here",
-    body: "For the hosted beta, the cloud server address is already set in Facenox Desktop.",
+    title: "Link Device",
+    body: "Paste the code below to securely register this desktop.",
   },
   {
     label: "Step 3",
-    title: "Connect and sync",
-    body: "This desktop stores its device token locally and starts the first snapshot sync.",
+    title: "Auto Sync",
+    body: "Records and groups will automatically sync in the background.",
   },
 ] as const
 
@@ -193,45 +193,21 @@ export function CloudSync() {
     }
   }
 
-  const statusTone =
-    config.connected ? "border-cyan-500/20 text-cyan-300" : "border-white/10 text-white/60"
+  const badgeTone = config.connected ? "bg-cyan-500/10 text-cyan-400" : "bg-white/5 text-white/40"
+
   const syncTone =
-    config.lastSyncStatus === "success" ? "text-cyan-300"
+    config.lastSyncStatus === "success" ? "text-cyan-400"
     : config.lastSyncStatus === "error" ? "text-red-400"
     : "text-white/50"
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col space-y-8 p-10">
-      <div className={`border-y px-0 py-4 ${statusTone}`}>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="text-[11px] font-semibold tracking-[0.24em] uppercase">
-              {config.connected ? "Connected" : "Not Connected"}
-            </div>
-            <div className="mt-1 text-sm">
-              {config.connected ?
-                `${config.organizationName || "Unknown org"} - ${config.siteName || "Unknown site"}`
-              : "This desktop is still local-only until you connect it to Facenox Cloud."}
-            </div>
-          </div>
-          <div className="rounded-full border border-current/20 px-3 py-1 text-[10px] font-semibold tracking-[0.22em] uppercase">
-            {config.connected ? "Cloud Linked" : "Local Only"}
-          </div>
-        </div>
-        {config.connected && (
-          <div className="mt-3 grid gap-1 text-[11px] text-white/50 sm:grid-cols-2">
-            <span>Device: {config.deviceName || "Unnamed desktop"}</span>
-            <span>Device ID: {config.deviceId}</span>
-          </div>
-        )}
-      </div>
-
+    <div className="mx-auto w-full max-w-[800px] space-y-12 px-6 pt-8 pb-16">
       {banner.type !== "idle" && (
         <div
-          className={`flex items-start gap-3 border-l-2 px-4 py-1 text-xs ${
+          className={`flex items-start gap-3 rounded-md px-4 py-3 text-[13px] font-medium ${
             banner.type === "success" ?
-              "border-cyan-400 text-cyan-300"
-            : "border-red-400 text-red-400"
+              "bg-cyan-500/10 text-cyan-400"
+            : "bg-red-500/10 text-red-400"
           }`}>
           <i
             className={`mt-0.5 shrink-0 ${
@@ -244,37 +220,60 @@ export function CloudSync() {
         </div>
       )}
 
-      <section className="space-y-6 pt-6">
-        <div className="space-y-1">
+      {/* Status Overview */}
+      <section>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-[14px] font-semibold text-white">Status Overview</h2>
+            <p className="mt-1 text-[13px] text-white/40">
+              {config.connected ?
+                `Connected to: ${config.organizationName || "Unknown org"} – ${config.siteName || "Default Site"}`
+              : "This desktop operates strictly local until linked."}
+            </p>
+          </div>
+          <div className={`rounded-md px-2 py-1 text-[11px] font-semibold ${badgeTone}`}>
+            {config.connected ? "Cloud Linked" : "Local Only"}
+          </div>
+        </div>
+
+        {config.connected && (
+          <div className="flex flex-col gap-1 rounded-md border border-white/[0.05] bg-white/[0.02] p-4 font-mono text-[12px] text-white/50">
+            <span>Device: {config.deviceName || "Unnamed desktop"}</span>
+            <span>Device ID: {config.deviceId}</span>
+          </div>
+        )}
+      </section>
+
+      <hr className="border-white/5" />
+
+      {/* Connection & Setup */}
+      <section>
+        <div className="mb-6">
           <div className="flex items-center gap-2">
-            <i className="fa-solid fa-link text-sm text-cyan-400" />
-            <h4 className="text-base font-semibold text-white">Connect this desktop</h4>
+            <h2 className="text-[14px] font-semibold text-white">Connection</h2>
             <Tooltip
-              content="Cloud Beta sync does not upload face embeddings or raw face images. Biometric matching stays local on this desktop. To move biometric profiles between devices, use encrypted backup and restore."
+              content="Cloud Beta sync does not upload face embeddings. Biometric profiles stay local."
               position="bottom">
               <button
                 type="button"
-                className="flex h-6 w-6 items-center justify-center rounded-full text-white/30 transition hover:text-cyan-300">
+                className="flex h-5 w-5 items-center justify-center rounded-full text-white/30 transition hover:text-white">
                 <i className="fa-solid fa-circle-info text-[11px]" />
               </button>
             </Tooltip>
           </div>
-          <p className="text-sm text-white/45">
-            For the hosted beta, normal users only need a pairing code. Server URL is an advanced
-            override for custom deployments.
+          <p className="mt-1 text-[13px] text-white/40">
+            Link this device to synchronize groups and attendance online.
           </p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           {!config.connected ?
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-3">
               {pairingSteps.map((step, index) => (
-                <div className="space-y-2 border-l border-white/10 pl-4" key={step.title}>
-                  <div className="text-[10px] font-semibold tracking-[0.24em] text-cyan-300 uppercase">
-                    0{index + 1}
-                  </div>
-                  <div className="text-sm font-semibold text-white">{step.title}</div>
-                  <div className="text-[11px] leading-relaxed text-white/50">{step.body}</div>
+                <div className="space-y-1" key={step.title}>
+                  <div className="text-[11px] font-semibold text-cyan-400">STEP {index + 1}</div>
+                  <div className="text-[13px] font-medium text-white">{step.title}</div>
+                  <div className="text-[12px] text-white/40">{step.body}</div>
                 </div>
               ))}
             </div>
@@ -282,63 +281,42 @@ export function CloudSync() {
 
           {!config.connected ?
             <>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                <label className="min-w-0 flex-1 space-y-2">
-                  <span className="text-[11px] font-medium text-white/30">Pairing Code</span>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <label className="text-[11px] font-medium text-white/30 uppercase">
+                    Pairing Code
+                  </label>
                   <input
                     type="text"
                     placeholder="ABCD2345"
                     value={pairingCode}
                     onChange={(e) => setPairingCode(e.target.value.toUpperCase())}
-                    className="h-10 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 text-xs tracking-[0.18em] text-white uppercase transition-all outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
+                    className="h-10 w-full rounded-md border-0 bg-white/5 px-4 font-mono text-[13px] tracking-widest text-white uppercase transition-all outline-none placeholder:tracking-normal placeholder:lowercase focus:bg-white/10 focus:ring-1 focus:ring-white/20"
                   />
-                </label>
+                </div>
                 <button
                   onClick={handlePair}
                   disabled={busyAction !== null || !pairingCode}
-                  className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 text-[11px] font-bold tracking-wider text-cyan-300 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
+                  className="flex h-10 min-w-32 shrink-0 items-center justify-center gap-2 rounded-md bg-cyan-500/10 px-4 text-[12px] font-bold text-cyan-400 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
                   <i
                     className={
-                      busyAction === "pairing" ?
-                        "fa-solid fa-circle-notch fa-spin"
-                      : "fa-solid fa-plug"
+                      busyAction === "pairing" ? "fa-solid fa-spinner fa-spin" : "fa-solid fa-plug"
                     }
                   />
                   Connect
                 </button>
               </div>
-              <div className="text-[11px] text-white/35">
-                Advanced settings are only for staging, self-hosted deployments, or custom device
-                labels.
-              </div>
             </>
           : <>
-              <div className="grid gap-5 border-y border-white/8 py-4 text-xs text-white/60 sm:grid-cols-2">
-                <div>
-                  <div className="mb-1 text-[11px] tracking-[0.22em] text-white/30 uppercase">
-                    Organization
-                  </div>
-                  <div className="text-white">
-                    {config.organizationName || config.organizationId}
-                  </div>
-                </div>
-                <div>
-                  <div className="mb-1 text-[11px] tracking-[0.22em] text-white/30 uppercase">
-                    Site
-                  </div>
-                  <div className="text-white">{config.siteName || config.siteId}</div>
-                </div>
-              </div>
-
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={handleManualSync}
                   disabled={busyAction !== null}
-                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-[11px] font-bold tracking-wider text-white/70 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
+                  className="flex items-center gap-2 rounded-md border border-white/10 bg-transparent px-4 py-2 text-[12px] font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
                   <i
                     className={
                       busyAction === "syncing" ?
-                        "fa-solid fa-circle-notch fa-spin"
+                        "fa-solid fa-spinner fa-spin"
                       : "fa-solid fa-rotate"
                     }
                   />
@@ -347,11 +325,11 @@ export function CloudSync() {
                 <button
                   onClick={handleDisconnect}
                   disabled={busyAction !== null}
-                  className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-red-300 transition-all hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-40">
+                  className="flex items-center gap-2 rounded-md bg-red-500/10 px-4 py-2 text-[12px] font-semibold text-red-500 transition-all hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40">
                   <i
                     className={
                       busyAction === "disconnecting" ?
-                        "fa-solid fa-circle-notch fa-spin"
+                        "fa-solid fa-spinner fa-spin"
                       : "fa-solid fa-link-slash"
                     }
                   />
@@ -361,111 +339,114 @@ export function CloudSync() {
             </>
           }
 
-          <button
-            onClick={() => setShowAdvanced((value) => !value)}
-            className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-white/45 uppercase transition hover:text-white/70">
-            <i className={`fa-solid ${showAdvanced ? "fa-chevron-up" : "fa-chevron-down"}`} />
-            {showAdvanced ? "Hide advanced settings" : "Show advanced settings"}
-          </button>
+          {/* Advanced Toggler */}
+          <div>
+            <button
+              onClick={() => setShowAdvanced((value) => !value)}
+              className="group flex items-center gap-1.5 text-[12px] font-medium text-white/30 transition hover:text-white/50">
+              {showAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
+              <i
+                className={`fa-solid ${showAdvanced ? "fa-chevron-up" : "fa-chevron-down"} text-[10px]`}
+              />
+            </button>
 
-          {showAdvanced ?
-            <div className="space-y-4 border-l border-white/10 pl-4">
-              <div className="text-[11px] leading-relaxed text-white/45">
-                Change these only if you need a custom server URL, a clearer device label, or a
-                different background sync schedule.
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="space-y-2">
-                  <span className="text-[11px] font-medium text-white/30">Custom Server URL</span>
-                  <input
-                    type="url"
-                    placeholder="Optional custom deployment URL"
-                    value={cloudBaseUrl}
-                    disabled={config.connected}
-                    onChange={(e) => setCloudBaseUrl(e.target.value)}
-                    className="h-10 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5 disabled:cursor-not-allowed disabled:opacity-60"
-                  />
-                  <div className="text-[11px] text-white/35">
-                    Leave this empty to use the hosted Facenox Cloud server. Only enter a value for
-                    self-hosted or custom deployments.
+            {showAdvanced ?
+              <div className="mt-4 space-y-6 rounded-md border border-white/[0.05] p-5">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-white/30 uppercase">
+                      Custom Server URL
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="Leave empty for official sync"
+                      value={cloudBaseUrl}
+                      disabled={config.connected}
+                      onChange={(e) => setCloudBaseUrl(e.target.value)}
+                      className="h-9 w-full rounded-md border-0 bg-white/5 px-3 text-[13px] text-white transition-all outline-none focus:bg-white/10 focus:ring-1 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
                   </div>
-                </label>
-                <label className="space-y-2">
-                  <span className="text-[11px] font-medium text-white/30">Device Name</span>
-                  <input
-                    type="text"
-                    placeholder="Front Desk Desktop"
-                    value={deviceName}
-                    disabled={config.connected}
-                    onChange={(e) => setDeviceName(e.target.value)}
-                    className="h-10 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5 disabled:cursor-not-allowed disabled:opacity-60"
-                  />
-                </label>
-              </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-white/30 uppercase">
+                      Device Name Override
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Front Desk Desktop"
+                      value={deviceName}
+                      disabled={config.connected}
+                      onChange={(e) => setDeviceName(e.target.value)}
+                      className="h-9 w-full rounded-md border-0 bg-white/5 px-3 text-[13px] text-white transition-all outline-none focus:bg-white/10 focus:ring-1 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                </div>
 
-              <div className="grid gap-4 md:grid-cols-[1fr_auto]">
-                <label className="space-y-2">
-                  <span className="text-[11px] font-medium text-white/30">Auto-Sync Interval</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={1440}
-                    value={intervalMinutes}
-                    onChange={(e) => setIntervalMinutes(Math.max(1, Number(e.target.value) || 1))}
-                    className="h-10 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 text-xs text-white transition-all outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
-                  />
-                </label>
-                <label className="mt-auto flex items-center gap-3 border border-white/10 px-4 py-2 text-xs text-white/70">
-                  <input
-                    type="checkbox"
-                    checked={enabled}
-                    onChange={(e) => setEnabled(e.target.checked)}
-                    className="h-4 w-4 accent-cyan-500"
-                  />
-                  Enable background auto-sync
-                </label>
-              </div>
+                <div className="grid gap-6 md:grid-cols-[1fr_auto]">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-white/30 uppercase">
+                      Auto-Sync Interval (Mins)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={1440}
+                      value={intervalMinutes}
+                      onChange={(e) => setIntervalMinutes(Math.max(1, Number(e.target.value) || 1))}
+                      className="h-9 w-full rounded-md border-0 bg-white/5 px-3 text-[13px] text-white transition-all outline-none focus:bg-white/10 focus:ring-1 focus:ring-white/20"
+                    />
+                  </div>
+                  <label className="mt-auto mb-1 flex cursor-pointer items-center gap-3 text-[13px] text-white/70">
+                    <input
+                      type="checkbox"
+                      checked={enabled}
+                      onChange={(e) => setEnabled(e.target.checked)}
+                      className="h-4 w-4 rounded bg-white/5 accent-cyan-500 ring-0 focus:ring-0"
+                    />
+                    Enable background auto-sync
+                  </label>
+                </div>
 
-              <button
-                onClick={handleSave}
-                disabled={busyAction !== null}
-                className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-cyan-300 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
-                <i
-                  className={
-                    busyAction === "saving" ?
-                      "fa-solid fa-circle-notch fa-spin"
-                    : "fa-solid fa-gear"
-                  }
-                />
-                Save Advanced Settings
-              </button>
-            </div>
-          : null}
+                <button
+                  onClick={handleSave}
+                  disabled={busyAction !== null}
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-white/10 px-4 py-2 text-[12px] font-medium text-white transition-all hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40">
+                  <i
+                    className={
+                      busyAction === "saving" ? "fa-solid fa-spinner fa-spin" : "fa-solid fa-gear"
+                    }
+                  />
+                  Save Settings
+                </button>
+              </div>
+            : null}
+          </div>
 
           {config.connected ?
-            <p className={`text-[11px] ${syncTone}`}>
+            <p className={`text-[12px] font-medium ${syncTone}`}>
               {config.lastSyncedAt ?
                 `Last successful sync: ${new Date(config.lastSyncedAt).toLocaleString()}`
               : "No successful sync yet."}
-              {config.lastSyncMessage ? ` ${config.lastSyncMessage}` : ""}
+              {config.lastSyncMessage ? ` • ${config.lastSyncMessage}` : ""}
             </p>
           : null}
         </div>
       </section>
 
-      <section className="space-y-4 border-t border-white/8 pt-6">
-        <div className="flex items-center gap-2">
-          <i className="fa-solid fa-cloud text-sm text-cyan-400" />
-          <h4 className="text-base font-semibold text-white">What goes to cloud</h4>
+      <hr className="border-white/5" />
+
+      {/* Scope Disclaimer */}
+      <section>
+        <div className="mb-4">
+          <h2 className="text-[14px] font-semibold text-white">Data Scope</h2>
+          <p className="mt-1 text-[13px] text-white/40">
+            Understand what is shared when the cloud connection is active.
+          </p>
         </div>
-        <ul className="space-y-3 text-sm leading-relaxed text-white/50">
-          <li>Groups, members, attendance records, and sessions from this desktop.</li>
-          <li>Device identity, sync status, and admin-facing reporting data.</li>
-          <li>Cloud Beta sync does not send face embeddings or raw face images.</li>
-          <li>
-            Biometric matching stays local. To move biometric profiles, use encrypted backup and
-            restore.
+        <ul className="list-disc space-y-1.5 pl-4 text-[13px] text-white/50 marker:text-white/20">
+          <li>Groups, members, and real-time attendance logs are synced.</li>
+          <li>Hardware IDs and sync timestamps are stored for admin auditing.</li>
+          <li className="text-amber-500/70">
+            Raw imagery and face profile vectors are never transmitted.
           </li>
         </ul>
       </section>
