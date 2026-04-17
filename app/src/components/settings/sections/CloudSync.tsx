@@ -201,7 +201,7 @@ export function CloudSync() {
     : "text-white/50"
 
   return (
-    <div className="mx-auto w-full max-w-[800px] space-y-12 px-6 pt-8 pb-16">
+    <div className="mx-auto w-full max-w-[900px] space-y-12 px-10 pt-8 pb-16">
       {banner.type !== "idle" && (
         <div
           className={`flex items-start gap-3 rounded-md px-4 py-3 text-[13px] font-medium ${

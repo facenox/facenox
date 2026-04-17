@@ -211,7 +211,7 @@ export function Database({
     : "Facenox could not read the current time status."
 
   return (
-    <div className="mx-auto w-full max-w-[800px] space-y-12 px-6 pt-8 pb-16">
+    <div className="mx-auto flex w-full max-w-[900px] flex-col space-y-10 px-10 pt-8 pb-16">
       {/* Statistics Overview */}
       <section>
         <DatabaseStats
@@ -220,8 +220,6 @@ export function Database({
           totalPersons={systemData.totalPersons}
         />
       </section>
-
-      <hr className="border-white/5" />
 
       {/* Device Time */}
       <section>
@@ -267,8 +265,6 @@ export function Database({
           </div>
         </div>
       </section>
-
-      <hr className="border-white/5" />
 
       {/* Backup & Restore */}
       <section>
@@ -343,8 +339,6 @@ export function Database({
           </div>
         </div>
       </section>
-
-      <hr className="border-white/5" />
 
       {/* Password Prompt Modal */}
       <Modal
@@ -487,8 +481,6 @@ export function Database({
           }
         </div>
       </section>
-
-      <hr className="border-white/5" />
 
       {/* Clear Actions */}
       <section>

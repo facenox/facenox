@@ -125,7 +125,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
   }
 
   return (
-    <section className="mx-auto flex h-full w-full max-w-[800px] flex-col px-6 pt-8">
+    <section className="mx-auto flex h-full w-full max-w-[900px] flex-col px-10 pt-4">
       {/* Activity Overview */}
       <section className="shrink-0">
         <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3">
@@ -156,10 +156,8 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
         </div>
       </section>
 
-      <hr className="my-10 shrink-0 border-white/5" />
-
       {/* Activity Log */}
-      <section className="flex min-h-0 flex-1 flex-col pb-6">
+      <section className="mt-8 flex min-h-0 flex-1 flex-col">
         <div className="mb-6 flex shrink-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="text-[14px] font-semibold text-white">Activity Log</h2>
@@ -189,7 +187,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
           </div>
         </div>
 
-        <div className="custom-scroll flex-1 overflow-y-auto pr-2 text-left">
+        <div className="custom-scroll flex-1 overflow-y-auto pr-2 pb-10 text-left">
           <div className="h-full">
             {recentRecords.length === 0 ?
               <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-transparent py-12 text-white/30">

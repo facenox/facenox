@@ -108,7 +108,7 @@ export function Reports({
   }, [onExportHandlersReady, handleExportCSV, members.length, loading])
 
   return (
-    <section className="custom-scroll flex h-full flex-col overflow-hidden p-6">
+    <section className="custom-scroll flex h-full flex-col overflow-hidden px-10 pt-4 pb-10">
       <div className="relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
         {error && (
           <div className="animate-in fade-in slide-in-from-top-2 rounded-lg border border-red-500/40 bg-red-600/20 px-4 py-2 text-sm text-red-200">

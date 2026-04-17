@@ -80,17 +80,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      <div className="hover-scrollbar settings-sidebar-scroll flex-1 space-y-6 overflow-y-auto px-3 pt-4 pb-6">
+      <div className="hover-scrollbar settings-sidebar-scroll flex-1 space-y-6 overflow-y-auto pt-4 pr-3 pb-6 pl-4">
         <section>
-          <div className="mb-2 px-2">
-            <h2 className="text-[11px] font-bold tracking-wider text-white/40 uppercase">
+          <div className="mb-3 px-3">
+            <h2 className="text-xs font-bold tracking-wider text-white/40 uppercase">
               Group Management
             </h2>
           </div>
 
           <div className="space-y-3">
             <div
-              className={`space-y-0.5 ${!dropdownValue ? "pointer-events-none opacity-40 grayscale" : ""}`}>
+              className={`space-y-1 ${!dropdownValue ? "pointer-events-none opacity-40 grayscale" : ""}`}>
               {groupSections.map((subsection) => {
                 const isActive = activeSection === "group" && groupInitialSection === subsection.id
                 return (
@@ -104,13 +104,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         setRegistrationState(null, null)
                       }
                     }}
-                    className={`group/item flex w-full items-center gap-3 rounded-md border-0 bg-transparent px-3 py-2 text-left text-[13px] font-medium transition-colors ${
+                    className={`group/item flex w-full items-center gap-3 rounded-md border-0 bg-transparent px-3 py-2.5 text-left text-[14px] font-medium transition-colors ${
                       isActive ? "!bg-white/10 text-white" : (
                         "text-white/60 hover:!bg-white/5 hover:text-white"
                       )
                     }`}>
                     <i
-                      className={`${subsection.icon} w-4 text-[13px] ${isActive ? "text-cyan-400" : "text-white/40 group-hover/item:text-white/70"}`}></i>
+                      className={`${subsection.icon} w-5 text-sm ${isActive ? "text-cyan-400" : "text-white/40 group-hover/item:text-white/70"}`}></i>
                     {subsection.label}
                   </button>
                 )
@@ -120,26 +120,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </section>
 
         <section>
-          <div className="mb-2 px-2">
-            <h2 className="text-[11px] font-bold tracking-wider text-white/40 uppercase">
-              General
-            </h2>
+          <div className="mb-3 px-3">
+            <h2 className="text-xs font-bold tracking-wider text-white/40 uppercase">General</h2>
           </div>
 
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             {sections.map((section) => {
               const isActive = activeSection === section.id
               return (
                 <button
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
-                  className={`group/item flex w-full items-center gap-3 rounded-md border-0 bg-transparent px-3 py-2 text-left text-[13px] font-medium transition-colors ${
+                  className={`group/item flex w-full items-center gap-3 rounded-md border-0 bg-transparent px-3 py-2.5 text-left text-[14px] font-medium transition-colors ${
                     isActive ? "!bg-white/10 text-white" : (
                       "text-white/60 hover:!bg-white/5 hover:text-white"
                     )
                   }`}>
                   <i
-                    className={`${section.icon} w-4 text-[13px] ${isActive ? "text-white" : "text-white/40 group-hover/item:text-white/70"}`}></i>
+                    className={`${section.icon} w-5 text-sm ${isActive ? "text-white" : "text-white/40 group-hover/item:text-white/70"}`}></i>
                   {section.label}
                 </button>
               )
