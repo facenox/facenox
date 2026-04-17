@@ -47,11 +47,6 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
     { id: "overview", label: "Overview", icon: "fa-solid fa-chart-line" },
     { id: "reports", label: "Reports", icon: "fa-solid fa-chart-bar" },
     { id: "members", label: "Members", icon: "fa-solid fa-users" },
-    {
-      id: "registration",
-      label: "Registration",
-      icon: "fa-solid fa-id-card",
-    },
   ]
 
   const sections = [

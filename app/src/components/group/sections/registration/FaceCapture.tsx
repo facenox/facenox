@@ -180,7 +180,7 @@ export function FaceCapture({
           <div className="mt-2 flex w-full justify-end">
             <button
               onClick={() => setGlobalError(null)}
-              className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-6 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
+              className="rounded-lg border border-white/5 bg-white/5 px-6 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-all hover:bg-white/10 hover:text-white">
               Dismiss
             </button>
           </div>

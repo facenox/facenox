@@ -124,7 +124,6 @@ export const useGroupUIStore = create<GroupUIState>((set, get) => ({
 
   jumpToRegistration: (memberId: string, source: "upload" | "camera" = "camera") => {
     set({
-      activeSection: "registration",
       preSelectedMemberId: memberId,
       lastRegistrationSource: source,
       lastRegistrationMode: "single",

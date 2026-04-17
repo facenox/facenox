@@ -1,7 +1,7 @@
 import { useMemo, memo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
-import { Members, Overview, Registration, Reports } from "@/components/group/sections"
+import { Members, Overview, Reports } from "@/components/group/sections"
 import { EmptyState } from "@/components/group/shared"
 
 interface GroupContentProps {
@@ -84,21 +84,13 @@ function GroupContentComponent({
 
         {activeSection === "members" && (
           <Members
+            group={selectedGroup}
             members={members}
             onMembersChange={handleMembersChange}
             onEdit={openEditMember}
             onAdd={openAddMember}
-          />
-        )}
-
-        {activeSection === "registration" && (
-          <Registration
-            group={selectedGroup}
-            members={members}
-            onRefresh={handleMembersChange}
             deselectMemberTrigger={deselectMemberTrigger}
             onHasSelectedMemberChange={onHasSelectedMemberChange}
-            onAddMember={openAddMember}
           />
         )}
       </motion.div>

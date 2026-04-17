@@ -68,7 +68,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   currentGroupMembers,
   triggerCreateGroup,
   deselectMemberTrigger,
-  setDeselectMemberTrigger,
   setHasSelectedMember,
   handleExportHandlersReady,
   handleAddMemberHandlerReady,
@@ -91,14 +90,12 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   members,
   reportsExportHandlers,
   addMemberHandler,
-  hasSelectedMember,
   dropdownGroups,
   groupSections,
 }) => {
   const { openEditGroup } = useGroupModals()
-  const registrationSource = useGroupUIStore((state) => state.lastRegistrationSource)
   const registrationMode = useGroupUIStore((state) => state.lastRegistrationMode)
-  const handleRegistrationBack = useGroupUIStore((state) => state.handleRegistrationBack)
+  const resetRegistration = useGroupUIStore((state) => state.resetRegistration)
   const antiSpoofDetectionInfoDismissed = useUIStore(
     (state) => state.antiSpoofDetectionInfoDismissed,
   )
@@ -173,12 +170,23 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 groupInitialSection === "members" &&
                 validInitialGroup &&
                 addMemberHandler &&
-                members.length > 0 && (
+                members.length > 0 &&
+                !registrationMode && (
                   <button
                     onClick={addMemberHandler}
                     className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium text-white/40 transition-all hover:bg-white/10 hover:text-white/80">
                     <i className="fa-solid fa-user-plus text-[10px]"></i>
                     Add Member
+                  </button>
+                )}
+              {activeSection === "group" &&
+                groupInitialSection === "members" &&
+                registrationMode && (
+                  <button
+                    onClick={resetRegistration}
+                    className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium text-white/50 transition-all hover:bg-white/10 hover:text-white">
+                    <i className="fa-solid fa-arrow-left text-[10px]"></i>
+                    Back to Members
                   </button>
                 )}
               {activeSection === "group" &&
@@ -213,22 +221,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                       Export CSV
                     </button>
                   </div>
-                )}
-              {activeSection === "group" &&
-                groupInitialSection === "registration" &&
-                registrationSource && (
-                  <button
-                    onClick={() => {
-                      if (registrationMode === "single" && hasSelectedMember) {
-                        setDeselectMemberTrigger(Date.now())
-                        return
-                      }
-                      handleRegistrationBack()
-                    }}
-                    className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium text-white/50 transition-all hover:bg-white/10 hover:text-white">
-                    <i className="fa-solid fa-arrow-left text-[10px]"></i>
-                    Back
-                  </button>
                 )}
             </div>
           </div>

@@ -325,7 +325,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
   useEffect(() => () => stopCamera(), [stopCamera])
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-[#0f0f0f] text-white">
+    <div className="flex h-full flex-col overflow-hidden text-white">
       {/* Privacy Notice — DPA Sec.16(a) / GDPR Art.13: inform data subjects at point of collection */}
       {showPrivacyNotice && (
         <div className="mx-6 mt-4 flex shrink-0 items-start gap-3 rounded-lg border border-blue-500/25 bg-blue-500/8 px-4 py-3 text-xs text-blue-200/80">
@@ -390,7 +390,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-lg border border-white/10 bg-[rgba(17,22,29,0.96)] p-3">
+              <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
                   <div className="relative min-w-55 flex-1">
                     <svg
@@ -410,12 +410,12 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                       value={memberSearch}
                       onChange={(e) => setMemberSearch(e.target.value)}
                       placeholder="Search members..."
-                      className="w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 pr-3 pl-10 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/30 focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
+                      className="w-full rounded-xl border border-white/5 bg-white/5 py-2.5 pr-3 pl-10 text-[11px] font-medium text-white shadow-inner transition-all duration-300 outline-none placeholder:text-white/30 focus:border-cyan-500/32 focus:bg-white/10 focus:ring-1 focus:ring-cyan-500/5"
                     />
                   </div>
                   <Dropdown
                     options={[
-                      { value: "all", label: "All members" },
+                      { value: "all", label: "Filter: All" },
                       { value: "non-registered", label: "Unregistered" },
                       { value: "registered", label: "Registered" },
                     ]}
@@ -425,6 +425,9 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                         setRegistrationFilter(value as "all" | "registered" | "non-registered")
                       }
                     }}
+                    buttonClassName="!bg-white/5 !border-white/5 py-2.5 px-3 h-full min-w-[130px] rounded-xl text-[11px] font-bold tracking-wider text-white hover:!bg-white/10"
+                    optionClassName="text-[11px] font-bold tracking-wider"
+                    iconClassName="text-[10px]"
                     showPlaceholderOption={false}
                     allowClear={false}
                     className="min-w-42.5"
@@ -433,13 +436,13 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
 
                 <div className="custom-scroll max-h-64 space-y-1.5 overflow-y-auto">
                   {members.length === 0 && (
-                    <div className="rounded-lg border border-dashed border-white/10 bg-[rgba(22,28,36,0.44)] px-3 py-8 text-center">
+                    <div className="rounded-lg border border-dashed border-white/5 bg-white/5 px-3 py-8 text-center">
                       <div className="text-xs text-white/40">No members yet</div>
                     </div>
                   )}
 
                   {members.length > 0 && filteredMembers.length === 0 && (
-                    <div className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-3 py-6 text-center">
+                    <div className="rounded-lg border border-white/5 bg-white/5 px-3 py-6 text-center">
                       <div className="text-xs text-white/40">
                         {memberSearch.trim() ?
                           `No results for "${memberSearch}"`
@@ -490,7 +493,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                         className={`group w-full rounded-lg border px-3 py-2 text-left transition-all ${
                           isInQueue ?
                             "border-cyan-400/50 bg-linear-to-br from-cyan-500/10 to-cyan-500/5"
-                          : "border-white/10 bg-[rgba(17,22,29,0.96)] hover:border-white/10 hover:bg-[rgba(22,28,36,0.52)]"
+                          : "border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/10"
                         }`}>
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0">
@@ -543,7 +546,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                 {!isStreaming && !cameraError && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/95">
                     <div className="max-w-xs space-y-4 text-center">
-                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-[rgba(22,28,36,0.62)]">
+                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-white/5 bg-white/5">
                         <i className="fa-solid fa-video text-2xl text-white/30"></i>
                       </div>
                       <div className="text-sm text-white/60">Select a camera to start</div>
@@ -600,7 +603,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                       <div className="max-w-xs text-xs text-red-300">{cameraError}</div>
                       <button
                         onClick={() => void startCamera()}
-                        className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
+                        className="rounded-lg border border-white/5 bg-white/5 px-4 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-all hover:bg-white/10 hover:text-white">
                         Try Again
                       </button>
                     </div>
@@ -681,7 +684,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                   )}
                   <button
                     onClick={() => setQueueStarted(false)}
-                    className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2 py-1 text-xs font-medium text-white/30 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
+                    className="rounded-lg border border-white/5 bg-white/5 px-2 py-1 text-xs font-medium text-white/30 transition-all hover:bg-white/10 hover:text-white">
                     <i className="fa-solid fa-list-ul mr-1"></i>
                     Queue
                   </button>
@@ -696,7 +699,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                       }
                     }}
                     disabled={currentIndex === 0}
-                    className="rounded-full border border-white/10 bg-[rgba(10,13,18,0.78)] p-2 text-white/60 transition-all hover:bg-[rgba(15,19,25,0.9)] hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
+                    className="rounded-full border border-white/5 bg-white/5 p-2 text-white/60 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
                     <i className="fa-solid fa-chevron-left text-sm"></i>
                   </button>
                 </div>
@@ -709,7 +712,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                       }
                     }}
                     disabled={currentIndex >= memberQueue.length - 1}
-                    className="rounded-full border border-white/10 bg-[rgba(10,13,18,0.78)] p-2 text-white/60 transition-all hover:bg-[rgba(15,19,25,0.9)] hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
+                    className="rounded-full border border-white/5 bg-white/5 p-2 text-white/60 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
                     <i className="fa-solid fa-chevron-right text-sm"></i>
                   </button>
                 </div>
@@ -729,7 +732,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                       }
                     }}
                     disabled={!currentMember}
-                    className="rounded-lg border border-white/10 bg-[rgba(10,13,18,0.78)] px-3 py-2 text-[11px] font-medium text-white/50 transition-all hover:bg-[rgba(15,19,25,0.9)] hover:text-white disabled:opacity-40">
+                    className="rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-[11px] font-medium text-white/50 transition-all hover:bg-white/10 hover:text-white disabled:opacity-40">
                     Skip
                   </button>
 
@@ -745,9 +748,9 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                     className={`flex-1 rounded-lg border px-4 py-2 transition-all disabled:cursor-not-allowed ${(() => {
                       const mRec = members.find((m) => m.person_id === currentMember?.personId)
                       if (currentMember && !mRec?.has_consent) {
-                        return "cursor-not-allowed border-white/10 bg-[rgba(22,28,36,0.44)] text-white/20"
+                        return "cursor-not-allowed border-white/5 bg-white/5 text-white/20"
                       }
-                      return "border-cyan-500/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 disabled:border-white/10 disabled:bg-[rgba(10,13,18,0.78)] disabled:text-white/30"
+                      return "border-cyan-500/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 disabled:border-white/10 disabled:bg-white/5 disabled:text-white/30"
                     })()}`}>
                     {isProcessing ?
                       <span className="flex items-center justify-center gap-2 text-xs font-medium">
@@ -864,8 +867,8 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
             </div>
 
             {/* Queue Sidebar - Compact */}
-            <div className="flex w-64 shrink-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-[rgba(17,22,29,0.96)]">
-              <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
+            <div className="flex w-64 shrink-0 flex-col overflow-hidden rounded-xl border border-white/5 bg-white/[0.02]">
+              <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
                 <span className="text-xs font-semibold text-white/70">Queue</span>
                 <span className="text-xs text-white/40">
                   {completedMembers}/{totalMembers}
@@ -891,7 +894,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                       className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-all ${
                         isCurrent ?
                           "border border-white/20 bg-white/10"
-                        : "border border-transparent hover:bg-[rgba(22,28,36,0.52)]"
+                        : "border border-transparent hover:bg-white/10"
                       }`}>
                       {/* Status Icon */}
                       <div
@@ -900,8 +903,8 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                           : member.status === "skipped" ? "bg-white/10 text-white/40"
                           : member.status === "error" ? "bg-red-500/20 text-red-400"
                           : member.status === "processing" ? "bg-amber-500/20 text-amber-400"
-                          : isCurrent ? "bg-[rgba(28,35,44,0.82)] text-white/60"
-                          : "bg-[rgba(22,28,36,0.62)] text-white/30"
+                          : isCurrent ? "bg-white/5 text-white/60"
+                          : "bg-white/5 text-white/30"
                         }`}>
                         {statusIcon ?
                           <i className={`fa-solid ${statusIcon}`}></i>
