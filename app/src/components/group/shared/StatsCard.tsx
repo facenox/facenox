@@ -1,14 +1,26 @@
+import { Tooltip } from "@/components/shared"
+import type { ReactNode } from "react"
+
 interface StatsCardProps {
   type: "present" | "absent" | "late" | "active"
   value: number | string
   total?: number
   label?: string
   disabled?: boolean
+  disabledTooltipText?: ReactNode
 }
 
-export function StatsCard({ type, value, total, label, disabled }: StatsCardProps) {
-  return (
-    <div className={`flex flex-col items-center gap-1.5 ${disabled ? "opacity-40 grayscale" : ""}`}>
+export function StatsCard({
+  type,
+  value,
+  total,
+  label,
+  disabled,
+  disabledTooltipText,
+}: StatsCardProps) {
+  const content = (
+    <div
+      className={`flex flex-col items-center gap-1.5 transition-opacity ${disabled ? "opacity-40 grayscale" : ""}`}>
       <div className="flex items-center gap-2">
         <p className="text-[12px] font-medium text-white/40">{label}</p>
         {disabled && (
@@ -27,4 +39,14 @@ export function StatsCard({ type, value, total, label, disabled }: StatsCardProp
       </div>
     </div>
   )
+
+  if (disabled && disabledTooltipText) {
+    return (
+      <Tooltip content={disabledTooltipText} position="top">
+        <div className="cursor-help">{content}</div>
+      </Tooltip>
+    )
+  }
+
+  return content
 }

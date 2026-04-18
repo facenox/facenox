@@ -54,7 +54,7 @@ export default function WindowBar() {
         <img
           src="./icons/logo-transparent.png"
           alt="Facenox"
-          className="mr-1 -ml-2.5 h-4 w-4 object-contain opacity-90"
+          className="-ml-3 h-5 w-5 object-contain opacity-90"
         />
       </div>
 

@@ -151,6 +151,14 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
               value={stats.late_today}
               label="Late Check-ins"
               disabled={!(group.settings?.late_threshold_enabled ?? false)}
+              disabledTooltipText={
+                <span>
+                  Late tracking is disabled. Click the{" "}
+                  <span className="font-medium text-cyan-400">Attendance</span> tab in the sidebar
+                  and enable <span className="font-medium text-cyan-400">Late Tracking</span> to set
+                  a threshold.
+                </span>
+              }
             />
           </div>
         </div>
