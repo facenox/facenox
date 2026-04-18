@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react"
 import { flushSync } from "react-dom"
+import { AnimatePresence, motion } from "framer-motion"
 import { attendanceManager } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { FormInput, Modal } from "@/components/common"
@@ -248,52 +249,45 @@ export function AddMember({
       }
       maxWidth="lg">
       <div className="-m-5 mt-2 max-h-[90vh] overflow-y-auto p-5">
-        {/* Mode selector */}
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                setIsBulkMode(false)
-                setBulkMembersText("")
-                setConfirmDuplicate(false)
-              }}
-              className={`rounded-lg px-4 py-2 text-[11px] font-medium transition ${
-                !isBulkMode ?
-                  "bg-cyan-500/18 text-cyan-100"
-                : "text-white/40 hover:bg-white/10 hover:text-white/80"
-              }`}>
-              Single
-            </button>
-            <button
-              onClick={() => {
-                setIsBulkMode(true)
-                setNewMemberName("")
-                setNewMemberRole("")
-                setConfirmDuplicate(false)
-              }}
-              className={`rounded-lg px-4 py-2 text-[11px] font-medium transition ${
-                isBulkMode ?
-                  "bg-cyan-500/18 text-cyan-100"
-                : "text-white/40 hover:bg-white/10 hover:text-white/80"
-              }`}>
-              Bulk Import
-            </button>
-          </div>
-          {isBulkMode && (
-            <label className="cursor-pointer rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-3 py-1.5 text-xs text-cyan-200 transition hover:bg-cyan-500/30">
-              Import File
-              <input
-                type="file"
-                accept=".txt,.csv"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) void handleFileUpload(file)
-                  e.target.value = ""
-                }}
+        {/* Mode selector Tabs */}
+        <div className="mb-6 flex gap-6 border-b border-white/5">
+          <button
+            onClick={() => {
+              setIsBulkMode(false)
+              setBulkMembersText("")
+              setConfirmDuplicate(false)
+            }}
+            className={`relative border-none bg-transparent pb-3 text-[12px] font-medium transition-colors outline-none ${
+              !isBulkMode ? "text-cyan-400" : "text-white/40 hover:text-white/80"
+            }`}>
+            Single
+            {!isBulkMode && (
+              <motion.div
+                layoutId="addMemberTabIndicator"
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute bottom-0 left-0 h-[2px] w-full rounded-t-full bg-cyan-400"
               />
-            </label>
-          )}
+            )}
+          </button>
+          <button
+            onClick={() => {
+              setIsBulkMode(true)
+              setNewMemberName("")
+              setNewMemberRole("")
+              setConfirmDuplicate(false)
+            }}
+            className={`relative border-none bg-transparent pb-3 text-[12px] font-medium transition-colors outline-none ${
+              isBulkMode ? "text-cyan-400" : "text-white/40 hover:text-white/80"
+            }`}>
+            Bulk Import
+            {isBulkMode && (
+              <motion.div
+                layoutId="addMemberTabIndicator"
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute bottom-0 left-0 h-[2px] w-full rounded-t-full bg-cyan-400"
+              />
+            )}
+          </button>
         </div>
 
         {error && (
@@ -302,96 +296,127 @@ export function AddMember({
           </div>
         )}
 
-        {/* Single Member Form */}
-        {!isBulkMode && (
-          <div className="grid gap-4">
-            <label className="text-sm">
-              <FormInput
-                ref={nameInputRef}
-                value={newMemberName}
-                onChange={(event) => setNewMemberName(event.target.value)}
-                placeholder="Full Name"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddMember()
-                }}
-                focusColor={
-                  isDuplicate && !confirmDuplicate ? "border-amber-400" : "border-cyan-500/60"
-                }
-                className={`${isDuplicate && !confirmDuplicate ? "border-amber-500/50" : ""}`}
-              />
-              {isDuplicate && !confirmDuplicate && (
-                <div className="mt-2 flex items-center gap-2 text-[11px] text-amber-400/80">
-                  <i className="fa-solid fa-triangle-exclamation text-[10px]"></i> A member with
-                  this name already exists.
-                </div>
-              )}
-            </label>
-            <label className="text-sm">
-              <FormInput
-                value={newMemberRole}
-                onChange={(event) => setNewMemberRole(event.target.value)}
-                placeholder="Role (Optional)"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddMember()
-                }}
-                focusColor="border-cyan-500/60"
-              />
-            </label>
-
-            {renderConsentRow("I confirm that this member has given biometric consent.")}
-          </div>
-        )}
-
-        {/* Bulk Add Form */}
-        {isBulkMode && (
-          <div className="space-y-4">
-            <div>
-              <textarea
-                value={bulkMembersText}
-                onChange={(event) => setBulkMembersText(event.target.value)}
-                className="min-h-[132px] w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-3 font-mono text-sm transition-all duration-300 outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
-                placeholder="Enter one member per line"
-              />
-              <div className="mt-2 text-[11px] text-white/30">
-                Format: <span className="font-mono text-white/50">Name, Role</span>
-              </div>
-            </div>
-
-            {renderConsentRow(
-              "I confirm that all members in this list have given biometric consent.",
-            )}
-
-            {/* Bulk Results */}
-            {bulkResults && (
-              <div
-                className={`rounded-lg border p-3 ${
-                  bulkResults.failed === 0 ?
-                    "border-cyan-500/40 bg-cyan-500/10"
-                  : "border-yellow-500/40 bg-yellow-500/10"
-                }`}>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm font-semibold">
-                    {bulkResults.failed === 0 ? "✓ Success!" : "⚠ Partial Success"}
+        <div className="relative min-h-[180px]">
+          <AnimatePresence mode="wait" initial={false}>
+            {!isBulkMode ?
+              <motion.div
+                key="single"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="grid gap-4">
+                <label className="flex flex-col gap-1.5 text-sm">
+                  <span className="pl-1 text-[11px] font-medium text-white/50">Full Name</span>
+                  <FormInput
+                    ref={nameInputRef}
+                    value={newMemberName}
+                    onChange={(event) => setNewMemberName(event.target.value)}
+                    placeholder="e.g. John Doe"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddMember()
+                    }}
+                    focusColor={
+                      isDuplicate && !confirmDuplicate ? "border-amber-400" : "border-cyan-500/60"
+                    }
+                    className={`${isDuplicate && !confirmDuplicate ? "border-amber-500/50" : ""}`}
+                  />
+                  {isDuplicate && !confirmDuplicate && (
+                    <div className="mt-1 flex items-center gap-2 text-[11px] text-amber-400/80">
+                      <i className="fa-solid fa-triangle-exclamation text-[10px]"></i> A member with
+                      this name already exists.
+                    </div>
+                  )}
+                </label>
+                <label className="flex flex-col gap-1.5 text-sm">
+                  <span className="pl-1 text-[11px] font-medium text-white/50">
+                    Role <span className="opacity-50">(Optional)</span>
                   </span>
-                  <span className="text-xs">
-                    {bulkResults.success} added, {bulkResults.failed} failed
-                  </span>
+                  <FormInput
+                    value={newMemberRole}
+                    onChange={(event) => setNewMemberRole(event.target.value)}
+                    placeholder="e.g. Employee, Student"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddMember()
+                    }}
+                    focusColor="border-cyan-500/60"
+                  />
+                </label>
+
+                {renderConsentRow("I confirm that this member has given biometric consent.")}
+              </motion.div>
+            : <motion.div
+                key="bulk"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="space-y-4">
+                <div>
+                  <textarea
+                    value={bulkMembersText}
+                    onChange={(event) => setBulkMembersText(event.target.value)}
+                    className="min-h-[132px] w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-3 font-mono text-sm transition-all duration-300 outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
+                    placeholder="Enter one member per line"
+                  />
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="text-[11px] text-white/30">
+                      Format: <span className="font-mono text-white/50">Name, Role</span>
+                    </div>
+                    <label className="group flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-cyan-400/80 transition-colors hover:text-cyan-400">
+                      <i className="fa-solid fa-file-arrow-up transition-transform group-hover:-translate-y-0.5"></i>
+                      Import .CSV or .TXT
+                      <input
+                        type="file"
+                        accept=".txt,.csv"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) void handleFileUpload(file)
+                          e.target.value = ""
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
-                {bulkResults.errors.length > 0 && (
-                  <div className="mt-2 max-h-32 space-y-1 overflow-y-auto">
-                    {bulkResults.errors.map((err: string, idx: number) => (
-                      <div
-                        key={idx}
-                        className="rounded bg-red-500/10 px-2 py-1 text-xs text-red-200">
-                        {err}
+
+                {renderConsentRow(
+                  "I confirm that all members in this list have given biometric consent.",
+                )}
+
+                {/* Bulk Results */}
+                {bulkResults && (
+                  <div
+                    className={`rounded-lg border p-3 ${
+                      bulkResults.failed === 0 ?
+                        "border-cyan-500/40 bg-cyan-500/10"
+                      : "border-yellow-500/40 bg-yellow-500/10"
+                    }`}>
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm font-semibold">
+                        {bulkResults.failed === 0 ? "✓ Success!" : "⚠ Partial Success"}
+                      </span>
+                      <span className="text-xs">
+                        {bulkResults.success} added, {bulkResults.failed} failed
+                      </span>
+                    </div>
+                    {bulkResults.errors.length > 0 && (
+                      <div className="mt-2 max-h-32 space-y-1 overflow-y-auto">
+                        {bulkResults.errors.map((err: string, idx: number) => (
+                          <div
+                            key={idx}
+                            className="rounded bg-red-500/10 px-2 py-1 text-xs text-red-200">
+                            {err}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
-              </div>
-            )}
-          </div>
-        )}
+              </motion.div>
+            }
+          </AnimatePresence>
+        </div>
 
         {/* Action Buttons */}
         <div className="mt-8 flex justify-end gap-3">
@@ -419,12 +444,10 @@ export function AddMember({
             }`}>
             {loading || isProcessingBulk ?
               "Processing..."
-            : !hasBiometricConsent ?
-              "Consent Required"
             : confirmDuplicate && !isBulkMode ?
               "Add Anyway"
             : isBulkMode ?
-              "Add Members"
+              "Import Members"
             : "Add Member"}
           </button>
         </div>

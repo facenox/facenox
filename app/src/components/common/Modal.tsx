@@ -11,6 +11,7 @@ interface ModalProps {
   children: React.ReactNode
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | string
   hideCloseButton?: boolean
+  headerActions?: React.ReactNode
 }
 
 export function Modal({
@@ -21,6 +22,7 @@ export function Modal({
   children,
   maxWidth = "sm",
   hideCloseButton = false,
+  headerActions,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
   const windowBarHeightPx = 32
@@ -73,18 +75,21 @@ export function Modal({
             className={`relative z-10 w-full overflow-hidden rounded-xl border border-white/6 bg-[rgba(15,19,25,0.98)] ${maxWidthClass}`}
             onClick={(e) => e.stopPropagation()}>
             <div className="p-5">
-              {(title || !hideCloseButton) && (
+              {(title || !hideCloseButton || headerActions) && (
                 <div
                   className={`flex items-start ${title ? "mb-5 justify-between" : "mb-2 justify-end"}`}>
                   {title && (
                     <div className="flex items-center gap-2">
                       {icon}
-                      <h2 className="text-base leading-none font-semibold tracking-tight text-white">
+                      <div className="text-base leading-none font-semibold tracking-tight text-white">
                         {title}
-                      </h2>
+                      </div>
                     </div>
                   )}
-                  {!hideCloseButton && onClose && <ModalCloseButton onClick={onClose} />}
+                  <div className="flex items-center gap-4">
+                    {headerActions}
+                    {!hideCloseButton && onClose && <ModalCloseButton onClick={onClose} />}
+                  </div>
                 </div>
               )}
               {children}
