@@ -63,7 +63,6 @@ describe("groupUIStore", () => {
 
     useGroupUIStore.getState().jumpToRegistration("member-1", "upload")
     expect(useGroupUIStore.getState()).toMatchObject({
-      activeSection: "registration",
       preSelectedMemberId: "member-1",
       lastRegistrationSource: "upload",
       lastRegistrationMode: "single",

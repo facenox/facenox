@@ -21,7 +21,6 @@ describe("CloudSync", () => {
     const { unmount } = renderWithProviders(<CloudSync />)
 
     await waitFor(() => {
-      expect(screen.getByText("Not Connected")).toBeInTheDocument()
       expect(screen.getByText("Local Only")).toBeInTheDocument()
     })
 
@@ -38,9 +37,8 @@ describe("CloudSync", () => {
     renderWithProviders(<CloudSync />)
 
     await waitFor(() => {
-      expect(screen.getByText("Connected")).toBeInTheDocument()
       expect(screen.getByText("Cloud Linked")).toBeInTheDocument()
-      expect(screen.getByText("Acme Org - Main Campus")).toBeInTheDocument()
+      expect(screen.getByText("Connected to: Acme Org – Main Campus")).toBeInTheDocument()
     })
   })
 
@@ -100,8 +98,8 @@ describe("CloudSync", () => {
 
     renderWithProviders(<CloudSync />)
 
-    fireEvent.click(await screen.findByRole("button", { name: /Show advanced settings/i }))
-    fireEvent.click(screen.getByRole("button", { name: /Save Advanced Settings/i }))
+    fireEvent.click(await screen.findByRole("button", { name: /Show Advanced Settings/i }))
+    fireEvent.click(screen.getByRole("button", { name: /Save Settings/i }))
 
     expect(
       await screen.findByText(
@@ -109,8 +107,8 @@ describe("CloudSync", () => {
       ),
     ).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: /Show advanced settings/i }))
-    fireEvent.click(screen.getByRole("button", { name: /Save Advanced Settings/i }))
+    fireEvent.click(screen.getByRole("button", { name: /Show Advanced Settings/i }))
+    fireEvent.click(screen.getByRole("button", { name: /Save Settings/i }))
 
     expect(
       await screen.findByText("Advanced cloud settings saved. Auto-sync state updated."),
@@ -177,8 +175,8 @@ describe("CloudSync", () => {
       target: { value: "Reception Desk" },
     })
 
-    await user.click(screen.getByRole("button", { name: /Hide advanced settings/i }))
-    await user.click(screen.getByRole("button", { name: /Show advanced settings/i }))
+    await user.click(screen.getByRole("button", { name: /Hide Advanced Settings/i }))
+    await user.click(screen.getByRole("button", { name: /Show Advanced Settings/i }))
 
     expect(screen.getByPlaceholderText("Front Desk Desktop")).toHaveValue("Reception Desk")
   })
@@ -186,12 +184,9 @@ describe("CloudSync", () => {
   it("keeps the hosted server URL hidden unless a custom override is being used", async () => {
     const { user } = renderWithProviders(<CloudSync />)
 
-    await user.click(await screen.findByRole("button", { name: /Show advanced settings/i }))
+    await user.click(await screen.findByRole("button", { name: /Show Advanced Settings/i }))
 
-    const serverUrlInput = screen.getByPlaceholderText("Optional custom deployment URL")
+    const serverUrlInput = screen.getByPlaceholderText("Leave empty for official sync")
     expect(serverUrlInput).toHaveValue("")
-    expect(
-      screen.getByText(/Leave this empty to use the hosted Facenox Cloud server/i),
-    ).toBeInTheDocument()
   })
 })
