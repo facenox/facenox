@@ -149,11 +149,13 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                       dropdownGroups.find((g) => g.id === dropdownValue)?.name
                     : "Group Management"}
                   </span>
-                  <span className="text-xl font-semibold text-white">
-                    {groupInitialSection ?
-                      groupSections.find((s) => s.id === groupInitialSection)?.label
-                    : "Overview"}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl font-semibold text-white">
+                      {groupInitialSection ?
+                        groupSections.find((s) => s.id === groupInitialSection)?.label
+                      : "Overview"}
+                    </span>
+                  </div>
                 </div>
               : <div className="flex flex-col">
                   <span className="mb-0.5 text-[11px] font-medium text-white/30">General</span>
@@ -179,16 +181,18 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                     Add Member
                   </button>
                 )}
+
               {activeSection === "group" &&
                 groupInitialSection === "members" &&
                 registrationMode && (
                   <button
                     onClick={resetRegistration}
-                    className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium text-white/50 transition-all hover:bg-white/10 hover:text-white">
+                    className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium text-white/40 transition-all hover:bg-white/10 hover:text-white/80">
                     <i className="fa-solid fa-arrow-left text-[10px]"></i>
                     Back to Members
                   </button>
                 )}
+
               {activeSection === "group" &&
                 groupInitialSection === "overview" &&
                 validInitialGroup && (

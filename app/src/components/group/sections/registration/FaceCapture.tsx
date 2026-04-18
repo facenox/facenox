@@ -5,7 +5,6 @@ import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { useCamera } from "@/components/group/sections/registration/hooks/useCamera"
 import { useFaceCapture } from "@/components/group/sections/registration/hooks/useFaceCapture"
 import { useDialog } from "@/components/shared"
-import { CaptureControls } from "@/components/group/sections/registration/components/CaptureControls"
 import { CameraFeed } from "@/components/group/sections/registration/components/CameraFeed"
 import { UploadArea } from "@/components/group/sections/registration/components/UploadArea"
 import { MemberSidebar } from "@/components/group/sections/registration/components/MemberSidebar"
@@ -34,7 +33,7 @@ export function FaceCapture({
 
   const preSelectedId = useGroupUIStore((state) => state.preSelectedMemberId)
 
-  const [source, setSource] = useState<CaptureSource>(initialSource ?? "upload")
+  const [source, setSource] = useState<CaptureSource>(initialSource ?? "live")
   const [selectedMemberId, setSelectedMemberId] = useState("")
   const [memberSearch, setMemberSearch] = useState("")
   const [registrationFilter, setRegistrationFilter] = useState<
@@ -81,6 +80,19 @@ export function FaceCapture({
   } = useFaceCapture(group, members, onRefresh, dialog)
 
   const framesReady = frames.length > 0
+
+  useEffect(() => {
+    let active = true
+    if (source === "live" && selectedMemberId && !isStreaming && !framesReady && !successMessage) {
+      const timer = setTimeout(() => {
+        if (active) startCamera()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+    return () => {
+      active = false
+    }
+  }, [source, selectedMemberId, isStreaming, framesReady, successMessage, startCamera])
 
   useEffect(() => {
     if (onSelectedMemberChange) {
@@ -203,14 +215,8 @@ export function FaceCapture({
         )}
 
         {selectedMemberId && (
-          <div className="flex h-full flex-col space-y-6 overflow-hidden p-6">
-            <div className="mx-auto flex w-full max-w-4xl flex-col space-y-6 overflow-hidden">
-              <CaptureControls
-                source={source}
-                setSource={setSource}
-                hasRequiredFrame={!!framesReady}
-              />
-
+          <div className="flex h-full flex-col space-y-4 overflow-hidden p-6">
+            <div className="mx-auto flex w-full max-w-4xl flex-col overflow-hidden">
               <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/6 bg-black/40 shadow-2xl">
                 {!framesReady ?
                   source === "live" ?
@@ -223,7 +229,6 @@ export function FaceCapture({
                       onStart={startCamera}
                       onStop={stopCamera}
                       source={source}
-                      isCameraSelected={!!selectedCamera}
                       cameraDevices={cameraDevices}
                       selectedCamera={selectedCamera}
                       setSelectedCamera={setSelectedCamera}
@@ -244,6 +249,19 @@ export function FaceCapture({
                     framesReady={!!framesReady}
                   />
                 }
+
+                {!framesReady && (
+                  <div className="absolute bottom-6 left-6 z-30">
+                    <button
+                      onClick={() => setSource(source === "live" ? "upload" : "live")}
+                      className="group flex items-center justify-center gap-2 rounded-full border border-white/10 bg-black/40 px-4 py-2 text-[11px] font-medium text-white/60 backdrop-blur-md transition-all hover:border-white/20 hover:bg-black/60 hover:text-white"
+                      title={source === "live" ? "Upload Photo Instead" : "Use Camera Instead"}>
+                      <i
+                        className={`fa-solid ${source === "live" ? "fa-file-image" : "fa-camera"} text-sm`}></i>
+                      <span>{source === "live" ? "Upload" : "Camera"}</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

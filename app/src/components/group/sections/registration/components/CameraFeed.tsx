@@ -7,11 +7,10 @@ interface CameraFeedProps {
   isVideoReady: boolean
   cameraError: string | null
   onCapture: () => void
-  onStart: () => void
+  onStart: (deviceId?: string) => void
   onStop: () => void
   source: CaptureSource
 
-  isCameraSelected: boolean
   cameraDevices: MediaDeviceInfo[]
   selectedCamera: string
   setSelectedCamera: (deviceId: string) => void
@@ -26,7 +25,6 @@ export function CameraFeed({
   onStart,
   onStop,
   source,
-  isCameraSelected,
   cameraDevices,
   selectedCamera,
   setSelectedCamera,
@@ -43,7 +41,7 @@ export function CameraFeed({
       />
 
       {/* Compact Camera Selection Overlay */}
-      <div className="absolute top-4 left-4 z-30 w-64">
+      <div className="absolute top-4 right-4 z-30 w-64">
         <Dropdown
           options={cameraDevices.map((device, index) => ({
             value: device.deviceId,
@@ -53,12 +51,15 @@ export function CameraFeed({
           onChange={(deviceId) => {
             if (deviceId) {
               setSelectedCamera(String(deviceId))
-              if (isStreaming) onStop()
+              if (isStreaming) {
+                onStop()
+                setTimeout(() => onStart(String(deviceId)), 300)
+              }
             }
           }}
           placeholder="Select camera…"
           emptyMessage="No cameras available"
-          disabled={isStreaming || cameraDevices.length <= 1}
+          disabled={cameraDevices.length <= 1}
           maxHeight={256}
           buttonClassName="text-[11px] px-3 py-1.5 bg-[rgba(10,13,18,0.84)] border border-white/10 hover:bg-[rgba(15,19,25,0.92)] transition-all font-medium"
           showPlaceholderOption={false}
@@ -68,12 +69,19 @@ export function CameraFeed({
 
       {!isStreaming && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-          <div className="space-y-2 text-center">
+          <div className="space-y-4 text-center">
             {cameraError ?
-              <div className="max-w-[280px] rounded-lg border border-red-500/20 bg-red-500/10 p-4">
-                <div className="text-[11px] font-medium text-red-200/60">{cameraError}</div>
+              <div className="flex flex-col items-center gap-4">
+                <div className="max-w-[280px] rounded-lg border border-red-500/20 bg-red-500/10 p-4">
+                  <div className="text-[11px] font-medium text-red-200/60">{cameraError}</div>
+                </div>
+                <button
+                  onClick={() => onStart()}
+                  className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-6 py-2 text-[12px] font-medium text-white/70 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
+                  Retry Camera
+                </button>
               </div>
-            : <div className="relative opacity-20">
+            : <div className="relative flex flex-col items-center justify-center opacity-20">
                 <svg
                   className="h-10 w-10 animate-pulse text-white"
                   fill="none"
@@ -103,25 +111,12 @@ export function CameraFeed({
           <button
             onClick={() => onCapture()}
             disabled={!isVideoReady || !!cameraError}
-            className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-8 py-2 text-sm font-medium text-cyan-400 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
-            Capture Face
+            className="group flex h-16 w-16 items-center justify-center rounded-full bg-white/20 p-1 transition-all hover:bg-white/30 disabled:cursor-not-allowed disabled:opacity-40"
+            title="Capture Face">
+            <div className="h-full w-full rounded-full bg-white transition-transform group-active:scale-90" />
           </button>
         </div>
       )}
-
-      <div className="absolute right-6 bottom-6 z-20">
-        <button
-          onClick={isStreaming ? onStop : onStart}
-          disabled={!isStreaming && !isCameraSelected}
-          className={`min-w-[140px] rounded-lg border px-6 py-2 text-sm font-medium transition-all ${
-            isStreaming ? "border-red-500/20 bg-red-500/10 text-red-400 hover:bg-red-500/20"
-            : isCameraSelected ?
-              "border-white/10 bg-[rgba(22,28,36,0.68)] text-white/50 hover:bg-[rgba(28,35,44,0.82)] hover:text-white"
-            : "cursor-not-allowed border-white/10 bg-[rgba(13,17,23,0.82)] text-white/20 opacity-50"
-          }`}>
-          {isStreaming ? "Stop Camera" : "Start Camera"}
-        </button>
-      </div>
     </div>
   )
 }
