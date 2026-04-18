@@ -3,6 +3,12 @@
   "private": true,
   "scripts": {
     "dev": "npm run dev --prefix app",
+    "build:app": "npm run build --prefix app",
+    "build:server": "npm run build --prefix server",
+    "build": "npm run build:app && npm run build:server",
+    "dist:win": "npm run dist:win --prefix app",
+    "dist:mac": "npm run dist:mac --prefix app",
+    "dist:linux": "npm run dist:linux --prefix app",
     "clean:app": "npm run clean --prefix app",
     "clean:server": "npm run clean --prefix server",
     "clean": "npm run clean:app && npm run clean:server",
