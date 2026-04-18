@@ -546,25 +546,29 @@ export default function Main() {
   const hasBlockingGroupModalOpen =
     showAddMemberModal || showEditMemberModal || showCreateGroupModal || showEditGroupModal
 
-  useEffect(() => {
-    if (!showSettings) {
-      wasStreamingBeforeBlockingGroupModal.current = false
-      return
-    }
+  const lastRegistrationMode = useGroupUIStore((state) => state.lastRegistrationMode)
 
-    if (hasBlockingGroupModalOpen) {
+  useEffect(() => {
+    const isBlockingActive = (hasBlockingGroupModalOpen || !!lastRegistrationMode) && showSettings
+
+    if (isBlockingActive) {
       if (isStreamingRef.current) {
         wasStreamingBeforeBlockingGroupModal.current = true
         stopCamera(false)
       }
-      return
+    } else {
+      if (wasStreamingBeforeBlockingGroupModal.current) {
+        startCameraGuarded()
+        wasStreamingBeforeBlockingGroupModal.current = false
+      }
     }
-
-    if (wasStreamingBeforeBlockingGroupModal.current) {
-      startCameraGuarded()
-      wasStreamingBeforeBlockingGroupModal.current = false
-    }
-  }, [hasBlockingGroupModalOpen, showSettings, startCameraGuarded, stopCamera])
+  }, [
+    hasBlockingGroupModalOpen,
+    lastRegistrationMode,
+    showSettings,
+    startCameraGuarded,
+    stopCamera,
+  ])
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[var(--bg-primary)] text-white">
@@ -721,6 +725,7 @@ export default function Main() {
               setShowSettings(false)
               setGroupInitialSection(undefined)
               setSettingsInitialSection(undefined)
+              useGroupUIStore.getState().resetRegistration()
               loadAttendanceDataRef.current()
             }}
             isModal={true}
