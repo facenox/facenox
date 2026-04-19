@@ -416,7 +416,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                   <Dropdown
                     options={[
                       { value: "all", label: "Filter: All" },
-                      { value: "non-registered", label: "Unregistered" },
+                      { value: "non-registered", label: "Not Registered" },
                       { value: "registered", label: "Registered" },
                     ]}
                     value={registrationFilter}

@@ -4,7 +4,7 @@ import type { AttendanceGroup } from "@/types/recognition"
 import { useDatabaseManagement } from "@/components/settings/sections/hooks/useDatabaseManagement"
 import { DatabaseStats } from "@/components/settings/sections/components/DatabaseStats"
 import { GroupEntry } from "@/components/settings/sections/components/GroupEntry"
-import { useDialog } from "@/components/shared"
+import { useDialog, InfoPopover } from "@/components/shared"
 import { Modal } from "@/components/common/Modal"
 import { useUIStore } from "@/components/main/stores"
 import { attendanceManager } from "@/services"
@@ -224,7 +224,13 @@ export function Database({
       {/* Device Time */}
       <section>
         <div className="mb-6">
-          <h2 className="text-[14px] font-semibold text-white">Device Time & Status</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-[14px] font-semibold text-white">Device Time & Status</h2>
+            <InfoPopover
+              title="Time Verification"
+              description="Attendance is logged using your local system time. When online, Facenox verifies this against a secure time server to ensure perfect accuracy for cloud syncing."
+            />
+          </div>
           <p className="mt-1 text-[13px] text-white/40">
             Check if your local system time is accurate for logging.
           </p>

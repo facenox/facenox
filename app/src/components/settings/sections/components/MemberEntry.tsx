@@ -122,10 +122,10 @@ export function MemberEntry({
         <div className="flex items-center gap-3">
           {member.has_face_data ?
             <div className="rounded-md bg-cyan-500/10 px-2 py-1 text-[11px] font-semibold text-cyan-400">
-              Face Configured
+              Registered
             </div>
           : <div className="rounded-md bg-amber-500/10 px-2 py-1 text-[11px] font-semibold text-amber-500">
-              No Face Data
+              Not Registered
             </div>
           }
 

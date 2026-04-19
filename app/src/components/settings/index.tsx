@@ -108,6 +108,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         addMemberHandler={settings.addMemberHandler}
         dropdownGroups={settings.dropdownGroups}
         groupSections={groupSections}
+        setActiveSection={settings.setActiveSection}
       />
     </div>
   )

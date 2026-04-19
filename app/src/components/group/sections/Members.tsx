@@ -69,7 +69,7 @@ export function Members({
     }
 
     result = [...result].sort((a, b) => {
-      // Sort by registration status first (Unregistered first)
+      // Sort by registration status first (Not Registered first)
       if (!a.has_face_data && b.has_face_data) return -1
       if (a.has_face_data && !b.has_face_data) return 1
       // Then alphabetically
@@ -206,7 +206,7 @@ export function Members({
               <Dropdown
                 options={[
                   { value: "all", label: "Filter: All" },
-                  { value: "non-registered", label: "Unregistered" },
+                  { value: "non-registered", label: "Not Registered" },
                   { value: "registered", label: "Registered" },
                   { value: "no-consent", label: "Needs Consent" },
                 ]}

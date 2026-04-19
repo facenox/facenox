@@ -7,8 +7,10 @@ interface InfoPopoverProps {
   title: string
   /** Main explanation text */
   description: string
-  /** Optional extra detail bullets */
+  /** Optional extra detail bullets (plain text) */
   details?: string[]
+  /** Optional extra detail bullets as React nodes (for links etc.) */
+  detailsNode?: React.ReactNode[]
   /**
    * Optional media slot: pass an image src or a <video> element.
    * When omitted the popover is text-only.
@@ -32,6 +34,7 @@ export function InfoPopover({
   title,
   description,
   details,
+  detailsNode,
   media,
   side = "right",
 }: InfoPopoverProps) {
@@ -79,13 +82,20 @@ export function InfoPopover({
     }
   }, [open, measure])
 
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const show = useCallback(() => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
     timerRef.current = setTimeout(() => setOpen(true), POPOVER_OPEN_DELAY)
   }, [])
 
   const hide = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
-    setOpen(false)
+    hideTimerRef.current = setTimeout(() => setOpen(false), 120)
+  }, [])
+
+  const cancelHide = useCallback(() => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
   }, [])
 
   return (
@@ -112,7 +122,9 @@ export function InfoPopover({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 4 }}
               transition={{ duration: POPOVER_ANIMATION_DURATION, ease: "easeOut" }}
-              className="pointer-events-none fixed z-99999 w-64"
+              className="pointer-events-auto fixed z-99999 w-64"
+              onMouseEnter={cancelHide}
+              onMouseLeave={hide}
               style={{
                 top: pos?.top ?? -9999,
                 left: pos?.left ?? -9999,
@@ -150,9 +162,9 @@ export function InfoPopover({
 
                   <p className="text-[11px] leading-relaxed text-white/50">{description}</p>
 
-                  {details && details.length > 0 && (
+                  {(details && details.length > 0) || (detailsNode && detailsNode.length > 0) ?
                     <ul className="space-y-1 border-t border-white/8 pt-2">
-                      {details.map((detail, index) => (
+                      {details?.map((detail, index) => (
                         <li
                           key={index}
                           className="flex items-start gap-1.5 text-[10.5px] text-white/35">
@@ -160,8 +172,16 @@ export function InfoPopover({
                           <span>{detail}</span>
                         </li>
                       ))}
+                      {detailsNode?.map((node, index) => (
+                        <li
+                          key={`node-${index}`}
+                          className="flex items-start gap-1.5 text-[10.5px] text-white/35">
+                          <span className="mt-0.5 text-cyan-500/40">&gt;</span>
+                          <span>{node}</span>
+                        </li>
+                      ))}
                     </ul>
-                  )}
+                  : null}
                 </div>
               </div>
             </motion.div>

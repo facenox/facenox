@@ -58,6 +58,7 @@ interface ContentPanelProps {
   hasSelectedMember: boolean
   dropdownGroups: AttendanceGroup[]
   groupSections: { id: GroupSection; label: string; icon: string }[]
+  setActiveSection: (section: string) => void
 }
 
 export const ContentPanel: React.FC<ContentPanelProps> = ({
@@ -92,6 +93,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   addMemberHandler,
   dropdownGroups,
   groupSections,
+  setActiveSection,
 }) => {
   const { openEditGroup } = useGroupModals()
   const registrationMode = useGroupUIStore((state) => state.lastRegistrationMode)
@@ -309,7 +311,9 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   }}
                 />
               )}
-              {activeSection === "cloudsync" && <CloudSync />}
+              {activeSection === "cloudsync" && (
+                <CloudSync onNavigateToDB={() => setActiveSection("database")} />
+              )}
               {activeSection === "about" && <About />}
             </motion.div>
           </AnimatePresence>

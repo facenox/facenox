@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
-import { Tooltip } from "@/components/shared"
+import { InfoPopover } from "@/components/shared"
 import { DEFAULT_CLOUD_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "@/services/cloudSyncDefaults"
 
 type CloudConfig = {
@@ -71,7 +71,7 @@ const pairingSteps = [
   },
 ]
 
-export function CloudSync() {
+export function CloudSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
   const [config, setConfig] = useState<CloudConfig>(defaultConfig)
   const [cloudBaseUrl, setCloudBaseUrl] = useState("")
   const [deviceName, setDeviceName] = useState("Facenox Desktop")
@@ -263,15 +263,24 @@ export function CloudSync() {
           <div className="mb-6">
             <div className="flex items-center gap-2">
               <h2 className="text-[14px] font-semibold text-white">Connection</h2>
-              <Tooltip
-                content="Cloud Beta sync does not upload face embeddings. Biometric profiles stay local."
-                position="bottom">
-                <button
-                  type="button"
-                  className="flex h-5 w-5 items-center justify-center rounded-full text-white/30 transition hover:text-white">
-                  <i className="fa-solid fa-circle-info text-[11px]" />
-                </button>
-              </Tooltip>
+              <InfoPopover
+                title="Data Privacy"
+                description="Cloud sync is strictly limited to attendance logs and member names. Face embeddings and biometric data are never uploaded and remain entirely on your local device."
+                detailsNode={[
+                  <>
+                    To backup face data,{" "}
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={onNavigateToDB}
+                      onKeyDown={(e) => e.key === "Enter" && onNavigateToDB?.()}
+                      className="pointer-events-auto cursor-pointer text-amber-400/80 underline underline-offset-2 transition-colors hover:text-amber-300">
+                      go to the Database tab
+                    </span>{" "}
+                    and use the Export tool.
+                  </>,
+                ]}
+              />
             </div>
             <p className="mt-1 text-[13px] text-white/40">
               Link this device to synchronize groups and attendance online.

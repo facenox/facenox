@@ -116,7 +116,7 @@ export function MemberSidebar({
                 "border border-amber-500/30 bg-amber-500/20 text-amber-200"
               : "border border-white/10 bg-[rgba(22,28,36,0.68)] text-white/40 hover:bg-[rgba(28,35,44,0.82)] hover:text-white/80"
             }`}>
-            Unregistered
+            Not Registered
           </button>
           <button
             onClick={() => setRegistrationFilter("registered")}

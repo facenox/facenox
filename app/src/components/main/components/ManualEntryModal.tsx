@@ -122,7 +122,7 @@ export const ManualEntryModal = ({
             </div>
             {noFaceCount > 0 && (
               <div className="rounded-full border border-amber-500/10 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-500/80">
-                {noFaceCount} Unregistered
+                {noFaceCount} Not Registered
               </div>
             )}
           </div>
