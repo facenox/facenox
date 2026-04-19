@@ -175,7 +175,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
           data?: import("@/components/main/types").AttendanceEvent
         },
       ) => {
-        const { setSuccess } = useUIStore.getState()
         const { currentGroup } = useAttendanceStore.getState()
         const payload = data.data ?? data
         if (payload.time_health?.warning_message) {
@@ -194,10 +193,8 @@ export function useBackendService(options: UseBackendServiceOptions) {
                 .getState()
                 .groupMembers.find((m) => m.person_id === payload.person_id)
           const memberName = member ? member.name : "Member"
-          const eventLabel = payload.event_type === "check_in" ? "Timed In" : "Timed Out"
           const cooldownKey = `${payload.person_id}-${payload.group_id}`
 
-          setSuccess(`${memberName} ${eventLabel}`)
           setPersistentCooldowns((prev) => {
             const next = new Map(prev)
             next.set(cooldownKey, {
