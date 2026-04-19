@@ -67,12 +67,18 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
             policies and legal notices.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5 pb-2">
-            <span className="rounded bg-[rgba(22,28,36,0.62)] px-2 py-0.5 text-[10px] text-white/40">
+            <button
+              onClick={() => updaterService.openReleasePage("https://gdpr-info.eu/")}
+              className="rounded bg-[rgba(22,28,36,0.62)] px-2 py-0.5 text-[10px] text-white/40 transition-all hover:bg-[rgba(22,28,36,0.85)] hover:text-white/70 active:scale-95">
               GDPR (EU)
-            </span>
-            <span className="rounded bg-[rgba(22,28,36,0.62)] px-2 py-0.5 text-[10px] text-white/40">
+            </button>
+            <button
+              onClick={() =>
+                updaterService.openReleasePage("https://privacy.gov.ph/data-privacy-act/")
+              }
+              className="rounded bg-[rgba(22,28,36,0.62)] px-2 py-0.5 text-[10px] text-white/40 transition-all hover:bg-[rgba(22,28,36,0.85)] hover:text-white/70 active:scale-95">
               Data Privacy Act of 2012 (PH)
-            </span>
+            </button>
           </div>
         </section>
         <div className="mt-8 flex justify-end">
