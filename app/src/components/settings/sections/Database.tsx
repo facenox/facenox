@@ -507,7 +507,9 @@ export function Database({
           <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex-1">
               <p className="text-[13px] text-white/40">
-                Deleting groups is permanent. Face data is managed separately from records.
+                Deleting groups or members is permanent. Face data is the biometric information used
+                for recognition. Clearing it will require members to re-register but preserves their
+                profiles and attendance records.
               </p>
             </div>
 

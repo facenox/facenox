@@ -5,7 +5,7 @@ import { useGroupUIStore } from "@/components/group/stores"
 import { generateDisplayNames } from "@/utils"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { EmptyState } from "@/components/group/shared/EmptyState"
-import { Dropdown, Tooltip } from "@/components/shared"
+import { Dropdown, Tooltip, useDialog } from "@/components/shared"
 import { DeleteMemberModal } from "./DeleteMemberModal"
 import { BulkConsentModal } from "./BulkConsentModal"
 import { FaceCapture } from "./registration/FaceCapture"
@@ -35,6 +35,7 @@ export function Members({
   const source = useGroupUIStore((state) => state.lastRegistrationSource)
   const resetRegistration = useGroupUIStore((state) => state.resetRegistration)
   const setRegistrationState = useGroupUIStore((state) => state.setRegistrationState)
+  const dialog = useDialog()
 
   const [memberSearch, setMemberSearch] = useState("")
   const [registrationFilter, setRegistrationFilter] = useState<
@@ -108,6 +109,29 @@ export function Members({
       setMemberToDelete(null)
     } catch (err) {
       console.error("Error removing member:", err)
+    }
+  }
+
+  const handleResetFace = async (member: AttendanceMember) => {
+    try {
+      const confirmed = await dialog.confirm({
+        title: "Reset Face Data",
+        message: `Are you sure you want to clear the face data for ${member.name}? They will need to re-register to be recognized.`,
+        confirmText: "Reset",
+        confirmVariant: "danger",
+      })
+
+      if (confirmed) {
+        const result = await attendanceManager.removeFaceDataForGroupPerson(
+          group.id,
+          member.person_id,
+        )
+        if (result.success) {
+          onMembersChange()
+        }
+      }
+    } catch (err) {
+      console.error("Error resetting face data:", err)
     }
   }
 
@@ -307,6 +331,15 @@ export function Members({
                           <i className="fa-solid fa-pen-to-square text-xs"></i>
                         </button>
                       </Tooltip>
+                      {isRegistered && (
+                        <Tooltip content="Reset face data" position="top">
+                          <button
+                            onClick={() => handleResetFace(member)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition-all hover:bg-amber-500/10 hover:text-amber-500">
+                            <i className="fa-solid fa-user-slash text-xs"></i>
+                          </button>
+                        </Tooltip>
+                      )}
                       <Tooltip content="Delete member" position="top">
                         <button
                           onClick={() => setMemberToDelete(member)}
