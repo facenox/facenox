@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import type { SettingsOverview, TimeHealthOverview } from "@/components/settings/types"
 import type { AttendanceGroup } from "@/types/recognition"
 import { useDatabaseManagement } from "@/components/settings/sections/hooks/useDatabaseManagement"
@@ -503,39 +504,53 @@ export function Database({
           </span>
         </button>
 
-        {isDangerZoneOpen ?
-          <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="flex-1">
-              <p className="text-[13px] text-white/40">
-                Deleting groups or members is permanent. Face data is the biometric information used
-                for recognition. Clearing it will require members to re-register but preserves their
-                profiles and attendance records.
-              </p>
-            </div>
+        <AnimatePresence mode="wait" initial={false}>
+          {isDangerZoneOpen ?
+            <motion.div
+              key="danger-zone-content"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mt-4 flex flex-col gap-4 overflow-hidden md:flex-row md:items-start md:justify-between">
+              <div className="flex-1">
+                <p className="text-[13px] text-white/40">
+                  Deleting groups or members is permanent. Face data is the biometric information
+                  used for recognition. Clearing it will require members to re-register but
+                  preserves their profiles and attendance records.
+                </p>
+              </div>
 
-            <div className="flex shrink-0 gap-3">
-              <button
-                onClick={handleClearAllGroups}
-                disabled={isLoading || deletingGroup === "all" || groups.length === 0}
-                className="flex items-center gap-2 rounded-md bg-red-500/10 px-4 py-2 text-[12px] font-semibold text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-40">
-                {deletingGroup === "all" ?
-                  <i className="fa-solid fa-spinner fa-spin"></i>
-                : null}
-                Clear Groups
-              </button>
+              <div className="flex shrink-0 gap-3">
+                <button
+                  onClick={handleClearAllGroups}
+                  disabled={isLoading || deletingGroup === "all" || groups.length === 0}
+                  className="flex items-center gap-2 rounded-md bg-red-500/10 px-4 py-2 text-[12px] font-semibold text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-40">
+                  {deletingGroup === "all" ?
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                  : null}
+                  Clear Groups
+                </button>
 
-              <button
-                onClick={onClearDatabase}
-                disabled={isLoading}
-                className="flex items-center gap-2 rounded-md bg-amber-500/10 px-4 py-2 text-[12px] font-semibold text-amber-500 transition-colors hover:bg-amber-500/20 disabled:opacity-40">
-                Clear Face Data
-              </button>
-            </div>
-          </div>
-        : <p className="mt-1 text-[13px] text-white/20">
-            Destructive actions are hidden by default.
-          </p>
-        }
+                <button
+                  onClick={onClearDatabase}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 rounded-md bg-amber-500/10 px-4 py-2 text-[12px] font-semibold text-amber-500 transition-colors hover:bg-amber-500/20 disabled:opacity-40">
+                  Clear Face Data
+                </button>
+              </div>
+            </motion.div>
+          : <motion.p
+              key="danger-zone-placeholder"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mt-1 overflow-hidden text-[13px] text-white/20">
+              Destructive actions are hidden by default.
+            </motion.p>
+          }
+        </AnimatePresence>
       </section>
     </div>
   )
