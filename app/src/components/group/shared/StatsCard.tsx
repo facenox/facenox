@@ -8,6 +8,7 @@ interface StatsCardProps {
   label?: string
   disabled?: boolean
   disabledTooltipText?: ReactNode
+  tooltipText?: ReactNode
 }
 
 export function StatsCard({
@@ -17,6 +18,7 @@ export function StatsCard({
   label,
   disabled,
   disabledTooltipText,
+  tooltipText,
 }: StatsCardProps) {
   const content = (
     <div
@@ -40,9 +42,11 @@ export function StatsCard({
     </div>
   )
 
-  if (disabled && disabledTooltipText) {
+  const activeTooltip = disabled ? disabledTooltipText : tooltipText
+
+  if (activeTooltip) {
     return (
-      <Tooltip content={disabledTooltipText} position="top">
+      <Tooltip content={activeTooltip} position="top">
         <div className="cursor-help">{content}</div>
       </Tooltip>
     )
