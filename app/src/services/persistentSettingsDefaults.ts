@@ -99,7 +99,7 @@ export const defaultSettings: PersistentSettingsSchema = {
     cachedInfo: null,
   },
   sync: {
-    enabled: false,
+    enabled: true,
     cloudBaseUrl: DEFAULT_CLOUD_BASE_URL,
     organizationId: "",
     organizationName: "",
