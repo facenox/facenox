@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { attendanceManager } from "@/services"
 import { createDisplayNameMap } from "@/utils"
 import { getLocalDateString } from "@/utils"
@@ -84,6 +85,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
   const [activitySearch, setActivitySearch] = useState("")
   const [dateFilter, setDateFilter] = useState<DateFilter>("today")
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false)
+  const [recordsLoading, setRecordsLoading] = useState(false)
   const filterDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -117,6 +119,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
     if (members.length === 0) return
     try {
       const { start, end } = getDateRange(dateFilter)
+      setRecordsLoading(true)
       const [groupStats, records] = await Promise.all([
         attendanceManager.getGroupStats(group.id, new Date()),
         attendanceManager.getRecords({
@@ -130,6 +133,8 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
       setRecentRecords(records)
     } catch (err) {
       console.error("Error loading overview data:", err)
+    } finally {
+      setRecordsLoading(false)
     }
   }, [group.id, members.length, dateFilter])
 
@@ -280,58 +285,77 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
         </div>
 
         <div className="custom-scroll flex-1 overflow-y-auto pr-2 pb-10 text-left">
-          <div className="h-full">
-            {recentRecords.length === 0 ?
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-transparent py-12 text-white/30">
-                <i className="fa-solid fa-clock mb-3 text-2xl opacity-50" />
-                <div className="text-[12px] font-medium">
-                  No records{" "}
-                  {dateFilter === "today" ?
-                    "today"
-                  : dateFilter === "yesterday" ?
-                    "yesterday"
-                  : "this week"}
-                </div>
-              </div>
-            : filteredRecords.length === 0 ?
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-transparent py-12 text-white/30">
-                <i className="fa-solid fa-ghost mb-3 text-2xl" />
-                <div className="text-[12px] font-medium">No results found</div>
-                <div className="mt-1 text-[11px]">
-                  No activity matched &quot;{activitySearch}&quot;
-                </div>
-              </div>
-            : <div className="space-y-1">
-                {filteredRecords.slice(0, 50).map((record) => {
-                  const displayName = displayNameMap.get(record.person_id) || "Unknown"
+          <AnimatePresence mode="wait">
+            {recordsLoading ?
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center justify-center py-12 text-white/20">
+                <i className="fa-solid fa-circle-notch animate-spin text-lg" />
+              </motion.div>
+            : <motion.div
+                key={dateFilter}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="h-full">
+                {recentRecords.length === 0 ?
+                  <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-transparent py-12 text-white/30">
+                    <i className="fa-solid fa-clock mb-3 text-2xl opacity-50" />
+                    <div className="text-[12px] font-medium">
+                      No records{" "}
+                      {dateFilter === "today" ?
+                        "today"
+                      : dateFilter === "yesterday" ?
+                        "yesterday"
+                      : "this week"}
+                    </div>
+                  </div>
+                : filteredRecords.length === 0 ?
+                  <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-transparent py-12 text-white/30">
+                    <i className="fa-solid fa-ghost mb-3 text-2xl" />
+                    <div className="text-[12px] font-medium">No results found</div>
+                    <div className="mt-1 text-[11px]">
+                      No activity matched &quot;{activitySearch}&quot;
+                    </div>
+                  </div>
+                : <div className="space-y-1">
+                    {filteredRecords.slice(0, 50).map((record) => {
+                      const displayName = displayNameMap.get(record.person_id) || "Unknown"
 
-                  return (
-                    <div
-                      key={record.id}
-                      className="group/item flex items-center justify-between rounded-lg border border-transparent bg-transparent px-4 py-3 transition-colors hover:bg-white/[0.02]">
-                      <div className="flex items-center gap-4">
-                        <div className="flex flex-col">
-                          <span className="text-[13px] font-medium text-white transition-colors">
-                            {displayName}
-                          </span>
-                          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-white/40">
-                            <i className="fa-regular fa-clock text-[10px]"></i>
-                            <span>{formatTime(record.timestamp)}</span>
+                      return (
+                        <div
+                          key={record.id}
+                          className="group/item flex items-center justify-between rounded-lg border border-transparent bg-transparent px-4 py-3 transition-colors hover:bg-white/[0.02]">
+                          <div className="flex items-center gap-4">
+                            <div className="flex flex-col">
+                              <span className="text-[13px] font-medium text-white transition-colors">
+                                {displayName}
+                              </span>
+                              <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-white/40">
+                                <i className="fa-regular fa-clock text-[10px]"></i>
+                                <span>{formatTime(record.timestamp)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4">
+                            <span className="text-[12px] font-medium text-white/30">
+                              {getRelativeTime(record.timestamp)}
+                            </span>
                           </div>
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-4">
-                        <span className="text-[12px] font-medium text-white/30">
-                          {getRelativeTime(record.timestamp)}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                      )
+                    })}
+                  </div>
+                }
+              </motion.div>
             }
-          </div>
+          </AnimatePresence>
         </div>
       </section>
     </section>
