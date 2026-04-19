@@ -60,22 +60,16 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
               layout: { duration: 0.2 },
             }}
             className="group relative">
-            <div className="relative flex min-w-50 items-center gap-3 overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0b]/90 p-3">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center">
-                <i className="fa-solid fa-check text-xs text-cyan-400"></i>
+            <div className="relative flex items-center gap-2.5 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 pr-4 shadow-lg backdrop-blur-md">
+              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-500/20">
+                <i className="fa-solid fa-check text-[10px] text-cyan-400"></i>
               </div>
-
-              <div className="flex min-w-0 flex-1 flex-col justify-center pr-1">
-                <div className="flex items-center justify-between gap-3">
-                  <h4 className="truncate text-xs leading-tight font-semibold text-white">
-                    {info.memberName || "Authorized Personnel"}
-                  </h4>
-                  <span className="px-1.5 text-[11px] font-medium text-cyan-400/80">Logged</span>
-                </div>
-              </div>
+              <h4 className="max-w-[140px] truncate text-xs font-medium text-white/95">
+                {info.memberName || "Authorized"}
+              </h4>
             </div>
 
-            <div className="absolute -inset-0.5 rounded-xl bg-cyan-500/10 opacity-0 blur-xl transition-opacity group-hover:opacity-100" />
+            <div className="absolute -inset-0.5 rounded-full bg-cyan-500/10 opacity-0 blur-md transition-opacity group-hover:opacity-100" />
           </motion.div>
         ))}
       </AnimatePresence>
