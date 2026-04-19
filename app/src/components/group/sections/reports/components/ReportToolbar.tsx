@@ -76,35 +76,31 @@ export function ReportToolbar({
     <div className="flex shrink-0 items-center gap-3 border-b border-white/5 px-4 py-2.5">
       {/* Date Range */}
       <div className="flex shrink-0 items-center gap-1.5">
-        <Tooltip content="Start date" position="bottom">
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => onStartDateChange(e.target.value)}
-            className="min-w-[110px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
-            style={
-              {
-                colorScheme: "dark",
-                fieldSizing: "content",
-              } as React.CSSProperties
-            }
-          />
-        </Tooltip>
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => onStartDateChange(e.target.value)}
+          className="min-w-[110px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
+          style={
+            {
+              colorScheme: "dark",
+              fieldSizing: "content",
+            } as React.CSSProperties
+          }
+        />
         <span className="px-1 text-[11px] font-bold text-white/35">To</span>
-        <Tooltip content="End date" position="bottom">
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => onEndDateChange(e.target.value)}
-            className="min-w-[110px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
-            style={
-              {
-                colorScheme: "dark",
-                fieldSizing: "content",
-              } as React.CSSProperties
-            }
-          />
-        </Tooltip>
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => onEndDateChange(e.target.value)}
+          className="min-w-[110px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
+          style={
+            {
+              colorScheme: "dark",
+              fieldSizing: "content",
+            } as React.CSSProperties
+          }
+        />
       </div>
 
       {/* ── Spacer ── */}
