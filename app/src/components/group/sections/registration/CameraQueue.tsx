@@ -506,7 +506,7 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                           </div>
                           <div className="flex items-center gap-2">
                             {isRegistered && (
-                              <span className="text-[11px] font-black tracking-wider text-cyan-400/80 uppercase">
+                              <span className="text-[11px] font-black tracking-wider text-cyan-400/80">
                                 Registered
                               </span>
                             )}
@@ -761,17 +761,13 @@ export function CameraQueue({ group, members, onRefresh, onClose }: CameraQueueP
                         const mRec = members.find((m) => m.person_id === currentMember?.personId)
                         if (currentMember && !mRec?.has_consent) {
                           return (
-                            <span className="flex items-center justify-center gap-2 text-xs font-bold tracking-widest uppercase">
+                            <span className="flex items-center justify-center gap-2 text-xs font-bold tracking-widest">
                               <i className="fa-solid fa-lock text-[10px]"></i>
                               Locked
                             </span>
                           )
                         }
-                        return (
-                          <span className="text-[11px] font-bold tracking-wider uppercase">
-                            Capture
-                          </span>
-                        )
+                        return <span className="text-[11px] font-bold tracking-wider">Capture</span>
                       })()
                     }
                   </button>

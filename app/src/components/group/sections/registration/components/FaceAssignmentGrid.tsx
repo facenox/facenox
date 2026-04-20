@@ -31,9 +31,7 @@ export function FaceAssignmentGrid({
             {assignedCount}
             <span className="mx-1 text-white/30">/</span>
             {detectedFaces.length}
-            <span className="ml-1.5 font-medium tracking-wider text-white/40 uppercase">
-              Assigned
-            </span>
+            <span className="ml-1.5 font-medium tracking-wider text-white/40">Assigned</span>
           </span>
         </div>
 
@@ -97,7 +95,7 @@ export function FaceAssignmentGrid({
                       <div className="truncate text-[11px] font-bold text-cyan-200">
                         {assignedMember?.name}
                       </div>
-                      <div className="text-[9px] font-medium tracking-wider text-cyan-400/40 uppercase">
+                      <div className="text-[9px] font-medium tracking-wider text-cyan-400/40">
                         Assigned
                       </div>
                     </div>

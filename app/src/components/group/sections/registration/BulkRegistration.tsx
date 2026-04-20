@@ -89,8 +89,8 @@ export function BulkRegistration({ group, members, onRefresh, onClose }: BulkReg
               )}
               <button
                 onClick={() => void handleConfirmDuplicates()}
-                className="flex-1 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-amber-500 uppercase transition-all hover:bg-amber-500/20">
-                Add Anyway
+                className="flex-1 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-[11px] font-bold tracking-wider text-amber-500 transition-all hover:bg-amber-500/20">
+                Add anyway
               </button>
             </div>
           </div>
