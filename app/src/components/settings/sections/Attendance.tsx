@@ -16,7 +16,6 @@ interface AttendanceProps {
 
 const SETTINGS_STATUS_SWAP_DURATION = 0.14
 const SETTINGS_PANEL_ANIMATION_DURATION = 0.18
-const SETTINGS_TOGGLE_DURATION_CLASS = "duration-200"
 
 export function Attendance({
   attendanceSettings,
@@ -64,7 +63,7 @@ export function Attendance({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                      className="text-xs font-normal text-white/40">
+                      className="text-xs font-normal text-white/60">
                       {!hasSelectedGroup ?
                         "Select a group to enable this feature"
                       : attendanceSettings.trackCheckout ?
@@ -78,13 +77,9 @@ export function Attendance({
               <button
                 onClick={() => onTrackCheckoutToggle(!attendanceSettings.trackCheckout)}
                 disabled={!hasSelectedGroup}
-                className={`relative ml-auto flex h-5.5 w-10 shrink-0 items-center rounded-full transition-colors ${SETTINGS_TOGGLE_DURATION_CLASS} focus:outline-none ${
-                  attendanceSettings.trackCheckout ? "bg-cyan-500/30" : "bg-white/10"
-                } group/toggle disabled:cursor-not-allowed disabled:opacity-50`}>
+                className={`premium-switch ${attendanceSettings.trackCheckout ? "premium-switch-on" : "premium-switch-off"} group/toggle disabled:cursor-not-allowed disabled:opacity-50`}>
                 <div
-                  className={`absolute left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-sm transition-transform ${SETTINGS_TOGGLE_DURATION_CLASS} ${
-                    attendanceSettings.trackCheckout ? "translate-x-4.5" : "translate-x-0"
-                  }`}></div>
+                  className={`premium-switch-thumb ${attendanceSettings.trackCheckout ? "premium-switch-thumb-on" : "premium-switch-thumb-off"}`}></div>
               </button>
             </div>
           </div>
@@ -129,7 +124,7 @@ export function Attendance({
                 step="5"
                 value={attendanceSettings.attendanceCooldownSeconds}
                 onChange={(e) => onAttendanceCooldownChange(parseInt(e.target.value))}
-                className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/8 px-1 accent-cyan-500"
+                className="premium-range h-1 w-24 accent-cyan-500"
               />
             </div>
           </div>
@@ -168,7 +163,7 @@ export function Attendance({
                 step="1"
                 value={attendanceSettings.maxRecognitionFacesPerFrame}
                 onChange={(e) => onMaxRecognitionFacesChange(parseInt(e.target.value))}
-                className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/8 px-1 accent-cyan-500"
+                className="premium-range h-1 w-24 accent-cyan-500"
               />
             </div>
           </div>
@@ -199,7 +194,7 @@ export function Attendance({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                      className="text-xs font-normal text-white/40">
+                      className="text-xs font-normal text-white/60">
                       {!hasSelectedGroup ?
                         "Select a group to enable late tracking"
                       : attendanceSettings.lateThresholdEnabled ?
@@ -213,13 +208,9 @@ export function Attendance({
               <button
                 onClick={() => onLateThresholdToggle(!attendanceSettings.lateThresholdEnabled)}
                 disabled={!hasSelectedGroup}
-                className={`relative ml-auto flex h-5.5 w-10 shrink-0 items-center rounded-full transition-colors ${SETTINGS_TOGGLE_DURATION_CLASS} focus:outline-none ${
-                  attendanceSettings.lateThresholdEnabled ? "bg-cyan-500/30" : "bg-white/10"
-                } group/toggle disabled:cursor-not-allowed disabled:opacity-50`}>
+                className={`premium-switch ${attendanceSettings.lateThresholdEnabled ? "premium-switch-on" : "premium-switch-off"} group/toggle disabled:cursor-not-allowed disabled:opacity-50`}>
                 <div
-                  className={`absolute left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-md transition-transform ${SETTINGS_TOGGLE_DURATION_CLASS} ${
-                    attendanceSettings.lateThresholdEnabled ? "translate-x-4.5" : "translate-x-0"
-                  }`}></div>
+                  className={`premium-switch-thumb ${attendanceSettings.lateThresholdEnabled ? "premium-switch-thumb-on" : "premium-switch-thumb-off"}`}></div>
               </button>
             </div>
 
@@ -250,7 +241,7 @@ export function Attendance({
                         step="5"
                         value={attendanceSettings.lateThresholdMinutes}
                         onChange={(e) => onLateThresholdChange(parseInt(e.target.value))}
-                        className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-white/8 px-1 accent-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="premium-range h-1 w-24 accent-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -294,7 +285,7 @@ export function Attendance({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 2 }}
                     transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                    className="text-xs font-normal text-white/40">
+                    className="text-xs font-normal text-white/60">
                     {attendanceSettings.enableSpoofDetection ?
                       "ON: Requires a live face before showing identity or recording attendance."
                     : "OFF: Identity can appear without a live-face check."}
@@ -306,13 +297,9 @@ export function Attendance({
             <button
               onClick={() => onSpoofDetectionToggle(!attendanceSettings.enableSpoofDetection)}
               aria-label="Toggle anti-spoof detection"
-              className={`relative ml-auto flex h-5.5 w-10 shrink-0 items-center rounded-full transition-colors ${SETTINGS_TOGGLE_DURATION_CLASS} focus:outline-none ${
-                attendanceSettings.enableSpoofDetection ? "bg-cyan-500/30" : "bg-white/10"
-              } group/toggle disabled:cursor-not-allowed disabled:opacity-50`}>
+              className={`premium-switch ${attendanceSettings.enableSpoofDetection ? "premium-switch-on" : "premium-switch-off"} group/toggle disabled:cursor-not-allowed disabled:opacity-50`}>
               <div
-                className={`absolute left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-sm transition-transform ${SETTINGS_TOGGLE_DURATION_CLASS} ${
-                  attendanceSettings.enableSpoofDetection ? "translate-x-4.5" : "translate-x-0"
-                }`}></div>
+                className={`premium-switch-thumb ${attendanceSettings.enableSpoofDetection ? "premium-switch-thumb-on" : "premium-switch-thumb-off"}`}></div>
             </button>
           </div>
 

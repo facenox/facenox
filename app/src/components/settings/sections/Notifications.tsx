@@ -7,7 +7,6 @@ interface NotificationsProps {
 }
 
 const SETTINGS_STATUS_SWAP_DURATION = 0.14
-const SETTINGS_TOGGLE_DURATION_CLASS = "duration-200"
 
 export function Notifications({ audioSettings, onAudioSettingsChange }: NotificationsProps) {
   return (
@@ -25,7 +24,7 @@ export function Notifications({ audioSettings, onAudioSettingsChange }: Notifica
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 2 }}
                   transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                  className="text-xs text-white/50">
+                  className="text-xs font-medium text-white/60">
                   {audioSettings.recognitionSoundEnabled ?
                     "ON: Play a notification sound when someone scans."
                   : "OFF: Silent mode enabled."}
@@ -40,13 +39,9 @@ export function Notifications({ audioSettings, onAudioSettingsChange }: Notifica
                 recognitionSoundEnabled: !audioSettings.recognitionSoundEnabled,
               })
             }
-            className={`relative ml-auto flex h-5.5 w-10 shrink-0 items-center rounded-full transition-colors ${SETTINGS_TOGGLE_DURATION_CLASS} focus:outline-none ${
-              audioSettings.recognitionSoundEnabled ? "bg-cyan-500/30" : "bg-white/10"
-            }`}>
+            className={`premium-switch ${audioSettings.recognitionSoundEnabled ? "premium-switch-on" : "premium-switch-off"}`}>
             <div
-              className={`absolute left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-sm transition-transform ${SETTINGS_TOGGLE_DURATION_CLASS} ${
-                audioSettings.recognitionSoundEnabled ? "translate-x-4.5" : "translate-x-0"
-              }`}></div>
+              className={`premium-switch-thumb ${audioSettings.recognitionSoundEnabled ? "premium-switch-thumb-on" : "premium-switch-thumb-off"}`}></div>
           </button>
         </div>
       </div>

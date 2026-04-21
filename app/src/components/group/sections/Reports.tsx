@@ -130,7 +130,7 @@ export function Reports({
                   <div className="absolute inset-0 rounded-full border-4 border-cyan-500/10"></div>
                   <div className="absolute inset-0 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
                 </div>
-                <span className="text-sm font-medium text-white/40">Generating Report</span>
+                <span className="text-sm font-medium text-white/60">Generating Report</span>
               </div>
             </motion.div>
           : !loading && members.length === 0 ?

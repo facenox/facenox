@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Display } from "@/components/settings/sections/Display"
 import { Notifications } from "@/components/settings/sections/Notifications"
@@ -8,6 +8,7 @@ import { About } from "@/components/settings/sections/About"
 import { CloudSync } from "@/components/settings/sections/CloudSync"
 import { AntiSpoofDetectionModal } from "@/components/settings/AntiSpoofDetectionModal"
 import { GroupPanel, type GroupSection } from "@/components/group"
+import { SectionHeader } from "./components/SectionHeader"
 import { useGroupModals } from "@/components/group/hooks"
 import { useGroupUIStore } from "@/components/group/stores"
 import { useUIStore } from "@/components/main/stores"
@@ -106,15 +107,108 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   )
   const [isAntiSpoofModalOpen, setIsAntiSpoofModalOpen] = useState(false)
   const [dontShowAntiSpoofInfoAgain, setDontShowAntiSpoofInfoAgain] = useState(false)
-  const generalTitles: Record<string, string> = {
-    attendance: "Attendance",
-    display: "Display",
-    notifications: "Notifications",
-    database: "Database",
-    cloudsync: "Cloud Beta",
-    about: "About",
-  }
   const isGroupSection = activeSection === "group"
+
+  // Dynamic Header Logic
+  const headerProps = useMemo(() => {
+    const generalTitles: Record<string, string> = {
+      attendance: "Attendance",
+      display: "Display",
+      notifications: "Notifications",
+      database: "Database",
+      cloudsync: "Cloud Beta",
+      about: "About",
+    }
+    if (isGroupSection) {
+      const groupName =
+        dropdownValue ?
+          dropdownGroups.find((g) => g.id === dropdownValue)?.name
+        : "Group Management"
+
+      const sectionLabel =
+        groupInitialSection ?
+          groupSections.find((s) => s.id === groupInitialSection)?.label
+        : "Overview"
+
+      // Actions
+      let actions: React.ReactNode = null
+      if (
+        groupInitialSection === "members" &&
+        validInitialGroup &&
+        addMemberHandler &&
+        members.length > 0 &&
+        !registrationMode
+      ) {
+        actions = (
+          <button
+            onClick={addMemberHandler}
+            className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-[11px] font-bold text-white/60 transition-all hover:bg-white/10 hover:text-white">
+            <i className="fa-solid fa-user-plus text-[10px]"></i>
+            ADD MEMBER
+          </button>
+        )
+      } else if (groupInitialSection === "members" && registrationMode) {
+        actions = (
+          <button
+            onClick={resetRegistration}
+            className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-[11px] font-bold text-white/60 transition-all hover:bg-white/10 hover:text-white">
+            <i className="fa-solid fa-arrow-left text-[10px]"></i>
+            BACK TO MEMBERS
+          </button>
+        )
+      } else if (groupInitialSection === "overview" && validInitialGroup) {
+        actions = (
+          <button
+            onClick={openEditGroup}
+            className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-[11px] font-bold text-white/60 transition-all hover:bg-white/10 hover:text-white">
+            <i className="fa-solid fa-pen-to-square text-[10px]"></i>
+            EDIT GROUP
+          </button>
+        )
+      } else if (groupInitialSection === "reports" && reportsExportHandlers) {
+        actions = (
+          <button
+            onClick={reportsExportHandlers.exportCSV}
+            className="flex items-center gap-2 rounded-lg bg-cyan-500/10 px-3 py-1.5 text-[11px] font-bold text-cyan-400 transition-all hover:bg-cyan-500/20">
+            <i className="fa-solid fa-file-csv text-[10px]"></i>
+            EXPORT CSV
+          </button>
+        )
+      }
+
+      return {
+        title: sectionLabel || "Overview",
+        eyebrow: groupName,
+        eyebrowColor: "text-cyan-400/80",
+        actions,
+        isGroupSection: true,
+      }
+    }
+
+    return {
+      title:
+        generalTitles[activeSection] ||
+        activeSection.charAt(0).toUpperCase() + activeSection.slice(1),
+      eyebrow: "General Settings",
+      eyebrowColor: "text-white/30",
+      actions: null,
+      isGroupSection: false,
+    }
+  }, [
+    activeSection,
+    isGroupSection,
+    dropdownValue,
+    dropdownGroups,
+    groupInitialSection,
+    groupSections,
+    validInitialGroup,
+    addMemberHandler,
+    members.length,
+    registrationMode,
+    resetRegistration,
+    openEditGroup,
+    reportsExportHandlers,
+  ])
 
   const handleSpoofDetectionToggle = (enabled: boolean) => {
     const isTurningOn = enabled && !attendanceSettings.enableSpoofDetection
@@ -139,98 +233,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   return (
     <>
       <div className="flex flex-1 flex-col overflow-hidden bg-[var(--bg-secondary)]">
-        {/* Section Header */}
-        <div className="px-10 pt-10 pb-2">
-          <div
-            className={`flex w-full items-center justify-between ${isGroupSection ? "" : "mx-auto max-w-[900px]"}`}>
-            <h2 className="flex items-center text-xl font-semibold">
-              {isGroupSection ?
-                <div className="flex flex-col">
-                  <span className="mb-0.5 text-[11px] font-medium text-cyan-400/60">
-                    {dropdownValue ?
-                      dropdownGroups.find((g) => g.id === dropdownValue)?.name
-                    : "Group Management"}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl font-semibold text-white">
-                      {groupInitialSection ?
-                        groupSections.find((s) => s.id === groupInitialSection)?.label
-                      : "Overview"}
-                    </span>
-                  </div>
-                </div>
-              : <div className="flex flex-col">
-                  <span className="mb-0.5 text-[11px] font-medium text-white/30">General</span>
-                  <span className="text-xl font-semibold text-white">
-                    {generalTitles[activeSection] ||
-                      activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
-                  </span>
-                </div>
-              }
-            </h2>
-
-            <div className="flex items-center gap-4">
-              {activeSection === "group" &&
-                groupInitialSection === "members" &&
-                validInitialGroup &&
-                addMemberHandler &&
-                members.length > 0 &&
-                !registrationMode && (
-                  <button
-                    onClick={addMemberHandler}
-                    className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium text-white/40 transition-all hover:bg-white/10 hover:text-white/80">
-                    <i className="fa-solid fa-user-plus text-[10px]"></i>
-                    Add Member
-                  </button>
-                )}
-
-              {activeSection === "group" &&
-                groupInitialSection === "members" &&
-                registrationMode && (
-                  <button
-                    onClick={resetRegistration}
-                    className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium text-white/40 transition-all hover:bg-white/10 hover:text-white/80">
-                    <i className="fa-solid fa-arrow-left text-[10px]"></i>
-                    Back to Members
-                  </button>
-                )}
-
-              {activeSection === "group" &&
-                groupInitialSection === "overview" &&
-                validInitialGroup && (
-                  <button
-                    onClick={openEditGroup}
-                    className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium text-white/40 transition-all hover:bg-white/10 hover:text-white/80">
-                    <svg
-                      className="mb-0.5 h-3.5 w-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                        strokeWidth={2.5}
-                      />
-                    </svg>
-                    Edit Group
-                  </button>
-                )}
-              {activeSection === "group" &&
-                groupInitialSection === "reports" &&
-                reportsExportHandlers && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={reportsExportHandlers.exportCSV}
-                      className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-medium text-white/40 transition-all hover:bg-white/10 hover:text-white/80">
-                      <i className="fa-solid fa-file-csv text-[10px]"></i>
-                      Export CSV
-                    </button>
-                  </div>
-                )}
-            </div>
-          </div>
-        </div>
+        <SectionHeader {...headerProps} />
 
         {/* Section Content */}
         <div

@@ -24,19 +24,19 @@ export function StatsCard({
     <div
       className={`flex flex-col items-center gap-1.5 transition-opacity ${disabled ? "opacity-40 grayscale" : ""}`}>
       <div className="flex items-center gap-2">
-        <p className="text-[12px] font-medium text-white/40">{label}</p>
+        <p className="text-[12px] font-bold tracking-wider text-white/50 uppercase">{label}</p>
         {disabled && (
-          <span className="rounded bg-[rgba(255,255,255,0.08)] px-1.5 py-0.5 text-[9px] font-bold text-white/40 uppercase">
+          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-bold tracking-tight text-white/40 uppercase">
             Disabled
           </span>
         )}
       </div>
       <div className="flex items-baseline gap-1.5">
-        <span className="text-3xl font-medium tracking-tight text-white">
+        <span className="text-4xl font-bold tracking-tight text-cyan-400">
           {disabled ? "-" : (value ?? 0)}
         </span>
         {!disabled && total !== undefined && (type === "present" || type === "absent") && (
-          <span className="text-xl font-medium text-white/40">/ {total}</span>
+          <span className="text-xl font-medium text-white/20">/ {total}</span>
         )}
       </div>
     </div>

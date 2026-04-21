@@ -22,7 +22,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
         </div>
       }
       maxWidth="md">
-      <div className="custom-scroll mt-2 -mr-2 max-h-[70vh] space-y-6 overflow-y-auto pr-2">
+      <div className="custom-scroll mt-2 -mr-2 max-h-[70vh] space-y-6 overflow-y-auto pr-2 pb-10">
         <section>
           <h3 className="mb-2 text-sm font-medium text-white">Your data stays local</h3>
           <p className="text-xs leading-relaxed text-white/50">
@@ -66,7 +66,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
             help support privacy-conscious deployments. Compliance still depends on your operational
             policies and legal notices.
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5 pb-2">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             <button
               onClick={() => updaterService.openReleasePage("https://gdpr-info.eu/")}
               className="rounded bg-[rgba(22,28,36,0.62)] px-2 py-0.5 text-[10px] text-white/40 transition-all hover:bg-[rgba(22,28,36,0.85)] hover:text-white/70 active:scale-95">
@@ -81,13 +81,6 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
             </button>
           </div>
         </section>
-        <div className="mt-8 flex justify-end">
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-6 py-2 text-[11px] font-bold tracking-wider text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
-            Close
-          </button>
-        </div>
       </div>
     </Modal>
   )

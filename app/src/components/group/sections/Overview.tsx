@@ -217,8 +217,8 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
       <section className="mt-8 flex min-h-0 flex-1 flex-col">
         <div className="mb-6 flex shrink-0 items-center justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-[14px] font-semibold text-white">Activity Log</h2>
-            <p className="mt-0.5 text-[12px] text-white/30">
+            <h2 className="text-[14px] font-bold tracking-tight text-white">Activity Log</h2>
+            <p className="mt-0.5 text-[12px] font-medium text-white/50">
               {DATE_FILTER_LABELS[dateFilter]}&apos;s records
             </p>
           </div>
@@ -336,8 +336,8 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                               <span className="text-[13px] font-medium text-white transition-colors">
                                 {displayName}
                               </span>
-                              <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-white/40">
-                                <i className="fa-regular fa-clock text-[10px]"></i>
+                              <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-white/60">
+                                <i className="fa-regular fa-clock text-[10px] opacity-70"></i>
                                 <span>{formatTime(record.timestamp)}</span>
                               </div>
                             </div>

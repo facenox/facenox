@@ -1,4 +1,5 @@
 import React from "react"
+import { motion } from "framer-motion"
 import { Dropdown, Tooltip } from "@/components/shared"
 import type { AttendanceGroup } from "@/types/recognition"
 import type { GroupSection } from "@/components/group/types"
@@ -12,10 +13,6 @@ interface SidebarProps {
   dropdownValue: string | null
   onGroupSelect?: (group: AttendanceGroup) => void
   setTriggerCreateGroup: (trigger: number) => void
-  setRegistrationState: (
-    source: "upload" | "camera" | null,
-    mode: "single" | "bulk" | "queue" | null,
-  ) => void
   sections: { id: string; label: string; icon: string }[]
   groupSections: { id: GroupSection; label: string; icon: string }[]
 }
@@ -29,12 +26,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   dropdownValue,
   onGroupSelect,
   setTriggerCreateGroup,
-  setRegistrationState,
   sections,
   groupSections,
 }) => {
   return (
-    <div className="flex w-[200px] shrink-0 flex-col border-r border-white/5 bg-[#0a0c10] sm:w-[240px] lg:w-[260px]">
+    <div className="flex w-[200px] shrink-0 flex-col border-r border-white/5 bg-[var(--bg-primary)] sm:w-[240px] lg:w-[260px]">
       {/* Workspace Switcher Header */}
       <div className="px-3 pt-6 pb-2">
         <div className="flex items-center gap-1">
@@ -80,10 +76,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      <div className="hover-scrollbar settings-sidebar-scroll flex-1 space-y-6 overflow-y-auto pt-4 pr-3 pb-6 pl-4">
+      <div className="hover-scrollbar settings-sidebar-scroll flex-1 space-y-6 overflow-y-auto pt-4 pr-3 pb-6 pl-3">
         <section>
           <div className="mb-3 px-3">
-            <h2 className="text-xs font-bold tracking-wider text-white/40 uppercase">
+            <h2 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
               Group Management
             </h2>
           </div>
@@ -100,17 +96,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       setActiveSection("group")
                       setGroupInitialSection(subsection.id)
                       setTriggerCreateGroup(0)
-                      if (subsection.id === "registration") {
-                        setRegistrationState(null, null)
-                      }
                     }}
-                    className={`group/item flex w-full items-center gap-3 rounded-md border-0 bg-transparent px-3 py-2.5 text-left text-[14px] font-medium transition-colors ${
-                      isActive ? "!bg-white/10 text-white" : (
-                        "text-white/60 hover:!bg-white/5 hover:text-white"
-                      )
+                    className={`group/item relative flex w-full items-center gap-3 rounded-md border-0 bg-transparent px-3 py-2 text-left text-[13px] font-medium transition-all ${
+                      isActive ?
+                        "bg-cyan-500/10 text-white"
+                      : "text-white/50 hover:bg-white/5 hover:text-white"
                     }`}>
+                    {isActive && (
+                      <motion.div
+                        layoutId="active-pill"
+                        className="absolute left-0 h-4 w-1 rounded-r-full bg-cyan-400"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
                     <i
-                      className={`${subsection.icon} w-5 text-sm ${isActive ? "text-cyan-400" : "text-white/40 group-hover/item:text-white/70"}`}></i>
+                      className={`${subsection.icon} w-5 text-sm transition-colors ${isActive ? "text-cyan-400" : "text-white/30 group-hover/item:text-white/70"}`}></i>
                     {subsection.label}
                   </button>
                 )
@@ -121,7 +121,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <section>
           <div className="mb-3 px-3">
-            <h2 className="text-xs font-bold tracking-wider text-white/40 uppercase">General</h2>
+            <h2 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
+              General
+            </h2>
           </div>
 
           <div className="space-y-1">
@@ -131,13 +133,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
-                  className={`group/item flex w-full items-center gap-3 rounded-md border-0 bg-transparent px-3 py-2.5 text-left text-[14px] font-medium transition-colors ${
-                    isActive ? "!bg-white/10 text-white" : (
-                      "text-white/60 hover:!bg-white/5 hover:text-white"
-                    )
+                  className={`group/item relative flex w-full items-center gap-3 rounded-md border-0 bg-transparent px-3 py-2 text-left text-[13px] font-medium transition-all ${
+                    isActive ?
+                      "bg-cyan-500/10 text-white"
+                    : "text-white/50 hover:bg-white/5 hover:text-white"
                   }`}>
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-pill-general"
+                      className="absolute left-0 h-4 w-1 rounded-r-full bg-cyan-400"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
                   <i
-                    className={`${section.icon} w-5 text-sm ${isActive ? "text-white" : "text-white/40 group-hover/item:text-white/70"}`}></i>
+                    className={`${section.icon} w-5 text-sm transition-colors ${isActive ? "text-cyan-400" : "text-white/30 group-hover/item:text-white/70"}`}></i>
                   {section.label}
                 </button>
               )

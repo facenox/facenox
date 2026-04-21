@@ -232,7 +232,7 @@ export function Database({
               description="Attendance is logged using your local system time. When online, Facenox verifies this against a secure time server to ensure perfect accuracy for cloud syncing."
             />
           </div>
-          <p className="mt-1 text-[13px] text-white/40">
+          <p className="mt-1 text-[13px] text-white/60">
             Check if your local system time is accurate for logging.
           </p>
         </div>
@@ -277,7 +277,7 @@ export function Database({
       <section>
         <div className="mb-6">
           <h2 className="text-[14px] font-semibold text-white">Data Management</h2>
-          <p className="mt-1 text-[13px] text-white/40">
+          <p className="mt-1 text-[13px] text-white/60">
             Securely backup your configuration, or export activity logs.
           </p>
         </div>

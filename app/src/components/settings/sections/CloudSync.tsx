@@ -238,8 +238,8 @@ export function CloudSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
         <section>
           <div className="mb-6 flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-[14px] font-semibold text-white">Status</h2>
-              <p className="mt-1 text-[13px] text-white/40">
+              <h2 className="text-[14px] font-bold tracking-tight text-white">Status</h2>
+              <p className="mt-1 text-[13px] text-white/60">
                 {config.connected ?
                   `Connected to: ${config.organizationName || "Unknown org"} – ${config.siteName || "Default Site"}`
                 : "Operating entirely offline until a cloud account is linked."}
@@ -296,7 +296,7 @@ export function CloudSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
                       {step.label.toUpperCase()}
                     </div>
                     <div className="text-[13px] font-medium text-white">{step.title}</div>
-                    <div className="text-[12px] text-white/40">{step.body}</div>
+                    <div className="text-[12px] font-medium text-white/60">{step.body}</div>
                   </div>
                 ))}
               </div>
@@ -429,15 +429,17 @@ export function CloudSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
                             className="h-9 w-full rounded-md border-0 bg-white/5 px-3 text-[13px] text-white transition-all outline-none focus:bg-white/10 focus:ring-1 focus:ring-white/20"
                           />
                         </div>
-                        <label className="mt-auto mb-1 flex cursor-pointer items-center gap-3 text-[13px] text-white/70">
-                          <input
-                            type="checkbox"
-                            checked={enabled}
-                            onChange={(e) => setEnabled(e.target.checked)}
-                            className="h-4 w-4 rounded bg-white/5 accent-cyan-500 ring-0 focus:ring-0"
-                          />
-                          Enable auto-sync
-                        </label>
+                        <div className="mt-auto mb-1 flex items-center gap-3">
+                          <button
+                            onClick={() => setEnabled(!enabled)}
+                            className={`premium-switch ${enabled ? "premium-switch-on" : "premium-switch-off"}`}>
+                            <div
+                              className={`premium-switch-thumb ${enabled ? "premium-switch-thumb-on" : "premium-switch-thumb-off"}`}></div>
+                          </button>
+                          <span className="text-[13px] font-medium text-white/70">
+                            Enable auto-sync
+                          </span>
+                        </div>
                       </div>
 
                       <button

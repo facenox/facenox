@@ -94,3 +94,83 @@
 .delay-3000 {
   animation-delay: 3000ms;
 }
+
+/* Premium Range Input */
+input[type="range"].premium-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"].premium-range:focus {
+  outline: none;
+}
+
+input[type="range"].premium-range::-webkit-slider-runnable-track {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  height: 4px;
+}
+
+input[type="range"].premium-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -6px;
+  background-color: #ffffff;
+  border-radius: 9999px;
+  height: 16px;
+  width: 16px;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input[type="range"].premium-range:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
+}
+
+input[type="range"].premium-range::-moz-range-track {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  height: 4px;
+}
+
+input[type="range"].premium-range::-moz-range-thumb {
+  background-color: #ffffff;
+  border-radius: 9999px;
+  height: 16px;
+  width: 16px;
+  border: none;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Premium Switch / Toggle */
+.premium-switch {
+  @apply relative flex h-5.5 w-10 shrink-0 items-center rounded-full transition-all duration-200 focus:outline-none;
+}
+
+.premium-switch-on {
+  @apply bg-cyan-600 shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)];
+}
+
+.premium-switch-off {
+  @apply bg-white/10 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)];
+}
+
+.premium-switch-thumb {
+  @apply absolute left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.4)] transition-transform duration-200;
+}
+
+.premium-switch-thumb-on {
+  @apply translate-x-4.5;
+}
+
+.premium-switch-thumb-off {
+  @apply translate-x-0;
+}
