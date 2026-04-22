@@ -194,12 +194,12 @@ export function Attendance({
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
                   className="overflow-hidden">
-                  <div className="relative flex items-center gap-4 pt-1 pb-5 pl-4">
+                  <div className="relative flex items-center gap-4 pt-3 pb-3 pl-4">
                     <div className="absolute top-0 bottom-1/2 left-0 w-px rounded-bl-xs bg-white/10"></div>
                     <div className="absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10"></div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="mt-0.5 text-xs text-white/40">
+                      <div className="text-xs text-white/40">
                         Maximum faces to process per frame.
                       </div>
                     </div>
@@ -278,12 +278,12 @@ export function Attendance({
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
                   className="overflow-hidden">
-                  <div className="relative flex items-center gap-4 pt-1 pb-5 pl-4">
+                  <div className="relative flex items-center gap-4 pt-3 pb-3 pl-4">
                     <div className="absolute top-0 bottom-1/2 left-0 w-px rounded-bl-xs bg-white/10"></div>
                     <div className="absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10"></div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="mt-0.5 text-xs text-white/40">Late threshold in minutes.</div>
+                      <div className="text-xs text-white/40">Late threshold in minutes.</div>
                     </div>
 
                     <div className="ml-auto flex shrink-0 items-center gap-3">
