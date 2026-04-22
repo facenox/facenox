@@ -362,21 +362,63 @@ export function Attendance({
 
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-white/90">Data Retention</div>
+              <div className="flex items-center gap-1.5">
+                <div className="text-sm font-medium text-white/90">Data Retention</div>
+                <InfoPopover
+                  title="Data Retention Guide"
+                  description="Controls how long attendance logs and biometric signatures are stored in your local database."
+                  detailsNode={[
+                    <div key="how-it-works" className="space-y-1.5">
+                      <div className="font-semibold text-white/90">How it works:</div>
+                      <ul className="list-disc space-y-1 pl-4 text-white/60">
+                        <li>Pruning occurs automatically every 24 hours.</li>
+                        <li>Expired records are permanently deleted.</li>
+                        <li>Setting this to 0 disables automatic deletion.</li>
+                      </ul>
+                    </div>,
+                    <div key="tip" className="rounded-md bg-white/5 p-2 text-[10px] text-white/50">
+                      <span className="font-medium text-white/70">Tip:</span> Shorter retention
+                      periods keep the app faster and comply better with modern privacy laws.
+                    </div>,
+                  ]}
+                />
+              </div>
               <div className="mt-0.5 text-xs text-white/40">
-                {attendanceSettings.dataRetentionDays && attendanceSettings.dataRetentionDays > 0 ?
-                  `Delete records older than ${attendanceSettings.dataRetentionDays} days automatically.`
-                : "Keep all records forever."}
+                {(() => {
+                  const totalDays = attendanceSettings.dataRetentionDays
+                  if (!totalDays || totalDays <= 0) return "Keep all records forever."
+
+                  const years = Math.floor(totalDays / 365)
+                  const remainingDays = totalDays % 365
+                  const months = Math.floor(remainingDays / 30)
+
+                  let timeStr = ""
+                  if (years > 0) {
+                    timeStr += `${years} ${years === 1 ? "year" : "years"}`
+                    if (months > 0) {
+                      timeStr += ` and ${months} ${months === 1 ? "month" : "months"}`
+                    }
+                  } else if (months > 0) {
+                    timeStr = `${months} ${months === 1 ? "month" : "months"}`
+                  } else {
+                    timeStr = `${totalDays} ${totalDays === 1 ? "day" : "days"}`
+                  }
+
+                  return `Delete records older than ${timeStr} automatically.`
+                })()}
               </div>
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">
               <span className="text-[11px] font-medium text-white/60">days</span>
               <input
-                type="number"
-                min={0}
-                max={3650}
+                type="text"
+                inputMode="numeric"
                 value={attendanceSettings.dataRetentionDays ?? 0}
-                onChange={(e) => onDataRetentionChange(Math.max(0, parseInt(e.target.value) || 0))}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "")
+                  const num = raw === "" ? 0 : parseInt(raw, 10)
+                  onDataRetentionChange(Math.min(3650, num))
+                }}
                 className="w-14 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
               />
             </div>
