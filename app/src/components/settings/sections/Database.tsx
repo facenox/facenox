@@ -68,6 +68,7 @@ export function Database({
   }>({ isOpen: false, action: "export" })
   const [importFilePath, setImportFilePath] = useState<string | null>(null)
   const [passwordInput, setPasswordInput] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleExport = async (password: string) => {
     setStatus({ type: "loading", action: "export" })
@@ -284,13 +285,13 @@ export function Database({
           {/* Export */}
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <h4 className="text-[13px] font-medium text-white">Export Database</h4>
+              <h4 className="text-[13px] font-medium text-white">Create Backup</h4>
               <p className="mt-1 text-[13px] text-white/40">
                 Save an encrypted{" "}
                 <code className="rounded bg-white/5 px-1 py-0.5 font-mono text-[11px]">
                   .facenox
                 </code>{" "}
-                backup with members, history, and biometric profiles.
+                file containing all members, history, and biometric profiles.
               </p>
             </div>
             <button
@@ -300,16 +301,16 @@ export function Database({
               {isBackingUp && status.action === "export" ?
                 <i className="fa-solid fa-circle-notch fa-spin" />
               : null}
-              Export
+              Create
             </button>
           </div>
 
           {/* Import */}
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <h4 className="text-[13px] font-medium text-white">Import Database</h4>
+              <h4 className="text-[13px] font-medium text-white">Restore Backup</h4>
               <p className="mt-1 text-[13px] text-white/40">
-                Restore from a backup file using its original encryption password.
+                Restore your database from a backup file using its original encryption password.
               </p>
             </div>
             <button
@@ -319,7 +320,7 @@ export function Database({
               {isBackingUp && status.action === "import" ?
                 <i className="fa-solid fa-circle-notch fa-spin" />
               : null}
-              Import
+              Restore
             </button>
           </div>
 
@@ -351,6 +352,7 @@ export function Database({
         onClose={() => {
           setPasswordModal({ ...passwordModal, isOpen: false })
           setPasswordInput("")
+          setShowPassword(false)
         }}
         title={passwordModal.action === "export" ? "Set Backup Password" : "Restore Backup"}
         icon={
@@ -371,32 +373,52 @@ export function Database({
           </p>
           <div className="space-y-1.5">
             <label className="text-[11px] font-medium text-white/30">Backup Password</label>
-            <input
-              type="password"
-              autoFocus
-              value={passwordInput}
-              onChange={(e) => setPasswordInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && passwordInput) {
-                  const pass = passwordInput
-                  setPasswordInput("")
-                  setPasswordModal({ ...passwordModal, isOpen: false })
-                  if (passwordModal.action === "export") {
-                    handleExport(pass)
-                  } else {
-                    handleImport(pass, passwordModal.overwrite)
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                autoFocus
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && passwordInput) {
+                    const pass = passwordInput
+                    setPasswordInput("")
+                    setShowPassword(false)
+                    setPasswordModal({ ...passwordModal, isOpen: false })
+                    if (passwordModal.action === "export") {
+                      handleExport(pass)
+                    } else {
+                      handleImport(pass, passwordModal.overwrite)
+                    }
                   }
-                }
-              }}
-              placeholder="Enter password..."
-              className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-xs text-white transition-all duration-300 outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
-            />
+                }}
+                placeholder="Enter password..."
+                className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 pr-10 pl-3 text-xs text-white transition-all duration-300 outline-none focus:border-cyan-500/32 focus:bg-[rgba(28,35,44,0.82)] focus:ring-1 focus:ring-cyan-500/5"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute top-1/2 right-3 -translate-y-1/2 border-none bg-transparent p-0 text-white/30 shadow-none transition-colors hover:text-white/60 focus:outline-none"
+                tabIndex={-1}>
+                <i className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"} text-[12px]`} />
+              </button>
+            </div>
+            {passwordModal.action === "export" && (
+              <div className="flex items-start gap-1.5 pt-1 text-[10px] leading-tight text-amber-500/80">
+                <i className="fa-solid fa-triangle-exclamation mt-0.5 shrink-0" />
+                <span>
+                  Save this password securely. It is required to restore your data and cannot be
+                  reset if forgotten.
+                </span>
+              </div>
+            )}
           </div>
           <div className="mt-6 flex justify-end gap-3">
             <button
               onClick={() => {
                 setPasswordModal({ ...passwordModal, isOpen: false })
                 setPasswordInput("")
+                setShowPassword(false)
               }}
               className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2 text-[11px] font-medium text-white/50 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
               Cancel
@@ -406,6 +428,7 @@ export function Database({
               onClick={() => {
                 const pass = passwordInput
                 setPasswordInput("")
+                setShowPassword(false)
                 setPasswordModal({ ...passwordModal, isOpen: false })
                 if (passwordModal.action === "export") {
                   handleExport(pass)
@@ -414,7 +437,7 @@ export function Database({
                 }
               }}
               className="min-w-25 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-50">
-              {passwordModal.action === "export" ? "Export" : "Import"}
+              {passwordModal.action === "export" ? "Create" : "Restore"}
             </button>
           </div>
         </div>
