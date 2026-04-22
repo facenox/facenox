@@ -47,7 +47,7 @@ const pairingSteps = [
     title: "Generate Code",
     body: (
       <>
-        Get a temporary pairing code from your{" "}
+        Get a pairing code from the{" "}
         <a
           href="https://facenox.com/dashboard"
           target="_blank"
@@ -65,7 +65,7 @@ const pairingSteps = [
     body: "Enter the code below to link this device.",
   },
   {
-    label: "Ready",
+    label: "Connected",
     title: "Auto-Sync Active",
     body: "Records and groups will automatically sync in the background.",
   },
