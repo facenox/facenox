@@ -1,6 +1,9 @@
 import type { Mock } from "vitest"
 import { vi } from "vitest"
-import { DEFAULT_CLOUD_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "@/services/remoteSyncDefaults"
+import {
+  DEFAULT_CLOUD_BASE_URL,
+  DEFAULT_SYNC_INTERVAL_MINUTES,
+} from "@/services/remoteSyncDefaults"
 
 export interface MockSyncConfig {
   enabled: boolean
@@ -35,6 +38,10 @@ export interface MockElectronAPI extends BackendServiceAPI {
     setThreshold: Mock
     clearDatabase: Mock
   }
+  saveFaceDatabase: Mock
+  loadFaceDatabase: Mock
+  removeFacePerson: Mock
+  getAllFacePersons: Mock
   store: {
     get: Mock
     set: Mock
@@ -132,6 +139,10 @@ export function createElectronAPIMock(): MockElectronAPI {
         total_persons: 0,
       }),
     },
+    saveFaceDatabase: vi.fn().mockResolvedValue({ success: true, message: "Saved" }),
+    loadFaceDatabase: vi.fn().mockResolvedValue({ success: true, message: "Loaded" }),
+    removeFacePerson: vi.fn().mockResolvedValue({ success: true, message: "Removed" }),
+    getAllFacePersons: vi.fn().mockResolvedValue({ success: true, persons: [], total_count: 0 }),
     store: {
       get: vi.fn().mockResolvedValue(undefined),
       set: vi.fn().mockResolvedValue(true),
