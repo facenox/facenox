@@ -218,23 +218,16 @@ const AttendanceRecordItem = memo(
             </span>
 
             <div className="flex shrink-0 items-center gap-2">
-              {timeStatus?.label && (
-                <span
-                  className={`rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-tight ${timeStatus.pillColor}`}>
-                  {timeStatus.label}
-                </span>
-              )}
-
               <div className="flex items-center gap-0">
                 <AnimatePresence initial={false}>
                   {isHovered && onVoidManual && (
                     <motion.div
                       key="remove-action"
                       initial={{ width: 0, opacity: 0 }}
-                      animate={{ width: 36, opacity: 1 }}
+                      animate={{ width: 32, opacity: 1 }}
                       exit={{ width: 0, opacity: 0 }}
-                      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                      className="flex items-center justify-center overflow-hidden px-1">
+                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                      className="flex items-center justify-center overflow-hidden pr-1">
                       <button
                         type="button"
                         onClick={(event) => {
@@ -249,13 +242,20 @@ const AttendanceRecordItem = memo(
                   )}
                 </AnimatePresence>
 
-                <span className="block w-[54px] text-right font-mono text-[11px] text-white/40 tabular-nums">
-                  {record.timestamp.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
+                {timeStatus?.label && (
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-tight ${timeStatus.pillColor}`}>
+                    {timeStatus.label}
+                  </span>
+                )}
               </div>
+
+              <span className="block w-[54px] text-right font-mono text-[11px] text-white/40 tabular-nums">
+                {record.timestamp.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
             </div>
           </div>
         </div>
