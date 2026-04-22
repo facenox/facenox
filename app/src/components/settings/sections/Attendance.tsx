@@ -31,9 +31,8 @@ export function Attendance({
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-4 pb-10">
       <div className="overflow-hidden">
-        <div className="border-b border-white/5 py-2">
-          <h3 className="flex items-center gap-2 text-[11px] font-medium text-cyan-400/50">
-            <i className="fa-solid fa-clock-rotate-left text-[11px]"></i>
+        <div className="border-b border-white/5 pt-6 pb-2">
+          <h3 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
             Attendance Logic
           </h3>
         </div>
@@ -253,9 +252,8 @@ export function Attendance({
       </div>
 
       <div className="overflow-hidden">
-        <div className="border-b border-white/5 py-2">
-          <h3 className="flex items-center gap-2 text-[11px] font-medium text-cyan-400/50">
-            <i className="fa-solid fa-shield-halved text-[11px]"></i>
+        <div className="border-b border-white/5 pt-6 pb-2">
+          <h3 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
             Security & Compliance
           </h3>
         </div>

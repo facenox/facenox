@@ -5,7 +5,7 @@ import type { AttendanceGroup } from "@/types/recognition"
 import { useDatabaseManagement } from "@/components/settings/sections/hooks/useDatabaseManagement"
 import { DatabaseStats } from "@/components/settings/sections/components/DatabaseStats"
 import { GroupEntry } from "@/components/settings/sections/components/GroupEntry"
-import { useDialog, InfoPopover } from "@/components/shared"
+import { useDialog } from "@/components/shared"
 import { Modal } from "@/components/common/Modal"
 import { useUIStore } from "@/components/main/stores"
 import { attendanceManager } from "@/services"
@@ -224,18 +224,14 @@ export function Database({
 
       {/* Device Time */}
       <section>
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <h2 className="text-[14px] font-semibold text-white">Device Time & Status</h2>
-            <InfoPopover
-              title="Time Verification"
-              description="Attendance is logged using your local system time. When online, Facenox verifies this against a secure time server to ensure perfect accuracy for cloud syncing."
-            />
-          </div>
-          <p className="mt-1 text-[13px] text-white/60">
-            Check if your local system time is accurate for logging.
-          </p>
+        <div className="mb-6 border-b border-white/5 pt-6 pb-2">
+          <h3 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
+            Device Time & Status
+          </h3>
         </div>
+        <p className="-mt-4 mb-6 text-[13px] text-white/60">
+          Check if your local system time is accurate for logging.
+        </p>
 
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
@@ -275,12 +271,14 @@ export function Database({
 
       {/* Backup & Restore */}
       <section>
-        <div className="mb-6">
-          <h2 className="text-[14px] font-semibold text-white">Data Management</h2>
-          <p className="mt-1 text-[13px] text-white/60">
-            Securely backup your configuration, or export activity logs.
-          </p>
+        <div className="mb-6 border-b border-white/5 pt-6 pb-2">
+          <h3 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
+            Data Management
+          </h3>
         </div>
+        <p className="-mt-4 mb-6 text-[13px] text-white/60">
+          Securely backup your configuration, or export activity logs.
+        </p>
 
         <div className="space-y-6">
           {/* Export */}
@@ -424,14 +422,15 @@ export function Database({
 
       {/* Groups Section */}
       <section>
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="text-[14px] font-semibold text-white">Groups</h2>
-            <p className="mt-1 text-[13px] text-white/40">
-              Browse stored groups and manage their members.
-            </p>
-          </div>
-
+        <div className="mb-6 border-b border-white/5 pt-6 pb-2">
+          <h3 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
+            Stored Groups
+          </h3>
+        </div>
+        <p className="-mt-4 mb-6 text-[13px] text-white/40">
+          Browse stored groups and manage their members.
+        </p>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="group/search relative w-full max-w-sm">
             <div className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-white/30 transition-colors group-focus-within/search:text-white/60">
               <i className="fa-solid fa-magnifying-glass text-[12px]"></i>
