@@ -145,13 +145,20 @@ const AttendanceRecordItem = memo(
         const severeLateThreshold = 30
         const earlyThreshold = -5
 
+        const formatDuration = (totalMinutes: number) => {
+          if (totalMinutes < 60) return `${totalMinutes}m`
+          const h = Math.floor(totalMinutes / 60)
+          const m = totalMinutes % 60
+          return m === 0 ? `${h}h` : `${h}h ${m}m`
+        }
+
         if (lateThresholdEnabled) {
           if (diffMinutes > lateThresholdMinutes) {
             const minutesLate = diffMinutes
             return {
               status: minutesLate > severeLateThreshold ? "severe-late" : "late",
               minutes: minutesLate,
-              label: `${minutesLate}M LATE`,
+              label: `${formatDuration(minutesLate)} LATE`,
               color: minutesLate > severeLateThreshold ? "text-red-400" : "text-amber-400",
               pillColor:
                 minutesLate > severeLateThreshold ?
@@ -171,7 +178,7 @@ const AttendanceRecordItem = memo(
             return {
               status: "early",
               minutes: minutesEarly,
-              label: `${minutesEarly}M EARLY`,
+              label: `${formatDuration(minutesEarly)} EARLY`,
               color: "text-cyan-400/80",
               pillColor: "bg-cyan-500/10 text-cyan-400/80 border-cyan-500/20",
               borderColor: "border-l-transparent",
@@ -224,44 +231,38 @@ const AttendanceRecordItem = memo(
                   {timeStatus.label}
                 </span>
               )}
-              {onVoidManual ?
-                <div className="relative flex h-6 w-[54px] items-center justify-end overflow-visible">
-                  <AnimatePresence initial={false}>
-                    {isHovered && (
-                      <motion.div
-                        key="remove-action"
-                        initial={{ opacity: 0, x: 6, scale: 0.92 }}
-                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                        exit={{ opacity: 0, x: 6, scale: 0.92 }}
-                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute top-0 right-[58px]">
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            onVoidManual(record)
-                          }}
-                          className="flex h-6 w-6 items-center justify-center rounded-full border border-red-500/18 bg-red-500/8 text-red-300/88 shadow-[0_4px_14px_rgba(127,29,29,0.18)] transition-all hover:border-red-500/28 hover:bg-red-500/14 hover:text-red-200"
-                          aria-label={`Remove manual attendance for ${displayName}`}>
-                          <i className="fa-regular fa-trash-can text-[10px]"></i>
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  <span className="block w-[54px] text-right font-mono text-[11px] text-white/40 tabular-nums">
-                    {record.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-              : <span className="font-mono text-[11px] text-white/40 tabular-nums">
+
+              <div className="flex items-center gap-0">
+                <AnimatePresence initial={false}>
+                  {isHovered && onVoidManual && (
+                    <motion.div
+                      key="remove-action"
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 36, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                      className="flex items-center justify-center overflow-hidden px-1">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onVoidManual(record)
+                        }}
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-none bg-transparent p-0 text-red-500/40 shadow-none transition-all outline-none hover:bg-red-500/15 hover:text-red-400"
+                        aria-label={`Remove manual attendance for ${displayName}`}>
+                        <i className="fa-regular fa-trash-can text-[10px]"></i>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <span className="block w-[54px] text-right font-mono text-[11px] text-white/40 tabular-nums">
                   {record.timestamp.toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
                 </span>
-              }
+              </div>
             </div>
           </div>
         </div>

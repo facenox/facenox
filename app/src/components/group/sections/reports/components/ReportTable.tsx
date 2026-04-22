@@ -22,6 +22,13 @@ export function ReportTable({
 }: ReportTableProps) {
   const visibleColDefs = allColumns.filter((c) => visibleColumns.includes(c.key))
 
+  const formatDuration = (totalMinutes: number) => {
+    if (totalMinutes < 60) return `${totalMinutes}m`
+    const h = Math.floor(totalMinutes / 60)
+    const m = totalMinutes % 60
+    return m === 0 ? `${h}h` : `${h}h ${m}m`
+  }
+
   return (
     <div className="custom-scroll flex-1 overflow-auto">
       <table className="w-full border-separate border-spacing-0 text-left">
@@ -153,7 +160,7 @@ export function ReportTable({
                                 </span>
                                 {row.is_late && row.late_minutes > 0 && (
                                   <span className="mt-0.5 text-[11px] font-semibold text-amber-500/60">
-                                    +{row.late_minutes}m
+                                    +{formatDuration(row.late_minutes)}
                                   </span>
                                 )}
                               </div>
@@ -178,13 +185,10 @@ export function ReportTable({
                           }
                         } else if (c.key === "total_hours") {
                           if (row.total_hours) {
-                            const hrs = Math.floor(row.total_hours)
-                            const mins = Math.round((row.total_hours - hrs) * 60)
-
+                            const totalMins = Math.round(row.total_hours * 60)
                             content = (
                               <span className="font-medium whitespace-nowrap text-cyan-400/80">
-                                {hrs > 0 ? `${hrs}h ` : ""}
-                                {mins > 0 || hrs === 0 ? `${mins}m` : ""}
+                                {formatDuration(totalMins)}
                               </span>
                             )
                           } else {
@@ -194,7 +198,7 @@ export function ReportTable({
                           content =
                             row.late_minutes > 0 ?
                               <span className="font-medium text-amber-400/80">
-                                {row.late_minutes}m
+                                {formatDuration(row.late_minutes)}
                               </span>
                             : <span className="text-white/10">-</span>
                         } else if (c.key === "date") {
