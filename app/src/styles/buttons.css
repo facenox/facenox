@@ -1,12 +1,12 @@
 @layer base {
   button {
     border-radius: 8px;
-    /* Standardized to 8px for premium feel */
+    /* 8px border-radius */
     border: 1px solid var(--border-primary);
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
     font-weight: 500;
-    /* Regularized weight */
+    /* 500 font-weight */
     font-family: inherit;
     background-color: var(--bg-secondary);
     color: var(--text-primary);
@@ -14,12 +14,12 @@
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
     letter-spacing: normal;
-    /* No more AI spaceship spacing */
+
   }
 
   button:active {
     transform: scale(0.98);
-    /* Tactile feedback */
+    /* Active state feedback */
   }
 
   button:disabled {
@@ -29,7 +29,7 @@
   }
 }
 
-/* Premium Design System */
+/* Base UI components */
 
 .btn-premium {
   display: inline-flex;
@@ -43,7 +43,7 @@
   background: rgba(34, 211, 238, 0.1);
   border-color: rgba(34, 211, 238, 0.2);
   color: #22d3ee;
-  /* Refined Cyan */
+  /* Cyan accent */
 }
 
 .btn-premium-primary:hover {
@@ -89,7 +89,7 @@
   color: #34d399;
 }
 
-/* Legacy Support (Updated to match Premium) */
+/* Legacy Support */
 
 .btn-primary {
   background: rgba(34, 211, 238, 0.1);

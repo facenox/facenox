@@ -9,7 +9,7 @@ interface StartTimeChipProps {
 
 /**
  * Inline time chip for the control bar.
- * Premium glassmorphism design with digital typography.
+ * Glassmorphism design with digital typography.
  */
 export function StartTimeChip({ startTime, onTimeChange, disabled = false }: StartTimeChipProps) {
   const [isOpen, setIsOpen] = useState(false)
