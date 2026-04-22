@@ -9,6 +9,11 @@ export {
   createDisplayNameMap,
 } from "@/utils/displayNameUtils"
 
-export { getLocalDateString, parseLocalDate, generateDateRange } from "@/utils/dateUtils"
+export {
+  getLocalDateString,
+  parseLocalDate,
+  generateDateRange,
+  formatDuration,
+} from "@/utils/dateUtils"
 
 export type { AttendanceStatusDisplay, StatusConfig } from "@/utils/attendanceStatusUtils"

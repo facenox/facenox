@@ -27,3 +27,13 @@ export const generateDateRange = (startDate: Date | string, endDate: Date | stri
 
   return dates
 }
+
+/**
+ * Formats a duration in minutes into a human-readable string (e.g., "8h 25m" or "45m").
+ */
+export const formatDuration = (totalMinutes: number): string => {
+  if (totalMinutes < 60) return `${totalMinutes}m`
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
+  return m === 0 ? `${h}h` : `${h}h ${m}m`
+}

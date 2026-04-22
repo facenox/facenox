@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, memo, useCallback } from "react"
 import type { ReactNode } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { createDisplayNameMap, getLocalDateString } from "@/utils"
+import { createDisplayNameMap, getLocalDateString, formatDuration } from "@/utils"
 import { Dropdown, Tooltip, MemberTooltip } from "@/components/shared"
 import type { AttendanceGroup, AttendanceRecord, AttendanceMember } from "@/components/main/types"
 import {
@@ -144,13 +144,6 @@ const AttendanceRecordItem = memo(
 
         const severeLateThreshold = 30
         const earlyThreshold = -5
-
-        const formatDuration = (totalMinutes: number) => {
-          if (totalMinutes < 60) return `${totalMinutes}m`
-          const h = Math.floor(totalMinutes / 60)
-          const m = totalMinutes % 60
-          return m === 0 ? `${h}h` : `${h}h ${m}m`
-        }
 
         if (lateThresholdEnabled) {
           if (diffMinutes > lateThresholdMinutes) {

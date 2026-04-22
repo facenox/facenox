@@ -1,6 +1,6 @@
 import { Fragment } from "react"
 import type { RowData, ColumnKey } from "@/components/group/sections/reports/types"
-import { parseLocalDate } from "@/utils"
+import { parseLocalDate, formatDuration } from "@/utils"
 
 interface ReportTableProps {
   groupedRows: Record<string, RowData[]>
@@ -21,13 +21,6 @@ export function ReportTable({
   onResetFilter,
 }: ReportTableProps) {
   const visibleColDefs = allColumns.filter((c) => visibleColumns.includes(c.key))
-
-  const formatDuration = (totalMinutes: number) => {
-    if (totalMinutes < 60) return `${totalMinutes}m`
-    const h = Math.floor(totalMinutes / 60)
-    const m = totalMinutes % 60
-    return m === 0 ? `${h}h` : `${h}h ${m}m`
-  }
 
   return (
     <div className="custom-scroll flex-1 overflow-auto">
