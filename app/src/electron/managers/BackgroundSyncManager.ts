@@ -1,4 +1,4 @@
-import { syncPushSchema, type SyncPushPayload } from "../../shared/cloudSyncContract.js"
+import { syncPushSchema, type SyncPushPayload } from "../../shared/remoteSyncContract.js"
 import { withLocalBackendHeaders } from "../localBackendScope.js"
 import { persistentStore } from "../persistentStore.js"
 import { backendService } from "../backendService.js"
@@ -6,7 +6,7 @@ import { getCurrentVersion } from "../updater.js"
 import {
   DEFAULT_CLOUD_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
-} from "../../services/cloudSyncDefaults.js"
+} from "../../services/remoteSyncDefaults.js"
 const STARTUP_CATCH_UP_DELAY_MS = 5000
 
 function authHeaders(extra: Record<string, string> = {}) {
@@ -226,7 +226,7 @@ export class BackgroundSyncManager {
       this.stop()
       this.setLastSyncState({
         lastSyncStatus: "error",
-        lastSyncMessage: "Connect this desktop to Facenox Cloud before syncing.",
+        lastSyncMessage: "Connect this desktop to Facenox Management Dashboard before syncing.",
       })
       return {
         success: false,

@@ -5,7 +5,7 @@ import { InfoPopover } from "../../shared/InfoPopover"
 import {
   DEFAULT_CLOUD_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
-} from "../../../services/cloudSyncDefaults"
+} from "../../../services/remoteSyncDefaults"
 
 type CloudConfig = {
   enabled: boolean

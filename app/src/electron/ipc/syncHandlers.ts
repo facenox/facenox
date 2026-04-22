@@ -11,7 +11,7 @@ import { getCurrentVersion } from "../updater.js"
 import {
   DEFAULT_CLOUD_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
-} from "../../services/cloudSyncDefaults.js"
+} from "../../services/remoteSyncDefaults.js"
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()

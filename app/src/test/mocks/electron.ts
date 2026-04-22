@@ -1,6 +1,6 @@
 import type { Mock } from "vitest"
 import { vi } from "vitest"
-import { DEFAULT_CLOUD_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "@/services/cloudSyncDefaults"
+import { DEFAULT_CLOUD_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "@/services/remoteSyncDefaults"
 
 export interface MockSyncConfig {
   enabled: boolean
