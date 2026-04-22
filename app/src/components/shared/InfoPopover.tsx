@@ -43,6 +43,7 @@ export function InfoPopover({
   const triggerRef = useRef<HTMLButtonElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastWindowFocusTime = useRef(0)
 
   const measure = useCallback(() => {
     if (!triggerRef.current || !popoverRef.current) return
@@ -71,7 +72,21 @@ export function InfoPopover({
   }, [side])
 
   useEffect(() => {
-    if (!open) return
+    const handleWindowBlur = () => setOpen(false)
+    const handleWindowFocus = () => {
+      lastWindowFocusTime.current = Date.now()
+    }
+
+    window.addEventListener("blur", handleWindowBlur)
+    window.addEventListener("focus", handleWindowFocus)
+
+    if (!open) {
+      return () => {
+        window.removeEventListener("blur", handleWindowBlur)
+        window.removeEventListener("focus", handleWindowFocus)
+      }
+    }
+
     const id = requestAnimationFrame(measure)
     window.addEventListener("scroll", measure, true)
     window.addEventListener("resize", measure)
@@ -79,6 +94,8 @@ export function InfoPopover({
       cancelAnimationFrame(id)
       window.removeEventListener("scroll", measure, true)
       window.removeEventListener("resize", measure)
+      window.removeEventListener("blur", handleWindowBlur)
+      window.removeEventListener("focus", handleWindowFocus)
     }
   }, [open, measure])
 
@@ -105,7 +122,11 @@ export function InfoPopover({
         type="button"
         onMouseEnter={show}
         onMouseLeave={hide}
-        onFocus={show}
+        onFocus={() => {
+          // Suppress if focus was regained due to window focus (Alt-Tab)
+          if (Date.now() - lastWindowFocusTime.current < 50) return
+          show()
+        }}
         onBlur={hide}
         className="m-0 inline-flex cursor-default items-center border-none bg-transparent p-0 leading-none text-white/20 shadow-none transition-colors duration-150 outline-none hover:text-cyan-400/70 focus:outline-none"
         aria-label={`More info about ${title}`}>

@@ -202,6 +202,7 @@ export function Tooltip({
   const triggerRef = useRef<HTMLElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastWindowFocusTime = useRef(0)
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -219,7 +220,21 @@ export function Tooltip({
     timerRef.current = setTimeout(() => setVisible(true), delay)
   }, [disabled, content, clearTimer, delay])
 
-  useEffect(() => () => clearTimer(), [clearTimer])
+  useEffect(() => {
+    const handleWindowBlur = () => hide()
+    const handleWindowFocus = () => {
+      lastWindowFocusTime.current = Date.now()
+    }
+
+    window.addEventListener("blur", handleWindowBlur)
+    window.addEventListener("focus", handleWindowFocus)
+
+    return () => {
+      clearTimer()
+      window.removeEventListener("blur", handleWindowBlur)
+      window.removeEventListener("focus", handleWindowFocus)
+    }
+  }, [hide, clearTimer])
 
   useEffect(() => {
     if (!visible || !triggerRef.current) return
@@ -294,6 +309,8 @@ export function Tooltip({
     if (childProps.onMouseLeave) childProps.onMouseLeave(e as never)
   }
   const handleFocus = (e: React.FocusEvent) => {
+    // Suppress tooltip if focus was regained due to window focus (Alt-Tab)
+    if (Date.now() - lastWindowFocusTime.current < 50) return
     show()
     if (childProps.onFocus) childProps.onFocus(e as never)
   }
