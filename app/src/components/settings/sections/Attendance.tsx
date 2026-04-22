@@ -42,14 +42,14 @@ export function Attendance({
             <div className={`flex items-center gap-4 py-4 ${hasSelectedGroup ? "" : ""}`}>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <div className="text-sm font-medium text-white/90">Time In & Time Out</div>
+                  <div className="text-sm font-medium text-white/90">Entry & Exit Tracking</div>
                   <InfoPopover
-                    title="Time In & Time Out"
-                    description="When enabled, the system records two events per person per day - their first scan as arrival (Time In) and their most recent scan as departure (Time Out)."
+                    title="Entry & Exit Tracking"
+                    description="Record two events per person per day: the first scan as arrival (Time In) and the most recent scan as departure (Time Out)."
                     details={[
-                      "Only 1 scan = Time In only, no Time Out.",
-                      "Each scan after the first updates the Time Out.",
-                      "Hours worked is calculated automatically.",
+                      "Single scans count as arrival only.",
+                      "Subsequent scans update the departure time.",
+                      "Total hours are calculated automatically.",
                     ]}
                     side="right"
                   />
@@ -66,8 +66,8 @@ export function Attendance({
                       {!hasSelectedGroup ?
                         "Select a group to enable this feature"
                       : attendanceSettings.trackCheckout ?
-                        "ON: Records both when people arrive and when they leave."
-                      : "OFF: Only records when people show up."}
+                        "Record both arrival and departure times."
+                      : "Only record arrival times."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -88,20 +88,20 @@ export function Attendance({
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <div className="text-sm font-medium text-white/90">Spam Filter</div>
+                <div className="text-sm font-medium text-white/90">Duplicate Prevention</div>
                 <InfoPopover
-                  title="Spam Filter"
-                  description="Prevents the same person from being logged again until the cooldown window expires. Applies to both Activity Log entries and the audio cue."
+                  title="Duplicate Prevention"
+                  description="Automatically filters out repeated scans from the same person to keep your reports clean."
                   details={[
-                    "Cannot be disabled - fundamental to system integrity.",
-                    "Short window (5s-30s) = more detailed raw logs.",
-                    "Long window (1m-1h) = cleaner, session-style logs.",
+                    "Always active to ensure accurate attendance and reporting.",
+                    "Short Window: Best for high-traffic areas or tracking movement.",
+                    "Long Window: Recommended for simple daily attendance.",
                   ]}
                   side="right"
                 />
               </div>
               <div className="mt-0.5 text-xs text-white/40">
-                Ignore the same person if they scan again within{" "}
+                Prevent duplicate logs if a person scans again within{" "}
                 {attendanceSettings.attendanceCooldownSeconds < 60 ?
                   `${attendanceSettings.attendanceCooldownSeconds} seconds`
                 : `${Math.round(attendanceSettings.attendanceCooldownSeconds / 60)} minute${Math.round(attendanceSettings.attendanceCooldownSeconds / 60) !== 1 ? "s" : ""}`
@@ -130,41 +130,98 @@ export function Attendance({
 
           <div className="h-px w-full bg-white/8" />
 
-          <div className="flex items-center gap-4 py-4">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <div className="text-sm font-medium text-white/90">Max Recognized Faces</div>
-                <InfoPopover
-                  title="Max Recognized Faces"
-                  description="Limits how many detected faces are sent to recognition per frame. Detection still sees everything; only recognition is capped."
-                  details={[
-                    "Lower values improve speed and stability.",
-                    "Higher values help in crowded scenes but use more CPU.",
-                    "Largest plausible faces are prioritized first.",
-                  ]}
-                  side="right"
+          <div className="flex flex-col">
+            <div className="flex items-center gap-4 py-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="text-sm font-medium text-white/90">Recognition Limit</div>
+                  <InfoPopover
+                    title="Recognition Limit"
+                    description="Limit how many faces are recognized per frame to optimize performance."
+                    details={[
+                      "Lower limits improve processing speed.",
+                      "Unlimited mode is best for large crowds.",
+                      "The system prioritizes the largest, closest faces.",
+                    ]}
+                    side="right"
+                  />
+                </div>
+                <div className="relative min-h-4">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={attendanceSettings.maxRecognitionFacesPerFrame > 0 ? "on" : "off"}
+                      initial={{ opacity: 0, y: -2 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 2 }}
+                      transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
+                      className="text-xs font-normal text-white/60">
+                      {attendanceSettings.maxRecognitionFacesPerFrame === 0 ?
+                        "Process all detected faces."
+                      : "Limit recognition to a specific number of faces."}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (attendanceSettings.maxRecognitionFacesPerFrame === 0) {
+                    onMaxRecognitionFacesChange(6)
+                  } else {
+                    onMaxRecognitionFacesChange(0)
+                  }
+                }}
+                className={`premium-switch ${
+                  attendanceSettings.maxRecognitionFacesPerFrame > 0 ?
+                    "premium-switch-on"
+                  : "premium-switch-off"
+                }`}>
+                <div
+                  className={`premium-switch-thumb ${
+                    attendanceSettings.maxRecognitionFacesPerFrame > 0 ?
+                      "premium-switch-thumb-on"
+                    : "premium-switch-thumb-off"
+                  }`}
                 />
-              </div>
-              <div className="mt-0.5 text-xs text-white/40">
-                Recognize up to {attendanceSettings.maxRecognitionFacesPerFrame} face
-                {attendanceSettings.maxRecognitionFacesPerFrame === 1 ? "" : "s"} per frame.
-              </div>
+              </button>
             </div>
 
-            <div className="ml-auto flex shrink-0 items-center gap-3">
-              <span className="min-w-10 text-right text-[11px] font-medium whitespace-nowrap text-cyan-400/80">
-                {attendanceSettings.maxRecognitionFacesPerFrame}
-              </span>
-              <input
-                type="range"
-                min="1"
-                max="10"
-                step="1"
-                value={attendanceSettings.maxRecognitionFacesPerFrame}
-                onChange={(e) => onMaxRecognitionFacesChange(parseInt(e.target.value))}
-                className="premium-range h-1 w-24 accent-cyan-500"
-              />
-            </div>
+            <AnimatePresence>
+              {attendanceSettings.maxRecognitionFacesPerFrame > 0 && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
+                  className="overflow-hidden">
+                  <div className="relative flex items-center gap-4 pt-1 pb-5 pl-4">
+                    <div className="absolute top-0 bottom-1/2 left-0 w-px rounded-bl-xs bg-white/10"></div>
+                    <div className="absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10"></div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="mt-0.5 text-xs text-white/40">
+                        Maximum faces to process per frame.
+                      </div>
+                    </div>
+
+                    <div className="ml-auto flex shrink-0 items-center gap-3">
+                      <span className="min-w-10 text-right text-[11px] font-medium whitespace-nowrap text-cyan-400/80">
+                        {attendanceSettings.maxRecognitionFacesPerFrame} faces
+                      </span>
+                      <input
+                        type="range"
+                        min="1"
+                        max="20"
+                        step="1"
+                        value={attendanceSettings.maxRecognitionFacesPerFrame}
+                        onChange={(e) => onMaxRecognitionFacesChange(parseInt(e.target.value))}
+                        className="premium-range h-1 w-24 accent-cyan-500"
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="h-px w-full bg-white/8" />
@@ -176,11 +233,11 @@ export function Attendance({
                   <div className="text-sm font-medium text-white/90">Late Tracking</div>
                   <InfoPopover
                     title="Late Tracking"
-                    description="Automatically marks members as late if their first scan occurs after the group's configured class start time plus the late threshold."
+                    description="Automatically mark members as late if their arrival occurs after the scheduled start time plus the late threshold."
                     details={[
-                      "Requires a group to be selected.",
+                      "Requires a group selection.",
                       "Late status appears in Reports and Overview.",
-                      "Set in group settings: Start Time + Threshold (minutes).",
+                      "Threshold is defined in minutes.",
                     ]}
                     side="right"
                   />
@@ -197,8 +254,8 @@ export function Attendance({
                       {!hasSelectedGroup ?
                         "Select a group to enable late tracking"
                       : attendanceSettings.lateThresholdEnabled ?
-                        "ON: Automatically checking for late members."
-                      : "OFF: Late tracking is disabled."}
+                        "Automatically mark members as late."
+                      : "Late tracking is disabled."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -262,9 +319,9 @@ export function Attendance({
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <div className="text-sm font-medium text-white/90">Anti-Spoof Detection</div>
+                <div className="text-sm font-medium text-white/90">Liveness Verification</div>
                 <InfoPopover
-                  title="Anti-Spoof Detection"
+                  title="Liveness Verification"
                   description="Requires a live face before showing identity or recording attendance, helping block photo and screen replay attempts."
                   details={[
                     "Uses liveness detection under the hood.",
@@ -285,8 +342,8 @@ export function Attendance({
                     transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                     className="text-xs font-normal text-white/60">
                     {attendanceSettings.enableSpoofDetection ?
-                      "ON: Requires a live face before showing identity or recording attendance."
-                    : "OFF: Identity can appear without a live-face check."}
+                      "Verify faces are real before recognition."
+                    : "Skip liveness verification."}
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -308,8 +365,8 @@ export function Attendance({
               <div className="text-sm font-medium text-white/90">Data Retention</div>
               <div className="mt-0.5 text-xs text-white/40">
                 {attendanceSettings.dataRetentionDays && attendanceSettings.dataRetentionDays > 0 ?
-                  `Records older than ${attendanceSettings.dataRetentionDays} days are deleted automatically.`
-                : "Records are kept forever."}
+                  `Delete records older than ${attendanceSettings.dataRetentionDays} days automatically.`
+                : "Keep all records forever."}
               </div>
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">

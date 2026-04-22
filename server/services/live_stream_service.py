@@ -279,7 +279,11 @@ class LiveStreamService:
             ),
             key=self._extract_face_area,
             reverse=True,
-        )[: max(1, config.max_recognition_faces_per_frame)]
+        )
+
+        limit = config.max_recognition_faces_per_frame
+        if limit > 0:
+            recognition_candidates = recognition_candidates[:limit]
 
         if not recognition_candidates:
             return []

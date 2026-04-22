@@ -15,7 +15,7 @@ export function Notifications({ audioSettings, onAudioSettingsChange }: Notifica
         {/* Recognition sound */}
         <div className="flex items-center gap-4 border-b border-white/5 py-3">
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-white/90">Scan Confirmation Sound</div>
+            <div className="text-sm font-medium text-white/90">Audio Feedback</div>
             <div className="relative min-h-4">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -26,8 +26,8 @@ export function Notifications({ audioSettings, onAudioSettingsChange }: Notifica
                   transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                   className="text-xs font-medium text-white/60">
                   {audioSettings.recognitionSoundEnabled ?
-                    "ON: Play a notification sound when someone scans."
-                  : "OFF: Silent mode enabled."}
+                    "Play a sound on successful recognition."
+                  : "Mute all recognition sounds."}
                 </motion.div>
               </AnimatePresence>
             </div>

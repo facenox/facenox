@@ -12,18 +12,18 @@ export function Display({ quickSettings, toggleQuickSetting }: DisplayProps) {
   const settingItems = [
     {
       key: "cameraMirrored" as keyof QuickSettings,
-      label: "Camera Mirroring",
+      label: "Mirror View",
       descriptions: {
-        on: "ON: Camera is mirrored.",
-        off: "OFF: Normal camera view.",
+        on: "Flip the camera horizontally.",
+        off: "Standard camera view.",
       },
     },
     {
       key: "showRecognitionNames" as keyof QuickSettings,
-      label: "Identification Labels",
+      label: "Identity Labels",
       descriptions: {
-        on: "ON: Member names are shown on the camera feed.",
-        off: "OFF: Names are hidden.",
+        on: "Show names on the camera feed.",
+        off: "Hide names on camera feed.",
       },
     },
   ]
