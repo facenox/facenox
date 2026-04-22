@@ -50,12 +50,12 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
         </section>
 
         <section>
-          <h3 className="mb-2 text-sm font-medium text-white">Optional cloud sync</h3>
+          <h3 className="mb-2 text-sm font-medium text-white">Remote Reporting Sync</h3>
           <p className="text-xs leading-relaxed text-white/50">
-            Facenox can pair with a separate Facenox Cloud deployment for reporting and device sync.
-            Cloud sync does not upload face embeddings or raw face images, and biometric matching
-            stays local to the desktop app. To move biometric profiles between devices, use an
-            encrypted backup and restore.
+            Facenox can pair with a separate Facenox Management Dashboard for reporting and device
+            sync. Remote sync does not upload face embeddings or raw face images, and biometric
+            matching stays local to the desktop app. To move biometric profiles between devices, use
+            an encrypted backup and restore.
           </p>
         </section>
 

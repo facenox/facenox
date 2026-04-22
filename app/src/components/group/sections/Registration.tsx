@@ -128,7 +128,7 @@ export function Registration({
                 onClick={() => setRegistrationState("upload", null)}
                 className="group relative flex flex-col items-center gap-6 rounded-[2.5rem] border border-white/5 bg-transparent p-10 transition-all duration-300 hover:border-cyan-500/30 hover:bg-cyan-500/10">
                 <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/5 transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(34,211,238,0.15)]">
-                  <i className="fa-solid fa-cloud-arrow-up text-4xl text-white/40 transition-colors group-hover:text-cyan-400"></i>
+                  <i className="fa-solid fa-upload text-4xl text-white/40 transition-colors group-hover:text-cyan-400"></i>
                 </div>
                 <div className="text-center">
                   <span className="block text-lg font-medium text-white/80 transition-colors group-hover:text-white">

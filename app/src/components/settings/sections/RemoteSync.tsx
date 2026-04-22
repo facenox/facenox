@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
-import { InfoPopover } from "@/components/shared"
-import { DEFAULT_CLOUD_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "@/services/cloudSyncDefaults"
+import { InfoPopover } from "../../shared/InfoPopover"
+import {
+  DEFAULT_CLOUD_BASE_URL,
+  DEFAULT_SYNC_INTERVAL_MINUTES,
+} from "../../../services/cloudSyncDefaults"
 
 type CloudConfig = {
   enabled: boolean
@@ -53,7 +56,7 @@ const pairingSteps = [
           target="_blank"
           rel="noopener noreferrer"
           className="text-cyan-400 underline transition-colors hover:text-cyan-300">
-          Facenox Cloud dashboard
+          Management Dashboard
         </a>
         .
       </>
@@ -71,7 +74,7 @@ const pairingSteps = [
   },
 ]
 
-export function CloudSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
+export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
   const [config, setConfig] = useState<CloudConfig>(defaultConfig)
   const [cloudBaseUrl, setCloudBaseUrl] = useState("")
   const [deviceName, setDeviceName] = useState("Facenox Desktop")
@@ -119,13 +122,13 @@ export function CloudSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
         type: "success",
         message:
           nextConfig.connected ?
-            "Advanced cloud settings saved. Auto-sync state updated."
-          : "Advanced cloud settings saved. You can pair this desktop whenever you're ready.",
+            "Remote sync settings saved. Auto-sync state updated."
+          : "Remote sync settings saved. You can pair this desktop whenever you're ready.",
       })
     } catch (error) {
       setBanner({
         type: "error",
-        message: error instanceof Error ? error.message : "Could not save Cloud Beta settings.",
+        message: error instanceof Error ? error.message : "Could not save Remote Sync settings.",
       })
     } finally {
       setBusyAction(null)
@@ -173,8 +176,8 @@ export function CloudSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
         type: result.warning ? "error" : "success",
         message:
           result.warning ?
-            `Disconnected locally, but the cloud returned a warning: ${result.warning}`
-          : "Device disconnected from Facenox Cloud.",
+            `Disconnected locally, but the dashboard returned a warning: ${result.warning}`
+          : "Device disconnected from Management Dashboard.",
       })
     } catch (error) {
       setBanner({
@@ -241,12 +244,12 @@ export function CloudSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
               <h2 className="text-[14px] font-bold tracking-tight text-white">Status</h2>
               <p className="mt-1 text-[13px] text-white/60">
                 {config.connected ?
-                  `Connected to: ${config.organizationName || "Unknown org"} – ${config.siteName || "Default Site"}`
-                : "Operating entirely offline until a cloud account is linked."}
+                  `Linked to: ${config.organizationName || "Unknown org"} – ${config.siteName || "Default Site"}`
+                : "Operating strictly on-premise. Remote reporting is currently inactive."}
               </p>
             </div>
             <div className={`rounded-md px-2 py-1 text-[11px] font-semibold ${badgeTone}`}>
-              {config.connected ? "Cloud Linked" : "Local Only"}
+              {config.connected ? "Synced" : "Offline Mode"}
             </div>
           </div>
 
@@ -262,10 +265,10 @@ export function CloudSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
         <section>
           <div className="mb-6">
             <div className="flex items-center gap-2">
-              <h2 className="text-[14px] font-semibold text-white">Connection</h2>
+              <h2 className="text-[14px] font-semibold text-white">Remote Sync</h2>
               <InfoPopover
                 title="Data Privacy"
-                description="Cloud sync is strictly limited to attendance logs and member names. Face embeddings and biometric data are never uploaded and remain entirely on your local device."
+                description="Remote sync is strictly limited to attendance logs and member names. Face embeddings and biometric data are never uploaded and remain entirely on your local device."
                 detailsNode={[
                   <>
                     To backup face data,{" "}
@@ -283,7 +286,7 @@ export function CloudSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
               />
             </div>
             <p className="mt-1 text-[13px] text-white/40">
-              Link this device to synchronize groups and attendance online.
+              Link this device to synchronize groups and attendance logs with your dashboard.
             </p>
           </div>
 
@@ -480,7 +483,7 @@ export function CloudSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
         <div className="mb-4">
           <h2 className="text-[14px] font-semibold text-white">Data Scope</h2>
           <p className="mt-1 text-[13px] text-white/40">
-            Understand what is shared when the cloud connection is active.
+            Understand what is shared when the remote connection is active.
           </p>
         </div>
         <ul className="list-disc space-y-1.5 pl-4 text-[13px] text-white/50 marker:text-white/20">

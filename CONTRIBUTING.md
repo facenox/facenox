@@ -84,7 +84,7 @@ If your change affects any of these, update the docs in the same pull request:
 - storage behavior
 - consent behavior
 - backup or restore behavior
-- Cloud Beta behavior
+- Dashboard Beta behavior
 - security or privacy expectations
 
 ### 4. Keep performance in mind

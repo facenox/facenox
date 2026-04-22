@@ -130,7 +130,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
                   </span>
                   <InfoPopover
                     title="Biometric Privacy"
-                    description="Facial features are encrypted and stored strictly on this device. Facenox does not upload biometric data to the cloud."
+                    description="Facial features are encrypted and stored strictly on this device. Facenox does not upload biometric data to any external server."
                   />
                 </div>
               </div>

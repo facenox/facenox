@@ -79,7 +79,7 @@ export function BulkUploadArea({
 
         <div className="relative flex flex-col items-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-white/10 bg-[rgba(22,28,36,0.62)] transition-all group-hover:border-white/20 group-hover:bg-[rgba(28,35,44,0.82)]">
-            <i className="fa-solid fa-cloud-arrow-up text-2xl text-white/40 transition-colors group-hover:text-white/60"></i>
+            <i className="fa-solid fa-upload text-2xl text-white/40 transition-colors group-hover:text-white/60"></i>
           </div>
 
           <div className="text-center">

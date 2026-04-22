@@ -19,7 +19,7 @@
 
 Facenox is an offline-first face recognition system that performs real-time face detection, ByteTrack-based face tracking over detector outputs, recognition, and liveness checks locally. No cloud required.
 
-Built for privacy-conscious teams, it keeps biometric matching local while optionally syncing attendance data to a cloud dashboard.
+Built for privacy-conscious teams, it keeps biometric matching local while optionally syncing attendance data to a management dashboard.
 
 Facenox is built on a simple idea: you should own your biometric data.
 
@@ -36,7 +36,7 @@ Ideal for teams, schools, and organizations that need reliable attendance withou
 - Real-time face recognition, CPU-friendly, no GPU required
 - Fully local biometric matching by default
 - Works fully offline. No internet required for core workflows
-- Optional cloud dashboard for centralized reporting and sync
+- Optional management dashboard for centralized reporting and sync
 
 ## Why Facenox
 
@@ -54,7 +54,7 @@ Most face recognition attendance systems rely on cloud-based biometrics. Facenox
 - Consent-aware biometric enrollment and deletion
 - Encrypted local biometric storage
 - Password-protected `.facenox` backup and restore
-- Optional Cloud Beta pairing with manual and background sync
+- Optional Dashboard Beta pairing with manual and background sync
 
 ## Performance
 
@@ -63,7 +63,7 @@ Most face recognition attendance systems rely on cloud-based biometrics. Facenox
 - Optimized for low-latency inference
 - Designed for real-world environments with varying lighting and hardware conditions
 
-## Cloud Beta
+## Dashboard Beta
 
 Facenox Cloud is an optional companion service for:
 
@@ -74,7 +74,7 @@ Facenox Cloud is an optional companion service for:
 
 Facenox Cloud is separate from this open source desktop repository. The desktop app in this repo remains usable without the hosted cloud service.
 
-The desktop app pushes attendance snapshots to the cloud. Cloud Beta does not upload raw face images or face embeddings, and biometric matching stays local. To move biometric profiles between devices, use encrypted backup and restore.
+The desktop app pushes attendance snapshots to the cloud. Dashboard Beta does not upload raw face images or face embeddings, and biometric matching stays local. To move biometric profiles between devices, use encrypted backup and restore.
 
 ## Offline-First Behavior
 
@@ -84,7 +84,7 @@ Facenox Desktop continues to work locally when internet access is unavailable:
 - attendance is still recorded locally
 - local settings and backup operations still work
 
-Cloud pairing, cloud sync, and cloud dashboard updates resume when connectivity returns.
+Cloud pairing, cloud sync, and management dashboard updates resume when connectivity returns.
 
 ## Roadmap
 
@@ -127,7 +127,7 @@ If macOS blocks the app because the developer is unidentified:
 
 ## Documentation
 
-- [docs/FEATURES.md](docs/FEATURES.md): features, Cloud Beta scope, and out-of-scope items
+- [docs/FEATURES.md](docs/FEATURES.md): features, Dashboard Beta scope, and out-of-scope items
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): desktop architecture and desktop-cloud boundaries
 - [docs/INSTALLATION.md](docs/INSTALLATION.md): local development and desktop build setup
 - [docs/CODE_SIGNING_POLICY.md](docs/CODE_SIGNING_POLICY.md): official release identity, trust rules, and current signing status

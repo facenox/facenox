@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import { CloudSync } from "@/components/settings/sections/CloudSync"
+import { RemoteSync } from "@/components/settings/sections/RemoteSync"
 import { createSyncConfig, getElectronAPIMock } from "@/test/mocks/electron"
 import { renderWithProviders } from "@/test/utils/renderWithProviders"
 
@@ -13,15 +13,15 @@ vi.mock("@/components/shared", async () => {
   }
 })
 
-describe("CloudSync", () => {
+describe("RemoteSync", () => {
   it("loads config and renders both local-only and connected states", async () => {
     const electronAPI = getElectronAPIMock()
     electronAPI.sync.getConfig.mockResolvedValueOnce(createSyncConfig())
 
-    const { unmount } = renderWithProviders(<CloudSync />)
+    const { unmount } = renderWithProviders(<RemoteSync />)
 
     await waitFor(() => {
-      expect(screen.getByText("Local Only")).toBeInTheDocument()
+      expect(screen.getByText("Offline Mode")).toBeInTheDocument()
     })
 
     electronAPI.sync.getConfig.mockResolvedValueOnce(
@@ -34,16 +34,16 @@ describe("CloudSync", () => {
     )
 
     unmount()
-    renderWithProviders(<CloudSync />)
+    renderWithProviders(<RemoteSync />)
 
     await waitFor(() => {
-      expect(screen.getByText("Cloud Linked")).toBeInTheDocument()
+      expect(screen.getByText("Synced")).toBeInTheDocument()
       expect(screen.getByText("Connected to: Acme Org – Main Campus")).toBeInTheDocument()
     })
   })
 
   it("keeps the connect button disabled without a pairing code", async () => {
-    renderWithProviders(<CloudSync />)
+    renderWithProviders(<RemoteSync />)
 
     const connectButton = await screen.findByRole("button", { name: /Connect/i })
     expect(connectButton).toBeDisabled()
@@ -62,7 +62,7 @@ describe("CloudSync", () => {
       }),
     })
 
-    const { user } = renderWithProviders(<CloudSync />)
+    const { user } = renderWithProviders(<RemoteSync />)
 
     const pairingInput = await screen.findByPlaceholderText("ABCD2345")
     await user.type(pairingInput, "abcd2345")
@@ -83,7 +83,7 @@ describe("CloudSync", () => {
       config: createSyncConfig({ connected: true }),
     })
 
-    const { user } = renderWithProviders(<CloudSync />)
+    const { user } = renderWithProviders(<RemoteSync />)
 
     await user.type(await screen.findByPlaceholderText("ABCD2345"), "CODE1234")
     await user.click(screen.getByRole("button", { name: /Connect/i }))
@@ -96,14 +96,14 @@ describe("CloudSync", () => {
     electronAPI.sync.updateConfig.mockResolvedValueOnce(createSyncConfig({ connected: false }))
     electronAPI.sync.updateConfig.mockResolvedValueOnce(createSyncConfig({ connected: true }))
 
-    renderWithProviders(<CloudSync />)
+    renderWithProviders(<RemoteSync />)
 
     fireEvent.click(await screen.findByRole("button", { name: /Show Advanced Settings/i }))
     fireEvent.click(screen.getByRole("button", { name: /Save Settings/i }))
 
     expect(
       await screen.findByText(
-        "Advanced cloud settings saved. You can pair this desktop whenever you're ready.",
+        "Remote sync settings saved. You can pair this desktop whenever you're ready.",
       ),
     ).toBeInTheDocument()
 
@@ -111,7 +111,7 @@ describe("CloudSync", () => {
     fireEvent.click(screen.getByRole("button", { name: /Save Settings/i }))
 
     expect(
-      await screen.findByText("Advanced cloud settings saved. Auto-sync state updated."),
+      await screen.findByText("Remote sync settings saved. Auto-sync state updated."),
     ).toBeInTheDocument()
   })
 
@@ -129,7 +129,7 @@ describe("CloudSync", () => {
       message: "Manual sync complete.",
     })
 
-    const { user } = renderWithProviders(<CloudSync />)
+    const { user } = renderWithProviders(<RemoteSync />)
 
     await user.click(await screen.findByRole("button", { name: /Sync Now/i }))
 
@@ -155,7 +155,7 @@ describe("CloudSync", () => {
       config: createSyncConfig(),
     })
 
-    const { user } = renderWithProviders(<CloudSync />)
+    const { user } = renderWithProviders(<RemoteSync />)
 
     await user.click(await screen.findByRole("button", { name: /Disconnect Device/i }))
 
@@ -167,7 +167,7 @@ describe("CloudSync", () => {
   })
 
   it("keeps advanced form state when toggled closed and reopened", async () => {
-    const { user } = renderWithProviders(<CloudSync />)
+    const { user } = renderWithProviders(<RemoteSync />)
 
     await user.click(await screen.findByRole("button", { name: /Show advanced settings/i }))
 
@@ -182,7 +182,7 @@ describe("CloudSync", () => {
   })
 
   it("keeps the hosted server URL hidden unless a custom override is being used", async () => {
-    const { user } = renderWithProviders(<CloudSync />)
+    const { user } = renderWithProviders(<RemoteSync />)
 
     await user.click(await screen.findByRole("button", { name: /Show Advanced Settings/i }))
 

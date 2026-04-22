@@ -5,7 +5,7 @@ import { Notifications } from "@/components/settings/sections/Notifications"
 import { Database } from "@/components/settings/sections/Database"
 import { Attendance } from "@/components/settings/sections/Attendance"
 import { About } from "@/components/settings/sections/About"
-import { CloudSync } from "@/components/settings/sections/CloudSync"
+import { RemoteSync } from "@/components/settings/sections/RemoteSync"
 import { AntiSpoofDetectionModal } from "@/components/settings/AntiSpoofDetectionModal"
 import { GroupPanel, type GroupSection } from "@/components/group"
 import { SectionHeader } from "./components/SectionHeader"
@@ -116,7 +116,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
       display: "Display",
       notifications: "Notifications",
       database: "Database",
-      cloudsync: "Cloud Beta",
+      cloudsync: "Remote Sync",
       about: "About",
     }
     if (isGroupSection) {
@@ -315,7 +315,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 />
               )}
               {activeSection === "cloudsync" && (
-                <CloudSync onNavigateToDB={() => setActiveSection("database")} />
+                <RemoteSync onNavigateToDB={() => setActiveSection("database")} />
               )}
               {activeSection === "about" && <About />}
             </motion.div>
