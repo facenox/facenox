@@ -38,9 +38,9 @@ Examples of high-severity issues include:
 
 - extracting raw face images or biometric templates unexpectedly
 - bypassing consent checks for enrollment or recognition
-- reading another organization's cloud data through a tenant-isolation bug
+- reading another organization's Remote Sync data through a tenant-isolation bug
 - modifying attendance or audit data without authorization
 
 ## Scope Reminder
 
-This repository covers the open source desktop application and its desktop-side cloud integration points. A deployed Facenox Cloud environment has its own operational and infrastructure risk surface and should be reviewed separately.
+This repository covers the open source desktop application and its desktop-side cloud integration points. A deployed Facenox Management Dashboard environment has its own operational and infrastructure risk surface and should be reviewed separately.

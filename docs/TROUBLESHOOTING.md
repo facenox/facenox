@@ -171,41 +171,41 @@ If performance is lower than expected:
 
 Do not assume GPU inference is broken just because CPU performance is slower. CPU is the default path.
 
-## Cloud Beta pairing fails
+## Management Dashboard Beta pairing fails
 
 Common causes:
 
-- wrong cloud base URL
+- wrong Remote Sync URL
 - expired or already-claimed pairing code
-- cloud deployment missing required environment variables
-- the device cannot reach the Facenox Cloud server
+- Remote Sync deployment missing required environment variables
+- the device cannot reach the Facenox Management Dashboard
 
 What to verify:
 
-- the cloud URL is correct and includes the protocol, for example `https://cloud.example.com`
+- the Remote Sync URL is correct and includes the protocol, for example `https://cloud.example.com`
 - the pairing code is still valid
-- the cloud server can respond to `POST /api/device/pair`
+- the Remote Sync server can respond to `POST /api/device/pair`
 
-## Cloud sync fails
+## Remote Sync fails
 
-Cloud sync failure should not stop local attendance. If local attendance stops, that is a separate problem.
+Remote Sync failure should not stop local attendance. If local attendance stops, that is a separate problem.
 
 For sync issues, check:
 
 - the device is still paired
 - the stored device token has not been revoked
-- the cloud deployment is reachable
-- the last sync message in the Cloud Beta settings panel
+- the Remote Sync deployment is reachable
+- the last sync message in the Management Dashboard Beta settings panel
 
-The current sync model is snapshot-based. A failed cloud push does not mean local attendance data was lost.
+The current sync model is snapshot-based. A failed Remote Sync push does not mean local attendance data was lost.
 
-## Initial sync never appears in the cloud
+## Initial sync never appears in the dashboard
 
-After pairing, the desktop attempts an immediate first sync. If that does not appear in the cloud:
+After pairing, the desktop attempts an immediate first sync. If that does not appear in the dashboard:
 
 - confirm that pairing succeeded fully
 - check the last sync message in the desktop app
-- inspect the cloud deployment logs for `/api/sync/push`
+- inspect the Remote Sync deployment logs for `/api/sync/push`
 - retry with the manual `Sync Now` button
 
 ## Need deeper inspection?
@@ -214,7 +214,7 @@ When the problem is not obvious, gather:
 
 - operating system and version
 - whether you are running from source or from a packaged build
-- whether the issue is desktop-only or Cloud Beta related
+- whether the issue is desktop-only or Management Dashboard Beta related
 - the exact error message shown by the app
 
 Then open an issue with reproduction steps or a security advisory if the report is security-sensitive.

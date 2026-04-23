@@ -1,6 +1,6 @@
 # Features
 
-This page covers the shipped desktop feature set and the scope of the current Cloud Beta integration.
+This page covers the shipped desktop feature set and the scope of the current Management Dashboard Beta integration.
 
 ## Desktop Features
 
@@ -39,13 +39,13 @@ This page covers the shipped desktop feature set and the scope of the current Cl
 - Desktop settings for camera, attendance, updater, and sync behavior
 - Offline-first operation for the core attendance workflow
 
-## Cloud Beta Integration
+## Management Dashboard Beta Integration
 
-Cloud Beta connects a Facenox desktop instance to a separate Facenox Cloud deployment for reporting and device visibility.
+Management Dashboard Beta connects a Facenox desktop instance to a separate Facenox Management Dashboard deployment for reporting and device visibility.
 
 ### What the desktop app supports
 
-- store a cloud base URL
+- store a Remote Sync URL
 - redeem a short-lived pairing code
 - connect a desktop instance to an organization and site
 - show pairing state, last sync state, and sync messages
@@ -65,14 +65,14 @@ Cloud Beta connects a Facenox desktop instance to a separate Facenox Cloud deplo
 - raw face photos
 - biometric templates
 - embeddings
-- cloud-side recognition state
+- remote-side recognition state
 
 ## Not in Scope
 
 These items are outside the current desktop repository scope:
 
-- cloud-side biometric storage
-- cloud-side face matching
+- remote-side biometric storage
+- remote-side face matching
 - two-way sync for members and attendance edits
 - payroll or HRIS integrations
 - self-serve billing

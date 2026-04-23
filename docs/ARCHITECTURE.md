@@ -8,7 +8,7 @@ Facenox is a desktop-first system. Recognition, attendance, and biometric storag
 - Primary database: local SQLite
 - Network requirement for core attendance: none
 - Biometric processing: local only
-- Optional cloud integration: separate Facenox Cloud deployment for reporting and device management
+- Optional remote integration: separate Facenox Management Dashboard deployment for reporting and device management
 
 ## High-Level Components
 
@@ -26,7 +26,7 @@ graph TD
         API <--> DB
     end
 
-    CLOUD["Optional Facenox Cloud"]
+    CLOUD["Optional Facenox Management Dashboard"]
 
     MAIN -. pairing, sync control .-> CLOUD
 ```
@@ -38,7 +38,7 @@ graph TD
 - camera and attendance UI
 - member and group management
 - settings, reports, and backup flows
-- Cloud Beta configuration UI
+- Management Dashboard Beta configuration UI
 
 ### Electron main process
 
@@ -46,13 +46,13 @@ graph TD
 - backend startup and health monitoring
 - local settings persistence
 - update checks
-- Cloud Beta pairing and sync orchestration
+- Management Dashboard Beta pairing and sync orchestration
 
 ### Local FastAPI backend
 
 - face detection and recognition endpoints
 - anti-spoofing and attendance APIs
-- export and import endpoints for backups and cloud sync
+- export and import endpoints for backups and Remote Sync
 - local database access
 
 ### Local SQLite database
@@ -74,19 +74,19 @@ graph TD
 
 This path does not require internet access.
 
-### Cloud Beta flow
+### Management Dashboard Beta flow
 
-1. An admin generates a pairing code in Facenox Cloud.
-2. The desktop app stores the cloud URL and redeems the pairing code.
+1. An admin generates a pairing code in Facenox Management Dashboard.
+2. The desktop app stores the Remote Sync URL and redeems the pairing code.
 3. The desktop receives an organization ID, site ID, device ID, and device token.
 4. The desktop exports a local attendance snapshot.
-5. The Electron sync manager wraps that export in a cloud sync envelope and sends it to `POST /api/sync/push`.
+5. The Electron sync manager wraps that export in a Remote Sync envelope and sends it to `POST /api/sync/push`.
 
 The desktop remains the system of record for biometrics and local attendance capture.
 
-## Desktop and Cloud Boundary
+## Desktop and Remote Sync Boundary
 
-The desktop-cloud boundary is intentionally narrow.
+The Remote Sync boundary is intentionally narrow.
 
 ### Data that stays local
 
@@ -95,7 +95,7 @@ The desktop-cloud boundary is intentionally narrow.
 - local face matching
 - local enrollment workflow
 
-### Data that may be sent to Facenox Cloud
+### Data that may be sent to Facenox Management Dashboard
 
 - organization, site, and device identifiers
 - group and member directory data needed for reporting
@@ -106,23 +106,23 @@ The desktop-cloud boundary is intentionally narrow.
 
 The current sync design is intentionally simple.
 
-- one-way only: desktop to cloud
+- one-way only: desktop to dashboard
 - snapshot-based instead of event-stream based
 - auto-sync available in the desktop app
 - manual `Sync Now` available as an override
 - initial sync runs immediately after pairing
 - catch-up sync runs on startup when the device is overdue
 
-If cloud sync fails, local attendance continues.
+If Remote Sync fails, local attendance continues.
 
 ## Not in This Repository
 
 This repository does not implement:
 
-- cloud-side biometric storage
-- cloud-side face matching
+- Remote-side biometric storage
+- Remote-side face matching
 - two-way sync for members or attendance edits
 - payroll or HRIS integrations
 - mobile clients
 
-Those concerns belong to a separate cloud architecture and should be documented there directly.
+Those concerns belong to a separate Remote Sync architecture and should be documented there directly.

@@ -23,7 +23,7 @@ Built for privacy-conscious teams, it keeps biometric matching local while optio
 
 Facenox is built on a simple idea: you should own your biometric data.
 
-This repository contains the open source Facenox desktop app and local backend. Facenox Cloud is an optional separate hosted companion service and is not included in this repository.
+This repository contains the open source Facenox desktop app and local backend. Facenox Management Dashboard is an optional separate hosted companion service and is not included in this repository.
 
 Ideal for teams, schools, and organizations that need reliable attendance without relying on cloud-based biometrics.
 
@@ -54,7 +54,7 @@ Most face recognition attendance systems rely on cloud-based biometrics. Facenox
 - Consent-aware biometric enrollment and deletion
 - Encrypted local biometric storage
 - Password-protected `.facenox` backup and restore
-- Optional Dashboard Beta pairing with manual and background sync
+- Optional Management Dashboard Beta pairing with manual and background sync
 
 ## Performance
 
@@ -63,18 +63,18 @@ Most face recognition attendance systems rely on cloud-based biometrics. Facenox
 - Optimized for low-latency inference
 - Designed for real-world environments with varying lighting and hardware conditions
 
-## Dashboard Beta
+## Management Dashboard Beta
 
-Facenox Cloud is an optional companion service for:
+Facenox Management Dashboard is an optional companion service for:
 
 - centralized reporting
 - device pairing
 - sync monitoring
 - organization and site-level visibility
 
-Facenox Cloud is separate from this open source desktop repository. The desktop app in this repo remains usable without the hosted cloud service.
+Facenox Management Dashboard is separate from this open source desktop repository. The desktop app in this repo remains usable without the hosted dashboard service.
 
-The desktop app pushes attendance snapshots to the cloud. Dashboard Beta does not upload raw face images or face embeddings, and biometric matching stays local. To move biometric profiles between devices, use encrypted backup and restore.
+The desktop app pushes attendance snapshots to the dashboard. Management Dashboard Beta does not upload raw face images or face embeddings, and biometric matching stays local. To move biometric profiles between devices, use encrypted backup and restore.
 
 ## Offline-First Behavior
 
@@ -84,11 +84,11 @@ Facenox Desktop continues to work locally when internet access is unavailable:
 - attendance is still recorded locally
 - local settings and backup operations still work
 
-Cloud pairing, cloud sync, and management dashboard updates resume when connectivity returns.
+Dashboard pairing, Remote Sync, and management dashboard updates resume when connectivity returns.
 
 ## Roadmap
 
-- [ ] Cloud dashboard for centralized reporting and analytics
+- [ ] Management dashboard for centralized reporting and analytics
 - [ ] macOS and Linux installer support
 - [ ] Code signing and notarization
 - [ ] Multi-device sync support
@@ -127,12 +127,12 @@ If macOS blocks the app because the developer is unidentified:
 
 ## Documentation
 
-- [docs/FEATURES.md](docs/FEATURES.md): features, Dashboard Beta scope, and out-of-scope items
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): desktop architecture and desktop-cloud boundaries
+- [docs/FEATURES.md](docs/FEATURES.md): features, Management Dashboard Beta scope, and out-of-scope items
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): desktop architecture and Remote Sync boundaries
 - [docs/INSTALLATION.md](docs/INSTALLATION.md): local development and desktop build setup
 - [docs/CODE_SIGNING_POLICY.md](docs/CODE_SIGNING_POLICY.md): official release identity, trust rules, and current signing status
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): common setup and runtime issues
-- [docs/PRIVACY.md](docs/PRIVACY.md): data handling, consent, backups, and cloud sync boundaries
+- [docs/PRIVACY.md](docs/PRIVACY.md): data handling, consent, backups, and Remote Sync boundaries
 - [SECURITY.md](SECURITY.md): supported version policy and vulnerability reporting
 - [app/TESTING.md](app/TESTING.md): frontend and Electron app testing conventions
 

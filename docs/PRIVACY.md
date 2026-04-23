@@ -1,6 +1,6 @@
 # Privacy and Data Handling
 
-This document covers the open source desktop application in this repository and the current Cloud Beta data boundary.
+This document covers the open source desktop application in this repository and the current Management Dashboard Beta data boundary.
 
 ## Scope
 
@@ -8,9 +8,9 @@ This document applies to:
 
 - the Electron desktop app in `app/`
 - the local FastAPI backend in `server/`
-- the current desktop-side Cloud Beta integration
+- the current desktop-side Management Dashboard Beta integration
 
-It does not replace the privacy and operational documentation required for a hosted Facenox Cloud deployment.
+It does not replace the privacy and operational documentation required for a hosted Facenox Management Dashboard deployment.
 
 ## What Facenox Stores Locally
 
@@ -58,25 +58,25 @@ The open source desktop app does not include analytics, ads, or hidden backgroun
 
 That does not automatically make every surrounding deployment private. If you add hosting, external logs, monitoring, or third-party infrastructure, those systems need their own review.
 
-## Cloud Beta Boundary
+## Management Dashboard Beta boundary
 
-The desktop app can optionally pair with a separate Facenox Cloud deployment.
+The desktop app can optionally pair with a separate Facenox Management Dashboard deployment.
 
-### Data not sent to Facenox Cloud
+### Data not sent to Facenox Management Dashboard
 
 - raw face images
 - biometric templates
 - embeddings
 - face matching and recognition decisions
 
-### Data that may be sent to Facenox Cloud
+### Data that may be sent to Facenox Management Dashboard
 
 - organization, site, and device identifiers
 - groups and member directory data needed for reports
 - attendance records and sessions
 - sync status and device health metadata
 
-The desktop app currently uses one-way snapshot sync. The cloud side is not the source of truth for biometrics.
+The desktop app currently uses one-way snapshot sync. The Remote Sync side is not the source of truth for biometrics.
 
 ## Offline Operation
 
@@ -87,7 +87,7 @@ The core desktop workflow remains offline-capable:
 - attendance capture works locally
 - local settings and backup operations work locally
 
-If the internet is unavailable, Cloud Beta stops updating until connectivity returns, but local attendance continues.
+If the internet is unavailable, Management Dashboard Beta stops updating until connectivity returns, but local attendance continues.
 
 ## Security Notes
 
@@ -109,4 +109,4 @@ Operators are still responsible for:
 - vendor and processor management
 - incident response and breach handling
 
-If you deploy Facenox Cloud, document that environment separately. This file should not be treated as the complete privacy position for a hosted service.
+If you deploy Facenox Management Dashboard, document that environment separately. This file should not be treated as the complete privacy position for a hosted service.

@@ -64,13 +64,13 @@ pnpm dev
 
 ### 1. Keep the local-first model intact
 
-Do not turn a local desktop workflow into a cloud dependency by accident.
+Do not turn a local desktop workflow into a remote dependency by accident.
 
 The current rules are simple:
 
 - local attendance must keep working without internet
 - biometrics stay local unless a change explicitly documents and justifies otherwise
-- cloud sync must not block attendance capture
+- Remote Sync must not block attendance capture
 
 ### 2. Prefer direct language in code and docs
 
@@ -84,7 +84,7 @@ If your change affects any of these, update the docs in the same pull request:
 - storage behavior
 - consent behavior
 - backup or restore behavior
-- Dashboard Beta behavior
+- Management Dashboard Beta behavior
 - security or privacy expectations
 
 ### 4. Keep performance in mind
