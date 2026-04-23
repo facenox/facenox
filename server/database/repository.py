@@ -731,6 +731,47 @@ class AttendanceRepository:
             "sessions_deleted": len(sessions_to_delete),
         }
 
+    async def clear_all_attendance_data(self) -> Dict[str, int]:
+        """Wipe all operational data: records, sessions, events, and soft-delete all members/groups."""
+
+        # 1. Delete all AttendanceRecord
+        records_query = select(AttendanceRecord)
+        records_query = self._apply_org_scope(records_query, AttendanceRecord)
+        records_result = await self.session.execute(records_query)
+        records_to_delete = records_result.scalars().all()
+        for r in records_to_delete:
+            await self.session.delete(r)
+
+        # 2. Delete all AttendanceSession
+        sessions_query = select(AttendanceSession)
+        sessions_query = self._apply_org_scope(sessions_query, AttendanceSession)
+        sessions_result = await self.session.execute(sessions_query)
+        sessions_to_delete = sessions_result.scalars().all()
+        for s in sessions_to_delete:
+            await self.session.delete(s)
+
+        # 3. Mark all members and groups as deleted
+        members_query = select(AttendanceMember)
+        members_query = self._apply_org_scope(members_query, AttendanceMember)
+        members_result = await self.session.execute(members_query)
+        for m in members_result.scalars().all():
+            m.is_active = False
+            m.is_deleted = True
+
+        groups_query = select(AttendanceGroup)
+        groups_query = self._apply_org_scope(groups_query, AttendanceGroup)
+        groups_result = await self.session.execute(groups_query)
+        for g in groups_result.scalars().all():
+            g.is_active = False
+            g.is_deleted = True
+
+        await self.session.commit()
+
+        return {
+            "records_deleted": len(records_to_delete),
+            "sessions_deleted": len(sessions_to_delete),
+        }
+
 
 class FaceRepository:
     """Repository pattern for Face database operations"""

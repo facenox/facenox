@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "framer-motion"
 import { attendanceManager } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { FormInput, Modal } from "@/components/common"
-import { InfoPopover } from "@/components/shared"
 
 interface AddMemberProps {
   isOpen: boolean
@@ -18,12 +17,6 @@ const waitForNextPaint = () =>
   new Promise<void>((resolve) => {
     requestAnimationFrame(() => resolve())
   })
-
-const consentPopoverContent = {
-  title: "Biometric Privacy",
-  description:
-    "Only add people who have given biometric consent. Face data stays encrypted on this device.",
-}
 
 export function AddMember({
   isOpen,
@@ -45,7 +38,6 @@ export function AddMember({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmDuplicate, setConfirmDuplicate] = useState(false)
-  const [hasBiometricConsent, setHasBiometricConsent] = useState(false)
 
   const nameInputRef = useRef<HTMLInputElement>(null)
   const singleSubmitInFlightRef = useRef(false)
@@ -124,7 +116,7 @@ export function AddMember({
       await waitForNextPaint()
       await attendanceManager.addMember(group.id, newMemberName.trim(), {
         role: newMemberRole.trim() || undefined,
-        hasConsent: hasBiometricConsent,
+        hasConsent: true,
       })
       resetForm()
       onSuccess()
@@ -174,7 +166,7 @@ export function AddMember({
         try {
           await attendanceManager.addMember(group.id, name, {
             role: role || undefined,
-            hasConsent: hasBiometricConsent,
+            hasConsent: true,
           })
           success++
         } catch (err) {
@@ -202,35 +194,6 @@ export function AddMember({
       setIsProcessingBulk(false)
     }
   }
-
-  const renderConsentRow = (label: string) => (
-    <div
-      className={`rounded-lg transition-all duration-300 ${
-        hasBiometricConsent ? "bg-cyan-500/6" : "bg-[rgba(13,17,23,0.82)]"
-      }`}>
-      <label className="group flex cursor-pointer items-center gap-3 px-3.5 py-3">
-        <div className="relative flex h-4.5 w-4.5 shrink-0 items-center justify-center">
-          <input
-            type="checkbox"
-            checked={hasBiometricConsent}
-            onChange={(e) => setHasBiometricConsent(e.target.checked)}
-            className="peer sr-only"
-          />
-          <div className="h-4.5 w-4.5 rounded-md border border-white/20 bg-[rgba(22,28,36,0.62)] transition-all duration-200 group-hover:border-white/40 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10" />
-          <i className="fa-solid fa-check absolute text-[9px] text-cyan-400 opacity-0 transition-all duration-200 peer-checked:opacity-100" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium tracking-tight text-white/85">{label}</span>
-            <InfoPopover
-              title={consentPopoverContent.title}
-              description={consentPopoverContent.description}
-            />
-          </div>
-        </div>
-      </label>
-    </div>
-  )
 
   return (
     <Modal
@@ -343,7 +306,19 @@ export function AddMember({
                   />
                 </label>
 
-                {renderConsentRow("I confirm that this member has given biometric consent.")}
+                {/* Implicit Certification Notice */}
+                <div className="mt-2 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3.5 py-2.5">
+                  <p className="flex items-start text-[10px] leading-relaxed text-cyan-200/60">
+                    <i className="fa-solid fa-circle-check mt-0.5 mr-2 shrink-0 text-cyan-400/50"></i>
+                    <span>
+                      By adding this member, you certify that you have obtained their{" "}
+                      <span className="font-medium text-cyan-300/80">
+                        explicit biometric consent
+                      </span>{" "}
+                      in accordance with the Data Privacy Act.
+                    </span>
+                  </p>
+                </div>
               </motion.div>
             : <motion.div
                 key="bulk"
@@ -380,9 +355,19 @@ export function AddMember({
                   </div>
                 </div>
 
-                {renderConsentRow(
-                  "I confirm that all members in this list have given biometric consent.",
-                )}
+                {/* Implicit Certification Notice for Bulk */}
+                <div className="mt-2 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3.5 py-2.5">
+                  <p className="flex items-start text-[10px] leading-relaxed text-cyan-200/60">
+                    <i className="fa-solid fa-circle-check mt-0.5 mr-2 shrink-0 text-cyan-400/50"></i>
+                    <span>
+                      By importing these members, you certify that you have obtained{" "}
+                      <span className="font-medium text-cyan-300/80">
+                        explicit biometric consent
+                      </span>{" "}
+                      for each individual.
+                    </span>
+                  </p>
+                </div>
 
                 {/* Bulk Results */}
                 {bulkResults && (
@@ -434,8 +419,7 @@ export function AddMember({
               loading ||
               isProcessingBulk ||
               (!isBulkMode && !newMemberName.trim()) ||
-              (isBulkMode && !bulkMembersText.trim()) ||
-              !hasBiometricConsent
+              (isBulkMode && !bulkMembersText.trim())
             }
             className={`min-w-[120px] rounded-lg border px-6 py-2 text-[11px] font-bold tracking-wider transition-colors disabled:opacity-50 ${
               confirmDuplicate && !isBulkMode ?

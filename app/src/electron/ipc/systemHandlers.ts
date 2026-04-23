@@ -1,4 +1,5 @@
-import { ipcMain } from "electron"
+import { ipcMain, shell } from "electron"
+import { diagnosticsService } from "../services/DiagnosticsService.js"
 
 export function registerSystemHandlers() {
   ipcMain.handle("system:get-stats", () => {
@@ -13,5 +14,12 @@ export function registerSystemHandlers() {
         appUsage: process.memoryUsage().rss,
       },
     }
+  })
+
+  ipcMain.handle("system:export-health", async () => {
+    const report = await diagnosticsService.generateHealthReport()
+    const path = await diagnosticsService.exportReportToDisk(report)
+    shell.showItemInFolder(path)
+    return { success: true, path }
   })
 }

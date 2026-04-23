@@ -190,7 +190,19 @@ export const About: React.FC = () => {
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleExportHealth = useCallback(async () => {
+    setIsExporting(true)
+    try {
+      await window.facenoxElectron?.exportHealth()
+    } catch (error) {
+      console.error("Export health failed:", error)
+    } finally {
+      setIsExporting(false)
+    }
+  }, [])
 
   useEffect(() => {
     updaterService.getVersion().then(setVersion)
@@ -316,6 +328,28 @@ export const About: React.FC = () => {
                 onClick={() => setShowPrivacyModal(true)}
                 className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/50 transition-all hover:border-cyan-500/10 hover:bg-cyan-500/10 hover:text-cyan-400 active:scale-95">
                 Read Policy
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between border-b border-white/5 py-3">
+              <div className="flex flex-col text-left">
+                <span className="text-[11px] font-medium text-white/30">Diagnostics</span>
+                <span className="mt-0.5 text-[9px] text-white/15">System health & error logs</span>
+              </div>
+              <button
+                disabled={isExporting}
+                onClick={handleExportHealth}
+                className="group flex items-center gap-2 rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/50 transition-all hover:border-white/10 hover:bg-white/5 hover:text-white active:scale-95 disabled:opacity-50">
+                {isExporting ?
+                  <>
+                    <i className="fa-solid fa-spinner animate-spin text-[10px]" />
+                    <span>Exporting...</span>
+                  </>
+                : <>
+                    <i className="fa-solid fa-file-export text-[10px] text-white/30 group-hover:text-white/60" />
+                    <span>Export Health Data</span>
+                  </>
+                }
               </button>
             </div>
           </div>

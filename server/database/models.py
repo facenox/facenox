@@ -31,7 +31,9 @@ class SyncMixin(AsyncAttrs):
     organization_id: Mapped[Optional[str]] = mapped_column(
         String, nullable=True, index=True
     )
-    remote_id: Mapped[Optional[str]] = mapped_column("cloud_id", String, nullable=True, index=True)
+    remote_id: Mapped[Optional[str]] = mapped_column(
+        "cloud_id", String, nullable=True, index=True
+    )
     version: Mapped[int] = mapped_column(Integer, default=1)
     last_modified_at: Mapped[datetime] = mapped_column(
         DateTime,

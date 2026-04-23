@@ -168,6 +168,7 @@ contextBridge.exposeInMainWorld("facenoxElectron", {
     return () => ipcRenderer.removeListener("window:restored", listener)
   },
   getSystemStats: () => ipcRenderer.invoke("system:get-stats"),
+  exportHealth: () => ipcRenderer.invoke("system:export-health"),
   getVersion: () => ipcRenderer.invoke("updater:get-version"),
   onAppReady: () => ipcRenderer.send("app:ready"),
 })

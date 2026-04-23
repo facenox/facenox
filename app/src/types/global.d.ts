@@ -68,6 +68,7 @@ declare global {
       cpu: number
       memory: { total: number; free: number; appUsage: number }
     }>
+    exportHealth: () => Promise<{ success: boolean; path: string }>
     getVersion: () => Promise<string>
     onAppReady: () => void
   }

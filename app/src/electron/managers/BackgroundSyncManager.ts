@@ -124,8 +124,22 @@ function normalizeAttendanceExportForRemote(
   } as SyncPushPayload["attendance_export"]
 }
 
+interface DeviceCommand {
+  id: string
+  command: string
+  payload: Record<string, unknown>
+}
+
+interface CommandResult {
+  success?: boolean
+  message?: string
+  error?: string
+  [key: string]: unknown
+}
+
 export class BackgroundSyncManager {
   private timer: NodeJS.Timeout | null = null
+  private commandTimer: NodeJS.Timeout | null = null
   private catchUpTimer: NodeJS.Timeout | null = null
   private isSyncing = false
 
@@ -201,10 +215,19 @@ export class BackgroundSyncManager {
       void this.performSync()
     }, intervalMs)
 
+    // Command Polling Loop (Phase 4: Remote Management)
+    // Poll every 30 seconds for remote commands (WIPE, etc.)
+    this.commandTimer = setInterval(() => {
+      void this.pollCommands()
+    }, 30000)
+
     if (!options.skipCatchUp && this.shouldRunCatchUpSync(intervalMinutes, lastSyncedAt)) {
       console.log("[Sync] Scheduling a catch-up sync because the device is overdue.")
       this.scheduleCatchUpSync()
     }
+
+    // Initial command poll
+    void this.pollCommands()
   }
 
   stop() {
@@ -212,6 +235,93 @@ export class BackgroundSyncManager {
     if (this.timer) {
       clearInterval(this.timer)
       this.timer = null
+    }
+    if (this.commandTimer) {
+      clearInterval(this.commandTimer)
+      this.commandTimer = null
+    }
+  }
+
+  private async pollCommands() {
+    const { enabled, remoteBaseUrl, deviceToken } = this.getSyncConfig()
+    if (!enabled || !remoteBaseUrl || !deviceToken) return
+
+    try {
+      const response = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/devices/commands`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${deviceToken}`,
+          "User-Agent": "Facenox-Desktop-Command-Poll",
+        },
+        signal: AbortSignal.timeout(10000),
+      })
+
+      if (!response.ok) return
+
+      const { commands } = (await response.json()) as { commands: DeviceCommand[] }
+      if (!commands || commands.length === 0) return
+
+      console.log(`[RemoteMgmt] Found ${commands.length} pending commands.`)
+
+      for (const cmd of commands) {
+        await this.executeCommand(cmd)
+      }
+    } catch (error) {
+      console.warn("[RemoteMgmt] Command polling failed:", error)
+    }
+  }
+
+  private async executeCommand(cmd: DeviceCommand) {
+    console.log(`[RemoteMgmt] Executing command: ${cmd.command} (${cmd.id})`)
+    let status = "completed"
+    let result: CommandResult
+
+    try {
+      switch (cmd.command) {
+        case "WIPE": {
+          // Call the comprehensive wipe endpoint in local Python backend
+          const wipeResponse = await fetch(`${backendService.getUrl()}/wipe`, {
+            method: "POST",
+            headers: authHeaders({ "Content-Type": "application/json" }),
+            signal: AbortSignal.timeout(60000),
+          })
+          if (!wipeResponse.ok) {
+            throw new Error(`Wipe failed on local backend: ${wipeResponse.status}`)
+          }
+          result = (await wipeResponse.json()) as CommandResult
+          console.warn("[RemoteMgmt] LOCAL DATA WIPE COMPLETED.")
+          break
+        }
+
+        default:
+          console.warn(`[RemoteMgmt] Unknown command: ${cmd.command}`)
+          status = "failed"
+          result = { error: "Unknown command" }
+      }
+    } catch (error) {
+      console.error(`[RemoteMgmt] Command ${cmd.command} failed:`, error)
+      status = "failed"
+      result = { error: error instanceof Error ? error.message : String(error) }
+    }
+
+    // Acknowledge command execution back to dashboard
+    try {
+      const { remoteBaseUrl, deviceToken } = this.getSyncConfig()
+      await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/devices/commands/ack`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${deviceToken}`,
+        },
+        body: JSON.stringify({
+          commandId: cmd.id,
+          status,
+          result,
+        }),
+        signal: AbortSignal.timeout(10000),
+      })
+    } catch (error) {
+      console.warn("[RemoteMgmt] Failed to acknowledge command:", error)
     }
   }
 

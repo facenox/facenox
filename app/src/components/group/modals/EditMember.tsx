@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react"
 import { attendanceManager } from "@/services"
 import type { AttendanceMember } from "@/types/recognition"
 import { FormInput, Modal } from "@/components/common"
-import { InfoPopover } from "@/components/shared"
 
 interface EditMemberProps {
   isOpen: boolean
@@ -107,34 +106,16 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
             />
           </label>
 
-          {/* Consent Toggle */}
-          <div
-            className={`rounded-xl transition-all duration-300 ${
-              hasBiometricConsent ? "bg-[rgba(18,24,31,0.94)]" : "bg-[rgba(13,17,23,0.82)]"
-            }`}>
-            <label className="group flex cursor-pointer items-center gap-4 p-4">
-              <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
-                <input
-                  type="checkbox"
-                  checked={hasBiometricConsent}
-                  onChange={(e) => setHasBiometricConsent(e.target.checked)}
-                  className="peer sr-only"
-                />
-                <div className="h-5 w-5 rounded-md border border-white/10 bg-[rgba(22,28,36,0.62)] transition-all duration-200 group-hover:border-white/20" />
-                <i className="fa-solid fa-check absolute text-[10px] text-cyan-400/80 opacity-0 transition-all duration-200 peer-checked:opacity-100" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-semibold tracking-tight text-white/90">
-                    I confirm that this member has provided informed biometric consent.
-                  </span>
-                  <InfoPopover
-                    title="Biometric Privacy"
-                    description="Facial features are encrypted and stored strictly on this device. Facenox does not upload biometric data to any external server."
-                  />
-                </div>
-              </div>
-            </label>
+          {/* Implicit Certification Notice */}
+          <div className="mt-2 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3.5 py-2.5">
+            <p className="flex items-start text-[10px] leading-relaxed text-cyan-200/60">
+              <i className="fa-solid fa-circle-check mt-0.5 mr-2 shrink-0 text-cyan-400/50"></i>
+              <span>
+                By updating this member, you certify that you have obtained their{" "}
+                <span className="font-medium text-cyan-300/80">explicit biometric consent</span> in
+                accordance with the Data Privacy Act.
+              </span>
+            </p>
           </div>
         </div>
         <div className="mt-8 flex justify-end gap-3">

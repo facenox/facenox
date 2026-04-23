@@ -52,7 +52,7 @@ const pairingSteps = [
       <>
         Get a pairing code from the{" "}
         <a
-          href="https://facenox.com/dashboard"
+          href="https://facenox.com/app/devices"
           target="_blank"
           rel="noopener noreferrer"
           className="text-cyan-400 underline transition-colors hover:text-cyan-300">
