@@ -13,6 +13,10 @@ interface SidebarProps {
   dropdownValue: string | null
   onGroupSelect?: (group: AttendanceGroup) => void
   setTriggerCreateGroup: (trigger: number) => void
+  setRegistrationState: (
+    source: "upload" | "camera" | null,
+    mode: "single" | "bulk" | "queue" | null,
+  ) => void
   sections: { id: string; label: string; icon: string }[]
   groupSections: { id: GroupSection; label: string; icon: string }[]
 }
@@ -26,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   dropdownValue,
   onGroupSelect,
   setTriggerCreateGroup,
+  setRegistrationState,
   sections,
   groupSections,
 }) => {
@@ -67,6 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 if (activeSection !== "group") {
                   setGroupInitialSection("overview")
                 }
+                setRegistrationState(null, null)
                 setTriggerCreateGroup(Date.now())
               }}
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-0 bg-transparent text-white/50 transition-colors hover:bg-white/10 hover:text-white">
@@ -95,6 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => {
                       setActiveSection("group")
                       setGroupInitialSection(subsection.id)
+                      setRegistrationState(null, null)
                       setTriggerCreateGroup(0)
                     }}
                     className={`group/item relative flex w-full items-center gap-3 rounded-md border-0 bg-transparent px-3 py-2 text-left text-[13px] font-medium transition-all ${

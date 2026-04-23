@@ -138,7 +138,7 @@ declare global {
   interface SyncAPI {
     getConfig: () => Promise<{
       enabled: boolean
-      cloudBaseUrl: string
+      remoteBaseUrl: string
       organizationId: string
       organizationName: string
       siteId: string
@@ -153,12 +153,12 @@ declare global {
     }>
     updateConfig: (updates: {
       enabled?: boolean
-      cloudBaseUrl?: string
+      remoteBaseUrl?: string
       deviceName?: string
       intervalMinutes?: number
     }) => Promise<{
       enabled: boolean
-      cloudBaseUrl: string
+      remoteBaseUrl: string
       organizationId: string
       organizationName: string
       siteId: string
@@ -172,7 +172,7 @@ declare global {
       connected: boolean
     }>
     pairDevice: (input: {
-      cloudBaseUrl?: string
+      remoteBaseUrl?: string
       pairingCode: string
       deviceName?: string
     }) => Promise<{
@@ -182,7 +182,7 @@ declare global {
       initialSyncSucceeded?: boolean
       config?: {
         enabled: boolean
-        cloudBaseUrl: string
+        remoteBaseUrl: string
         organizationId: string
         organizationName: string
         siteId: string
@@ -201,7 +201,7 @@ declare global {
       warning?: string | null
       config: {
         enabled: boolean
-        cloudBaseUrl: string
+        remoteBaseUrl: string
         organizationId: string
         organizationName: string
         siteId: string
@@ -240,7 +240,7 @@ declare global {
       success: boolean
       config: {
         enabled: boolean
-        cloudBaseUrl: string
+        remoteBaseUrl: string
         organizationId: string
         organizationName: string
         siteId: string

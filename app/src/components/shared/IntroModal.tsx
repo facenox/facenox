@@ -48,8 +48,8 @@ export function IntroModal() {
             </p>
           </div>
           <p className="text-xs leading-relaxed text-white/50">
-            No data is sent to the internet or any cloud services unless you explicitly choose to
-            sync it later.
+            No data is sent to the internet or any remote services unless you explicitly choose to
+            sync it with your dashboard later.
           </p>
         </div>
       ),

@@ -9,7 +9,7 @@ import { syncManager } from "../managers/BackgroundSyncManager.js"
 import { persistentStore } from "../persistentStore.js"
 import { getCurrentVersion } from "../updater.js"
 import {
-  DEFAULT_CLOUD_BASE_URL,
+  DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
 } from "../../services/remoteSyncDefaults.js"
 
@@ -18,17 +18,17 @@ function authHeaders(extra: Record<string, string> = {}) {
   return withLocalBackendHeaders(token ? { "X-Facenox-Token": token, ...extra } : { ...extra })
 }
 
-function normalizeCloudBaseUrl(value: string): string {
+function normalizeRemoteBaseUrl(value: string): string {
   return value.trim().replace(/\/+$/, "")
 }
 
-function resolveCloudBaseUrl(value: string): string {
-  return normalizeCloudBaseUrl(value) || DEFAULT_CLOUD_BASE_URL
+function resolveRemoteBaseUrl(value: string): string {
+  return normalizeRemoteBaseUrl(value) || DEFAULT_REMOTE_BASE_URL
 }
 
-function getCloudSyncStatus() {
-  const cloudBaseUrl = resolveCloudBaseUrl(
-    (persistentStore.get("sync.cloudBaseUrl") as string) || "",
+function getRemoteSyncStatus() {
+  const remoteBaseUrl = resolveRemoteBaseUrl(
+    (persistentStore.get("sync.remoteBaseUrl") as string) || "",
   )
   const organizationId = (persistentStore.get("sync.organizationId") as string) || ""
   const organizationName = (persistentStore.get("sync.organizationName") as string) || ""
@@ -50,7 +50,7 @@ function getCloudSyncStatus() {
 
   return {
     enabled,
-    cloudBaseUrl,
+    remoteBaseUrl,
     organizationId,
     organizationName,
     siteId,
@@ -61,11 +61,11 @@ function getCloudSyncStatus() {
     lastSyncedAt,
     lastSyncStatus,
     lastSyncMessage,
-    connected: Boolean(cloudBaseUrl && organizationId && siteId && deviceId && deviceToken),
+    connected: Boolean(remoteBaseUrl && organizationId && siteId && deviceId && deviceToken),
   }
 }
 
-function clearCloudConnection() {
+function clearRemoteConnection() {
   persistentStore.set("sync.enabled", false)
   persistentStore.set("sync.organizationId", "")
   persistentStore.set("sync.organizationName", "")
@@ -141,7 +141,7 @@ function decryptBackup(blob: Buffer, password: string): Buffer {
 // IPC Registration
 export function registerSyncHandlers() {
   ipcMain.handle("sync:restart-manager", () => {
-    const status = getCloudSyncStatus()
+    const status = getRemoteSyncStatus()
     if (status.enabled && status.connected) {
       syncManager.start()
     } else {
@@ -149,7 +149,7 @@ export function registerSyncHandlers() {
     }
     return {
       success: true,
-      config: getCloudSyncStatus(),
+      config: getRemoteSyncStatus(),
     }
   })
 
@@ -158,12 +158,12 @@ export function registerSyncHandlers() {
   })
 
   ipcMain.handle("sync:get-config", () => {
-    return getCloudSyncStatus()
+    return getRemoteSyncStatus()
   })
 
   ipcMain.handle("sync:update-config", async (_event, updates: Record<string, unknown> = {}) => {
-    if (typeof updates.cloudBaseUrl === "string") {
-      persistentStore.set("sync.cloudBaseUrl", resolveCloudBaseUrl(updates.cloudBaseUrl))
+    if (typeof updates.remoteBaseUrl === "string") {
+      persistentStore.set("sync.remoteBaseUrl", resolveRemoteBaseUrl(updates.remoteBaseUrl))
     }
 
     if (typeof updates.deviceName === "string") {
@@ -178,7 +178,7 @@ export function registerSyncHandlers() {
       persistentStore.set("sync.enabled", updates.enabled)
     }
 
-    const status = getCloudSyncStatus()
+    const status = getRemoteSyncStatus()
     if (status.enabled && status.connected) {
       syncManager.start()
     } else {
@@ -193,12 +193,12 @@ export function registerSyncHandlers() {
     async (
       _event,
       input: {
-        cloudBaseUrl?: string
+        remoteBaseUrl?: string
         pairingCode?: string
         deviceName?: string
       } = {},
     ) => {
-      const cloudBaseUrl = resolveCloudBaseUrl(input.cloudBaseUrl || "")
+      const remoteBaseUrl = resolveRemoteBaseUrl(input.remoteBaseUrl || "")
       const pairingCode = (input.pairingCode || "").trim()
       const deviceName = (input.deviceName || "").trim() || os.hostname()
 
@@ -210,7 +210,7 @@ export function registerSyncHandlers() {
       }
 
       try {
-        const response = await fetch(`${cloudBaseUrl}/api/device/pair`, {
+        const response = await fetch(`${remoteBaseUrl}/api/device/pair`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -245,7 +245,7 @@ export function registerSyncHandlers() {
           }
         }
 
-        persistentStore.set("sync.cloudBaseUrl", cloudBaseUrl)
+        persistentStore.set("sync.remoteBaseUrl", remoteBaseUrl)
         persistentStore.set("sync.organizationId", String(payload?.organizationId ?? ""))
         persistentStore.set("sync.organizationName", String(payload?.organizationName ?? ""))
         persistentStore.set("sync.siteId", String(payload?.siteId ?? ""))
@@ -263,7 +263,7 @@ export function registerSyncHandlers() {
 
         return {
           success: true,
-          config: getCloudSyncStatus(),
+          config: getRemoteSyncStatus(),
           initialSyncSucceeded: initialSyncResult.success,
           message:
             initialSyncResult.success ?
@@ -280,12 +280,12 @@ export function registerSyncHandlers() {
   )
 
   ipcMain.handle("sync:disconnect-device", async () => {
-    const status = getCloudSyncStatus()
+    const status = getRemoteSyncStatus()
     let warning: string | null = null
 
     if (status.connected) {
       try {
-        const response = await fetch(`${status.cloudBaseUrl}/api/device/unpair`, {
+        const response = await fetch(`${status.remoteBaseUrl}/api/device/unpair`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -301,27 +301,27 @@ export function registerSyncHandlers() {
 
         if (!response.ok && ![401, 404].includes(response.status)) {
           const text = await response.text()
-          warning = text || `Cloud unpair returned HTTP ${response.status}.`
+          warning = text || `Remote unpair returned HTTP ${response.status}.`
         }
       } catch (error) {
-        warning = error instanceof Error ? error.message : "Cloud unpair failed."
+        warning = error instanceof Error ? error.message : "Remote unpair failed."
       }
     }
 
-    clearCloudConnection()
+    clearRemoteConnection()
     persistentStore.set("sync.lastSyncStatus", "idle")
     persistentStore.set(
       "sync.lastSyncMessage",
       warning ?
         `Disconnected locally. Remote warning: ${warning}`
-      : "Device disconnected from Facenox Cloud.",
+      : "Device disconnected from Management Dashboard.",
     )
     syncManager.stop()
 
     return {
       success: true,
       warning,
-      config: getCloudSyncStatus(),
+      config: getRemoteSyncStatus(),
     }
   })
 

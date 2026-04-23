@@ -116,7 +116,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
       display: "Display",
       notifications: "Notifications",
       database: "Database",
-      cloudsync: "Remote Sync",
+      "remote-sync": "Remote Sync",
       about: "About",
     }
     if (isGroupSection) {
@@ -314,7 +314,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   }}
                 />
               )}
-              {activeSection === "cloudsync" && (
+              {activeSection === "remote-sync" && (
                 <RemoteSync onNavigateToDB={() => setActiveSection("database")} />
               )}
               {activeSection === "about" && <About />}

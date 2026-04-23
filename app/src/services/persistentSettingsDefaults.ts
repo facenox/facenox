@@ -1,6 +1,6 @@
 import type { AudioSettings, QuickSettings } from "../components/settings/types"
 import type { UpdateInfo } from "../types/global"
-import { DEFAULT_CLOUD_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "./remoteSyncDefaults"
+import { DEFAULT_REMOTE_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "./remoteSyncDefaults"
 
 export interface PersistentSettingsSchema {
   quickSettings: QuickSettings
@@ -47,7 +47,7 @@ export interface PersistentSettingsSchema {
   }
   sync: {
     enabled: boolean
-    cloudBaseUrl: string
+    remoteBaseUrl: string
     organizationId: string
     organizationName: string
     siteId: string
@@ -100,7 +100,7 @@ export const defaultSettings: PersistentSettingsSchema = {
   },
   sync: {
     enabled: true,
-    cloudBaseUrl: DEFAULT_CLOUD_BASE_URL,
+    remoteBaseUrl: DEFAULT_REMOTE_BASE_URL,
     organizationId: "",
     organizationName: "",
     siteId: "",

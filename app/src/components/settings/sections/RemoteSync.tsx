@@ -3,13 +3,13 @@ import { motion, AnimatePresence } from "framer-motion"
 
 import { InfoPopover } from "../../shared/InfoPopover"
 import {
-  DEFAULT_CLOUD_BASE_URL,
+  DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
 } from "../../../services/remoteSyncDefaults"
 
-type CloudConfig = {
+type RemoteSyncConfig = {
   enabled: boolean
-  cloudBaseUrl: string
+  remoteBaseUrl: string
   organizationId: string
   organizationName: string
   siteId: string
@@ -28,9 +28,9 @@ type BannerState =
   | { type: "success"; message: string }
   | { type: "error"; message: string }
 
-const defaultConfig: CloudConfig = {
+const defaultConfig: RemoteSyncConfig = {
   enabled: true,
-  cloudBaseUrl: DEFAULT_CLOUD_BASE_URL,
+  remoteBaseUrl: DEFAULT_REMOTE_BASE_URL,
   organizationId: "",
   organizationName: "",
   siteId: "",
@@ -75,8 +75,8 @@ const pairingSteps = [
 ]
 
 export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
-  const [config, setConfig] = useState<CloudConfig>(defaultConfig)
-  const [cloudBaseUrl, setCloudBaseUrl] = useState("")
+  const [config, setConfig] = useState<RemoteSyncConfig>(defaultConfig)
+  const [remoteBaseUrl, setRemoteBaseUrl] = useState("")
   const [deviceName, setDeviceName] = useState("Facenox Desktop")
   const [pairingCode, setPairingCode] = useState("")
   const [intervalMinutes, setIntervalMinutes] = useState(DEFAULT_SYNC_INTERVAL_MINUTES)
@@ -87,15 +87,15 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
   >(null)
   const [banner, setBanner] = useState<BannerState>({ type: "idle" })
 
-  const syncFromConfig = useCallback((nextConfig: CloudConfig) => {
-    const nextCloudBaseUrl = nextConfig.cloudBaseUrl || DEFAULT_CLOUD_BASE_URL
+  const syncFromConfig = useCallback((nextConfig: RemoteSyncConfig) => {
+    const nextRemoteBaseUrl = nextConfig.remoteBaseUrl || DEFAULT_REMOTE_BASE_URL
 
     setConfig(nextConfig)
-    setCloudBaseUrl(nextCloudBaseUrl === DEFAULT_CLOUD_BASE_URL ? "" : nextCloudBaseUrl)
+    setRemoteBaseUrl(nextRemoteBaseUrl === DEFAULT_REMOTE_BASE_URL ? "" : nextRemoteBaseUrl)
     setDeviceName(nextConfig.deviceName || "Facenox Desktop")
     setIntervalMinutes(nextConfig.intervalMinutes || DEFAULT_SYNC_INTERVAL_MINUTES)
     setEnabled(nextConfig.enabled)
-    setShowAdvanced(nextCloudBaseUrl !== DEFAULT_CLOUD_BASE_URL)
+    setShowAdvanced(nextRemoteBaseUrl !== DEFAULT_REMOTE_BASE_URL)
   }, [])
 
   const loadConfig = useCallback(async () => {
@@ -112,7 +112,7 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
     setBanner({ type: "idle" })
     try {
       const nextConfig = await window.electronAPI.sync.updateConfig({
-        cloudBaseUrl: cloudBaseUrl.trim(),
+        remoteBaseUrl: remoteBaseUrl.trim(),
         deviceName,
         intervalMinutes,
         enabled,
@@ -140,7 +140,7 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
     setBanner({ type: "idle" })
     try {
       const result = await window.electronAPI.sync.pairDevice({
-        cloudBaseUrl: cloudBaseUrl.trim() || DEFAULT_CLOUD_BASE_URL,
+        remoteBaseUrl: remoteBaseUrl.trim() || DEFAULT_REMOTE_BASE_URL,
         pairingCode,
         deviceName,
       })
@@ -395,9 +395,9 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
                           <input
                             type="url"
                             placeholder="Leave empty for official sync"
-                            value={cloudBaseUrl}
+                            value={remoteBaseUrl}
                             disabled={config.connected}
-                            onChange={(e) => setCloudBaseUrl(e.target.value)}
+                            onChange={(e) => setRemoteBaseUrl(e.target.value)}
                             className="h-9 w-full rounded-md border-0 bg-white/5 px-3 text-[13px] text-white transition-all outline-none focus:bg-white/10 focus:ring-1 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50"
                           />
                         </div>

@@ -38,7 +38,7 @@ describe("RemoteSync", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Synced")).toBeInTheDocument()
-      expect(screen.getByText("Connected to: Acme Org – Main Campus")).toBeInTheDocument()
+      expect(screen.getByText(/Linked to: Acme Org – Main Campus/i)).toBeInTheDocument()
     })
   })
 
@@ -140,7 +140,7 @@ describe("RemoteSync", () => {
     })
   })
 
-  it("shows the disconnect warning when the cloud returns one", async () => {
+  it("shows the disconnect warning when the dashboard returns one", async () => {
     const electronAPI = getElectronAPIMock()
     electronAPI.sync.getConfig.mockResolvedValue(
       createSyncConfig({
@@ -161,7 +161,7 @@ describe("RemoteSync", () => {
 
     expect(
       await screen.findByText(
-        "Disconnected locally, but the cloud returned a warning: Cloud cleanup failed",
+        "Disconnected locally, but the dashboard returned a warning: Cloud cleanup failed",
       ),
     ).toBeInTheDocument()
   })

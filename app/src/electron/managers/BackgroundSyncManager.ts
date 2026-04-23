@@ -4,7 +4,7 @@ import { persistentStore } from "../persistentStore.js"
 import { backendService } from "../backendService.js"
 import { getCurrentVersion } from "../updater.js"
 import {
-  DEFAULT_CLOUD_BASE_URL,
+  DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
 } from "../../services/remoteSyncDefaults.js"
 const STARTUP_CATCH_UP_DELAY_MS = 5000
@@ -14,7 +14,7 @@ function authHeaders(extra: Record<string, string> = {}) {
   return withLocalBackendHeaders(token ? { "X-Facenox-Token": token, ...extra } : { ...extra })
 }
 
-function toCloudIsoDateTime(value: unknown): string | null {
+function toRemoteIsoDateTime(value: unknown): string | null {
   if (value == null || value === "") {
     return null
   }
@@ -45,7 +45,7 @@ function toCloudIsoDateTime(value: unknown): string | null {
   return null
 }
 
-function normalizeAttendanceExportForCloud(
+function normalizeAttendanceExportForRemote(
   attendanceExport: Record<string, unknown>,
 ): SyncPushPayload["attendance_export"] {
   const groups = Array.isArray(attendanceExport.groups) ? attendanceExport.groups : []
@@ -55,13 +55,13 @@ function normalizeAttendanceExportForCloud(
 
   return {
     ...attendanceExport,
-    exported_at: toCloudIsoDateTime(attendanceExport.exported_at) ?? new Date().toISOString(),
+    exported_at: toRemoteIsoDateTime(attendanceExport.exported_at) ?? new Date().toISOString(),
     groups: groups.map((group) => {
       const candidate = typeof group === "object" && group !== null ? group : {}
       return {
         ...candidate,
         created_at:
-          toCloudIsoDateTime((candidate as { created_at?: unknown }).created_at) ??
+          toRemoteIsoDateTime((candidate as { created_at?: unknown }).created_at) ??
           new Date().toISOString(),
         settings:
           (
@@ -80,9 +80,9 @@ function normalizeAttendanceExportForCloud(
       return {
         ...candidate,
         joined_at:
-          toCloudIsoDateTime((candidate as { joined_at?: unknown }).joined_at) ??
+          toRemoteIsoDateTime((candidate as { joined_at?: unknown }).joined_at) ??
           new Date().toISOString(),
-        consent_granted_at: toCloudIsoDateTime(
+        consent_granted_at: toRemoteIsoDateTime(
           (candidate as { consent_granted_at?: unknown }).consent_granted_at,
         ),
       }
@@ -92,7 +92,7 @@ function normalizeAttendanceExportForCloud(
       return {
         ...candidate,
         timestamp:
-          toCloudIsoDateTime((candidate as { timestamp?: unknown }).timestamp) ??
+          toRemoteIsoDateTime((candidate as { timestamp?: unknown }).timestamp) ??
           new Date().toISOString(),
       }
     }),
@@ -100,8 +100,10 @@ function normalizeAttendanceExportForCloud(
       const candidate = typeof session === "object" && session !== null ? session : {}
       return {
         ...candidate,
-        check_in_time: toCloudIsoDateTime((candidate as { check_in_time?: unknown }).check_in_time),
-        check_out_time: toCloudIsoDateTime(
+        check_in_time: toRemoteIsoDateTime(
+          (candidate as { check_in_time?: unknown }).check_in_time,
+        ),
+        check_out_time: toRemoteIsoDateTime(
           (candidate as { check_out_time?: unknown }).check_out_time,
         ),
       }
@@ -130,7 +132,8 @@ export class BackgroundSyncManager {
   private getSyncConfig() {
     return {
       enabled: persistentStore.get("sync.enabled") as boolean,
-      cloudBaseUrl: (persistentStore.get("sync.cloudBaseUrl") as string) || DEFAULT_CLOUD_BASE_URL,
+      remoteBaseUrl:
+        (persistentStore.get("sync.remoteBaseUrl") as string) || DEFAULT_REMOTE_BASE_URL,
       siteId: (persistentStore.get("sync.siteId") as string) || "",
       deviceId: (persistentStore.get("sync.deviceId") as string) || "",
       deviceToken: (persistentStore.get("sync.deviceToken") as string) || "",
@@ -183,11 +186,11 @@ export class BackgroundSyncManager {
   start(options: { skipCatchUp?: boolean } = {}) {
     this.stop()
 
-    const { enabled, cloudBaseUrl, siteId, deviceId, deviceToken, intervalMinutes, lastSyncedAt } =
+    const { enabled, remoteBaseUrl, siteId, deviceId, deviceToken, intervalMinutes, lastSyncedAt } =
       this.getSyncConfig()
 
-    if (!enabled || !cloudBaseUrl || !siteId || !deviceId || !deviceToken) {
-      console.log("[Sync] Background Auto-Sync is disabled or cloud pairing is incomplete.")
+    if (!enabled || !remoteBaseUrl || !siteId || !deviceId || !deviceToken) {
+      console.log("[Sync] Background Auto-Sync is disabled or device pairing is incomplete.")
       return
     }
 
@@ -220,9 +223,9 @@ export class BackgroundSyncManager {
       }
     }
 
-    const { enabled, cloudBaseUrl, siteId, deviceId, deviceToken } = this.getSyncConfig()
+    const { enabled, remoteBaseUrl, siteId, deviceId, deviceToken } = this.getSyncConfig()
 
-    if (!cloudBaseUrl || !siteId || !deviceId || !deviceToken) {
+    if (!remoteBaseUrl || !siteId || !deviceId || !deviceToken) {
       this.stop()
       this.setLastSyncState({
         lastSyncStatus: "error",
@@ -230,7 +233,7 @@ export class BackgroundSyncManager {
       })
       return {
         success: false,
-        message: "Cloud pairing is incomplete.",
+        message: "Device pairing is incomplete.",
       }
     }
 
@@ -258,7 +261,7 @@ export class BackgroundSyncManager {
       }
 
       const rawAttendanceExport = (await response.json()) as Record<string, unknown>
-      const attendanceExport = normalizeAttendanceExportForCloud(rawAttendanceExport)
+      const attendanceExport = normalizeAttendanceExportForRemote(rawAttendanceExport)
       const exportedAt =
         typeof attendanceExport?.exported_at === "string" ?
           attendanceExport.exported_at
@@ -274,7 +277,7 @@ export class BackgroundSyncManager {
       }
       const validatedPayload = syncPushSchema.parse(syncPayload)
 
-      const cloudResponse = await fetch(`${cloudBaseUrl.replace(/\/+$/, "")}/api/sync/push`, {
+      const remoteResponse = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/push`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -286,7 +289,7 @@ export class BackgroundSyncManager {
         signal: AbortSignal.timeout(60000),
       })
 
-      const responseText = await cloudResponse.text()
+      const responseText = await remoteResponse.text()
       let responsePayload: Record<string, unknown> | null = null
       if (responseText) {
         try {
@@ -296,12 +299,12 @@ export class BackgroundSyncManager {
         }
       }
 
-      if (!cloudResponse.ok) {
+      if (!remoteResponse.ok) {
         const detail =
           typeof responsePayload?.error === "string" ?
             responsePayload.error
-          : responseText || `HTTP ${cloudResponse.status}`
-        throw new Error(`Cloud sync failed: ${detail}`)
+          : responseText || `HTTP ${remoteResponse.status}`
+        throw new Error(`Remote sync failed: ${detail}`)
       }
 
       console.log("[Sync] Background sync successful.")

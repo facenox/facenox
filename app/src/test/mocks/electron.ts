@@ -1,13 +1,13 @@
 import type { Mock } from "vitest"
 import { vi } from "vitest"
 import {
-  DEFAULT_CLOUD_BASE_URL,
+  DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
 } from "@/services/remoteSyncDefaults"
 
 export interface MockSyncConfig {
   enabled: boolean
-  cloudBaseUrl: string
+  remoteBaseUrl: string
   organizationId: string
   organizationName: string
   siteId: string
@@ -91,7 +91,7 @@ export interface MockFacenoxElectronAPI extends FacenoxElectronAPI {
 export function createSyncConfig(overrides: Partial<MockSyncConfig> = {}): MockSyncConfig {
   return {
     enabled: false,
-    cloudBaseUrl: DEFAULT_CLOUD_BASE_URL,
+    remoteBaseUrl: DEFAULT_REMOTE_BASE_URL,
     organizationId: "",
     organizationName: "",
     siteId: "",

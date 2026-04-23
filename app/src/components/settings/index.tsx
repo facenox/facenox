@@ -54,7 +54,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
     { id: "display", label: "Display", icon: "fa-solid fa-desktop" },
     { id: "notifications", label: "Notifications", icon: "fa-solid fa-bell" },
     { id: "database", label: "Database", icon: "fa-solid fa-database" },
-    { id: "cloudsync", label: "Cloud Beta", icon: "fa-solid fa-cloud" },
+    { id: "remote-sync", label: "Remote Sync", icon: "fa-solid fa-rotate" },
     { id: "about", label: "About", icon: "fa-solid fa-circle-info" },
   ]
 

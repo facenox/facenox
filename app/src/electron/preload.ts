@@ -111,14 +111,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
     updateConfig: (
       updates: Partial<{
         enabled: boolean
-        cloudBaseUrl: string
+        remoteBaseUrl: string
         deviceName: string
         intervalMinutes: number
       }>,
     ) => {
       return ipcRenderer.invoke("sync:update-config", updates)
     },
-    pairDevice: (input: { cloudBaseUrl?: string; pairingCode: string; deviceName?: string }) => {
+    pairDevice: (input: { remoteBaseUrl?: string; pairingCode: string; deviceName?: string }) => {
       return ipcRenderer.invoke("sync:pair-device", input)
     },
     disconnectDevice: () => {
