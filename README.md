@@ -1,7 +1,7 @@
 <a id="readme-top"></a>
 
 > [!CAUTION]
-> This is the official open source repository for Facenox. Treat other repositories, installers, and downloads as unverified unless they come from the official Facenox channels.
+> This is the official open source repository for Facenox. Treat other repositories, installers, and downloads as unverified unless they come from official sources.
 
 <a href="https://github.com/facenox/facenox">
   <img src="app/public/assets/header.png" alt="Facenox header" width="100%">
