@@ -161,7 +161,9 @@ class LiveStreamService:
                 settings = await repo.get_settings()
                 config.enable_liveness_detection = settings.enable_liveness_detection
                 config.max_recognition_faces_per_frame = (
-                    settings.max_recognition_faces_per_frame or 6
+                    settings.max_recognition_faces_per_frame
+                    if settings.max_recognition_faces_per_frame is not None
+                    else 6
                 )
                 config.group_context.max_recognition_faces_per_frame = (
                     config.max_recognition_faces_per_frame
@@ -192,7 +194,11 @@ class LiveStreamService:
         if "max_recognition_faces_per_frame" in message:
             configured_cap = message.get("max_recognition_faces_per_frame", 6)
             try:
-                config.max_recognition_faces_per_frame = max(1, int(configured_cap))
+                parsed = int(configured_cap)
+                # 0 means "no limit"; only enforce minimum of 1 for positive values
+                config.max_recognition_faces_per_frame = (
+                    max(1, parsed) if parsed > 0 else 0
+                )
             except (TypeError, ValueError):
                 config.max_recognition_faces_per_frame = 6
             config.group_context.max_recognition_faces_per_frame = (
@@ -228,7 +234,9 @@ class LiveStreamService:
                 settings.attendance_cooldown_seconds or 300
             )
             group_context.max_recognition_faces_per_frame = (
-                settings.max_recognition_faces_per_frame or 6
+                settings.max_recognition_faces_per_frame
+                if settings.max_recognition_faces_per_frame is not None
+                else 6
             )
 
             if group:
