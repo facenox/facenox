@@ -73,18 +73,17 @@ export function ReportToolbar({
   }, [])
 
   return (
-    <div className="flex shrink-0 items-center gap-3 border-b border-white/5 px-4 py-2.5">
+    <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/5 px-4 py-2.5">
       {/* Date Range */}
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-1">
         <input
           type="date"
           value={startDate}
           onChange={(e) => onStartDateChange(e.target.value)}
-          className="min-w-[110px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
+          className="w-[104px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium tracking-tight text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:ml-1 [&::-webkit-calendar-picker-indicator]:p-0"
           style={
             {
               colorScheme: "dark",
-              fieldSizing: "content",
             } as React.CSSProperties
           }
         />
@@ -93,30 +92,26 @@ export function ReportToolbar({
           type="date"
           value={endDate}
           onChange={(e) => onEndDateChange(e.target.value)}
-          className="min-w-[110px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
+          className="w-[104px] cursor-pointer rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] px-2 py-1 text-[11px] font-medium tracking-tight text-white/60 transition-all duration-300 outline-none focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:ml-1 [&::-webkit-calendar-picker-indicator]:p-0"
           style={
             {
               colorScheme: "dark",
-              fieldSizing: "content",
             } as React.CSSProperties
           }
         />
       </div>
 
-      {/* ── Spacer ── */}
-      <div className="flex-1" />
-
       {/* ── Right Controls ── */}
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
         {/* Search */}
-        <div className="relative">
+        <div className="relative max-w-[180px] min-w-0 flex-1">
           <i className="fa-solid fa-magnifying-glass absolute top-1/2 left-2.5 -translate-y-1/2 text-[9px] text-white/20" />
           <input
             type="search"
             placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-36 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] py-1.5 pr-3 pl-7 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/25 focus:w-52 focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5"
+            className="w-full min-w-0 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.62)] py-1 pr-3 pl-7 text-[11px] font-medium text-white transition-all duration-300 outline-none placeholder:text-white/25 focus:border-cyan-500/32 focus:ring-1 focus:ring-cyan-500/5 sm:focus:max-w-[220px]"
           />
         </div>
 

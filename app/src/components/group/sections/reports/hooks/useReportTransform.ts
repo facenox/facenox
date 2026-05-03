@@ -134,7 +134,13 @@ export function useReportTransform(
 
       if (search) {
         const q = search.toLowerCase()
-        const hay = `${r.name} ${r.status} ${r.notes}`.toLowerCase()
+        const formattedDate = new Date(r.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+        const hay =
+          `${r.name} ${r.status} ${r.notes} ${r.date} ${formattedDate} ${r.check_in_time || ""} ${r.check_out_time || ""}`.toLowerCase()
         if (!hay.includes(q)) return false
       }
       return true
