@@ -257,29 +257,36 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                 />
               </button>
 
-              {filterDropdownOpen && (
-                <div className="absolute top-full right-0 z-50 mt-1.5 min-w-[128px] overflow-hidden rounded-lg border border-white/10 bg-[rgba(18,22,30,0.97)] py-1 shadow-xl">
-                  {(["today", "yesterday", "week"] as DateFilter[]).map((filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => {
-                        setDateFilter(filter)
-                        setActivitySearch("")
-                        setFilterDropdownOpen(false)
-                      }}
-                      className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] transition-colors ${
-                        dateFilter === filter ? "text-white" : (
-                          "text-white/40 hover:bg-white/5 hover:text-white/80"
-                        )
-                      }`}>
-                      <i
-                        className={`fa-solid fa-check text-[9px] text-cyan-400 transition-opacity ${dateFilter === filter ? "opacity-100" : "opacity-0"}`}
-                      />
-                      {DATE_FILTER_LABELS[filter]}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <AnimatePresence>
+                {filterDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="absolute top-full right-0 z-50 mt-1.5 min-w-[128px] overflow-hidden rounded-lg border border-white/10 bg-[rgba(15,19,25,0.98)] py-1">
+                    {(["today", "yesterday", "week"] as DateFilter[]).map((filter) => (
+                      <button
+                        key={filter}
+                        onClick={() => {
+                          setDateFilter(filter)
+                          setActivitySearch("")
+                          setFilterDropdownOpen(false)
+                        }}
+                        className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] transition-colors ${
+                          dateFilter === filter ? "text-white" : (
+                            "text-white/40 hover:bg-white/5 hover:text-white/80"
+                          )
+                        }`}>
+                        <i
+                          className={`fa-solid fa-check text-[9px] text-cyan-400 transition-opacity ${dateFilter === filter ? "opacity-100" : "opacity-0"}`}
+                        />
+                        {DATE_FILTER_LABELS[filter]}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
