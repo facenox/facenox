@@ -55,6 +55,8 @@ declare global {
   }
 
   interface FacenoxElectronAPI {
+    platform: string
+    desktopEnv: string
     minimize: () => Promise<boolean>
     maximize: () => Promise<boolean>
     close: () => Promise<boolean>

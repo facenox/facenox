@@ -225,6 +225,7 @@ export class WindowManager {
         devTools: isDev(),
       },
       titleBarStyle: "hidden",
+      trafficLightPosition: { x: 12, y: 10 },
       transparent: false,
       backgroundColor: "#000000",
       icon: getWindowIconPath(),

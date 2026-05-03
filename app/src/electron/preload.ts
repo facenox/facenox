@@ -134,6 +134,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
 })
 
 contextBridge.exposeInMainWorld("facenoxElectron", {
+  platform: process.platform,
+  desktopEnv: process.env.XDG_CURRENT_DESKTOP || "",
   minimize: () => ipcRenderer.invoke("window:minimize"),
   maximize: () => ipcRenderer.invoke("window:maximize"),
   close: () => ipcRenderer.invoke("window:close"),
