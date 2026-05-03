@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import type { SettingsOverview, TimeHealthOverview } from "@/components/settings/types"
 import type { AttendanceGroup } from "@/types/recognition"
 import { useDatabaseManagement } from "@/components/settings/sections/hooks/useDatabaseManagement"
@@ -60,7 +59,6 @@ export function Database({
 
   const [status, setStatus] = useState<BackupStatus>({ type: "idle" })
   const [isExportingAuditLog, setIsExportingAuditLog] = useState(false)
-  const [isDangerZoneOpen, setIsDangerZoneOpen] = useState(false)
   const [passwordModal, setPasswordModal] = useState<{
     isOpen: boolean
     action: "export" | "import"
@@ -213,7 +211,7 @@ export function Database({
     : "Facenox could not read the current time status."
 
   return (
-    <div className="mx-auto flex w-full max-w-[900px] flex-col space-y-10 px-10 pt-8 pb-16">
+    <div className="mx-auto flex w-full max-w-[900px] flex-col space-y-16 px-10 pt-10 pb-20">
       {/* Statistics Overview */}
       <section>
         <DatabaseStats
@@ -224,71 +222,71 @@ export function Database({
       </section>
 
       {/* Device Time */}
-      <section>
-        <div className="mb-6 border-b border-white/5 pt-6 pb-2">
-          <h3 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
+      <section className="space-y-6">
+        <div className="pt-2 pb-2">
+          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/30 uppercase">
             Device Time & Status
           </h3>
         </div>
-        <p className="-mt-4 mb-6 text-[13px] text-white/60">
-          Check if your local system time is accurate for logging.
-        </p>
 
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0 flex-1">
-            <h4 className={`text-[13px] font-medium ${timeHealthTone}`}>{timeHealthSummary}</h4>
-            <p className="mt-1 text-[13px] text-white/40">{timeHealthDetails}</p>
-            <p className="mt-1.5 font-mono text-[11px] text-white/30">
-              {timeHealthState.loading ?
-                "Checking..."
-              : timeHealth ?
-                `${formattedLocalTime ?? "Unavailable"} • ${getFriendlyTimeZoneLabel()}`
-              : "Clock health unavailable."}
-            </p>
+            <h4 className={`text-[15px] font-semibold tracking-tight ${timeHealthTone}`}>
+              {timeHealthSummary}
+            </h4>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-white/45">{timeHealthDetails}</p>
+            <div className="mt-4 flex items-center gap-2 font-mono text-[10px] tracking-tight text-white/20">
+              <i className="fa-solid fa-microchip opacity-50" />
+              <span>
+                {timeHealthState.loading ?
+                  "Checking..."
+                : timeHealth ?
+                  `${formattedLocalTime ?? "Unavailable"} • ${getFriendlyTimeZoneLabel()}`
+                : "Clock health unavailable."}
+              </span>
+            </div>
           </div>
 
           <div className="flex shrink-0 flex-col items-end gap-3">
             <button
               onClick={onRefreshTimeHealth}
               disabled={timeHealthState.loading}
-              className="flex items-center gap-2 rounded-md border border-white/10 bg-transparent px-3 py-1.5 text-[12px] font-medium text-white/60 transition-colors hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
+              className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/5 px-4 py-1.5 text-[12px] font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white active:scale-95 disabled:opacity-40">
               {timeHealthState.loading ?
-                <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
-              : <i className="fa-solid fa-rotate-right text-[11px]" />}
-              Check Again
+                <i className="fa-solid fa-circle-notch fa-spin" />
+              : <i className="fa-solid fa-rotate-right" />}
+              Check Now
             </button>
 
             {!timeHealthState.loading &&
               timeHealth &&
               timeHealthStatus === "drift_detected" &&
               typeof timeHealth.online_drift_seconds === "number" && (
-                <span className="text-[11px] text-white/45">
-                  {Math.abs(timeHealth.online_drift_seconds).toFixed(1)}s difference
-                </span>
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500/70">
+                  <i className="fa-solid fa-triangle-exclamation" />
+                  <span>{Math.abs(timeHealth.online_drift_seconds).toFixed(1)}s drift</span>
+                </div>
               )}
           </div>
         </div>
       </section>
 
-      {/* Backup & Restore */}
-      <section>
-        <div className="mb-6 border-b border-white/5 pt-6 pb-2">
-          <h3 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
+      {/* Data Management */}
+      <section className="space-y-8">
+        <div className="pt-2 pb-2">
+          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/30 uppercase">
             Data Management
           </h3>
         </div>
-        <p className="-mt-4 mb-6 text-[13px] text-white/60">
-          Securely backup your configuration, or export activity logs.
-        </p>
 
-        <div className="space-y-6">
+        <div className="space-y-10">
           {/* Export */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <h4 className="text-[13px] font-medium text-white">Create Backup</h4>
-              <p className="mt-1 text-[13px] text-white/40">
+              <h4 className="text-[15px] font-semibold text-white/90">Create Backup</h4>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-white/45">
                 Save an encrypted{" "}
-                <code className="rounded bg-white/5 px-1 py-0.5 font-mono text-[11px]">
+                <code className="rounded-sm bg-white/5 px-1.5 py-0.5 font-mono text-[11px] text-cyan-400/60">
                   .facenox
                 </code>{" "}
                 file containing all members, history, and biometric profiles.
@@ -297,38 +295,38 @@ export function Database({
             <button
               onClick={() => setPasswordModal({ isOpen: true, action: "export" })}
               disabled={isBackingUp}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-md bg-white/10 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-white/15 disabled:opacity-40">
+              className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-white/10 px-5 py-2 text-[12px] font-bold text-white transition-all hover:bg-white/15 active:scale-95 disabled:opacity-40">
               {isBackingUp && status.action === "export" ?
                 <i className="fa-solid fa-circle-notch fa-spin" />
-              : null}
+              : <i className="fa-solid fa-file-export text-[11px] opacity-40" />}
               Create
             </button>
           </div>
 
           {/* Import */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <h4 className="text-[13px] font-medium text-white">Restore Backup</h4>
-              <p className="mt-1 text-[13px] text-white/40">
+              <h4 className="text-[15px] font-semibold text-white/90">Restore Backup</h4>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-white/45">
                 Restore your database from a backup file using its original encryption password.
               </p>
             </div>
             <button
               onClick={startImportFlow}
               disabled={isBackingUp}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-md bg-white/10 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-white/15 disabled:opacity-40">
+              className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-white/10 px-5 py-2 text-[12px] font-bold text-white transition-all hover:bg-white/15 active:scale-95 disabled:opacity-40">
               {isBackingUp && status.action === "import" ?
                 <i className="fa-solid fa-circle-notch fa-spin" />
-              : null}
+              : <i className="fa-solid fa-file-import text-[11px] opacity-40" />}
               Restore
             </button>
           </div>
 
           {/* Audit Log */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <h4 className="text-[13px] font-medium text-white">Export Audit Log</h4>
-              <p className="mt-1 text-[13px] text-white/40">
+              <h4 className="text-[15px] font-semibold text-white/90">Export Audit Log</h4>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-white/45">
                 Download a CSV of admin actions, including consent changes, deletions, and backup
                 activity.
               </p>
@@ -336,11 +334,118 @@ export function Database({
             <button
               onClick={handleExportAuditLog}
               disabled={isExportingAuditLog}
-              className="flex shrink-0 items-center gap-2 rounded-md border border-white/10 bg-transparent px-4 py-2 text-[12px] font-medium text-white/60 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-40">
+              className="flex shrink-0 items-center gap-2 rounded-lg border border-white/10 bg-transparent px-5 py-2 text-[12px] font-bold text-white/60 transition-all hover:bg-white/5 hover:text-white active:scale-95 disabled:opacity-40">
               {isExportingAuditLog ?
                 <i className="fa-solid fa-circle-notch fa-spin" />
-              : <i className="fa-solid fa-download" />}
+              : <i className="fa-solid fa-download text-[11px] opacity-40" />}
               CSV Log
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Stored Groups */}
+      <section className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="pt-2 pb-2">
+            <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/30 uppercase">
+              Stored Groups
+            </h3>
+          </div>
+          <div className="group/search relative min-w-[280px]">
+            <div className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-white/20 transition-colors group-focus-within/search:text-cyan-400/50">
+              <i className="fa-solid fa-magnifying-glass text-[11px]"></i>
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search groups..."
+              className="w-full rounded-md border-0 bg-white/5 py-2 pr-8 pl-9 text-[12px] font-medium text-white placeholder-white/20 transition-all outline-none focus:bg-white/[0.08] focus:ring-1 focus:ring-cyan-500/20"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute top-1/2 right-2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-white/20 hover:bg-white/10 hover:text-white">
+                <i className="fa-solid fa-xmark text-[10px]"></i>
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div className={`${filteredData.length === 0 ? "h-32" : "h-auto"} space-y-1`}>
+            {filteredData.length === 0 ?
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/5 bg-white/[0.01] py-12 text-white/20">
+                <i className="fa-solid fa-folder-open mb-3 text-2xl opacity-30" />
+                <div className="text-[12px] font-medium tracking-wide">No results found</div>
+                {groups.length === 0 && (
+                  <div className="mt-1 text-[11px] text-white/10">
+                    Create a group to begin managing members.
+                  </div>
+                )}
+              </div>
+            : filteredData.map((group) => (
+                <GroupEntry
+                  key={group.id}
+                  group={group}
+                  isExpanded={expandedGroups.has(group.id)}
+                  editingGroup={editingGroup}
+                  editingMember={editingMember}
+                  editValue={editValue}
+                  savingGroup={savingGroup}
+                  savingMember={savingMember}
+                  deletingGroup={deletingGroup}
+                  deletingMember={deletingMember}
+                  onToggle={toggleGroup}
+                  onStartEditingGroup={startEditingGroup}
+                  onStartEditingMember={startEditing}
+                  onEditValueChange={setEditValue}
+                  onSaveGroupEdit={saveGroupEdit}
+                  onSaveMemberEdit={saveEdit}
+                  onCancelEditing={cancelEditing}
+                  onDeleteGroup={handleDeleteGroup}
+                  onDeleteMember={handleDeleteMember}
+                />
+              ))
+            }
+          </div>
+        </div>
+      </section>
+
+      {/* Danger Zone */}
+      <section className="space-y-6 pt-4">
+        <div className="pt-4 pb-2">
+          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-red-500/50 uppercase">
+            Danger Zone
+          </h3>
+        </div>
+
+        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div className="flex-1">
+            <p className="text-[13px] leading-relaxed text-white/45">
+              Deleting groups or members is permanent. Face data is the biometric information used
+              for recognition. Clearing it will require members to re-register.
+            </p>
+          </div>
+
+          <div className="flex shrink-0 gap-3">
+            <button
+              onClick={handleClearAllGroups}
+              disabled={isLoading || deletingGroup === "all" || groups.length === 0}
+              className="flex items-center gap-2 rounded-lg bg-red-500/10 px-4 py-2 text-[12px] font-bold text-red-400 transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-40">
+              {deletingGroup === "all" ?
+                <i className="fa-solid fa-spinner fa-spin"></i>
+              : <i className="fa-solid fa-trash-can text-[11px] opacity-60" />}
+              Clear Groups
+            </button>
+
+            <button
+              onClick={onClearDatabase}
+              disabled={isLoading}
+              className="flex items-center gap-2 rounded-lg bg-amber-500/10 px-4 py-2 text-[12px] font-bold text-amber-500 transition-all hover:bg-amber-500/20 active:scale-95 disabled:opacity-40">
+              <i className="fa-solid fa-face-viewfinder text-[11px] opacity-60" />
+              Reset Face Data
             </button>
           </div>
         </div>
@@ -363,7 +468,7 @@ export function Database({
           />
         }>
         <div className="space-y-4">
-          <p className="text-[11px] leading-relaxed text-white/50">
+          <p className="text-[11px] leading-relaxed text-white/45">
             {passwordModal.action === "export" ?
               "Choose a strong password to encrypt your backup. You will need this password to restore your data later."
             : `Enter the password for ${
@@ -442,138 +547,6 @@ export function Database({
           </div>
         </div>
       </Modal>
-
-      {/* Groups Section */}
-      <section>
-        <div className="mb-6 border-b border-white/5 pt-6 pb-2">
-          <h3 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
-            Stored Groups
-          </h3>
-        </div>
-        <p className="-mt-4 mb-6 text-[13px] text-white/40">
-          Browse stored groups and manage their members.
-        </p>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="group/search relative w-full max-w-sm">
-            <div className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-white/30 transition-colors group-focus-within/search:text-white/60">
-              <i className="fa-solid fa-magnifying-glass text-[12px]"></i>
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search members or groups..."
-              className="w-full rounded-md border-0 bg-white/5 py-2 pr-8 pl-8 text-[13px] font-medium text-white placeholder-white/30 transition-all outline-none focus:bg-white/10 focus:ring-1 focus:ring-white/20"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute top-1/2 right-2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-sm text-white/30 hover:bg-white/10 hover:text-white">
-                <i className="fa-solid fa-xmark text-[10px]"></i>
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className={`${filteredData.length === 0 ? "h-32" : "h-auto"} space-y-1`}>
-          {filteredData.length === 0 ?
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-transparent py-12 text-white/30">
-              <i className="fa-solid fa-ghost mb-3 text-2xl" />
-              <div className="text-[12px] font-medium">No results found</div>
-              {groups.length === 0 && (
-                <div className="mt-1 text-[11px]">Create a group to begin managing members.</div>
-              )}
-            </div>
-          : filteredData.map((group) => (
-              <GroupEntry
-                key={group.id}
-                group={group}
-                isExpanded={expandedGroups.has(group.id)}
-                editingGroup={editingGroup}
-                editingMember={editingMember}
-                editValue={editValue}
-                savingGroup={savingGroup}
-                savingMember={savingMember}
-                deletingGroup={deletingGroup}
-                deletingMember={deletingMember}
-                onToggle={toggleGroup}
-                onStartEditingGroup={startEditingGroup}
-                onStartEditingMember={startEditing}
-                onEditValueChange={setEditValue}
-                onSaveGroupEdit={saveGroupEdit}
-                onSaveMemberEdit={saveEdit}
-                onCancelEditing={cancelEditing}
-                onDeleteGroup={handleDeleteGroup}
-                onDeleteMember={handleDeleteMember}
-              />
-            ))
-          }
-        </div>
-      </section>
-
-      {/* Clear Actions */}
-      <section>
-        <button
-          type="button"
-          onClick={() => setIsDangerZoneOpen((current) => !current)}
-          className="group flex w-full items-center justify-between text-left transition-colors">
-          <span className="text-[14px] font-semibold text-red-500/80 group-hover:text-red-500">
-            Danger Zone
-          </span>
-          <span className="flex items-center gap-1.5 text-[12px] font-medium text-white/30 group-hover:text-white/50">
-            {isDangerZoneOpen ? "Hide" : "Show"}
-            <i className={`fa-solid fa-chevron-${isDangerZoneOpen ? "up" : "down"} text-[10px]`} />
-          </span>
-        </button>
-
-        <AnimatePresence mode="wait" initial={false}>
-          {isDangerZoneOpen ?
-            <motion.div
-              key="danger-zone-content"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="mt-4 flex flex-col gap-4 overflow-hidden md:flex-row md:items-start md:justify-between">
-              <div className="flex-1">
-                <p className="text-[13px] text-white/40">
-                  Deleting groups or members is permanent. Face data is the biometric information
-                  used for recognition. Clearing it will require members to re-register but
-                  preserves their profiles and attendance records.
-                </p>
-              </div>
-
-              <div className="flex shrink-0 gap-3">
-                <button
-                  onClick={handleClearAllGroups}
-                  disabled={isLoading || deletingGroup === "all" || groups.length === 0}
-                  className="flex items-center gap-2 rounded-md bg-red-500/10 px-4 py-2 text-[12px] font-semibold text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-40">
-                  {deletingGroup === "all" ?
-                    <i className="fa-solid fa-spinner fa-spin"></i>
-                  : null}
-                  Clear Groups
-                </button>
-
-                <button
-                  onClick={onClearDatabase}
-                  disabled={isLoading}
-                  className="flex items-center gap-2 rounded-md bg-amber-500/10 px-4 py-2 text-[12px] font-semibold text-amber-500 transition-colors hover:bg-amber-500/20 disabled:opacity-40">
-                  Clear Face Data
-                </button>
-              </div>
-            </motion.div>
-          : <motion.p
-              key="danger-zone-placeholder"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="mt-1 overflow-hidden text-[13px] text-white/20">
-              Destructive actions are hidden by default.
-            </motion.p>
-          }
-        </AnimatePresence>
-      </section>
     </div>
   )
 }

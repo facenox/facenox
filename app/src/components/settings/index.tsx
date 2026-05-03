@@ -50,7 +50,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
   ]
 
   const sections = [
-    { id: "attendance", label: "Attendance", icon: "fa-solid fa-user-check" },
+    { id: "attendance", label: "General", icon: "fa-solid fa-sliders" },
     { id: "display", label: "Display", icon: "fa-solid fa-desktop" },
     { id: "notifications", label: "Notifications", icon: "fa-solid fa-bell" },
     { id: "database", label: "Database", icon: "fa-solid fa-database" },

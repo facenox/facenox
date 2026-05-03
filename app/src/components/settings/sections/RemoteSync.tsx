@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
+import { useUIStore } from "@/components/main/stores"
 import { InfoPopover } from "../../shared/InfoPopover"
 import {
   DEFAULT_REMOTE_BASE_URL,
@@ -22,11 +23,6 @@ type RemoteSyncConfig = {
   lastSyncMessage: string | null
   connected: boolean
 }
-
-type BannerState =
-  | { type: "idle" }
-  | { type: "success"; message: string }
-  | { type: "error"; message: string }
 
 const defaultConfig: RemoteSyncConfig = {
   enabled: true,
@@ -75,6 +71,8 @@ const pairingSteps = [
 ]
 
 export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) {
+  const setSuccess = useUIStore((state) => state.setSuccess)
+  const setError = useUIStore((state) => state.setError)
   const [config, setConfig] = useState<RemoteSyncConfig>(defaultConfig)
   const [remoteBaseUrl, setRemoteBaseUrl] = useState("")
   const [deviceName, setDeviceName] = useState("Facenox Desktop")
@@ -85,7 +83,6 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
   const [busyAction, setBusyAction] = useState<
     "saving" | "pairing" | "disconnecting" | "syncing" | null
   >(null)
-  const [banner, setBanner] = useState<BannerState>({ type: "idle" })
 
   const syncFromConfig = useCallback((nextConfig: RemoteSyncConfig) => {
     const nextRemoteBaseUrl = nextConfig.remoteBaseUrl || DEFAULT_REMOTE_BASE_URL
@@ -109,7 +106,6 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
 
   const handleSave = async () => {
     setBusyAction("saving")
-    setBanner({ type: "idle" })
     try {
       const nextConfig = await window.electronAPI.sync.updateConfig({
         remoteBaseUrl: remoteBaseUrl.trim(),
@@ -118,18 +114,13 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
         enabled,
       })
       syncFromConfig(nextConfig)
-      setBanner({
-        type: "success",
-        message:
-          nextConfig.connected ?
-            "Remote sync settings saved. Auto-sync state updated."
-          : "Remote sync settings saved. You can pair this desktop whenever you're ready.",
-      })
+      setSuccess(
+        nextConfig.connected ?
+          "Remote sync settings saved. Auto-sync state updated."
+        : "Remote sync settings saved. You can pair this desktop whenever you're ready.",
+      )
     } catch (error) {
-      setBanner({
-        type: "error",
-        message: error instanceof Error ? error.message : "Could not save Remote Sync settings.",
-      })
+      setError(error instanceof Error ? error.message : "Could not save Remote Sync settings.")
     } finally {
       setBusyAction(null)
     }
@@ -137,7 +128,6 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
 
   const handlePair = async () => {
     setBusyAction("pairing")
-    setBanner({ type: "idle" })
     try {
       const result = await window.electronAPI.sync.pairDevice({
         remoteBaseUrl: remoteBaseUrl.trim() || DEFAULT_REMOTE_BASE_URL,
@@ -151,15 +141,13 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
 
       syncFromConfig(result.config)
       setPairingCode("")
-      setBanner({
-        type: result.initialSyncSucceeded === false ? "error" : "success",
-        message: result.message || "Device paired successfully.",
-      })
+      if (result.initialSyncSucceeded === false) {
+        setError(result.message || "Device paired successfully.")
+      } else {
+        setSuccess(result.message || "Device paired successfully.")
+      }
     } catch (error) {
-      setBanner({
-        type: "error",
-        message: error instanceof Error ? error.message : "Could not pair this desktop.",
-      })
+      setError(error instanceof Error ? error.message : "Could not pair this desktop.")
     } finally {
       setBusyAction(null)
     }
@@ -167,23 +155,17 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
 
   const handleDisconnect = async () => {
     setBusyAction("disconnecting")
-    setBanner({ type: "idle" })
     try {
       const result = await window.electronAPI.sync.disconnectDevice()
       syncFromConfig(result.config)
       setPairingCode("")
-      setBanner({
-        type: result.warning ? "error" : "success",
-        message:
-          result.warning ?
-            `Disconnected locally, but the dashboard returned a warning: ${result.warning}`
-          : "Device disconnected from Management Dashboard.",
-      })
+      if (result.warning) {
+        setError(`Disconnected locally, but the dashboard returned a warning: ${result.warning}`)
+      } else {
+        setSuccess("Device disconnected from Management Dashboard.")
+      }
     } catch (error) {
-      setBanner({
-        type: "error",
-        message: error instanceof Error ? error.message : "Could not disconnect this device.",
-      })
+      setError(error instanceof Error ? error.message : "Could not disconnect this device.")
     } finally {
       setBusyAction(null)
     }
@@ -191,19 +173,16 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
 
   const handleManualSync = async () => {
     setBusyAction("syncing")
-    setBanner({ type: "idle" })
     try {
       const result = await window.electronAPI.sync.triggerNow()
       await loadConfig()
-      setBanner({
-        type: result.success ? "success" : "error",
-        message: result.message,
-      })
+      if (result.success) {
+        setSuccess(result.message)
+      } else {
+        setError(result.message)
+      }
     } catch (error) {
-      setBanner({
-        type: "error",
-        message: error instanceof Error ? error.message : "Manual sync failed.",
-      })
+      setError(error instanceof Error ? error.message : "Manual sync failed.")
     } finally {
       setBusyAction(null)
     }
@@ -218,31 +197,16 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
 
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-10 px-10 pt-8 pb-16">
-      {banner.type !== "idle" && (
-        <div
-          className={`flex items-start gap-3 rounded-md px-4 py-3 text-[13px] font-medium ${
-            banner.type === "success" ?
-              "bg-cyan-500/10 text-cyan-400"
-            : "bg-red-500/10 text-red-400"
-          }`}>
-          <i
-            className={`mt-0.5 shrink-0 ${
-              banner.type === "success" ?
-                "fa-solid fa-circle-check"
-              : "fa-solid fa-circle-exclamation"
-            }`}
-          />
-          <span>{banner.message}</span>
-        </div>
-      )}
-
-      {/* Status & Connection Block */}
       <div className="space-y-8">
-        <section>
-          <div className="mb-6 flex items-start justify-between gap-4">
+        <section className="space-y-6">
+          <div className="pt-2 pb-2">
+            <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/30 uppercase">
+              Status
+            </h3>
+          </div>
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-[14px] font-bold tracking-tight text-white">Status</h2>
-              <p className="mt-1 text-[13px] text-white/60">
+              <p className="text-[13px] text-white/45">
                 {config.connected ?
                   `Linked to: ${config.organizationName || "Unknown org"} – ${config.siteName || "Default Site"}`
                 : "Operating strictly on-premise. Remote reporting is currently inactive."}
@@ -261,34 +225,34 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
           )}
         </section>
 
-        {/* Connection & Setup */}
-        <section>
-          <div className="mb-6">
-            <div className="flex items-center gap-2">
-              <h2 className="text-[14px] font-semibold text-white">Remote Sync</h2>
-              <InfoPopover
-                title="Data Privacy"
-                description="Remote sync is strictly limited to attendance logs and member names. Face embeddings and biometric data are never uploaded and remain entirely on your local device."
-                detailsNode={[
-                  <>
-                    To backup face data,{" "}
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={onNavigateToDB}
-                      onKeyDown={(e) => e.key === "Enter" && onNavigateToDB?.()}
-                      className="pointer-events-auto cursor-pointer text-amber-400/80 underline underline-offset-2 transition-colors hover:text-amber-300">
-                      go to the Database tab
-                    </span>{" "}
-                    and use the Export tool.
-                  </>,
-                ]}
-              />
-            </div>
-            <p className="mt-1 text-[13px] text-white/40">
-              Link this device to synchronize groups and attendance logs with your dashboard.
-            </p>
+        <section className="space-y-6">
+          <div className="flex items-center gap-2 pt-2 pb-2">
+            <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/30 uppercase">
+              Remote Sync
+            </h3>
+            <InfoPopover
+              title="Data Privacy"
+              description="Remote sync is strictly limited to attendance logs and member names. Face embeddings and biometric data are never uploaded and remain entirely on your local device."
+              detailsNode={[
+                <>
+                  To backup face data,{" "}
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={onNavigateToDB}
+                    onKeyDown={(e) => e.key === "Enter" && onNavigateToDB?.()}
+                    className="pointer-events-auto cursor-pointer text-amber-400/80 underline underline-offset-2 transition-colors hover:text-amber-300">
+                    go to the Database tab
+                  </span>{" "}
+                  and use the Export tool.
+                </>,
+              ]}
+            />
           </div>
+
+          <p className="text-[13px] leading-relaxed text-white/45">
+            Link this device to synchronize groups and attendance logs with your dashboard.
+          </p>
 
           <div className="space-y-8">
             {!config.connected ?
@@ -299,75 +263,68 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
                       {step.label.toUpperCase()}
                     </div>
                     <div className="text-[13px] font-medium text-white">{step.title}</div>
-                    <div className="text-[12px] font-medium text-white/60">{step.body}</div>
+                    <div className="text-[12px] font-medium text-white/45">{step.body}</div>
                   </div>
                 ))}
               </div>
             : null}
 
             {!config.connected ?
-              <>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <label className="text-[11px] font-medium text-white/30 uppercase">
-                      Pairing Code
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="ABCD2345"
-                      value={pairingCode}
-                      onChange={(e) => setPairingCode(e.target.value.toUpperCase())}
-                      className="h-10 w-full rounded-md border-0 bg-white/5 px-4 font-mono text-[13px] tracking-widest text-white uppercase transition-all outline-none placeholder:tracking-normal placeholder:lowercase focus:bg-white/10 focus:ring-1 focus:ring-white/20"
-                    />
-                  </div>
-                  <button
-                    onClick={handlePair}
-                    disabled={busyAction !== null || !pairingCode}
-                    className="flex h-10 min-w-32 shrink-0 items-center justify-center gap-2 rounded-md bg-cyan-500/10 px-4 text-[12px] font-bold text-cyan-400 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
-                    <i
-                      className={
-                        busyAction === "pairing" ?
-                          "fa-solid fa-spinner fa-spin"
-                        : "fa-solid fa-plug"
-                      }
-                    />
-                    Connect
-                  </button>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <label className="text-[11px] font-medium text-white/30 uppercase">
+                    Pairing Code
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="ABCD2345"
+                    value={pairingCode}
+                    onChange={(e) => setPairingCode(e.target.value.toUpperCase())}
+                    className="h-10 w-full rounded-md border-0 bg-white/5 px-4 font-mono text-[13px] tracking-widest text-white uppercase transition-all outline-none placeholder:tracking-normal placeholder:lowercase focus:bg-white/10 focus:ring-1 focus:ring-white/20"
+                  />
                 </div>
-              </>
-            : <>
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    onClick={handleManualSync}
-                    disabled={busyAction !== null}
-                    className="flex items-center gap-2 rounded-md border border-white/10 bg-transparent px-4 py-2 text-[12px] font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
-                    <i
-                      className={
-                        busyAction === "syncing" ?
-                          "fa-solid fa-spinner fa-spin"
-                        : "fa-solid fa-rotate"
-                      }
-                    />
-                    Sync Now
-                  </button>
-                  <button
-                    onClick={handleDisconnect}
-                    disabled={busyAction !== null}
-                    className="flex items-center gap-2 rounded-md bg-red-500/10 px-4 py-2 text-[12px] font-semibold text-red-500 transition-all hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40">
-                    <i
-                      className={
-                        busyAction === "disconnecting" ?
-                          "fa-solid fa-spinner fa-spin"
-                        : "fa-solid fa-link-slash"
-                      }
-                    />
-                    Disconnect Device
-                  </button>
-                </div>
-              </>
+                <button
+                  onClick={handlePair}
+                  disabled={busyAction !== null || !pairingCode}
+                  className="flex h-10 min-w-32 shrink-0 items-center justify-center gap-2 rounded-md bg-cyan-500/10 px-4 text-[12px] font-bold text-cyan-400 transition-all hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40">
+                  <i
+                    className={
+                      busyAction === "pairing" ? "fa-solid fa-spinner fa-spin" : "fa-solid fa-plug"
+                    }
+                  />
+                  Connect
+                </button>
+              </div>
+            : <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={handleManualSync}
+                  disabled={busyAction !== null}
+                  className="flex items-center gap-2 rounded-md border border-white/10 bg-transparent px-4 py-2 text-[12px] font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
+                  <i
+                    className={
+                      busyAction === "syncing" ?
+                        "fa-solid fa-spinner fa-spin"
+                      : "fa-solid fa-rotate"
+                    }
+                  />
+                  Sync Now
+                </button>
+                <button
+                  onClick={handleDisconnect}
+                  disabled={busyAction !== null}
+                  className="flex items-center gap-2 rounded-md bg-red-500/10 px-4 py-2 text-[12px] font-semibold text-red-500 transition-all hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40">
+                  <i
+                    className={
+                      busyAction === "disconnecting" ?
+                        "fa-solid fa-spinner fa-spin"
+                      : "fa-solid fa-link-slash"
+                    }
+                  />
+                  Disconnect Device
+                </button>
+              </div>
             }
 
-            {/* Advanced Toggler */}
             <div>
               <button
                 onClick={() => setShowAdvanced((value) => !value)}
@@ -476,23 +433,25 @@ export function RemoteSync({ onNavigateToDB }: { onNavigateToDB?: () => void }) 
         </section>
       </div>
 
-      <hr className="border-white/5" />
-
       {/* Scope Disclaimer */}
-      <section>
-        <div className="mb-4">
-          <h2 className="text-[14px] font-semibold text-white">Data Scope</h2>
-          <p className="mt-1 text-[13px] text-white/40">
+      <section className="space-y-4">
+        <div className="pt-2 pb-2">
+          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/30 uppercase">
+            Data Scope
+          </h3>
+        </div>
+        <div className="space-y-4">
+          <p className="text-[13px] text-white/45">
             Understand what is shared when the remote connection is active.
           </p>
+          <ul className="list-disc space-y-1.5 pl-4 text-[13px] text-white/50 marker:text-white/20">
+            <li>Groups, members, and real-time attendance logs are synced.</li>
+            <li>Hardware IDs and sync timestamps are stored for admin auditing.</li>
+            <li className="text-amber-500/70">
+              Raw imagery and face profile vectors are never transmitted.
+            </li>
+          </ul>
         </div>
-        <ul className="list-disc space-y-1.5 pl-4 text-[13px] text-white/50 marker:text-white/20">
-          <li>Groups, members, and real-time attendance logs are synced.</li>
-          <li>Hardware IDs and sync timestamps are stored for admin auditing.</li>
-          <li className="text-amber-500/70">
-            Raw imagery and face profile vectors are never transmitted.
-          </li>
-        </ul>
       </section>
     </div>
   )

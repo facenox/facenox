@@ -112,7 +112,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   // Dynamic Header Logic
   const headerProps = useMemo(() => {
     const generalTitles: Record<string, string> = {
-      attendance: "Attendance",
+      attendance: "General",
       display: "Display",
       notifications: "Notifications",
       database: "Database",

@@ -42,7 +42,7 @@ export function Display({ quickSettings, toggleQuickSetting }: DisplayProps) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 2 }}
                   transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                  className="text-xs font-medium text-white/60">
+                  className="text-xs font-medium text-white/45">
                   {quickSettings[key] ? descriptions.on : descriptions.off}
                 </motion.div>
               </AnimatePresence>

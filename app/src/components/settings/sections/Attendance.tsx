@@ -31,9 +31,9 @@ export function Attendance({
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-4 pb-10">
       <div className="overflow-hidden">
-        <div className="border-b border-white/5 pt-6 pb-2">
-          <h3 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
-            Attendance Logic
+        <div className="pt-6 pb-2">
+          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/30 uppercase">
+            Attendance
           </h3>
         </div>
 
@@ -62,7 +62,7 @@ export function Attendance({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                      className="text-xs font-normal text-white/60">
+                      className="text-xs font-normal text-white/45">
                       {!hasSelectedGroup ?
                         "Select a group to enable this feature"
                       : attendanceSettings.trackCheckout ?
@@ -100,7 +100,7 @@ export function Attendance({
                   side="right"
                 />
               </div>
-              <div className="mt-0.5 text-xs text-white/40">
+              <div className="mt-0.5 text-xs text-white/45">
                 Prevent duplicate logs if a person scans again within{" "}
                 {attendanceSettings.attendanceCooldownSeconds < 60 ?
                   `${attendanceSettings.attendanceCooldownSeconds} seconds`
@@ -139,8 +139,8 @@ export function Attendance({
                     title="Recognition Limit"
                     description="Limit how many faces are recognized per frame to optimize performance."
                     details={[
+                      "If disabled, the system will attempt to recognize all faces detected in a frame.",
                       "Lower limits improve processing speed.",
-                      "Unlimited mode is best for large crowds.",
                       "The system prioritizes the largest, closest faces.",
                     ]}
                     side="right"
@@ -154,7 +154,7 @@ export function Attendance({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                      className="text-xs font-normal text-white/60">
+                      className="text-xs font-normal text-white/45">
                       {attendanceSettings.maxRecognitionFacesPerFrame === 0 ?
                         "Process all detected faces."
                       : "Limit recognition to a specific number of faces."}
@@ -199,7 +199,7 @@ export function Attendance({
                     <div className="absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10"></div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs text-white/40">
+                      <div className="text-xs text-white/45">
                         Maximum faces to process per frame.
                       </div>
                     </div>
@@ -234,11 +234,7 @@ export function Attendance({
                   <InfoPopover
                     title="Late Tracking"
                     description="Automatically mark members as late if their arrival occurs after the scheduled start time plus the late threshold."
-                    details={[
-                      "Requires a group selection.",
-                      "Late status appears in Reports and Overview.",
-                      "Threshold is defined in minutes.",
-                    ]}
+                    details={["If enabled, late status will be reflected in Overview and Reports."]}
                     side="right"
                   />
                 </div>
@@ -250,7 +246,7 @@ export function Attendance({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                      className="text-xs font-normal text-white/60">
+                      className="text-xs font-normal text-white/45">
                       {!hasSelectedGroup ?
                         "Select a group to enable late tracking"
                       : attendanceSettings.lateThresholdEnabled ?
@@ -283,7 +279,7 @@ export function Attendance({
                     <div className="absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10"></div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs text-white/40">Late threshold in minutes.</div>
+                      <div className="text-xs text-white/45">Late threshold in minutes.</div>
                     </div>
 
                     <div className="ml-auto flex shrink-0 items-center gap-3">
@@ -309,8 +305,8 @@ export function Attendance({
       </div>
 
       <div className="overflow-hidden">
-        <div className="border-b border-white/5 pt-6 pb-2">
-          <h3 className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
+        <div className="pt-6 pb-2">
+          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/30 uppercase">
             Security & Compliance
           </h3>
         </div>
@@ -340,7 +336,7 @@ export function Attendance({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 2 }}
                     transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                    className="text-xs font-normal text-white/60">
+                    className="text-xs font-normal text-white/45">
                     {attendanceSettings.enableSpoofDetection ?
                       "Verify faces are real before recognition."
                     : "Skip liveness verification."}
@@ -357,33 +353,44 @@ export function Attendance({
                 className={`premium-switch-thumb ${attendanceSettings.enableSpoofDetection ? "premium-switch-thumb-on" : "premium-switch-thumb-off"}`}></div>
             </button>
           </div>
+        </div>
+      </div>
 
-          <div className="h-px w-full bg-white/8" />
+      <div className="overflow-hidden">
+        <div className="pt-10 pb-2">
+          <h3 className="text-[10px] font-extrabold tracking-[0.25em] text-white/30 uppercase">
+            Data Retention
+          </h3>
+        </div>
 
+        <div className="py-2">
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <div className="text-sm font-medium text-white/90">Data Retention</div>
+                <div className="text-sm font-medium text-white/90">Retention Policy</div>
                 <InfoPopover
-                  title="Data Retention Guide"
+                  title="Data Retention"
                   description="Controls how long attendance logs and biometric signatures are stored in your local database."
                   detailsNode={[
                     <div key="how-it-works" className="space-y-1.5">
                       <div className="font-semibold text-white/90">How it works:</div>
-                      <ul className="list-disc space-y-1 pl-4 text-white/60">
+                      <ul className="list-disc space-y-1 pl-4 text-white/45">
                         <li>Pruning occurs automatically every 24 hours.</li>
                         <li>Expired records are permanently deleted.</li>
                         <li>Setting this to 0 disables automatic deletion.</li>
                       </ul>
                     </div>,
-                    <div key="tip" className="rounded-md bg-white/5 p-2 text-[10px] text-white/50">
-                      <span className="font-medium text-white/70">Tip:</span> Shorter retention
+                    <div
+                      key="tip"
+                      data-hide-chevron
+                      className="rounded-md bg-white/5 p-2 text-[10px] text-white/45">
+                      <span className="font-medium text-white/60">Tip:</span> Shorter retention
                       periods keep the app faster and comply better with modern privacy laws.
                     </div>,
                   ]}
                 />
               </div>
-              <div className="mt-0.5 text-xs text-white/40">
+              <div className="mt-0.5 text-xs text-white/45">
                 {(() => {
                   const totalDays = attendanceSettings.dataRetentionDays
                   if (!totalDays || totalDays <= 0) return "Keep all records forever."
@@ -409,7 +416,7 @@ export function Attendance({
               </div>
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">
-              <span className="text-[11px] font-medium text-white/60">days</span>
+              <span className="text-[11px] font-medium text-white/45">days</span>
               <input
                 type="text"
                 inputMode="numeric"

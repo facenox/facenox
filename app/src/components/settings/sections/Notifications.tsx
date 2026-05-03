@@ -24,7 +24,7 @@ export function Notifications({ audioSettings, onAudioSettingsChange }: Notifica
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 2 }}
                   transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                  className="text-xs font-medium text-white/60">
+                  className="text-xs font-medium text-white/45">
                   {audioSettings.recognitionSoundEnabled ?
                     "Play a sound on successful recognition."
                   : "Mute all recognition sounds."}
