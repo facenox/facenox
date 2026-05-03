@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import { RemoteSync } from "@/components/settings/sections/RemoteSync"
+import { useUIStore } from "@/components/main/stores"
 import { createSyncConfig, getElectronAPIMock } from "@/test/mocks/electron"
 import { renderWithProviders } from "@/test/utils/renderWithProviders"
 
@@ -12,6 +13,18 @@ vi.mock("@/components/shared", async () => {
     Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
   }
 })
+
+// Helper component to render global feedback in tests
+function FeedbackDisplay() {
+  const success = useUIStore((state) => state.success)
+  const error = useUIStore((state) => state.error)
+  return (
+    <>
+      {success && <div>{success}</div>}
+      {error && <div>{error}</div>}
+    </>
+  )
+}
 
 describe("RemoteSync", () => {
   it("loads config and renders both local-only and connected states", async () => {
@@ -62,7 +75,12 @@ describe("RemoteSync", () => {
       }),
     })
 
-    const { user } = renderWithProviders(<RemoteSync />)
+    const { user } = renderWithProviders(
+      <>
+        <RemoteSync />
+        <FeedbackDisplay />
+      </>,
+    )
 
     const pairingInput = await screen.findByPlaceholderText("ABCD2345")
     await user.type(pairingInput, "abcd2345")
@@ -83,7 +101,12 @@ describe("RemoteSync", () => {
       config: createSyncConfig({ connected: true }),
     })
 
-    const { user } = renderWithProviders(<RemoteSync />)
+    const { user } = renderWithProviders(
+      <>
+        <RemoteSync />
+        <FeedbackDisplay />
+      </>,
+    )
 
     await user.type(await screen.findByPlaceholderText("ABCD2345"), "CODE1234")
     await user.click(screen.getByRole("button", { name: /Connect/i }))
@@ -96,7 +119,12 @@ describe("RemoteSync", () => {
     electronAPI.sync.updateConfig.mockResolvedValueOnce(createSyncConfig({ connected: false }))
     electronAPI.sync.updateConfig.mockResolvedValueOnce(createSyncConfig({ connected: true }))
 
-    renderWithProviders(<RemoteSync />)
+    renderWithProviders(
+      <>
+        <RemoteSync />
+        <FeedbackDisplay />
+      </>,
+    )
 
     fireEvent.click(await screen.findByRole("button", { name: /Show Advanced Settings/i }))
     fireEvent.click(screen.getByRole("button", { name: /Save Settings/i }))
@@ -107,7 +135,7 @@ describe("RemoteSync", () => {
       ),
     ).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: /Show Advanced Settings/i }))
+    fireEvent.click(await screen.findByRole("button", { name: /Show Advanced Settings/i }))
     fireEvent.click(screen.getByRole("button", { name: /Save Settings/i }))
 
     expect(
@@ -129,7 +157,12 @@ describe("RemoteSync", () => {
       message: "Manual sync complete.",
     })
 
-    const { user } = renderWithProviders(<RemoteSync />)
+    const { user } = renderWithProviders(
+      <>
+        <RemoteSync />
+        <FeedbackDisplay />
+      </>,
+    )
 
     await user.click(await screen.findByRole("button", { name: /Sync Now/i }))
 
@@ -155,7 +188,12 @@ describe("RemoteSync", () => {
       config: createSyncConfig(),
     })
 
-    const { user } = renderWithProviders(<RemoteSync />)
+    const { user } = renderWithProviders(
+      <>
+        <RemoteSync />
+        <FeedbackDisplay />
+      </>,
+    )
 
     await user.click(await screen.findByRole("button", { name: /Disconnect Device/i }))
 
