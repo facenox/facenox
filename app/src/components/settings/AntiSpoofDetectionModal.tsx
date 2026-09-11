@@ -20,25 +20,29 @@ export function AntiSpoofDetectionModal({
   const slides = [
     {
       title: "Use balanced lighting",
-      description:
-        "Use even front lighting. Avoid dim and strong lighting that can make a real face fail liveness.",
+      description: "Ensure even front lighting. Avoid direct glare and deep shadows.",
       imageSrc: "./assets/anti-spoof/check-lighting.png",
       imageAlt: "Admin setup slide showing balanced face lighting for anti-spoof setup.",
     },
     {
       title: "Frame the face properly",
-      description:
-        "Make sure the face is large enough and centered in the camera view to less likely avoid getting stuck on move-closer or centering prompts.",
+      description: "Position the camera at eye level and keep faces centered.",
       imageSrc: "./assets/anti-spoof/check-framing.png",
       imageAlt: "Admin setup slide showing proper face framing and camera distance.",
     },
     {
       title: "Keep the camera clear",
-      description:
-        "Make sure the camera looks sharp and not blurry. If the image seems soft or hazy, wipe the lens first so the face stays clear during verification.",
+      description: "Keep the camera lens clean and smudge-free for sharp detection.",
       imageSrc: "./assets/anti-spoof/check-camera-clarity.png",
       imageAlt:
         "Admin setup slide showing a clear camera lens and sharp face preview for anti-spoof setup.",
+    },
+    {
+      title: "Motion verification",
+      description:
+        "Users will be prompted to gently turn their head once to confirm physical presence.",
+      imageSrc: "./assets/anti-spoof/check-head-turn.png",
+      imageAlt: "Admin setup slide showing motion verification for anti-spoof setup.",
     },
   ] as const
   const [step, setStep] = useState(0)

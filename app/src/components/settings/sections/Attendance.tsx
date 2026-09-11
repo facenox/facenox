@@ -417,7 +417,7 @@ export function Attendance({
                     {attendanceSettings.forceLiveness ?
                       "Managed by your organization."
                     : attendanceSettings.enableSpoofDetection ?
-                      "Prevents bypass attempts using printed photos, video playback, or other spoofing methods."
+                      "Verifies physical presence to prevent spoofing."
                     : "Skip liveness verification."}
                   </motion.div>
                 </AnimatePresence>

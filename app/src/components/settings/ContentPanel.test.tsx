@@ -100,6 +100,7 @@ describe("ContentPanel anti-spoof prompt", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
+    fireEvent.click(screen.getByRole("button", { name: "Next" }))
     fireEvent.click(screen.getByRole("button", { name: "Enable" }))
 
     expect(updateAttendanceSetting).toHaveBeenCalledWith({ enableSpoofDetection: true })
@@ -132,9 +133,18 @@ describe("ContentPanel anti-spoof prompt", () => {
       ),
     ).toBeInTheDocument()
 
+    fireEvent.click(screen.getByRole("button", { name: "Next" }))
+
+    expect(await screen.findByText("Motion verification")).toBeInTheDocument()
+    expect(
+      await screen.findByAltText(
+        "Admin setup slide showing motion verification for anti-spoof setup.",
+      ),
+    ).toBeInTheDocument()
+
     fireEvent.click(screen.getByRole("button", { name: "Back" }))
 
-    expect(await screen.findByText("Frame the face properly")).toBeInTheDocument()
+    expect(await screen.findByText("Keep the camera clear")).toBeInTheDocument()
   })
 
   it("persists the do-not-show-again choice after confirmation", () => {
@@ -145,6 +155,7 @@ describe("ContentPanel anti-spoof prompt", () => {
     fireEvent.click(screen.getByLabelText("Liveness Verification (Anti-Spoof)"))
     fireEvent.click(screen.getByLabelText("Don't show this again"))
 
+    fireEvent.click(screen.getByRole("button", { name: "Next" }))
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
     fireEvent.click(screen.getByRole("button", { name: "Enable" }))
