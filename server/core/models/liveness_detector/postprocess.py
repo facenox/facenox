@@ -38,7 +38,6 @@ def validate_detection(detection: Dict) -> Tuple[bool, Optional[Dict]]:
 def run_batch_inference(
     face_crops: List[Any],
     ort_session,
-    input_name: str,
     model_img_size: int = 256,
 ) -> List[np.ndarray]:
     """Executes model inference."""

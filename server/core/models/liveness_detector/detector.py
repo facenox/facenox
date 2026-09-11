@@ -17,22 +17,17 @@ class LivenessDetector:
     def __init__(
         self,
         model_path: str,
-        pass_margin: float = 0.40,
+        pass_margin: float = 2.197,
         spoof_margin: float = 0.00,
         required_real_frames: int = 3,
         model_img_size: int = 256,
-        bbox_inc: float = 1.0,
-        enforce_active_challenge: bool = True,
     ):
         self.model_img_size = model_img_size
-        self.bbox_inc = bbox_inc
         self.pass_margin = float(pass_margin)
         self.spoof_margin = float(spoof_margin)
-        self.logit_threshold = self.pass_margin
-        self.enforce_active_challenge = enforce_active_challenge
 
         self.required_real_frames = required_real_frames
-        self.ort_session, self.input_name = self._init_session_(model_path)
+        self.ort_session, _ = init_onnx_session(model_path)
         self.track_memory = TrackLivenessMemory(
             required_real_frames=required_real_frames
         )
@@ -41,9 +36,6 @@ class LivenessDetector:
         )
 
         self.frame_counter = 0
-
-    def _init_session_(self, onnx_model_path: str):
-        return init_onnx_session(onnx_model_path)
 
     def detect_faces(
         self,
@@ -97,14 +89,13 @@ class LivenessDetector:
         raw_logits = run_batch_inference(
             face_crops,
             self.ort_session,
-            self.input_name,
             self.model_img_size,
         )
 
         results = assemble_liveness_results(
             valid_detections,
             raw_logits,
-            self.logit_threshold,
+            self.pass_margin,
             results,
             spoof_margin=self.spoof_margin,
         )
@@ -120,7 +111,7 @@ class LivenessDetector:
                 and float(liveness.get("logit_diff", 0.0)) < -1.5
             )
 
-            if self.enforce_active_challenge and track_id > 0:
+            if track_id > 0:
                 if (
                     self.track_memory.is_stable_real(
                         track_id, namespace=tracking_namespace

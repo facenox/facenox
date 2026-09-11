@@ -5,7 +5,7 @@ from typing import Dict, Optional
 class TrackLivenessMemory:
     def __init__(
         self,
-        required_real_frames: int = 2,
+        required_real_frames: int = 3,
         max_stale_frames: int = 30,
         cleanup_interval: int = 10,
         reset_after_gap_seconds: float = 0.5,
