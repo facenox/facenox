@@ -2,7 +2,7 @@
 
 Facenox includes open-source frameworks and bundled model components.
 
-Some packaged model files in this repository use generic integration names such as `recognizer.onnx`, `detector.onnx`, and `liveness.onnx`. Those filenames are Facenox integration names only. They do not change the original authorship or license of the upstream work described below.
+Some packaged model files in this repository use generic integration names such as `recognizer.onnx` and `detector.onnx`. Those filenames are Facenox integration names only. They do not change the original authorship or license of the upstream work described below.
 
 ## Core Frameworks and Runtimes
 
@@ -74,32 +74,3 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-### Face Anti-Spoofing / Liveness
-
-- Facenox ships a liveness model at `server/assets/models/liveness.onnx`.
-- Direct shipped source: https://github.com/facenox/face-antispoof-onnx
-- Direct shipped source license: Apache-2.0
-- The shipped liveness model is distributed from the Facenox anti-spoofing project and used in ONNX form for local desktop inference.
-- The current Facenox anti-spoofing project documents MiniFASNet V2 SE as the active training architecture.
-- Upstream lineage: the `face-antispoof-onnx` project states that it is based on the MiniFAS architecture from the Silent Face Anti-Spoofing project by Minivision AI.
-- Lineage reference: https://github.com/minivision-ai/Silent-Face-Anti-Spoofing-APK
-
-### Face Anti-Spoofing Notice
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this work except in compliance with the License.
-You may obtain a copy of the License at
-
-    https://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-For the full Apache License 2.0 text, see:
-
-- https://www.apache.org/licenses/LICENSE-2.0
-- https://github.com/facenox/face-antispoof-onnx/blob/main/LICENSE
