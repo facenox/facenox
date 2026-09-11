@@ -350,4 +350,79 @@ describe("overlayGuidance", () => {
       isLowLight: undefined,
     })
   })
+
+  it("returns avoid glare guidance when liveness status is glare", () => {
+    const face = baseFace({
+      liveness: {
+        is_real: null,
+        confidence: 0.9,
+        status: "glare",
+      },
+    })
+
+    expect(
+      getOverlayGuidance(face, {
+        enableSpoofDetection: true,
+        recognitionEnabled: false,
+        recognitionResult: null,
+        holdStillActive: false,
+        verifyingHintActive: false,
+      }),
+    ).toEqual({
+      label: "Too bright",
+      subLabel: "Avoid direct light",
+      tone: "warning",
+      isLowLight: undefined,
+    })
+  })
+
+  it("returns too dark guidance when liveness status is too_dark", () => {
+    const face = baseFace({
+      liveness: {
+        is_real: null,
+        confidence: 0.9,
+        status: "too_dark",
+      },
+    })
+
+    expect(
+      getOverlayGuidance(face, {
+        enableSpoofDetection: true,
+        recognitionEnabled: false,
+        recognitionResult: null,
+        holdStillActive: false,
+        verifyingHintActive: false,
+      }),
+    ).toEqual({
+      label: "Too dark",
+      subLabel: "Step into light",
+      tone: "warning",
+      isLowLight: true,
+    })
+  })
+
+  it("returns look at camera guidance when liveness status is look_at_camera", () => {
+    const face = baseFace({
+      liveness: {
+        is_real: null,
+        confidence: 0.0,
+        status: "look_at_camera",
+      },
+    })
+
+    expect(
+      getOverlayGuidance(face, {
+        enableSpoofDetection: true,
+        recognitionEnabled: false,
+        recognitionResult: null,
+        holdStillActive: false,
+        verifyingHintActive: false,
+      }),
+    ).toEqual({
+      label: "Look at camera",
+      subLabel: "Keep face upright",
+      tone: "warning",
+      isLowLight: undefined,
+    })
+  })
 })

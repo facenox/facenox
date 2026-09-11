@@ -25,6 +25,14 @@ class TrackLivenessMemory:
             }
         )
 
+    def is_stable_real(self, track_id: int, namespace: str | None = None) -> bool:
+        if track_id <= 0:
+            return False
+        namespace_key = self._normalize_namespace(namespace)
+        return bool(
+            self.track_states[(namespace_key, track_id)].get("stable_real", False)
+        )
+
     @staticmethod
     def _normalize_namespace(namespace: str | None) -> str:
         return namespace or "__global__"
@@ -44,8 +52,7 @@ class TrackLivenessMemory:
             frame_number = namespace_frame
         self.namespace_frames[namespace_key] = frame_number
 
-        raw_status = liveness.get("status")
-        if track_id <= 0 or raw_status not in {"real", "spoof"}:
+        if track_id <= 0:
             return liveness
 
         state = self.track_states[(namespace_key, track_id)]
@@ -56,8 +63,9 @@ class TrackLivenessMemory:
             current_time = time.time()
         last_seen_time = state.get("last_time", 0.0)
 
-        # Middle Ground: Identity-Bound Reset
-        # If the person identity changes for this track, we must re-verify liveness
+        state["last_frame"] = frame_number
+        state["last_time"] = current_time
+
         if (
             person_id
             and state.get("last_person_id")
@@ -76,16 +84,24 @@ class TrackLivenessMemory:
             state["consecutive_real_frames"] = 0
             state["stable_real"] = False
 
-        state["last_frame"] = frame_number
-        state["last_time"] = current_time
+        raw_status = liveness.get("status")
+        if raw_status not in {"real", "spoof"}:
+            return liveness
 
         stabilized = dict(liveness)
 
         if raw_status == "spoof":
             state["consecutive_real_frames"] = 0
+            state["consecutive_spoof_frames"] = (
+                state.get("consecutive_spoof_frames", 0) + 1
+            )
 
-            # Identity-Bound Infinite lock:
-            # Only ignore spoof frames if we are stable AND the identity hasn't shifted.
+            if state["consecutive_spoof_frames"] >= 2:
+                state["stable_real"] = False
+                stabilized["status"] = "spoof"
+                stabilized["is_real"] = False
+                return stabilized
+
             if state["stable_real"]:
                 stabilized["status"] = "real"
                 stabilized["is_real"] = True
@@ -96,11 +112,14 @@ class TrackLivenessMemory:
             stabilized["is_real"] = False
             return stabilized
 
+        state["consecutive_spoof_frames"] = 0
         state["consecutive_real_frames"] += 1
 
         if (
             state["stable_real"]
             or state["consecutive_real_frames"] >= self.required_real_frames
+            or liveness.get("active_verified")
+            or liveness.get("message") == "Liveness Verified"
         ):
             state["stable_real"] = True
             stabilized["status"] = "real"
@@ -123,7 +142,9 @@ class TrackLivenessMemory:
         if namespace_key in self.namespace_last_cleanup_frame:
             del self.namespace_last_cleanup_frame[namespace_key]
 
-    def _cleanup_namespace_stale_tracks(self, namespace_key: str, force: bool = False):
+    def _cleanup_namespace_stale_tracks(
+        self, namespace_key: str, force: bool = False
+    ) -> list:
         current_frame = self.namespace_frames[namespace_key]
         last_cleanup_frame = self.namespace_last_cleanup_frame[namespace_key]
 
@@ -132,7 +153,7 @@ class TrackLivenessMemory:
             and last_cleanup_frame > 0
             and (current_frame - last_cleanup_frame) < self.cleanup_interval
         ):
-            return
+            return []
 
         stale_tracks = [
             track_key
@@ -153,7 +174,6 @@ class TrackLivenessMemory:
 
         self.namespace_last_cleanup_frame[namespace_key] = current_frame
 
-        # Clean up the namespace itself if it has no active tracks and is not global
         has_active_tracks = any(
             key[0] == namespace_key for key in self.track_states.keys()
         )
@@ -161,13 +181,23 @@ class TrackLivenessMemory:
             self.namespace_frames.pop(namespace_key, None)
             self.namespace_last_cleanup_frame.pop(namespace_key, None)
 
-    def cleanup_stale_tracks(self, force: bool = False, namespace: str | None = None):
+        return stale_tracks
+
+    def cleanup_stale_tracks(
+        self, force: bool = False, namespace: str | None = None
+    ) -> list:
+        pruned = []
         if namespace is not None:
             namespace_key = self._normalize_namespace(namespace)
-            self._cleanup_namespace_stale_tracks(namespace_key, force=force)
-            return
+            pruned.extend(
+                self._cleanup_namespace_stale_tracks(namespace_key, force=force)
+            )
+            return pruned
 
         namespace_keys = set(self.namespace_frames.keys())
         namespace_keys.update(key[0] for key in self.track_states.keys())
         for namespace_key in namespace_keys:
-            self._cleanup_namespace_stale_tracks(namespace_key, force=force)
+            pruned.extend(
+                self._cleanup_namespace_stale_tracks(namespace_key, force=force)
+            )
+        return pruned

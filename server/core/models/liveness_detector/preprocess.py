@@ -1,118 +1,161 @@
 import cv2
 import numpy as np
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Any
+
+TARGET_SIZE = 256
+FFT_SIZE = 16
 
 
-def enhance_face_illumination(img_rgb: np.ndarray) -> np.ndarray:
-    """
-    Applies CLAHE on the LAB L-channel to compensate for low light and eye-socket shadows.
-    Only fires under poor or uneven lighting to avoid distorting well-lit crops.
-    """
-    try:
-        lab = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2LAB)
-        l_channel = lab[:, :, 0]
+def compute_fft(gray_img: np.ndarray) -> np.ndarray:
+    """Computes frequency spectrum map."""
+    dft = np.fft.fft2(gray_img)
+    dft_shift = np.fft.fftshift(dft)
+    magnitude = np.log(np.abs(dft_shift) + 1.0)
 
-        mean_l = np.mean(l_channel)
-        std_l = np.std(l_channel)
+    mean_val = magnitude.mean()
+    std_val = magnitude.std()
+    magnitude = (magnitude - mean_val) / (std_val + 1e-6)
+    magnitude = np.clip(magnitude, -3.0, 3.0)
+    magnitude = (magnitude + 3.0) / 6.0
 
-        # Trigger only under dark (< 85) or shadowed (std > 48 and mean < 95) conditions.
-        # Bright crops bypass to preserve raw micro-texture critical for spoof detection.
-        if mean_l < 85.0 or (std_l > 48.0 and mean_l < 95.0):
-            clahe = cv2.createCLAHE(clipLimit=1.3, tileGridSize=(8, 8))
-            lab[:, :, 0] = clahe.apply(l_channel)
-            return cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
-
-        return img_rgb
-    except Exception:
-        return img_rgb
-
-
-def preprocess(img: np.ndarray, model_img_size: int) -> np.ndarray:
-    img = enhance_face_illumination(img)
-
-    new_size = model_img_size
-    old_size = img.shape[:2]
-
-    ratio = float(new_size) / max(old_size)
-    scaled_shape = tuple([int(x * ratio) for x in old_size])
-
-    interpolation = cv2.INTER_LANCZOS4 if ratio > 1.0 else cv2.INTER_AREA
-    img = cv2.resize(
-        img, (scaled_shape[1], scaled_shape[0]), interpolation=interpolation
+    h_m, w_m = magnitude.shape
+    return (
+        magnitude.reshape(FFT_SIZE, h_m // FFT_SIZE, FFT_SIZE, w_m // FFT_SIZE)
+        .max(axis=(1, 3))
+        .astype(np.float32)
     )
 
-    delta_w = new_size - scaled_shape[1]
-    delta_h = new_size - scaled_shape[0]
-    top, bottom = delta_h // 2, delta_h - (delta_h // 2)
-    left, right = delta_w // 2, delta_w - (delta_w // 2)
 
-    img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_REFLECT_101)
-    img = img.transpose(2, 0, 1).astype(np.float32) / 255.0
+def crop_face(
+    img: np.ndarray, bbox: tuple, target_size: int = TARGET_SIZE
+) -> np.ndarray:
+    """Extracts tight face crop."""
+    h, w = img.shape[:2]
+    bx, by, bw, bh = bbox
 
-    return img
+    max_dim = max(bw, bh)
+    cx = bx + bw / 2.0
+    cy = by + bh / 2.0
+    crop_size = int(max_dim)
+
+    x1 = int(cx - crop_size / 2.0)
+    y1 = int(cy - crop_size / 2.0)
+    x2 = x1 + crop_size
+    y2 = y1 + crop_size
+
+    pad_top = max(0, -y1)
+    pad_left = max(0, -x1)
+    pad_bottom = max(0, y2 - h)
+    pad_right = max(0, x2 - w)
+
+    cropped = img[max(0, y1) : min(h, y2), max(0, x1) : min(w, x2)]
+    if pad_top > 0 or pad_left > 0 or pad_bottom > 0 or pad_right > 0:
+        cropped = cv2.copyMakeBorder(
+            cropped, pad_top, pad_bottom, pad_left, pad_right, cv2.BORDER_REFLECT_101
+        )
+
+    return cv2.resize(
+        cropped, (target_size, target_size), interpolation=cv2.INTER_LANCZOS4
+    )
 
 
-def preprocess_batch(face_crops: List[np.ndarray], model_img_size: int) -> np.ndarray:
+def crop_context_face(
+    img: np.ndarray, bbox: tuple, scale: float = 2.0, target_size: int = TARGET_SIZE
+) -> np.ndarray:
+    """Extracts contextual face crop."""
+    h, w = img.shape[:2]
+    bx, by, bw, bh = bbox
+    max_dim = max(bw, bh)
+
+    cx = bx + bw / 2.0
+    cy = by + bh / 2.0
+    crop_size = int(max_dim * scale)
+
+    x1 = int(cx - crop_size / 2.0)
+    y1 = int(cy - crop_size / 2.0)
+    x2 = x1 + crop_size
+    y2 = y1 + crop_size
+
+    pad_top = max(0, -y1)
+    pad_left = max(0, -x1)
+    pad_bottom = max(0, y2 - h)
+    pad_right = max(0, x2 - w)
+
+    cropped = img[max(0, y1) : min(h, y2), max(0, x1) : min(w, x2)]
+    if pad_top > 0 or pad_left > 0 or pad_bottom > 0 or pad_right > 0:
+        cropped = cv2.copyMakeBorder(
+            cropped, pad_top, pad_bottom, pad_left, pad_right, cv2.BORDER_REFLECT_101
+        )
+
+    return cv2.resize(
+        cropped, (target_size, target_size), interpolation=cv2.INTER_LANCZOS4
+    )
+
+
+def check_glare_and_illumination(gray_tight: np.ndarray) -> Tuple[bool, str]:
+    """Validates face illumination."""
+    if gray_tight.size == 0:
+        return False, "zero_face_area"
+
+    mean_b = float(np.mean(gray_tight))
+    if mean_b < 20.0:
+        return False, "too_dark"
+
+    sat_ratio = float(np.sum(gray_tight >= 235) / gray_tight.size)
+    spec_ratio = float(np.sum(gray_tight >= 250) / gray_tight.size)
+
+    if mean_b > 215.0 or sat_ratio > 0.25 or spec_ratio > 0.05:
+        return False, "glare"
+
+    return True, "ok"
+
+
+def preprocess_batch(
+    face_crops: List[Any], model_img_size: int = TARGET_SIZE
+) -> Dict[str, np.ndarray]:
+    """Preprocesses batch inputs."""
     if not face_crops:
         raise ValueError("face_crops list cannot be empty")
 
-    batch = np.zeros(
-        (len(face_crops), 3, model_img_size, model_img_size), dtype=np.float32
-    )
-    for i, face_crop in enumerate(face_crops):
-        batch[i] = preprocess(face_crop, model_img_size)
+    n = len(face_crops)
+    tight_batch = np.zeros((n, 3, model_img_size, model_img_size), dtype=np.float32)
+    fft_batch = np.zeros((n, 1, FFT_SIZE, FFT_SIZE), dtype=np.float32)
+    ctx_batch = np.zeros((n, 3, model_img_size, model_img_size), dtype=np.float32)
 
-    return batch
+    for i, item in enumerate(face_crops):
+        if isinstance(item, dict):
+            tight = item["tight"]
+            fft_map = item["fft"]
+            ctx = item["ctx"]
+        elif isinstance(item, (tuple, list)) and len(item) == 3:
+            tight, fft_map, ctx = item
+        elif isinstance(item, np.ndarray):
+            tight = item
+            if tight.shape[:2] != (model_img_size, model_img_size):
+                tight = cv2.resize(
+                    tight,
+                    (model_img_size, model_img_size),
+                    interpolation=cv2.INTER_LANCZOS4,
+                )
+            gray = (
+                cv2.cvtColor(tight, cv2.COLOR_RGB2GRAY)
+                if len(tight.shape) == 3 and tight.shape[2] == 3
+                else tight
+            )
+            fft_map = compute_fft(gray)
+            ctx = tight.copy()
+        else:
+            raise TypeError(f"Unsupported face crop item type: {type(item)}")
 
+        tight_batch[i] = tight.transpose(2, 0, 1).astype(np.float32) / 255.0
+        fft_batch[i] = fft_map[None, :, :]
+        ctx_batch[i] = ctx.transpose(2, 0, 1).astype(np.float32) / 255.0
 
-def crop(img: np.ndarray, bbox: tuple, bbox_inc: float) -> np.ndarray:
-    real_h, real_w = img.shape[:2]
-    x, y, w, h = bbox
-
-    w = w - x
-    h = h - y
-
-    if w <= 0 or h <= 0:
-        raise ValueError("Invalid bbox dimensions")
-
-    max_dim = max(w, h)
-    xc = x + w / 2
-    yc = y + h / 2
-
-    x = int(xc - max_dim * bbox_inc / 2)
-    y = int(yc - max_dim * bbox_inc / 2)
-    crop_size = int(max_dim * bbox_inc)
-
-    crop_x1 = max(0, x)
-    crop_y1 = max(0, y)
-    crop_x2 = min(real_w, x + crop_size)
-    crop_y2 = min(real_h, y + crop_size)
-
-    top_pad = int(max(0, -y))
-    left_pad = int(max(0, -x))
-    bottom_pad = int(max(0, (y + crop_size) - real_h))
-    right_pad = int(max(0, (x + crop_size) - real_w))
-
-    if crop_x2 > crop_x1 and crop_y2 > crop_y1:
-        img = img[crop_y1:crop_y2, crop_x1:crop_x2, :]
-    else:
-        img = np.zeros((0, 0, 3), dtype=img.dtype)
-
-    result = cv2.copyMakeBorder(
-        img,
-        top_pad,
-        bottom_pad,
-        left_pad,
-        right_pad,
-        cv2.BORDER_REFLECT_101,
-    )
-
-    if result.shape[0] != crop_size or result.shape[1] != crop_size:
-        raise ValueError(
-            f"Crop size mismatch: expected {crop_size}x{crop_size}, got {result.shape[0]}x{result.shape[1]}"
-        )
-
-    return result
+    return {
+        "input_tight": tight_batch,
+        "input_fft": fft_batch,
+        "input_ctx": ctx_batch,
+    }
 
 
 def extract_bbox_coordinates(
@@ -136,9 +179,7 @@ def extract_bbox_coordinates(
 def extract_face_crops_from_detections(
     rgb_image: np.ndarray,
     detections: List[Dict],
-    bbox_inc: float,
-    crop_fn,
-) -> Tuple[List[np.ndarray], List[Dict], List[Dict]]:
+) -> Tuple[List[Dict[str, Any]], List[Dict], List[Dict]]:
     face_crops = []
     valid_detections = []
     skipped_results = []
@@ -152,21 +193,38 @@ def extract_face_crops_from_detections(
         x, y, w, h = bbox_coords
 
         try:
-            face_crop = crop_fn(rgb_image, (x, y, x + w, y + h), bbox_inc)
-            if len(face_crop.shape) != 3 or face_crop.shape[2] != 3:
+            tight_crop = crop_face(rgb_image, (x, y, w, h), target_size=TARGET_SIZE)
+            ctx_crop = crop_context_face(
+                rgb_image, (x, y, w, h), scale=2.0, target_size=TARGET_SIZE
+            )
+            gray_tight = cv2.cvtColor(tight_crop, cv2.COLOR_RGB2GRAY)
+
+            is_illum_ok, guard_reason = check_glare_and_illumination(gray_tight)
+            if not is_illum_ok:
+                detection["liveness"] = {
+                    "is_real": False,
+                    "status": guard_reason,
+                    "logit_diff": -5.0,
+                    "real_logit": -5.0,
+                    "spoof_logit": 5.0,
+                    "confidence": 5.0,
+                    "message": f"Quality Gate: {guard_reason}",
+                }
                 skipped_results.append(detection)
                 continue
-            if face_crop.shape[0] != face_crop.shape[1]:
-                skipped_results.append(detection)
-                continue
-        except (ValueError, IndexError):
-            skipped_results.append(detection)
-            continue
+
+            fft_map = compute_fft(gray_tight)
+
+            bundle = {
+                "tight": tight_crop,
+                "fft": fft_map,
+                "ctx": ctx_crop,
+            }
+            face_crops.append(bundle)
+            valid_detections.append(detection)
+
         except Exception:
             skipped_results.append(detection)
             continue
-
-        face_crops.append(face_crop)
-        valid_detections.append(detection)
 
     return face_crops, valid_detections, skipped_results

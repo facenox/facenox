@@ -160,13 +160,19 @@ async def get_available_models():
             "available": True,
             "info": {
                 "model_path": str(LIVENESS_DETECTOR_CONFIG["model_path"]),
-                "model_img_size": LIVENESS_DETECTOR_CONFIG["model_img_size"],
-                "confidence_threshold": getattr(
+                "pass_margin": getattr(
                     liveness_detector,
-                    "confidence_threshold",
-                    LIVENESS_DETECTOR_CONFIG["confidence_threshold"],
+                    "pass_margin",
+                    LIVENESS_DETECTOR_CONFIG["pass_margin"],
                 ),
-                "bbox_inc": LIVENESS_DETECTOR_CONFIG["bbox_inc"],
+                "spoof_margin": getattr(
+                    liveness_detector,
+                    "spoof_margin",
+                    LIVENESS_DETECTOR_CONFIG["spoof_margin"],
+                ),
+                "required_real_frames": LIVENESS_DETECTOR_CONFIG.get(
+                    "required_real_frames", 3
+                ),
             },
         }
     else:

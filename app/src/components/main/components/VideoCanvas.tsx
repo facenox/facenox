@@ -2,6 +2,8 @@ import { memo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { RefObject } from "react"
 import { StartTimeChip } from "./StartTimeChip"
+import { ActiveHeadTurnGuide } from "./ActiveHeadTurnGuide"
+import { useDetectionStore } from "@/components/main/stores"
 import type { QuickSettings } from "@/components/settings"
 import type { AttendanceGroup } from "@/types/recognition"
 
@@ -47,6 +49,19 @@ export const VideoCanvas = memo(function VideoCanvas({
   maxRecognitionFacesPerFrame = 5,
 }: VideoCanvasProps) {
   const [showSettings, setShowSettings] = useState(false)
+  const currentDetections = useDetectionStore((s) => s.currentDetections)
+
+  const isHeadTurnPromptActive = Boolean(
+    isStreaming &&
+    enableSpoofDetection &&
+    currentDetections?.faces?.some(
+      (f) =>
+        !f.liveness?.is_real &&
+        (f.overlayGuidance?.subLabel === "Slowly turn head" ||
+          (f.liveness?.status === "candidate_real" &&
+            f.liveness?.message?.toLowerCase().includes("turn"))),
+    ),
+  )
 
   const formatCooldown = (secs: number) => {
     if (secs < 60) return `${secs}s`
@@ -144,6 +159,9 @@ export const VideoCanvas = memo(function VideoCanvas({
           mixBlendMode: "normal",
         }}
       />
+
+      {/* 3D Head Turn Guidance Animation for Active Liveness Challenge */}
+      <ActiveHeadTurnGuide active={isHeadTurnPromptActive} />
 
       {isStreaming && lateTrackingEnabled && (
         <div

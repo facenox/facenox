@@ -23,7 +23,16 @@ export interface DetectionResult {
       real_logit?: number
       spoof_logit?: number
       status:
-        "real" | "spoof" | "candidate_real" | "unknown" | "error" | "move_closer" | "center_face"
+        | "real"
+        | "spoof"
+        | "candidate_real"
+        | "unknown"
+        | "error"
+        | "move_closer"
+        | "center_face"
+        | "glare"
+        | "too_dark"
+        | "look_at_camera"
       attack_type?: string
       message?: string
     }
@@ -51,7 +60,16 @@ export interface WebSocketFaceData {
     real_logit?: number
     spoof_logit?: number
     status?:
-      "real" | "spoof" | "candidate_real" | "unknown" | "error" | "move_closer" | "center_face"
+      | "real"
+      | "spoof"
+      | "candidate_real"
+      | "unknown"
+      | "error"
+      | "move_closer"
+      | "center_face"
+      | "glare"
+      | "too_dark"
+      | "look_at_camera"
     attack_type?: string
     message?: string
   }
@@ -127,7 +145,16 @@ export interface TrackedFace {
   occlusionCount: number
   angleConsistency: number
   livenessStatus?:
-    "real" | "spoof" | "candidate_real" | "unknown" | "error" | "move_closer" | "center_face"
+    | "real"
+    | "spoof"
+    | "candidate_real"
+    | "unknown"
+    | "error"
+    | "move_closer"
+    | "center_face"
+    | "glare"
+    | "too_dark"
+    | "look_at_camera"
   unknownFramesCount?: number
 }
 

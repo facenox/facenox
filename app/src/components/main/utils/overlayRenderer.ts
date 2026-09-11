@@ -30,39 +30,6 @@ export const getFaceColor = (
   return "#94a3b8"
 }
 
-const drawOscillatingScanner = (
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  currentOpacity: number,
-) => {
-  ctx.save()
-  ctx.globalAlpha = currentOpacity
-  ctx.shadowBlur = 0
-
-  // 1. Draw a thin, semi-transparent horizontal track line
-  ctx.strokeStyle = "rgba(203, 213, 225, 0.25)" // slate-300 with low opacity
-  ctx.lineWidth = 1.5
-  ctx.lineCap = "round"
-  ctx.beginPath()
-  ctx.moveTo(cx - 18, cy)
-  ctx.lineTo(cx + 18, cy)
-  ctx.stroke()
-
-  // 2. Smoothly calculate the horizontal offset using a sine wave
-  const dotOffset = Math.sin(performance.now() / 280) * 16
-
-  // 3. Draw the gliding dot with a soft white glow
-  ctx.shadowColor = "rgba(255, 255, 255, 0.6)"
-  ctx.shadowBlur = 4
-  ctx.fillStyle = "#cbd5e1" // slate-300
-  ctx.beginPath()
-  ctx.arc(cx + dotOffset, cy, 2.5, 0, Math.PI * 2)
-  ctx.fill()
-
-  ctx.restore()
-}
-
 const drawRoundedRect = (
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -468,15 +435,11 @@ export const drawOverlays = ({
 
         const subLabelY = Math.min(displayHeight - 8, y2 + 24)
 
-        // Draw the micro-animated horizontal scanning dot guide directly above the subtitle
-        drawOscillatingScanner(
-          ctx,
-          x1 + width / 2,
-          subLabelY - 14,
-          (face.renderOpacity ?? 1) * subCurrentOpacity,
-        )
-
-        ctx.fillText(subLabelText, x1 + width / 2, subLabelY)
+        // When "Slowly turn head" is active, the dedicated floating 3D HUD card handles the guidance.
+        // For other guidance cues (e.g. "Step into light", "Keep face upright"), render the subtitle text here.
+        if (subLabelText !== "Slowly turn head") {
+          ctx.fillText(subLabelText, x1 + width / 2, subLabelY)
+        }
         ctx.restore()
       }
     }

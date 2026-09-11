@@ -413,8 +413,8 @@ function DataBoundariesModal({ isOpen, onClose, onNavigateToDB }: DataBoundaries
       title="Data Boundaries & Privacy">
       <div className="space-y-5 pt-2">
         <p className="text-[12px] leading-relaxed text-white/65">
-          To maintain security and compliance, Facenox clearly separates what information is shared with
-          Facenox Cloud versus what remains strictly on your local device:
+          To maintain security and compliance, Facenox clearly separates what information is shared
+          with Facenox Cloud versus what remains strictly on your local device:
         </p>
 
         <div className="space-y-5 text-xs">
@@ -422,8 +422,8 @@ function DataBoundariesModal({ isOpen, onClose, onNavigateToDB }: DataBoundaries
           <div className="space-y-1">
             <div className="text-[13px] font-semibold text-white/90">Shared with Facenox Cloud</div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Employee names, roles, attendance logs, device diagnostics, and encrypted biometric face
-              vectors (embeddings) are synchronized to Facenox Cloud for backup and reporting.
+              Employee names, roles, attendance logs, device diagnostics, and encrypted biometric
+              face vectors (embeddings) are synchronized to Facenox Cloud for backup and reporting.
             </p>
           </div>
 

@@ -90,7 +90,7 @@ const getBoundingBoxIoU = (a: FaceBbox, b: FaceBbox): number => {
 
 const hasHigherPriorityGuidance = (face: Face): boolean => {
   const status = face.liveness?.status
-  return status === "center_face" || status === "move_closer"
+  return status === "center_face" || status === "move_closer" || status === "look_at_camera"
 }
 
 const isVerifyingStatus = (status: string | undefined) =>
@@ -363,6 +363,33 @@ export const getOverlayGuidance = (
 
   if (status === "move_closer") {
     return { label: "Move closer", tone: "warning", isLowLight: face.low_light }
+  }
+
+  if (status === "glare") {
+    return {
+      label: "Too bright",
+      subLabel: "Avoid direct light",
+      tone: "warning",
+      isLowLight: face.low_light,
+    }
+  }
+
+  if (status === "too_dark") {
+    return {
+      label: "Too dark",
+      subLabel: "Step into light",
+      tone: "warning",
+      isLowLight: true,
+    }
+  }
+
+  if (status === "look_at_camera") {
+    return {
+      label: "Look at camera",
+      subLabel: "Keep face upright",
+      tone: "warning",
+      isLowLight: face.low_light,
+    }
   }
 
   if (holdStillActive) {

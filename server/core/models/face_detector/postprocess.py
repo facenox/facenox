@@ -48,5 +48,39 @@ def process_detection(
             "confidence": 0.0,
             "message": "Move closer",
         }
+        return detection
+
+    if landmarks_5 is not None and len(landmarks_5) >= 5:
+        re, le, nose = landmarks_5[0], landmarks_5[1], landmarks_5[2]
+        rcm, lcm = landmarks_5[3], landmarks_5[4]
+
+        dx = float(le[0] - re[0])
+        dy = float(le[1] - re[1])
+        roll_deg = abs(float(np.degrees(np.arctan2(dy, dx))))
+
+        dist_l = float(np.linalg.norm(nose - le))
+        dist_r = float(np.linalg.norm(nose - re))
+        yaw_ratio = float(dist_l / (dist_r + 1e-6))
+
+        eye_center = (le + re) / 2.0
+        mouth_center = (lcm + rcm) / 2.0
+        dist_en = float(np.linalg.norm(nose - eye_center))
+        dist_nm = float(np.linalg.norm(mouth_center - nose))
+        pitch_ratio = float(dist_en / (dist_nm + 1e-6))
+
+        if (
+            roll_deg > 35.0
+            or yaw_ratio < 0.28
+            or yaw_ratio > 3.60
+            or pitch_ratio < 0.25
+            or pitch_ratio > 3.00
+        ):
+            detection["liveness"] = {
+                "is_real": None,
+                "status": "look_at_camera",
+                "confidence": 0.0,
+                "message": "Look at the camera",
+            }
+            return detection
 
     return detection

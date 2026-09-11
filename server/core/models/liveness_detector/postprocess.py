@@ -1,8 +1,14 @@
 import numpy as np
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 from .preprocess import preprocess_batch
 
-GUIDANCE_STATUSES = {"move_closer", "center_face"}
+GUIDANCE_STATUSES = {
+    "move_closer",
+    "center_face",
+    "glare",
+    "too_dark",
+    "look_at_camera",
+}
 
 
 def validate_detection(detection: Dict) -> Tuple[bool, Optional[Dict]]:
@@ -30,19 +36,20 @@ def validate_detection(detection: Dict) -> Tuple[bool, Optional[Dict]]:
 
 
 def run_batch_inference(
-    face_crops: List[np.ndarray],
+    face_crops: List[Any],
     ort_session,
     input_name: str,
-    model_img_size: int,
+    model_img_size: int = 256,
 ) -> List[np.ndarray]:
+    """Executes model inference."""
     if not face_crops:
         return []
 
     if not ort_session:
         raise RuntimeError("ONNX session is not available")
 
-    batch_input = preprocess_batch(face_crops, model_img_size)
-    logits = ort_session.run([], {input_name: batch_input})[0]
+    feeds = preprocess_batch(face_crops, model_img_size)
+    logits = ort_session.run(None, feeds)[0]
 
     if logits.shape != (len(face_crops), 2):
         raise ValueError(
@@ -58,12 +65,10 @@ def assemble_liveness_results(
     raw_logits: List[np.ndarray],
     logit_threshold: float,
     results: List[Dict],
+    spoof_margin: float = 0.0,
 ) -> List[Dict]:
     if len(valid_detections) != len(raw_logits):
-        raise ValueError(
-            f"Length mismatch: {len(valid_detections)} detections but "
-            f"{len(raw_logits)} predictions. This indicates a bug in the pipeline."
-        )
+        raise ValueError("Length mismatch between valid detections and model logits")
 
     for detection, logits in zip(valid_detections, raw_logits):
         real_logit = float(logits[0])
@@ -71,7 +76,9 @@ def assemble_liveness_results(
 
         logit_diff = real_logit - spoof_logit
         is_real = logit_diff >= logit_threshold
+        is_confirmed_spoof = logit_diff < spoof_margin
         confidence = abs(logit_diff)
+        prob_real = float(1.0 / (1.0 + np.exp(-np.clip(logit_diff, -20.0, 20.0))))
 
         detection["liveness"] = {
             "is_real": bool(is_real),
@@ -80,6 +87,8 @@ def assemble_liveness_results(
             "real_logit": float(real_logit),
             "spoof_logit": float(spoof_logit),
             "confidence": float(confidence),
+            "prob_real": float(prob_real),
+            "is_confirmed_spoof": bool(is_confirmed_spoof),
         }
 
         results.append(detection)

@@ -55,9 +55,8 @@ async def lifespan(app: FastAPI):
         def _load_liveness_detector():
             return LivenessDetector(
                 model_path=str(LIVENESS_DETECTOR_CONFIG["model_path"]),
-                model_img_size=LIVENESS_DETECTOR_CONFIG["model_img_size"],
-                confidence_threshold=LIVENESS_DETECTOR_CONFIG["confidence_threshold"],
-                bbox_inc=LIVENESS_DETECTOR_CONFIG["bbox_inc"],
+                pass_margin=LIVENESS_DETECTOR_CONFIG["pass_margin"],
+                spoof_margin=LIVENESS_DETECTOR_CONFIG["spoof_margin"],
                 required_real_frames=LIVENESS_DETECTOR_CONFIG.get(
                     "required_real_frames", 3
                 ),
