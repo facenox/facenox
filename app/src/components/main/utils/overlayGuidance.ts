@@ -396,6 +396,14 @@ export const getOverlayGuidance = (
     return { label: "Hold still", tone: "warning", isLowLight: face.low_light }
   }
 
+  // Active 3D Challenge: Suppress forehead badge while head turn is requested.
+  // The dedicated floating 3D HUD card at the bottom of the screen handles guidance,
+  // preventing visual clutter and text jitter while the head is in motion.
+  const livenessMessage = face.liveness?.message?.toLowerCase() ?? ""
+  if (status === "candidate_real" && livenessMessage.includes("turn")) {
+    return null
+  }
+
   if (status === "spoof" || status === "candidate_real" || status === "unknown") {
     if (verifyingHintActive) {
       return {

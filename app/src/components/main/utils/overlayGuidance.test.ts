@@ -113,6 +113,26 @@ describe("overlayGuidance", () => {
     })
   })
 
+  it("suppresses forehead badge when active head turn challenge is underway", () => {
+    const face = baseFace({
+      liveness: {
+        is_real: false,
+        status: "candidate_real",
+        message: "Slowly turn head",
+      },
+    })
+
+    expect(
+      getOverlayGuidance(face, {
+        enableSpoofDetection: true,
+        recognitionEnabled: true,
+        recognitionResult: null,
+        holdStillActive: false,
+        verifyingHintActive: false,
+      }),
+    ).toBeNull()
+  })
+
   it("shows a more helpful delayed hint when verifying stays stuck in optimal light", () => {
     const face = baseFace({
       liveness: {
