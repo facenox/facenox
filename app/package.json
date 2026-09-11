@@ -1,7 +1,7 @@
 {
   "name": "facenox",
   "private": true,
-  "version": "1.0.0-beta.10",
+  "version": "1.0.0-beta.11",
   "description": "Real-time AI attendance tracker with face recognition.",
   "author": "FACENOX <support@facenox.com>",
   "repository": {
