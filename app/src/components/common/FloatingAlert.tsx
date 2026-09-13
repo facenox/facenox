@@ -20,10 +20,10 @@ interface FloatingAlertProps {
 export function FloatingAlert({ message, variant, onDismiss }: FloatingAlertProps) {
   const configs = {
     success: {
-      borderBg: "border-cyan-500/30 bg-[rgba(15,23,42,0.9)] text-cyan-100/95",
-      icon: "fa-solid fa-circle-check text-cyan-400",
+      borderBg: "border-emerald-500/30 bg-[rgba(6,28,20,0.92)] text-emerald-100/95",
+      icon: "fa-solid fa-circle-check text-emerald-400",
       label: "Success",
-      labelColor: "text-cyan-400",
+      labelColor: "text-emerald-400",
     },
     warning: {
       borderBg: "border-amber-500/30 bg-[rgba(24,18,10,0.9)] text-amber-100/95",
