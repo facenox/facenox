@@ -212,17 +212,28 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                 "Connected to Custom Server"
               : "Connected to Facenox Cloud"}
             </h3>
-            {!config.connected && (
-              <p className="mt-0.5 text-xs text-white/60">
-                Enter your pairing code to connect this kiosk.{" "}
-                <button
-                  type="button"
-                  onClick={() => setShowPrivacyModal(true)}
-                  className="inline font-medium text-white/45 transition-colors hover:text-white/80 hover:underline">
-                  Learn more
-                </button>
-              </p>
-            )}
+            <p className="mt-0.5 text-xs text-white/60">
+              {!config.connected ?
+                <>
+                  Enter your pairing code to connect.{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrivacyModal(true)}
+                    className="inline font-medium text-white/45 transition-colors hover:text-white/80 hover:underline">
+                    Learn more
+                  </button>
+                </>
+              : <>
+                  Attendance records sync automatically.{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrivacyModal(true)}
+                    className="inline font-medium text-white/45 transition-colors hover:text-white/80 hover:underline">
+                    Privacy & boundaries
+                  </button>
+                </>
+              }
+            </p>
           </div>
           <div className="mt-0.5 flex shrink-0 items-center">
             <button
@@ -263,42 +274,34 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                   </button>
                 </div>
               </div>
-            : <div className="space-y-4">
-                <div className="flex items-center justify-between gap-4 text-xs">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/40">Device:</span>
-                      <span className="font-medium text-white/85">
-                        {config.deviceName || "Facenox Desktop"}
+            : <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1 text-xs">
+                  {config.unsyncedRecordsCount !== undefined && config.unsyncedRecordsCount > 0 ?
+                    <div className="flex items-center gap-2 font-semibold text-amber-400/90">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-[1px] bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex h-2 w-2 rounded-[1px] bg-amber-500"></span>
                       </span>
+                      <span>{config.unsyncedRecordsCount} record(s) queued</span>
                     </div>
-                  </div>
-                  <div className="space-y-1 text-right">
-                    <div className={`text-xs ${syncTone}`}>
-                      {config.lastSyncedAt ?
-                        `Last sync: ${new Date(config.lastSyncedAt).toLocaleString()}`
-                      : "No successful sync yet."}
+                  : config.lastSyncStatus === "error" ?
+                    <div className="flex items-center gap-1.5 font-medium text-red-400">
+                      <i className="fa-solid fa-circle-exclamation text-[11px]" />
+                      <span>{config.lastSyncMessage || "Sync error"}</span>
                     </div>
-                    {config.lastSyncStatus === "error" && config.lastSyncMessage && (
-                      <div className="text-xs text-red-400">{config.lastSyncMessage}</div>
-                    )}
-                    {config.unsyncedRecordsCount !== undefined && config.unsyncedRecordsCount > 0 ?
-                      <div className="flex items-center justify-end gap-1.5 font-semibold text-amber-400/90">
-                        <span className="relative flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-[1px] bg-amber-400 opacity-75"></span>
-                          <span className="relative inline-flex h-2 w-2 rounded-[1px] bg-amber-500"></span>
-                        </span>
-                        <span>{config.unsyncedRecordsCount} record(s) queued</span>
-                      </div>
-                    : <div className="flex items-center justify-end gap-1.5 font-medium text-emerald-400">
-                        <i className="fa-solid fa-check text-[11px]" />
-                        <span>All synced</span>
-                      </div>
-                    }
+                  : <div className="flex items-center gap-1.5 font-medium text-emerald-400">
+                      <i className="fa-solid fa-check text-[11px]" />
+                      <span>All synced</span>
+                    </div>
+                  }
+                  <div className={`text-xs ${syncTone}`}>
+                    {config.lastSyncedAt ?
+                      `Last sync: ${new Date(config.lastSyncedAt).toLocaleString()}`
+                    : "No successful sync yet."}
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+                <div className="flex flex-wrap items-center gap-3">
                   <button
                     onClick={handleManualSync}
                     disabled={busyAction !== null}
@@ -401,7 +404,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                   </div>
                 </div>
 
-                <div className="pt-2">
+                <div className="flex justify-end pt-2">
                   <button
                     onClick={handleSave}
                     disabled={busyAction !== null}

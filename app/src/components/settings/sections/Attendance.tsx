@@ -309,11 +309,12 @@ export function Attendance({
                   <div className="text-sm font-medium text-white/90">Recognition Limit</div>
                   <InfoPopover
                     title="Recognition Limit"
-                    description="Limit how many faces are recognized per frame to optimize performance."
+                    description="Limits how many faces are recognized per frame to optimize performance on this physical device."
                     details={[
-                      "If disabled, the system will attempt to recognize all faces detected in a frame.",
-                      "Lower limits improve processing speed.",
-                      "The system prioritizes the largest, closest faces.",
+                      "Hardware-specific: Adjust based on this kiosk's CPU/GPU load and camera location.",
+                      "Lower limits (1-5) improve processing speed and prevent frame drops.",
+                      "If disabled, the system will attempt to recognize all faces detected in each frame.",
+                      "The system prioritizes the largest, closest faces first.",
                     ]}
                     side="right"
                   />
@@ -328,7 +329,7 @@ export function Attendance({
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                       className="text-xs font-normal text-white/65">
                       {attendanceSettings.maxRecognitionFacesPerFrame === 0 ?
-                        "Process all detected faces."
+                        "Process all detected faces without limits."
                       : "Limit the maximum number of faces recognized per frame to optimize performance."
                       }
                     </motion.div>
@@ -395,12 +396,12 @@ export function Attendance({
                 <div className="text-sm font-medium text-white/90">Liveness Verification</div>
                 <InfoPopover
                   title="Liveness Verification"
-                  description="Requires a live face before showing identity or recording attendance, helping block photo and screen replay attempts."
+                  description="Requires a live face before recording attendance, helping block photo and screen replay attempts."
                   details={[
-                    "Uses liveness detection under the hood.",
-                    "Can show guidance like Center face, Move closer, or Verifying....",
+                    "Prevents spoofing using real-time passive liveness checks.",
+                    "Can be toggled per kiosk based on camera quality and lighting, unless enforced by organization policy.",
                     "Works best with balanced lighting and a clear front-facing view.",
-                    "May slightly reduce recognition speed when enabled.",
+                    "May slightly increase recognition processing time on lower-powered devices.",
                   ]}
                   side="right"
                 />
@@ -418,7 +419,7 @@ export function Attendance({
                       "Managed by your organization."
                     : attendanceSettings.enableSpoofDetection ?
                       "Verifies physical presence to prevent spoofing."
-                    : "Skip liveness verification."}
+                    : "Liveness verification is disabled."}
                   </motion.div>
                 </AnimatePresence>
               </div>
