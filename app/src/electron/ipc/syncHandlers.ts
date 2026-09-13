@@ -406,7 +406,7 @@ export function registerSyncHandlers() {
       "sync.lastSyncMessage",
       warning ?
         `Disconnected locally. Remote warning: ${warning}`
-      : "Device disconnected from Management Dashboard.",
+      : "Device disconnected from Facenox Cloud.",
     )
     syncManager.stop()
 

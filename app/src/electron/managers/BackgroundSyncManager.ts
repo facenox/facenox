@@ -543,7 +543,7 @@ export class BackgroundSyncManager {
       this.stop()
       this.setLastSyncState({
         lastSyncStatus: "error",
-        lastSyncMessage: "Connect this desktop to Facenox Management Dashboard before syncing.",
+        lastSyncMessage: "Connect this desktop to Facenox Cloud before syncing.",
       })
       return {
         success: false,

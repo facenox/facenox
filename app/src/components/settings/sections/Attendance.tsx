@@ -462,7 +462,7 @@ export function Attendance({
               </div>
               <div className="mt-0.5 text-xs text-white/65">
                 {isPaired ?
-                  "Synchronized with Management Dashboard compliance plan data."
+                  "Synchronized with Facenox Cloud compliance plan data."
                 : (() => {
                     const totalDays = attendanceSettings.dataRetentionDays
                     if (!totalDays || totalDays <= 0) return "Keep all records forever."

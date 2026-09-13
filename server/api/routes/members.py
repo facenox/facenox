@@ -44,7 +44,7 @@ async def add_member(
         if await repo.is_paired():
             raise HTTPException(
                 status_code=403,
-                detail="Groups are synced from the Management Dashboard. Use Dashboard to manage members.",
+                detail="Members are synced from Facenox Cloud. Use Facenox Cloud to manage members.",
             )
         # Check if group exists
         group = await repo.get_group(member_data.group_id)
@@ -103,7 +103,7 @@ async def add_members_bulk(
         if await repo.is_paired():
             raise HTTPException(
                 status_code=403,
-                detail="Groups are synced from the Management Dashboard. Use Dashboard to manage members.",
+                detail="Members are synced from Facenox Cloud. Use Facenox Cloud to manage members.",
             )
         # Check if groups exist
         group_ids = list(set(m.group_id for m in bulk_data.members))
@@ -191,7 +191,7 @@ async def update_member(
         if await repo.is_paired():
             raise HTTPException(
                 status_code=403,
-                detail="Groups are synced from the Management Dashboard. Use Dashboard to manage members.",
+                detail="Members are synced from Facenox Cloud. Use Facenox Cloud to manage members.",
             )
         # Check if member exists
         existing_member = await repo.get_member(person_id)
@@ -288,7 +288,7 @@ async def remove_member(
         if await repo.is_paired():
             raise HTTPException(
                 status_code=403,
-                detail="Groups are synced from the Management Dashboard. Use Dashboard to manage members.",
+                detail="Members are synced from Facenox Cloud. Use Facenox Cloud to manage members.",
             )
         success = await repo.remove_member(person_id)
         if not success:
@@ -327,7 +327,7 @@ async def remove_members_bulk(
         if await repo.is_paired():
             raise HTTPException(
                 status_code=403,
-                detail="Groups are synced from the Management Dashboard. Use Dashboard to manage members.",
+                detail="Members are synced from Facenox Cloud. Use Facenox Cloud to manage members.",
             )
 
         bulk_results = await repo.remove_members_bulk(bulk_data.person_ids)

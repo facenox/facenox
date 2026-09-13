@@ -294,8 +294,7 @@ export function useDatabaseManagement(
         if (dialog) {
           await dialog.alert({
             title: "Cannot delete group",
-            message:
-              "Member list is managed from the Management Dashboard. Disconnect to manage locally.",
+            message: "Member list is managed in Facenox Cloud. Disconnect to manage locally.",
             variant: "default",
           })
         }
@@ -329,8 +328,7 @@ export function useDatabaseManagement(
         if (dialog) {
           await dialog.alert({
             title: "Cannot delete member",
-            message:
-              "Member list is managed from the Management Dashboard. Disconnect to manage locally.",
+            message: "Member list is managed in Facenox Cloud. Disconnect to manage locally.",
             variant: "default",
           })
         }
@@ -397,8 +395,7 @@ export function useDatabaseManagement(
         if (dialog) {
           await dialog.alert({
             title: "Cannot delete groups",
-            message:
-              "Member list is managed from the Management Dashboard. Disconnect to manage locally.",
+            message: "Member list is managed in Facenox Cloud. Disconnect to manage locally.",
             variant: "default",
           })
         }

@@ -17,6 +17,7 @@ import {
 } from "@/components/main/components/attendancePanelUtils"
 
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
+import { updaterService } from "@/services"
 import { ManualEntryModal } from "./ManualEntryModal"
 import { ManualCorrectionModal } from "./ManualCorrectionModal"
 
@@ -495,7 +496,18 @@ export const AttendancePanel = memo(function AttendancePanel({
       : <div className="flex min-h-0 flex-1 items-center justify-center">
           <div className="flex flex-col items-center justify-center space-y-3">
             <div className="text-center text-xs text-white/55">
-              {isPaired ? "Groups are managed from the Management Dashboard" : "No groups created"}
+              {isPaired ?
+                <span>
+                  Groups are managed in{" "}
+                  <button
+                    type="button"
+                    onClick={() => updaterService.openReleasePage("https://app.facenox.com")}
+                    className="inline-flex cursor-pointer items-center gap-1 font-semibold text-white/90 underline underline-offset-2 transition-colors hover:text-cyan-400">
+                    Facenox Cloud
+                    <i className="fa-solid fa-arrow-up-right-from-square text-[9px]" />
+                  </button>
+                </span>
+              : "No groups created"}
             </div>
             {!isPaired && (
               <button
@@ -663,7 +675,18 @@ export const AttendancePanel = memo(function AttendancePanel({
                       <div className="flex flex-col items-center justify-center space-y-3">
                         <div className="text-center text-xs text-white/55">
                           {isPaired ?
-                            "Members are managed from the Management Dashboard"
+                            <span>
+                              Members are managed in{" "}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updaterService.openReleasePage("https://app.facenox.com")
+                                }
+                                className="inline-flex cursor-pointer items-center gap-1 font-semibold text-white/90 underline underline-offset-2 transition-colors hover:text-cyan-400">
+                                Facenox Cloud
+                                <i className="fa-solid fa-arrow-up-right-from-square text-[9px]" />
+                              </button>
+                            </span>
                           : "This group has no members"}
                         </div>
                         {!isPaired && (

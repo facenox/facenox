@@ -38,7 +38,7 @@ async def create_group(
         if await repo.is_paired():
             raise HTTPException(
                 status_code=403,
-                detail="Groups are synced from the Management Dashboard. Use Dashboard to manage groups.",
+                detail="Groups are synced from Facenox Cloud. Use Facenox Cloud to manage groups.",
             )
         service = AttendanceService(repo)
         group_id = service.generate_id()
@@ -130,7 +130,7 @@ async def update_group(
         if await repo.is_paired():
             raise HTTPException(
                 status_code=403,
-                detail="Groups are synced from the Management Dashboard. Use Dashboard to manage groups.",
+                detail="Groups are synced from Facenox Cloud. Use Facenox Cloud to manage groups.",
             )
         existing_group = await repo.get_group(group_id)
         if not existing_group:
@@ -181,7 +181,7 @@ async def delete_group(
         if await repo.is_paired():
             raise HTTPException(
                 status_code=403,
-                detail="Groups are synced from the Management Dashboard. Use Dashboard to manage groups.",
+                detail="Groups are synced from Facenox Cloud. Use Facenox Cloud to manage groups.",
             )
         success = await repo.delete_group(group_id)
         if not success:

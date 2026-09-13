@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { attendanceManager } from "@/services"
+import { attendanceManager, updaterService } from "@/services"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
 import { useAttendanceStore } from "@/components/main/stores"
 import { generateDisplayNames } from "@/utils"
@@ -358,11 +358,17 @@ export function Members({
             title="This group has no members"
             description={
               isPaired ?
-                "Members are managed from the Management Dashboard."
+                "Members are managed in Facenox Cloud."
               : "Add, edit, and remove members to manage profiles and enrollment status."
             }
             action={
-              !isPaired && onAdd ?
+              isPaired ?
+                {
+                  label: "Open Facenox Cloud",
+                  onClick: () => updaterService.openReleasePage("https://app.facenox.com"),
+                  iconClass: "fa-solid fa-arrow-up-right-from-square text-[9px]",
+                }
+              : onAdd ?
                 {
                   label: "Add Member",
                   onClick: onAdd,

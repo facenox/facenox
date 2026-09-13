@@ -13,6 +13,7 @@ import { exportReportToCSV } from "@/components/group/sections/reports/utils/exp
 import { EmptyState } from "@/components/group/shared/EmptyState"
 import { EditSessionModal } from "@/components/group/sections/reports/components/EditSessionModal"
 import { attendanceManager } from "@/services/AttendanceManager"
+import { updaterService } from "@/services"
 import { Spinner } from "@/components/common"
 
 import type { ColumnKey, RowData } from "@/components/group/sections/reports/types"
@@ -150,11 +151,17 @@ export function Reports({
                 title="This group has no members"
                 description={
                   isPaired ?
-                    "Members are managed from the Management Dashboard."
+                    "Members are managed in Facenox Cloud."
                   : "Generate custom attendance reports and export attendance data."
                 }
                 action={
-                  !isPaired && onAddMember ?
+                  isPaired ?
+                    {
+                      label: "Open Facenox Cloud",
+                      onClick: () => updaterService.openReleasePage("https://app.facenox.com"),
+                      iconClass: "fa-solid fa-arrow-up-right-from-square text-[9px]",
+                    }
+                  : onAddMember ?
                     {
                       label: "Add Member",
                       onClick: onAddMember,

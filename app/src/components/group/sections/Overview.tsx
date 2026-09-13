@@ -5,6 +5,7 @@ import { createDisplayNameMap, getLocalDateString } from "@/utils"
 import { StatsCard, EmptyState } from "@/components/group/shared"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { Spinner } from "@/components/common"
+import { updaterService } from "@/services"
 
 interface OverviewProps {
   group: AttendanceGroup
@@ -174,11 +175,17 @@ export function Overview({ group, members, onAddMember, isPaired }: OverviewProp
         title="This group has no members"
         description={
           isPaired ?
-            "Members are managed from the Management Dashboard."
+            "Members are managed in Facenox Cloud."
           : "View group activity history and attendance metrics."
         }
         action={
-          !isPaired && onAddMember ?
+          isPaired ?
+            {
+              label: "Open Facenox Cloud",
+              onClick: () => updaterService.openReleasePage("https://app.facenox.com"),
+              iconClass: "fa-solid fa-arrow-up-right-from-square text-[9px]",
+            }
+          : onAddMember ?
             {
               label: "Add Member",
               onClick: onAddMember,
