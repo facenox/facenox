@@ -177,9 +177,9 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       const result = await window.electronAPI.sync.triggerNow()
       await loadConfig()
       if (result.success) {
-        setSuccess(result.message)
+        setSuccess("Sync completed successfully.")
       } else {
-        setError("Manual sync failed. Check the log below for details.")
+        setError(result.message || "Manual sync failed.")
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : "Manual sync failed.")

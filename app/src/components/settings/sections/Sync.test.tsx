@@ -189,7 +189,7 @@ describe("Sync", () => {
     await waitFor(() => {
       expect(electronAPI.sync.triggerNow).toHaveBeenCalled()
       expect(electronAPI.sync.getConfig).toHaveBeenCalledTimes(2)
-      expect(screen.getByText("Manual sync complete.")).toBeInTheDocument()
+      expect(screen.getByText("Sync completed successfully.")).toBeInTheDocument()
     })
   })
 
