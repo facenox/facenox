@@ -62,8 +62,7 @@ export function IntroModal() {
           </p>
           <p className="text-xs leading-relaxed text-white/65">
             Your biometric face template never leaves this machine unencrypted. Basic profile info
-            (like names) and attendance logs are also shared if you choose to sync with the
-            dashboard.
+            (like names) and attendance logs are also shared if you choose to sync with the cloud.
           </p>
         </div>
       ),
@@ -111,7 +110,7 @@ export function IntroModal() {
         <div className="space-y-3">
           <p className="text-[12.5px] leading-relaxed text-white/55">
             Choose how this device operates. You can always change this later in{" "}
-            <span className="font-medium text-white/70">Settings → Sync</span>.
+            <span className="font-medium text-white/70">Settings → Cloud Sync</span>.
           </p>
         </div>
       ),
@@ -183,18 +182,16 @@ export function IntroModal() {
                       onClick={() => setSelectedPath("offline")}
                       onMouseEnter={() => setHoveredCard("offline")}
                       onMouseLeave={() => setHoveredCard(null)}
-                      className={`group relative flex flex-col rounded-xl border p-5 text-left transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cyan-400/40 focus-visible:outline-none active:scale-[0.98] ${
-                        selectedPath === "offline" ? "border-white/20 bg-white/[0.04]"
+                      className={`group relative flex flex-col rounded-xl border p-5 text-left transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cyan-400/40 focus-visible:outline-none active:scale-[0.98] ${selectedPath === "offline" ? "border-white/20 bg-white/[0.04]"
                         : hoveredCard === "offline" ? "border-white/12 bg-white/[0.02]"
-                        : "border-white/6 bg-white/[0.01] opacity-70"
-                      }`}>
+                          : "border-white/6 bg-white/[0.01] opacity-70"
+                        }`}>
                       <div className="mb-3 flex items-center gap-2">
                         <i
-                          className={`fa-solid fa-shield-halved text-sm transition-colors ${
-                            selectedPath === "offline" || hoveredCard === "offline" ?
-                              "text-white"
+                          className={`fa-solid fa-shield-halved text-sm transition-colors ${selectedPath === "offline" || hoveredCard === "offline" ?
+                            "text-white"
                             : "text-white/60"
-                          }`}
+                            }`}
                         />
                         <span className="text-[14px] font-semibold text-white">Use Offline</span>
                         <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-medium text-white/60">
@@ -218,18 +215,16 @@ export function IntroModal() {
                       onClick={() => setSelectedPath("cloud")}
                       onMouseEnter={() => setHoveredCard("cloud")}
                       onMouseLeave={() => setHoveredCard(null)}
-                      className={`group relative flex flex-col rounded-xl border p-5 text-left transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cyan-400/40 focus-visible:outline-none active:scale-[0.98] ${
-                        selectedPath === "cloud" ? "border-cyan-400/30 bg-cyan-500/[0.05]"
+                      className={`group relative flex flex-col rounded-xl border p-5 text-left transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cyan-400/40 focus-visible:outline-none active:scale-[0.98] ${selectedPath === "cloud" ? "border-cyan-400/30 bg-cyan-500/[0.05]"
                         : hoveredCard === "cloud" ? "border-cyan-400/20 bg-cyan-500/[0.02]"
-                        : "border-white/6 bg-white/[0.01] opacity-70"
-                      }`}>
+                          : "border-white/6 bg-white/[0.01] opacity-70"
+                        }`}>
                       <div className="mb-3 flex items-center gap-2">
                         <i
-                          className={`fa-solid fa-cloud text-sm transition-colors ${
-                            selectedPath === "cloud" || hoveredCard === "cloud" ?
-                              "text-cyan-400"
+                          className={`fa-solid fa-cloud text-sm transition-colors ${selectedPath === "cloud" || hoveredCard === "cloud" ?
+                            "text-cyan-400"
                             : "text-white/60"
-                          }`}
+                            }`}
                         />
                         <span className="text-[14px] font-semibold text-white">
                           Connect to Cloud
@@ -267,9 +262,8 @@ export function IntroModal() {
             <button
               onClick={handleBack}
               disabled={step === 0}
-              className={`rounded-lg border-none! bg-transparent! px-8 pr-5 text-[11px] font-medium shadow-none! transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none ${
-                step === 0 ? "pointer-events-none opacity-0" : "text-white/55 hover:text-white"
-              }`}>
+              className={`rounded-lg border-none! bg-transparent! px-8 pr-5 text-[11px] font-medium shadow-none! transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none ${step === 0 ? "pointer-events-none opacity-0" : "text-white/55 hover:text-white"
+                }`}>
               Back
             </button>
 
@@ -277,9 +271,8 @@ export function IntroModal() {
               {steps.map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1 rounded-full transition-all duration-300 ${
-                    i === step ? "w-6 bg-cyan-500" : "w-2 bg-white/10"
-                  }`}
+                  className={`h-1 rounded-full transition-all duration-300 ${i === step ? "w-6 bg-cyan-500" : "w-2 bg-white/10"
+                    }`}
                 />
               ))}
             </div>
