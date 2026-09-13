@@ -6,6 +6,7 @@ import { StatsCard, EmptyState } from "@/components/group/shared"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { Spinner } from "@/components/common"
 import { updaterService } from "@/services"
+import { DEFAULT_REMOTE_BASE_URL } from "@/services/syncDefaults"
 
 interface OverviewProps {
   group: AttendanceGroup
@@ -79,6 +80,31 @@ const getDateRange = (filter: DateFilter): { start: string; end: string } => {
 export function Overview({ group, members, onAddMember, isPaired }: OverviewProps) {
   const fetchOverviewData = useGroupStore((state) => state.fetchOverviewData)
   const stats = useGroupStore((state) => state.overviewStats[group.id])
+
+  const [remoteBaseUrl, setRemoteBaseUrl] = useState("")
+
+  useEffect(() => {
+    if (!window.electronAPI?.sync) return
+
+    const fetchConfig = () => {
+      window.electronAPI.sync
+        .getConfig()
+        .then((c) => setRemoteBaseUrl(c.remoteBaseUrl || ""))
+        .catch(console.error)
+    }
+
+    fetchConfig()
+
+    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
+      fetchConfig()
+    })
+
+    return unsubscribe
+  }, [])
+
+  const isCustomServer = Boolean(remoteBaseUrl && remoteBaseUrl.trim() !== DEFAULT_REMOTE_BASE_URL)
+  const dashboardUrl = remoteBaseUrl?.trim() || DEFAULT_REMOTE_BASE_URL
+  const dashboardLabel = isCustomServer ? "Open Dashboard" : "Open Facenox Cloud"
 
   const [activitySearch, setActivitySearch] = useState("")
   const [dateFilter, setDateFilter] = useState<DateFilter>("today")
@@ -175,14 +201,16 @@ export function Overview({ group, members, onAddMember, isPaired }: OverviewProp
         title="This group has no members"
         description={
           isPaired ?
-            "Members are managed in Facenox Cloud."
+            isCustomServer ?
+              "Members are managed on your custom server dashboard."
+            : "Members are managed in Facenox Cloud."
           : "View group activity history and attendance metrics."
         }
         action={
           isPaired ?
             {
-              label: "Open Facenox Cloud",
-              onClick: () => updaterService.openReleasePage("https://app.facenox.com"),
+              label: dashboardLabel,
+              onClick: () => updaterService.openReleasePage(dashboardUrl),
               iconClass: "fa-solid fa-arrow-up-right-from-square text-[9px]",
             }
           : onAddMember ?

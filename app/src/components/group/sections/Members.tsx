@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { attendanceManager, updaterService } from "@/services"
+import { DEFAULT_REMOTE_BASE_URL } from "@/services/syncDefaults"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
 import { useAttendanceStore } from "@/components/main/stores"
 import { generateDisplayNames } from "@/utils"
@@ -237,6 +238,7 @@ export function Members({
   })()
 
   const [isPaired, setIsPaired] = useState(false)
+  const [remoteBaseUrl, setRemoteBaseUrl] = useState("")
   const [memberToDelete, setMemberToDelete] = useState<AttendanceMember | null>(null)
 
   useEffect(() => {
@@ -245,7 +247,10 @@ export function Members({
     const fetchConfig = () => {
       window.electronAPI.sync
         .getConfig()
-        .then((c) => setIsPaired(c.connected))
+        .then((c) => {
+          setIsPaired(c.connected)
+          setRemoteBaseUrl(c.remoteBaseUrl || "")
+        })
         .catch(console.error)
     }
 
@@ -257,6 +262,10 @@ export function Members({
 
     return unsubscribe
   }, [])
+
+  const isCustomServer = Boolean(remoteBaseUrl && remoteBaseUrl.trim() !== DEFAULT_REMOTE_BASE_URL)
+  const dashboardUrl = remoteBaseUrl?.trim() || DEFAULT_REMOTE_BASE_URL
+  const dashboardLabel = isCustomServer ? "Open Dashboard" : "Open Facenox Cloud"
 
   const [isBulkConsentModalOpen, setIsBulkConsentModalOpen] = useState(false)
   const [bulkConsentScope, setBulkConsentScope] = useState<"all" | "selected">("all")
@@ -358,14 +367,16 @@ export function Members({
             title="This group has no members"
             description={
               isPaired ?
-                "Members are managed in Facenox Cloud."
+                isCustomServer ?
+                  "Members are managed on your custom server dashboard."
+                : "Members are managed in Facenox Cloud."
               : "Add, edit, and remove members to manage profiles and enrollment status."
             }
             action={
               isPaired ?
                 {
-                  label: "Open Facenox Cloud",
-                  onClick: () => updaterService.openReleasePage("https://app.facenox.com"),
+                  label: dashboardLabel,
+                  onClick: () => updaterService.openReleasePage(dashboardUrl),
                   iconClass: "fa-solid fa-arrow-up-right-from-square text-[9px]",
                 }
               : onAdd ?

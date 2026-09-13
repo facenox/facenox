@@ -18,6 +18,7 @@ import {
 
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { updaterService } from "@/services"
+import { DEFAULT_REMOTE_BASE_URL } from "@/services/syncDefaults"
 import { ManualEntryModal } from "./ManualEntryModal"
 import { ManualCorrectionModal } from "./ManualCorrectionModal"
 
@@ -295,6 +296,7 @@ export const AttendancePanel = memo(function AttendancePanel({
   const [isManualCorrectionOpen, setIsManualCorrectionOpen] = useState(false)
   const [recordToVoid, setRecordToVoid] = useState<AttendanceRecord | null>(null)
   const [isPaired, setIsPaired] = useState(false)
+  const [remoteBaseUrl, setRemoteBaseUrl] = useState("")
 
   useEffect(() => {
     if (!window.electronAPI?.sync) return
@@ -302,7 +304,10 @@ export const AttendancePanel = memo(function AttendancePanel({
     const fetchConfig = () => {
       window.electronAPI.sync
         .getConfig()
-        .then((c) => setIsPaired(c.connected))
+        .then((c) => {
+          setIsPaired(c.connected)
+          setRemoteBaseUrl(c.remoteBaseUrl || "")
+        })
         .catch(console.error)
     }
 
@@ -314,6 +319,10 @@ export const AttendancePanel = memo(function AttendancePanel({
 
     return unsubscribe
   }, [])
+
+  const isCustomServer = Boolean(remoteBaseUrl && remoteBaseUrl.trim() !== DEFAULT_REMOTE_BASE_URL)
+  const dashboardUrl = remoteBaseUrl?.trim() || DEFAULT_REMOTE_BASE_URL
+  const dashboardLabel = isCustomServer ? "Dashboard" : "Facenox Cloud"
 
   const todayPresentPersonIds = useMemo(() => {
     const today = getLocalDateString()
@@ -501,9 +510,9 @@ export const AttendancePanel = memo(function AttendancePanel({
                   Groups are managed in{" "}
                   <button
                     type="button"
-                    onClick={() => updaterService.openReleasePage("https://app.facenox.com")}
+                    onClick={() => updaterService.openReleasePage(dashboardUrl)}
                     className="inline-flex cursor-pointer items-center gap-1 font-semibold text-white/90 underline underline-offset-2 transition-colors hover:text-cyan-400">
-                    Facenox Cloud
+                    {dashboardLabel}
                     <i className="fa-solid fa-arrow-up-right-from-square text-[9px]" />
                   </button>
                 </span>
@@ -679,11 +688,9 @@ export const AttendancePanel = memo(function AttendancePanel({
                               Members are managed in{" "}
                               <button
                                 type="button"
-                                onClick={() =>
-                                  updaterService.openReleasePage("https://app.facenox.com")
-                                }
+                                onClick={() => updaterService.openReleasePage(dashboardUrl)}
                                 className="inline-flex cursor-pointer items-center gap-1 font-semibold text-white/90 underline underline-offset-2 transition-colors hover:text-cyan-400">
-                                Facenox Cloud
+                                {dashboardLabel}
                                 <i className="fa-solid fa-arrow-up-right-from-square text-[9px]" />
                               </button>
                             </span>
