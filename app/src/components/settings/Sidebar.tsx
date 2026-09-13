@@ -139,7 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {isActive && (
                       <motion.div
                         layoutId="active-settings-sidebar-pill"
-                        className="absolute left-[-16px] h-5 w-[3px] rounded-r-full bg-cyan-400"
+                        className="absolute left-[-16px] h-5 w-[3px] rounded-r-[2px] bg-cyan-400"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
@@ -175,7 +175,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {isActive && (
                     <motion.div
                       layoutId="active-settings-sidebar-pill"
-                      className="absolute left-[-16px] h-5 w-[3px] rounded-r-full bg-cyan-400"
+                      className="absolute left-[-16px] h-5 w-[3px] rounded-r-[2px] bg-cyan-400"
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
                   )}

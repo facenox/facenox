@@ -237,16 +237,15 @@ export function Database({
 
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2.5">
               <h4 className="text-[15px] font-semibold text-white/90">System Clock</h4>
-              <span className="text-[11px] font-medium text-white/20">•</span>
               {timeHealthState.loading ?
                 <span className="inline-flex items-center gap-1.5 text-[12px] text-white/40">
                   <i className="fa-solid fa-circle-notch fa-spin text-[10px]" />
                   Checking time...
                 </span>
               : timeHealthStatus === "verified" ?
-                <span className="text-[12px] text-cyan-400/70">Synced</span>
+                <span className="text-[12px] font-medium text-emerald-400">Synced</span>
               : timeHealthStatus === "drift_detected" ?
                 <span className="text-[12px] text-amber-400/80">Drift warning</span>
               : timeHealthStatus === "offline" ?
@@ -520,7 +519,7 @@ export function Database({
         {/* Sleek centered trigger */}
         <button
           onClick={() => setIsDangerZoneOpen(!isDangerZoneOpen)}
-          className="group flex items-center gap-2.5 rounded-full border-0 bg-transparent px-5 py-2.5 text-[11px] font-extrabold tracking-[0.2em] text-red-500/40 uppercase shadow-none transition-all duration-300 outline-none hover:bg-red-500/[0.03] hover:text-red-400 focus:outline-none active:scale-95">
+          className="group flex items-center gap-2.5 rounded-md border-0 bg-transparent px-5 py-2 text-[11px] font-extrabold tracking-[0.2em] text-red-500/40 uppercase shadow-none transition-all duration-300 outline-none hover:bg-red-500/[0.04] hover:text-red-400 focus:outline-none active:scale-95">
           <i className="fa-solid fa-triangle-exclamation text-[10px] opacity-60 transition-transform group-hover:scale-110" />
           <span>Danger Zone</span>
           <motion.i

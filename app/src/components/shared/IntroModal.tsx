@@ -276,7 +276,7 @@ export function IntroModal() {
               {steps.map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1 rounded-full transition-all duration-300 ${
+                  className={`h-1 rounded-[1px] transition-all duration-300 ${
                     i === step ? "w-6 bg-cyan-500" : "w-2 bg-white/10"
                   }`}
                 />

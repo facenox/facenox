@@ -93,7 +93,7 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
                 {isActive && (
                   <motion.div
                     layoutId="activePresetUnderline"
-                    className="absolute -bottom-1.5 left-1/2 h-[2px] w-4 -translate-x-1/2 rounded-full bg-cyan-400"
+                    className="absolute -bottom-1.5 left-1/2 h-[2px] w-4 -translate-x-1/2 rounded-[1px] bg-cyan-400"
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}

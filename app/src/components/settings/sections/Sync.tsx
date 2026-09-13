@@ -7,7 +7,6 @@ import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
 } from "../../../services/syncDefaults"
-import { updaterService } from "@/services"
 
 type RemoteSyncConfig = {
   enabled: boolean
@@ -60,6 +59,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   const [intervalMinutes, setIntervalMinutes] = useState(DEFAULT_SYNC_INTERVAL_MINUTES)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
+  const [copiedId, setCopiedId] = useState(false)
   const [busyAction, setBusyAction] = useState<
     "saving" | "pairing" | "disconnecting" | "syncing" | null
   >(null)
@@ -188,6 +188,10 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     }
   }
 
+  const isCustomServer = Boolean(
+    config.remoteBaseUrl && config.remoteBaseUrl.trim() !== DEFAULT_REMOTE_BASE_URL,
+  )
+
   const syncTone =
     config.lastSyncStatus === "success" ? "text-white/60"
     : config.lastSyncStatus === "error" ? "text-red-400"
@@ -197,43 +201,30 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
       <div className="overflow-hidden">
         {/* Elevated Header Row with Connect/Connected Device Details and Actions */}
-        <div className="flex items-start justify-between gap-4 border-b border-white/5 pt-6 pb-4">
-          <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-8 border-b border-white/5 pt-6 pb-4">
+          <div className="max-w-xl min-w-0 flex-1">
             <h3 className="text-sm font-medium text-white/90">
-              {!config.connected ? "Connect to Facenox Cloud" : "Connected to Facenox Cloud"}
+              {!config.connected ?
+                isCustomServer ?
+                  "Connect to Custom Server"
+                : "Connect to Facenox Cloud"
+              : isCustomServer ?
+                "Connected to Custom Server"
+              : "Connected to Facenox Cloud"}
             </h3>
-            {!config.connected ?
-              <p className="mt-0.5 text-xs text-white/65">
-                Generate a pairing code in{" "}
-                <a
-                  href="https://app.facenox.com"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    updaterService.openReleasePage("https://app.facenox.com")
-                  }}
-                  className="text-white transition-colors hover:underline">
-                  Facenox Cloud
-                </a>{" "}
-                and enter it below to connect this device.
+            {!config.connected && (
+              <p className="mt-0.5 text-xs text-white/60">
+                Enter your pairing code to connect this kiosk.{" "}
+                <button
+                  type="button"
+                  onClick={() => setShowPrivacyModal(true)}
+                  className="inline font-medium text-white/45 transition-colors hover:text-white/80 hover:underline">
+                  Learn more
+                </button>
               </p>
-            : config.remoteBaseUrl && config.remoteBaseUrl !== DEFAULT_REMOTE_BASE_URL ?
-              <p className="mt-0.5 text-xs text-white/65">
-                Device connected. Attendance records are syncing automatically to custom server:{" "}
-                <span className="font-mono text-[11px] text-white/80 underline select-all">
-                  {config.remoteBaseUrl}
-                </span>
-              </p>
-            : <p className="mt-0.5 text-xs text-white/65">
-                Device connected. Attendance records are syncing automatically with Facenox Cloud.
-              </p>
-            }
+            )}
           </div>
-          <div className="mt-0.5 flex shrink-0 flex-col items-end gap-3">
-            <button
-              onClick={() => setShowPrivacyModal(true)}
-              className="text-[10px] font-extrabold tracking-[0.12em] text-cyan-400/90 uppercase transition-colors hover:text-cyan-300">
-              View Privacy & Boundaries
-            </button>
+          <div className="mt-0.5 flex shrink-0 items-center">
             <button
               onClick={() => setShowAdvanced((value) => !value)}
               className="group flex items-center gap-1.5 text-xs font-semibold text-white/45 transition hover:text-white/70">
@@ -273,28 +264,34 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                 </div>
               </div>
             : <div className="space-y-4">
-                <div className="flex justify-between gap-4 font-mono text-[11px] text-white/40">
-                  <div className="space-y-0.5">
-                    <div>Device: {config.deviceName || "Facenox Desktop"}</div>
-                    <div>Hardware ID: {config.deviceId}</div>
+                <div className="flex items-center justify-between gap-4 text-xs">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white/40">Device:</span>
+                      <span className="font-medium text-white/85">
+                        {config.deviceName || "Facenox Desktop"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="space-y-0.5 text-right">
-                    <div className={syncTone}>
+                  <div className="space-y-1 text-right">
+                    <div className={`text-xs ${syncTone}`}>
                       {config.lastSyncedAt ?
                         `Last sync: ${new Date(config.lastSyncedAt).toLocaleString()}`
                       : "No successful sync yet."}
                     </div>
-                    {config.lastSyncMessage && <div>{config.lastSyncMessage}</div>}
+                    {config.lastSyncStatus === "error" && config.lastSyncMessage && (
+                      <div className="text-xs text-red-400">{config.lastSyncMessage}</div>
+                    )}
                     {config.unsyncedRecordsCount !== undefined && config.unsyncedRecordsCount > 0 ?
-                      <div className="mt-1 flex items-center justify-end gap-1.5 font-semibold text-amber-400/90">
+                      <div className="flex items-center justify-end gap-1.5 font-semibold text-amber-400/90">
                         <span className="relative flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
-                          <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-[1px] bg-amber-400 opacity-75"></span>
+                          <span className="relative inline-flex h-2 w-2 rounded-[1px] bg-amber-500"></span>
                         </span>
                         <span>{config.unsyncedRecordsCount} record(s) queued</span>
                       </div>
-                    : <div className="mt-1 flex items-center justify-end gap-1.5 font-medium text-emerald-400">
-                        <i className="fa-solid fa-circle-check text-[10px]" />
+                    : <div className="flex items-center justify-end gap-1.5 font-medium text-emerald-400">
+                        <i className="fa-solid fa-check text-[11px]" />
                         <span>All synced</span>
                       </div>
                     }
@@ -305,14 +302,16 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                   <button
                     onClick={handleManualSync}
                     disabled={busyAction !== null}
-                    className="flex items-center gap-2 rounded border border-white/10 bg-transparent px-4 py-1.5 text-[11.5px] font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
-                    {busyAction === "syncing" && <i className="fa-solid fa-spinner fa-spin" />}
+                    className="flex items-center gap-2 rounded border border-white/10 bg-transparent px-4 py-1.5 text-xs font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
+                    {busyAction === "syncing" ?
+                      <i className="fa-solid fa-spinner fa-spin" />
+                    : <i className="fa-solid fa-arrows-rotate text-[11px]" />}
                     Sync Now
                   </button>
                   <button
                     onClick={handleDisconnect}
                     disabled={busyAction !== null}
-                    className="flex items-center gap-2 rounded border border-red-500/20 bg-red-500/[0.03] px-4 py-1.5 text-[11.5px] font-semibold text-red-400 transition-all hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40">
+                    className="flex items-center gap-2 rounded border border-red-500/20 bg-red-500/[0.03] px-4 py-1.5 text-xs font-semibold text-red-400 transition-all hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40">
                     {busyAction === "disconnecting" && (
                       <i className="fa-solid fa-spinner fa-spin" />
                     )}
@@ -333,6 +332,34 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
               transition={{ duration: 0.15, ease: "easeOut" }}
               className="overflow-hidden">
               <div className="mt-4 grid gap-4 border-t border-white/5 pt-4">
+                {config.connected && config.deviceId && (
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
+                      Hardware ID
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={config.deviceId}
+                        className="h-8.5 w-full rounded border border-white/10 bg-white/[0.02] px-3 font-mono text-[11px] text-white/60 outline-none select-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(config.deviceId)
+                          setCopiedId(true)
+                          setTimeout(() => setCopiedId(false), 2000)
+                        }}
+                        className="flex h-8.5 shrink-0 items-center gap-1.5 rounded border border-white/10 bg-white/[0.04] px-3 text-[11px] font-medium text-white/70 transition hover:bg-white/10 hover:text-white">
+                        <i
+                          className={`fa-solid ${copiedId ? "fa-check text-emerald-400" : "fa-copy"}`}
+                        />
+                        {copiedId ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">

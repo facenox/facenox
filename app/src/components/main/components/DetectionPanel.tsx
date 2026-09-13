@@ -89,7 +89,7 @@ const DetectionCard = memo(
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.18, ease: "easeOut" }}
                   className="flex items-center gap-2 text-[13px] font-medium text-white/45">
-                  <span className="inline-block h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-cyan-500/50" />
+                  <span className="inline-block h-2 w-[3px] shrink-0 animate-pulse rounded-[1px] bg-cyan-500/50" />
                   Searching...
                 </motion.span>
               }
@@ -104,7 +104,7 @@ const DetectionCard = memo(
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
                   transition={{ type: "spring", stiffness: 380, damping: 18 }}
-                  className="flex items-center justify-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.2)]">
+                  className="flex items-center justify-center rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.2)]">
                   <i className="fa-solid fa-check text-[10px]"></i>
                 </motion.div>
               )}

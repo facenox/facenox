@@ -59,7 +59,7 @@ export const MemberRow = React.memo(
               <span className="truncate">{member.role || "Member"}</span>
               {member.email && (
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="h-0.5 w-0.5 shrink-0 rounded-full bg-white/10" />
+                  <span className="h-0.5 w-0.5 shrink-0 rounded-[0.5px] bg-white/20" />
                   <span className="truncate">{member.email}</span>
                 </div>
               )}

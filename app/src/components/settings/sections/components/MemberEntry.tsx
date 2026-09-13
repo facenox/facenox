@@ -132,10 +132,10 @@ export const MemberEntry = React.memo(
         <div className="ml-4 flex shrink-0 items-center justify-end gap-3">
           <div className="flex items-center gap-3">
             {member.has_face_data ?
-              <div className="flex items-center gap-1.5 rounded-full border border-cyan-500/10 bg-cyan-500/[0.06] px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-cyan-400">
+              <div className="flex items-center gap-1.5 rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-cyan-400">
                 Enrolled
               </div>
-            : <div className="flex items-center gap-1.5 rounded-full border border-amber-500/10 bg-amber-500/[0.06] px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-amber-400">
+            : <div className="flex items-center gap-1.5 rounded-md border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-amber-400">
                 Not Enrolled
               </div>
             }

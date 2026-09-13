@@ -178,7 +178,7 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
   return (
     <div className="flex flex-col items-end gap-1.5">
       <div className="flex items-center gap-3">
-        {showSuccess && <span className="text-xs font-medium text-cyan-500/60">Up to date</span>}
+        {showSuccess && <span className="text-xs font-medium text-emerald-400">Up to date</span>}
         <button
           onClick={onCheck}
           disabled={isChecking}

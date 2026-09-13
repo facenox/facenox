@@ -233,23 +233,23 @@ export default function WindowBar() {
           const relativeTime = formatRelativeTime(syncConfig.lastSyncedAt)
           const pendingCount =
             (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
-          let dotColorClass: string
+          let textColorClass: string
           let statusText: string
           let tooltipContent: string
 
           if (syncConfig.lastSyncStatus === "success") {
-            dotColorClass = "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+            textColorClass = "text-emerald-400"
             statusText = pendingCount > 0 ? `Synced (${pendingCount} queued)` : "Synced"
             tooltipContent =
               pendingCount > 0 ?
                 `Last synced: ${relativeTime}. ${pendingCount} new record${pendingCount === 1 ? "" : "s"} queued for next sync.`
               : `Last synced: ${relativeTime}. ${syncConfig.lastSyncMessage || "All records are up to date."}`
           } else if (syncConfig.lastSyncStatus === "error") {
-            dotColorClass = "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+            textColorClass = "text-amber-400"
             statusText = pendingCount > 0 ? `${pendingCount} pending` : "Sync Warning"
             tooltipContent = `Failed to sync: ${syncConfig.lastSyncMessage || "Network connection issue."} • ${pendingCount} record${pendingCount === 1 ? "" : "s"} saved locally. (Last success: ${relativeTime})`
           } else {
-            dotColorClass = "bg-emerald-500/50"
+            textColorClass = "text-emerald-400/80"
             statusText = pendingCount > 0 ? `${pendingCount} queued` : "Ready"
             tooltipContent =
               pendingCount > 0 ?
@@ -259,8 +259,8 @@ export default function WindowBar() {
 
           return (
             <Tooltip content={tooltipContent} position="bottom" offset={6}>
-              <div className="pointer-events-auto flex cursor-default items-center gap-1.5 text-[9px] font-bold tracking-wide text-white/50 transition-all duration-200 select-none [webkit-app-region:no-drag] hover:text-white/75">
-                <span className={`h-1.5 w-1.5 rounded-full ${dotColorClass}`} />
+              <div
+                className={`pointer-events-auto flex cursor-default items-center text-[10px] font-semibold tracking-wide ${textColorClass} transition-all duration-200 select-none [webkit-app-region:no-drag] hover:opacity-80`}>
                 <span>{statusText}</span>
               </div>
             </Tooltip>
@@ -289,7 +289,7 @@ export default function WindowBar() {
               <button
                 onClick={handleOpenRelease}
                 style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                className="relative flex cursor-pointer items-center gap-1.5 rounded-full border border-cyan-800/30 bg-cyan-950/45 px-3 py-1 text-[9px] font-bold tracking-wider text-cyan-400 uppercase shadow-[0_0_12px_rgba(6,182,212,0.15)] transition-all duration-200 select-none [webkit-app-region:no-drag] hover:border-cyan-700/50 hover:bg-cyan-900/60 hover:text-cyan-300">
+                className="relative flex cursor-pointer items-center gap-1.5 rounded-md border border-cyan-800/40 bg-cyan-950/50 px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-cyan-400 uppercase shadow-[0_0_12px_rgba(6,182,212,0.15)] transition-all duration-200 select-none [webkit-app-region:no-drag] hover:border-cyan-700/50 hover:bg-cyan-900/60 hover:text-cyan-300">
                 Update Available
               </button>
             </Tooltip>
@@ -313,7 +313,7 @@ export default function WindowBar() {
             title="Minimize"
             className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
               isLinux ?
-                "mx-0.5 h-[28px] w-[28px] rounded-full hover:bg-white/10"
+                "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-white/10"
               : "h-full w-[46px] hover:bg-white/10"
             }`}>
             <span
@@ -328,7 +328,7 @@ export default function WindowBar() {
             title={isMaximized ? "Restore" : "Maximize"}
             className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
               isLinux ?
-                "mx-0.5 h-[28px] w-[28px] rounded-full hover:bg-white/10"
+                "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-white/10"
               : "h-full w-[46px] hover:bg-white/10"
             }`}>
             <span
@@ -343,7 +343,7 @@ export default function WindowBar() {
             title="Close"
             className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
               isLinux ?
-                "mx-0.5 h-[28px] w-[28px] rounded-full hover:bg-[#e81123]"
+                "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-[#e81123]"
               : "h-full w-[46px] hover:bg-[#e81123]"
             }`}>
             <span
@@ -372,7 +372,7 @@ export default function WindowBar() {
 
         {updateCheckState === "up-to-date" && (
           <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-400">
               <i className="fa-solid fa-check text-xl" />
             </div>
             <div className="space-y-1">
@@ -391,7 +391,7 @@ export default function WindowBar() {
 
         {updateCheckState === "available" && (
           <div className="flex flex-col items-center justify-center gap-4 py-4 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-400">
               <i className="fa-solid fa-cloud-arrow-down text-xl" />
             </div>
             <div className="space-y-1">
@@ -428,8 +428,8 @@ export default function WindowBar() {
 
         {(updateCheckState === "error" || updateCheckState === "offline") && (
           <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-              <i className="fa-solid fa-circle-exclamation text-xl" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 text-red-400">
+              <i className="fa-solid fa-triangle-exclamation text-xl" />
             </div>
             <div className="space-y-1">
               <p className="text-sm font-semibold text-white">Update Check Failed</p>

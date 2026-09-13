@@ -171,7 +171,7 @@ export function Attendance({
                           {attendanceSettings.lateThresholdMinutes === mins && (
                             <motion.div
                               layoutId="lateUnderline"
-                              className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-full bg-cyan-400"
+                              className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
                               transition={{ type: "spring", stiffness: 380, damping: 30 }}
                             />
                           )}
@@ -291,7 +291,7 @@ export function Attendance({
                   {attendanceSettings.attendanceCooldownSeconds === secs && (
                     <motion.div
                       layoutId="cooldownUnderline"
-                      className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-full bg-cyan-400"
+                      className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
@@ -374,7 +374,7 @@ export function Attendance({
                           {activeLimit === faces && (
                             <motion.div
                               layoutId="facesUnderline"
-                              className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-full bg-cyan-400"
+                              className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
                               transition={{ type: "spring", stiffness: 380, damping: 30 }}
                             />
                           )}

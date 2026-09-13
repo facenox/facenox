@@ -287,7 +287,7 @@ export const Sidebar = memo(function Sidebar({
                 </motion.div>
 
                 {updateInfo?.hasUpdate && (
-                  <div className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full border border-black bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.6)]"></div>
+                  <div className="absolute top-1 right-1 h-1.5 w-1.5 rounded-[1px] border border-black bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.6)]"></div>
                 )}
               </motion.button>
             </Tooltip>

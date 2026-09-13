@@ -189,7 +189,7 @@ export function ReportToolbar({
               }`}>
               <i className="fa-solid fa-filter text-[11px]" />
               {statusFilter !== "all" && (
-                <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
+                <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-[1px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
               )}
             </button>
           </Tooltip>
