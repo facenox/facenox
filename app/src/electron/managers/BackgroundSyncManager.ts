@@ -657,6 +657,34 @@ export class BackgroundSyncManager {
         }
       }
 
+      if (remoteResponse.status === 429) {
+        let retryAfterMs = 5000
+        if (typeof responsePayload?.retryAfterMs === "number" && responsePayload.retryAfterMs > 0) {
+          retryAfterMs = responsePayload.retryAfterMs
+        } else {
+          const retryHeader = remoteResponse.headers.get("Retry-After")
+          if (retryHeader) {
+            const parsedSeconds = parseInt(retryHeader, 10)
+            if (!Number.isNaN(parsedSeconds) && parsedSeconds > 0) {
+              retryAfterMs = parsedSeconds * 1000
+            }
+          }
+        }
+
+        console.log(
+          `[Sync] Push throttled by server. Scheduling automatic silent retry in ${retryAfterMs}ms.`,
+        )
+
+        // Reschedule debounced sync silently without flagging UI as fatal error
+        this.triggerDebouncedSync(retryAfterMs)
+
+        return {
+          success: true,
+          message: `Sync queued (throttled). Retrying in ${Math.ceil(retryAfterMs / 1000)}s...`,
+          syncedAt: this.getSyncConfig().lastSyncedAt || undefined,
+        }
+      }
+
       if (!remoteResponse.ok) {
         let detail =
           typeof responsePayload?.error === "string" ?
