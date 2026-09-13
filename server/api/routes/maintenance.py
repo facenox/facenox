@@ -252,9 +252,25 @@ async def import_metadata(
             if member.joined_at:
                 member_payload["joined_at"] = member.joined_at
             if existing_member:
-                # Track consent revocations for biometric erasure
+                # Consent preservation: local consent is the source of truth.
+                # Cloud pull must NEVER downgrade consent that was already granted
+                # locally (e.g. enrolled before pairing). Doing so would cause the
+                # recognition engine to mask the member as "Protected" even though
+                # their face is enrolled and consent was explicitly granted on-device.
+                #
+                # Allowed:  False (local) → True  (cloud)  — cloud grants consent
+                # Blocked:  True  (local) → False (cloud)  — would break recognition
+                #
+                # True revocations are handled by is_active=False (member removal above).
                 if existing_member.has_consent and not member.has_consent:
-                    revoked_consent_ids.append(member.person_id)
+                    # Preserve local consent — do not propagate the cloud's False value.
+                    member_payload["has_consent"] = True
+                    member_payload["consent_granted_at"] = (
+                        existing_member.consent_granted_at
+                    )
+                    member_payload["consent_granted_by"] = (
+                        existing_member.consent_granted_by
+                    )
                 existing_member.is_deleted = False
                 existing_member.is_active = True
                 await repo.update_member(member.person_id, member_payload)
