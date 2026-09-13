@@ -60,7 +60,8 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
                     setSelectedGroup(null)
                   }
                 }}
-                placeholder="Select group..."
+                placeholder={groups.length === 0 ? "No groups yet" : "Select group..."}
+                disabled={groups.length === 0}
                 emptyMessage="No groups available"
                 maxHeight={256}
                 buttonClassName="h-10"

@@ -80,7 +80,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   )
                 }
               }}
-              placeholder="Select group..."
+              placeholder={dropdownGroups.length === 0 ? "No groups yet" : "Select group..."}
+              disabled={dropdownGroups.length === 0}
               emptyMessage="No groups available"
               maxHeight={256}
               buttonClassName="!h-8 !w-full !rounded-md !border-white/5 !bg-white/5 !px-3.5 !text-xs !font-bold !tracking-wide !text-white/80 !transition-colors hover:!bg-white/[0.08] hover:!border-white/10 focus:!border-white/20 dropdown-trigger !shadow-none"
