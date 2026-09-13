@@ -78,12 +78,18 @@ function GroupContentComponent({
               "Groups are managed from Dashboard"
             : "No groups created"
           }
+          description={
+            hasGroups ? "Choose a group from the sidebar to view overview, reports, and members."
+            : isPaired ?
+              "Create or assign groups from the Facenox Cloud dashboard to sync them with this kiosk."
+            : "Create a group to start organizing members and recording attendance."
+          }
           action={
             !isPaired ?
               {
                 label: "Create Group",
                 onClick: openCreateGroup,
-                iconClass: "fa-solid fa-folder-plus text-[10px]",
+                iconClass: "fa-solid fa-plus text-[10px]",
               }
             : undefined
           }

@@ -16,7 +16,7 @@ interface EmptyStateProps {
 export function EmptyState({
   title,
   description,
-  iconClass = "fa-solid fa-users text-3xl",
+  iconClass = "fa-solid fa-users text-lg",
   action,
   children,
   className = "",
@@ -28,24 +28,22 @@ export function EmptyState({
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       className={`flex h-full min-h-0 w-full flex-1 flex-col items-center justify-center p-8 px-6 text-center ${className}`}>
-      <div className="text-white/35">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/45">
         <i className={iconClass} />
       </div>
 
       <div className="mt-3.5 space-y-1">
-        <h3 className="text-[13px] font-bold text-white/80">{title}</h3>
+        <h3 className="text-sm font-semibold text-white/90">{title}</h3>
         {description && (
-          <p className="mx-auto max-w-md text-[11px] leading-relaxed font-medium text-white/55">
-            {description}
-          </p>
+          <p className="mx-auto max-w-sm text-xs leading-relaxed text-white/55">{description}</p>
         )}
       </div>
 
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-3.5 flex items-center gap-2 rounded border border-white/10 bg-white/[0.02] px-4 py-1.5 text-[10px] font-bold tracking-tight text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
-          <i className={action.iconClass || "fa-solid fa-plus text-[8px]"} />
+          className="mt-4 flex items-center gap-2 rounded border border-white/10 bg-[rgba(22,28,36,0.62)] px-4 py-1.5 text-xs font-semibold text-white/70 transition-all hover:bg-[rgba(22,28,36,0.85)] hover:text-white active:scale-95">
+          <i className={action.iconClass || "fa-solid fa-plus text-[10px]"} />
           <span>{action.label}</span>
         </button>
       )}
