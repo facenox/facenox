@@ -206,10 +206,10 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
               <p className="mt-0.5 text-xs text-white/65">
                 Generate a pairing code in{" "}
                 <a
-                  href="https://facenox.com"
+                  href="https://app.facenox.com"
                   onClick={(e) => {
                     e.preventDefault()
-                    updaterService.openReleasePage("https://facenox.com")
+                    updaterService.openReleasePage("https://app.facenox.com")
                   }}
                   className="text-white transition-colors hover:underline">
                   Facenox Cloud
