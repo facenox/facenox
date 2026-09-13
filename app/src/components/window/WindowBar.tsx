@@ -238,7 +238,7 @@ export default function WindowBar() {
           let tooltipContent: string
 
           if (syncConfig.lastSyncStatus === "success") {
-            dotColorClass = "bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]"
+            dotColorClass = "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
             statusText = pendingCount > 0 ? `Synced (${pendingCount} queued)` : "Synced"
             tooltipContent =
               pendingCount > 0 ?
@@ -249,7 +249,7 @@ export default function WindowBar() {
             statusText = pendingCount > 0 ? `${pendingCount} pending` : "Sync Warning"
             tooltipContent = `Failed to sync: ${syncConfig.lastSyncMessage || "Network connection issue."} • ${pendingCount} record${pendingCount === 1 ? "" : "s"} saved locally. (Last success: ${relativeTime})`
           } else {
-            dotColorClass = "bg-cyan-500/50"
+            dotColorClass = "bg-emerald-500/50"
             statusText = pendingCount > 0 ? `${pendingCount} queued` : "Ready"
             tooltipContent =
               pendingCount > 0 ?

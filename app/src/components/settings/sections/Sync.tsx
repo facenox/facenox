@@ -189,7 +189,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   }
 
   const syncTone =
-    config.lastSyncStatus === "success" ? "text-cyan-400/90"
+    config.lastSyncStatus === "success" ? "text-white/60"
     : config.lastSyncStatus === "error" ? "text-red-400"
     : "text-white/45"
 
@@ -293,7 +293,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         </span>
                         <span>{config.unsyncedRecordsCount} record(s) queued</span>
                       </div>
-                    : <div className="mt-1 flex items-center justify-end gap-1.5 font-medium text-cyan-400/90">
+                    : <div className="mt-1 flex items-center justify-end gap-1.5 font-medium text-emerald-400">
                         <i className="fa-solid fa-circle-check text-[10px]" />
                         <span>All synced</span>
                       </div>

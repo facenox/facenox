@@ -284,7 +284,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   syncConfig.connected ?
                     syncConfig.lastSyncStatus === "error" ?
                       "border-red-500/20 bg-red-500/10 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.1)]"
-                    : "border-cyan-500/20 bg-cyan-500/10 text-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.1)]"
+                    : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.1)]"
                   : "border-white/5 bg-white/5 text-white/50"
                 }`}>
                 {syncConfig.connected ?
