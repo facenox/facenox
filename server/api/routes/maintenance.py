@@ -10,7 +10,7 @@ from api.schemas import (
 )
 from api.deps import get_repository
 from database.repository import AttendanceRepository
-from database.models import AttendanceGroup
+from database.models import AttendanceGroup, AttendanceMember, Face
 
 logger = logging.getLogger(__name__)
 
@@ -175,13 +175,10 @@ async def import_metadata(
                 group_payload["created_at"] = group.created_at
             if existing_group:
                 was_deleted = existing_group.is_deleted
-                # Revive soft-deleted groups and update all fields directly
-                # to avoid repo.update_group → get_group filter issues
+                is_active_val = group.is_active if group.is_active is not None else True
                 existing_group.name = group.name
-                existing_group.is_active = (
-                    group.is_active if group.is_active is not None else True
-                )
-                existing_group.is_deleted = False
+                existing_group.is_active = is_active_val
+                existing_group.is_deleted = not is_active_val
                 existing_group.remote_id = remote_id
                 existing_group.organization_id = repo.organization_id
                 settings = group.settings or {}
@@ -204,7 +201,7 @@ async def import_metadata(
 
                 # Re-assert group rule when reviving to prevent stale
                 # attendance config (thresholds, class start time, etc.)
-                if was_deleted:
+                if was_deleted and is_active_val:
                     await repo.add_group_rule(
                         repo._group_rule_payload(
                             existing_group.id,
@@ -223,15 +220,28 @@ async def import_metadata(
         members_count = 0
         revoked_consent_ids: list[str] = []
         for member in request.members:
-            existing_member = await repo.get_member(member.person_id)
+            stmt = select(AttendanceMember).where(
+                AttendanceMember.person_id == member.person_id,
+                AttendanceMember.organization_id == repo.organization_id,
+            )
+            result = await repo.session.execute(stmt)
+            existing_member = result.scalars().first()
             remote_id = member.remote_id or member.person_id
+            is_active_val = member.is_active if member.is_active is not None else True
+
+            if is_active_val is False:
+                # Soft delete member locally and purge local biometric face data
+                if existing_member:
+                    await repo.remove_member(member.person_id)
+                continue
+
             member_payload = {
                 "person_id": member.person_id,
                 "group_id": member.group_id,
                 "name": member.name,
                 "role": member.role,
                 "email": member.email,
-                "is_active": member.is_active,
+                "is_active": True,
                 "has_consent": member.has_consent,
                 "consent_granted_at": member.consent_granted_at,
                 "consent_granted_by": member.consent_granted_by,
@@ -245,6 +255,8 @@ async def import_metadata(
                 # Track consent revocations for biometric erasure
                 if existing_member.has_consent and not member.has_consent:
                     revoked_consent_ids.append(member.person_id)
+                existing_member.is_deleted = False
+                existing_member.is_active = True
                 await repo.update_member(member.person_id, member_payload)
             else:
                 # Ensure local group exists for SQLite FK constraints
@@ -262,8 +274,9 @@ async def import_metadata(
                     await repo.create_group(
                         {
                             "id": member.group_id,
-                            "name": f"Cloud Group ({member.group_id[:6]})",
-                            "remote_id": member.group_id,
+                            "name": f"Group {member.group_id[:8]}",
+                            "is_active": True,
+                            "settings": {},
                         }
                     )
                 elif group_exists.is_deleted:
@@ -273,8 +286,6 @@ async def import_metadata(
             members_count += 1
 
         # Prune groups/members that were deleted from the cloud dashboard
-        from database.models import AttendanceMember
-
         pulled_group_ids = {g.id for g in request.groups}
         group_query = select(AttendanceGroup).where(
             AttendanceGroup.is_deleted.is_(False),
@@ -301,8 +312,6 @@ async def import_metadata(
             m.is_deleted = True
 
         # Prune orphan face embeddings for members that no longer exist in the members list
-        from database.models import Face
-
         pruned_faces = 0
         if pulled_member_ids is not None:
             if pulled_member_ids:
