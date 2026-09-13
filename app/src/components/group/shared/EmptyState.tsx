@@ -16,7 +16,7 @@ interface EmptyStateProps {
 export function EmptyState({
   title,
   description,
-  iconClass = "fa-solid fa-users text-lg",
+  iconClass = "fa-solid fa-users text-2xl",
   action,
   children,
   className = "",
@@ -28,7 +28,7 @@ export function EmptyState({
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       className={`flex h-full min-h-0 w-full flex-1 flex-col items-center justify-center p-8 px-6 text-center ${className}`}>
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/45">
+      <div className="text-white/35">
         <i className={iconClass} />
       </div>
 
