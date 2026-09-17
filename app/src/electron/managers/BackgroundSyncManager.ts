@@ -89,8 +89,14 @@ function normalizeAttendanceExportForRemote(
     }),
     members: members.map((member) => {
       const candidate = typeof member === "object" && member !== null ? member : {}
+      const personId = String((candidate as { person_id?: unknown }).person_id || "")
+      const id = String((candidate as { id?: unknown }).id || personId)
       return {
         ...candidate,
+        id,
+        person_id: personId,
+        group_id: String((candidate as { group_id?: unknown }).group_id || "default"),
+        has_consent: Boolean((candidate as { has_consent?: unknown }).has_consent),
         joined_at:
           toRemoteIsoDateTime((candidate as { joined_at?: unknown }).joined_at) ??
           new Date().toISOString(),
@@ -101,8 +107,12 @@ function normalizeAttendanceExportForRemote(
     }),
     records: records.map((record) => {
       const candidate = typeof record === "object" && record !== null ? record : {}
+      const personId = String((candidate as { person_id?: unknown }).person_id || "")
+      const memberId = String((candidate as { member_id?: unknown }).member_id || personId)
       return {
         ...candidate,
+        person_id: personId,
+        member_id: memberId,
         timestamp:
           toRemoteIsoDateTime((candidate as { timestamp?: unknown }).timestamp) ??
           new Date().toISOString(),
@@ -110,8 +120,12 @@ function normalizeAttendanceExportForRemote(
     }),
     sessions: sessions.map((session) => {
       const candidate = typeof session === "object" && session !== null ? session : {}
+      const personId = String((candidate as { person_id?: unknown }).person_id || "")
+      const memberId = String((candidate as { member_id?: unknown }).member_id || personId)
       return {
         ...candidate,
+        person_id: personId,
+        member_id: memberId,
         check_in_time: toRemoteIsoDateTime(
           (candidate as { check_in_time?: unknown }).check_in_time,
         ),
