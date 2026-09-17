@@ -154,15 +154,10 @@ export class BackgroundSyncManager {
   private commandTimer: NodeJS.Timeout | null = null
   private catchUpTimer: NodeJS.Timeout | null = null
   private debounceTimer: NodeJS.Timeout | null = null
-  private pollFallbackTimer: NodeJS.Timeout | null = null
-  private reconnectTimer: NodeJS.Timeout | null = null
   private isSyncing = false
+  private isPollingCommands = false
   /** When true, a sync will be re-triggered once the current one finishes. */
   private pendingSyncRequested = false
-  private reconnectAttempts = 0
-  private eventStreamController: AbortController | null = null
-  private lastEventReceivedAt: number = 0
-  private pollFallbackIntervalMs = 60000 // 1 minute fallback poll
 
   private getSyncConfig() {
     return {
@@ -240,155 +235,23 @@ export class BackgroundSyncManager {
       void this.performSync()
     }, intervalMs)
 
-    // Command Polling Loop (Phase 4: Remote Management)
-    // Poll every 30 seconds for remote commands (WIPE, etc.)
-    this.commandTimer = setInterval(() => {
-      void this.pollCommands()
-    }, 30000)
-
     if (!options.skipCatchUp && this.shouldRunCatchUpSync(intervalMinutes, lastSyncedAt)) {
       console.log("[Sync] Scheduling a catch-up sync because the device is overdue.")
       this.scheduleCatchUpSync()
     }
 
-    // Initial command poll
+    // Initial command poll on startup
     void this.pollCommands()
 
-    // Real-time: Start listening for dashboard events
-    void this.startEventStream()
-
-    // Fallback polling: sync periodically if SSE hasn't delivered events
-    this.startPollFallback()
-  }
-
-  private async startEventStream() {
-    this.stopEventStream()
-
-    const { enabled, remoteBaseUrl, deviceId, deviceToken } = this.getSyncConfig()
-    if (!enabled || !remoteBaseUrl || !deviceId || !deviceToken) return
-
-    const url = `${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/events?deviceId=${deviceId}`
-    console.log(`[Sync] Connecting to real-time event stream: ${url}`)
-
-    this.eventStreamController = new AbortController()
-    const { signal } = this.eventStreamController
-
-    try {
-      // Using global fetch with ReadableStream for SSE in Electron Main
-      const response = await fetch(url, {
-        signal,
-        headers: {
-          Authorization: `Bearer ${deviceToken}`,
-          Accept: "text/event-stream",
-        },
-      })
-
-      if (!response.ok || !response.body) {
-        throw new Error(`Failed to open event stream: ${response.statusText}`)
-      }
-
-      this.reconnectAttempts = 0
-      // Don't reset lastEventReceivedAt on reconnect to avoid masking SSE failure
-      // from the fallback poll. Only update it when actual SSE data is received.
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-
-      while (true) {
-        const { value, done } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value, { stream: true })
-        const lines = chunk.split("\n")
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            this.lastEventReceivedAt = Date.now()
-            try {
-              const data = JSON.parse(line.slice(6))
-              console.log("[Sync] Real-time event received:", data.type)
-
-              if (
-                data.type === "POLICY_UPDATE" ||
-                data.type === "SYNC_REQUEST" ||
-                data.type === "MEMBERS_UPDATE"
-              ) {
-                console.log("[Sync] Triggering immediate sync from real-time command.")
-                void this.performSync()
-              }
-            } catch {
-              // Ignore heartbeat or malformed JSON
-            }
-          }
-        }
-      }
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === "AbortError") {
-        console.log("[Sync] Event stream aborted cleanly.")
-        return
-      }
-      console.warn("[Sync] Event stream error, reconnecting...", error)
-      // On SSE error, immediately do a catch-up sync to pick up missed events
-      void this.performSync()
-      this.reconnectEventStream()
-    }
-  }
-
-  private reconnectEventStream() {
-    this.stopEventStream()
-    // Faster reconnect: max 10s instead of 30s, start at 500ms
-    const delay = Math.min(10000, Math.pow(2, this.reconnectAttempts) * 500)
-    this.reconnectAttempts++
-
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer)
-    }
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null
-      void this.startEventStream()
-    }, delay)
-  }
-
-  private stopEventStream() {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer)
-      this.reconnectTimer = null
-    }
-    if (this.eventStreamController) {
-      this.eventStreamController.abort()
-      this.eventStreamController = null
-    }
-  }
-
-  private startPollFallback() {
-    this.stopPollFallback()
-    this.pollFallbackTimer = setInterval(() => {
-      // Only sync if we haven't received any SSE event recently
-      // (within the last 2x the poll interval)
-      const staleThreshold = this.pollFallbackIntervalMs * 2
-      const timeSinceLastEvent = Date.now() - this.lastEventReceivedAt
-      if (timeSinceLastEvent >= staleThreshold) {
-        console.log(
-          `[Sync] Fallback poll: No SSE events for ${(timeSinceLastEvent / 1000).toFixed(0)}s, syncing...`,
-        )
-        void this.performSync()
-      }
-    }, this.pollFallbackIntervalMs)
-  }
-
-  private stopPollFallback() {
-    if (this.pollFallbackTimer) {
-      clearInterval(this.pollFallbackTimer)
-      this.pollFallbackTimer = null
-    }
+    // Start dedicated command polling timer (every 30 seconds for WIPE, UPGRADE, etc.)
+    this.commandTimer = setInterval(() => {
+      void this.pollCommands()
+    }, 30_000)
   }
 
   stop() {
     this.clearCatchUpTimer()
     this.pendingSyncRequested = false
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer)
-      this.reconnectTimer = null
-    }
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer)
       this.debounceTimer = null
@@ -401,13 +264,13 @@ export class BackgroundSyncManager {
       clearInterval(this.commandTimer)
       this.commandTimer = null
     }
-    this.stopPollFallback()
-    this.stopEventStream()
   }
 
   private async pollCommands() {
     const { enabled, remoteBaseUrl, deviceToken } = this.getSyncConfig()
     if (!enabled || !remoteBaseUrl || !deviceToken) return
+    if (this.isPollingCommands) return
+    this.isPollingCommands = true
 
     try {
       const response = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/devices/commands`, {
@@ -431,6 +294,8 @@ export class BackgroundSyncManager {
       }
     } catch (error) {
       console.warn("[RemoteMgmt] Command polling failed:", error)
+    } finally {
+      this.isPollingCommands = false
     }
   }
 
@@ -525,6 +390,125 @@ export class BackgroundSyncManager {
     }
   }
 
+  private async pullMetadata(): Promise<{ success: boolean; message: string }> {
+    const { remoteBaseUrl, deviceToken, encryptionKey } = this.getSyncConfig()
+    if (!remoteBaseUrl || !deviceToken) {
+      return { success: false, message: "Missing remote connection configuration." }
+    }
+
+    try {
+      console.log("[Sync] Triggering automatic metadata pull sync...")
+      const pullResponse = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/pull`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${deviceToken}`,
+          "User-Agent": "Facenox-Desktop-Pull",
+        },
+        signal: AbortSignal.timeout(30000),
+      })
+
+      if (!pullResponse.ok) {
+        console.warn("[Sync] Automatic remote metadata pull failed: HTTP", pullResponse.status)
+        return {
+          success: false,
+          message: ` Remote metadata pull failed (HTTP ${pullResponse.status}).`,
+        }
+      }
+
+      const pullPayload = (await pullResponse.json()) as {
+        groups: Array<Record<string, unknown>>
+        members: Array<Record<string, unknown>>
+        face_embeddings?: Array<FaceEmbedding>
+      }
+
+      const importResponse = await fetch(`${backendService.getUrl()}/attendance/import-metadata`, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          groups: pullPayload.groups,
+          members: pullPayload.members,
+        }),
+        signal: AbortSignal.timeout(30000),
+      })
+
+      if (!importResponse.ok) {
+        console.warn("[Sync] Automatic local metadata import failed.")
+        return { success: false, message: " Metadata pull succeeded but local import failed." }
+      }
+
+      const importResult = (await importResponse.json()) as {
+        success?: boolean
+        groups_count: number
+        members_count: number
+      }
+      let pullMsg = ` Pulled ${importResult.groups_count} groups, ${importResult.members_count} members.`
+      console.log(`[Sync] Automatic metadata pull completed.${pullMsg}`)
+      state.mainWindow?.webContents.send("sync:data-changed")
+
+      // Import face embeddings from cloud using batch endpoint
+      if (encryptionKey && pullPayload.face_embeddings?.length) {
+        const batchEmbeddings: Array<{
+          person_id: string
+          embedding_bytes: string
+          embedding_dimension: number
+        }> = []
+        let decryptFailures = 0
+
+        for (const fe of pullPayload.face_embeddings) {
+          try {
+            const rawBytes = decryptEmbedding(fe.embedding_encrypted, encryptionKey)
+            const b64 = Buffer.from(rawBytes).toString("base64")
+            batchEmbeddings.push({
+              person_id: fe.person_id,
+              embedding_bytes: b64,
+              embedding_dimension: fe.embedding_dimension,
+            })
+          } catch (err) {
+            decryptFailures++
+            console.warn(`[Sync] Failed to decrypt embedding for ${fe.person_id}:`, err)
+            // Non-fatal: continue processing the rest of the members so corrupt or old keys don't brick sync
+          }
+        }
+
+        if (decryptFailures > 0) {
+          console.warn(
+            `[Sync] Skipped ${decryptFailures} embeddings due to decryption failure (possible key mismatch or legacy template).`,
+          )
+          pullMsg += ` (${decryptFailures} embeddings skipped due to key mismatch)`
+        }
+
+        if (batchEmbeddings.length > 0) {
+          try {
+            const embBatchResponse = await fetch(
+              `${backendService.getUrl()}/attendance/import-embeddings-batch`,
+              {
+                method: "POST",
+                headers: authHeaders({ "Content-Type": "application/json" }),
+                body: JSON.stringify({ embeddings: batchEmbeddings }),
+                signal: AbortSignal.timeout(30000),
+              },
+            )
+            const embBatchResult = (await embBatchResponse.json()) as { imported_count?: number }
+            if (embBatchResponse.ok && (embBatchResult.imported_count ?? 0) > 0) {
+              pullMsg += ` Imported ${embBatchResult.imported_count} face embeddings.`
+              console.log(`[Sync] ${pullMsg}`)
+            } else if (!embBatchResponse.ok) {
+              console.warn("[Sync] import-embeddings-batch failed:", embBatchResult)
+            }
+          } catch (batchErr) {
+            console.warn("[Sync] Failed to post batch embeddings:", batchErr)
+          }
+        }
+      }
+
+      return { success: true, message: pullMsg }
+    } catch (pullError) {
+      const errMsg = pullError instanceof Error ? pullError.message : "unknown"
+      console.warn("[Sync] Automatic metadata pull failed:", pullError)
+      return { success: false, message: ` Metadata pull error: ${errMsg}` }
+    }
+  }
+
   async performSync() {
     if (this.isSyncing) {
       // Queue a follow-up sync instead of silently dropping this request.
@@ -563,6 +547,13 @@ export class BackgroundSyncManager {
     console.log("[Sync] Triggering background auto-sync...")
 
     try {
+      // Step 1: Pull metadata (groups, members, face embeddings) from Cloud FIRST
+      // This guarantees that any changes made on Cloud Dashboard are absorbed locally before exporting
+      const pullResult = await this.pullMetadata()
+      const pullMsg = pullResult.message
+      const pullFailed = !pullResult.success
+
+      // Step 2: Export local attendance data
       const { lastSyncedAt } = this.getSyncConfig()
       let exportUrl = `${backendService.getUrl()}/attendance/export`
       if (lastSyncedAt) {
@@ -586,7 +577,7 @@ export class BackgroundSyncManager {
           attendanceExport.exported_at
         : new Date().toISOString()
 
-      // Export and encrypt face embeddings for cross-device sync
+      // Step 3: Export and encrypt face embeddings for cross-device sync
       let faceEmbeddings: SyncPushPayload["attendance_export"]["face_embeddings"] = []
       const { encryptionKey } = this.getSyncConfig()
       if (encryptionKey) {
@@ -621,88 +612,114 @@ export class BackgroundSyncManager {
         }
       }
 
-      const syncPayload: SyncPushPayload = {
-        schema_version: 1 as const,
-        snapshot_id: `${deviceId}:${exportedAt}`,
-        device_id: deviceId,
-        site_id: siteId,
-        app_version: getCurrentVersion(),
-        exported_at: exportedAt,
-        attendance_export: {
-          ...attendanceExport,
-          face_embeddings: faceEmbeddings.length > 0 ? faceEmbeddings : undefined,
-        },
-      }
-      const validatedPayload = syncPushSchema.parse(syncPayload)
+      // Step 4: Chunked Push (max 250 records per request to satisfy Vercel 4.5MB & PG 65535 parameter limit)
+      const allRecords = attendanceExport.records || []
+      const CHUNK_SIZE = 250
+      const totalChunks = Math.max(1, Math.ceil(allRecords.length / CHUNK_SIZE))
+      let lastPushResponsePayload: Record<string, unknown> | null = null
 
-      const remoteResponse = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/push`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${deviceToken}`,
-          "X-Facenox-Version": getCurrentVersion(),
-          "User-Agent": "Facenox-Desktop-Sync",
-        },
-        body: JSON.stringify(validatedPayload),
-        signal: AbortSignal.timeout(60000),
-      })
+      for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
+        const chunkRecords = allRecords.slice(chunkIdx * CHUNK_SIZE, (chunkIdx + 1) * CHUNK_SIZE)
+        const isFirstChunk = chunkIdx === 0
+        const snapshotId =
+          totalChunks > 1 ?
+            `${deviceId}:${exportedAt}:part-${chunkIdx + 1}-of-${totalChunks}`
+          : `${deviceId}:${exportedAt}`
 
-      const responseText = await remoteResponse.text()
-      let responsePayload: Record<string, unknown> | null = null
-      if (responseText) {
-        try {
-          responsePayload = JSON.parse(responseText) as Record<string, unknown>
-        } catch {
-          responsePayload = null
+        const syncPayload: SyncPushPayload = {
+          schema_version: 1 as const,
+          snapshot_id: snapshotId,
+          device_id: deviceId,
+          site_id: siteId,
+          app_version: getCurrentVersion(),
+          exported_at: exportedAt,
+          attendance_export: {
+            ...attendanceExport,
+            // Only send auxiliary metadata on first chunk to avoid redundant data transfer
+            groups: isFirstChunk ? attendanceExport.groups : [],
+            members: isFirstChunk ? attendanceExport.members : [],
+            sessions: isFirstChunk ? attendanceExport.sessions : [],
+            records: chunkRecords,
+            face_embeddings: isFirstChunk && faceEmbeddings.length > 0 ? faceEmbeddings : undefined,
+          },
         }
-      }
+        const validatedPayload = syncPushSchema.parse(syncPayload)
 
-      if (remoteResponse.status === 429) {
-        let retryAfterMs = 5000
-        if (typeof responsePayload?.retryAfterMs === "number" && responsePayload.retryAfterMs > 0) {
-          retryAfterMs = responsePayload.retryAfterMs
-        } else {
-          const retryHeader = remoteResponse.headers.get("Retry-After")
-          if (retryHeader) {
-            const parsedSeconds = parseInt(retryHeader, 10)
-            if (!Number.isNaN(parsedSeconds) && parsedSeconds > 0) {
-              retryAfterMs = parsedSeconds * 1000
+        const remoteResponse = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/push`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${deviceToken}`,
+            "X-Facenox-Version": getCurrentVersion(),
+            "X-Sync-Chunk": totalChunks > 1 ? "true" : "false",
+            "User-Agent": "Facenox-Desktop-Sync",
+          },
+          body: JSON.stringify(validatedPayload),
+          signal: AbortSignal.timeout(60000),
+        })
+
+        const responseText = await remoteResponse.text()
+        let responsePayload: Record<string, unknown> | null = null
+        if (responseText) {
+          try {
+            responsePayload = JSON.parse(responseText) as Record<string, unknown>
+          } catch {
+            responsePayload = null
+          }
+        }
+        lastPushResponsePayload = responsePayload
+
+        if (remoteResponse.status === 429) {
+          let retryAfterMs = 5000
+          if (
+            typeof responsePayload?.retryAfterMs === "number" &&
+            responsePayload.retryAfterMs > 0
+          ) {
+            retryAfterMs = responsePayload.retryAfterMs
+          } else {
+            const retryHeader = remoteResponse.headers.get("Retry-After")
+            if (retryHeader) {
+              const parsedSeconds = parseInt(retryHeader, 10)
+              if (!Number.isNaN(parsedSeconds) && parsedSeconds > 0) {
+                retryAfterMs = parsedSeconds * 1000
+              }
             }
+          }
+
+          console.log(
+            `[Sync] Push throttled by server on chunk ${chunkIdx + 1}/${totalChunks}. Scheduling automatic retry in ${retryAfterMs}ms.`,
+          )
+
+          this.triggerDebouncedSync(retryAfterMs)
+
+          return {
+            success: true,
+            message: `Sync queued (throttled). Retrying in ${Math.ceil(retryAfterMs / 1000)}s...`,
+            syncedAt: this.getSyncConfig().lastSyncedAt || undefined,
           }
         }
 
-        console.log(
-          `[Sync] Push throttled by server. Scheduling automatic silent retry in ${retryAfterMs}ms.`,
-        )
+        if (!remoteResponse.ok) {
+          let detail =
+            typeof responsePayload?.error === "string" ?
+              responsePayload.error
+            : responseText || `HTTP ${remoteResponse.status}`
 
-        // Reschedule debounced sync silently without flagging UI as fatal error
-        this.triggerDebouncedSync(retryAfterMs)
+          if (detail.startsWith("Sync rejected: ")) {
+            detail = detail.replace("Sync rejected: ", "")
+          }
 
-        return {
-          success: true,
-          message: `Sync queued (throttled). Retrying in ${Math.ceil(retryAfterMs / 1000)}s...`,
-          syncedAt: this.getSyncConfig().lastSyncedAt || undefined,
+          throw new Error(`Sync failed on chunk ${chunkIdx + 1}/${totalChunks}: ${detail}`)
         }
       }
 
-      if (!remoteResponse.ok) {
-        let detail =
-          typeof responsePayload?.error === "string" ?
-            responsePayload.error
-          : responseText || `HTTP ${remoteResponse.status}`
-
-        if (detail.startsWith("Sync rejected: ")) {
-          detail = detail.replace("Sync rejected: ", "")
-        }
-
-        throw new Error(`Sync failed: ${detail}`)
-      }
-
-      console.log("[Sync] Background sync successful.")
+      console.log(
+        `[Sync] Background sync push successful (${totalChunks} chunk${totalChunks > 1 ? "s" : ""}).`,
+      )
 
       // Process Remote Policy from Dashboard
-      if (responsePayload?.policy && typeof responsePayload.policy === "object") {
-        const policy = responsePayload.policy as {
+      if (lastPushResponsePayload?.policy && typeof lastPushResponsePayload.policy === "object") {
+        const policy = lastPushResponsePayload.policy as {
           forceLiveness?: boolean
           trackCheckout?: boolean
           lateThresholdEnabled?: boolean
@@ -735,129 +752,11 @@ export class BackgroundSyncManager {
       }
       const syncedAt = new Date().toISOString()
 
-      // Automatically pull metadata (groups & members) from cloud dashboard
-      let pullMsg = ""
-      let pullFailed = false
-      try {
-        console.log("[Sync] Triggering automatic metadata pull sync...")
-        const pullResponse = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/pull`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${deviceToken}`,
-            "User-Agent": "Facenox-Desktop-Pull",
-          },
-          signal: AbortSignal.timeout(30000),
-        })
-
-        if (pullResponse.ok) {
-          const pullPayload = (await pullResponse.json()) as {
-            groups: Array<Record<string, unknown>>
-            members: Array<Record<string, unknown>>
-            face_embeddings?: Array<FaceEmbedding>
-          }
-
-          const importResponse = await fetch(
-            `${backendService.getUrl()}/attendance/import-metadata`,
-            {
-              method: "POST",
-              headers: authHeaders({ "Content-Type": "application/json" }),
-              body: JSON.stringify({
-                groups: pullPayload.groups,
-                members: pullPayload.members,
-              }),
-              signal: AbortSignal.timeout(30000),
-            },
-          )
-
-          if (importResponse.ok) {
-            const importResult = (await importResponse.json()) as {
-              success?: boolean
-              groups_count: number
-              members_count: number
-            }
-            pullMsg = ` Pulled ${importResult.groups_count} groups, ${importResult.members_count} members.`
-            console.log(`[Sync] Automatic metadata pull completed.${pullMsg}`)
-            state.mainWindow?.webContents.send("sync:data-changed")
-
-            // Import face embeddings from cloud using batch endpoint
-            const { encryptionKey } = this.getSyncConfig()
-            if (encryptionKey && pullPayload.face_embeddings?.length) {
-              const batchEmbeddings: Array<{
-                person_id: string
-                embedding_bytes: string
-                embedding_dimension: number
-              }> = []
-              let consecutiveDecryptFailures = 0
-              const MAX_CONSECUTIVE_DECRYPT_FAILURES = 3
-
-              for (const fe of pullPayload.face_embeddings) {
-                try {
-                  const rawBytes = decryptEmbedding(fe.embedding_encrypted, encryptionKey)
-                  consecutiveDecryptFailures = 0
-                  const b64 = Buffer.from(rawBytes).toString("base64")
-                  batchEmbeddings.push({
-                    person_id: fe.person_id,
-                    embedding_bytes: b64,
-                    embedding_dimension: fe.embedding_dimension,
-                  })
-                } catch (err) {
-                  consecutiveDecryptFailures++
-                  console.warn(`[Sync] Failed to decrypt embedding for ${fe.person_id}:`, err)
-
-                  if (consecutiveDecryptFailures >= MAX_CONSECUTIVE_DECRYPT_FAILURES) {
-                    console.error(
-                      `[Sync] Aborting embedding import: ${MAX_CONSECUTIVE_DECRYPT_FAILURES} consecutive decryption failures. Possible encryption key mismatch.`,
-                    )
-                    pullMsg += " Embedding sync aborted: encryption key may be invalid."
-                    break
-                  }
-                }
-              }
-
-              if (batchEmbeddings.length > 0) {
-                try {
-                  const embBatchResponse = await fetch(
-                    `${backendService.getUrl()}/attendance/import-embeddings-batch`,
-                    {
-                      method: "POST",
-                      headers: authHeaders({ "Content-Type": "application/json" }),
-                      body: JSON.stringify({ embeddings: batchEmbeddings }),
-                      signal: AbortSignal.timeout(30000),
-                    },
-                  )
-                  const embBatchResult = await embBatchResponse.json()
-                  if (embBatchResponse.ok && embBatchResult.imported_count > 0) {
-                    pullMsg += ` Imported ${embBatchResult.imported_count} face embeddings.`
-                    console.log(`[Sync] ${pullMsg}`)
-                  } else if (!embBatchResponse.ok) {
-                    console.warn("[Sync] import-embeddings-batch failed:", embBatchResult)
-                  }
-                } catch (batchErr) {
-                  console.warn("[Sync] Failed to post batch embeddings:", batchErr)
-                }
-              }
-            }
-          } else {
-            pullMsg = " Metadata pull succeeded but local import failed."
-            pullFailed = true
-            console.warn("[Sync] Automatic local metadata import failed.")
-          }
-        } else {
-          pullMsg = " Remote metadata pull failed."
-          pullFailed = true
-          console.warn("[Sync] Automatic remote metadata pull failed.")
-        }
-      } catch (pullError) {
-        pullMsg = ` Metadata pull error: ${pullError instanceof Error ? pullError.message : "unknown"}`
-        pullFailed = true
-        console.warn("[Sync] Automatic metadata pull failed:", pullError)
-      }
-
       const syncStatus = pullFailed ? "error" : "success"
       const syncMessage =
         pullFailed ? `Snapshot synced but:${pullMsg}`
-        : typeof responsePayload?.status === "string" ?
-          `Snapshot ${responsePayload.status}.${pullMsg}`
+        : typeof lastPushResponsePayload?.status === "string" ?
+          `Snapshot ${lastPushResponsePayload.status}.${pullMsg}`
         : `Snapshot synced successfully.${pullMsg}`
 
       this.setLastSyncState({
@@ -865,6 +764,9 @@ export class BackgroundSyncManager {
         lastSyncStatus: syncStatus,
         lastSyncMessage: syncMessage,
       })
+
+      // Check for any pending remote commands during sync
+      void this.pollCommands()
 
       return {
         success: !pullFailed,
