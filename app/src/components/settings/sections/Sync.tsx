@@ -462,9 +462,8 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
 
                         {/* Single seamless PIN capsule */}
                         <div className="flex items-center justify-center gap-2">
-                          <div className="inline-flex items-center gap-2 rounded-lg bg-white/[0.04] px-4 py-2 font-mono text-2xl font-bold tracking-[0.25em] text-white select-all">
+                          <div className="inline-flex items-center gap-3 rounded-lg bg-white/[0.04] px-4 py-2 font-mono text-2xl font-bold tracking-[0.25em] text-white select-all">
                             <span>{reversePairing.userCode.slice(0, 3)}</span>
-                            <span className="text-white/20">—</span>
                             <span>{reversePairing.userCode.slice(3, 6)}</span>
                           </div>
                           <button
@@ -493,17 +492,12 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         </div>
 
                         {/* Live waiting indicator */}
-                        <div className="flex items-center justify-center gap-2 text-xs text-white/45">
-                          <span className="relative flex size-2">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
-                            <span className="relative inline-flex size-2 rounded-full bg-cyan-500"></span>
-                          </span>
-                          <span>
-                            Waiting for authorization...{" "}
-                            <span className="font-mono text-white/35">
-                              ({Math.floor(secondsLeft / 60)}:
-                              {(secondsLeft % 60).toString().padStart(2, "0")})
-                            </span>
+                        <div className="flex items-center justify-center gap-1.5 text-xs text-white/40">
+                          <span>Waiting for authorization</span>
+                          <span className="text-white/20">·</span>
+                          <span className="font-mono text-white/30">
+                            {Math.floor(secondsLeft / 60)}:
+                            {(secondsLeft % 60).toString().padStart(2, "0")}
                           </span>
                         </div>
                       </motion.div>
