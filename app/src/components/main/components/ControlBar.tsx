@@ -42,7 +42,7 @@ export function ControlBar({
         label: "Stop",
         className:
           "bg-rose-500/5 border border-rose-500/10 text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20 hover:shadow-[0_0_15px_rgba(244,63,94,0.18)] tracking-wider",
-        tooltip: "Stop attendance logging",
+        tooltip: undefined,
         enabled: true,
       }
     }
@@ -87,16 +87,24 @@ export function ControlBar({
       }
     }
 
+    if (!hasCameraDevices) {
+      return {
+        label: "Start Scan",
+        className:
+          "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/40 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/40",
+        tooltip: "No camera detected",
+        enabled: false,
+      }
+    }
+
     const cyanStyle =
       "bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25 hover:text-cyan-200 hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.35)] tracking-wider"
-
-    const standardTooltip = hasCameraDevices ? "Start attendance tracking" : "No camera detected"
 
     return {
       label: "Start Scan",
       className: cyanStyle,
-      tooltip: standardTooltip,
-      enabled: hasCameraDevices,
+      tooltip: undefined,
+      enabled: true,
     }
   }
 
