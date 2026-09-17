@@ -498,7 +498,6 @@ export function Database({
                       onCancelEditing={cancelEditing}
                       onDeleteGroup={handleDeleteGroup}
                       onDeleteMember={handleDeleteMember}
-                      isPaired={isPaired}
                       onGroupsChanged={onGroupsChanged}
                     />
                   ))}

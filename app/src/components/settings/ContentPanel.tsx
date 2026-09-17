@@ -193,8 +193,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         validInitialGroup &&
         addMemberHandler &&
         members.length > 0 &&
-        !enrollmentMode &&
-        !isPaired
+        !enrollmentMode
       ) {
         actions = (
           <div className="flex items-center gap-2">
@@ -215,7 +214,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             Back to Members
           </button>
         )
-      } else if (groupInitialSection === "overview" && validInitialGroup && !isPaired) {
+      } else if (groupInitialSection === "overview" && validInitialGroup) {
         actions = (
           <button
             onClick={openEditGroup}
@@ -311,7 +310,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     reportsExportHandlers,
     setGroupInitialSection,
     syncConfig,
-    isPaired,
   ])
 
   const handleSpoofDetectionToggle = (enabled: boolean) => {

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { attendanceManager, updaterService } from "@/services"
-import { DEFAULT_REMOTE_BASE_URL } from "@/services/syncDefaults"
+import { attendanceManager } from "@/services"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
 import { useAttendanceStore } from "@/components/main/stores"
 import { generateDisplayNames } from "@/utils"
@@ -237,35 +236,7 @@ export function Members({
     }
   })()
 
-  const [isPaired, setIsPaired] = useState(false)
-  const [remoteBaseUrl, setRemoteBaseUrl] = useState("")
   const [memberToDelete, setMemberToDelete] = useState<AttendanceMember | null>(null)
-
-  useEffect(() => {
-    if (!window.electronAPI?.sync) return
-
-    const fetchConfig = () => {
-      window.electronAPI.sync
-        .getConfig()
-        .then((c) => {
-          setIsPaired(c.connected)
-          setRemoteBaseUrl(c.remoteBaseUrl || "")
-        })
-        .catch(console.error)
-    }
-
-    fetchConfig()
-
-    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
-      fetchConfig()
-    })
-
-    return unsubscribe
-  }, [])
-
-  const isCustomServer = Boolean(remoteBaseUrl && remoteBaseUrl.trim() !== DEFAULT_REMOTE_BASE_URL)
-  const dashboardUrl = remoteBaseUrl?.trim() || DEFAULT_REMOTE_BASE_URL
-  const dashboardLabel = isCustomServer ? "Open Dashboard" : "Open Facenox Cloud"
 
   const [isBulkConsentModalOpen, setIsBulkConsentModalOpen] = useState(false)
   const [bulkConsentScope, setBulkConsentScope] = useState<"all" | "selected">("all")
@@ -373,13 +344,7 @@ export function Members({
               : "Add, edit, and remove members to manage profiles and enrollment status."
             }
             action={
-              isPaired ?
-                {
-                  label: dashboardLabel,
-                  onClick: () => updaterService.openReleasePage(dashboardUrl),
-                  iconClass: "fa-solid fa-arrow-up-right-from-square text-[9px]",
-                }
-              : onAdd ?
+              onAdd ?
                 {
                   label: "Add Member",
                   onClick: onAdd,
@@ -725,8 +690,8 @@ export function Members({
                         isSelected={selectedIds.has(member.person_id)}
                         isSelectionMode={selectedIds.size >= 2}
                         onToggleSelect={toggleSelect}
-                        onEdit={isPaired ? undefined : onEdit}
-                        onDelete={isPaired ? undefined : setMemberToDelete}
+                        onEdit={onEdit}
+                        onDelete={setMemberToDelete}
                         onResetFace={handleResetFace}
                         isConsentCertified={Boolean(group?.settings?.biometric_consent_certified)}
                       />

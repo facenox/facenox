@@ -1,4 +1,4 @@
-import React, { useMemo, memo, useEffect, useState } from "react"
+import React, { useMemo, memo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { Members, Overview, Reports } from "@/components/group/sections"
@@ -27,27 +27,6 @@ function GroupContentComponent({
   const openEditMember = useGroupUIStore((state) => state.openEditMember)
   const openCreateGroup = useGroupUIStore((state) => state.openCreateGroup)
 
-  const [isPaired, setIsPaired] = useState(false)
-
-  useEffect(() => {
-    if (!window.electronAPI?.sync) return
-
-    const fetchConfig = () => {
-      window.electronAPI.sync
-        .getConfig()
-        .then((c) => setIsPaired(c.connected))
-        .catch(console.error)
-    }
-
-    fetchConfig()
-
-    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
-      fetchConfig()
-    })
-
-    return unsubscribe
-  }, [])
-
   const handleMembersChange = () => {
     onMembersChange()
   }
@@ -72,20 +51,14 @@ function GroupContentComponent({
     return (
       <div className="h-full px-6 pt-6">
         <EmptyState
-          title={
-            hasGroups ? "Select a group to continue"
-            : isPaired ?
-              "Groups are managed from Dashboard"
-            : "No groups created"
-          }
+          title={hasGroups ? "Select a group to continue" : "No groups created"}
           description={
-            hasGroups ? "Choose a group from the sidebar to view overview, reports, and members."
-            : isPaired ?
-              "Create or assign groups from the Facenox Cloud dashboard to sync them with this kiosk."
+            hasGroups ?
+              "Choose a group from the sidebar to view overview, reports, and members."
             : "Create a group to start organizing members and recording attendance."
           }
           action={
-            !isPaired ?
+            !hasGroups ?
               {
                 label: "Create Group",
                 onClick: openCreateGroup,
@@ -107,12 +80,7 @@ function GroupContentComponent({
             key={`overview-${selectedGroupId}`}
             {...motionProps}
             className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden">
-            <Overview
-              group={selectedGroup}
-              members={members}
-              onAddMember={isPaired ? undefined : openAddMember}
-              isPaired={isPaired}
-            />
+            <Overview group={selectedGroup} members={members} onAddMember={openAddMember} />
           </motion.div>
         )}
 
@@ -125,8 +93,7 @@ function GroupContentComponent({
               group={selectedGroup}
               onDaysTrackedChange={onDaysTrackedChange}
               onExportHandlersReady={onExportHandlersReady}
-              onAddMember={isPaired ? undefined : openAddMember}
-              isPaired={isPaired}
+              onAddMember={openAddMember}
             />
           </motion.div>
         )}
@@ -140,8 +107,8 @@ function GroupContentComponent({
               group={selectedGroup}
               members={members}
               onMembersChange={handleMembersChange}
-              onEdit={isPaired ? undefined : openEditMember}
-              onAdd={isPaired ? undefined : openAddMember}
+              onEdit={openEditMember}
+              onAdd={openAddMember}
               deselectMemberTrigger={deselectMemberTrigger}
               onHasSelectedMemberChange={onHasSelectedMemberChange}
             />

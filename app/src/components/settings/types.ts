@@ -21,6 +21,7 @@ export interface AttendanceSettings {
   maxRecognitionFacesPerFrame: number
   trackCheckout: boolean
   dataRetentionDays?: number
+  cloudRetentionDays?: number
   forceLiveness?: boolean
   biometricConsentCertified?: boolean
 }

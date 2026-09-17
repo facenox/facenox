@@ -137,9 +137,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
           ...(settings.policyOverrides.attendanceCooldownSeconds !== undefined && {
             attendanceCooldownSeconds: settings.policyOverrides.attendanceCooldownSeconds,
           }),
-          ...(settings.policyOverrides.dataRetentionDays !== undefined && {
-            dataRetentionDays: settings.policyOverrides.dataRetentionDays,
-          }),
+          cloudRetentionDays: settings.policyOverrides.dataRetentionDays,
         }}
         updateAttendanceSetting={settings.updateAttendanceSetting}
         dropdownValue={settings.dropdownValue}

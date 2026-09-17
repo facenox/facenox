@@ -38,6 +38,27 @@ export function Attendance({
       attendanceSettings.maxRecognitionFacesPerFrame
     : 5
 
+  const cloudCeiling =
+    (
+      isPaired &&
+      typeof attendanceSettings.cloudRetentionDays === "number" &&
+      attendanceSettings.cloudRetentionDays > 0
+    ) ?
+      attendanceSettings.cloudRetentionDays
+    : null
+  const isCloudUnlimited =
+    isPaired &&
+    typeof attendanceSettings.cloudRetentionDays === "number" &&
+    attendanceSettings.cloudRetentionDays <= 0
+
+  const rawLocalDays = attendanceSettings.dataRetentionDays ?? 0
+  const effectiveDays =
+    cloudCeiling ?
+      rawLocalDays > 0 && rawLocalDays <= cloudCeiling ?
+        rawLocalDays
+      : cloudCeiling
+    : Math.max(0, rawLocalDays)
+
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
       <div className="overflow-hidden">
@@ -438,85 +459,102 @@ export function Attendance({
 
           <div className="h-px w-full bg-white/8" />
 
+          {/* Retention Policy (Local Kiosk Cache with Cloud Plan Constraint) */}
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <div className="text-sm font-medium text-white/90">Retention Policy</div>
+                {isPaired &&
+                  (cloudCeiling ?
+                    <span className="inline-flex items-center gap-1 rounded border border-cyan-500/25 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300">
+                      <i className="fa-solid fa-cloud text-[9px]" /> Cloud plan: {cloudCeiling}d max
+                    </span>
+                  : isCloudUnlimited ?
+                    <span className="inline-flex items-center gap-1 rounded border border-cyan-500/25 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300">
+                      <i className="fa-solid fa-cloud text-[9px]" /> Cloud plan: Unlimited
+                    </span>
+                  : null)}
                 <InfoPopover
                   title="Data Retention"
-                  description="Controls how long attendance records and biometric signatures are stored in the local database."
+                  description="Controls how long attendance records and biometric signatures are kept on this local physical device."
                   details={[
-                    "Pruning occurs automatically every 24 hours.",
-                    "Expired records are permanently deleted.",
-                    "Setting this to 0 disables automatic deletion.",
+                    "Pruning runs automatically every 24 hours on this kiosk.",
+                    "Expired records are permanently deleted from the local database to free up disk space.",
+                    isPaired && cloudCeiling ?
+                      `When paired, local retention cannot exceed your cloud subscription window of ${cloudCeiling} days.`
+                    : "Setting this to 0 disables automatic deletion and keeps local records indefinitely.",
                   ]}
                   detailsNode={[
                     <div
-                      key="tip"
+                      key="retention-tip"
                       data-hide-chevron
                       className="rounded-md bg-white/5 p-2 text-[11px] text-white/65">
                       <span className="font-medium text-white/65">Tip:</span> Shorter retention
                       periods keep the app faster and comply better with modern privacy laws.
                     </div>,
                   ]}
+                  side="right"
                 />
               </div>
               <div className="mt-0.5 text-xs text-white/65">
-                {isPaired ?
-                  "Synchronized with Facenox Cloud compliance plan data."
-                : (() => {
-                    const totalDays = attendanceSettings.dataRetentionDays
-                    if (!totalDays || totalDays <= 0) return "Keep all records forever."
-
-                    const years = Math.floor(totalDays / 365)
-                    const remainingDays = totalDays % 365
-                    const months = Math.floor(remainingDays / 30)
-
-                    let timeStr = ""
-                    if (years > 0) {
-                      timeStr += `${years} ${years === 1 ? "year" : "years"}`
-                      if (months > 0) {
-                        timeStr += ` and ${months} ${months === 1 ? "month" : "months"}`
-                      }
-                    } else if (months > 0) {
-                      timeStr = `${months} ${months === 1 ? "month" : "months"}`
-                    } else {
-                      timeStr = `${totalDays} ${totalDays === 1 ? "day" : "days"}`
+                {(() => {
+                  if (cloudCeiling) {
+                    if (effectiveDays === cloudCeiling) {
+                      return `Local records are pruned after ${cloudCeiling} days (matches cloud plan limit). You may lower this to save physical disk space.`
                     }
+                    return `Local records are pruned after ${effectiveDays} days to save disk space (Cloud keeps up to ${cloudCeiling} days).`
+                  }
+                  if (isCloudUnlimited) {
+                    return effectiveDays <= 0 ?
+                        "Cloud plan allows unlimited history. Local records are kept forever."
+                      : `Cloud plan allows unlimited history. Local records older than ${effectiveDays} days are pruned automatically.`
+                  }
+                  if (effectiveDays <= 0) return "Keep all records forever."
 
-                    return `Delete records older than ${timeStr} automatically.`
-                  })()
-                }
+                  const years = Math.floor(effectiveDays / 365)
+                  const remainingDays = effectiveDays % 365
+                  const months = Math.floor(remainingDays / 30)
+
+                  let timeStr = ""
+                  if (years > 0) {
+                    timeStr += `${years} ${years === 1 ? "year" : "years"}`
+                    if (months > 0) {
+                      timeStr += ` and ${months} ${months === 1 ? "month" : "months"}`
+                    }
+                  } else if (months > 0) {
+                    timeStr = `${months} ${months === 1 ? "month" : "months"}`
+                  } else {
+                    timeStr = `${effectiveDays} ${effectiveDays === 1 ? "day" : "days"}`
+                  }
+
+                  return `Delete records older than ${timeStr} automatically.`
+                })()}
               </div>
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">
-              {isPaired && (attendanceSettings.dataRetentionDays ?? 0) <= 0 ?
-                <>
-                  <span className="text-[11px] font-medium text-white/40">lifetime</span>
-                  <span className="flex w-14 items-center justify-center text-xs font-bold text-cyan-400">
-                    ∞
-                  </span>
-                </>
-              : <>
-                  <span className="text-[11px] font-medium text-white/65">
-                    {(attendanceSettings.dataRetentionDays ?? 0) <= 0 ? "" : "days"}
-                  </span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={Math.max(0, attendanceSettings.dataRetentionDays ?? 0)}
-                    disabled={isPaired}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\D/g, "")
-                      const num = raw === "" ? 0 : parseInt(raw, 10)
-                      onDataRetentionChange(Math.min(3650, num))
-                    }}
-                    className={`w-14 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none focus:border-white/20 ${
-                      isPaired ? "cursor-not-allowed opacity-40 select-none" : ""
-                    }`}
-                  />
-                </>
-              }
+              <span className="text-[11px] font-medium text-white/65">
+                {effectiveDays <= 0 ? "forever" : "days"}
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={effectiveDays}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "")
+                  const num = raw === "" ? 0 : parseInt(raw, 10)
+                  if (cloudCeiling) {
+                    onDataRetentionChange(Math.min(cloudCeiling, num))
+                  } else {
+                    onDataRetentionChange(Math.min(3650, num))
+                  }
+                }}
+                onBlur={() => {
+                  if (cloudCeiling && (attendanceSettings.dataRetentionDays ?? 0) <= 0) {
+                    onDataRetentionChange(cloudCeiling)
+                  }
+                }}
+                className="w-14 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none focus:border-white/20"
+              />
             </div>
           </div>
         </div>

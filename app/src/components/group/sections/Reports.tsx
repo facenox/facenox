@@ -13,8 +13,6 @@ import { exportReportToCSV } from "@/components/group/sections/reports/utils/exp
 import { EmptyState } from "@/components/group/shared/EmptyState"
 import { EditSessionModal } from "@/components/group/sections/reports/components/EditSessionModal"
 import { attendanceManager } from "@/services/AttendanceManager"
-import { updaterService } from "@/services"
-import { DEFAULT_REMOTE_BASE_URL } from "@/services/syncDefaults"
 import { Spinner } from "@/components/common"
 
 import type { ColumnKey, RowData } from "@/components/group/sections/reports/types"
@@ -41,34 +39,9 @@ export function Reports({
   onDaysTrackedChange,
   onExportHandlersReady,
   onAddMember,
-  isPaired,
 }: ReportsProps) {
   const storeMembers = useGroupStore((state) => state.members)
   const [editingRow, setEditingRow] = useState<RowData | null>(null)
-  const [remoteBaseUrl, setRemoteBaseUrl] = useState("")
-
-  useEffect(() => {
-    if (!window.electronAPI?.sync) return
-
-    const fetchConfig = () => {
-      window.electronAPI.sync
-        .getConfig()
-        .then((c) => setRemoteBaseUrl(c.remoteBaseUrl || ""))
-        .catch(console.error)
-    }
-
-    fetchConfig()
-
-    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
-      fetchConfig()
-    })
-
-    return unsubscribe
-  }, [])
-
-  const isCustomServer = Boolean(remoteBaseUrl && remoteBaseUrl.trim() !== DEFAULT_REMOTE_BASE_URL)
-  const dashboardUrl = remoteBaseUrl?.trim() || DEFAULT_REMOTE_BASE_URL
-  const dashboardLabel = isCustomServer ? "Open Dashboard" : "Open Facenox Cloud"
 
   // Stores enough context to undo the last correction within a short window
   const [undoToast, setUndoToast] = useState<{
@@ -174,21 +147,9 @@ export function Reports({
               className="flex flex-1 items-center justify-center">
               <EmptyState
                 title="This group has no members"
-                description={
-                  isPaired ?
-                    isCustomServer ?
-                      "Members are managed on your custom server dashboard."
-                    : "Members are managed in Facenox Cloud."
-                  : "Generate custom attendance reports and export attendance data."
-                }
+                description="Add members to start generating reports and viewing attendance data."
                 action={
-                  isPaired ?
-                    {
-                      label: dashboardLabel,
-                      onClick: () => updaterService.openReleasePage(dashboardUrl),
-                      iconClass: "fa-solid fa-arrow-up-right-from-square text-[9px]",
-                    }
-                  : onAddMember ?
+                  onAddMember ?
                     {
                       label: "Add Member",
                       onClick: onAddMember,

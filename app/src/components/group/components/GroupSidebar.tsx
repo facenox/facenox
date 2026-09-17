@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react"
 import { Dropdown, Tooltip } from "@/components/shared"
 import { generateGroupDisplayNames } from "@/utils"
 
@@ -15,26 +14,6 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
   const { selectedGroup, groups, setSelectedGroup } = useGroupStore()
   const { activeSection, isSidebarCollapsed, setActiveSection, toggleSidebar } = useGroupUIStore()
   const { openCreateGroup } = useGroupModals()
-  const [isPaired, setIsPaired] = useState(false)
-
-  useEffect(() => {
-    if (!window.electronAPI?.sync) return
-
-    const fetchConfig = () => {
-      window.electronAPI.sync
-        .getConfig()
-        .then((c) => setIsPaired(c.connected))
-        .catch(console.error)
-    }
-
-    fetchConfig()
-
-    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
-      fetchConfig()
-    })
-
-    return unsubscribe
-  }, [])
 
   return (
     <aside
@@ -70,20 +49,14 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
                 align="left"
               />
             </div>
-            {isPaired ?
-              <div className="flex items-center gap-1.5 text-[9px] font-bold tracking-wider text-cyan-400/60 uppercase">
-                <i className="fa-solid fa-cloud-check text-[8px]" />
-                <span>From Dashboard</span>
-              </div>
-            : <Tooltip content="New Group" position="top">
-                <button
-                  onClick={openCreateGroup}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-[rgba(24,30,38,0.85)]"
-                  aria-label="New Group">
-                  <span className="text-lg">+</span>
-                </button>
-              </Tooltip>
-            }
+            <Tooltip content="New Group" position="top">
+              <button
+                onClick={openCreateGroup}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-[rgba(24,30,38,0.85)]"
+                aria-label="New Group">
+                <span className="text-lg">+</span>
+              </button>
+            </Tooltip>
           </div>
         </div>
       )}
