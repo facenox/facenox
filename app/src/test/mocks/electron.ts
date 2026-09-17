@@ -61,6 +61,8 @@ export interface MockElectronAPI extends BackendServiceAPI {
     getConfig: Mock
     updateConfig: Mock
     pairDevice: Mock
+    initiateReversePairing: Mock
+    pollDeviceAuthorization: Mock
     disconnectDevice: Mock
     exportData: Mock
     pickImportFile: Mock
@@ -192,6 +194,20 @@ export function createElectronAPIMock(): MockElectronAPI {
         message: "Device paired successfully.",
         initialSyncSucceeded: true,
         config: createSyncConfig({ connected: true }),
+      }),
+      initiateReversePairing: vi.fn().mockResolvedValue({
+        success: true,
+        data: {
+          deviceCode: "mock-device-code",
+          userCode: "749120",
+          verificationUri: "https://facenox.cloud/pair",
+          verificationUriComplete: "https://facenox.cloud/pair?code=749120",
+          expiresIn: 900,
+          interval: 3,
+        },
+      }),
+      pollDeviceAuthorization: vi.fn().mockResolvedValue({
+        status: "pending",
       }),
       disconnectDevice: vi.fn().mockResolvedValue({
         success: true,

@@ -207,6 +207,46 @@ declare global {
         unsyncedSessionsCount?: number
       }
     }>
+    initiateReversePairing: (input?: { remoteBaseUrl?: string; deviceName?: string }) => Promise<{
+      success: boolean
+      error?: string
+      data?: {
+        deviceCode: string
+        userCode: string
+        verificationUri: string
+        verificationUriComplete: string
+        expiresIn: number
+        interval: number
+      }
+    }>
+    pollDeviceAuthorization: (input: {
+      remoteBaseUrl?: string
+      deviceCode: string
+      deviceName?: string
+    }) => Promise<{
+      status: "pending" | "approved" | "expired" | "denied" | "error" | "network_error"
+      success?: boolean
+      message?: string
+      error?: string
+      initialSyncSucceeded?: boolean
+      config?: {
+        enabled: boolean
+        remoteBaseUrl: string
+        organizationId: string
+        organizationName: string
+        siteId: string
+        siteName: string
+        deviceId: string
+        deviceName: string
+        intervalMinutes: number
+        lastSyncedAt: string | null
+        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncMessage: string | null
+        connected: boolean
+        unsyncedRecordsCount?: number
+        unsyncedSessionsCount?: number
+      }
+    }>
     disconnectDevice: () => Promise<{
       success: boolean
       warning?: string | null

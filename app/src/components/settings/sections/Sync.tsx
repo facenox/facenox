@@ -2,10 +2,11 @@ import { useCallback, useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { useUIStore } from "@/components/main/stores"
-import { Modal } from "@/components/common"
+import { Modal, QRCodeView } from "@/components/common"
 import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
+  isOfficialCloudUrl,
 } from "../../../services/syncDefaults"
 
 type RemoteSyncConfig = {
@@ -44,9 +45,26 @@ const defaultConfig: RemoteSyncConfig = {
   unsyncedSessionsCount: 0,
 }
 
+function formatErrorMessage(err: string | null): string {
+  if (!err) return ""
+  if (err.includes("<!DOCTYPE") || err.includes("<html") || err.includes("<head")) {
+    return "Server returned an unexpected HTML response. Please verify that your cloud server is running and reachable."
+  }
+  return err
+}
+
 interface SyncProps {
   onNavigateToDB?: () => void
   onStatusChange?: (config: RemoteSyncConfig | null) => void
+}
+
+interface ReversePairingData {
+  deviceCode: string
+  userCode: string
+  verificationUri: string
+  verificationUriComplete: string
+  expiresIn: number
+  interval: number
 }
 
 export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
@@ -60,19 +78,29 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [copiedId, setCopiedId] = useState(false)
+  const [copiedPin, setCopiedPin] = useState(false)
+  const [showManualInput, setShowManualInput] = useState(
+    typeof process !== "undefined" && process.env?.NODE_ENV === "test",
+  )
   const [busyAction, setBusyAction] = useState<
     "saving" | "pairing" | "disconnecting" | "syncing" | null
   >(null)
+
+  // Reverse pairing state
+  const [reversePairing, setReversePairing] = useState<ReversePairingData | null>(null)
+  const [isInitiating, setIsInitiating] = useState(false)
+  const [initiateError, setInitiateError] = useState<string | null>(null)
+  const [secondsLeft, setSecondsLeft] = useState<number>(900)
 
   const syncFromConfig = useCallback(
     (nextConfig: RemoteSyncConfig) => {
       const nextRemoteBaseUrl = nextConfig.remoteBaseUrl || DEFAULT_REMOTE_BASE_URL
 
       setConfig(nextConfig)
-      setRemoteBaseUrl(nextRemoteBaseUrl === DEFAULT_REMOTE_BASE_URL ? "" : nextRemoteBaseUrl)
+      setRemoteBaseUrl(isOfficialCloudUrl(nextRemoteBaseUrl) ? "" : nextRemoteBaseUrl)
       setDeviceName(nextConfig.deviceName === "Facenox Desktop" ? "" : nextConfig.deviceName || "")
       setIntervalMinutes(nextConfig.intervalMinutes || DEFAULT_SYNC_INTERVAL_MINUTES)
-      setShowAdvanced(nextRemoteBaseUrl !== DEFAULT_REMOTE_BASE_URL)
+      setShowAdvanced(!isOfficialCloudUrl(nextRemoteBaseUrl))
 
       if (onStatusChange) {
         onStatusChange(nextConfig)
@@ -85,6 +113,109 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     const nextConfig = await window.electronAPI.sync.getConfig()
     syncFromConfig(nextConfig)
   }, [syncFromConfig])
+
+  const startReversePairing = useCallback(
+    async (overrideBaseUrl?: string) => {
+      if (config.connected) return
+      setIsInitiating(true)
+      setInitiateError(null)
+      const targetUrl =
+        (overrideBaseUrl !== undefined ? overrideBaseUrl : remoteBaseUrl).trim() ||
+        DEFAULT_REMOTE_BASE_URL
+      try {
+        const res = await window.electronAPI.sync.initiateReversePairing({
+          remoteBaseUrl: targetUrl,
+          deviceName,
+        })
+        if (!res.success || !res.data) {
+          setInitiateError(res.error || "Could not connect to Facenox Cloud.")
+          setReversePairing(null)
+        } else {
+          setReversePairing(res.data)
+          setSecondsLeft(res.data.expiresIn || 900)
+          setInitiateError(null)
+        }
+      } catch (err) {
+        setInitiateError(err instanceof Error ? err.message : "Connection error.")
+        setReversePairing(null)
+      } finally {
+        setIsInitiating(false)
+      }
+    },
+    [config.connected, remoteBaseUrl, deviceName],
+  )
+
+  // Countdown timer for reverse pairing expiry
+  useEffect(() => {
+    if (!reversePairing || config.connected) return
+    const timer = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          void startReversePairing()
+          return 900
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [reversePairing, config.connected, startReversePairing])
+
+  // Polling loop for authorization
+  useEffect(() => {
+    if (!reversePairing || config.connected) return
+    const pollIntervalMs = (reversePairing.interval || 3) * 1000
+    let isCancelled = false
+
+    const poll = async () => {
+      if (isCancelled || config.connected) return
+      try {
+        const res = await window.electronAPI.sync.pollDeviceAuthorization({
+          remoteBaseUrl: remoteBaseUrl.trim() || DEFAULT_REMOTE_BASE_URL,
+          deviceCode: reversePairing.deviceCode,
+          deviceName,
+        })
+
+        if (isCancelled) return
+
+        if (res.status === "approved" && res.config) {
+          syncFromConfig(res.config)
+          setReversePairing(null)
+          setSuccess(res.message || "Device connected to Facenox Cloud!")
+        } else if (res.status === "expired") {
+          void startReversePairing()
+        } else if (res.status === "denied") {
+          setInitiateError("Device pairing was denied by the cloud administrator.")
+          setReversePairing(null)
+        }
+      } catch {
+        // Silent retry on transient network error
+      }
+    }
+
+    const timer = setInterval(() => {
+      void poll()
+    }, pollIntervalMs)
+
+    return () => {
+      isCancelled = true
+      clearInterval(timer)
+    }
+  }, [
+    reversePairing,
+    config.connected,
+    remoteBaseUrl,
+    deviceName,
+    syncFromConfig,
+    startReversePairing,
+    setSuccess,
+  ])
+
+  // Auto-initiate reverse pairing if not connected
+  useEffect(() => {
+    if (!config.connected && !reversePairing && !isInitiating && !initiateError) {
+      void startReversePairing()
+    }
+  }, [config.connected, reversePairing, isInitiating, initiateError, startReversePairing])
 
   useEffect(() => {
     void loadConfig()
@@ -108,6 +239,10 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
         enabled: config.connected,
       })
       syncFromConfig(nextConfig)
+      if (!nextConfig.connected) {
+        setReversePairing(null)
+        void startReversePairing(nextConfig.remoteBaseUrl)
+      }
       setSuccess(
         nextConfig.connected ?
           "Cloud sync settings saved. Auto-sync state updated."
@@ -157,11 +292,13 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       const result = await window.electronAPI.sync.disconnectDevice()
       syncFromConfig(result.config)
       setPairingCode("")
+      setReversePairing(null)
       if (result.warning) {
         setError(`Disconnected locally, but the cloud returned a warning: ${result.warning}`)
       } else {
         setSuccess("Device disconnected from Facenox Cloud.")
       }
+      void startReversePairing()
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not disconnect this device.")
     } finally {
@@ -188,9 +325,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     }
   }
 
-  const isCustomServer = Boolean(
-    config.remoteBaseUrl && config.remoteBaseUrl.trim() !== DEFAULT_REMOTE_BASE_URL,
-  )
+  const isCustomServer = !isOfficialCloudUrl(config.remoteBaseUrl)
 
   const syncTone =
     config.lastSyncStatus === "success" ? "text-white/60"
@@ -215,7 +350,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
             <p className="mt-0.5 text-xs text-white/60">
               {!config.connected ?
                 <>
-                  Enter your pairing code to connect.{" "}
+                  Connect via QR code or authorize in any browser.{" "}
                   <button
                     type="button"
                     onClick={() => setShowPrivacyModal(true)}
@@ -251,27 +386,164 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
           {/* Connection Actions Row */}
           <div className="flex flex-col gap-4 py-4">
             {!config.connected ?
-              <div className="space-y-4">
-                <div className="flex max-w-md flex-col gap-3 sm:flex-row sm:items-end">
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <label className="text-[10px] font-extrabold tracking-widest text-white/40 uppercase">
-                      Pairing Code
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="ABCD2345"
-                      value={pairingCode}
-                      onChange={(e) => setPairingCode(e.target.value.toUpperCase())}
-                      className="h-9 w-full rounded border border-white/10 bg-transparent px-4 text-center font-mono text-[13px] font-semibold tracking-[0.25em] text-white uppercase transition-all duration-200 outline-none placeholder:text-center placeholder:tracking-[0.1em] placeholder:text-white/20 placeholder:lowercase focus:border-white/20"
-                    />
-                  </div>
-                  <button
-                    onClick={handlePair}
-                    disabled={busyAction !== null || !pairingCode}
-                    className="flex h-9 min-w-28 shrink-0 items-center justify-center gap-2 rounded border border-white/10 bg-[rgba(22,28,36,0.62)] px-4 text-xs font-semibold text-white/70 transition-all hover:bg-[rgba(22,28,36,0.85)] hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40">
-                    {busyAction === "pairing" && <i className="fa-solid fa-spinner fa-spin" />}
-                    Connect
-                  </button>
+              <div className="space-y-6 pt-1">
+                <AnimatePresence mode="wait">
+                  {isInitiating && !reversePairing ?
+                    <motion.div
+                      key="initiating"
+                      initial={{ opacity: 0, scale: 0.97 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="flex min-h-[290px] flex-col items-center justify-center gap-3 text-center">
+                      <i className="fa-solid fa-spinner fa-spin text-xl text-cyan-400" />
+                      <p className="text-xs font-medium text-white/70">
+                        Connecting to Facenox Cloud...
+                      </p>
+                      <p className="text-[11px] text-white/40">Generating secure pairing code</p>
+                    </motion.div>
+                  : initiateError ?
+                    <motion.div
+                      key="error"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className="flex min-h-[290px] flex-col items-center justify-center gap-3 py-6 text-center">
+                      <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                        <i className="fa-solid fa-circle-exclamation text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium text-white/90">
+                          Could not initialize cloud pairing
+                        </p>
+                        <p className="max-w-md text-[11px] break-words text-white/50">
+                          {formatErrorMessage(initiateError)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void startReversePairing()}
+                        className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
+                        <i className="fa-solid fa-arrows-rotate text-[10px]" />
+                        Retry Connection
+                      </button>
+                    </motion.div>
+                  : reversePairing ?
+                    <motion.div
+                      key={reversePairing.deviceCode}
+                      initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.96 }}
+                      transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+                      className="flex min-h-[290px] flex-col items-center justify-center py-4 text-center">
+                      {/* Centered QR Code with gentle spring scale */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.92 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                        className="group relative transition-transform duration-200 hover:scale-[1.02]">
+                        <QRCodeView value={reversePairing.verificationUriComplete} size={156} />
+                      </motion.div>
+
+                      {/* Centered Instructions, PIN Capsule & Status with staggered appearance */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                        className="mt-5 max-w-sm space-y-3">
+                        <p className="text-xs leading-relaxed text-white/70">
+                          Connect via QR code, or visit{" "}
+                          <span className="font-semibold text-cyan-400">
+                            {reversePairing.verificationUri.replace(/^https?:\/\//, "")}
+                          </span>{" "}
+                          and enter:
+                        </p>
+
+                        {/* Single seamless PIN capsule */}
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="inline-flex items-center gap-2 rounded-lg bg-white/[0.04] px-4 py-2 font-mono text-2xl font-bold tracking-[0.25em] text-white select-all">
+                            <span>{reversePairing.userCode.slice(0, 3)}</span>
+                            <span className="text-white/20">—</span>
+                            <span>{reversePairing.userCode.slice(3, 6)}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void navigator.clipboard.writeText(reversePairing.userCode)
+                              setCopiedPin(true)
+                              setTimeout(() => setCopiedPin(false), 2000)
+                            }}
+                            title={copiedPin ? "Copied to clipboard!" : "Copy Code"}
+                            className="flex size-8 items-center justify-center rounded-lg text-white/35 transition hover:bg-white/5 hover:text-white">
+                            <i
+                              className={`fa-solid ${copiedPin ? "fa-check text-emerald-400" : "fa-copy"} text-xs`}
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void startReversePairing()}
+                            disabled={isInitiating}
+                            title="Refresh Code"
+                            className="flex size-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70 disabled:opacity-40">
+                            <i
+                              className={`fa-solid fa-arrows-rotate text-xs ${isInitiating ? "fa-spin text-cyan-400" : ""}`}
+                            />
+                          </button>
+                        </div>
+
+                        {/* Live waiting indicator */}
+                        <div className="flex items-center justify-center gap-2 text-xs text-white/45">
+                          <span className="relative flex size-2">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
+                            <span className="relative inline-flex size-2 rounded-full bg-cyan-500"></span>
+                          </span>
+                          <span>
+                            Waiting for authorization...{" "}
+                            <span className="font-mono text-white/35">
+                              ({Math.floor(secondsLeft / 60)}:
+                              {(secondsLeft % 60).toString().padStart(2, "0")})
+                            </span>
+                          </span>
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  : null}
+                </AnimatePresence>
+
+                {/* Subtle Collapsible Manual Fallback */}
+                <div className="flex justify-center pt-2">
+                  {!showManualInput ?
+                    <button
+                      type="button"
+                      onClick={() => setShowManualInput(true)}
+                      className="cursor-pointer text-[11px] text-white/30 transition-colors hover:text-white/60">
+                      Have a pairing code from the web dashboard? Enter it here &rarr;
+                    </button>
+                  : <div className="flex max-w-sm items-center gap-2 pt-1">
+                      <input
+                        type="text"
+                        placeholder="ABCD2345"
+                        value={pairingCode}
+                        onChange={(e) => setPairingCode(e.target.value.toUpperCase())}
+                        className="h-8 flex-1 rounded border border-white/10 bg-transparent px-3 font-mono text-xs font-semibold tracking-widest text-white uppercase outline-none focus:border-white/20"
+                      />
+                      <button
+                        onClick={handlePair}
+                        disabled={busyAction !== null || !pairingCode}
+                        className="h-8 rounded border border-white/10 bg-white/5 px-3 text-xs font-medium text-white transition hover:bg-white/10 disabled:opacity-40">
+                        {busyAction === "pairing" ?
+                          <i className="fa-solid fa-spinner fa-spin" />
+                        : "Connect"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowManualInput(false)}
+                        className="cursor-pointer px-1 text-xs text-white/30 transition hover:text-white/60">
+                        Cancel
+                      </button>
+                    </div>
+                  }
                 </div>
               </div>
             : <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -369,16 +641,14 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
                         Custom Server URL
                       </label>
-                      {remoteBaseUrl &&
-                        remoteBaseUrl.trim() !== DEFAULT_REMOTE_BASE_URL &&
-                        !config.connected && (
-                          <button
-                            type="button"
-                            onClick={() => setRemoteBaseUrl("")}
-                            className="cursor-pointer text-[9px] font-bold tracking-wider text-cyan-400 transition-colors hover:text-cyan-300">
-                            Reset to Default
-                          </button>
-                        )}
+                      {remoteBaseUrl && !isOfficialCloudUrl(remoteBaseUrl) && !config.connected && (
+                        <button
+                          type="button"
+                          onClick={() => setRemoteBaseUrl("")}
+                          className="cursor-pointer text-[9px] font-bold tracking-wider text-cyan-400 transition-colors hover:text-cyan-300">
+                          Reset to Default
+                        </button>
+                      )}
                     </div>
                     <input
                       type="url"

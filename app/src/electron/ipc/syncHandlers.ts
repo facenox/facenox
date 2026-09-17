@@ -8,6 +8,7 @@ import { syncManager } from "../managers/BackgroundSyncManager.js"
 import { persistentStore } from "../persistentStore.js"
 import { getCurrentVersion } from "../updater.js"
 import { state } from "../State.js"
+import isDev from "../util.js"
 import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
@@ -32,7 +33,11 @@ function normalizeRemoteBaseUrl(value: string): string {
 }
 
 function resolveRemoteBaseUrl(value: string): string {
-  return normalizeRemoteBaseUrl(value) || DEFAULT_REMOTE_BASE_URL
+  const normalized = normalizeRemoteBaseUrl(value)
+  if (!normalized) {
+    return isDev() ? "http://localhost:3000" : DEFAULT_REMOTE_BASE_URL
+  }
+  return normalized
 }
 
 function getRemoteSyncStatus() {
@@ -211,7 +216,16 @@ export function registerSyncHandlers() {
 
   ipcMain.handle("sync:update-config", async (_event, updates: Record<string, unknown> = {}) => {
     if (typeof updates.remoteBaseUrl === "string") {
-      persistentStore.set("sync.remoteBaseUrl", resolveRemoteBaseUrl(updates.remoteBaseUrl))
+      const trimmed = updates.remoteBaseUrl.trim()
+      if (
+        !trimmed ||
+        trimmed === DEFAULT_REMOTE_BASE_URL ||
+        (isDev() && trimmed === "http://localhost:3000")
+      ) {
+        persistentStore.set("sync.remoteBaseUrl", "")
+      } else {
+        persistentStore.set("sync.remoteBaseUrl", normalizeRemoteBaseUrl(trimmed))
+      }
     }
 
     if (typeof updates.deviceName === "string") {
@@ -352,6 +366,205 @@ export function registerSyncHandlers() {
         return {
           success: false,
           error: error instanceof Error ? error.message : "Connection failed.",
+        }
+      }
+    },
+  )
+
+  ipcMain.handle(
+    "sync:initiate-reverse-pairing",
+    async (
+      _event,
+      input: {
+        remoteBaseUrl?: string
+        deviceName?: string
+      } = {},
+    ) => {
+      const remoteBaseUrl = resolveRemoteBaseUrl(input.remoteBaseUrl || "")
+      const deviceName = (input.deviceName || "").trim() || "Facenox Desktop"
+
+      try {
+        const response = await fetch(`${remoteBaseUrl}/api/device/code`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Facenox-Version": getCurrentVersion(),
+            "User-Agent": "Facenox-Desktop-ReversePair",
+          },
+          body: JSON.stringify({
+            device_name: deviceName,
+            app_version: getCurrentVersion(),
+          }),
+          signal: AbortSignal.timeout(15000),
+        })
+
+        if (!response.ok) {
+          let errorDetail = `HTTP ${response.status}`
+          const contentType = response.headers.get("content-type") || ""
+          if (contentType.includes("application/json")) {
+            try {
+              const errJson = (await response.json()) as { message?: string; error?: string }
+              errorDetail = errJson.message || errJson.error || errorDetail
+            } catch {
+              // ignore
+            }
+          } else {
+            const text = await response.text().catch(() => "")
+            if (text && text.length < 120 && !text.includes("<") && !text.includes("{")) {
+              errorDetail = `${errorDetail}: ${text.trim()}`
+            } else if (response.status === 404) {
+              errorDetail = `Endpoint not found (HTTP 404 at ${remoteBaseUrl})`
+            } else {
+              errorDetail = `Server returned HTTP ${response.status} (${response.statusText || "Error"})`
+            }
+          }
+          return {
+            success: false,
+            error: `Failed to initiate pairing: ${errorDetail}`,
+          }
+        }
+
+        const data = (await response.json()) as {
+          device_code: string
+          user_code: string
+          verification_uri: string
+          verification_uri_complete: string
+          expires_in: number
+          interval?: number
+        }
+
+        return {
+          success: true,
+          data: {
+            deviceCode: data.device_code,
+            userCode: data.user_code,
+            verificationUri: data.verification_uri,
+            verificationUriComplete: data.verification_uri_complete,
+            expiresIn: data.expires_in,
+            interval: data.interval || 3,
+          },
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Could not connect to Facenox Cloud.",
+        }
+      }
+    },
+  )
+
+  interface DeviceTokenPollPayload {
+    status?: "pending" | "approved" | "expired" | "denied" | "error" | "network_error"
+    error?: string
+    message?: string
+    deviceId?: string
+    deviceToken?: string
+    encryptionKey?: string
+    organizationId?: string
+    organizationName?: string
+    siteId?: string
+    siteName?: string
+  }
+
+  ipcMain.handle(
+    "sync:poll-device-authorization",
+    async (
+      _event,
+      input: {
+        remoteBaseUrl?: string
+        deviceCode: string
+        deviceName?: string
+      },
+    ) => {
+      const remoteBaseUrl = resolveRemoteBaseUrl(input.remoteBaseUrl || "")
+      const deviceCode = (input.deviceCode || "").trim()
+      const deviceName = (input.deviceName || "").trim() || "Facenox Desktop"
+
+      if (!deviceCode) {
+        return { status: "error", error: "deviceCode is required." }
+      }
+
+      try {
+        const response = await fetch(`${remoteBaseUrl}/api/device/token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Facenox-Version": getCurrentVersion(),
+            "User-Agent": "Facenox-Desktop-ReversePair",
+          },
+          body: JSON.stringify({ device_code: deviceCode }),
+          signal: AbortSignal.timeout(15000),
+        })
+
+        const payload = (await response.json().catch(() => null)) as DeviceTokenPollPayload | null
+
+        if (!response.ok) {
+          if (payload?.error === "authorization_pending") {
+            return { status: "pending" }
+          }
+          if (payload?.error === "expired_token") {
+            return { status: "expired", error: "Pairing code expired." }
+          }
+          if (payload?.error === "access_denied") {
+            return { status: "denied", error: "Device pairing was denied by admin." }
+          }
+          return {
+            status: "error",
+            error: payload?.message || payload?.error || `HTTP ${response.status}`,
+          }
+        }
+
+        if (payload?.status === "pending") {
+          return { status: "pending" }
+        }
+
+        if (payload?.status === "approved" && payload.deviceToken) {
+          persistentStore.set("sync.remoteBaseUrl", remoteBaseUrl)
+          persistentStore.set("sync.organizationId", String(payload.organizationId ?? ""))
+          persistentStore.set("sync.organizationName", String(payload.organizationName ?? ""))
+          persistentStore.set("sync.siteId", String(payload.siteId ?? ""))
+          persistentStore.set("sync.siteName", String(payload.siteName ?? ""))
+          persistentStore.set("sync.deviceId", String(payload.deviceId ?? ""))
+          persistentStore.set("sync.deviceName", deviceName)
+          persistentStore.set("sync.deviceToken", String(payload.deviceToken ?? ""))
+          persistentStore.set("sync.encryptionKey", String(payload.encryptionKey ?? ""))
+          persistentStore.set("sync.enabled", true)
+          persistentStore.set("sync.lastSyncedAt", null)
+          persistentStore.set("sync.lastSyncStatus", "idle")
+          persistentStore.set("sync.lastSyncMessage", "Device connected. Starting initial sync...")
+
+          try {
+            const assignUrl = `${backendService.getUrl()}/attendance/groups/assign-org-id`
+            await fetch(assignUrl, {
+              method: "POST",
+              headers: authHeaders({ "Content-Type": "application/json" }),
+              signal: AbortSignal.timeout(10000),
+            })
+          } catch (assignError) {
+            console.warn("[Sync] Error calling assign-org-id:", assignError)
+          }
+
+          syncManager.start({ skipCatchUp: true })
+          const initialSyncResult = await syncManager.performSync()
+          state.mainWindow?.webContents.send("sync:data-changed")
+
+          return {
+            status: "approved",
+            success: true,
+            config: await getExtendedSyncStatus(),
+            initialSyncSucceeded: initialSyncResult.success,
+            message:
+              initialSyncResult.success ?
+                "Device connected and initial sync completed."
+              : "Device connected, but the initial sync failed. Check the sync log for details.",
+          }
+        }
+
+        return { status: payload?.status || "pending" }
+      } catch (error) {
+        return {
+          status: "network_error",
+          error: error instanceof Error ? error.message : "Polling connection error.",
         }
       }
     },

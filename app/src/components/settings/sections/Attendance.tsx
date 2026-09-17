@@ -332,7 +332,7 @@ export function Attendance({
                     title="Recognition Limit"
                     description="Limits how many faces are recognized per frame to optimize performance on this physical device."
                     details={[
-                      "Hardware-specific: Adjust based on this kiosk's CPU/GPU load and camera location.",
+                      "Hardware-specific: Adjust based on this device's CPU/GPU load and camera location.",
                       "Lower limits (1-5) improve processing speed and prevent frame drops.",
                       "If disabled, the system will attempt to recognize all faces detected in each frame.",
                       "The system prioritizes the largest, closest faces first.",
@@ -420,7 +420,7 @@ export function Attendance({
                   description="Requires a live face before recording attendance, helping block photo and screen replay attempts."
                   details={[
                     "Prevents spoofing using real-time passive liveness checks.",
-                    "Can be toggled per kiosk based on camera quality and lighting, unless enforced by organization policy.",
+                    "Can be toggled per device based on camera quality and lighting, unless enforced by organization policy.",
                     "Works best with balanced lighting and a clear front-facing view.",
                     "May slightly increase recognition processing time on lower-powered devices.",
                   ]}
@@ -478,7 +478,7 @@ export function Attendance({
                   title="Data Retention"
                   description="Controls how long attendance records and biometric signatures are kept on this local physical device."
                   details={[
-                    "Pruning runs automatically every 24 hours on this kiosk.",
+                    "Pruning runs automatically every 24 hours on this device.",
                     "Expired records are permanently deleted from the local database to free up disk space.",
                     isPaired && cloudCeiling ?
                       `When paired, local retention cannot exceed your cloud subscription window of ${cloudCeiling} days.`

@@ -15,7 +15,7 @@ import { useGroupUIStore } from "@/components/group/stores"
 import { useUIStore } from "@/components/main/stores"
 import { attendanceManager } from "@/services"
 import { Tooltip } from "@/components/shared"
-import { DEFAULT_REMOTE_BASE_URL } from "../../services/syncDefaults"
+import { isOfficialCloudUrl } from "../../services/syncDefaults"
 import type {
   QuickSettings,
   AttendanceSettings,
@@ -262,7 +262,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
           </button>
         : activeSection === "remote-sync" && syncConfig ?
           <div className="flex items-center gap-2">
-            {syncConfig.remoteBaseUrl && syncConfig.remoteBaseUrl !== DEFAULT_REMOTE_BASE_URL && (
+            {!isOfficialCloudUrl(syncConfig.remoteBaseUrl) && (
               <Tooltip
                 content={`Custom sync destination: ${syncConfig.remoteBaseUrl}`}
                 position="bottom">

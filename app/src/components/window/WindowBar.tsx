@@ -4,6 +4,7 @@ import { Tooltip } from "@/components/shared"
 import { updaterService } from "@/services"
 import type { UpdateInfo } from "@/types/updater"
 import { Modal, Spinner } from "@/components/common"
+import { useUIStore } from "@/components/main/stores/uiStore"
 
 function formatRelativeTime(dateString: string | null): string {
   if (!dateString) return "Never"
@@ -228,41 +229,60 @@ export default function WindowBar() {
           </div>
         </div>
         {(() => {
-          if (!syncConfig || !syncConfig.connected) return null
+          const handleOpenCloudSync = () => {
+            useUIStore.getState().setSettingsInitialSection("remote-sync")
+            useUIStore.getState().setShowSettings(true)
+          }
+
+          if (!syncConfig || !syncConfig.connected) {
+            return (
+              <Tooltip content="Automatic sync & remote reports" position="bottom" offset={6}>
+                <button
+                  onClick={handleOpenCloudSync}
+                  style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+                  className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[10px] font-medium text-white/50 transition-all duration-150 select-none hover:border-white/20 hover:bg-white/[0.06] hover:text-white/90 active:scale-95">
+                  <i className="fa-solid fa-cloud text-[9px] opacity-70" />
+                  <span>Connect Cloud</span>
+                </button>
+              </Tooltip>
+            )
+          }
 
           const relativeTime = formatRelativeTime(syncConfig.lastSyncedAt)
           const pendingCount =
             (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
-          let textColorClass: string
-          let statusText: string
-          let tooltipContent: string
 
-          if (syncConfig.lastSyncStatus === "success") {
-            textColorClass = "text-emerald-400"
-            statusText = pendingCount > 0 ? `Synced (${pendingCount} queued)` : "Synced"
-            tooltipContent =
-              pendingCount > 0 ?
-                `Last synced: ${relativeTime}. ${pendingCount} new record${pendingCount === 1 ? "" : "s"} queued for next sync.`
-              : `Last synced: ${relativeTime}. ${syncConfig.lastSyncMessage || "All records are up to date."}`
-          } else if (syncConfig.lastSyncStatus === "error") {
-            textColorClass = "text-amber-400"
+          let badgeBorderClass =
+            "border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-400 hover:border-emerald-500/35 hover:bg-emerald-500/10"
+          let dotColorClass = "bg-emerald-400"
+          let statusText = pendingCount > 0 ? `Synced (${pendingCount} queued)` : "Synced"
+          let tooltipContent =
+            pendingCount > 0 ?
+              `Last synced: ${relativeTime}. ${pendingCount} new record${pendingCount === 1 ? "" : "s"} queued. Click to open Cloud Sync.`
+            : `Last synced: ${relativeTime}. All records up to date. Click to open Cloud Sync.`
+
+          if (syncConfig.lastSyncStatus === "error") {
+            badgeBorderClass =
+              "border-amber-500/25 bg-amber-500/[0.06] text-amber-400 hover:border-amber-500/40 hover:bg-amber-500/10"
+            dotColorClass = "bg-amber-400"
             statusText = pendingCount > 0 ? `${pendingCount} pending` : "Sync Warning"
-            tooltipContent = `Failed to sync: ${syncConfig.lastSyncMessage || "Network connection issue."} • ${pendingCount} record${pendingCount === 1 ? "" : "s"} saved locally. (Last success: ${relativeTime})`
-          } else {
-            textColorClass = "text-emerald-400/80"
-            statusText = pendingCount > 0 ? `${pendingCount} queued` : "Ready"
-            tooltipContent =
-              pendingCount > 0 ?
-                `${pendingCount} record${pendingCount === 1 ? "" : "s"} waiting for next sync.`
-              : "Paired with cloud. Waiting for next automatic sync cycle."
+            tooltipContent = `Sync issue: ${syncConfig.lastSyncMessage || "Network connection error."} Click to open Cloud Sync.`
           }
 
           return (
             <Tooltip content={tooltipContent} position="bottom" offset={6}>
-              <div
-                className={`pointer-events-auto flex cursor-default items-center text-[10px] font-semibold tracking-wide ${textColorClass} transition-all duration-200 select-none [webkit-app-region:no-drag] hover:opacity-80`}>
+              <button
+                onClick={handleOpenCloudSync}
+                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+                className={`pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide transition-all duration-150 select-none active:scale-95 ${badgeBorderClass}`}>
+                <span className="relative flex size-1.5">
+                  <span
+                    className={`absolute inline-flex h-full w-full animate-ping rounded-full ${dotColorClass} opacity-60`}
+                  />
+                  <span className={`relative inline-flex size-1.5 rounded-full ${dotColorClass}`} />
+                </span>
                 <span>{statusText}</span>
-              </div>
+              </button>
             </Tooltip>
           )
         })()}

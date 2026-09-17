@@ -35,6 +35,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
   sections,
   groupSections,
 }) => {
+  const [syncStatus, setSyncStatus] = React.useState<{
+    connected: boolean
+    organizationName?: string
+  } | null>(null)
+
+  React.useEffect(() => {
+    if (!window.electronAPI?.sync) return
+
+    const fetchConfig = () => {
+      window.electronAPI.sync
+        .getConfig()
+        .then((cfg) => {
+          setSyncStatus({
+            connected: Boolean(cfg?.connected),
+            organizationName: cfg?.organizationName,
+          })
+        })
+        .catch(console.error)
+    }
+
+    fetchConfig()
+    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
+      fetchConfig()
+    })
+    return unsubscribe
+  }, [])
   return (
     <div className="settings-sidebar flex w-[200px] shrink-0 flex-col border-r border-white/5 bg-[var(--bg-primary)] sm:w-[220px] lg:w-[240px]">
       {/* Workspace Switcher Header */}
@@ -158,8 +184,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     />
                   )}
                   <i
-                    className={`${section.icon} w-5 text-sm transition-colors ${isActive ? "text-cyan-400" : "text-white/55 group-hover/item:text-white/70"}`}></i>
-                  {section.label}
+                    className={`${section.icon} w-5 text-sm transition-colors ${
+                      isActive ? "text-cyan-400"
+                      : section.id === "remote-sync" && syncStatus?.connected ? "text-emerald-400"
+                      : "text-white/55 group-hover/item:text-white/70"
+                    }`}
+                  />
+                  <span className="flex-1 truncate">{section.label}</span>
+                  {section.id === "remote-sync" && syncStatus?.connected && (
+                    <span className="relative flex size-1.5 shrink-0">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                      <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
+                    </span>
+                  )}
                 </button>
               )
             })}
