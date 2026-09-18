@@ -1,6 +1,7 @@
 import { memo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { RefObject } from "react"
+import { Spinner } from "@/components/common"
 import { StartTimeChip } from "./StartTimeChip"
 import { ActiveHeadTurnGuide } from "./ActiveHeadTurnGuide"
 import { useDetectionStore } from "@/components/main/stores"
@@ -214,9 +215,7 @@ export const VideoCanvas = memo(function VideoCanvas({
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.15 }}
                   className="flex flex-col items-center justify-center">
-                  <div className="h-12 w-12 rounded-full border border-cyan-500/20">
-                    <div className="h-full w-full animate-spin rounded-full border-t-2 border-cyan-400"></div>
-                  </div>
+                  <Spinner size="lg" color="cyan" />
                 </motion.div>
               : <motion.div
                   key="canvas-idle-state"

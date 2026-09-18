@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { useUIStore } from "@/components/main/stores"
-import { Modal, QRCodeView } from "@/components/common"
+import { Modal, QRCodeView, Spinner } from "@/components/common"
 import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
@@ -407,7 +407,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       exit={{ opacity: 0, scale: 0.97 }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
                       className="flex min-h-[290px] flex-col items-center justify-center gap-3 text-center">
-                      <i className="fa-solid fa-spinner fa-spin text-xl text-cyan-400" />
+                      <Spinner size="md" color="cyan" />
                       <p className="text-xs font-medium text-white/70">
                         Connecting to Facenox Cloud...
                       </p>
@@ -535,10 +535,9 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       <button
                         onClick={handlePair}
                         disabled={busyAction !== null || !pairingCode}
-                        className="h-8 rounded border border-white/10 bg-white/5 px-3 text-xs font-medium text-white transition hover:bg-white/10 disabled:opacity-40">
-                        {busyAction === "pairing" ?
-                          <i className="fa-solid fa-spinner fa-spin" />
-                        : "Connect"}
+                        className="flex h-8 items-center gap-2 rounded border border-white/10 bg-white/5 px-3 text-xs font-medium text-white transition hover:bg-white/10 disabled:opacity-40">
+                        {busyAction === "pairing" && <Spinner size="xs" color="white" />}
+                        Connect
                       </button>
                       <button
                         type="button"
@@ -583,7 +582,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     disabled={busyAction !== null}
                     className="flex items-center gap-2 rounded border border-white/10 bg-transparent px-4 py-1.5 text-xs font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
                     {busyAction === "syncing" ?
-                      <i className="fa-solid fa-spinner fa-spin" />
+                      <Spinner size="xs" color="white" />
                     : <i className="fa-solid fa-arrows-rotate text-[11px]" />}
                     Sync Now
                   </button>
@@ -591,9 +590,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     onClick={handleDisconnect}
                     disabled={busyAction !== null}
                     className="flex items-center gap-2 rounded border border-red-500/20 bg-red-500/[0.03] px-4 py-1.5 text-xs font-semibold text-red-400 transition-all hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40">
-                    {busyAction === "disconnecting" && (
-                      <i className="fa-solid fa-spinner fa-spin" />
-                    )}
+                    {busyAction === "disconnecting" && <Spinner size="xs" color="white" />}
                     Disconnect
                   </button>
                 </div>
@@ -683,7 +680,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     onClick={handleSave}
                     disabled={busyAction !== null}
                     className="flex items-center gap-2 rounded border border-white/10 bg-[rgba(22,28,36,0.62)] px-4 py-1.5 text-xs font-semibold text-white/70 transition-all hover:bg-[rgba(22,28,36,0.85)] hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40">
-                    {busyAction === "saving" && <i className="fa-solid fa-spinner fa-spin" />}
+                    {busyAction === "saving" && <Spinner size="xs" color="white" />}
                     Save Configuration
                   </button>
                 </div>
