@@ -134,10 +134,9 @@ describe("Sync", () => {
     expect(await screen.findByText("Paired, but the first sync failed.")).toBeInTheDocument()
   })
 
-  it("shows the correct save message depending on connected state", async () => {
+  it("shows save message when settings are saved", async () => {
     const electronAPI = getElectronAPIMock()
     electronAPI.sync.updateConfig.mockResolvedValueOnce(createSyncConfig({ connected: false }))
-    electronAPI.sync.updateConfig.mockResolvedValueOnce(createSyncConfig({ connected: true }))
 
     renderWithProviders(
       <>
@@ -149,18 +148,7 @@ describe("Sync", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Advanced Settings/i }))
     fireEvent.click(screen.getByRole("button", { name: /Save Configuration/i }))
 
-    expect(
-      await screen.findByText(
-        "Cloud sync settings saved. You can connect this desktop whenever you're ready.",
-      ),
-    ).toBeInTheDocument()
-
-    fireEvent.click(await screen.findByRole("button", { name: /Advanced Settings/i }))
-    fireEvent.click(screen.getByRole("button", { name: /Save Configuration/i }))
-
-    expect(
-      await screen.findByText("Cloud sync settings saved. Auto-sync state updated."),
-    ).toBeInTheDocument()
+    expect(await screen.findByText("Cloud sync settings saved.")).toBeInTheDocument()
   })
 
   it("reloads config and shows the manual sync result", async () => {

@@ -111,7 +111,7 @@ export const VideoCanvas = memo(function VideoCanvas({
 
   const isTimeOutdated = (): boolean => {
     try {
-      if (!classStartTime) return false
+      if (!lateTrackingEnabled || !classStartTime) return false
       const [hours, minutes] = classStartTime.split(":").map(Number)
       const now = new Date()
       const setTime = new Date()
@@ -130,11 +130,11 @@ export const VideoCanvas = memo(function VideoCanvas({
   const emptyStateText =
     !isShellReady ? "Loading groups and settings..."
     : hasSelectedGroup ?
-      !hasMembers ? "To start scanning, add and enroll at least one member."
-      : !hasEnrolledFaces ? "To start scanning, enroll at least one member."
-      : "Select a camera, then press Start Scan to begin attendance tracking."
-    : hasGroups ? "Select a group to begin attendance tracking."
-    : "Create a group to begin attendance tracking."
+      !hasMembers ? "Add and enroll at least one member to start scanning."
+      : !hasEnrolledFaces ? "Enroll at least one member to start scanning."
+      : null
+    : hasGroups ? "Select a group to begin."
+    : "Create a group to begin."
 
   return (
     <div
@@ -158,6 +158,11 @@ export const VideoCanvas = memo(function VideoCanvas({
         style={{
           mixBlendMode: "normal",
         }}
+      />
+      <canvas
+        ref={canvasRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute top-0 left-0 z-0 h-full w-full opacity-0"
       />
 
       {/* 3D Head Turn Guidance Animation for Active Liveness Challenge */}
@@ -235,7 +240,7 @@ export const VideoCanvas = memo(function VideoCanvas({
                     </svg>
                   </div>
                   <div className="relative flex min-h-[32px] max-w-xl flex-col items-center justify-center text-xs text-white/65">
-                    <p className="text-white/65">{emptyStateText}</p>
+                    {emptyStateText && <p className="text-white/65">{emptyStateText}</p>}
 
                     {hasSelectedGroup &&
                       hasEnrolledFaces &&
