@@ -12,6 +12,8 @@ import isDev from "../util.js"
 import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
+  OFFICIAL_REMOTE_BASE_URL,
+  isOfficialCloudUrl,
 } from "../../services/syncDefaults.js"
 
 function authHeaders(extra: Record<string, string> = {}) {
@@ -20,8 +22,10 @@ function authHeaders(extra: Record<string, string> = {}) {
 }
 
 function normalizeRemoteBaseUrl(value: string): string {
-  let url = value.trim().replace(/\/+$/, "")
+  let url = value.trim()
   if (!url) return ""
+
+  url = url.replace(/^\/+/, "")
 
   if (!/^https?:\/\//i.test(url)) {
     const isLocal = /^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1]))/i.test(
@@ -29,13 +33,15 @@ function normalizeRemoteBaseUrl(value: string): string {
     )
     url = (isLocal ? "http://" : "https://") + url
   }
+  url = url.replace(/^(https?:\/\/)\/+/, "$1")
+  url = url.replace(/\/+$/, "")
   return url
 }
 
 function resolveRemoteBaseUrl(value: string): string {
   const normalized = normalizeRemoteBaseUrl(value)
   if (!normalized) {
-    return isDev() ? "http://localhost:3000" : DEFAULT_REMOTE_BASE_URL
+    return OFFICIAL_REMOTE_BASE_URL
   }
   return normalized
 }
@@ -219,6 +225,7 @@ export function registerSyncHandlers() {
       const trimmed = updates.remoteBaseUrl.trim()
       if (
         !trimmed ||
+        isOfficialCloudUrl(trimmed) ||
         trimmed === DEFAULT_REMOTE_BASE_URL ||
         (isDev() && trimmed === "http://localhost:3000")
       ) {

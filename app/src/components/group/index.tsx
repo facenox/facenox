@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, memo } from "react"
+import { AnimatePresence } from "framer-motion"
 
 export type { GroupSection } from "@/components/group/types"
 import type { GroupPanelProps } from "@/components/group/types"
@@ -6,7 +7,8 @@ import type { AttendanceGroup } from "@/types/recognition"
 
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { useGroupData } from "@/components/group/hooks"
-import { ErrorBanner, GroupContent, GroupModals, GroupSidebar } from "@/components/group/components"
+import { FloatingAlert } from "@/components/common"
+import { GroupContent, GroupModals, GroupSidebar } from "@/components/group/components"
 
 function GroupPanelComponent({
   onBack,
@@ -113,7 +115,13 @@ function GroupPanelComponent({
   if (isEmbedded) {
     return (
       <>
-        {error && <ErrorBanner error={error} onDismiss={() => setError(null)} />}
+        <div className="pointer-events-none fixed bottom-12 left-1/2 z-50 flex -translate-x-1/2 items-center justify-center px-4">
+          <AnimatePresence>
+            {error && (
+              <FloatingAlert message={error} variant="error" onDismiss={() => setError(null)} />
+            )}
+          </AnimatePresence>
+        </div>
 
         <div className="flex h-full flex-col overflow-hidden">
           <GroupContent
@@ -136,7 +144,13 @@ function GroupPanelComponent({
 
   return (
     <div className="flex h-full overflow-hidden bg-[var(--bg-primary)] text-white">
-      {error && <ErrorBanner error={error} onDismiss={() => setError(null)} />}
+      <div className="pointer-events-none fixed bottom-12 left-1/2 z-50 flex -translate-x-1/2 items-center justify-center px-4">
+        <AnimatePresence>
+          {error && (
+            <FloatingAlert message={error} variant="error" onDismiss={() => setError(null)} />
+          )}
+        </AnimatePresence>
+      </div>
 
       <GroupSidebar onBack={onBack} />
 

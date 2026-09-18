@@ -662,7 +662,7 @@ export default function Main() {
       )}
 
       {/* Floating Alert System */}
-      <div className="pointer-events-none absolute top-6 left-1/2 z-100 w-full max-w-xl -translate-x-1/2 px-4">
+      <div className="pointer-events-none absolute bottom-12 left-1/2 z-100 flex w-full -translate-x-1/2 flex-col items-center px-4">
         <AnimatePresence>
           {success && (
             <FloatingAlert message={success} variant="success" onDismiss={() => setSuccess(null)} />

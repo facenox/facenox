@@ -75,7 +75,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
       }
       maxWidth="md">
       <div className="mt-2">
-        {error && <ErrorMessage message={error} />}
+        {error && <ErrorMessage message={error} className="mb-4" />}
 
         <div className="grid gap-4">
           <label className="flex flex-col gap-1.5 text-sm">

@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-import { Modal } from "@/components/common"
+import { ErrorMessage, Modal } from "@/components/common"
 import { InfoPopover } from "@/components/shared"
 import { attendanceManager } from "@/services/AttendanceManager"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
@@ -127,11 +127,7 @@ export function ManualCorrectionModal({
           />
         </div>
 
-        {error && (
-          <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-[11px] font-medium text-red-200">
-            {error}
-          </div>
-        )}
+        {error && <ErrorMessage message={error} />}
 
         <div className="flex justify-end gap-3 pt-1">
           <button

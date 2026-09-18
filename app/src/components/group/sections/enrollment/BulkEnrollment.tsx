@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import { ErrorMessage } from "@/components/common"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { useBulkEnrollment } from "@/components/group/sections/enrollment/hooks/useBulkEnrollment"
 import { BulkUploadArea } from "@/components/group/shared"
@@ -111,16 +112,10 @@ export function BulkEnrollment({
         </>
       )}
 
-      {/* Error — inline, no border box */}
+      {/* Error */}
       {error && (
-        <div className="flex shrink-0 items-center gap-2 px-8 pt-4 text-[11px] text-red-400">
-          <i className="fa-solid fa-circle-exclamation text-[10px]" />
-          <span className="flex-1">{error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="rounded p-0.5 text-red-400/50 transition-colors hover:text-red-400 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:outline-none">
-            <i className="fa-solid fa-xmark text-[10px]" />
-          </button>
+        <div className="px-8 pt-4">
+          <ErrorMessage message={error} onClose={() => setError(null)} />
         </div>
       )}
 

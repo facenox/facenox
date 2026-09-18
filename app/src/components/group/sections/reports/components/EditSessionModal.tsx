@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Modal } from "@/components/common"
+import { ErrorMessage, Modal } from "@/components/common"
 import { Dropdown } from "@/components/shared"
 import { attendanceManager } from "@/services/AttendanceManager"
 import type { RowData } from "@/components/group/sections/reports/types"
@@ -365,12 +365,7 @@ export function EditSessionModal({
           </div>
 
           {/* ── Error ─────────────────────────────────────────────────────── */}
-          {error && (
-            <div className="flex items-start gap-2 rounded-lg bg-red-500/8 px-3 py-2.5 text-[11px] font-semibold text-red-300 ring-1 ring-red-500/15">
-              <i className="fa-solid fa-circle-exclamation mt-px shrink-0 text-[10px]" />
-              {error}
-            </div>
-          )}
+          {error && <ErrorMessage message={error} />}
         </div>
 
         {/* ── Fixed Footer Actions (Docked, doesn't scroll) ──────────────── */}

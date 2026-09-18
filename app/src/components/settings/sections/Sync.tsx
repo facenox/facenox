@@ -6,6 +6,7 @@ import { Modal, QRCodeView } from "@/components/common"
 import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
+  OFFICIAL_REMOTE_BASE_URL,
   isOfficialCloudUrl,
 } from "../../../services/syncDefaults"
 
@@ -43,6 +44,11 @@ const defaultConfig: RemoteSyncConfig = {
   connected: false,
   unsyncedRecordsCount: 0,
   unsyncedSessionsCount: 0,
+}
+
+function getEffectiveRemoteUrl(url?: string): string {
+  const clean = (url || "").trim()
+  return !clean || isOfficialCloudUrl(clean) ? OFFICIAL_REMOTE_BASE_URL : clean
 }
 
 function formatErrorMessage(err: string | null): string {
@@ -117,13 +123,13 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
 
   const startReversePairing = useCallback(
     async (overrideBaseUrl?: string) => {
-      if (config.connected || isInitiatingRef.current) return
+      if (config.connected) return
       isInitiatingRef.current = true
       setIsInitiating(true)
       setInitiateError(null)
-      const targetUrl =
-        (overrideBaseUrl !== undefined ? overrideBaseUrl : remoteBaseUrl).trim() ||
-        DEFAULT_REMOTE_BASE_URL
+      const targetUrl = getEffectiveRemoteUrl(
+        overrideBaseUrl !== undefined ? overrideBaseUrl : remoteBaseUrl,
+      )
       try {
         const res = await window.electronAPI.sync.initiateReversePairing({
           remoteBaseUrl: targetUrl,
@@ -173,7 +179,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       if (isCancelled || config.connected) return
       try {
         const res = await window.electronAPI.sync.pollDeviceAuthorization({
-          remoteBaseUrl: remoteBaseUrl.trim() || DEFAULT_REMOTE_BASE_URL,
+          remoteBaseUrl: getEffectiveRemoteUrl(remoteBaseUrl),
           deviceCode: reversePairing.deviceCode,
           deviceName,
         })
@@ -250,13 +256,10 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       syncFromConfig(nextConfig)
       if (!nextConfig.connected) {
         setReversePairing(null)
-        void startReversePairing(nextConfig.remoteBaseUrl)
+        setInitiateError(null)
+        void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
       }
-      setSuccess(
-        nextConfig.connected ?
-          "Cloud sync settings saved. Auto-sync state updated."
-        : "Cloud sync settings saved. You can connect this desktop whenever you're ready.",
-      )
+      setSuccess("Cloud sync settings saved.")
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not save cloud sync settings.")
     } finally {
@@ -270,7 +273,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     setBusyAction("pairing")
     try {
       const result = await window.electronAPI.sync.pairDevice({
-        remoteBaseUrl: remoteBaseUrl.trim() || DEFAULT_REMOTE_BASE_URL,
+        remoteBaseUrl: getEffectiveRemoteUrl(remoteBaseUrl),
         pairingCode,
         deviceName,
       })
@@ -432,7 +435,10 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       </div>
                       <button
                         type="button"
-                        onClick={() => void startReversePairing()}
+                        onClick={() => {
+                          isInitiatingRef.current = false
+                          void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
+                        }}
                         className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
                         <i className="fa-solid fa-arrows-rotate text-[10px]" />
                         Retry Connection

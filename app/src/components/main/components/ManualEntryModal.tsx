@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { attendanceManager } from "@/services/AttendanceManager"
-import { Modal } from "@/components/common"
+import { ErrorMessage, Modal } from "@/components/common"
 import { Tooltip, InfoPopover } from "@/components/shared"
 import { useAttendanceStore } from "@/components/main/stores"
 import type { AttendanceMember, AttendanceGroup } from "@/components/main/types"
@@ -168,12 +168,7 @@ export const ManualEntryModal = ({
               />
             </div>
 
-            {error && (
-              <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[11px] font-bold text-red-300">
-                <i className="fa-solid fa-circle-exclamation text-[10px]"></i>
-                {error}
-              </div>
-            )}
+            {error && <ErrorMessage message={error} />}
 
             <div className="flex justify-end gap-3 pt-2">
               <button
@@ -255,12 +250,7 @@ export const ManualEntryModal = ({
               )}
             </div>
 
-            {error && (
-              <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[11px] font-bold text-red-300">
-                <i className="fa-solid fa-circle-exclamation text-[10px]"></i>
-                {error}
-              </div>
-            )}
+            {error && <ErrorMessage message={error} />}
 
             <AnimatePresence mode="wait">
               {sortedAllMembers.length > 0 ?

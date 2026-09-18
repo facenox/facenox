@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { attendanceManager } from "@/services"
 import type { AttendanceMember } from "@/types/recognition"
-import { FormInput, Modal } from "@/components/common"
+import { ErrorMessage, FormInput, Modal } from "@/components/common"
 import { useAttendanceStore } from "@/components/main/stores"
 
 interface EditMemberProps {
@@ -93,11 +93,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
       }
       maxWidth="md">
       <div className="mt-2">
-        {error && (
-          <div className="mb-4 rounded-lg border border-red-500/40 bg-red-600/20 px-4 py-2 text-sm text-red-200">
-            {error}
-          </div>
-        )}
+        {error && <ErrorMessage message={error} className="mb-4" />}
 
         <div className="grid gap-4">
           <label className="flex flex-col gap-1.5 text-sm">
