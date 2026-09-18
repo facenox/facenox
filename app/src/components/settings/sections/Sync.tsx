@@ -130,13 +130,16 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       const targetUrl = getEffectiveRemoteUrl(
         overrideBaseUrl !== undefined ? overrideBaseUrl : remoteBaseUrl,
       )
+      const isTargetCustom = !isOfficialCloudUrl(targetUrl)
+      const targetDisplayName = isTargetCustom ? "Custom Server" : "Facenox Cloud"
+
       try {
         const res = await window.electronAPI.sync.initiateReversePairing({
           remoteBaseUrl: targetUrl,
           deviceName,
         })
         if (!res.success || !res.data) {
-          setInitiateError(res.error || "Could not connect to Facenox Cloud.")
+          setInitiateError(res.error || `Could not connect to ${targetDisplayName}.`)
           setReversePairing(null)
         } else {
           setReversePairing(res.data)
@@ -189,11 +192,11 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
         if (res.status === "approved" && res.config) {
           syncFromConfig(res.config)
           setReversePairing(null)
-          setSuccess(res.message || "Device connected to Facenox Cloud!")
+          setSuccess(res.message || "Device connected successfully!")
         } else if (res.status === "expired") {
           void startReversePairing()
         } else if (res.status === "denied") {
-          setInitiateError("Device pairing was denied by the cloud administrator.")
+          setInitiateError("Device pairing was denied by the administrator.")
           setReversePairing(null)
         }
       } catch {
@@ -337,7 +340,9 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     }
   }
 
-  const isCustomServer = !isOfficialCloudUrl(config.remoteBaseUrl)
+  const effectiveUrl = getEffectiveRemoteUrl(remoteBaseUrl || config.remoteBaseUrl)
+  const isCustomServer = !isOfficialCloudUrl(effectiveUrl)
+  const serverDisplayName = isCustomServer ? "Custom Server" : "Facenox Cloud"
 
   const syncTone =
     config.lastSyncStatus === "success" ? "text-white/60"
@@ -352,12 +357,8 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
           <div className="max-w-xl min-w-0 flex-1">
             <h3 className="text-sm font-medium text-white/90">
               {!config.connected ?
-                isCustomServer ?
-                  "Connect to Custom Server"
-                : "Connect to Facenox Cloud"
-              : isCustomServer ?
-                "Connected to Custom Server"
-              : "Connected to Facenox Cloud"}
+                `Connect to ${serverDisplayName}`
+              : `Connected to ${serverDisplayName}`}
             </h3>
             <p className="mt-0.5 text-xs text-white/60">
               {!config.connected ?
@@ -410,7 +411,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       className="flex min-h-[290px] flex-col items-center justify-center gap-3 text-center">
                       <Spinner size="md" color="cyan" />
                       <p className="text-xs font-medium text-white/70">
-                        Connecting to Facenox Cloud...
+                        Connecting to {serverDisplayName}...
                       </p>
                       <p className="text-[11px] text-white/40">Generating secure pairing code</p>
                     </motion.div>
@@ -465,9 +466,19 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         className="mt-5 max-w-sm space-y-3">
                         <p className="text-xs leading-relaxed text-white/70">
                           Connect via QR code, or visit{" "}
-                          <span className="font-semibold text-cyan-400">
-                            {reversePairing.verificationUri.replace(/^https?:\/\//, "")}
-                          </span>{" "}
+                          <a
+                            href={
+                              reversePairing.verificationUriComplete ||
+                              reversePairing.verificationUri
+                            }
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-cyan-400 underline-offset-4 transition hover:text-cyan-300 hover:underline">
+                            <span>
+                              {reversePairing.verificationUri.replace(/^https?:\/\//, "")}
+                            </span>
+                            <i className="fa-solid fa-arrow-up-right-from-square text-[9px]" />
+                          </a>{" "}
                           and enter:
                         </p>
 
