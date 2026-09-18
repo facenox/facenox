@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { useUIStore } from "@/components/main/stores"
@@ -89,6 +89,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   // Reverse pairing state
   const [reversePairing, setReversePairing] = useState<ReversePairingData | null>(null)
   const [isInitiating, setIsInitiating] = useState(false)
+  const isInitiatingRef = useRef(false)
   const [initiateError, setInitiateError] = useState<string | null>(null)
   const [secondsLeft, setSecondsLeft] = useState<number>(900)
 
@@ -116,7 +117,8 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
 
   const startReversePairing = useCallback(
     async (overrideBaseUrl?: string) => {
-      if (config.connected) return
+      if (config.connected || isInitiatingRef.current) return
+      isInitiatingRef.current = true
       setIsInitiating(true)
       setInitiateError(null)
       const targetUrl =
@@ -139,6 +141,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
         setInitiateError(err instanceof Error ? err.message : "Connection error.")
         setReversePairing(null)
       } finally {
+        isInitiatingRef.current = false
         setIsInitiating(false)
       }
     },
@@ -212,7 +215,13 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
 
   // Auto-initiate reverse pairing if not connected
   useEffect(() => {
-    if (!config.connected && !reversePairing && !isInitiating && !initiateError) {
+    if (
+      !config.connected &&
+      !reversePairing &&
+      !isInitiating &&
+      !isInitiatingRef.current &&
+      !initiateError
+    ) {
       void startReversePairing()
     }
   }, [config.connected, reversePairing, isInitiating, initiateError, startReversePairing])
@@ -431,20 +440,16 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     </motion.div>
                   : reversePairing ?
                     <motion.div
-                      key={reversePairing.deviceCode}
+                      key="reverse-pairing-ready"
                       initial={{ opacity: 0, y: 12, scale: 0.96 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.96 }}
                       transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
                       className="flex min-h-[290px] flex-col items-center justify-center py-4 text-center">
-                      {/* Centered QR Code with gentle spring scale */}
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.92 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                        className="group relative transition-transform duration-200 hover:scale-[1.02]">
+                      {/* Centered QR Code with gentle hover */}
+                      <div className="group relative transition-transform duration-200 hover:scale-[1.02]">
                         <QRCodeView value={reversePairing.verificationUriComplete} size={156} />
-                      </motion.div>
+                      </div>
 
                       {/* Centered Instructions, PIN Capsule & Status with staggered appearance */}
                       <motion.div
