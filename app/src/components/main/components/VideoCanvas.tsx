@@ -223,8 +223,8 @@ export const VideoCanvas = memo(function VideoCanvas({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.15 }}
-                  className="flex flex-col items-center gap-3 px-6 text-center">
-                  <div className="relative flex h-16 w-16 items-center justify-center">
+                  className="relative flex flex-col items-center justify-center">
+                  <div className="flex h-16 w-16 items-center justify-center">
                     <svg
                       className="h-16 w-16 animate-pulse text-white/55"
                       fill="none"
@@ -238,21 +238,27 @@ export const VideoCanvas = memo(function VideoCanvas({
                       />
                     </svg>
                   </div>
-                  <div className="relative flex min-h-[32px] max-w-xl flex-col items-center justify-center text-xs text-white/65">
-                    {emptyStateText && <p className="text-white/65">{emptyStateText}</p>}
-
-                    {hasSelectedGroup &&
+                  {(emptyStateText ||
+                    (hasSelectedGroup &&
                       hasEnrolledFaces &&
                       onStartTimeChange &&
-                      lateTrackingEnabled && (
-                        <div className="pointer-events-auto absolute top-full left-1/2 mt-4 -translate-x-1/2">
-                          <StartTimeChip
-                            startTime={classStartTime}
-                            onTimeChange={onStartTimeChange}
-                          />
-                        </div>
-                      )}
-                  </div>
+                      lateTrackingEnabled)) && (
+                    <div className="absolute top-full left-1/2 mt-4 flex w-max max-w-xl -translate-x-1/2 flex-col items-center gap-3 px-6 text-center text-xs text-white/65">
+                      {emptyStateText && <p className="text-white/65">{emptyStateText}</p>}
+
+                      {hasSelectedGroup &&
+                        hasEnrolledFaces &&
+                        onStartTimeChange &&
+                        lateTrackingEnabled && (
+                          <div className="pointer-events-auto">
+                            <StartTimeChip
+                              startTime={classStartTime}
+                              onTimeChange={onStartTimeChange}
+                            />
+                          </div>
+                        )}
+                    </div>
+                  )}
                 </motion.div>
               }
             </AnimatePresence>
