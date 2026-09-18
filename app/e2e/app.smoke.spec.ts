@@ -431,9 +431,7 @@ test.describe("renderer smoke", () => {
     await expect(page.getByText("Morning Class")).toBeVisible()
     await expect(page.getByRole("button", { name: "Start" })).toBeVisible()
     await expect(page.getByPlaceholder("Search name...")).toBeVisible()
-    await expect(
-      page.getByText("Select a camera, then press Start Scan to begin attendance tracking."),
-    ).toBeVisible()
+    await expect(page.getByLabel("Live camera feed and face recognition canvas")).toBeVisible()
 
     await expect
       .poll(() =>

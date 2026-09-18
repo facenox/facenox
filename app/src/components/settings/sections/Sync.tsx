@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion"
 
 import { useUIStore } from "@/components/main/stores"
 import { Modal, QRCodeView, Spinner } from "@/components/common"
+import { Tooltip } from "@/components/shared"
 import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
@@ -476,29 +477,33 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                             <span>{reversePairing.userCode.slice(0, 3)}</span>
                             <span>{reversePairing.userCode.slice(3, 6)}</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void navigator.clipboard.writeText(reversePairing.userCode)
-                              setCopiedPin(true)
-                              setTimeout(() => setCopiedPin(false), 2000)
-                            }}
-                            title={copiedPin ? "Copied to clipboard!" : "Copy Code"}
-                            className="flex size-8 items-center justify-center rounded-lg text-white/35 transition hover:bg-white/5 hover:text-white">
-                            <i
-                              className={`fa-solid ${copiedPin ? "fa-check text-emerald-400" : "fa-copy"} text-xs`}
-                            />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void startReversePairing()}
-                            disabled={isInitiating}
-                            title="Refresh Code"
-                            className="flex size-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70 disabled:opacity-40">
-                            <i
-                              className={`fa-solid fa-arrows-rotate text-xs ${isInitiating ? "fa-spin text-cyan-400" : ""}`}
-                            />
-                          </button>
+                          <Tooltip
+                            content={copiedPin ? "Copied to clipboard!" : "Copy code"}
+                            position="top">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                void navigator.clipboard.writeText(reversePairing.userCode)
+                                setCopiedPin(true)
+                                setTimeout(() => setCopiedPin(false), 2000)
+                              }}
+                              className="flex size-8 items-center justify-center rounded-lg text-white/35 transition hover:bg-white/5 hover:text-white">
+                              <i
+                                className={`fa-solid ${copiedPin ? "fa-check text-emerald-400" : "fa-copy"} text-xs`}
+                              />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="Refresh code" position="top">
+                            <button
+                              type="button"
+                              onClick={() => void startReversePairing()}
+                              disabled={isInitiating}
+                              className="flex size-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70 disabled:opacity-40">
+                              <i
+                                className={`fa-solid fa-arrows-rotate text-xs ${isInitiating ? "fa-spin text-cyan-400" : ""}`}
+                              />
+                            </button>
+                          </Tooltip>
                         </div>
 
                         {/* Live waiting indicator */}

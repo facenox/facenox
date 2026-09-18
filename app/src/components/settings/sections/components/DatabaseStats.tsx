@@ -14,28 +14,26 @@ export function DatabaseStats({ groupsCount, totalMembers, totalPersons }: Datab
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3">
-      <div className="flex flex-col items-center gap-1.5">
-        <p className="text-[12px] font-medium tracking-wider text-white/65 uppercase">
-          Total Groups
-        </p>
-        <div className="flex items-baseline">
+    <div className="flex items-center justify-between">
+      <div className="flex flex-col items-center gap-1 text-center">
+        <p className="text-[11px] font-bold tracking-wider text-white/50 uppercase">Groups</p>
+        <div className="flex items-baseline justify-center">
           <span className="text-3xl font-medium tracking-tight text-cyan-400">{groupsCount}</span>
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-1.5">
-        <p className="text-[12px] font-medium tracking-wider text-white/65 uppercase">
-          Total Members
-        </p>
-        <div className="flex min-h-10 items-baseline">{renderStatValue(totalMembers)}</div>
+      <div className="flex flex-col items-center gap-1 text-center">
+        <p className="text-[11px] font-bold tracking-wider text-white/50 uppercase">Members</p>
+        <div className="flex min-h-10 items-baseline justify-center">
+          {renderStatValue(totalMembers)}
+        </div>
       </div>
 
-      <div className="flex flex-col items-center gap-1.5">
-        <p className="text-[12px] font-medium tracking-wider text-white/65 uppercase">
-          Enrolled Members
-        </p>
-        <div className="flex min-h-10 items-baseline">{renderStatValue(totalPersons)}</div>
+      <div className="flex flex-col items-center gap-1 text-center">
+        <p className="text-[11px] font-bold tracking-wider text-white/50 uppercase">Enrolled</p>
+        <div className="flex min-h-10 items-baseline justify-center">
+          {renderStatValue(totalPersons)}
+        </div>
       </div>
     </div>
   )
