@@ -107,7 +107,6 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       setRemoteBaseUrl(isOfficialCloudUrl(nextRemoteBaseUrl) ? "" : nextRemoteBaseUrl)
       setDeviceName(nextConfig.deviceName === "Facenox Desktop" ? "" : nextConfig.deviceName || "")
       setIntervalMinutes(nextConfig.intervalMinutes || DEFAULT_SYNC_INTERVAL_MINUTES)
-      setShowAdvanced(!isOfficialCloudUrl(nextRemoteBaseUrl))
 
       if (onStatusChange) {
         onStatusChange(nextConfig)
