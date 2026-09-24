@@ -366,14 +366,24 @@ export function Database({
                 Access local database files, logs, and biometric signatures on this device.
               </p>
             </div>
-            <button
-              onClick={async () => {
-                await window.facenoxElectron?.openDataDir()
-              }}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-5 py-2 text-[12px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
-              <i className="fa-regular fa-folder-open text-[11px] opacity-40" />
-              Open Folder
-            </button>
+            <div className="flex shrink-0 flex-wrap gap-2 self-start md:self-auto">
+              <button
+                onClick={async () => {
+                  await window.facenoxElectron?.openDataDir()
+                }}
+                className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-5 py-2 text-[12px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
+                <i className="fa-regular fa-folder-open text-[11px] opacity-40" />
+                Open Folder
+              </button>
+              <button
+                onClick={async () => {
+                  await window.facenoxElectron?.openLogFile()
+                }}
+                className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-5 py-2 text-[12px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
+                <i className="fa-regular fa-file-lines text-[11px] opacity-40" />
+                Open Log
+              </button>
+            </div>
           </div>
 
           {/* Install Folder */}
@@ -547,8 +557,12 @@ export function Database({
                       Clear Group Directory
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Permanently deletes all groups and member profiles. This wipes out the entire
-                      local directory structure.
+                      Permanently deletes all groups, member profiles, and their consent records.
+                      This wipes out the entire local directory structure.{" "}
+                      <span className="font-semibold text-white/80">
+                        After clearing, consent must be re-granted for each member before
+                        re-enrollment will work.
+                      </span>
                     </p>
                   </div>
                   <button

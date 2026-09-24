@@ -206,5 +206,6 @@ contextBridge.exposeInMainWorld("facenoxElectron", {
   getVersion: () => ipcRenderer.invoke("updater:get-version"),
   openDataDir: () => ipcRenderer.invoke("system:open-data-dir"),
   openInstallDir: () => ipcRenderer.invoke("system:open-install-dir"),
+  openLogFile: () => ipcRenderer.invoke("system:open-log-file"),
   onAppReady: () => ipcRenderer.send("app:ready"),
 })

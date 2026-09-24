@@ -1,5 +1,6 @@
 import { ipcMain, shell, app } from "electron"
 import path from "path"
+import fs from "node:fs"
 import { diagnosticsService } from "../services/DiagnosticsService.js"
 import isDev from "../util.js"
 
@@ -35,5 +36,16 @@ export function registerSystemHandlers() {
     const installPath = app.isPackaged ? path.dirname(process.execPath) : app.getAppPath()
     await shell.openPath(installPath)
     return { success: true, path: installPath }
+  })
+
+  ipcMain.handle("system:open-log-file", async () => {
+    const logDir = isDev() ? path.join(app.getAppPath(), "..", "data") : app.getPath("userData")
+    const logFile = path.join(logDir, "backend.log")
+    if (fs.existsSync(logFile)) {
+      shell.showItemInFolder(logFile)
+    } else {
+      await shell.openPath(logDir)
+    }
+    return { success: true, path: logFile }
   })
 }

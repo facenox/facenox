@@ -162,7 +162,26 @@ export class BackendProcessManager {
       })
 
       const logDir = isDev() ? path.join(process.cwd(), "..", "data") : app.getPath("userData")
-      const logFile = path.join(logDir, "backend-startup.log")
+      const logFile = path.join(logDir, "backend.log")
+      const logFileOld = path.join(logDir, "backend.old.log")
+      const logFileLegacy = path.join(logDir, "backend-startup.log")
+      const MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
+      try {
+        if (fs.existsSync(logFileLegacy)) {
+          if (!fs.existsSync(logFileOld)) {
+            fs.renameSync(logFileLegacy, logFileOld)
+          } else {
+            fs.unlinkSync(logFileLegacy)
+          }
+        }
+        const stat = fs.statSync(logFile)
+        if (stat.size > MAX_LOG_SIZE_BYTES) {
+          if (fs.existsSync(logFileOld)) fs.unlinkSync(logFileOld)
+          fs.renameSync(logFile, logFileOld)
+        }
+      } catch {
+        // log file doesn't exist yet — fine
+      }
       fs.writeFileSync(logFile, `[${new Date().toISOString()}] Backend starting...\n`)
       const logStream = fs.createWriteStream(logFile, { flags: "a" })
 

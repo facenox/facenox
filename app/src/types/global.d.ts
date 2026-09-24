@@ -63,6 +63,7 @@ declare global {
     getVersion: () => Promise<string>
     openDataDir: () => Promise<{ success: boolean; path: string }>
     openInstallDir: () => Promise<{ success: boolean; path: string }>
+    openLogFile: () => Promise<{ success: boolean; path: string }>
     onAppReady: () => void
   }
 

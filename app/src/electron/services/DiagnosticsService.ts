@@ -33,9 +33,9 @@ export class DiagnosticsService {
     const totalMem = os.totalmem()
     const freeMem = os.freemem()
 
-    // Get last 100 lines of backend-startup.log
+    // Get last 100 lines of backend.log
     const logDir = isDev() ? path.join(process.cwd(), "..", "data") : app.getPath("userData")
-    const logPath = path.join(logDir, "backend-startup.log")
+    const logPath = path.join(logDir, "backend.log")
 
     let logs: string[]
     try {
