@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Root npm dependencies
+  # Root npm dependencies (safe minor & patch updates)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -14,8 +14,11 @@ updates:
     groups:
       dependencies:
         patterns: ["*"]
+        update-types:
+          - "minor"
+          - "patch"
 
-  # Desktop app workspace (/app)
+  # Desktop app workspace (/app) (safe minor & patch updates)
   - package-ecosystem: "npm"
     directory: "/app"
     schedule:
@@ -29,8 +32,11 @@ updates:
     groups:
       app-dependencies:
         patterns: ["*"]
+        update-types:
+          - "minor"
+          - "patch"
 
-  # Server workspace (/server)
+  # Server workspace (/server) (safe minor & patch updates)
   - package-ecosystem: "npm"
     directory: "/server"
     schedule:
@@ -44,6 +50,9 @@ updates:
     groups:
       server-dependencies:
         patterns: ["*"]
+        update-types:
+          - "minor"
+          - "patch"
 
   # GitHub Actions workflows
   - package-ecosystem: "github-actions"
