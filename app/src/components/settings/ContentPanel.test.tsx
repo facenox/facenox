@@ -4,6 +4,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ContentPanel } from "@/components/settings/ContentPanel"
 import { useUIStore } from "@/components/main/stores"
 
+const MOTION_PROP_KEYS = new Set([
+  "layout",
+  "layoutId",
+  "variants",
+  "initial",
+  "animate",
+  "exit",
+  "transition",
+  "custom",
+  "whileHover",
+  "whileTap",
+])
+
 vi.mock("framer-motion", () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => children,
   motion: new Proxy(
@@ -11,22 +24,12 @@ vi.mock("framer-motion", () => ({
     {
       get:
         (_, tag: string) =>
-        ({
-          children,
-          layout,
-          layoutId,
-          variants,
-          initial,
-          animate,
-          exit,
-          transition,
-          custom,
-          whileHover,
-          whileTap,
-          ...props
-        }: Record<string, unknown>) => {
+        ({ children, ...props }: Record<string, unknown>) => {
+          const domProps = Object.fromEntries(
+            Object.entries(props).filter(([key]) => !MOTION_PROP_KEYS.has(key)),
+          )
           const Tag = tag as keyof React.JSX.IntrinsicElements
-          return <Tag {...(props as any)}>{children as ReactNode}</Tag>
+          return <Tag {...domProps}>{children as ReactNode}</Tag>
         },
     },
   ),

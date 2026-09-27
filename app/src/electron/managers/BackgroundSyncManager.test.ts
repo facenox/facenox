@@ -44,19 +44,24 @@ vi.mock("electron", () => ({
   },
 }))
 
-vi.mock("ably", () => ({
-  default: {
-    Realtime: vi.fn().mockImplementation(() => ({
-      channels: {
-        get: vi.fn().mockReturnValue({
-          subscribe: vi.fn(),
-          unsubscribe: vi.fn(),
-        }),
-      },
-      close: vi.fn(),
-    })),
-  },
-}))
+vi.mock("ably", () => {
+  class MockRealtime {
+    channels = {
+      get: vi.fn().mockReturnValue({
+        subscribe: vi.fn(),
+        unsubscribe: vi.fn(),
+      }),
+    }
+    close = vi.fn()
+  }
+
+  return {
+    Realtime: MockRealtime,
+    default: {
+      Realtime: MockRealtime,
+    },
+  }
+})
 
 describe("BackgroundSyncManager", () => {
   const TEST_KEY = Buffer.alloc(32, 1).toString("base64")
