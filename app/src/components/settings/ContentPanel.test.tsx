@@ -1,7 +1,17 @@
+import type { ReactNode } from "react"
 import { fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ContentPanel } from "@/components/settings/ContentPanel"
 import { useUIStore } from "@/components/main/stores"
+
+vi.mock("framer-motion", () => ({
+  AnimatePresence: ({ children }: { children: ReactNode }) => children,
+  motion: {
+    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+      <div {...props}>{children}</div>
+    ),
+  },
+}))
 
 describe("ContentPanel anti-spoof prompt", () => {
   const baseProps = {

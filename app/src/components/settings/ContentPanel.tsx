@@ -475,7 +475,10 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                           <Tooltip content="Edit group name" position="bottom" offset={6}>
                             <button
                               type="button"
-                              onClick={() => setIsEditingGroupName(true)}
+                              onClick={() => {
+                                setGroupNameInput(validInitialGroup?.name || "")
+                                setIsEditingGroupName(true)
+                              }}
                               aria-label="Edit group name"
                               className="flex h-5 w-5 items-center justify-center border-none bg-transparent p-0 text-white/35 transition-colors duration-150 hover:text-cyan-400 focus:outline-none active:scale-95">
                               <i className="fa-solid fa-pen text-[9px]" />
