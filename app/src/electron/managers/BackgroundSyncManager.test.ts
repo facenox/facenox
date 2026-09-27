@@ -46,6 +46,10 @@ vi.mock("electron", () => ({
 
 vi.mock("ably", () => {
   class MockRealtime {
+    connection = {
+      on: vi.fn(),
+      off: vi.fn(),
+    }
     channels = {
       get: vi.fn().mockReturnValue({
         subscribe: vi.fn(),

@@ -273,7 +273,19 @@ describe("ContentPanel inline group name editing", () => {
     expect(input).toBeInTheDocument()
 
     fireEvent.change(input, { target: { value: "New Team" } })
-    fireEvent.keyDown(input, { key: "Escape" })
+    fireEvent.keyDown(input, { key: "Escape", code: "Escape" })
+
+    expect(screen.getByText("Engineering Team")).toBeInTheDocument()
+    expect(screen.queryByDisplayValue("New Team")).not.toBeInTheDocument()
+  })
+
+  it("cancels inline editing when clicking the cancel button", () => {
+    render(<ContentPanel {...groupProps} />)
+    fireEvent.click(screen.getByLabelText("Edit group name"))
+
+    const input = screen.getByDisplayValue("Engineering Team") as HTMLInputElement
+    fireEvent.change(input, { target: { value: "New Team" } })
+    fireEvent.click(screen.getByLabelText("Cancel"))
 
     expect(screen.getByText("Engineering Team")).toBeInTheDocument()
     expect(screen.queryByDisplayValue("New Team")).not.toBeInTheDocument()

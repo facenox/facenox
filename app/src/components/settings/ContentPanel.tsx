@@ -405,7 +405,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                             e.preventDefault()
                             e.stopPropagation()
                             handleSaveGroupName()
-                          } else if (e.key === "Escape") {
+                          } else if (e.key === "Escape" || e.key === "Esc") {
                             e.preventDefault()
                             e.stopPropagation()
                             handleCancelGroupNameEdit()
