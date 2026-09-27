@@ -1,3 +1,4 @@
+import Ably from "ably"
 import {
   syncPushSchema,
   type SyncPushPayload,
@@ -168,6 +169,8 @@ export class BackgroundSyncManager {
   private commandTimer: NodeJS.Timeout | null = null
   private catchUpTimer: NodeJS.Timeout | null = null
   private debounceTimer: NodeJS.Timeout | null = null
+  private ablyClient: Ably.Realtime | null = null
+  private ablyChannel: Ably.RealtimeChannel | null = null
   private isSyncing = false
   private isPollingCommands = false
   /** When true, a sync will be re-triggered once the current one finishes. */
@@ -231,6 +234,89 @@ export class BackgroundSyncManager {
     state.mainWindow?.webContents.send("sync:data-changed")
   }
 
+  private initRealtimeListener() {
+    this.teardownRealtimeListener()
+
+    const { enabled, remoteBaseUrl, siteId, deviceToken } = this.getSyncConfig()
+    if (!enabled || !remoteBaseUrl || !siteId || !deviceToken) {
+      return
+    }
+
+    try {
+      const cleanBaseUrl = remoteBaseUrl.replace(/\/+$/, "")
+      console.log(`[Ably] Initializing realtime sync connection for site:${siteId}...`)
+
+      this.ablyClient = new Ably.Realtime({
+        authCallback: async (_data, callback) => {
+          try {
+            const res = await fetch(`${cleanBaseUrl}/api/sync/ably-token`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${deviceToken}`,
+                "User-Agent": "Facenox-Desktop-Ably",
+              },
+              signal: AbortSignal.timeout(15000),
+            })
+
+            if (!res.ok) {
+              throw new Error(`Ably token request failed: HTTP ${res.status}`)
+            }
+
+            const tokenRequest = await res.json()
+            callback(null, tokenRequest)
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            console.warn("[Ably] Failed to fetch token request from cloud:", errorMsg)
+            callback(errorMsg, null)
+          }
+        },
+        autoConnect: true,
+      })
+
+      this.ablyClient.connection.on("connected", () => {
+        console.log(
+          `[Ably] Realtime connected. Listening on site:${siteId} for instant cloud sync.`,
+        )
+      })
+
+      this.ablyClient.connection.on("disconnected", () => {
+        console.log("[Ably] Realtime disconnected. Reconnecting automatically...")
+      })
+
+      this.ablyClient.connection.on("failed", (stateChange) => {
+        console.warn("[Ably] Realtime connection failed:", stateChange.reason)
+      })
+
+      this.ablyChannel = this.ablyClient.channels.get(`site:${siteId}`)
+      this.ablyChannel.subscribe("sync_required", (message) => {
+        console.log("[Ably] Realtime sync notification received from cloud:", message.data)
+        this.triggerDebouncedSync(500)
+      })
+    } catch (err) {
+      console.warn("[Ably] Failed to initialize Ably realtime client:", err)
+    }
+  }
+
+  private teardownRealtimeListener() {
+    if (this.ablyChannel) {
+      try {
+        this.ablyChannel.unsubscribe()
+      } catch {
+        // ignore
+      }
+      this.ablyChannel = null
+    }
+
+    if (this.ablyClient) {
+      try {
+        this.ablyClient.close()
+      } catch {
+        // ignore
+      }
+      this.ablyClient = null
+    }
+  }
+
   start(options: { skipCatchUp?: boolean } = {}) {
     this.stop()
 
@@ -254,6 +340,9 @@ export class BackgroundSyncManager {
       this.scheduleCatchUpSync()
     }
 
+    // Initialize instant realtime Ably push listener
+    this.initRealtimeListener()
+
     // Initial command poll on startup
     void this.pollCommands()
 
@@ -265,6 +354,7 @@ export class BackgroundSyncManager {
 
   stop() {
     this.clearCatchUpTimer()
+    this.teardownRealtimeListener()
     this.pendingSyncRequested = false
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer)

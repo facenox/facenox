@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@types/qrcode": "^1.5.6",
+    "ably": "^2.29.0",
     "framer-motion": "^12.43.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.8",
