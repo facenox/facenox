@@ -6,11 +6,30 @@ import { useUIStore } from "@/components/main/stores"
 
 vi.mock("framer-motion", () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => children,
-  motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-      <div {...props}>{children}</div>
-    ),
-  },
+  motion: new Proxy(
+    {},
+    {
+      get:
+        (_, tag: string) =>
+        ({
+          children,
+          layout,
+          layoutId,
+          variants,
+          initial,
+          animate,
+          exit,
+          transition,
+          custom,
+          whileHover,
+          whileTap,
+          ...props
+        }: Record<string, unknown>) => {
+          const Tag = tag as keyof React.JSX.IntrinsicElements
+          return <Tag {...(props as any)}>{children as ReactNode}</Tag>
+        },
+    },
+  ),
 }))
 
 describe("ContentPanel anti-spoof prompt", () => {
