@@ -616,7 +616,7 @@ export class BackgroundSyncManager {
   async performSync() {
     if (this.isSyncing) {
       // Queue a follow-up sync instead of silently dropping this request.
-      // Prevents missed updates from SSE events or manual triggers that
+      // Prevents missed updates from realtime events or manual triggers that
       // arrive while a sync is already in-flight.
       this.pendingSyncRequested = true
       return {
