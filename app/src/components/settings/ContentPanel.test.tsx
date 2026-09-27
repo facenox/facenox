@@ -3,22 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ContentPanel } from "@/components/settings/ContentPanel"
 import { useUIStore } from "@/components/main/stores"
 
-vi.mock("@/components/group/hooks", () => ({
-  useGroupModals: () => ({
-    openEditGroup: vi.fn(),
-  }),
-}))
-
-vi.mock("@/components/group/stores", () => ({
-  useGroupUIStore: vi.fn((selector: (state: Record<string, unknown>) => unknown) =>
-    selector({
-      lastEnrollmentSource: null,
-      lastEnrollmentMode: null,
-      handleEnrollmentBack: vi.fn(),
-    }),
-  ),
-}))
-
 describe("ContentPanel anti-spoof prompt", () => {
   const baseProps = {
     activeSection: "attendance",
@@ -174,5 +158,105 @@ describe("ContentPanel anti-spoof prompt", () => {
 
     expect(screen.queryByText("Before Enabling Liveness")).not.toBeInTheDocument()
     expect(updateAttendanceSetting).toHaveBeenCalledWith({ enableSpoofDetection: true })
+  })
+})
+
+describe("ContentPanel inline group name editing", () => {
+  const groupProps = {
+    activeSection: "group",
+    groupInitialSection: "overview" as const,
+    setGroupInitialSection: vi.fn(),
+    validInitialGroup: {
+      id: "group-1",
+      name: "Engineering Team",
+      created_at: new Date("2026-01-01T00:00:00Z"),
+      is_active: true,
+      settings: {},
+    },
+    currentGroupMembers: [],
+    triggerCreateGroup: 0,
+    deselectMemberTrigger: 0,
+    setDeselectMemberTrigger: vi.fn(),
+    setHasSelectedMember: vi.fn(),
+    handleExportHandlersReady: vi.fn(),
+    handleAddMemberHandlerReady: vi.fn(),
+    handleGroupsChanged: vi.fn(),
+    handleGroupBack: vi.fn(),
+    quickSettings: {
+      cameraMirrored: true,
+      showRecognitionNames: true,
+    },
+    toggleQuickSetting: vi.fn(),
+    audioSettings: {
+      recognitionSoundEnabled: true,
+      recognitionSoundUrl: "./assets/sounds/Recognition_Success.mp3",
+    },
+    attendanceSettings: {
+      lateThresholdEnabled: false,
+      lateThresholdMinutes: 5,
+      classStartTime: "08:00",
+      attendanceCooldownSeconds: 8,
+      enableSpoofDetection: false,
+      maxRecognitionFacesPerFrame: 6,
+      trackCheckout: false,
+      dataRetentionDays: 0,
+    },
+    updateAttendanceSetting: vi.fn(),
+    updateAudioSetting: vi.fn(),
+    setActiveSection: vi.fn(),
+    dropdownValue: "group-1",
+    systemData: {
+      totalPersons: null,
+      totalMembers: null,
+      lastUpdated: "",
+    },
+    timeHealthState: {
+      timeHealth: null,
+      loading: false,
+    },
+    groups: [],
+    isLoading: false,
+    handleClearDatabase: vi.fn(),
+    loadSystemData: vi.fn(),
+    onGroupsChanged: vi.fn(),
+    members: [],
+    reportsExportHandlers: null,
+    addMemberHandler: null,
+    hasSelectedMember: false,
+    dropdownGroups: [],
+    groupSections: [{ id: "overview" as const, label: "Overview", icon: "fa-chart-pie" }],
+  }
+
+  it("renders the group name and a pencil edit icon in header", () => {
+    render(<ContentPanel {...groupProps} />)
+    expect(screen.getByText("Engineering Team")).toBeInTheDocument()
+    expect(screen.getByLabelText("Edit group name")).toBeInTheDocument()
+  })
+
+  it("switches to inline input when pencil is clicked and cancels on Escape", () => {
+    render(<ContentPanel {...groupProps} />)
+    fireEvent.click(screen.getByLabelText("Edit group name"))
+
+    const input = screen.getByDisplayValue("Engineering Team") as HTMLInputElement
+    expect(input).toBeInTheDocument()
+
+    fireEvent.change(input, { target: { value: "New Team" } })
+    fireEvent.keyDown(input, { key: "Escape" })
+
+    expect(screen.getByText("Engineering Team")).toBeInTheDocument()
+    expect(screen.queryByDisplayValue("New Team")).not.toBeInTheDocument()
+  })
+
+  it("automatically cancels inline edit mode when switching sections", () => {
+    const { rerender } = render(<ContentPanel {...groupProps} groupInitialSection="overview" />)
+    fireEvent.click(screen.getByLabelText("Edit group name"))
+
+    expect(screen.getByDisplayValue("Engineering Team")).toBeInTheDocument()
+
+    // Switch section to reports
+    rerender(<ContentPanel {...groupProps} groupInitialSection="reports" />)
+
+    expect(screen.queryByDisplayValue("Engineering Team")).not.toBeInTheDocument()
+    expect(screen.getByText("Engineering Team")).toBeInTheDocument()
   })
 })

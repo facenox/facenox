@@ -239,8 +239,8 @@ export default function WindowBar() {
                 <button
                   onClick={handleOpenCloudSync}
                   style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                  className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-[4px] border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[10px] font-medium text-white/60 transition-all duration-150 select-none hover:border-white/20 hover:bg-white/[0.06] hover:text-white/90 active:scale-95">
-                  <i className="fa-solid fa-cloud text-[9px] opacity-70" />
+                  className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-white/45 transition-all duration-150 select-none hover:bg-white/5 hover:text-white/80 active:scale-95">
+                  <i className="fa-solid fa-cloud text-[9px] opacity-60" />
                   <span>Connect Cloud</span>
                 </button>
               </Tooltip>
@@ -252,7 +252,7 @@ export default function WindowBar() {
             (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
 
           let badgeBorderClass =
-            "border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-400 hover:border-emerald-500/35 hover:bg-emerald-500/10"
+            "text-emerald-400/90 hover:bg-emerald-500/10 hover:text-emerald-300"
           let iconClass = "fa-solid fa-cloud text-emerald-400 text-[9px]"
           let statusText = pendingCount > 0 ? `Synced (${pendingCount} queued)` : "Synced"
           let tooltipContent =
@@ -261,8 +261,7 @@ export default function WindowBar() {
             : `Last synced: ${relativeTime}. All records up to date. Click to open Cloud Sync.`
 
           if (syncConfig.lastSyncStatus === "error") {
-            badgeBorderClass =
-              "border-amber-500/25 bg-amber-500/[0.06] text-amber-400 hover:border-amber-500/40 hover:bg-amber-500/10"
+            badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
             iconClass = "fa-solid fa-triangle-exclamation text-amber-400 text-[9px]"
             statusText = pendingCount > 0 ? `${pendingCount} pending` : "Sync Warning"
             tooltipContent = `Sync issue: ${syncConfig.lastSyncMessage || "Network connection error."} Click to open Cloud Sync.`
@@ -273,7 +272,7 @@ export default function WindowBar() {
               <button
                 onClick={handleOpenCloudSync}
                 style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                className={`pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-[4px] border px-2 py-0.5 text-[10px] font-medium tracking-wide transition-all duration-150 select-none active:scale-95 ${badgeBorderClass}`}>
+                className={`pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide transition-all duration-150 select-none active:scale-95 ${badgeBorderClass}`}>
                 <i className={iconClass} />
                 <span>{statusText}</span>
               </button>

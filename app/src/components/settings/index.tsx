@@ -45,7 +45,10 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
     if (!isModal) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return
+      if (e.key !== "Escape" || e.defaultPrevented) return
+
+      const activeTag = document.activeElement?.tagName
+      if (activeTag === "INPUT" || activeTag === "TEXTAREA") return
 
       const groupUIState = useGroupUIStore.getState()
       const isZustandSubModalOpen =

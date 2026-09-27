@@ -5,9 +5,11 @@ const mockPersistentSettings = {
   getQuickSettings: vi.fn(),
   getAudioSettings: vi.fn(),
   getUIState: vi.fn(),
+  getSecuritySettings: vi.fn(),
   setUIState: vi.fn().mockResolvedValue(undefined),
   setQuickSettings: vi.fn().mockResolvedValue(undefined),
   setAudioSettings: vi.fn().mockResolvedValue(undefined),
+  setSecuritySettings: vi.fn().mockResolvedValue(undefined),
 }
 
 vi.mock("@/services/PersistentSettingsService", () => ({
@@ -36,6 +38,10 @@ describe("uiStore", () => {
       antiSpoofDetectionInfoDismissed: false,
       sidebarCollapsed: false,
       sidebarWidth: 300,
+    })
+    mockPersistentSettings.getSecuritySettings.mockResolvedValue({
+      adminPinEnabled: false,
+      adminPin: "1234",
     })
   })
 
@@ -85,6 +91,7 @@ describe("uiStore", () => {
     mockPersistentSettings.getQuickSettings.mockReturnValue(pending)
     mockPersistentSettings.getAudioSettings.mockReturnValue(pending)
     mockPersistentSettings.getUIState.mockReturnValue(pending)
+    mockPersistentSettings.getSecuritySettings.mockReturnValue(pending)
 
     const useUIStore = await loadStore()
     useUIStore.getState().setHasSeenIntro(true)

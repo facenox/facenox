@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react"
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Display } from "@/components/settings/sections/Display"
 import { Notifications } from "@/components/settings/sections/Notifications"
@@ -10,7 +10,6 @@ import { AntiSpoofDetectionModal } from "@/components/settings/AntiSpoofDetectio
 import { AuditLogExportModal } from "@/components/settings/AuditLogExportModal"
 import { GroupPanel, type GroupSection } from "@/components/group"
 import { SectionHeader } from "./components/SectionHeader"
-import { useGroupModals } from "@/components/group/hooks"
 import { useGroupUIStore } from "@/components/group/stores"
 import { useUIStore } from "@/components/main/stores"
 import { attendanceManager } from "@/services"
@@ -97,9 +96,75 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   groupSections,
   setActiveSection,
 }) => {
-  const { openEditGroup } = useGroupModals()
   const enrollmentMode = useGroupUIStore((state) => state.lastEnrollmentMode)
   const resetEnrollment = useGroupUIStore((state) => state.resetEnrollment)
+
+  const [isEditingGroupName, setIsEditingGroupName] = useState(false)
+  const [groupNameInput, setGroupNameInput] = useState("")
+  const [isSavingGroupName, setIsSavingGroupName] = useState(false)
+  const groupNameInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isEditingGroupName) {
+      setGroupNameInput(validInitialGroup?.name || "")
+      const timer = setTimeout(() => {
+        groupNameInputRef.current?.focus()
+        groupNameInputRef.current?.select()
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [isEditingGroupName, validInitialGroup?.name])
+
+  // Auto-cancel group name edit mode whenever navigating sections or switching groups
+  useEffect(() => {
+    setIsEditingGroupName(false)
+  }, [activeSection, groupInitialSection, validInitialGroup?.id])
+
+  const handleSaveGroupName = async () => {
+    if (!validInitialGroup) return
+    const trimmed = groupNameInput.trim()
+    if (!trimmed || trimmed === validInitialGroup.name) {
+      setIsEditingGroupName(false)
+      return
+    }
+
+    setIsSavingGroupName(true)
+    try {
+      await attendanceManager.updateGroup(validInitialGroup.id, {
+        name: trimmed,
+      })
+      setIsEditingGroupName(false)
+      const updatedGroup = { ...validInitialGroup, name: trimmed }
+      handleGroupsChanged(updatedGroup)
+      setSuccess("Group name updated.")
+    } catch (err) {
+      console.error("Failed to update group name:", err)
+      setError(err instanceof Error ? err.message : "Failed to update group name")
+    } finally {
+      setIsSavingGroupName(false)
+    }
+  }
+
+  const handleCancelGroupNameEdit = useCallback(() => {
+    setIsEditingGroupName(false)
+    setGroupNameInput(validInitialGroup?.name || "")
+  }, [validInitialGroup?.name])
+
+  useEffect(() => {
+    if (!isEditingGroupName) return
+
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
+        handleCancelGroupNameEdit()
+      }
+    }
+
+    window.addEventListener("keydown", handleGlobalKeyDown, true)
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown, true)
+  }, [isEditingGroupName, handleCancelGroupNameEdit])
   const antiSpoofDetectionInfoDismissed = useUIStore(
     (state) => state.antiSpoofDetectionInfoDismissed,
   )
@@ -214,15 +279,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             Back to Members
           </button>
         )
-      } else if (groupInitialSection === "overview" && validInitialGroup) {
-        actions = (
-          <button
-            onClick={openEditGroup}
-            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
-            <i className="fa-solid fa-pen text-[10px]"></i>
-            Edit
-          </button>
-        )
       } else if (groupInitialSection === "reports" && reportsExportHandlers) {
         actions = (
           <button
@@ -306,7 +362,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     members.length,
     enrollmentMode,
     resetEnrollment,
-    openEditGroup,
     reportsExportHandlers,
     setGroupInitialSection,
     syncConfig,
@@ -347,16 +402,89 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
           <SectionHeader.Breadcrumbs>
             {headerProps.isGroupSection ?
               <>
-                <SectionHeader.Breadcrumb
-                  key="group-name"
-                  active={!groupInitialSection || groupInitialSection === "overview"}
-                  onClick={
-                    !groupInitialSection || groupInitialSection === "overview" ?
-                      undefined
-                    : () => setGroupInitialSection("overview")
-                  }>
-                  {validInitialGroup?.name || "Group Management"}
-                </SectionHeader.Breadcrumb>
+                <AnimatePresence mode="wait" initial={false}>
+                  {isEditingGroupName ?
+                    <motion.div
+                      key="editing-group-name"
+                      initial={{ opacity: 0, scale: 0.96, x: -4 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.96, x: -4 }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
+                      className="flex items-center gap-1.5">
+                      <input
+                        ref={groupNameInputRef}
+                        type="text"
+                        value={groupNameInput}
+                        onChange={(e) => setGroupNameInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            e.nativeEvent.stopImmediatePropagation()
+                            handleSaveGroupName()
+                          } else if (e.key === "Escape") {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            e.nativeEvent.stopImmediatePropagation()
+                            handleCancelGroupNameEdit()
+                          }
+                        }}
+                        disabled={isSavingGroupName}
+                        className="w-44 rounded-md border border-white/10 bg-[rgba(22,28,36,0.68)] px-2.5 py-0.5 text-xs font-medium text-white transition-all duration-200 outline-none placeholder:text-white/40 focus:border-cyan-500/40 focus:bg-[rgba(28,35,44,0.85)] focus:ring-1 focus:ring-cyan-500/20"
+                      />
+                      <Tooltip content="Save (Enter)" position="bottom" offset={6}>
+                        <button
+                          type="button"
+                          onClick={handleSaveGroupName}
+                          disabled={!groupNameInput.trim() || isSavingGroupName}
+                          aria-label="Save name"
+                          className="flex h-5 w-5 items-center justify-center rounded border-none bg-transparent p-0 text-cyan-400/80 transition-all duration-150 hover:bg-cyan-500/10 hover:text-cyan-300 focus:outline-none active:scale-95 disabled:opacity-30">
+                          <i className="fa-solid fa-check text-[10px]" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Cancel (Esc)" position="bottom" offset={6}>
+                        <button
+                          type="button"
+                          onClick={handleCancelGroupNameEdit}
+                          disabled={isSavingGroupName}
+                          aria-label="Cancel"
+                          className="flex h-5 w-5 items-center justify-center rounded border-none bg-transparent p-0 text-white/35 transition-all duration-150 hover:bg-white/5 hover:text-white/75 focus:outline-none active:scale-95">
+                          <i className="fa-solid fa-xmark text-[10px]" />
+                        </button>
+                      </Tooltip>
+                    </motion.div>
+                  : <motion.div
+                      key="viewing-group-name"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
+                      className="group/group-title flex items-center gap-1.5">
+                      <SectionHeader.Breadcrumb
+                        key="group-name"
+                        active={!groupInitialSection || groupInitialSection === "overview"}
+                        onClick={
+                          !groupInitialSection || groupInitialSection === "overview" ?
+                            undefined
+                          : () => setGroupInitialSection("overview")
+                        }>
+                        {validInitialGroup?.name || "Group Management"}
+                      </SectionHeader.Breadcrumb>
+                      {validInitialGroup &&
+                        (!groupInitialSection || groupInitialSection === "overview") && (
+                          <Tooltip content="Edit group name" position="bottom" offset={6}>
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingGroupName(true)}
+                              aria-label="Edit group name"
+                              className="flex h-5 w-5 items-center justify-center border-none bg-transparent p-0 text-white/35 transition-colors duration-150 hover:text-cyan-400 focus:outline-none active:scale-95">
+                              <i className="fa-solid fa-pen text-[9px]" />
+                            </button>
+                          </Tooltip>
+                        )}
+                    </motion.div>
+                  }
+                </AnimatePresence>
                 <AnimatePresence mode="popLayout">
                   {groupInitialSection && groupInitialSection !== "overview" && (
                     <motion.div
