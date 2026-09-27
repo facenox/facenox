@@ -464,12 +464,15 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
 
 @pytest.mark.asyncio
 async def test_import_metadata_preserves_local_groups_and_empty_pull_safety(
-    client, session_factory
-):
+    maintenance_env,
+) -> None:
     """
     Test that local groups and members (remote_id is None) are preserved during cloud pull,
     and an empty pull payload does not prune any local records.
     """
+    client = maintenance_env["client"]
+    session_factory = maintenance_env["session_factory"]
+
     async with session_factory() as session:
         repo = AttendanceRepository(session, organization_id="org-1")
         face_repo = FaceRepository(session, organization_id="org-1")
