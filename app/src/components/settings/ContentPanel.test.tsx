@@ -273,7 +273,7 @@ describe("ContentPanel inline group name editing", () => {
     expect(input).toBeInTheDocument()
 
     fireEvent.change(input, { target: { value: "New Team" } })
-    fireEvent.keyDown(input, { key: "Escape", code: "Escape" })
+    fireEvent.keyDown(input, { key: "Escape", code: "Escape", keyCode: 27 })
 
     expect(screen.getByText("Engineering Team")).toBeInTheDocument()
     expect(screen.queryByDisplayValue("New Team")).not.toBeInTheDocument()

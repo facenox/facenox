@@ -401,11 +401,11 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                         value={groupNameInput}
                         onChange={(e) => setGroupNameInput(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") {
+                          if (e.key === "Enter" || e.keyCode === 13) {
                             e.preventDefault()
                             e.stopPropagation()
                             handleSaveGroupName()
-                          } else if (e.key === "Escape" || e.key === "Esc") {
+                          } else if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
                             e.preventDefault()
                             e.stopPropagation()
                             handleCancelGroupNameEdit()
