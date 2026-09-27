@@ -17,20 +17,41 @@ const MOTION_PROP_KEYS = new Set([
   "whileTap",
 ])
 
+const motionComponentCache = new Map<
+  string,
+  React.FC<{ children?: ReactNode } & Record<string, unknown>>
+>()
+
+function createMotionComponent(tag: string) {
+  function MotionTagComponent({ children, ...props }: Record<string, unknown>) {
+    const domProps = Object.fromEntries(
+      Object.entries(props).filter(([key]) => !MOTION_PROP_KEYS.has(key)),
+    )
+    const Tag = tag as keyof React.JSX.IntrinsicElements
+    return <Tag {...domProps}>{children as ReactNode}</Tag>
+  }
+  MotionTagComponent.displayName = `motion.${tag}`
+  return MotionTagComponent
+}
+
+function MockAnimatePresence({ children }: { children: ReactNode }) {
+  return <>{children}</>
+}
+MockAnimatePresence.displayName = "AnimatePresence"
+
 vi.mock("framer-motion", () => ({
-  AnimatePresence: ({ children }: { children: ReactNode }) => children,
+  AnimatePresence: MockAnimatePresence,
   motion: new Proxy(
     {},
     {
-      get:
-        (_, tag: string) =>
-        ({ children, ...props }: Record<string, unknown>) => {
-          const domProps = Object.fromEntries(
-            Object.entries(props).filter(([key]) => !MOTION_PROP_KEYS.has(key)),
-          )
-          const Tag = tag as keyof React.JSX.IntrinsicElements
-          return <Tag {...domProps}>{children as ReactNode}</Tag>
-        },
+      get: (_, tag: string) => {
+        let Component = motionComponentCache.get(tag)
+        if (!Component) {
+          Component = createMotionComponent(tag)
+          motionComponentCache.set(tag, Component)
+        }
+        return Component
+      },
     },
   ),
 }))
@@ -273,7 +294,9 @@ describe("ContentPanel inline group name editing", () => {
     expect(input).toBeInTheDocument()
 
     fireEvent.change(input, { target: { value: "New Team" } })
-    fireEvent.keyDown(input, { key: "Escape", code: "Escape", keyCode: 27 })
+
+    const updatedInput = screen.getByDisplayValue("New Team")
+    fireEvent.keyDown(updatedInput, { key: "Escape", code: "Escape", keyCode: 27 })
 
     await waitFor(() => {
       expect(screen.getByText("Engineering Team")).toBeInTheDocument()
