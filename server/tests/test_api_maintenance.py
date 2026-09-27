@@ -306,13 +306,16 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
         face_repo = FaceRepository(session, organization_id="org-1")
 
         # Group 1, Member 1, Face 1
-        await repo.create_group({"id": "group-1", "name": "Morning Group"})
+        await repo.create_group(
+            {"id": "group-1", "name": "Morning Group", "remote_id": "group-1"}
+        )
         await repo.add_member(
             {
                 "person_id": "member-1",
                 "group_id": "group-1",
                 "name": "Alice",
                 "has_consent": True,
+                "remote_id": "member-1",
             }
         )
         await face_repo.upsert_face("member-1", b"AliceEmb", 128)
@@ -324,30 +327,37 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
                 "group_id": "group-1",
                 "name": "David",
                 "has_consent": True,
+                "remote_id": "member-4",
             }
         )
         await face_repo.upsert_face("member-4", b"DavidEmb", 128)
 
         # Group 2, Member 2, Face 2
-        await repo.create_group({"id": "group-2", "name": "Evening Group"})
+        await repo.create_group(
+            {"id": "group-2", "name": "Evening Group", "remote_id": "group-2"}
+        )
         await repo.add_member(
             {
                 "person_id": "member-2",
                 "group_id": "group-2",
                 "name": "Bob",
                 "has_consent": True,
+                "remote_id": "member-2",
             }
         )
         await face_repo.upsert_face("member-2", b"BobEmb", 128)
 
         # Group 3, Member 3, Face 3 (will be pruned via group deletion)
-        await repo.create_group({"id": "group-3", "name": "Night Group"})
+        await repo.create_group(
+            {"id": "group-3", "name": "Night Group", "remote_id": "group-3"}
+        )
         await repo.add_member(
             {
                 "person_id": "member-3",
                 "group_id": "group-3",
                 "name": "Charlie",
                 "has_consent": True,
+                "remote_id": "member-3",
             }
         )
         await face_repo.upsert_face("member-3", b"CharlieEmb", 128)
@@ -450,3 +460,95 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
     assert "member-2" in recognizer.enrolled["org-1"]
     # Cache should still have been refreshed
     assert "org-1" in recognizer.refreshed_orgs
+
+
+@pytest.mark.asyncio
+async def test_import_metadata_preserves_local_groups_and_empty_pull_safety(
+    client, session_factory
+):
+    """
+    Test that local groups and members (remote_id is None) are preserved during cloud pull,
+    and an empty pull payload does not prune any local records.
+    """
+    async with session_factory() as session:
+        repo = AttendanceRepository(session, organization_id="org-1")
+        face_repo = FaceRepository(session, organization_id="org-1")
+
+        # Create a local group with NO remote_id (created on desktop kiosk)
+        await repo.create_group({"id": "local-group-1", "name": "Local Only Group"})
+        await repo.add_member(
+            {
+                "person_id": "local-member-1",
+                "group_id": "local-group-1",
+                "name": "Local Alice",
+                "has_consent": True,
+            }
+        )
+        await face_repo.upsert_face("local-member-1", b"LocalAliceEmb", 128)
+        await session.commit()
+
+    # 1. Test empty pull (e.g. newly paired cloud account with 0 groups/members)
+    empty_payload = {"groups": [], "members": []}
+    res_empty = client.post(
+        "/attendance/import-metadata",
+        headers=_headers("org-1"),
+        json=empty_payload,
+    )
+    assert res_empty.status_code == 200, res_empty.text
+
+    # Local records must NOT have been wiped
+    async with session_factory() as session:
+        lg = await session.get(AttendanceGroup, "local-group-1")
+        assert lg is not None
+        assert lg.is_deleted is False
+        assert lg.is_active is True
+
+        lm_res = await session.execute(
+            select(AttendanceMember).where(
+                AttendanceMember.person_id == "local-member-1"
+            )
+        )
+        lm = lm_res.scalars().first()
+        assert lm is not None
+        assert lm.is_deleted is False
+
+        lf_res = await session.execute(
+            select(Face).where(Face.person_id == "local-member-1")
+        )
+        assert lf_res.scalars().first() is not None
+
+    # 2. Test pull with other cloud groups — local-only group must still NOT be pruned
+    partial_payload = {
+        "groups": [{"id": "cloud-group-1", "name": "Cloud Group 1", "is_active": True}],
+        "members": [
+            {
+                "person_id": "cloud-member-1",
+                "group_id": "cloud-group-1",
+                "name": "Cloud User",
+                "is_active": True,
+                "has_consent": True,
+            }
+        ],
+    }
+    res_partial = client.post(
+        "/attendance/import-metadata",
+        headers=_headers("org-1"),
+        json=partial_payload,
+    )
+    assert res_partial.status_code == 200, res_partial.text
+
+    async with session_factory() as session:
+        # Local group and member still exist and active
+        lg2 = await session.get(AttendanceGroup, "local-group-1")
+        assert lg2 is not None
+        assert lg2.is_deleted is False
+        assert lg2.is_active is True
+
+        lm2_res = await session.execute(
+            select(AttendanceMember).where(
+                AttendanceMember.person_id == "local-member-1"
+            )
+        )
+        lm2 = lm2_res.scalars().first()
+        assert lm2 is not None
+        assert lm2.is_deleted is False

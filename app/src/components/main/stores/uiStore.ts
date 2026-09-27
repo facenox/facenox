@@ -13,6 +13,14 @@ interface UIState {
   // Warning state (non-blocking)
   warning: string | null
 
+  // Security / Admin Lock
+  adminPinEnabled: boolean
+  adminPin: string
+  isPinPromptOpen: boolean
+  pendingSettingsSection: string | undefined
+  pendingGroupSection: GroupSection | undefined
+  pendingPinCallback: (() => void) | null
+
   // Settings UI
   showSettings: boolean
   groupInitialSection: GroupSection | undefined
@@ -41,6 +49,11 @@ interface UIState {
   setSuccess: (success: string | null) => void
   setWarning: (warning: string | null) => void
   setShowSettings: (show: boolean) => void
+  requestOpenSettings: (section?: string, groupSection?: GroupSection) => void
+  openPinPrompt: (onSuccess: () => void) => void
+  closePinPrompt: () => void
+  verifyPin: (enteredPin: string) => boolean
+  setAdminPinSettings: (settings: { adminPinEnabled?: boolean; adminPin?: string }) => void
   setGroupInitialSection: (section: GroupSection | undefined) => void
   setSettingsInitialSection: (section: string | undefined) => void
   setLastSettingsSection: (section: string) => void
@@ -60,15 +73,18 @@ interface UIState {
 }
 
 const loadInitialSettings = async () => {
-  const [quickSettings, audioSettings, uiState] = await Promise.all([
+  const [quickSettings, audioSettings, uiState, security] = await Promise.all([
     persistentSettings.getQuickSettings(),
     persistentSettings.getAudioSettings(),
     persistentSettings.getUIState(),
+    persistentSettings.getSecuritySettings(),
   ])
 
   return {
     quickSettings,
     audioSettings,
+    adminPinEnabled: security.adminPinEnabled ?? false,
+    adminPin: security.adminPin ?? "1234",
     hasSeenIntro: uiState.hasSeenIntro,
     pendingCloudSetup: uiState.pendingCloudSetup,
     antiSpoofDetectionInfoDismissed: uiState.antiSpoofDetectionInfoDismissed,
@@ -82,11 +98,19 @@ let errorTimer: NodeJS.Timeout | null = null
 let successTimer: NodeJS.Timeout | null = null
 let warningTimer: NodeJS.Timeout | null = null
 
-export const useUIStore = create<UIState>((set) => ({
+export const useUIStore = create<UIState>((set, get) => ({
   // Initial state
   error: null,
   success: null,
   warning: null,
+
+  adminPinEnabled: false,
+  adminPin: "1234",
+  isPinPromptOpen: false,
+  pendingSettingsSection: undefined,
+  pendingGroupSection: undefined,
+  pendingPinCallback: null,
+
   showSettings: false,
   groupInitialSection: undefined,
   settingsInitialSection: undefined,
@@ -135,6 +159,82 @@ export const useUIStore = create<UIState>((set) => ({
     }
   },
   setShowSettings: (show) => set({ showSettings: show }),
+
+  requestOpenSettings: (section, groupSection) => {
+    const { adminPinEnabled } = get()
+    if (adminPinEnabled) {
+      set({
+        isPinPromptOpen: true,
+        pendingSettingsSection: section,
+        pendingGroupSection: groupSection,
+        pendingPinCallback: null,
+      })
+    } else {
+      if (section) {
+        set({ settingsInitialSection: section, groupInitialSection: undefined })
+      }
+      if (groupSection) {
+        set({ groupInitialSection: groupSection, settingsInitialSection: undefined })
+      }
+      set({ showSettings: true })
+    }
+  },
+
+  openPinPrompt: (onSuccess) => {
+    const { adminPinEnabled } = get()
+    if (adminPinEnabled) {
+      set({
+        isPinPromptOpen: true,
+        pendingPinCallback: onSuccess,
+        pendingSettingsSection: undefined,
+        pendingGroupSection: undefined,
+      })
+    } else {
+      onSuccess()
+    }
+  },
+
+  closePinPrompt: () => {
+    set({
+      isPinPromptOpen: false,
+      pendingSettingsSection: undefined,
+      pendingGroupSection: undefined,
+      pendingPinCallback: null,
+    })
+  },
+
+  verifyPin: (enteredPin: string) => {
+    const { adminPin, pendingSettingsSection, pendingGroupSection, pendingPinCallback } = get()
+    if (enteredPin === adminPin) {
+      if (pendingPinCallback) {
+        pendingPinCallback()
+      } else {
+        if (pendingSettingsSection) {
+          set({ settingsInitialSection: pendingSettingsSection, groupInitialSection: undefined })
+        }
+        if (pendingGroupSection) {
+          set({ groupInitialSection: pendingGroupSection, settingsInitialSection: undefined })
+        }
+        set({ showSettings: true })
+      }
+      set({
+        isPinPromptOpen: false,
+        pendingSettingsSection: undefined,
+        pendingGroupSection: undefined,
+        pendingPinCallback: null,
+      })
+      return true
+    }
+    return false
+  },
+
+  setAdminPinSettings: (settings) => {
+    set((state) => ({
+      adminPinEnabled: settings.adminPinEnabled ?? state.adminPinEnabled,
+      adminPin: settings.adminPin ?? state.adminPin,
+    }))
+  },
+
   setGroupInitialSection: (section) => set({ groupInitialSection: section }),
   setSettingsInitialSection: (section) => set({ settingsInitialSection: section }),
   setLastSettingsSection: (section) => set({ lastSettingsSection: section }),
@@ -211,6 +311,18 @@ useUIStore.subscribe((state, prevState) => {
   if (state.audioSettings !== prevState.audioSettings) {
     persistentSettings.setAudioSettings(state.audioSettings).catch(console.error)
   }
+
+  if (
+    state.adminPinEnabled !== prevState.adminPinEnabled ||
+    state.adminPin !== prevState.adminPin
+  ) {
+    persistentSettings
+      .setSecuritySettings({
+        adminPinEnabled: state.adminPinEnabled,
+        adminPin: state.adminPin,
+      })
+      .catch(console.error)
+  }
 })
 
 // Load Settings from store on initialization
@@ -220,6 +332,8 @@ if (typeof window !== "undefined") {
       ({
         quickSettings,
         audioSettings,
+        adminPinEnabled,
+        adminPin,
         hasSeenIntro,
         pendingCloudSetup,
         antiSpoofDetectionInfoDismissed,
@@ -230,6 +344,8 @@ if (typeof window !== "undefined") {
         useUIStore.setState({
           quickSettings,
           audioSettings,
+          adminPinEnabled: adminPinEnabled ?? false,
+          adminPin: adminPin ?? "1234",
           hasSeenIntro,
           pendingCloudSetup,
           antiSpoofDetectionInfoDismissed,

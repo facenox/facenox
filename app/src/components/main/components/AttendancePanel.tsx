@@ -289,7 +289,7 @@ export const AttendancePanel = memo(function AttendancePanel({
     setShowGroupManagement,
   } = useAttendanceStore()
 
-  const { setShowSettings, setGroupInitialSection, setSettingsInitialSection } = useUIStore()
+  const { requestOpenSettings } = useUIStore()
   const [showManualEntry, setShowManualEntry] = useState(false)
   const [isManualCorrectionOpen, setIsManualCorrectionOpen] = useState(false)
   const [recordToVoid, setRecordToVoid] = useState<AttendanceRecord | null>(null)
@@ -331,10 +331,8 @@ export const AttendancePanel = memo(function AttendancePanel({
 
   const handleOpenSettingsForEnrollment = useCallback(() => {
     // Force active settings tab to "group" (Group Management) to override cached history
-    setSettingsInitialSection("group")
-    setGroupInitialSection("members")
-    setShowSettings(true)
-  }, [setGroupInitialSection, setSettingsInitialSection, setShowSettings])
+    requestOpenSettings("group", "members")
+  }, [requestOpenSettings])
 
   const unenrolledMembersCount = useMemo(() => {
     return groupMembers.filter((m) => m.is_active && !m.has_face_data).length

@@ -55,10 +55,8 @@ export function GroupModals({
         existingGroups={groups}
         onClose={closeCreateGroup}
         onSuccess={(newGroup) => {
-          if (!isEmbedded) {
-            fetchGroups()
-          }
-          if (newGroup && !isEmbedded) {
+          fetchGroups()
+          if (newGroup) {
             setSelectedGroup(newGroup)
           }
           onGroupSuccess(newGroup)

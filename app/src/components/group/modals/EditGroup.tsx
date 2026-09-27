@@ -48,8 +48,8 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
       onClose={handleClose}
       title={
         <div>
-          <h3 className="mb-2 text-xl font-semibold">Edit Group</h3>
-          <p className="text-xs font-normal text-white/65">Update group information</p>
+          <h3 className="text-xl font-semibold">Edit Group</h3>
+          <p className="mt-1 text-xs font-normal text-white/65">Update group information</p>
         </div>
       }
       maxWidth="md">

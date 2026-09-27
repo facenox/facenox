@@ -59,16 +59,14 @@ function GroupPanelComponent({
 
   const handleGroupSuccess = useCallback(
     (newGroup?: AttendanceGroup) => {
-      if (!isEmbedded) {
-        fetchGroups()
-      }
-      if (newGroup && !isEmbedded) {
+      fetchGroups()
+      if (newGroup) {
         setSelectedGroup(newGroup)
       }
 
       notifyParentDataChanged(newGroup)
     },
-    [fetchGroups, isEmbedded, setSelectedGroup, notifyParentDataChanged],
+    [fetchGroups, setSelectedGroup, notifyParentDataChanged],
   )
 
   const handleMembersChange = useCallback(() => {

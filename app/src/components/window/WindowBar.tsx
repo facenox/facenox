@@ -230,8 +230,7 @@ export default function WindowBar() {
         </div>
         {(() => {
           const handleOpenCloudSync = () => {
-            useUIStore.getState().setSettingsInitialSection("remote-sync")
-            useUIStore.getState().setShowSettings(true)
+            useUIStore.getState().requestOpenSettings("remote-sync")
           }
 
           if (!syncConfig || !syncConfig.connected) {

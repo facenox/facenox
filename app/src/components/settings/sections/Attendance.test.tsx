@@ -138,7 +138,11 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     expect(screen.queryByText(/Cloud plan/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Cloud Data Retention/i)).not.toBeInTheDocument()
     expect(screen.queryByText("Standalone")).not.toBeInTheDocument()
-    expect(screen.getByText("Keep all records forever.")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Keep all attendance logs forever. Member profiles and face data are never deleted.",
+      ),
+    ).toBeInTheDocument()
     const input = screen.getByDisplayValue("0") as HTMLInputElement
     expect(input).not.toBeDisabled()
   })

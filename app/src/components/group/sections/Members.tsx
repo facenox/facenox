@@ -22,6 +22,7 @@ interface MembersProps {
   onAdd?: () => void
   deselectMemberTrigger?: number
   onHasSelectedMemberChange?: (hasSelectedMember: boolean) => void
+  isPaired?: boolean
 }
 
 export function Members({
@@ -336,13 +337,7 @@ export function Members({
         <motion.div key="empty" className="relative flex h-full w-full flex-col">
           <EmptyState
             title="This group has no members"
-            description={
-              isPaired ?
-                isCustomServer ?
-                  "Members are managed on your custom server dashboard."
-                : "Members are managed in Facenox Cloud."
-              : "Add, edit, and remove members to manage profiles and enrollment status."
-            }
+            description="Add, edit, and remove members to manage profiles and enrollment status."
             action={
               onAdd ?
                 {

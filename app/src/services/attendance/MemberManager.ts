@@ -57,6 +57,9 @@ export class MemberManager {
       this.apiEndpoints.members,
       memberData,
     )
+    if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
+      window.electronAPI.sync.triggerDebouncedSync()
+    }
     return {
       ...member,
       joined_at: new Date(member.joined_at),
@@ -96,6 +99,10 @@ export class MemberManager {
       members: AttendanceMember[]
     }>(`${this.apiEndpoints.members}/bulk`, payload)
 
+    if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
+      window.electronAPI.sync.triggerDebouncedSync()
+    }
+
     return {
       ...res,
       members: (res.members || []).map((m) => ({
@@ -125,6 +132,9 @@ export class MemberManager {
         `${this.apiEndpoints.members}/${personId}`,
         updates,
       )
+      if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
+        window.electronAPI.sync.triggerDebouncedSync()
+      }
       return true
     } catch (error) {
       console.error("Error updating member:", error)
@@ -137,16 +147,23 @@ export class MemberManager {
     error_count: number
     errors: Array<{ person_id: string; error: string }>
   }> {
-    return await this.httpClient.post<{
+    const res = await this.httpClient.post<{
       success_count: number
       error_count: number
       errors: Array<{ person_id: string; error: string }>
     }>(`${this.apiEndpoints.members}/bulk-delete`, { person_ids: personIds })
+    if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
+      window.electronAPI.sync.triggerDebouncedSync()
+    }
+    return res
   }
 
   async removeMember(personId: string): Promise<boolean> {
     try {
       await this.httpClient.delete(`${this.apiEndpoints.members}/${personId}`)
+      if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
+        window.electronAPI.sync.triggerDebouncedSync()
+      }
       return true
     } catch (error) {
       console.error("Error removing member:", error)

@@ -231,6 +231,24 @@ class PersistentSettingsService {
     const current = await this.getSyncSettings()
     await this.set("sync", { ...current, ...settings })
   }
+
+  async getSecuritySettings(): Promise<PersistentSettingsSchema["security"]> {
+    const settings = await this.get<PersistentSettingsSchema["security"]>("security")
+
+    if (!settings) {
+      await this.set("security", defaultSettings.security)
+      return defaultSettings.security
+    }
+
+    return { ...defaultSettings.security, ...settings }
+  }
+
+  async setSecuritySettings(
+    settings: Partial<PersistentSettingsSchema["security"]>,
+  ): Promise<void> {
+    const current = await this.getSecuritySettings()
+    await this.set("security", { ...current, ...settings })
+  }
 }
 
 export const persistentSettings = new PersistentSettingsService()

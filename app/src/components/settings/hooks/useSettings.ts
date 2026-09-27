@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { backendService, attendanceManager, persistentSettings } from "@/services"
 import { useDialog } from "@/components/shared"
-import { useGroupUIStore } from "@/components/group/stores"
+import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { useUIStore, useAttendanceStore } from "@/components/main/stores"
 import type { GroupSection } from "@/components/group"
 import type { QuickSettings, AttendanceSettings, AudioSettings } from "@/components/settings/types"
@@ -272,12 +272,14 @@ export const useSettings = ({
 
   const handleGroupsChangedInternal = useCallback(
     async (newGroup?: AttendanceGroup) => {
-      await loadSystemData()
-
-      if (newGroup && onGroupSelect) {
-        onGroupSelect(newGroup)
+      if (newGroup) {
+        useGroupStore.getState().setSelectedGroup(newGroup)
+        if (onGroupSelect) {
+          onGroupSelect(newGroup)
+        }
       }
 
+      await loadSystemData()
       onGroupsChanged?.()
     },
     [loadSystemData, onGroupSelect, onGroupsChanged],

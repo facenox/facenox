@@ -1,8 +1,9 @@
 import { useCallback } from "react"
 import { AnimatePresence } from "framer-motion"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
-import { useGroupUIStore } from "@/components/group/stores"
+import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { attendanceManager } from "@/services"
+import { PinPromptModal } from "@/components/common"
 import { GroupManagementModal } from "./GroupManagementModal"
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal"
 import { Settings } from "@/components/settings"
@@ -73,15 +74,21 @@ export function MainModals({
       setCurrentGroup(updatedGroup)
       if (!updatedGroup) return
 
+      const exists = attendanceGroups.some((g) => g.id === updatedGroup.id)
       setAttendanceGroups(
-        attendanceGroups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)),
+        exists ?
+          attendanceGroups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g))
+        : [...attendanceGroups, updatedGroup],
       )
+      useGroupStore.getState().setSelectedGroup(updatedGroup)
     },
     [attendanceGroups, setAttendanceGroups, setCurrentGroup],
   )
 
   return (
     <>
+      <PinPromptModal />
+
       <GroupManagementModal
         showGroupManagement={showGroupManagement}
         setShowGroupManagement={setShowGroupManagement}

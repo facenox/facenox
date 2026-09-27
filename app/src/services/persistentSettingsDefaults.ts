@@ -61,6 +61,10 @@ export interface PersistentSettingsSchema {
     lastSyncStatus: "idle" | "success" | "error"
     lastSyncMessage: string | null
   }
+  security: {
+    adminPinEnabled: boolean
+    adminPin: string
+  }
 }
 
 export const defaultSettings: PersistentSettingsSchema = {
@@ -114,5 +118,9 @@ export const defaultSettings: PersistentSettingsSchema = {
     lastSyncedAt: null,
     lastSyncStatus: "idle",
     lastSyncMessage: null,
+  },
+  security: {
+    adminPinEnabled: false,
+    adminPin: "1234",
   },
 }

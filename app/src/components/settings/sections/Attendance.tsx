@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { AttendanceSettings } from "@/components/settings/types"
 import { InfoPopover, Switch } from "@/components/shared"
+import { useUIStore } from "@/components/main/stores"
 
 interface AttendanceProps {
   attendanceSettings: AttendanceSettings
@@ -32,6 +34,30 @@ export function Attendance({
   hasSelectedGroup = false,
   isPaired = false,
 }: AttendanceProps) {
+  const adminPinEnabled = useUIStore((state) => state.adminPinEnabled)
+  const adminPin = useUIStore((state) => state.adminPin)
+  const setAdminPinSettings = useUIStore((state) => state.setAdminPinSettings)
+
+  const [pinValue, setPinValue] = useState(adminPin || "1234")
+  const [showPin, setShowPin] = useState(false)
+  const [isSaved, setIsSaved] = useState(false)
+
+  useEffect(() => {
+    if (adminPin) {
+      setPinValue(adminPin)
+    }
+  }, [adminPin])
+
+  const handlePinChange = (val: string) => {
+    const cleaned = val.replace(/\D/g, "").slice(0, 4)
+    setPinValue(cleaned)
+    if (cleaned.length === 4) {
+      setAdminPinSettings({ adminPin: cleaned })
+      setIsSaved(true)
+      setTimeout(() => setIsSaved(false), 2000)
+    }
+  }
+
   const allowedChoices = [1, 2, 5, 10, 15, 20] as const
   const activeLimit =
     (allowedChoices as readonly number[]).includes(attendanceSettings.maxRecognitionFacesPerFrame) ?
@@ -94,9 +120,7 @@ export function Attendance({
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                       className="text-xs font-normal text-white/65">
-                      {isPaired ?
-                        "Managed by your organization."
-                      : !hasSelectedGroup ?
+                      {!hasSelectedGroup ?
                         "Select a group to enable this feature"
                       : attendanceSettings.trackCheckout ?
                         "Record both arrival and departure times."
@@ -109,10 +133,9 @@ export function Attendance({
               <Switch
                 checked={attendanceSettings.trackCheckout}
                 onChange={onTrackCheckoutToggle}
-                disabled={!hasSelectedGroup || isPaired}
-                ariaLabel="Entry & Exit Tracking">
-                {isPaired && <i className="fa-solid fa-lock text-[8px] text-cyan-900/60" />}
-              </Switch>
+                disabled={!hasSelectedGroup}
+                ariaLabel="Entry & Exit Tracking"
+              />
             </div>
           </div>
 
@@ -139,9 +162,7 @@ export function Attendance({
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                       className="text-xs font-normal text-white/65">
-                      {isPaired ?
-                        "Managed by your organization."
-                      : !hasSelectedGroup ?
+                      {!hasSelectedGroup ?
                         "Select a group to enable late tracking"
                       : attendanceSettings.lateThresholdEnabled ?
                         "Automatically mark members as late based on scheduled start times."
@@ -154,10 +175,9 @@ export function Attendance({
               <Switch
                 checked={attendanceSettings.lateThresholdEnabled}
                 onChange={onLateThresholdToggle}
-                disabled={!hasSelectedGroup || isPaired}
-                ariaLabel="Late Tracking">
-                {isPaired && <i className="fa-solid fa-lock text-[8px] text-cyan-900/60" />}
-              </Switch>
+                disabled={!hasSelectedGroup}
+                ariaLabel="Late Tracking"
+              />
             </div>
 
             <AnimatePresence>
@@ -181,11 +201,10 @@ export function Attendance({
                         <button
                           key={mins}
                           type="button"
-                          onClick={() => !isPaired && onLateThresholdChange(mins)}
-                          disabled={isPaired}
+                          onClick={() => onLateThresholdChange(mins)}
                           className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
-                            isPaired ? "cursor-not-allowed text-white/30 opacity-40"
-                            : attendanceSettings.lateThresholdMinutes === mins ? "text-cyan-400"
+                            attendanceSettings.lateThresholdMinutes === mins ?
+                              "text-cyan-400"
                             : "text-white/40 hover:text-white/70"
                           }`}>
                           {mins}m
@@ -231,9 +250,7 @@ export function Attendance({
                     exit={{ opacity: 0, y: 2 }}
                     transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                     className="text-xs font-normal text-white/65">
-                    {isPaired ?
-                      "Managed by your organization."
-                    : !hasSelectedGroup ?
+                    {!hasSelectedGroup ?
                       "Select a group to enable this feature"
                     : attendanceSettings.biometricConsentCertified ?
                       "Bypass manual consent checkboxes when adding or editing members."
@@ -247,10 +264,9 @@ export function Attendance({
             <Switch
               checked={attendanceSettings.biometricConsentCertified}
               onChange={(checked) => onBiometricConsentToggle?.(checked)}
-              disabled={!hasSelectedGroup || isPaired}
-              ariaLabel="Biometric Consent">
-              {isPaired && <i className="fa-solid fa-lock text-[8px] text-cyan-900/60" />}
-            </Switch>
+              disabled={!hasSelectedGroup}
+              ariaLabel="Biometric Consent"
+            />
           </div>
         </div>
       </div>
@@ -281,16 +297,14 @@ export function Attendance({
               <div className="relative min-h-4">
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={`cooldown-${isPaired}`}
+                    key="cooldown-active"
                     initial={{ opacity: 0, y: -2 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 2 }}
                     transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                     className="text-xs font-normal text-white/65">
-                    {isPaired ?
-                      "Managed by your organization."
-                    : "Automatically filters out repeated scans from the same person to keep reports clean."
-                    }
+                    Automatically filters out repeated scans from the same person to keep reports
+                    clean.
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -301,11 +315,10 @@ export function Attendance({
                 <button
                   key={secs}
                   type="button"
-                  onClick={() => !isPaired && onAttendanceCooldownChange(secs)}
-                  disabled={isPaired}
+                  onClick={() => onAttendanceCooldownChange(secs)}
                   className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
-                    isPaired ? "cursor-not-allowed text-white/30 opacity-40"
-                    : attendanceSettings.attendanceCooldownSeconds === secs ? "text-cyan-400"
+                    attendanceSettings.attendanceCooldownSeconds === secs ?
+                      "text-cyan-400"
                     : "text-white/40 hover:text-white/70"
                   }`}>
                   {secs < 60 ? `${secs}s` : `${secs / 60}m`}
@@ -450,11 +463,8 @@ export function Attendance({
               checked={attendanceSettings.enableSpoofDetection || attendanceSettings.forceLiveness}
               onChange={onSpoofDetectionToggle}
               disabled={attendanceSettings.forceLiveness}
-              ariaLabel="Liveness Verification (Anti-Spoof)">
-              {attendanceSettings.forceLiveness && (
-                <i className="fa-solid fa-lock text-[8px] text-cyan-900/60" />
-              )}
-            </Switch>
+              ariaLabel="Liveness Verification (Anti-Spoof)"
+            />
           </div>
 
           <div className="h-px w-full bg-white/8" />
@@ -476,13 +486,14 @@ export function Attendance({
                   : null)}
                 <InfoPopover
                   title="Data Retention"
-                  description="Controls how long attendance records and biometric signatures are kept on this local physical device."
+                  description="Controls how long past attendance check-in logs are kept on this device. Member profiles and enrolled face signatures are never deleted."
                   details={[
                     "Pruning runs automatically every 24 hours on this device.",
-                    "Expired records are permanently deleted from the local database to free up disk space.",
+                    "Only past attendance check-in and checkout logs are deleted to free up disk space.",
+                    "Member profiles, groups, and enrolled face data remain safe forever.",
                     isPaired && cloudCeiling ?
                       `When paired, local retention cannot exceed your cloud subscription window of ${cloudCeiling} days.`
-                    : "Setting this to 0 disables automatic deletion and keeps local records indefinitely.",
+                    : "Setting this to 0 disables automatic deletion and keeps local attendance logs indefinitely.",
                   ]}
                   detailsNode={[
                     <div
@@ -500,16 +511,17 @@ export function Attendance({
                 {(() => {
                   if (cloudCeiling) {
                     if (effectiveDays === cloudCeiling) {
-                      return `Local records are pruned after ${cloudCeiling} days (matches cloud plan limit). You may lower this to save physical disk space.`
+                      return `Attendance check-in logs older than ${cloudCeiling} days are pruned (matches cloud plan limit). Member profiles and face data are never deleted.`
                     }
-                    return `Local records are pruned after ${effectiveDays} days to save disk space (Cloud keeps up to ${cloudCeiling} days).`
+                    return `Attendance check-in logs older than ${effectiveDays} days are pruned locally (Cloud keeps up to ${cloudCeiling} days). Member profiles and face data are never deleted.`
                   }
                   if (isCloudUnlimited) {
                     return effectiveDays <= 0 ?
-                        "Cloud plan allows unlimited history. Local records are kept forever."
-                      : `Cloud plan allows unlimited history. Local records older than ${effectiveDays} days are pruned automatically.`
+                        "Cloud plan allows unlimited history. Attendance logs are kept forever."
+                      : `Cloud plan allows unlimited history. Attendance logs older than ${effectiveDays} days are pruned automatically. Member profiles and face data are never deleted.`
                   }
-                  if (effectiveDays <= 0) return "Keep all records forever."
+                  if (effectiveDays <= 0)
+                    return "Keep all attendance logs forever. Member profiles and face data are never deleted."
 
                   const years = Math.floor(effectiveDays / 365)
                   const remainingDays = effectiveDays % 365
@@ -527,7 +539,7 @@ export function Attendance({
                     timeStr = `${effectiveDays} ${effectiveDays === 1 ? "day" : "days"}`
                   }
 
-                  return `Delete records older than ${timeStr} automatically.`
+                  return `Delete attendance logs older than ${timeStr} automatically. Member profiles and face data are never deleted.`
                 })()}
               </div>
             </div>
@@ -556,6 +568,119 @@ export function Attendance({
                 className="w-14 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none focus:border-white/20"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Kiosk Security / Admin PIN Lock */}
+        <div className="pt-6 pb-2">
+          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
+            Kiosk Security
+          </h3>
+        </div>
+
+        <div className="py-2">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-4 py-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="text-sm font-medium text-white/90">Administrator PIN Lock</div>
+                  <InfoPopover
+                    title="Administrator PIN Lock"
+                    description="Protects settings and kiosk configuration with a 4-digit PIN code so visitors cannot alter settings or member records."
+                    details={[
+                      "Recommended for unattended kiosks in lobbies, entrances, or classrooms.",
+                      "Requires the 4-digit PIN whenever anyone clicks Settings or presses Ctrl+,.",
+                      "Default PIN is 1234. Change it anytime below.",
+                    ]}
+                    side="right"
+                  />
+                </div>
+                <div className="relative min-h-4">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={adminPinEnabled ? "on" : "off"}
+                      initial={{ opacity: 0, y: -2 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 2 }}
+                      transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
+                      className="text-xs font-normal text-white/65">
+                      {adminPinEnabled ?
+                        "Settings are protected with an administrator PIN."
+                      : "PIN lock is disabled. Anyone on this kiosk can access settings."}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              <Switch
+                checked={adminPinEnabled}
+                onChange={(checked) => setAdminPinSettings({ adminPinEnabled: checked })}
+                ariaLabel="Administrator PIN Lock"
+              />
+            </div>
+
+            <AnimatePresence>
+              {adminPinEnabled && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
+                  className="overflow-hidden">
+                  <div className="relative flex flex-col gap-2 pt-3 pb-2 pl-4">
+                    <div className="absolute top-0 bottom-1/2 left-0 w-px rounded-bl-xs bg-white/10"></div>
+                    <div className="absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10"></div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-medium text-white/80">
+                          Set 4-Digit Administrator PIN:
+                        </div>
+                        <div className="mt-0.5 text-[11px]">
+                          {isSaved ?
+                            <span className="font-medium text-cyan-400">
+                              <i className="fa-solid fa-circle-check mr-1 text-[10px]" />
+                              PIN updated successfully
+                            </span>
+                          : pinValue.length === 4 ?
+                            <span className="text-white/65">
+                              4-digit PIN is active. Default is 1234.
+                            </span>
+                          : <span className="font-medium text-amber-400">
+                              <i className="fa-solid fa-circle-info mr-1 text-[10px]" />
+                              Enter 4 numeric digits to save
+                            </span>
+                          }
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setShowPin(!showPin)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/5 hover:text-white"
+                          aria-label={showPin ? "Hide PIN" : "Show PIN"}>
+                          <i
+                            className={`fa-solid ${showPin ? "fa-eye-slash" : "fa-eye"} text-xs`}
+                          />
+                        </button>
+
+                        <input
+                          type={showPin ? "text" : "password"}
+                          inputMode="numeric"
+                          maxLength={4}
+                          value={pinValue}
+                          onChange={(e) => handlePinChange(e.target.value)}
+                          placeholder="1234"
+                          aria-label="4-digit Administrator PIN"
+                          className="w-20 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2.5 py-1.5 text-center text-xs font-bold tracking-widest text-white transition-all outline-none focus:border-cyan-500/60 focus:bg-cyan-500/[0.03]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

@@ -205,7 +205,7 @@ describe("BackgroundSyncManager", () => {
     expect(requestBody.embeddings[0].person_id).toBe("valid-4")
   })
 
-  it("executes pullMetadata before attendance export to ensure cloud edits are not overwritten", async () => {
+  it("executes attendance export and push before pullMetadata so new local groups/members are registered on cloud", async () => {
     const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
     const manager = new BackgroundSyncManager()
 
@@ -213,22 +213,6 @@ describe("BackgroundSyncManager", () => {
 
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input)
-      if (url.includes("/api/sync/pull")) {
-        callOrder.push("PULL_FROM_CLOUD")
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({ groups: [], members: [] }),
-        } as Response
-      }
-      if (url.includes("/attendance/import-metadata")) {
-        callOrder.push("IMPORT_TO_LOCAL_DB")
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({ groups_count: 0, members_count: 0 }),
-        } as Response
-      }
       if (url.includes("/attendance/export-embeddings")) {
         callOrder.push("EXPORT_EMBEDDINGS")
         return {
@@ -259,6 +243,22 @@ describe("BackgroundSyncManager", () => {
           text: async () => JSON.stringify({ ok: true, status: "accepted" }),
         } as Response
       }
+      if (url.includes("/api/sync/pull")) {
+        callOrder.push("PULL_FROM_CLOUD")
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ groups: [], members: [] }),
+        } as Response
+      }
+      if (url.includes("/attendance/import-metadata")) {
+        callOrder.push("IMPORT_TO_LOCAL_DB")
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ groups_count: 0, members_count: 0 }),
+        } as Response
+      }
       if (url.includes("/api/devices/commands")) {
         return {
           ok: true,
@@ -272,11 +272,11 @@ describe("BackgroundSyncManager", () => {
     await manager.performSync()
 
     expect(callOrder).toEqual([
-      "PULL_FROM_CLOUD",
-      "IMPORT_TO_LOCAL_DB",
       "EXPORT_FROM_LOCAL_DB",
       "EXPORT_EMBEDDINGS",
       "PUSH_TO_CLOUD",
+      "PULL_FROM_CLOUD",
+      "IMPORT_TO_LOCAL_DB",
     ])
   })
 

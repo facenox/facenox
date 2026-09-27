@@ -27,6 +27,9 @@ export class GroupManager {
       }
 
       const group = await this.httpClient.post<AttendanceGroup>(this.apiEndpoints.groups, groupData)
+      if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
+        window.electronAPI.sync.triggerDebouncedSync()
+      }
       return {
         ...group,
         created_at: new Date(group.created_at),
@@ -70,6 +73,9 @@ export class GroupManager {
   async updateGroup(groupId: string, updates: Partial<AttendanceGroup>): Promise<boolean> {
     try {
       await this.httpClient.put<AttendanceGroup>(`${this.apiEndpoints.groups}/${groupId}`, updates)
+      if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
+        window.electronAPI.sync.triggerDebouncedSync()
+      }
       return true
     } catch (error) {
       console.error("Error updating group:", error)
@@ -80,6 +86,9 @@ export class GroupManager {
   async deleteGroup(groupId: string): Promise<boolean> {
     try {
       await this.httpClient.delete(`${this.apiEndpoints.groups}/${groupId}`)
+      if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
+        window.electronAPI.sync.triggerDebouncedSync()
+      }
       return true
     } catch (error) {
       console.error("Error deleting group:", error)

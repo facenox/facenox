@@ -24,7 +24,7 @@ import {
   useAttendanceStore,
   useUIStore,
 } from "@/components/main/stores"
-import { useGroupUIStore } from "@/components/group/stores"
+import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { FloatingAlert } from "@/components/common"
 
 import { ControlBar } from "@/components/main/components/ControlBar"
@@ -108,9 +108,7 @@ export default function Main() {
     warning,
     setWarning,
     showSettings,
-    setShowSettings,
-    setGroupInitialSection,
-    setSettingsInitialSection,
+    requestOpenSettings,
     quickSettings,
     audioSettings,
     setSidebarCollapsed,
@@ -127,18 +125,10 @@ export default function Main() {
   useEffect(() => {
     if (!hasCheckedCloudSetupRef.current && pendingCloudSetup) {
       hasCheckedCloudSetupRef.current = true
-      setSettingsInitialSection("remote-sync")
-      setGroupInitialSection(undefined)
-      setShowSettings(true)
+      requestOpenSettings("remote-sync")
       setPendingCloudSetup(false)
     }
-  }, [
-    pendingCloudSetup,
-    setSettingsInitialSection,
-    setGroupInitialSection,
-    setShowSettings,
-    setPendingCloudSetup,
-  ])
+  }, [pendingCloudSetup, requestOpenSettings, setPendingCloudSetup])
 
   // Preload sound to minimize delay on first recognition
   useEffect(() => {
@@ -329,9 +319,13 @@ export default function Main() {
         return
       }
 
+      const exists = attendanceGroups.some((g) => g.id === updatedGroup.id)
       setAttendanceGroups(
-        attendanceGroups.map((group) => (group.id === updatedGroup.id ? updatedGroup : group)),
+        exists ?
+          attendanceGroups.map((group) => (group.id === updatedGroup.id ? updatedGroup : group))
+        : [...attendanceGroups, updatedGroup],
       )
+      useGroupStore.getState().setSelectedGroup(updatedGroup)
     },
     [attendanceGroups, setAttendanceGroups, setCurrentGroup],
   )
@@ -453,11 +447,7 @@ export default function Main() {
   useEffect(() => {
     const handleOpenSettings = (event: CustomEvent<{ section?: string }>) => {
       const section = event.detail?.section
-      if (section) {
-        setSettingsInitialSection(section)
-        setGroupInitialSection(undefined)
-      }
-      setShowSettings(true)
+      requestOpenSettings(section)
     }
 
     window.addEventListener("openSettings", handleOpenSettings as EventListener)
@@ -465,7 +455,7 @@ export default function Main() {
     return () => {
       window.removeEventListener("openSettings", handleOpenSettings as EventListener)
     }
-  }, [setShowSettings, setGroupInitialSection, setSettingsInitialSection])
+  }, [requestOpenSettings])
 
   // Listen for system clock warnings emitted by AttendanceManager
   useEffect(() => {
@@ -558,10 +548,8 @@ export default function Main() {
   }, [isShellReady, setTimeHealth])
 
   const handleOpenTimeSettings = useCallback(() => {
-    setSettingsInitialSection("database")
-    setGroupInitialSection(undefined)
-    setShowSettings(true)
-  }, [setGroupInitialSection, setSettingsInitialSection, setShowSettings])
+    requestOpenSettings("database")
+  }, [requestOpenSettings])
 
   // Handle auto-pause on minimize
   const wasStreamingBeforeMinimize = useRef(false)

@@ -47,7 +47,7 @@ export function useGroupData(
   useEffect(() => {
     if (isEmbedded) {
       const nextSelected =
-        initialGroup ? (embeddedGroups.find((g) => g.id === initialGroup.id) ?? null) : null
+        initialGroup ? (embeddedGroups.find((g) => g.id === initialGroup.id) ?? initialGroup) : null
 
       if (!nextSelected) {
         if (selectedGroup !== null) {
@@ -56,7 +56,7 @@ export function useGroupData(
         return
       }
 
-      if (selectedGroup !== nextSelected) {
+      if (selectedGroup?.id !== nextSelected.id) {
         setSelectedGroup(nextSelected)
       }
       return

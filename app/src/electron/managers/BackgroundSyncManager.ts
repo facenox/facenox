@@ -651,13 +651,7 @@ export class BackgroundSyncManager {
     console.log("[Sync] Triggering background auto-sync...")
 
     try {
-      // Step 1: Pull metadata (groups, members, face embeddings) from Cloud FIRST
-      // This guarantees that any changes made on Cloud Dashboard are absorbed locally before exporting
-      const pullResult = await this.pullMetadata()
-      const pullMsg = pullResult.message
-      const pullFailed = !pullResult.success
-
-      // Step 2: Export local attendance data
+      // Step 1: Export local attendance data
       const { lastSyncedAt } = this.getSyncConfig()
       let exportUrl = `${backendService.getUrl()}/attendance/export`
       if (lastSyncedAt) {
@@ -681,7 +675,7 @@ export class BackgroundSyncManager {
           attendanceExport.exported_at
         : new Date().toISOString()
 
-      // Step 3: Export and encrypt face embeddings for cross-device sync
+      // Step 2: Export and encrypt face embeddings for cross-device sync
       let faceEmbeddings: SyncPushPayload["attendance_export"]["face_embeddings"] = []
       const { encryptionKey } = this.getSyncConfig()
       if (encryptionKey) {
@@ -716,7 +710,7 @@ export class BackgroundSyncManager {
         }
       }
 
-      // Step 4: Chunked Push (max 250 records per request to satisfy Vercel 4.5MB & PG 65535 parameter limit)
+      // Step 3: Chunked Push (max 250 records per request to satisfy Vercel 4.5MB & PG 65535 parameter limit)
       const allRecords = attendanceExport.records || []
       const CHUNK_SIZE = 250
       const totalChunks = Math.max(1, Math.ceil(allRecords.length / CHUNK_SIZE))
@@ -820,6 +814,12 @@ export class BackgroundSyncManager {
       console.log(
         `[Sync] Background sync push successful (${totalChunks} chunk${totalChunks > 1 ? "s" : ""}).`,
       )
+
+      // Step 4: Pull metadata (groups, members, face embeddings) from Cloud AFTER Push
+      // This ensures all newly created local groups/members are registered on Cloud before pulling
+      const pullResult = await this.pullMetadata()
+      const pullMsg = pullResult.message
+      const pullFailed = !pullResult.success
 
       // Process Remote Policy from Dashboard
       if (lastPushResponsePayload?.policy && typeof lastPushResponsePayload.policy === "object") {

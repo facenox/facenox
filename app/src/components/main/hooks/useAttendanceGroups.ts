@@ -230,14 +230,18 @@ export function useAttendanceGroups() {
 
   const refreshAttendanceData = useCallback(async () => {
     try {
-      const currentGroupValue = currentGroupRef.current
+      const currentGroupValue =
+        useAttendanceStore.getState().currentGroup ??
+        useGroupStore.getState().selectedGroup ??
+        currentGroupRef.current
       const groups = await attendanceManager.getGroups()
       setAttendanceGroups(groups)
 
       let resolvedGroup: AttendanceGroup | null = null
       if (currentGroupValue) {
         resolvedGroup = groups.find((group) => group.id === currentGroupValue.id) ?? null
-      } else if (groups.length > 0) {
+      }
+      if (!resolvedGroup && groups.length > 0) {
         resolvedGroup = groups[0]
       }
 

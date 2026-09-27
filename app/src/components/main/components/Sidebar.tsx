@@ -86,7 +86,7 @@ export const Sidebar = memo(function Sidebar({
 }: SidebarProps) {
   const { groupMembers, persistentCooldowns, currentGroup } = useAttendanceStore()
   const {
-    setShowSettings,
+    requestOpenSettings,
     sidebarCollapsed: isCollapsed,
     setSidebarCollapsed: setIsCollapsed,
     sidebarWidth,
@@ -213,13 +213,13 @@ export const Sidebar = memo(function Sidebar({
 
       if ((e.ctrlKey || e.metaKey) && e.key === ",") {
         e.preventDefault()
-        setShowSettings(true)
+        requestOpenSettings()
       }
     }
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [toggleSidebar, setShowSettings])
+  }, [toggleSidebar, requestOpenSettings])
 
   const currentWidth = isCollapsed ? MIN_WIDTH : sidebarWidth
 
@@ -266,10 +266,7 @@ export const Sidebar = memo(function Sidebar({
               disabled={isCollapsed}>
               <motion.button
                 onClick={() => {
-                  setShowSettings(true)
-                  if (updateInfo?.hasUpdate) {
-                    useUIStore.getState().setSettingsInitialSection("about")
-                  }
+                  requestOpenSettings(updateInfo?.hasUpdate ? "about" : undefined)
                 }}
                 className="group relative flex h-8 w-8 items-center justify-center rounded-lg border-none bg-transparent transition-all duration-200 hover:bg-white/[0.06] active:scale-95"
                 disabled={isCollapsed}
@@ -353,10 +350,7 @@ export const Sidebar = memo(function Sidebar({
               position="left">
               <motion.button
                 onClick={() => {
-                  setShowSettings(true)
-                  if (updateInfo?.hasUpdate) {
-                    useUIStore.getState().setSettingsInitialSection("about")
-                  }
+                  requestOpenSettings(updateInfo?.hasUpdate ? "about" : undefined)
                 }}
                 className="group relative flex h-8 w-8 items-center justify-center rounded-lg border-none bg-transparent transition-all duration-200 hover:bg-white/[0.06] active:scale-95"
                 aria-label="Open Settings"

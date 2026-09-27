@@ -13,9 +13,7 @@ interface CreateGroupProps {
 
 /**
  * Modal for creating a new attendance group.
- * Warns the user when the typed name already exists (case-insensitive),
- * requiring a second deliberate click to confirm the duplicate creation —
- * identical UX pattern to AddMember duplicate handling.
+ * In standalone mode, manages groups locally in SQLite. When cloud-paired, automatic background sync synchronizes it.
  */
 export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }: CreateGroupProps) {
   const [name, setName] = useState("")
@@ -68,11 +66,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={
-        <div>
-          <h3 className="mb-2 text-xl font-semibold">Create Group</h3>
-        </div>
-      }
+      title={<h3 className="text-xl font-semibold">Create Group</h3>}
       maxWidth="md">
       <div className="mt-2">
         {error && <ErrorMessage message={error} className="mb-4" />}
