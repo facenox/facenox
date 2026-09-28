@@ -289,6 +289,17 @@ export class BackgroundSyncManager {
 
       this.ablyChannel = this.ablyClient.channels.get(`site:${siteId}`)
       this.ablyChannel.subscribe("sync_required", (message) => {
+        const payload = message?.data as
+          { deviceId?: string; source?: string; type?: string } | undefined
+        const currentDeviceId = this.getSyncConfig().deviceId
+        // Ignore self-echo when this device pushes attendance to prevent infinite sync loops
+        if (
+          payload?.source === "device_push" &&
+          payload?.deviceId &&
+          payload.deviceId === currentDeviceId
+        ) {
+          return
+        }
         console.log("[Ably] Realtime sync notification received from cloud:", message.data)
         this.triggerDebouncedSync(500)
       })

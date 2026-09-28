@@ -682,6 +682,7 @@ class AttendanceRepository:
         record.voided_at = to_storage_local(local_now())
         record.voided_by = voided_by
         record.void_reason = void_reason
+        record.last_modified_at = to_storage_local(local_now())
 
         return record
 
@@ -707,6 +708,7 @@ class AttendanceRepository:
             new_notes = session_data.get("notes")
             if new_notes is not None:
                 session_obj.notes = new_notes
+            session_obj.last_modified_at = to_storage_local(local_now())
         else:
             session_obj = AttendanceSession(
                 id=session_data["id"],
@@ -723,6 +725,7 @@ class AttendanceRepository:
                 late_minutes=session_data.get("late_minutes"),
                 notes=session_data.get("notes"),
                 organization_id=self.organization_id,
+                last_modified_at=to_storage_local(local_now()),
             )
             self.session.add(session_obj)
         return session_obj
