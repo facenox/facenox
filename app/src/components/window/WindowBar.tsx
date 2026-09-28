@@ -254,16 +254,16 @@ export default function WindowBar() {
           let badgeBorderClass =
             "text-emerald-400/90 hover:bg-emerald-500/10 hover:text-emerald-300"
           let iconClass = "fa-solid fa-cloud text-emerald-400 text-[9px]"
-          let statusText = pendingCount > 0 ? `Synced (${pendingCount} queued)` : "Synced"
+          let statusText = "Synced"
           let tooltipContent =
             pendingCount > 0 ?
-              `Last synced: ${relativeTime}. ${pendingCount} new record${pendingCount === 1 ? "" : "s"} queued. Click to open Cloud Sync.`
+              `Last synced: ${relativeTime}. ${pendingCount} new record${pendingCount === 1 ? "" : "s"} queued for upload. Click to open Cloud Sync.`
             : `Last synced: ${relativeTime}. All records up to date. Click to open Cloud Sync.`
 
           if (syncConfig.lastSyncStatus === "error") {
             badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
             iconClass = "fa-solid fa-triangle-exclamation text-amber-400 text-[9px]"
-            statusText = pendingCount > 0 ? `${pendingCount} pending` : "Sync Warning"
+            statusText = "Sync Warning"
             tooltipContent = `Sync issue: ${syncConfig.lastSyncMessage || "Network connection error."} Click to open Cloud Sync.`
           }
 
