@@ -109,6 +109,7 @@ class AttendanceRepository:
             id=group_data["id"],
             name=group_data["name"],
             created_at=to_storage_local(group_data.get("created_at") or local_now()),
+            last_modified_at=to_storage_local(local_now()),
             late_threshold_minutes=settings.get("late_threshold_minutes"),
             late_threshold_enabled=late_threshold_enabled,
             class_start_time=class_start_time,
@@ -243,6 +244,7 @@ class AttendanceRepository:
             "class_start_time": group.class_start_time,
             "track_checkout": group.track_checkout,
         }
+        group.last_modified_at = to_storage_local(local_now())
         if tracked_before != tracked_after:
             await self.add_group_rule(self._group_rule_payload(group.id, tracked_after))
         return group
@@ -253,6 +255,7 @@ class AttendanceRepository:
             return False
         group.is_active = False
         group.is_deleted = True
+        group.last_modified_at = to_storage_local(local_now())
 
         # Soft delete members and hard delete their faces
         members_query = select(AttendanceMember).where(
@@ -263,6 +266,7 @@ class AttendanceRepository:
         for member in members:
             member.is_active = False
             member.is_deleted = True
+            member.last_modified_at = to_storage_local(local_now())
 
             face_query = select(Face).where(Face.person_id == member.person_id)
             face_query = self._apply_org_scope(face_query, Face)
@@ -299,6 +303,7 @@ class AttendanceRepository:
                 )
                 existing_member.is_active = True
                 existing_member.is_deleted = False
+                existing_member.last_modified_at = to_storage_local(local_now())
                 member = existing_member
             else:
                 raise ValueError(
@@ -313,6 +318,7 @@ class AttendanceRepository:
                 role=member_data.get("role"),
                 email=member_data.get("email"),
                 joined_at=to_storage_local(member_data.get("joined_at") or local_now()),
+                last_modified_at=to_storage_local(local_now()),
                 has_consent=has_consent,
                 consent_granted_at=(
                     to_storage_local(local_now()) if has_consent else None
@@ -373,6 +379,7 @@ class AttendanceRepository:
                     )
                     existing_member.is_active = True
                     existing_member.is_deleted = False
+                    existing_member.last_modified_at = to_storage_local(local_now())
                     results.append(
                         {
                             "member": existing_member,
@@ -397,6 +404,7 @@ class AttendanceRepository:
                     role=m_data.get("role"),
                     email=m_data.get("email"),
                     joined_at=to_storage_local(m_data.get("joined_at") or local_now()),
+                    last_modified_at=to_storage_local(local_now()),
                     has_consent=has_consent,
                     consent_granted_at=(
                         to_storage_local(local_now()) if has_consent else None
@@ -482,6 +490,7 @@ class AttendanceRepository:
             if hasattr(member, key):
                 setattr(member, key, value)
 
+        member.last_modified_at = to_storage_local(local_now())
         return member
 
     async def remove_member(self, person_id: str) -> bool:
@@ -490,6 +499,7 @@ class AttendanceRepository:
             return False
         member.is_active = False
         member.is_deleted = True
+        member.last_modified_at = to_storage_local(local_now())
 
         face_query = select(Face).where(Face.person_id == person_id)
         face_query = self._apply_org_scope(face_query, Face)
