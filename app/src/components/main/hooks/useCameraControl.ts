@@ -330,6 +330,14 @@ export function useCameraControl({
       isScanningRef.current = false
       detectionInFlightRef.current = false
 
+      if (videoRef.current) {
+        try {
+          videoRef.current.pause()
+        } catch {
+          // Ignore
+        }
+      }
+
       cleanupStream(streamRef)
       cleanupVideo(videoRef, !forceCleanup)
 

@@ -34,7 +34,7 @@ export function CameraFeed({
     <div className="group/feed relative h-full w-full">
       <video
         ref={videoRef}
-        className="h-full w-full scale-x-[-1] object-contain"
+        className="h-full w-full scale-x-[-1] bg-[var(--bg-canvas)] object-contain"
         playsInline
         muted
       />
