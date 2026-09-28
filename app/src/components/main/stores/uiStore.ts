@@ -165,18 +165,16 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (adminPinEnabled) {
       set({
         isPinPromptOpen: true,
-        pendingSettingsSection: section,
+        pendingSettingsSection: section || (groupSection ? "group" : undefined),
         pendingGroupSection: groupSection,
         pendingPinCallback: null,
       })
     } else {
-      if (section) {
-        set({ settingsInitialSection: section, groupInitialSection: undefined })
-      }
-      if (groupSection) {
-        set({ groupInitialSection: groupSection, settingsInitialSection: undefined })
-      }
-      set({ showSettings: true })
+      set({
+        settingsInitialSection: section || (groupSection ? "group" : undefined),
+        groupInitialSection: groupSection,
+        showSettings: true,
+      })
     }
   },
 
@@ -209,13 +207,12 @@ export const useUIStore = create<UIState>((set, get) => ({
       if (pendingPinCallback) {
         pendingPinCallback()
       } else {
-        if (pendingSettingsSection) {
-          set({ settingsInitialSection: pendingSettingsSection, groupInitialSection: undefined })
-        }
-        if (pendingGroupSection) {
-          set({ groupInitialSection: pendingGroupSection, settingsInitialSection: undefined })
-        }
-        set({ showSettings: true })
+        set({
+          settingsInitialSection:
+            pendingSettingsSection || (pendingGroupSection ? "group" : undefined),
+          groupInitialSection: pendingGroupSection,
+          showSettings: true,
+        })
       }
       set({
         isPinPromptOpen: false,

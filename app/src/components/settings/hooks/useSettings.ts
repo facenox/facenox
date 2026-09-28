@@ -43,7 +43,7 @@ export const useSettings = ({
   const uiStore = useUIStore()
 
   const [activeSection, setActiveSectionState] = useState<string>(
-    initialSection || uiStore.lastSettingsSection || "group",
+    initialSection || (initialGroupSection ? "group" : uiStore.lastSettingsSection) || "group",
   )
   const [groupInitialSection, setGroupInitialSectionState] = useState<GroupSection | undefined>(
     initialGroupSection || uiStore.lastGroupInitialSection || "overview",
