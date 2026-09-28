@@ -1125,6 +1125,42 @@ class AttendanceRepository:
         await self.session.commit()
         return counts
 
+    async def unassign_organization_id(
+        self, org_id: Optional[str] = None
+    ) -> Dict[str, int]:
+        """Convert records scoped to org_id (or all org-scoped records if None) to standalone NULL org_id."""
+        counts = {
+            "groups": 0,
+            "members": 0,
+            "records": 0,
+            "sessions": 0,
+            "group_rules": 0,
+            "settings": 0,
+            "faces": 0,
+            "audit_logs": 0,
+        }
+
+        for model, key in [
+            (AttendanceGroup, "groups"),
+            (AttendanceMember, "members"),
+            (AttendanceRecord, "records"),
+            (AttendanceSession, "sessions"),
+            (AttendanceGroupRule, "group_rules"),
+            (AttendanceSettings, "settings"),
+            (Face, "faces"),
+            (AuditLog, "audit_logs"),
+        ]:
+            query = update(model)
+            if org_id:
+                query = query.where(model.organization_id == org_id)
+            else:
+                query = query.where(model.organization_id.is_not(None))
+            result = await self.session.execute(query.values(organization_id=None))
+            counts[key] = result.rowcount
+
+        await self.session.commit()
+        return counts
+
 
 class FaceRepository:
     """Repository pattern for Face database operations"""

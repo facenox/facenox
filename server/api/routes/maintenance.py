@@ -1,5 +1,6 @@
 import logging
-from fastapi import APIRouter, HTTPException, Depends
+from typing import Optional
+from fastapi import APIRouter, HTTPException, Depends, Header
 from sqlalchemy import select
 
 from api.schemas import (
@@ -83,24 +84,21 @@ async def remote_wipe_data(
 @router.post("/unpair", response_model=SuccessResponse)
 async def unpair_local_database(
     repo: AttendanceRepository = Depends(get_repository),
+    x_facenox_organization: Optional[str] = Header(
+        None, alias="X-Facenox-Organization"
+    ),
 ):
     """Reset database organization settings to unlock standalone offline operations."""
     try:
-        from database.models import AttendanceSettings
-        from sqlalchemy import update
-
-        await repo.session.execute(
-            update(AttendanceSettings).values(
-                organization_id=None, data_retention_days=0
-            )
+        await repo.unassign_organization_id(
+            org_id=x_facenox_organization or repo.organization_id
         )
-        await repo.session.commit()
 
         await repo.add_audit_log(
             action="DEVICE_MANUALLY_UNPAIRED",
             target_type="system",
             target_id="settings",
-            details="Device disconnected locally. Organization scope removed from database settings.",
+            details="Device disconnected locally. Organization scope removed from database settings and records transitioned to standalone offline scope.",
         )
 
         return SuccessResponse(message="Local database unpaired successfully.")
