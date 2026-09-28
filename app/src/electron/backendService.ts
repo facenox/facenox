@@ -68,17 +68,26 @@ export class BackendService {
   }
 
   async isAvailable(): Promise<boolean> {
-    if (!this.status.isRunning) return false
     const health = await this.client.checkAvailability()
+    if (health.available) {
+      this.status.isRunning = true
+      this.status.error = undefined
+    }
     return health.available
   }
 
   async checkAvailability() {
-    return this.client.checkAvailability()
+    const health = await this.client.checkAvailability()
+    if (health.available) {
+      this.status.isRunning = true
+      this.status.error = undefined
+    }
+    return health
   }
 
   async checkReadiness() {
-    return this.client.checkReadiness(this.status.isRunning)
+    const isHealthy = await this.processManager.checkHealth().catch(() => false)
+    return this.client.checkReadiness(isHealthy || this.status.isRunning)
   }
 
   async getModels(): Promise<ModelsResponse> {

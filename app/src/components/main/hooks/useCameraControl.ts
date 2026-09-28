@@ -113,6 +113,7 @@ export function useCameraControl({
           isStreamingRef.current = false
           setIsStreaming(false)
           setIsVideoLoading(false)
+          setCameraActive(false)
           isStartingRef.current = false
           return
         }

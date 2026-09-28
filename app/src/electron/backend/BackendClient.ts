@@ -90,20 +90,14 @@ export class BackendClient {
     isRunning: boolean,
   ): Promise<{ ready: boolean; modelsLoaded: boolean; error?: string }> {
     try {
-      if (!isRunning)
-        return {
-          ready: false,
-          modelsLoaded: false,
-          error: "Backend service not started",
-        }
-
       const health = await this.checkAvailability()
-      if (!health.available)
+      if (!health.available) {
         return {
           ready: false,
           modelsLoaded: false,
-          error: "Backend health check failed",
+          error: isRunning ? "Backend health check failed" : "Backend service not started",
         }
+      }
 
       const modelsData = await this.getModels()
       const faceDetectorAvailable = modelsData.models.face_detector?.available || false

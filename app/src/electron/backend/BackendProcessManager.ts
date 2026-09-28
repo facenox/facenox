@@ -295,14 +295,27 @@ export class BackendProcessManager {
     }
   }
 
+  async checkHealth(): Promise<boolean> {
+    const isHealthy = await this.healthCheck()
+    if (isHealthy) {
+      this.status.isRunning = true
+      this.status.error = undefined
+    }
+    return isHealthy
+  }
+
   private startHealthMonitoring(): void {
     if (this.healthCheckTimer) clearInterval(this.healthCheckTimer)
 
     this.healthCheckTimer = setInterval(async () => {
-      if (this.status.isRunning) {
-        if (!(await this.healthCheck())) {
-          this.status.isRunning = false
-        }
+      if (this.isStoppingManually) return
+
+      const isHealthy = await this.healthCheck()
+      if (isHealthy) {
+        this.status.isRunning = true
+        this.status.error = undefined
+      } else if (this.status.isRunning) {
+        this.status.isRunning = false
       }
     }, this.config.healthCheckInterval)
   }

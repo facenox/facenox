@@ -150,8 +150,9 @@ app.whenReady().then(async () => {
     state.mainWindow?.once("ready-to-show", () => resolve())
   })
 
-  // Listen for OS resume events to notify renderer for drift corrections
-  powerMonitor.on("resume", () => {
+  // Listen for OS resume events to notify renderer for drift corrections and restore backend readiness
+  powerMonitor.on("resume", async () => {
+    await backendService.checkReadiness().catch(() => {})
     if (state.mainWindow && !state.mainWindow.isDestroyed()) {
       state.mainWindow.webContents.send("system:resume")
     }
