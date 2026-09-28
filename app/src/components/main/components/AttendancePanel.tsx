@@ -456,12 +456,12 @@ export const AttendancePanel = memo(function AttendancePanel({
             <motion.div
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3 py-2 text-xs">
+              className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3 py-2 text-xs">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="flex h-2.5 w-[3px] shrink-0 animate-pulse rounded-[1px] bg-amber-400" />
                 <span className="truncate text-[11.5px] font-medium text-amber-300/90">
-                  {unenrolledMembersCount} member{unenrolledMembersCount === 1 ? " needs" : "s need"} face
-                  enrollment
+                  {unenrolledMembersCount} member
+                  {unenrolledMembersCount === 1 ? " needs" : "s need"} face enrollment
                 </span>
               </div>
               <button
