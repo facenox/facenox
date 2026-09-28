@@ -101,6 +101,16 @@ async def unpair_local_database(
             details="Device disconnected locally. Organization scope removed from database settings and records transitioned to standalone offline scope.",
         )
 
+        from core.lifespan import face_recognizer
+
+        if face_recognizer:
+            try:
+                await face_recognizer.refresh_cache(None)
+            except Exception as err:
+                logger.error(
+                    f"Failed to refresh face_recognizer cache after unpair: {err}"
+                )
+
         return SuccessResponse(message="Local database unpaired successfully.")
 
     except Exception as e:
