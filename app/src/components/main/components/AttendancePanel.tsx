@@ -338,6 +338,10 @@ export const AttendancePanel = memo(function AttendancePanel({
     return groupMembers.filter((m) => m.is_active && !m.has_face_data).length
   }, [groupMembers])
 
+  const hasAnyEnrolledMember = useMemo(() => {
+    return groupMembers.some((m) => m.is_active && m.has_face_data)
+  }, [groupMembers])
+
   const [searchQuery, setSearchQuery] = useState("")
   const [recordScope, setRecordScope] = useState<AttendanceRecordScope>("today")
   const [displayLimit, setDisplayLimit] = useState(20)
@@ -448,7 +452,7 @@ export const AttendancePanel = memo(function AttendancePanel({
           </div>
 
           {/* Biometric Enrollment Handoff Banner */}
-          {currentGroup && unenrolledMembersCount > 0 && (
+          {currentGroup && hasAnyEnrolledMember && unenrolledMembersCount > 0 && (
             <motion.div
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
@@ -456,7 +460,7 @@ export const AttendancePanel = memo(function AttendancePanel({
               <div className="flex min-w-0 items-center gap-2">
                 <span className="flex h-2.5 w-[3px] shrink-0 animate-pulse rounded-[1px] bg-amber-400" />
                 <span className="truncate text-[11.5px] font-medium text-amber-300/90">
-                  {unenrolledMembersCount} member{unenrolledMembersCount === 1 ? "" : "s"} need face
+                  {unenrolledMembersCount} member{unenrolledMembersCount === 1 ? " needs" : "s need"} face
                   enrollment
                 </span>
               </div>
