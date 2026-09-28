@@ -233,6 +233,11 @@ export function useBackendService(options: UseBackendServiceOptions) {
 
           // Refresh attendance data to show in sidebar
           loadAttendanceDataRef.current?.().catch(console.error)
+
+          // Trigger debounced cloud sync so the attendance record appears on web cloud in near real-time
+          if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
+            void window.electronAPI.sync.triggerDebouncedSync()
+          }
         }
       },
     )
