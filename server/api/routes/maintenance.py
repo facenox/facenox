@@ -102,6 +102,7 @@ async def unpair_local_database(
         )
 
         from core.lifespan import face_recognizer
+        from utils.websocket_manager import manager
 
         if face_recognizer:
             try:
@@ -110,6 +111,13 @@ async def unpair_local_database(
                 logger.error(
                     f"Failed to refresh face_recognizer cache after unpair: {err}"
                 )
+
+        try:
+            await manager.disconnect_all()
+        except Exception as ws_err:
+            logger.warning(
+                f"Failed to disconnect active websockets on unpair: {ws_err}"
+            )
 
         return SuccessResponse(message="Local database unpaired successfully.")
 

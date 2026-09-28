@@ -550,6 +550,16 @@ export function useBackendService(options: UseBackendServiceOptions) {
   ])
 
   useEffect(() => {
+    if (!window.electronAPI?.sync?.onDataChanged) return
+    const cleanup = window.electronAPI.sync.onDataChanged(() => {
+      if (webSocketServiceRef.current?.isWebSocketReady()) {
+        webSocketServiceRef.current.disconnect()
+      }
+    })
+    return cleanup
+  }, [webSocketServiceRef])
+
+  useEffect(() => {
     if (!webSocketServiceRef.current) return
 
     return webSocketServiceRef.current.onStatusChange((status) => {

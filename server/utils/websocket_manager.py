@@ -116,6 +116,15 @@ class ConnectionManager:
             except Exception:
                 pass
 
+    async def disconnect_all(self):
+        """Disconnect all active clients to force reconnection with updated organization scope."""
+        client_ids = list(self.active_connections.keys())
+        for cid in client_ids:
+            try:
+                await self.disconnect(cid)
+            except Exception as e:
+                logger.warning(f"Error disconnecting client {cid}: {e}")
+
     async def send_personal_message(self, message: dict, client_id: str) -> bool:
         """
         Send message to specific client

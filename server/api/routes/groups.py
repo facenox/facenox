@@ -88,6 +88,15 @@ async def assign_organization_id(
                 f"Failed to refresh face_recognizer cache after assigning org id: {err}"
             )
 
+    from utils.websocket_manager import manager
+
+    try:
+        await manager.disconnect_all()
+    except Exception as ws_err:
+        logger.warning(
+            f"Failed to disconnect active websockets on assign org: {ws_err}"
+        )
+
     return counts
 
 
