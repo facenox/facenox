@@ -7,7 +7,7 @@ import type {
   AttendanceGroup,
   AttendanceMember,
 } from "../../types/recognition"
-import { getLocalDateString, parseLocalDate } from "../../utils/index"
+import { getLocalDateString, parseLocalDate, notifyDataChanged } from "../../utils/index"
 import type { HttpClient } from "./HttpClient"
 
 export class RecordManager {
@@ -32,9 +32,7 @@ export class RecordManager {
   }
 
   private triggerSync() {
-    if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
-      void window.electronAPI.sync.triggerDebouncedSync()
-    }
+    notifyDataChanged()
   }
 
   async processAttendanceEvent(

@@ -62,7 +62,7 @@ export function Attendance({
   const activeLimit =
     (allowedChoices as readonly number[]).includes(attendanceSettings.maxRecognitionFacesPerFrame) ?
       attendanceSettings.maxRecognitionFacesPerFrame
-      : 5
+    : 5
 
   const cloudCeiling =
     (
@@ -71,7 +71,7 @@ export function Attendance({
       attendanceSettings.cloudRetentionDays > 0
     ) ?
       attendanceSettings.cloudRetentionDays
-      : null
+    : null
   const isCloudUnlimited =
     isPaired &&
     typeof attendanceSettings.cloudRetentionDays === "number" &&
@@ -82,8 +82,8 @@ export function Attendance({
     cloudCeiling ?
       rawLocalDays > 0 && rawLocalDays <= cloudCeiling ?
         rawLocalDays
-        : cloudCeiling
-      : Math.max(0, rawLocalDays)
+      : cloudCeiling
+    : Math.max(0, rawLocalDays)
 
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
@@ -122,9 +122,9 @@ export function Attendance({
                       className="text-xs font-normal text-white/65">
                       {!hasSelectedGroup ?
                         "Select a group to enable this feature"
-                        : attendanceSettings.trackCheckout ?
-                          "Record both arrival and departure times."
-                          : "Only record arrival times."}
+                      : attendanceSettings.trackCheckout ?
+                        "Record both arrival and departure times."
+                      : "Only record arrival times."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -164,9 +164,9 @@ export function Attendance({
                       className="text-xs font-normal text-white/65">
                       {!hasSelectedGroup ?
                         "Select a group to enable late tracking"
-                        : attendanceSettings.lateThresholdEnabled ?
-                          "Automatically mark members as late based on scheduled start times."
-                          : "Late tracking is disabled."}
+                      : attendanceSettings.lateThresholdEnabled ?
+                        "Automatically mark members as late based on scheduled start times."
+                      : "Late tracking is disabled."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -202,10 +202,11 @@ export function Attendance({
                           key={mins}
                           type="button"
                           onClick={() => onLateThresholdChange(mins)}
-                          className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${attendanceSettings.lateThresholdMinutes === mins ?
-                            "text-cyan-400"
+                          className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                            attendanceSettings.lateThresholdMinutes === mins ?
+                              "text-cyan-400"
                             : "text-white/40 hover:text-white/70"
-                            }`}>
+                          }`}>
                           {mins}m
                           {attendanceSettings.lateThresholdMinutes === mins && (
                             <motion.div
@@ -251,9 +252,9 @@ export function Attendance({
                     className="text-xs font-normal text-white/65">
                     {!hasSelectedGroup ?
                       "Select a group to enable this feature"
-                      : attendanceSettings.biometricConsentCertified ?
-                        "Bypass manual consent checkboxes when adding or editing members."
-                        : "Require manual consent checkbox certification when adding or editing members."
+                    : attendanceSettings.biometricConsentCertified ?
+                      "Bypass manual consent checkboxes when adding or editing members."
+                    : "Require manual consent checkbox certification when adding or editing members."
                     }
                   </motion.div>
                 </AnimatePresence>
@@ -315,10 +316,11 @@ export function Attendance({
                   key={secs}
                   type="button"
                   onClick={() => onAttendanceCooldownChange(secs)}
-                  className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${attendanceSettings.attendanceCooldownSeconds === secs ?
-                    "text-cyan-400"
+                  className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                    attendanceSettings.attendanceCooldownSeconds === secs ?
+                      "text-cyan-400"
                     : "text-white/40 hover:text-white/70"
-                    }`}>
+                  }`}>
                   {secs < 60 ? `${secs}s` : `${secs / 60}m`}
                   {attendanceSettings.attendanceCooldownSeconds === secs && (
                     <motion.div
@@ -362,7 +364,7 @@ export function Attendance({
                       className="text-xs font-normal text-white/65">
                       {attendanceSettings.maxRecognitionFacesPerFrame === 0 ?
                         "Process all detected faces without limits."
-                        : "Limit the maximum number of faces recognized per frame to optimize performance."
+                      : "Limit the maximum number of faces recognized per frame to optimize performance."
                       }
                     </motion.div>
                   </AnimatePresence>
@@ -398,10 +400,11 @@ export function Attendance({
                           key={faces}
                           type="button"
                           onClick={() => onMaxRecognitionFacesChange(faces)}
-                          className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${activeLimit === faces ? "text-cyan-400" : (
-                            "text-white/40 hover:text-white/70"
-                          )
-                            }`}>
+                          className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                            activeLimit === faces ? "text-cyan-400" : (
+                              "text-white/40 hover:text-white/70"
+                            )
+                          }`}>
                           {faces}
                           {activeLimit === faces && (
                             <motion.div
@@ -448,9 +451,9 @@ export function Attendance({
                     className="text-xs font-normal text-white/65">
                     {attendanceSettings.forceLiveness ?
                       "Managed by your organization."
-                      : attendanceSettings.enableSpoofDetection ?
-                        "Verifies physical presence to prevent spoofing."
-                        : "Liveness verification is disabled."}
+                    : attendanceSettings.enableSpoofDetection ?
+                      "Verifies physical presence to prevent spoofing."
+                    : "Liveness verification is disabled."}
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -476,11 +479,11 @@ export function Attendance({
                     <span className="inline-flex items-center gap-1 rounded border border-cyan-500/25 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300">
                       <i className="fa-solid fa-cloud text-[9px]" /> Cloud plan: {cloudCeiling}d max
                     </span>
-                    : isCloudUnlimited ?
-                      <span className="inline-flex items-center gap-1 rounded border border-cyan-500/25 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300">
-                        <i className="fa-solid fa-cloud text-[9px]" /> Cloud plan: Unlimited
-                      </span>
-                      : null)}
+                  : isCloudUnlimited ?
+                    <span className="inline-flex items-center gap-1 rounded border border-cyan-500/25 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300">
+                      <i className="fa-solid fa-cloud text-[9px]" /> Cloud plan: Unlimited
+                    </span>
+                  : null)}
                 <InfoPopover
                   title="Data Retention"
                   description="Controls how long past attendance check-in logs are kept on this device. Member profiles and enrolled face signatures are never deleted."
@@ -490,7 +493,7 @@ export function Attendance({
                     "Member profiles, groups, and enrolled face data remain safe forever.",
                     isPaired && cloudCeiling ?
                       `When paired, local retention cannot exceed your cloud subscription window of ${cloudCeiling} days.`
-                      : "Setting this to 0 disables automatic deletion and keeps local attendance logs indefinitely.",
+                    : "Setting this to 0 disables automatic deletion and keeps local attendance logs indefinitely.",
                   ]}
                   detailsNode={[
                     <div
@@ -514,7 +517,7 @@ export function Attendance({
                   }
                   if (isCloudUnlimited) {
                     return effectiveDays <= 0 ?
-                      "Cloud plan allows unlimited history. Attendance logs are kept forever."
+                        "Cloud plan allows unlimited history. Attendance logs are kept forever."
                       : `Cloud plan allows unlimited history. Attendance logs older than ${effectiveDays} days are pruned automatically. Member profiles and face data are never deleted.`
                   }
                   if (effectiveDays <= 0)
@@ -603,7 +606,7 @@ export function Attendance({
                       className="text-xs font-normal text-white/65">
                       {adminPinEnabled ?
                         "Settings are protected with an administrator PIN."
-                        : "PIN lock is disabled. Anyone can access settings."}
+                      : "PIN lock is disabled. Anyone can access settings."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -639,14 +642,14 @@ export function Attendance({
                               <i className="fa-solid fa-circle-check mr-1 text-[10px]" />
                               PIN updated successfully
                             </span>
-                            : pinValue.length === 4 ?
-                              <span className="text-white/65">
-                                4-digit PIN is active. Default is 1234.
-                              </span>
-                              : <span className="font-medium text-amber-400">
-                                <i className="fa-solid fa-circle-info mr-1 text-[10px]" />
-                                Enter 4 numeric digits to save
-                              </span>
+                          : pinValue.length === 4 ?
+                            <span className="text-white/65">
+                              4-digit PIN is active. Default is 1234.
+                            </span>
+                          : <span className="font-medium text-amber-400">
+                              <i className="fa-solid fa-circle-info mr-1 text-[10px]" />
+                              Enter 4 numeric digits to save
+                            </span>
                           }
                         </div>
                       </div>

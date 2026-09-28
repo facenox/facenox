@@ -6,6 +6,7 @@ import type {
   BulkEnrollResponse,
 } from "../../types/recognition"
 import type { HttpClient } from "./HttpClient"
+import { notifyDataChanged } from "@/utils/syncNotifier"
 
 export class GroupManager {
   private httpClient: HttpClient
@@ -27,9 +28,7 @@ export class GroupManager {
       }
 
       const group = await this.httpClient.post<AttendanceGroup>(this.apiEndpoints.groups, groupData)
-      if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
-        window.electronAPI.sync.triggerDebouncedSync()
-      }
+      notifyDataChanged()
       return {
         ...group,
         created_at: new Date(group.created_at),
@@ -73,9 +72,7 @@ export class GroupManager {
   async updateGroup(groupId: string, updates: Partial<AttendanceGroup>): Promise<boolean> {
     try {
       await this.httpClient.put<AttendanceGroup>(`${this.apiEndpoints.groups}/${groupId}`, updates)
-      if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
-        window.electronAPI.sync.triggerDebouncedSync()
-      }
+      notifyDataChanged()
       return true
     } catch (error) {
       console.error("Error updating group:", error)
@@ -86,9 +83,7 @@ export class GroupManager {
   async deleteGroup(groupId: string): Promise<boolean> {
     try {
       await this.httpClient.delete(`${this.apiEndpoints.groups}/${groupId}`)
-      if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
-        window.electronAPI.sync.triggerDebouncedSync()
-      }
+      notifyDataChanged()
       return true
     } catch (error) {
       console.error("Error deleting group:", error)
@@ -153,9 +148,11 @@ export class GroupManager {
     images.forEach((item) => formData.append("images", item.file, item.filename))
     formData.append("metadata", JSON.stringify(enrollments))
 
-    return this.httpClient.postMultipart(
+    const result = await this.httpClient.postMultipart<BulkEnrollResponse>(
       `${this.apiEndpoints.groups}/${groupId}/bulk-enroll-faces`,
       formData,
     )
+    notifyDataChanged()
+    return result
   }
 }

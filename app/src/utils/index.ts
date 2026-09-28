@@ -18,3 +18,4 @@ export {
 } from "@/utils/dateUtils"
 
 export type { AttendanceStatusDisplay, StatusConfig } from "@/utils/attendanceStatusUtils"
+export { notifyDataChanged } from "@/utils/syncNotifier"

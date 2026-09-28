@@ -1,6 +1,7 @@
 import type { AttendanceMember } from "../../types/recognition"
 import type { HttpClient } from "./HttpClient"
 import { dataUrlToBlob } from "@/utils/dataUrl"
+import { notifyDataChanged } from "@/utils/syncNotifier"
 
 export class MemberManager {
   private httpClient: HttpClient
@@ -57,9 +58,7 @@ export class MemberManager {
       this.apiEndpoints.members,
       memberData,
     )
-    if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
-      window.electronAPI.sync.triggerDebouncedSync()
-    }
+    notifyDataChanged()
     return {
       ...member,
       joined_at: new Date(member.joined_at),
@@ -99,9 +98,7 @@ export class MemberManager {
       members: AttendanceMember[]
     }>(`${this.apiEndpoints.members}/bulk`, payload)
 
-    if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
-      window.electronAPI.sync.triggerDebouncedSync()
-    }
+    notifyDataChanged()
 
     return {
       ...res,
@@ -132,9 +129,7 @@ export class MemberManager {
         `${this.apiEndpoints.members}/${personId}`,
         updates,
       )
-      if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
-        window.electronAPI.sync.triggerDebouncedSync()
-      }
+      notifyDataChanged()
       return true
     } catch (error) {
       console.error("Error updating member:", error)
@@ -152,18 +147,14 @@ export class MemberManager {
       error_count: number
       errors: Array<{ person_id: string; error: string }>
     }>(`${this.apiEndpoints.members}/bulk-delete`, { person_ids: personIds })
-    if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
-      window.electronAPI.sync.triggerDebouncedSync()
-    }
+    notifyDataChanged()
     return res
   }
 
   async removeMember(personId: string): Promise<boolean> {
     try {
       await this.httpClient.delete(`${this.apiEndpoints.members}/${personId}`)
-      if (typeof window !== "undefined" && window.electronAPI?.sync?.triggerDebouncedSync) {
-        window.electronAPI.sync.triggerDebouncedSync()
-      }
+      notifyDataChanged()
       return true
     } catch (error) {
       console.error("Error removing member:", error)
@@ -204,6 +195,7 @@ export class MemberManager {
         message: string
       }>(url, formData)
 
+      notifyDataChanged()
       return { success: true, message: result.message }
     } catch (error) {
       console.error("Error enrolling face for group person:", error)
@@ -223,6 +215,7 @@ export class MemberManager {
         success: boolean
         message: string
       }>(`${this.apiEndpoints.groups}/${groupId}/persons/${personId}/face-data`)
+      notifyDataChanged()
       return { success: true, message: result.message }
     } catch (error) {
       console.error("Error removing face data for group person:", error)

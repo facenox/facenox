@@ -16,6 +16,7 @@ import { HttpClient } from "./attendance/HttpClient"
 import { GroupManager } from "./attendance/GroupManager"
 import { MemberManager } from "./attendance/MemberManager"
 import { RecordManager } from "./attendance/RecordManager"
+import { notifyDataChanged } from "../utils/syncNotifier"
 
 const API_BASE_URL = "http://127.0.0.1:7400"
 const API_ENDPOINTS = {
@@ -272,6 +273,7 @@ export class AttendanceManager {
         newSettings,
       )
       this.settings = updated
+      notifyDataChanged()
     } catch (error) {
       console.error("Error updating settings:", error)
       throw error
@@ -282,10 +284,12 @@ export class AttendanceManager {
     await this.httpClient.post("/attendance/cleanup", {
       days_to_keep: daysToKeep,
     })
+    notifyDataChanged()
   }
 
   async purgeAttendanceHistory(): Promise<void> {
     await this.httpClient.post("/attendance/purge-history")
+    notifyDataChanged()
   }
 
   async exportData(): Promise<string> {
