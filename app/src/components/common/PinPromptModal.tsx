@@ -32,29 +32,29 @@ export function PinPromptModal() {
     }
   }, [isPinPromptOpen])
 
-  const handleDigit = useCallback(
-    (digit: string) => {
-      setPin((prevPin) => {
-        if (prevPin.length >= 4) return prevPin
-        const nextPin = prevPin + digit
-        setError(false)
-        if (nextPin.length === 4) {
-          // Auto-check on 4 digits
-          const success = verifyPin(nextPin)
-          if (!success) {
-            setError(true)
-            setIsShaking(true)
-            setTimeout(() => {
-              setIsShaking(false)
-              setPin("")
-            }, 600)
-          }
-        }
-        return nextPin
-      })
-    },
-    [verifyPin],
-  )
+  const handleWrongPin = useCallback(() => {
+    setError(true)
+    setIsShaking(true)
+    setTimeout(() => {
+      setIsShaking(false)
+      setPin("")
+    }, 600)
+  }, [])
+
+  const handleDigit = useCallback((digit: string) => {
+    setPin((prevPin) => {
+      if (prevPin.length >= 4) return prevPin
+      return prevPin + digit
+    })
+    setError(false)
+  }, [])
+
+  // Auto-submit when 4 digits are entered
+  useEffect(() => {
+    if (pin.length !== 4) return
+    const success = verifyPin(pin)
+    if (!success) handleWrongPin()
+  }, [pin, verifyPin, handleWrongPin])
 
   const handleBackspace = useCallback(() => {
     setPin((prev) => prev.slice(0, -1))
@@ -67,20 +67,10 @@ export function PinPromptModal() {
   }, [])
 
   const handleManualSubmit = useCallback(() => {
-    setPin((currentPin) => {
-      if (!currentPin) return currentPin
-      const success = verifyPin(currentPin)
-      if (!success) {
-        setError(true)
-        setIsShaking(true)
-        setTimeout(() => {
-          setIsShaking(false)
-          setPin("")
-        }, 600)
-      }
-      return currentPin
-    })
-  }, [verifyPin])
+    if (!pin) return
+    const success = verifyPin(pin)
+    if (!success) handleWrongPin()
+  }, [pin, verifyPin, handleWrongPin])
 
   // Global window keyboard handler to prevent duplicate input
   useEffect(() => {

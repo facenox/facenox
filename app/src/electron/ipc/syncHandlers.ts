@@ -168,8 +168,8 @@ async function getExtendedSyncStatus() {
   try {
     const statsUrl =
       status.lastSyncedAt ?
-        `${backendService.getUrl()}/stats?last_synced_at=${encodeURIComponent(status.lastSyncedAt)}`
-      : `${backendService.getUrl()}/stats`
+        `${backendService.getUrl()}/attendance/stats?last_synced_at=${encodeURIComponent(status.lastSyncedAt)}`
+      : `${backendService.getUrl()}/attendance/stats`
     const response = await fetch(statsUrl, {
       method: "GET",
       headers: authHeaders(),
