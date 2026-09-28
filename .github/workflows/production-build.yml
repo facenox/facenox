@@ -183,7 +183,7 @@ jobs:
       
       # Windows Signing (Placeholder/Optional)
       - name: Submit to SignPath (Windows)
-        uses: signpath/github-action-submit-signing-request@v2
+        uses: signpath/github-action-submit-signing-request@v3
         id: sign-windows
         continue-on-error: true
         with:
