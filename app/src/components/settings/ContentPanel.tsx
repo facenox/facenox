@@ -376,12 +376,11 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     animate: { opacity: 1, scale: 1 },
     exit: { opacity: 0, scale: 0.995 },
     transition: { duration: 0.18, ease: "easeOut" as const },
-    style: { willChange: "opacity, transform" } as React.CSSProperties,
   }
 
   return (
     <>
-      <div className="flex flex-1 flex-col overflow-hidden bg-[var(--bg-secondary)]">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[var(--bg-secondary)]">
         <SectionHeader>
           <SectionHeader.Breadcrumbs>
             {headerProps.isGroupSection ?

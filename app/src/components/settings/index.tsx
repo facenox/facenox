@@ -91,7 +91,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
   ]
 
   const mainContent = (
-    <div className="flex h-full bg-[var(--bg-secondary)] text-white">
+    <div className="flex h-full w-full min-w-0 bg-[var(--bg-secondary)] text-white">
       <Sidebar
         activeSection={settings.activeSection}
         setActiveSection={settings.setActiveSection}
@@ -169,7 +169,6 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: SETTINGS_OVERLAY_ANIMATION_DURATION, ease: "easeOut" }}
-        style={{ willChange: "opacity" }}
         className="fixed inset-0 z-60 flex items-center justify-center bg-[rgba(5,7,10,0.76)] [@media(max-height:760px)_and_(max-width:1100px)]:inset-x-0 [@media(max-height:760px)_and_(max-width:1100px)]:top-[32px] [@media(max-height:760px)_and_(max-width:1100px)]:bottom-0 [@media(max-height:760px)_and_(max-width:1100px)]:items-stretch">
         <motion.div
           initial={{ opacity: 0, scale: 0.98, y: 8 }}
@@ -179,8 +178,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
             duration: SETTINGS_PANEL_ANIMATION_DURATION,
             ease: [0.16, 1, 0.3, 1], // Custom "snappy" cubic-bezier
           }}
-          style={{ willChange: "transform, opacity" }}
-          className="relative mt-6 w-full max-w-full overflow-hidden rounded-xl border border-white/6 bg-[var(--bg-secondary)] md:h-[92vh] lg:h-[90vh] lg:max-w-[96%] [@media(max-height:760px)_and_(max-width:1100px)]:mt-0 [@media(max-height:760px)_and_(max-width:1100px)]:h-full [@media(max-height:760px)_and_(max-width:1100px)]:max-w-full [@media(max-height:760px)_and_(max-width:1100px)]:rounded-none [@media(max-height:760px)_and_(max-width:1100px)]:border-0">
+          className="relative mt-6 flex h-[92vh] w-full max-w-[96%] min-w-0 flex-col overflow-hidden rounded-xl border border-white/6 bg-[var(--bg-secondary)] md:h-[92vh] lg:h-[90vh] lg:max-w-[96%] [@media(max-height:760px)_and_(max-width:1100px)]:mt-0 [@media(max-height:760px)_and_(max-width:1100px)]:h-full [@media(max-height:760px)_and_(max-width:1100px)]:max-w-full [@media(max-height:760px)_and_(max-width:1100px)]:rounded-none [@media(max-height:760px)_and_(max-width:1100px)]:border-0">
           <button
             onClick={props.onBack}
             className="absolute top-[14px] right-[14px] z-50 rounded-lg border-none bg-transparent p-1 text-white/35 shadow-none transition-all duration-200 hover:bg-white/[0.06] hover:text-white active:scale-95"

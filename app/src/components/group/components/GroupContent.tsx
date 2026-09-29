@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from "react"
+import { useMemo, memo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { Members, Overview, Reports } from "@/components/group/sections"
@@ -44,7 +44,6 @@ function GroupContentComponent({
     animate: { opacity: 1, scale: 1 },
     exit: { opacity: 0, scale: 0.995 },
     transition: { duration: 0.18, ease: "easeOut" as const },
-    style: { willChange: "opacity, transform" } as React.CSSProperties,
   }
 
   if (!hasSelectedGroup || !selectedGroup) {
@@ -73,13 +72,13 @@ function GroupContentComponent({
   }
 
   return (
-    <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+    <div className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
       <AnimatePresence mode="wait">
         {activeSection === "overview" && (
           <motion.div
             key={`overview-${selectedGroupId}`}
             {...motionProps}
-            className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+            className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
             <Overview group={selectedGroup} members={members} onAddMember={openAddMember} />
           </motion.div>
         )}
@@ -88,7 +87,7 @@ function GroupContentComponent({
           <motion.div
             key={`reports-${selectedGroupId}`}
             {...motionProps}
-            className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+            className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
             <Reports
               group={selectedGroup}
               onDaysTrackedChange={onDaysTrackedChange}
@@ -102,7 +101,7 @@ function GroupContentComponent({
           <motion.div
             key={`members-${selectedGroupId}`}
             {...motionProps}
-            className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+            className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
             <Members
               group={selectedGroup}
               members={members}
