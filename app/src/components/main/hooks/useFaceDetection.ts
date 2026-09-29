@@ -5,7 +5,7 @@ import type { DetectionResult } from "@/components/main/types"
 // Safety-net: if a frame has been "in-flight" for longer than this
 // without a response, forcibly reset the lock so the pipeline can resume.
 // In normal operation this never fires — purely defensive insurance.
-const WATCHDOG_TIMEOUT_MS = 15_000
+const WATCHDOG_TIMEOUT_MS = 5_000
 
 interface UseFaceDetectionOptions {
   webSocketServiceRef: React.RefObject<WebSocketService | null>

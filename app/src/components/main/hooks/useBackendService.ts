@@ -369,11 +369,15 @@ export function useBackendService(options: UseBackendServiceOptions) {
         setWebsocketStatus("connected")
       } else if (data.status === "disconnected") {
         setWebsocketStatus("disconnected")
+        setCurrentDetections(null)
+        lastDetectionRef.current = null
       }
     })
 
     webSocketServiceRef.current.onMessage("error", (data: WebSocketErrorMessage) => {
       detectionInFlightRef.current = false
+      setCurrentDetections(null)
+      lastDetectionRef.current = null
 
       if (!isStreamingRef.current || !isScanningRef.current) {
         return
@@ -548,16 +552,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
     streamRef,
     videoRef,
   ])
-
-  useEffect(() => {
-    if (!window.electronAPI?.sync?.onDataChanged) return
-    const cleanup = window.electronAPI.sync.onDataChanged(() => {
-      if (webSocketServiceRef.current?.isWebSocketReady()) {
-        webSocketServiceRef.current.disconnect()
-      }
-    })
-    return cleanup
-  }, [webSocketServiceRef])
 
   useEffect(() => {
     if (!webSocketServiceRef.current) return
