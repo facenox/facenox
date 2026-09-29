@@ -39,29 +39,31 @@ export function CameraFeed({
         muted
       />
 
-      {/* Compact Camera Selection Overlay */}
-      <div className="absolute top-4 right-4 z-30 w-64">
-        <Dropdown
-          options={formatCameraDevices(cameraDevices)}
-          value={selectedCamera}
-          onChange={(deviceId) => {
-            if (deviceId) {
-              setSelectedCamera(String(deviceId))
-              if (isStreaming) {
-                onStop()
-                setTimeout(() => onStart(String(deviceId)), 300)
+      {/* Compact Camera Selection Overlay (Only shown when multiple cameras exist) */}
+      {cameraDevices.length > 1 && (
+        <div className="absolute top-4 right-4 z-30 w-64">
+          <Dropdown
+            options={formatCameraDevices(cameraDevices)}
+            value={selectedCamera}
+            onChange={(deviceId) => {
+              if (deviceId) {
+                setSelectedCamera(String(deviceId))
+                if (isStreaming) {
+                  onStop()
+                  setTimeout(() => onStart(String(deviceId)), 300)
+                }
               }
-            }
-          }}
-          placeholder="Select camera…"
-          emptyMessage="No cameras available"
-          disabled={cameraDevices.length <= 1}
-          maxHeight={256}
-          buttonClassName="text-[11px] px-3 py-1.5 bg-[rgba(10,13,18,0.84)] border border-white/10 hover:bg-[rgba(15,19,25,0.92)] transition-all font-medium"
-          showPlaceholderOption={false}
-          allowClear={false}
-        />
-      </div>
+            }}
+            placeholder="Select camera…"
+            emptyMessage="No cameras available"
+            disabled={false}
+            maxHeight={256}
+            buttonClassName="text-[11px] px-3 py-1.5 bg-[rgba(10,13,18,0.84)] border border-white/10 hover:bg-[rgba(15,19,25,0.92)] transition-all font-medium"
+            showPlaceholderOption={false}
+            allowClear={false}
+          />
+        </div>
+      )}
 
       {!isStreaming && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">

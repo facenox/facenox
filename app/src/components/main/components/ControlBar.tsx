@@ -114,7 +114,13 @@ export function ControlBar({
     <div>
       <div className="flex min-h-16 items-center justify-between gap-4 rounded-lg p-3 pt-0">
         <div className="flex items-center space-x-6">
-          {cameraDevices.length > 0 && (
+          {cameraDevices.length === 1 ?
+            <div className="flex items-center rounded-lg border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-white/90">
+              <span className="max-w-[200px] truncate">
+                {formatCameraDevices(cameraDevices)[0]?.label || "Camera"}
+              </span>
+            </div>
+          : cameraDevices.length > 1 ?
             <div className="flex flex-col items-start space-y-1">
               <div className="w-fit max-w-[260px] min-w-[140px]">
                 <Dropdown
@@ -125,7 +131,7 @@ export function ControlBar({
                   }}
                   placeholder="Select camera..."
                   emptyMessage="No cameras available"
-                  disabled={isStreaming || cameraDevices.length <= 1}
+                  disabled={isStreaming}
                   maxHeight={256}
                   buttonClassName="text-md px-4"
                   showPlaceholderOption={false}
@@ -133,7 +139,7 @@ export function ControlBar({
                 />
               </div>
             </div>
-          )}
+          : null}
         </div>
 
         <div className="flex items-center gap-3">
