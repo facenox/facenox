@@ -132,7 +132,7 @@ python tests/stress_test_recognition.py
 *(The script will automatically download the test faces, run the simulation, and clean up afterwards.)*
 
 > [!NOTE]
-> **Scaling:** The benchmark above represents a worst-case scenario, searching all 500 profiles with no filtering. In actual use, Facenox limits face searches to the active group's members only, reducing both search time and false match risk in practice.
+> **Scaling:** The benchmark above represents a worst-case scenario, searching all 500 profiles with no filtering. In actual use, Facenox supports both Universal **"All Groups"** multi-group scanning and single-group active filtering to match your organization's setup with minimal latency.
 
 ## Offline-First Behavior
 
@@ -185,7 +185,15 @@ Because Facenox operates locally, no external servers have access to your databa
 
 ## Download
 
-Latest prebuilt binaries are available on the [GitHub Releases](https://github.com/facenox/facenox/releases/latest) page.
+Download the latest prebuilt binaries for your platform:
+
+<p align="left">
+  <a href="https://github.com/facenox/facenox/releases/latest"><img src="https://img.shields.io/badge/Windows-Download_.exe-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows"></a>
+  <a href="https://github.com/facenox/facenox/releases/latest"><img src="https://img.shields.io/badge/macOS-Download_.dmg-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS"></a>
+  <a href="https://github.com/facenox/facenox/releases/latest"><img src="https://img.shields.io/badge/Linux-Download_.AppImage_/_deb-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Download Linux"></a>
+</p>
+
+For all available releases and architecture packages, visit the [GitHub Releases](https://github.com/facenox/facenox/releases/latest) page.
 
 If you want to build from source, please follow the [Installation Guide](docs/INSTALLATION.md).
 
