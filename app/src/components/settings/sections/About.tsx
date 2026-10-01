@@ -294,19 +294,21 @@ export const About: React.FC = () => {
     <div className="relative min-h-full w-full">
       <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
 
-      <div className="mx-auto flex min-h-full max-w-lg flex-col items-center px-10 pt-8 pb-10 text-center">
-        <div className="w-full flex-1 space-y-9">
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex h-22 w-22 items-center justify-center">
+      <div className="mx-auto flex min-h-full max-w-lg flex-col px-10 pt-8 pb-10">
+        <div className="w-full flex-1 space-y-8">
+          <div className="flex items-center justify-center gap-4.5">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center">
               <img
                 src="./icons/logo-transparent.png"
                 alt="Facenox logo"
                 className="h-full w-full object-contain"
               />
             </div>
-            <h1 className="text-4xl font-black tracking-[-0.04em] text-white">Facenox</h1>
-            <div className="flex min-h-7 items-center justify-center px-2.5 py-0.5">
-              <span className="font-mono text-[11px] leading-none tracking-[0.02em] text-white/55">
+            <div className="flex flex-col items-start">
+              <h1 className="text-4xl leading-tight font-black tracking-[-0.04em] text-white">
+                Facenox
+              </h1>
+              <span className="mt-0.5 font-mono text-[12px] leading-none tracking-[0.02em] text-white/55">
                 {version || "-"}
               </span>
             </div>
@@ -390,7 +392,7 @@ export const About: React.FC = () => {
               Docs
             </button>
           </div>
-          <p className="text-[11px] font-medium text-white/55">© 2026 Facenox</p>
+          <p className="text-center text-[11px] font-medium text-white/55">© 2026 Facenox</p>
         </div>
       </div>
     </div>
