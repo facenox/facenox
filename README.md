@@ -253,7 +253,7 @@ Facenox is in active development. Until code-signing is finalized in a future re
 - **Runtime:** Python 3.10+ (FastAPI)
 - **Inference:** ONNX Runtime, OpenCV
 - **Tracking:** ByteTrack (High-performance MOT)
-- **Anti-Spoofing:** [face-antispoof-onnx](https://github.com/facenox/face-antispoof-onnx)
+- **Anti-Spoofing:** AuraFAS (Custom Dual-Stream ONNX Liveness Engine)
 - **Storage:** SQLite, SQLAlchemy, Alembic
 
 ### Desktop App
