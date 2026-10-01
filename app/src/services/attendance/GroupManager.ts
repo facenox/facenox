@@ -93,6 +93,10 @@ export class GroupManager {
 
   async getGroupMembers(groupId: string): Promise<AttendanceMember[]> {
     try {
+      const endpoint =
+        groupId === "all" ?
+          this.apiEndpoints.members
+        : `${this.apiEndpoints.groups}/${groupId}/persons`
       const members = await this.httpClient.get<
         {
           person_id: string
@@ -105,7 +109,7 @@ export class GroupManager {
           group_id: string
           has_consent: boolean
         }[]
-      >(`${this.apiEndpoints.groups}/${groupId}/persons`)
+      >(endpoint)
 
       return members.map((member) => ({
         person_id: member.person_id,

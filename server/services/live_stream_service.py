@@ -234,7 +234,6 @@ class LiveStreamService:
         async with AsyncSessionLocal() as session:
             repo = AttendanceRepository(session, organization_id=self.organization_id)
             settings = await repo.get_settings()
-            group = await repo.get_group(active_group_id)
 
             group_context.attendance_cooldown_seconds = (
                 settings.attendance_cooldown_seconds or 300
@@ -245,11 +244,13 @@ class LiveStreamService:
                 else 6
             )
 
-            if group:
-                members = await repo.get_group_members(active_group_id)
+            if active_group_id and active_group_id.lower() == "all":
+                members = await repo.get_members()
                 group_context.group_exists = True
 
-                group_context.allowed_person_ids = {m.person_id for m in members}
+                group_context.allowed_person_ids = {
+                    m.person_id for m in members if m.is_active
+                }
 
                 group_context.members_by_person_id = {
                     member.person_id: {
@@ -258,8 +259,29 @@ class LiveStreamService:
                         "has_consent": member.has_consent,
                     }
                     for member in members
+                    if member.is_active
                 }
+            else:
+                group = await repo.get_group(active_group_id)
+                if group:
+                    members = await repo.get_group_members(active_group_id)
+                    group_context.group_exists = True
 
+                    group_context.allowed_person_ids = {
+                        m.person_id for m in members if m.is_active
+                    }
+
+                    group_context.members_by_person_id = {
+                        member.person_id: {
+                            "name": member.name,
+                            "role": member.role,
+                            "has_consent": member.has_consent,
+                        }
+                        for member in members
+                        if member.is_active
+                    }
+
+            if group_context.group_exists:
                 # Pre-build high-performance NumPy matrix for batch recognition
                 from core.lifespan import face_recognizer
 

@@ -240,6 +240,7 @@ export const VideoCanvas = memo(function VideoCanvas({
                   </div>
                   {(emptyStateText ||
                     (hasSelectedGroup &&
+                      currentGroup?.id !== "all" &&
                       hasEnrolledFaces &&
                       onStartTimeChange &&
                       lateTrackingEnabled)) && (
@@ -247,6 +248,7 @@ export const VideoCanvas = memo(function VideoCanvas({
                       {emptyStateText && <p className="text-white/65">{emptyStateText}</p>}
 
                       {hasSelectedGroup &&
+                        currentGroup?.id !== "all" &&
                         hasEnrolledFaces &&
                         onStartTimeChange &&
                         lateTrackingEnabled && (

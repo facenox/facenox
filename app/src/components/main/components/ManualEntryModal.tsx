@@ -40,8 +40,12 @@ export const ManualEntryModal = ({
 
   useEffect(() => {
     if (!currentGroup?.id) return
-    attendanceManager
-      .getGroupPersons(currentGroup.id)
+    const fetchPersons =
+      currentGroup.id === "all" ?
+        attendanceManager.getMembers()
+      : attendanceManager.getGroupPersons(currentGroup.id)
+
+    fetchPersons
       .then((persons: AttendanceMember[]) => {
         const map = new Map<string, boolean>()
         persons.forEach((p) => map.set(p.person_id, p.has_face_data ?? false))

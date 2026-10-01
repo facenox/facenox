@@ -13,11 +13,30 @@ interface PanelDataCacheEntry {
   records: AttendanceRecord[]
 }
 
+export const ALL_GROUPS_ID = "all"
+
+export const createAllGroupsVirtualGroup = (totalGroupsCount: number): AttendanceGroup => ({
+  id: ALL_GROUPS_ID,
+  name: `All Groups (${totalGroupsCount})`,
+  created_at: new Date().toISOString(),
+  is_active: true,
+  settings: {
+    late_threshold_minutes: 15,
+    late_threshold_enabled: false,
+    class_start_time: "08:00",
+    track_checkout: false,
+    biometric_consent_certified: false,
+  },
+})
+
 const resolveSelectedGroup = (
   groups: AttendanceGroup[],
   selectedGroupId: string | null | undefined,
 ): AttendanceGroup | null => {
   if (groups.length === 0) return null
+  if (selectedGroupId === ALL_GROUPS_ID) {
+    return createAllGroupsVirtualGroup(groups.length)
+  }
   if (selectedGroupId) {
     const match = groups.find((group) => group.id === selectedGroupId)
     if (match) return match
@@ -116,9 +135,11 @@ export async function loadSelectedGroupData(
 
   try {
     const [members, records] = await Promise.all([
-      attendanceManager.getGroupMembers(groupId),
+      groupId === ALL_GROUPS_ID ?
+        attendanceManager.getMembers()
+      : attendanceManager.getGroupMembers(groupId),
       attendanceManager.getRecords({
-        group_id: groupId,
+        group_id: groupId === ALL_GROUPS_ID ? undefined : groupId,
         limit: 100,
       }),
     ])
@@ -238,7 +259,9 @@ export function useAttendanceGroups() {
       setAttendanceGroups(groups)
 
       let resolvedGroup: AttendanceGroup | null = null
-      if (currentGroupValue) {
+      if (currentGroupValue?.id === ALL_GROUPS_ID) {
+        resolvedGroup = createAllGroupsVirtualGroup(groups.length)
+      } else if (currentGroupValue) {
         resolvedGroup = groups.find((group) => group.id === currentGroupValue.id) ?? null
       }
       if (!resolvedGroup && groups.length > 0) {

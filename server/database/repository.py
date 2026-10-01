@@ -640,7 +640,7 @@ class AttendanceRepository:
         query = select(AttendanceRecord)
         query = self._apply_org_scope(query, AttendanceRecord)
 
-        if group_id:
+        if group_id and group_id.lower() != "all":
             query = query.where(AttendanceRecord.group_id == group_id)
         if person_id:
             query = query.where(AttendanceRecord.person_id == person_id)
@@ -835,7 +835,7 @@ class AttendanceRepository:
         query = select(AttendanceSession)
         query = self._apply_org_scope(query, AttendanceSession)
 
-        if group_id:
+        if group_id and group_id.lower() != "all":
             query = query.where(AttendanceSession.group_id == group_id)
         if person_id:
             query = query.where(AttendanceSession.person_id == person_id)

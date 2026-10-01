@@ -896,3 +896,84 @@ def test_biometric_endpoints_reject_images_without_detectable_face(
     assert bulk.json()["success_count"] == 0
     assert bulk.json()["failed_count"] == 1
     assert "no detectable face found" in bulk.json()["results"][0]["error"].lower()
+
+
+def test_recognition_and_websocket_all_groups_mode(biometrics_env) -> None:
+    client = biometrics_env["client"]
+    headers = _headers("org-all-groups")
+    group_a = _create_group(client, headers, "Teachers")
+    group_b = _create_group(client, headers, "Admins")
+
+    _create_member(
+        client, headers, group_a, "person-a", "Teacher Alice", has_consent=True
+    )
+    _create_member(client, headers, group_b, "person-b", "Admin Bob", has_consent=True)
+
+    image_bytes = _make_image_bytes()
+    enroll_a = client.post(
+        f"/attendance/groups/{group_a}/persons/person-a/enroll-face",
+        headers=headers,
+        data={"metadata": _enroll_metadata()},
+        files={"image": ("face_a.jpg", image_bytes, "image/jpeg")},
+    )
+    assert enroll_a.status_code == 200, enroll_a.text
+
+    enroll_b = client.post(
+        f"/attendance/groups/{group_b}/persons/person-b/enroll-face",
+        headers=headers,
+        data={"metadata": _enroll_metadata()},
+        files={"image": ("face_b.jpg", image_bytes, "image/jpeg")},
+    )
+    assert enroll_b.status_code == 200, enroll_b.text
+
+    # 1. HTTP Recognition route with group_id="all" matches members across both groups
+    recognize = client.post(
+        "/api/recognition/recognize",
+        headers=headers,
+        data={
+            "metadata": json.dumps(
+                {
+                    "bbox": [8, 12, 42, 36],
+                    "landmarks_5": [
+                        [10, 10],
+                        [30, 10],
+                        [20, 20],
+                        [12, 30],
+                        [28, 30],
+                    ],
+                    "group_id": "all",
+                    "enable_liveness_detection": False,
+                }
+            )
+        },
+        files={"image": ("face.jpg", image_bytes, "image/jpeg")},
+    )
+    assert recognize.status_code == 200, recognize.text
+    res_json = recognize.json()
+    assert res_json["success"] is True
+    assert res_json["person_id"] in ["person-a", "person-b"]
+
+    # 2. WebSocket live stream with group_id="all"
+    from utils.websocket_manager import manager
+
+    client_id = "all-groups-client"
+    manager.face_trackers[client_id] = DummyTracker()
+
+    with client.websocket_connect(
+        f"/ws/detect/{client_id}?token=biometrics-token&organization_id=org-all-groups"
+    ) as websocket:
+        assert websocket.receive_json()["type"] == "connection"
+
+        websocket.send_json({"type": "config", "group_id": "all"})
+        assert websocket.receive_json()["group_id"] == "all"
+
+        websocket.send_bytes(image_bytes)
+        detection = websocket.receive_json()
+        assert detection["type"] == "detection_response"
+        assert detection["faces"][0]["recognition"]["success"] is True
+        assert detection["faces"][0]["recognition"]["person_id"] in [
+            "person-a",
+            "person-b",
+        ]
+
+        websocket.send_json({"type": "disconnect"})

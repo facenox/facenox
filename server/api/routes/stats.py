@@ -38,13 +38,22 @@ async def get_group_stats(
     to build precise and up-to-date attendance state before calculating group-wide statistics.
     """
     try:
-        group = await repo.get_group(group_id)
-        if not group:
-            raise HTTPException(status_code=404, detail="Group not found")
-
         target_date = date or local_date_string(
             get_time_authority().current_time_local()
         )
+
+        if group_id.lower() == "all":
+            members = await repo.get_members(is_active=True)
+            sessions = await repo.get_sessions(
+                start_date=target_date, end_date=target_date
+            )
+            service = AttendanceService(repo)
+            stats = service.calculate_group_stats(members, sessions)
+            return AttendanceStatsResponse(**stats)
+
+        group = await repo.get_group(group_id)
+        if not group:
+            raise HTTPException(status_code=404, detail="Group not found")
 
         # Parallelize data fetching to reduce latency
         import asyncio

@@ -17,6 +17,10 @@ import {
 } from "@/components/main/components/attendancePanelUtils"
 
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
+import {
+  ALL_GROUPS_ID,
+  createAllGroupsVirtualGroup,
+} from "@/components/main/hooks/useAttendanceGroups"
 import { ManualEntryModal } from "./ManualEntryModal"
 import { ManualCorrectionModal } from "./ManualCorrectionModal"
 
@@ -101,6 +105,8 @@ const AttendanceRecordItem = memo(
     lateThresholdEnabled,
     trackCheckoutEnabled,
     hasCheckedInEarlier,
+    isAllGroupsMode = false,
+    groupName,
     onVoidManual,
   }: {
     record: AttendanceRecord
@@ -111,6 +117,8 @@ const AttendanceRecordItem = memo(
     lateThresholdEnabled: boolean
     trackCheckoutEnabled: boolean
     hasCheckedInEarlier: boolean
+    isAllGroupsMode?: boolean
+    groupName?: string
     onVoidManual?: (record: AttendanceRecord) => void
   }) => {
     const [isHovered, setIsHovered] = useState(false)
@@ -209,16 +217,21 @@ const AttendanceRecordItem = memo(
         onMouseLeave={() => setIsHovered(false)}
         className={`group relative border-b border-l-2 border-white/5 py-2.5 pr-3 pl-4 transition-colors hover:bg-[rgba(22,28,36,0.52)] ${timeStatus?.borderColor || "border-l-transparent"}`}>
         <div className="flex items-center gap-3 py-0.5">
-          <div className="min-w-0 flex-1 truncate">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 truncate">
             <MemberTooltip
               member={member}
               position="top"
               showEnrollment={false}
               role={record.event_type === "check_out" ? "Exiting" : "Present"}>
-              <span className="cursor-help text-[13px] font-medium text-white/90 hover:text-white">
+              <span className="cursor-help truncate text-[13px] font-medium text-white/90 hover:text-white">
                 {displayName}
               </span>
             </MemberTooltip>
+            {isAllGroupsMode && groupName && (
+              <span className="shrink-0 rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-medium tracking-tight text-white/45">
+                {groupName}
+              </span>
+            )}
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -410,17 +423,31 @@ export const AttendancePanel = memo(function AttendancePanel({
           <div className="flex items-center">
             <div className="min-w-30 flex-1">
               <Dropdown
-                options={generateGroupDisplayNames(attendanceGroups).map((group) => ({
-                  value: group.id,
-                  label: group.displayName,
-                }))}
+                options={[
+                  ...(attendanceGroups.length > 1 ?
+                    [
+                      {
+                        value: ALL_GROUPS_ID,
+                        label: `All Groups (${attendanceGroups.length})`,
+                        dividerBelow: true,
+                      },
+                    ]
+                  : []),
+                  ...generateGroupDisplayNames(attendanceGroups).map((group) => ({
+                    value: group.id,
+                    label: group.displayName,
+                  })),
+                ]}
                 value={
-                  currentGroup && attendanceGroups.some((g) => g.id === currentGroup.id) ?
+                  currentGroup?.id === ALL_GROUPS_ID ? ALL_GROUPS_ID
+                  : currentGroup && attendanceGroups.some((g) => g.id === currentGroup.id) ?
                     currentGroup.id
                   : null
                 }
                 onChange={(groupId) => {
-                  if (groupId) {
+                  if (groupId === ALL_GROUPS_ID) {
+                    handleSelectGroup(createAllGroupsVirtualGroup(attendanceGroups.length))
+                  } else if (groupId) {
                     const group = attendanceGroups.find((g) => g.id === groupId)
                     if (group) handleSelectGroup(group)
                   }
@@ -571,17 +598,37 @@ export const AttendancePanel = memo(function AttendancePanel({
                       const hasCheckedInEarlier = recordCheckInStatus.get(record.id) ?? false
                       const member = memberMap.get(record.person_id)
 
+                      const memberGroup =
+                        member?.group_id ?
+                          attendanceGroups.find((g) => g.id === member.group_id)
+                        : currentGroup
+                      const effectiveStartTime =
+                        memberGroup?.settings?.class_start_time ||
+                        lateTrackingSettings.classStartTime
+                      const effectiveLateThreshold =
+                        memberGroup?.settings?.late_threshold_minutes ??
+                        lateTrackingSettings.lateThresholdMinutes
+                      const effectiveLateEnabled =
+                        memberGroup?.settings?.late_threshold_enabled ??
+                        lateTrackingSettings.lateThresholdEnabled
+                      const effectiveTrackCheckout =
+                        memberGroup?.settings?.track_checkout ??
+                        currentGroup?.settings?.track_checkout ??
+                        false
+
                       return (
                         <AttendanceRecordItem
                           key={record.id || `record-${idx}`}
                           record={record}
                           displayName={displayName}
                           member={member}
-                          classStartTime={lateTrackingSettings.classStartTime}
-                          lateThresholdMinutes={lateTrackingSettings.lateThresholdMinutes}
-                          lateThresholdEnabled={lateTrackingSettings.lateThresholdEnabled}
-                          trackCheckoutEnabled={currentGroup?.settings?.track_checkout ?? false}
+                          classStartTime={effectiveStartTime}
+                          lateThresholdMinutes={effectiveLateThreshold}
+                          lateThresholdEnabled={effectiveLateEnabled}
+                          trackCheckoutEnabled={effectiveTrackCheckout}
                           hasCheckedInEarlier={hasCheckedInEarlier}
+                          isAllGroupsMode={currentGroup?.id === ALL_GROUPS_ID}
+                          groupName={memberGroup?.name}
                           onVoidManual={(record) => {
                             setRecordToVoid(record)
                             setIsManualCorrectionOpen(true)

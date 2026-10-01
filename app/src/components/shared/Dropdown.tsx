@@ -7,6 +7,8 @@ export interface DropdownOption<T = string> {
   value: T
   label: React.ReactNode
   disabled?: boolean
+  dividerBelow?: boolean
+  icon?: string | React.ReactNode
 }
 
 interface DropdownProps<T = string> extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> {
@@ -366,25 +368,34 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                         )}
 
                         {options.map((option, idx) => (
-                          <Tooltip
-                            key={option.value !== "" ? String(option.value) : `empty-${idx}`}
-                            content={option.label}
-                            offset={4}
-                            disabled={!shouldShowCustomTooltip(option.label)}
-                            className="!px-2.5 !py-1.5 text-center break-all">
-                            <button
-                              type="button"
-                              onClick={() => handleSelect(option.value)}
-                              disabled={option.disabled}
-                              className={`w-full truncate rounded-none px-3 py-2 text-left text-sm transition-colors ${
-                                value === option.value ?
-                                  "bg-cyan-500/10 font-semibold text-cyan-400"
-                                : option.disabled ? "cursor-not-allowed text-white/55"
-                                : "text-white/70 hover:bg-white/5 hover:text-white"
-                              } ${optionClassName}`}>
-                              <span className="block truncate">{option.label}</span>
-                            </button>
-                          </Tooltip>
+                          <div key={option.value !== "" ? String(option.value) : `empty-${idx}`}>
+                            <Tooltip
+                              content={typeof option.label === "string" ? option.label : undefined}
+                              offset={4}
+                              disabled={!shouldShowCustomTooltip(option.label)}
+                              className="!px-2.5 !py-1.5 text-center break-all">
+                              <button
+                                type="button"
+                                onClick={() => handleSelect(option.value)}
+                                disabled={option.disabled}
+                                className={`flex w-full items-center gap-2 truncate rounded-none px-3 py-2 text-left text-sm transition-colors ${
+                                  value === option.value ?
+                                    "bg-cyan-500/10 font-semibold text-cyan-400"
+                                  : option.disabled ? "cursor-not-allowed text-white/55"
+                                  : "text-white/70 hover:bg-white/5 hover:text-white"
+                                } ${optionClassName}`}>
+                                {option.icon && (
+                                  <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-xs opacity-75">
+                                    {typeof option.icon === "string" ?
+                                      <i className={option.icon} />
+                                    : option.icon}
+                                  </span>
+                                )}
+                                <span className="block flex-1 truncate">{option.label}</span>
+                              </button>
+                            </Tooltip>
+                            {option.dividerBelow && <div className="mx-2 my-1 h-px bg-white/5" />}
+                          </div>
                         ))}
                       </>
                     }

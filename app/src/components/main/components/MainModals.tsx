@@ -114,16 +114,25 @@ export function MainModals({
             audioSettings={audioSettings}
             onAudioSettingsChange={setAudioSettings}
             attendanceSettings={{
-              lateThresholdEnabled: currentGroup?.settings?.late_threshold_enabled ?? false,
-              lateThresholdMinutes: currentGroup?.settings?.late_threshold_minutes ?? 15,
-              classStartTime: currentGroup?.settings?.class_start_time ?? "08:00",
+              lateThresholdEnabled:
+                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
+                  ?.late_threshold_enabled ?? false,
+              lateThresholdMinutes:
+                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
+                  ?.late_threshold_minutes ?? 15,
+              classStartTime:
+                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
+                  ?.class_start_time ?? "08:00",
               attendanceCooldownSeconds: attendanceCooldownSeconds,
               enableSpoofDetection: enableSpoofDetection,
               maxRecognitionFacesPerFrame: maxRecognitionFacesPerFrame,
-              trackCheckout: currentGroup?.settings?.track_checkout ?? false,
+              trackCheckout:
+                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
+                  ?.track_checkout ?? false,
               dataRetentionDays: dataRetentionDays,
               biometricConsentCertified:
-                currentGroup?.settings?.biometric_consent_certified ?? false,
+                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
+                  ?.biometric_consent_certified ?? false,
             }}
             onAttendanceSettingsChange={async (updates) => {
               if (updates.enableSpoofDetection !== undefined) {
@@ -134,17 +143,20 @@ export function MainModals({
                 setMaxRecognitionFacesPerFrame(updates.maxRecognitionFacesPerFrame)
               }
 
-              if (updates.biometricConsentCertified !== undefined && currentGroup) {
+              const editableGroup =
+                currentGroup && currentGroup.id !== "all" ? currentGroup : attendanceGroups[0]
+
+              if (updates.biometricConsentCertified !== undefined && editableGroup) {
                 const updatedSettings = {
-                  ...currentGroup.settings,
+                  ...editableGroup.settings,
                   biometric_consent_certified: updates.biometricConsentCertified,
                 }
                 try {
-                  await attendanceManager.updateGroup(currentGroup.id, {
+                  await attendanceManager.updateGroup(editableGroup.id, {
                     settings: updatedSettings,
                   })
                   syncUpdatedGroupLocally({
-                    ...currentGroup,
+                    ...editableGroup,
                     settings: updatedSettings,
                   })
                 } catch (error) {
@@ -152,17 +164,17 @@ export function MainModals({
                 }
               }
 
-              if (updates.trackCheckout !== undefined && currentGroup) {
+              if (updates.trackCheckout !== undefined && editableGroup) {
                 const updatedSettings = {
-                  ...currentGroup.settings,
+                  ...editableGroup.settings,
                   track_checkout: updates.trackCheckout,
                 }
                 try {
-                  await attendanceManager.updateGroup(currentGroup.id, {
+                  await attendanceManager.updateGroup(editableGroup.id, {
                     settings: updatedSettings,
                   })
                   syncUpdatedGroupLocally({
-                    ...currentGroup,
+                    ...editableGroup,
                     settings: updatedSettings,
                   })
                 } catch (error) {
@@ -193,13 +205,13 @@ export function MainModals({
               }
 
               if (
-                currentGroup &&
+                editableGroup &&
                 (updates.lateThresholdEnabled !== undefined ||
                   updates.lateThresholdMinutes !== undefined ||
                   updates.classStartTime !== undefined)
               ) {
                 const updatedSettings = {
-                  ...currentGroup.settings,
+                  ...editableGroup.settings,
                   ...(updates.lateThresholdEnabled !== undefined && {
                     late_threshold_enabled: updates.lateThresholdEnabled,
                   }),
@@ -211,11 +223,11 @@ export function MainModals({
                   }),
                 }
                 try {
-                  await attendanceManager.updateGroup(currentGroup.id, {
+                  await attendanceManager.updateGroup(editableGroup.id, {
                     settings: updatedSettings,
                   })
                   syncUpdatedGroupLocally({
-                    ...currentGroup,
+                    ...editableGroup,
                     settings: updatedSettings,
                   })
                 } catch (error) {
@@ -225,7 +237,9 @@ export function MainModals({
             }}
             initialGroupSection={groupInitialSection}
             initialSection={settingsInitialSection}
-            currentGroup={currentGroup}
+            currentGroup={
+              currentGroup && currentGroup.id !== "all" ? currentGroup : attendanceGroups[0] || null
+            }
             currentGroupMembers={groupMembers}
             onGroupSelect={syncUpdatedGroupLocally}
             onGroupsChanged={() => loadAttendanceDataRef.current()}

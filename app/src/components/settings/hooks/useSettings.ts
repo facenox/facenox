@@ -247,16 +247,19 @@ export const useSettings = ({
   // Ensures the newly selected group is instantly recognized by consumers even before
   // background network synchronizations complete.
   const dropdownGroups = useMemo(() => {
-    const list = [...initialGroups]
-    if (currentGroup && !list.some((g) => g.id === currentGroup.id)) {
+    const list = initialGroups.filter((g) => g.id !== "all")
+    if (currentGroup && currentGroup.id !== "all" && !list.some((g) => g.id === currentGroup.id)) {
       list.push(currentGroup)
     }
     return list
   }, [initialGroups, currentGroup])
 
   const validInitialGroup = useMemo(() => {
-    return currentGroup
-  }, [currentGroup])
+    if (currentGroup && currentGroup.id !== "all") {
+      return currentGroup
+    }
+    return initialGroups.find((g) => g.id !== "all") ?? null
+  }, [currentGroup, initialGroups])
 
   const handleGroupBack = useCallback(() => {
     setActiveSection("attendance")
