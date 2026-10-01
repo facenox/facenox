@@ -44,10 +44,15 @@ class DummyFaceRecognizer:
         self,
         image: np.ndarray,
         landmarks_5: list,
-        allowed_person_ids: list[str],
-        organization_id: str | None,
+        allowed_person_ids: list[str] | None = None,
+        organization_id: str | None = None,
     ) -> dict:
-        for person_id in allowed_person_ids:
+        candidates = (
+            allowed_person_ids
+            if allowed_person_ids is not None
+            else list(self.enrolled[organization_id].keys())
+        )
+        for person_id in candidates:
             if person_id in self.enrolled[organization_id]:
                 return {
                     "success": True,
@@ -60,8 +65,8 @@ class DummyFaceRecognizer:
         self,
         image: np.ndarray,
         faces: list[dict],
-        allowed_person_ids: list[str],
-        organization_id: str | None,
+        allowed_person_ids: list[str] | None = None,
+        organization_id: str | None = None,
         **kwargs,
     ) -> list[dict]:
         return [
