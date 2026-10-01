@@ -484,8 +484,7 @@ export const AttendancePanel = memo(function AttendancePanel({
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3 py-2 text-xs">
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="flex h-2.5 w-[3px] shrink-0 animate-pulse rounded-[1px] bg-amber-400" />
+              <div className="flex min-w-0 items-center">
                 <span className="truncate text-[11.5px] font-medium text-amber-300/90">
                   {unenrolledMembersCount} member
                   {unenrolledMembersCount === 1 ? " needs" : "s need"} face enrollment
@@ -494,7 +493,7 @@ export const AttendancePanel = memo(function AttendancePanel({
               <button
                 onClick={handleOpenSettingsForEnrollment}
                 className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/15 px-2.5 py-0.5 text-[10.5px] font-bold tracking-wider text-amber-300 uppercase transition-all duration-150 hover:border-amber-500/50 hover:bg-amber-500/25 active:scale-95">
-                Enroll →
+                Enroll
               </button>
             </motion.div>
           )}

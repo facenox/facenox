@@ -928,7 +928,7 @@ def test_recognition_and_websocket_all_groups_mode(biometrics_env) -> None:
 
     # 1. HTTP Recognition route with group_id="all" matches members across both groups
     recognize = client.post(
-        "/api/recognition/recognize",
+        "/face/recognize",
         headers=headers,
         data={
             "metadata": json.dumps(
