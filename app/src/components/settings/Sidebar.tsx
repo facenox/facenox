@@ -4,6 +4,7 @@ import { Dropdown, Tooltip } from "@/components/shared"
 import { generateGroupDisplayNames } from "@/utils"
 import type { AttendanceGroup } from "@/types/recognition"
 import type { GroupSection } from "@/components/group/types"
+import { updaterService } from "@/services"
 
 interface SidebarProps {
   activeSection: string
@@ -39,6 +40,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     connected: boolean
     organizationName?: string
   } | null>(null)
+  const [appVersion, setAppVersion] = React.useState<string>("")
+
+  React.useEffect(() => {
+    updaterService
+      .getVersion()
+      .then(setAppVersion)
+      .catch(() => {})
+  }, [])
 
   React.useEffect(() => {
     if (!window.electronAPI?.sync) return
@@ -197,6 +206,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </section>
       </div>
+
+      {appVersion && (
+        <div className="shrink-0 px-4 pt-1 pb-4">
+          <div className="flex items-center justify-center gap-1.5 opacity-30 transition-opacity hover:opacity-70">
+            <img
+              src="./icons/logo-transparent.png"
+              alt="Facenox"
+              className="pointer-events-none h-3.5 w-3.5 object-contain"
+            />
+            <span className="font-mono text-[10px] tracking-wide text-white">v{appVersion}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
