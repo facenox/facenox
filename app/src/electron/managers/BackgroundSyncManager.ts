@@ -810,8 +810,8 @@ export class BackgroundSyncManager {
 
         if (!remoteResponse.ok) {
           let detail =
-            typeof responsePayload?.error === "string" ?
-              responsePayload.error
+            typeof responsePayload?.message === "string" ? responsePayload.message
+            : typeof responsePayload?.error === "string" ? responsePayload.error
             : responseText || `HTTP ${remoteResponse.status}`
 
           if (detail.startsWith("Sync rejected: ")) {

@@ -567,18 +567,26 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
               </div>
             : <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1 text-xs">
-                  {config.unsyncedRecordsCount !== undefined && config.unsyncedRecordsCount > 0 ?
+                  {config.lastSyncStatus === "error" ?
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 font-medium text-red-400">
+                        <i className="fa-solid fa-circle-exclamation text-[11px]" />
+                        <span>{config.lastSyncMessage || "Sync error"}</span>
+                      </div>
+                      {config.unsyncedRecordsCount !== undefined &&
+                        config.unsyncedRecordsCount > 0 && (
+                          <div className="text-[11px] text-white/45">
+                            {config.unsyncedRecordsCount} record(s) queued for upload
+                          </div>
+                        )}
+                    </div>
+                  : config.unsyncedRecordsCount !== undefined && config.unsyncedRecordsCount > 0 ?
                     <div className="flex items-center gap-2 font-semibold text-amber-400/90">
                       <span className="relative flex h-2 w-2">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-[1px] bg-amber-400 opacity-75"></span>
                         <span className="relative inline-flex h-2 w-2 rounded-[1px] bg-amber-500"></span>
                       </span>
                       <span>{config.unsyncedRecordsCount} record(s) queued</span>
-                    </div>
-                  : config.lastSyncStatus === "error" ?
-                    <div className="flex items-center gap-1.5 font-medium text-red-400">
-                      <i className="fa-solid fa-circle-exclamation text-[11px]" />
-                      <span>{config.lastSyncMessage || "Sync error"}</span>
                     </div>
                   : <div className="flex items-center gap-1.5 font-medium text-emerald-400">
                       <i className="fa-solid fa-check text-[11px]" />
