@@ -31,7 +31,7 @@ describe("uiStore", () => {
     })
     mockPersistentSettings.getAudioSettings.mockResolvedValue({
       recognitionSoundEnabled: true,
-      recognitionSoundUrl: "./assets/sounds/Recognition_Success.mp3",
+      recognitionSoundUrl: "./assets/sounds/Recognition_Success.wav",
     })
     mockPersistentSettings.getUIState.mockResolvedValue({
       hasSeenIntro: false,
@@ -82,7 +82,7 @@ describe("uiStore", () => {
 
     expect(useUIStore.getState().audioSettings).toEqual({
       recognitionSoundEnabled: false,
-      recognitionSoundUrl: "./assets/sounds/Recognition_Success.mp3",
+      recognitionSoundUrl: "./assets/sounds/Recognition_Success.wav",
     })
   })
 
@@ -151,7 +151,7 @@ describe("uiStore", () => {
       })
       expect(mockPersistentSettings.setAudioSettings).toHaveBeenCalledWith({
         recognitionSoundEnabled: false,
-        recognitionSoundUrl: "./assets/sounds/Recognition_Success.mp3",
+        recognitionSoundUrl: "./assets/sounds/Recognition_Success.wav",
       })
     })
   })

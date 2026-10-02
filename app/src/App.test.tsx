@@ -51,7 +51,7 @@ function resetStores() {
     },
     audioSettings: {
       recognitionSoundEnabled: true,
-      recognitionSoundUrl: "./assets/sounds/Recognition_Success.mp3",
+      recognitionSoundUrl: "./assets/sounds/Recognition_Success.wav",
     },
   })
 

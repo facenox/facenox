@@ -98,10 +98,12 @@ class PersistentSettingsService {
     // Auto-migrate legacy or corrupted sound paths to use safe relative paths for Electron
     const merged = { ...defaultSettings.audio, ...settings }
     if (
-      merged.recognitionSoundUrl?.includes("Default.mp3") ||
-      merged.recognitionSoundUrl === "/assets/sounds/Recognition_Success.mp3"
+      !merged.recognitionSoundUrl ||
+      merged.recognitionSoundUrl.includes("Default.mp3") ||
+      merged.recognitionSoundUrl.endsWith(".mp3") ||
+      merged.recognitionSoundUrl === "/assets/sounds/Recognition_Success.wav"
     ) {
-      merged.recognitionSoundUrl = "./assets/sounds/Recognition_Success.mp3"
+      merged.recognitionSoundUrl = "./assets/sounds/Recognition_Success.wav"
       await this.set("audio", merged) // Save the corrected path
     }
 

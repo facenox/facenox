@@ -15,6 +15,8 @@ function getAudio(url: string): HTMLAudioElement {
   return audio
 }
 
+const activeAudios = new Set<HTMLAudioElement>()
+
 export const soundEffects = {
   preload(url: string): void {
     if (!url) return
@@ -37,6 +39,16 @@ export const soundEffects = {
       }
 
       const audioClone = baseAudio.cloneNode(true) as HTMLAudioElement
+      activeAudios.add(audioClone)
+
+      const cleanup = () => {
+        activeAudios.delete(audioClone)
+        audioClone.onended = null
+        audioClone.onerror = null
+      }
+
+      audioClone.onended = cleanup
+      audioClone.onerror = cleanup
 
       await audioClone.play()
     } catch (err) {
