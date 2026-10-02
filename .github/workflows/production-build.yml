@@ -70,7 +70,7 @@ jobs:
             arch: x64
           - os: macos-latest
             arch: x64
-          - os: macos-14
+          - os: macos-15
             arch: arm64
           - os: ubuntu-24.04
             arch: x64
@@ -112,7 +112,7 @@ jobs:
             arch: x64
           - os: macos-latest
             arch: x64
-          - os: macos-14
+          - os: macos-15
             arch: arm64
           - os: ubuntu-24.04
             arch: x64
@@ -150,7 +150,7 @@ jobs:
           cd app
           if [ "${{ matrix.os }}" == "ubuntu-24.04" ]; then
             npx electron-builder --linux deb AppImage --publish never
-          elif [ "${{ matrix.os }}" == "macos-14" ]; then
+          elif [ "${{ matrix.os }}" == "macos-15" ]; then
             npx electron-builder --mac --arm64 --publish never
           elif [ "${{ matrix.os }}" == "macos-latest" ]; then
             npx electron-builder --mac --x64 --publish never
@@ -209,7 +209,7 @@ jobs:
             signed/windows/*.exe
             original-artifacts/unsigned-app-windows-latest-x64/*.exe
             original-artifacts/unsigned-app-macos-latest-x64/*.dmg
-            original-artifacts/unsigned-app-macos-14-arm64/*.dmg
+            original-artifacts/unsigned-app-macos-15-arm64/*.dmg
             original-artifacts/unsigned-app-ubuntu-24.04-x64/*.AppImage
             original-artifacts/unsigned-app-ubuntu-24.04-x64/*.deb
           generate_release_notes: true
