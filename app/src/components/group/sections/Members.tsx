@@ -47,6 +47,9 @@ export function Members({
     "all",
   )
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [memberToDelete, setMemberToDelete] = useState<AttendanceMember | null>(null)
+  const [isBulkConsentModalOpen, setIsBulkConsentModalOpen] = useState(false)
+  const [bulkConsentScope, setBulkConsentScope] = useState<"all" | "selected">("all")
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [shouldKeepExpanded, setShouldKeepExpanded] = useState(false)
   const [scrollTop, setScrollTop] = useState(0)
@@ -62,16 +65,19 @@ export function Members({
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (selectedIds.size === 0) return
+      if (isBulkConsentModalOpen || memberToDelete) return
       const target = e.target as HTMLElement
       if (
-        target.closest("button, input, select, [data-member-row], [role=button], [role=combobox]")
+        target.closest(
+          "button, input, select, label, [data-member-row], [role=button], [role=combobox], [role=dialog], .modal, [data-modal]",
+        )
       )
         return
       setSelectedIds(new Set())
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [selectedIds.size])
+  }, [selectedIds.size, isBulkConsentModalOpen, memberToDelete])
 
   const handleSearchFocus = () => {
     setIsSearchFocused(true)
@@ -236,11 +242,6 @@ export function Members({
       eligible: ready + enrolled,
     }
   })()
-
-  const [memberToDelete, setMemberToDelete] = useState<AttendanceMember | null>(null)
-
-  const [isBulkConsentModalOpen, setIsBulkConsentModalOpen] = useState(false)
-  const [bulkConsentScope, setBulkConsentScope] = useState<"all" | "selected">("all")
 
   const handleBulkConsent = async (confirmedIds: string[]) => {
     try {
