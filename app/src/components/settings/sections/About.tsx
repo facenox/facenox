@@ -291,11 +291,11 @@ export const About: React.FC = () => {
   const openLink = (url: string) => () => updaterService.openReleasePage(url)
 
   return (
-    <div className="relative min-h-full w-full">
+    <div className="relative w-full">
       <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
 
-      <div className="mx-auto flex min-h-full max-w-lg flex-col px-10 pt-8 pb-10">
-        <div className="w-full flex-1 space-y-8">
+      <div className="mx-auto w-full max-w-2xl px-10 pt-8 pb-12">
+        <div className="space-y-8">
           <div className="flex items-center justify-center gap-4.5">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center">
               <img
@@ -372,27 +372,27 @@ export const About: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
 
-        <div className="mt-auto w-full border-t border-white/5 pt-10 pb-4">
-          <div className="mb-5 flex items-center justify-center gap-6">
-            <button
-              onClick={openLink("https://github.com/facenox/facenox/releases")}
-              className="w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
-              Releases
-            </button>
-            <button
-              onClick={openLink("https://github.com/facenox/facenox/issues")}
-              className="w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
-              Support
-            </button>
-            <button
-              onClick={openLink("https://github.com/facenox/facenox#readme")}
-              className="w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
-              Docs
-            </button>
+          <div className="pt-6 pb-2 text-center">
+            <div className="mb-4 flex items-center justify-center gap-6">
+              <button
+                onClick={openLink("https://github.com/facenox/facenox/releases")}
+                className="w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
+                Releases
+              </button>
+              <button
+                onClick={openLink("https://github.com/facenox/facenox/issues")}
+                className="w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
+                Support
+              </button>
+              <button
+                onClick={openLink("https://github.com/facenox/facenox#readme")}
+                className="w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
+                Docs
+              </button>
+            </div>
+            <p className="text-center text-[11px] font-medium text-white/55">© 2026 Facenox</p>
           </div>
-          <p className="text-center text-[11px] font-medium text-white/55">© 2026 Facenox</p>
         </div>
       </div>
     </div>
