@@ -259,15 +259,9 @@ export class WindowManager {
 
     mainWindow.on("maximize", () => {
       mainWindow.webContents.send("window:maximized")
-      if (process.platform === "win32") {
-        mainWindow.setResizable(false)
-      }
     })
 
     mainWindow.on("unmaximize", () => {
-      if (process.platform === "win32") {
-        mainWindow.setResizable(true)
-      }
       mainWindow.webContents.send("window:unmaximized")
     })
 
