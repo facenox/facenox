@@ -775,7 +775,7 @@ function DataBoundariesModal({ isOpen, onClose, onNavigateToDB }: DataBoundaries
                   onNavigateToDB()
                 }}
                 className="text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 hover:underline">
-                Manage Local Database →
+                Manage Data & Storage →
               </button>
             )}
           </div>

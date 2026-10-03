@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Display } from "@/components/settings/sections/Display"
-import { Database } from "@/components/settings/sections/Database"
+import { DataStorage } from "@/components/settings/sections/DataStorage"
 import { Attendance } from "@/components/settings/sections/Attendance"
 import { About } from "@/components/settings/sections/About"
 import { Sync } from "@/components/settings/sections/Sync"
@@ -224,7 +224,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
       attendance: "General",
       display: "Display & Audio",
       notifications: "Display & Audio",
-      database: "Database",
+      database: "Data & Storage",
       "remote-sync": "Cloud Sync",
       about: "About",
     }
@@ -618,7 +618,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 key="database"
                 {...motionProps}
                 className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
-                <Database
+                <DataStorage
                   systemData={systemData}
                   timeHealthState={timeHealthState}
                   onRefreshTimeHealth={loadSystemData}

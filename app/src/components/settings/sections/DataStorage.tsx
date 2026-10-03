@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/group/shared"
 
 type BackupStatus = { type: "idle" } | { type: "loading"; action: "export" | "import" }
 
-interface DatabaseProps {
+interface DataStorageProps {
   systemData: SettingsOverview
   timeHealthState: TimeHealthOverview
   onRefreshTimeHealth: () => void
@@ -22,7 +22,7 @@ interface DatabaseProps {
   onGroupsChanged?: () => void
 }
 
-export function Database({
+export function DataStorage({
   systemData,
   timeHealthState,
   onRefreshTimeHealth,
@@ -30,7 +30,7 @@ export function Database({
   isLoading,
   onClearDatabase,
   onGroupsChanged,
-}: DatabaseProps) {
+}: DataStorageProps) {
   const dialog = useDialog()
   const {
     expandedGroups,
