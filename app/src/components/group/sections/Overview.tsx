@@ -142,6 +142,11 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
     return createDisplayNameMap(members)
   }, [members])
 
+  const enrolledCount = useMemo(() => {
+    return members.filter((m) => Boolean(m.has_face_data)).length
+  }, [members])
+  const pendingEnrollment = Math.max(0, members.length - enrolledCount)
+
   const filteredRecords = useMemo(() => {
     let result = recentRecords
 
@@ -212,7 +217,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
     <section className="flex h-full w-full flex-col px-10 pt-8">
       {/* Activity Overview */}
       <section className="shrink-0">
-        <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3">
           <div className="flex flex-col items-center">
             <StatsCard
               type="present"
@@ -229,7 +234,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
             {(() => {
               const absent = Math.max(0, (stats.total_members ?? 0) - (stats.present_today ?? 0))
               return absent > 0 ?
-                  <p className="mt-1.5 text-[11px] text-white/55">{absent} absent</p>
+                  <p className="mt-1.5 text-[11px] text-white/50">{absent} absent</p>
                 : null
             })()}
           </div>
@@ -248,6 +253,22 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                 </span>
               }
             />
+          </div>
+          <div className="flex flex-col items-center">
+            <StatsCard
+              type="present"
+              value={enrolledCount}
+              total={members.length}
+              label="Enrolled"
+              tooltipText={
+                <span>Members in this group with registered biometric face profiles.</span>
+              }
+            />
+            {pendingEnrollment > 0 ?
+              <p className="mt-1.5 text-[11px] text-white/50">{pendingEnrollment} pending</p>
+            : members.length > 0 ?
+              <p className="mt-1.5 text-[11px] text-white/50">All enrolled</p>
+            : null}
           </div>
         </div>
       </section>

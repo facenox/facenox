@@ -2,7 +2,7 @@ import { Tooltip } from "@/components/shared"
 import type { ReactNode } from "react"
 
 interface StatsCardProps {
-  type: "present" | "absent" | "late" | "active"
+  type: "present" | "absent" | "late" | "active" | "rate" | "total"
   value: number | string
   total?: number
   label?: string
