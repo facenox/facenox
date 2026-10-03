@@ -2,12 +2,10 @@ import type { DetectionResult } from "@/components/main/types"
 import type { ExtendedFaceRecognitionResponse } from "./recognitionHelpers"
 import type { QuickSettings } from "@/components/settings"
 
-// Module-level cache to track low light opacity per face track_id for smooth transitions
-const lowLightOpacityCache = new Map<number, number>()
+// Module-level cache to track sub-label opacity per face track_id for smooth transitions
 const subLabelOpacityCache = new Map<number, number>()
 
 export const clearOverlayRendererCache = () => {
-  lowLightOpacityCache.clear()
   subLabelOpacityCache.clear()
 }
 
@@ -283,7 +281,6 @@ export const drawOverlays = ({
 
     if (shouldShowLabel) {
       const isShield = labelTone === "recognition" && recognitionResult?.has_consent === false
-      const isLowLight = !!face.overlayGuidance?.isLowLight
 
       // Sequential smoothly-fading dots animation loop
       const isVerifyingState = label === "Verifying..."
@@ -300,46 +297,6 @@ export const drawOverlays = ({
 
       const badgeX = x1 + (width - badgeW) / 2
       const badgeY = Math.max(6, y1 - 25)
-
-      // Stacked low-light warning text with smooth opacity LERP
-      const showLowLightBadge = isLowLight && label !== "Poor lighting detected"
-      const targetOpacity = showLowLightBadge ? 1.0 : 0.0
-
-      let currentOpacity = lowLightOpacityCache.get(trackId) ?? 0.0
-
-      // Interpolate opacity towards target (LERP)
-      const lerpFactor = 0.12
-      currentOpacity += (targetOpacity - currentOpacity) * lerpFactor
-
-      if (currentOpacity < 0.001) {
-        lowLightOpacityCache.delete(trackId)
-      } else {
-        lowLightOpacityCache.set(trackId, currentOpacity)
-      }
-
-      if (currentOpacity > 0.01) {
-        ctx.save()
-        ctx.globalAlpha = (face.renderOpacity ?? 1) * currentOpacity
-        ctx.font = "italic 11px system-ui, sans-serif"
-        const warningText = "⚠ Poor lighting detected"
-
-        let warnBadgeY = badgeY - 14
-        if (warnBadgeY < 6) {
-          warnBadgeY = badgeY + 16
-        }
-
-        // Render borderless text with drop shadow
-        ctx.shadowColor = "rgba(0, 0, 0, 0.9)"
-        ctx.shadowBlur = 4
-        ctx.shadowOffsetX = 0
-        ctx.shadowOffsetY = 1
-
-        ctx.fillStyle = "#f5a623" // desaturated honey-gold for dark mode
-        ctx.textAlign = "center"
-        ctx.textBaseline = "middle"
-        ctx.fillText(warningText, x1 + width / 2, warnBadgeY)
-        ctx.restore()
-      }
 
       // Premium Minimalist Floating Design:
       // All guidance and warning prompts float in a clean, solid white (#f8fafc) to reduce visual clutter.
