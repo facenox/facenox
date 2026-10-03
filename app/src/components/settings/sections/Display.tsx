@@ -121,7 +121,6 @@ export function Display({
       .map((s) => ({
         value: s.url,
         label: formatSoundName(s.fileName),
-        icon: <i className="fa-solid fa-music text-white/50" />,
       }))
       .filter((item) => {
         if (seen.has(item.label)) return false
