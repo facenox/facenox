@@ -12,6 +12,16 @@
 </p>
 
 <p align="center">
+  <a href="#why-facenox">Why Facenox</a> •
+  <a href="#features">Features</a> •
+  <a href="#performance">Benchmark</a> •
+  <a href="#offline-first-behavior">Offline-First</a> •
+  <a href="#download">Download</a> •
+  <a href="#documentation">Documentation</a> •
+  <a href="#development-quickstart">Quickstart</a>
+</p>
+
+<p align="center">
   <strong>Facenox is an open-source, offline-first face recognition software for real-time attendance tracking.</strong><br>
   Built for privacy: No photos are saved. Biometric templates are end-to-end encrypted (E2EE).
 </p>
@@ -52,20 +62,15 @@ _Member management interface for profile administration, role assignment, and bi
 ![General Settings](docs/assets/screenshots/06-settings-general.png)
 _Configuration controls for core attendance mechanics, including Entry/Exit modes, Late Tracking thresholds, Duplicate Prevention cooldowns, and Recognition Limits._
 
-### Security & Compliance
+### Security & Anti-Spoofing
 
 ![Security Settings](docs/assets/screenshots/07-settings-security.png)
 _Configuration panel for Anti-spoofing (Liveness Verification) toggles, Global Group Consent enforcement, and Data Retention policies._
 
-### Database
+### Data & Storage
 
-![Database Settings](docs/assets/screenshots/08-settings-database-sync.png)
-_Database settings panel detailing system clock accuracy validation and enrollment metrics across groups._
-
-### Backup & Export
-
-![Backup Restore](docs/assets/screenshots/09-database-backup-restore.png)
-_Backup utilities for exporting and restoring the offline SQLite database and biometric profiles via encrypted archives._
+![Data and Storage Settings](docs/assets/screenshots/08-settings-database-sync.png)
+_Data and storage management panel detailing system clock accuracy validation, audit logs, and encrypted `.facenox` archive backups/restores._
 
 </details>
 
@@ -270,14 +275,15 @@ cd facenox
 
 # 2. Setup Local Backend
 python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate
+source venv/bin/activate  # or venv\Scripts\activate (Windows)
 pip install -r server/requirements.txt
 
 # 3. Setup Desktop App
 pnpm install
 
 # 4. Run Development Workspace
-./dev-start.sh
+pnpm dev                  # Windows / Cross-platform
+# or ./dev-start.sh       # macOS / Linux helper script
 ```
 
 ## Contributing
