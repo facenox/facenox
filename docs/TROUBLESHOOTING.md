@@ -222,7 +222,7 @@ When the problem is not obvious, gather:
 
 - operating system and version
 - whether you are running from source or from a packaged build
-- whether the issue is desktop-only or Management Dashboard Beta related
+- whether the issue is desktop-only or Facenox Cloud sync related
 - the exact error message shown by the app
 
 Then open an issue with reproduction steps or a security advisory if the report is security-sensitive.

@@ -1,6 +1,6 @@
 # Features
 
-This page covers the shipped desktop feature set and the scope of the current Management Dashboard Beta integration.
+This page covers the shipped desktop feature set and the scope of the current Facenox Cloud integration.
 
 ## Desktop Features
 

@@ -1,6 +1,6 @@
 # Privacy and Data Handling
 
-This document covers the open source desktop application in this repository and the data boundary for the **official Facenox Dashboard**.
+This document covers the open source desktop application in this repository and the data boundary for the **official Facenox Cloud**.
 
 ## Scope
 
@@ -8,9 +8,9 @@ This document applies to:
 
 - the Electron desktop app in `app/`
 - the local FastAPI backend in `server/`
-- the current desktop-side Management Dashboard Beta integration
+- the current desktop-side Facenox Cloud integration
 
-It does not replace the privacy and operational documentation required for a hosted Facenox Management Dashboard deployment.
+It does not replace the privacy and operational documentation required for a hosted Facenox Cloud deployment.
 
 ## What Facenox Stores Locally
 
@@ -117,7 +117,7 @@ Operators are still responsible for:
 
 ## Google API Services Disclosure
 
-Facenox uses Google API Services to handle user authentication and account setup for the Management Dashboard.
+Facenox uses Google API Services to handle user authentication and account setup for Facenox Cloud.
 
 ### Data Accessed
 When you authenticate via Google, we access your:
@@ -129,7 +129,7 @@ We use the standard `openid`, `email`, and `profile` scopes.
 
 ### Data Usage
 This data is used exclusively to:
-- Create and identify your Facenox Dashboard account.
+- Create and identify your Facenox Cloud account.
 - Personalize your profile.
 - Send transactional emails (e.g., password resets, organization invitations).
 

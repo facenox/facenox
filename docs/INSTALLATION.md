@@ -138,4 +138,4 @@ pip install -r requirements-build.txt
 
 ## Troubleshooting
 
-See [docs/TROUBLESHOOTING.md](TROUBLESHOOTING.md) if the backend fails to start, the camera is unavailable, or Management Dashboard Beta pairing and sync fail.
+See [docs/TROUBLESHOOTING.md](TROUBLESHOOTING.md) if the backend fails to start, the camera is unavailable, or Facenox Cloud pairing and sync fail.

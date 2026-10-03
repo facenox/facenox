@@ -24,7 +24,7 @@ The official open source repository for Facenox is:
 
 This repository covers the open source desktop app and local backend.
 
-Facenox Management Dashboard is a separate hosted companion service. It is not part of the open source desktop codebase covered by this page.
+Facenox Cloud is a separate hosted companion service. It is not part of the open source desktop codebase covered by this page.
 
 ## Release Ownership
 

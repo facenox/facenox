@@ -8,7 +8,7 @@ Facenox is a desktop-first system. Recognition, attendance, and biometric storag
 - Primary database: local SQLite
 - Network requirement for core attendance: none
 - Biometric processing: local only; encrypted templates may sync between paired devices
-- Optional remote integration: separate Facenox Management Dashboard deployment for reporting, device management, and encrypted template relay
+- Optional remote integration: separate Facenox Cloud deployment for reporting, device management, and encrypted template relay
 
 ## High-Level Components
 
@@ -26,7 +26,7 @@ graph TD
         API <--> DB
     end
 
-    CLOUD["Optional Facenox Management Dashboard"]
+    CLOUD["Optional Facenox Cloud"]
 
     MAIN -. pairing, sync control .-> CLOUD
 ```
@@ -38,7 +38,7 @@ graph TD
 - camera and attendance UI
 - member and group management
 - settings, reports, and backup flows
-- Management Dashboard Beta configuration UI
+- Facenox Cloud configuration UI
 
 ### Electron main process
 

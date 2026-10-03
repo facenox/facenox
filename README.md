@@ -96,7 +96,7 @@ Most face recognition systems rely on cloud-based biometrics. Facenox doesn't. B
 - **Directory Management:** Full control over group and member directories.
 - **Attendance Tracking:** Automated session recording and CSV/JSON exports.
 - **Secure Storage:** Encrypted local biometric storage and password-protected `.facenox` backups.
-- **Optional Sync:** Secure pairing with Facenox Dashboard for centralized reporting. Encrypted face templates can sync between devices, using site-specific encryption keys.
+- **Optional Sync:** Secure pairing with Facenox Cloud for centralized reporting. Encrypted face templates can sync between devices, using site-specific encryption keys.
 
 ## Performance
 
@@ -168,7 +168,7 @@ Because Facenox operates locally, no external servers have access to your databa
 ## Roadmap
 
 - [x] Support for cross-platform native installers (Windows, macOS, Linux).
-- [x] Attendance trends and site-level reporting in Facenox Dashboard.
+- [x] Attendance trends and site-level reporting in Facenox Cloud.
 - [ ] Software Signing.
 - [ ] Mobile companion application for remote monitoring.
 
@@ -181,7 +181,7 @@ Because Facenox operates locally, no external servers have access to your databa
 > - **Build Transparency:** GitHub Actions compiles all release binaries from public source code.
 > - **Privacy First:** Devices encrypt all outbound templates with AES-256-GCM. The database only stores templates in encrypted form.
 
-> **Management Dashboard:** The **official Facenox Dashboard** is an optional service for centralized reporting. This repository contains the source for the **desktop client** only.
+> **Cloud Dashboard:** The **official Facenox Cloud Dashboard** is an optional service for centralized reporting. This repository contains the source for the **desktop client** only.
 
 ## Download
 
