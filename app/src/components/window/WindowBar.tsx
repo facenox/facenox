@@ -384,29 +384,20 @@ export default function WindowBar() {
         )}
 
         {updateCheckState === "up-to-date" && (
-          <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-400">
-              <i className="fa-solid fa-check text-xl" />
-            </div>
+          <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+            <i className="fa-solid fa-circle-check text-4xl text-cyan-400" />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-white">You&apos;re up to date!</p>
               <p className="text-xs text-white/50">
                 Facenox v{checkedUpdateInfo?.currentVersion} is the latest version available.
               </p>
             </div>
-            <button
-              onClick={() => setIsUpdateModalOpen(false)}
-              className="mt-2 rounded-lg bg-cyan-500 px-6 py-2 text-xs font-bold text-slate-950 transition-all hover:bg-cyan-400 active:scale-95">
-              Close
-            </button>
           </div>
         )}
 
         {updateCheckState === "available" && (
           <div className="flex flex-col items-center justify-center gap-4 py-4 text-center">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-400">
-              <i className="fa-solid fa-cloud-arrow-down text-xl" />
-            </div>
+            <i className="fa-solid fa-cloud-arrow-down text-4xl text-cyan-400" />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-white">New Version Available!</p>
               <p className="text-xs text-white/50">
@@ -441,9 +432,7 @@ export default function WindowBar() {
 
         {(updateCheckState === "error" || updateCheckState === "offline") && (
           <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 text-red-400">
-              <i className="fa-solid fa-triangle-exclamation text-xl" />
-            </div>
+            <i className="fa-solid fa-circle-exclamation text-4xl text-red-400" />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-white">Update Check Failed</p>
               <p className="text-xs text-white/50">
