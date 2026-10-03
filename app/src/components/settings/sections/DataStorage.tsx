@@ -450,71 +450,69 @@ export function DataStorage({
           </div>
         </div>
 
-        <div className={!isInitialLoad && filteredData.length > 0 ? "border-t border-white/5" : ""}>
-          <div
-            className={`${isInitialLoad || filteredData.length === 0 ? "min-h-[200px]" : "h-auto"} divide-y divide-white/5`}>
-            <AnimatePresence mode="wait">
-              {isInitialLoad ?
-                <motion.div
-                  key="loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex flex-col items-center justify-center py-12 text-white/20">
-                  <i className="fa-solid fa-circle-notch fa-spin mb-3 text-2xl opacity-30" />
-                  <div className="text-[12px] font-medium tracking-wide">Syncing directory...</div>
-                </motion.div>
-              : filteredData.length === 0 ?
-                <EmptyState
-                  key="empty"
-                  className="py-12"
-                  title={searchQuery.trim() ? "No results found" : "No groups found"}
-                  description={
-                    searchQuery.trim() ?
-                      `No groups matched "${searchQuery}"`
-                    : "Create a group to begin managing members."
-                  }
-                  iconClass={
-                    searchQuery.trim() ?
-                      "fa-solid fa-ghost text-2xl"
-                    : "fa-solid fa-folder-open text-2xl"
-                  }
-                />
-              : <motion.div
-                  key="results"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
-                  {filteredData.map((group, idx) => (
-                    <GroupEntry
-                      key={group.id || `group-${idx}`}
-                      group={group}
-                      isExpanded={expandedGroups.has(group.id)}
-                      editingGroup={editingGroup}
-                      editingMember={editingMember}
-                      editValue={editValue}
-                      savingGroup={savingGroup}
-                      savingMember={savingMember}
-                      deletingGroup={deletingGroup}
-                      deletingMember={deletingMember}
-                      onToggle={toggleGroup}
-                      onStartEditingGroup={startEditingGroup}
-                      onStartEditingMember={startEditing}
-                      onEditValueChange={setEditValue}
-                      onSaveGroupEdit={saveGroupEdit}
-                      onSaveMemberEdit={saveEdit}
-                      onCancelEditing={cancelEditing}
-                      onDeleteGroup={handleDeleteGroup}
-                      onDeleteMember={handleDeleteMember}
-                      onGroupsChanged={onGroupsChanged}
-                    />
-                  ))}
-                </motion.div>
-              }
-            </AnimatePresence>
-          </div>
+        <div
+          className={`${isInitialLoad || filteredData.length === 0 ? "min-h-[200px]" : "h-auto"} divide-y divide-white/5`}>
+          <AnimatePresence mode="wait">
+            {isInitialLoad ?
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="flex flex-col items-center justify-center py-12 text-white/20">
+                <i className="fa-solid fa-circle-notch fa-spin mb-3 text-2xl opacity-30" />
+                <div className="text-[12px] font-medium tracking-wide">Syncing directory...</div>
+              </motion.div>
+            : filteredData.length === 0 ?
+              <EmptyState
+                key="empty"
+                className="py-12"
+                title={searchQuery.trim() ? "No results found" : "No groups found"}
+                description={
+                  searchQuery.trim() ?
+                    `No groups matched "${searchQuery}"`
+                  : "Create a group to begin managing members."
+                }
+                iconClass={
+                  searchQuery.trim() ?
+                    "fa-solid fa-ghost text-2xl"
+                  : "fa-solid fa-folder-open text-2xl"
+                }
+              />
+            : <motion.div
+                key="results"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
+                {filteredData.map((group, idx) => (
+                  <GroupEntry
+                    key={group.id || `group-${idx}`}
+                    group={group}
+                    isExpanded={expandedGroups.has(group.id)}
+                    editingGroup={editingGroup}
+                    editingMember={editingMember}
+                    editValue={editValue}
+                    savingGroup={savingGroup}
+                    savingMember={savingMember}
+                    deletingGroup={deletingGroup}
+                    deletingMember={deletingMember}
+                    onToggle={toggleGroup}
+                    onStartEditingGroup={startEditingGroup}
+                    onStartEditingMember={startEditing}
+                    onEditValueChange={setEditValue}
+                    onSaveGroupEdit={saveGroupEdit}
+                    onSaveMemberEdit={saveEdit}
+                    onCancelEditing={cancelEditing}
+                    onDeleteGroup={handleDeleteGroup}
+                    onDeleteMember={handleDeleteMember}
+                    onGroupsChanged={onGroupsChanged}
+                  />
+                ))}
+              </motion.div>
+            }
+          </AnimatePresence>
         </div>
       </section>
 
