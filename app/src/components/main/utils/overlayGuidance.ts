@@ -350,6 +350,7 @@ export const getOverlayGuidance = (
   if (recognitionEnabled && recognitionResult && !recognitionResult.person_id) {
     return {
       label: "Verifying...",
+      subLabel: face.low_light ? "Low light detected" : undefined,
       tone: "warning",
       isLowLight: face.low_light,
     }
@@ -358,11 +359,21 @@ export const getOverlayGuidance = (
   const status = face.liveness?.status
 
   if (status === "center_face") {
-    return { label: "Center face", tone: "warning", isLowLight: face.low_light }
+    return {
+      label: "Center face",
+      subLabel: face.low_light ? "Low light detected" : undefined,
+      tone: "warning",
+      isLowLight: face.low_light,
+    }
   }
 
   if (status === "move_closer") {
-    return { label: "Move closer", tone: "warning", isLowLight: face.low_light }
+    return {
+      label: "Move closer",
+      subLabel: face.low_light ? "Low light detected" : undefined,
+      tone: "warning",
+      isLowLight: face.low_light,
+    }
   }
 
   if (status === "glare") {
@@ -393,7 +404,12 @@ export const getOverlayGuidance = (
   }
 
   if (holdStillActive) {
-    return { label: "Hold still", tone: "warning", isLowLight: face.low_light }
+    return {
+      label: "Hold still",
+      subLabel: face.low_light ? "Low light detected" : undefined,
+      tone: "warning",
+      isLowLight: face.low_light,
+    }
   }
 
   // Active 3D Challenge: Suppress forehead badge while head turn is requested.
@@ -414,12 +430,18 @@ export const getOverlayGuidance = (
       }
     }
 
-    return { label: "Verifying...", tone: "warning", isLowLight: face.low_light }
+    return {
+      label: "Verifying...",
+      subLabel: face.low_light ? "Low light detected" : undefined,
+      tone: "warning",
+      isLowLight: face.low_light,
+    }
   }
 
   if (face.low_light) {
     return {
       label: "Poor lighting detected",
+      subLabel: "Step into light",
       tone: "warning",
       isLowLight: true,
     }

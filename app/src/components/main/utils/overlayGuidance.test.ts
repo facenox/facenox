@@ -176,6 +176,7 @@ describe("overlayGuidance", () => {
       }),
     ).toEqual({
       label: "Verifying...",
+      subLabel: "Low light detected",
       tone: "warning",
       isLowLight: true,
     })
@@ -225,6 +226,7 @@ describe("overlayGuidance", () => {
       }),
     ).toEqual({
       label: "Poor lighting detected",
+      subLabel: "Step into light",
       tone: "warning",
       isLowLight: true,
     })
