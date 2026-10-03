@@ -2,7 +2,7 @@
   "name": "facenox",
   "private": true,
   "version": "1.0.0-beta.14",
-  "description": "Real-time AI attendance tracker with face recognition.",
+  "description": "Open-source, offline-first face recognition software for real-time attendance tracking.",
   "author": "Facenox <support@facenox.com>",
   "repository": {
     "type": "git",
