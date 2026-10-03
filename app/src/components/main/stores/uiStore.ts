@@ -129,6 +129,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   quickSettings: {
     cameraMirrored: true,
     showRecognitionNames: true,
+    showTrackingBoxes: true,
+    cameraFitCover: false,
   },
 
   audioSettings: {

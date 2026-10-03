@@ -145,7 +145,9 @@ export const VideoCanvas = memo(function VideoCanvas({
       <video
         ref={videoRef}
         aria-label="Real-time camera capture feed"
-        className={`absolute inset-0 h-full w-full bg-[var(--bg-canvas)] object-contain transition-opacity duration-300 ${
+        className={`absolute inset-0 h-full w-full bg-[var(--bg-canvas)] ${
+          quickSettings.cameraFitCover ? "object-cover" : "object-contain"
+        } transition-opacity duration-300 ${
           isStreaming && !isVideoLoading ? "opacity-100" : "opacity-0"
         } ${quickSettings.cameraMirrored ? "scale-x-[-1]" : ""}`}
         playsInline

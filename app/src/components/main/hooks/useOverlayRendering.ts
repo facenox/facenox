@@ -54,6 +54,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     width: 0,
     height: 0,
   })
+  const lastFitCoverRef = useRef<boolean | undefined>(undefined)
   const scaleFactorsRef = useRef<{
     scaleX: number
     scaleY: number
@@ -103,7 +104,8 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
       lastVideoSizeRef.current.width === currentVideoWidth &&
       lastVideoSizeRef.current.height === currentVideoHeight &&
       lastCanvasSizeRef.current.width === overlayCanvas.width &&
-      lastCanvasSizeRef.current.height === overlayCanvas.height
+      lastCanvasSizeRef.current.height === overlayCanvas.height &&
+      lastFitCoverRef.current === quickSettings.cameraFitCover
     ) {
       return scaleFactorsRef.current
     }
@@ -116,6 +118,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
       width: overlayCanvas.width,
       height: overlayCanvas.height,
     }
+    lastFitCoverRef.current = quickSettings.cameraFitCover
 
     const displayWidth = overlayCanvas.width
     const displayHeight = overlayCanvas.height
@@ -128,14 +131,29 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     let offsetX = 0
     let offsetY = 0
 
-    if (videoAspectRatio > containerAspectRatio) {
-      actualVideoWidth = displayWidth
-      actualVideoHeight = displayWidth / videoAspectRatio
-      offsetY = (displayHeight - actualVideoHeight) / 2
+    if (quickSettings.cameraFitCover) {
+      if (videoAspectRatio > containerAspectRatio) {
+        // Video is wider than container -> match height, crop overflow horizontally
+        actualVideoHeight = displayHeight
+        actualVideoWidth = displayHeight * videoAspectRatio
+        offsetX = (displayWidth - actualVideoWidth) / 2
+      } else {
+        // Video is taller than container -> match width, crop overflow vertically
+        actualVideoWidth = displayWidth
+        actualVideoHeight = displayWidth / videoAspectRatio
+        offsetY = (displayHeight - actualVideoHeight) / 2
+      }
     } else {
-      actualVideoHeight = displayHeight
-      actualVideoWidth = displayHeight * videoAspectRatio
-      offsetX = (displayWidth - actualVideoWidth) / 2
+      // Standard contain (letterbox)
+      if (videoAspectRatio > containerAspectRatio) {
+        actualVideoWidth = displayWidth
+        actualVideoHeight = displayWidth / videoAspectRatio
+        offsetY = (displayHeight - actualVideoHeight) / 2
+      } else {
+        actualVideoHeight = displayHeight
+        actualVideoWidth = displayHeight * videoAspectRatio
+        offsetX = (displayWidth - actualVideoWidth) / 2
+      }
     }
 
     const scaleX = actualVideoWidth / currentVideoWidth
@@ -143,7 +161,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
 
     scaleFactorsRef.current = { scaleX, scaleY, offsetX, offsetY }
     return scaleFactorsRef.current
-  }, [videoRef, overlayCanvasRef])
+  }, [videoRef, overlayCanvasRef, quickSettings.cameraFitCover])
 
   const handleDrawOverlays = useCallback(
     (detections: DetectionResult | null) => {

@@ -30,6 +30,7 @@ interface SettingsProps {
   onGroupsChanged?: () => void
   initialGroups?: AttendanceGroup[]
   initialSection?: string
+  streamRef?: React.RefObject<MediaStream | null>
 }
 
 export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, ref) => {
@@ -83,8 +84,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
 
   const sections = [
     { id: "attendance", label: "General", icon: "fa-solid fa-sliders" },
-    { id: "display", label: "Display", icon: "fa-solid fa-desktop" },
-    { id: "notifications", label: "Notifications", icon: "fa-solid fa-bell" },
+    { id: "display", label: "Display & Audio", icon: "fa-solid fa-desktop" },
     { id: "database", label: "Database", icon: "fa-solid fa-database" },
     { id: "remote-sync", label: "Cloud Sync", icon: "fa-solid fa-cloud" },
     { id: "about", label: "About", icon: "fa-solid fa-circle-info" },
@@ -125,6 +125,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         toggleQuickSetting={settings.toggleQuickSetting}
         audioSettings={props.audioSettings}
         updateAudioSetting={settings.updateAudioSetting}
+        streamRef={props.streamRef}
         attendanceSettings={{
           ...props.attendanceSettings,
           forceLiveness: settings.forceLiveness,

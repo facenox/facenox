@@ -256,7 +256,7 @@ export const drawOverlays = ({
       }
       ctx.filter = "none"
       ctx.restore()
-    } else {
+    } else if (quickSettings.showTrackingBoxes !== false) {
       setupCanvasContext(ctx, color)
       drawBoundingBox(ctx, x1, y1, x2, y2)
     }

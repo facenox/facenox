@@ -17,6 +17,8 @@ interface MainModalsProps {
   cancelDeleteGroup: () => void
   /** Ref to invoke database reload updates inside settings callbacks. */
   loadAttendanceDataRef: React.MutableRefObject<() => Promise<void>>
+  /** Optional active camera stream for real-time live preview in settings. */
+  streamRef?: React.RefObject<MediaStream | null>
 }
 
 /**
@@ -30,6 +32,7 @@ export function MainModals({
   confirmDeleteGroup,
   cancelDeleteGroup,
   loadAttendanceDataRef,
+  streamRef,
 }: MainModalsProps) {
   const {
     currentGroup,
@@ -113,6 +116,7 @@ export function MainModals({
             onQuickSettingsChange={setQuickSettings}
             audioSettings={audioSettings}
             onAudioSettingsChange={setAudioSettings}
+            streamRef={streamRef}
             attendanceSettings={{
               lateThresholdEnabled:
                 (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings

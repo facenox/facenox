@@ -71,6 +71,8 @@ export const defaultSettings: PersistentSettingsSchema = {
   quickSettings: {
     showRecognitionNames: true,
     cameraMirrored: true,
+    showTrackingBoxes: true,
+    cameraFitCover: false,
   },
   audio: {
     recognitionSoundEnabled: true,

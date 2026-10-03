@@ -728,6 +728,7 @@ export default function Main() {
         confirmDeleteGroup={confirmDeleteGroup}
         cancelDeleteGroup={cancelDeleteGroup}
         loadAttendanceDataRef={loadAttendanceDataRef}
+        streamRef={streamRef}
       />
     </div>
   )

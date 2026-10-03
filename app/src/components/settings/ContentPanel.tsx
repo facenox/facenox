@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Display } from "@/components/settings/sections/Display"
-import { Notifications } from "@/components/settings/sections/Notifications"
 import { Database } from "@/components/settings/sections/Database"
 import { Attendance } from "@/components/settings/sections/Attendance"
 import { About } from "@/components/settings/sections/About"
@@ -61,6 +60,7 @@ interface ContentPanelProps {
   dropdownGroups: AttendanceGroup[]
   groupSections: { id: GroupSection; label: string; icon: string }[]
   setActiveSection: (section: string) => void
+  streamRef?: React.RefObject<MediaStream | null>
 }
 
 export const ContentPanel: React.FC<ContentPanelProps> = ({
@@ -80,6 +80,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   toggleQuickSetting,
   audioSettings,
   updateAudioSetting,
+  streamRef,
   attendanceSettings,
   updateAttendanceSetting,
   systemData,
@@ -221,8 +222,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
 
     const generalTitles: Record<string, string> = {
       attendance: "General",
-      display: "Display",
-      notifications: "Notifications",
+      display: "Display & Audio",
+      notifications: "Display & Audio",
       database: "Database",
       "remote-sync": "Cloud Sync",
       about: "About",
@@ -562,23 +563,17 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               </motion.div>
             )}
 
-            {activeSection === "display" && (
+            {(activeSection === "display" || activeSection === "notifications") && (
               <motion.div
                 key="display"
                 {...motionProps}
                 className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
-                <Display quickSettings={quickSettings} toggleQuickSetting={toggleQuickSetting} />
-              </motion.div>
-            )}
-
-            {activeSection === "notifications" && (
-              <motion.div
-                key="notifications"
-                {...motionProps}
-                className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
-                <Notifications
+                <Display
+                  quickSettings={quickSettings}
+                  toggleQuickSetting={toggleQuickSetting}
                   audioSettings={audioSettings}
                   onAudioSettingsChange={updateAudioSetting}
+                  streamRef={streamRef}
                 />
               </motion.div>
             )}
