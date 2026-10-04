@@ -1,10 +1,14 @@
 import os
 import time
+import logging
 from datetime import datetime
 from enum import Enum
 from typing import Optional, Dict, Any
 import cv2
 import numpy as np
+
+logger = logging.getLogger(__name__)
+ENABLE_ACTIVE_AUDIT = os.getenv("FACENOX_ACTIVE_AUDIT", "0").lower() in ("1", "true")
 
 AUDIT_LOG_FILE = os.path.abspath(
     os.path.join(
@@ -25,6 +29,8 @@ def _audit(
     latch: int,
     reason: str,
 ):
+    if not ENABLE_ACTIVE_AUDIT:
+        return
     try:
         os.makedirs(os.path.dirname(AUDIT_LOG_FILE), exist_ok=True)
         now_str = datetime.now().strftime("%H:%M:%S.%f")[:-3]
@@ -35,7 +41,7 @@ def _audit(
         )
         with open(AUDIT_LOG_FILE, "a", encoding="utf-8") as f:
             f.write(line + "\n")
-        print(f"[ActiveChallenge] {line}", flush=True)
+        logger.debug("[ActiveChallenge] %s", line)
     except Exception:
         pass
 
