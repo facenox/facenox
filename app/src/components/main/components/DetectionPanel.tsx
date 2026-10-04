@@ -97,7 +97,7 @@ const DetectionCard = memo(
             </AnimatePresence>
           </div>
 
-          <div className="flex min-h-5 shrink-0 items-center gap-2">
+          <div className="flex min-h-5 shrink-0 items-center pr-1">
             <AnimatePresence>
               {isDone && (
                 <motion.div
@@ -105,8 +105,8 @@ const DetectionCard = memo(
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
                   transition={{ type: "spring", stiffness: 380, damping: 18 }}
-                  className="flex items-center justify-center rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.2)]">
-                  <i className="fa-solid fa-check text-[10px]"></i>
+                  className="flex items-center justify-center text-cyan-400">
+                  <i className="fa-solid fa-check text-xs"></i>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -264,7 +264,7 @@ export function DetectionPanel({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="w-full space-y-0.5 py-0.5 pr-0 pl-2">
+          className="w-full space-y-0.5 pt-1.5 pr-0 pb-1 pl-2">
           <AnimatePresence mode="popLayout" initial={false}>
             {filteredFaces.map((face) => {
               const trackId = face.track_id!
