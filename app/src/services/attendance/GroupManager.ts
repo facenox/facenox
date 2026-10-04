@@ -76,7 +76,7 @@ export class GroupManager {
       return true
     } catch (error) {
       console.error("Error updating group:", error)
-      return false
+      throw error
     }
   }
 

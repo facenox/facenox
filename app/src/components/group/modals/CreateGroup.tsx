@@ -81,6 +81,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                 if (e.key === "Enter") void handleCreate()
               }}
               placeholder=""
+              maxLength={100}
               focusColor={
                 isDuplicate && !confirmDuplicate ? "border-amber-400" : "border-cyan-500/60"
               }

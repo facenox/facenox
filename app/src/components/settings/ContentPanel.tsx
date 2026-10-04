@@ -129,6 +129,11 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
       return
     }
 
+    if (trimmed.length > 100) {
+      setError("Group name cannot exceed 100 characters.")
+      return
+    }
+
     setIsSavingGroupName(true)
     try {
       await attendanceManager.updateGroup(validInitialGroup.id, {
@@ -394,10 +399,11 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                       animate={{ opacity: 1, scale: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.96, x: -4 }}
                       transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="flex items-center gap-1.5">
+                      className="flex min-w-0 items-center gap-1.5">
                       <input
                         ref={groupNameInputRef}
                         type="text"
+                        maxLength={100}
                         value={groupNameInput}
                         onChange={(e) => setGroupNameInput(e.target.value)}
                         onKeyDown={(e) => {
@@ -412,7 +418,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                           }
                         }}
                         disabled={isSavingGroupName}
-                        className="w-44 rounded-md border border-white/10 bg-[rgba(22,28,36,0.68)] px-2.5 py-0.5 text-xs font-medium text-white transition-all duration-200 outline-none placeholder:text-white/40 focus:border-cyan-500/40 focus:bg-[rgba(28,35,44,0.85)] focus:ring-1 focus:ring-cyan-500/20"
+                        className="w-44 max-w-[200px] shrink rounded-md border border-white/10 bg-[rgba(22,28,36,0.68)] px-2.5 py-0.5 text-xs font-medium text-white transition-all duration-200 outline-none placeholder:text-white/40 focus:border-cyan-500/40 focus:bg-[rgba(28,35,44,0.85)] focus:ring-1 focus:ring-cyan-500/20"
                       />
                       <Tooltip content="Save (Enter)" position="bottom" offset={6}>
                         <button
@@ -420,7 +426,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                           onClick={handleSaveGroupName}
                           disabled={!groupNameInput.trim() || isSavingGroupName}
                           aria-label="Save name"
-                          className="flex h-5 w-5 items-center justify-center rounded border-none bg-transparent p-0 text-cyan-400/80 transition-all duration-150 hover:bg-cyan-500/10 hover:text-cyan-300 focus:outline-none active:scale-95 disabled:opacity-30">
+                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded border-none bg-transparent p-0 text-cyan-400/80 transition-all duration-150 hover:bg-cyan-500/10 hover:text-cyan-300 focus:outline-none active:scale-95 disabled:opacity-30">
                           <i className="fa-solid fa-check text-[10px]" />
                         </button>
                       </Tooltip>
@@ -430,7 +436,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                           onClick={handleCancelGroupNameEdit}
                           disabled={isSavingGroupName}
                           aria-label="Cancel"
-                          className="flex h-5 w-5 items-center justify-center rounded border-none bg-transparent p-0 text-white/35 transition-all duration-150 hover:bg-white/5 hover:text-white/75 focus:outline-none active:scale-95">
+                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded border-none bg-transparent p-0 text-white/35 transition-all duration-150 hover:bg-white/5 hover:text-white/75 focus:outline-none active:scale-95">
                           <i className="fa-solid fa-xmark text-[10px]" />
                         </button>
                       </Tooltip>
@@ -441,17 +447,22 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.98 }}
                       transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="group/group-title flex items-center gap-1.5">
-                      <SectionHeader.Breadcrumb
-                        key="group-name"
-                        active={!groupInitialSection || groupInitialSection === "overview"}
-                        onClick={
-                          !groupInitialSection || groupInitialSection === "overview" ?
-                            undefined
-                          : () => setGroupInitialSection("overview")
-                        }>
-                        {validInitialGroup?.name || "Group Management"}
-                      </SectionHeader.Breadcrumb>
+                      className="group/group-title flex min-w-0 items-center gap-1.5 overflow-hidden">
+                      <Tooltip
+                        content={validInitialGroup?.name || "Group Management"}
+                        position="bottom"
+                        offset={6}>
+                        <SectionHeader.Breadcrumb
+                          key="group-name"
+                          active={!groupInitialSection || groupInitialSection === "overview"}
+                          onClick={
+                            !groupInitialSection || groupInitialSection === "overview" ?
+                              undefined
+                            : () => setGroupInitialSection("overview")
+                          }>
+                          {validInitialGroup?.name || "Group Management"}
+                        </SectionHeader.Breadcrumb>
+                      </Tooltip>
                       {validInitialGroup &&
                         (!groupInitialSection || groupInitialSection === "overview") && (
                           <Tooltip content="Edit group name" position="bottom" offset={6}>
@@ -462,7 +473,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                                 setIsEditingGroupName(true)
                               }}
                               aria-label="Edit group name"
-                              className="flex h-5 w-5 items-center justify-center border-none bg-transparent p-0 text-white/35 transition-colors duration-150 hover:text-cyan-400 focus:outline-none active:scale-95">
+                              className="flex h-5 w-5 shrink-0 items-center justify-center border-none bg-transparent p-0 text-white/35 transition-colors duration-150 hover:text-cyan-400 focus:outline-none active:scale-95">
                               <i className="fa-solid fa-pen text-[9px]" />
                             </button>
                           </Tooltip>
@@ -479,7 +490,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                       exit={{ opacity: 0, x: 8 }}
                       transition={{ duration: 0.18, ease: "easeOut" }}
                       style={{ display: "inline-flex", alignItems: "center" }}
-                      className="gap-2">
+                      className="shrink-0 gap-2">
                       <SectionHeader.Separator />
                       <SectionHeader.Breadcrumb active>
                         {groupSections.find((s) => s.id === groupInitialSection)?.label ||
@@ -509,7 +520,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                       exit={{ opacity: 0, x: 8 }}
                       transition={{ duration: 0.18, ease: "easeOut" }}
                       style={{ display: "inline-flex", alignItems: "center" }}
-                      className="gap-2">
+                      className="shrink-0 gap-2">
                       <SectionHeader.Separator />
                       <SectionHeader.Breadcrumb active>
                         {headerProps.title}

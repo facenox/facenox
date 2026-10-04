@@ -259,7 +259,7 @@ export function DataStorage({
                 {timeHealthState.loading ?
                   "Checking..."
                 : timeHealth ?
-                  `${formattedLocalTime ?? "Unavailable"} • ${getFriendlyTimeZoneLabel()}`
+                  `${formattedLocalTime ?? "Unavailable"} / ${getFriendlyTimeZoneLabel()}`
                 : "Clock health unavailable."}
               </span>
             </div>
@@ -269,11 +269,11 @@ export function DataStorage({
             <button
               onClick={onRefreshTimeHealth}
               disabled={timeHealthState.loading}
-              className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-4 py-1.5 text-[12px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-40">
+              className="flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97] disabled:opacity-40">
               {timeHealthState.loading ?
-                <i className="fa-solid fa-circle-notch fa-spin" />
-              : <i className="fa-solid fa-rotate-right" />}
-              {timeHealthState.loading ? "Checking..." : "Check Now"}
+                <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
+              : <i className="fa-solid fa-rotate-right text-[11px] text-white/50" />}
+              <span>{timeHealthState.loading ? "Checking..." : "Check Now"}</span>
             </button>
 
             {!timeHealthState.loading &&
@@ -313,11 +313,11 @@ export function DataStorage({
             <button
               onClick={() => setPasswordModal({ isOpen: true, action: "export" })}
               disabled={isBackingUp}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-5 py-2 text-[12px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-40">
+              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97] disabled:opacity-40">
               {status.type === "loading" && status.action === "export" ?
-                <i className="fa-solid fa-circle-notch fa-spin" />
-              : <i className="fa-solid fa-file-export text-[11px] opacity-40" />}
-              Create
+                <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
+              : <i className="fa-solid fa-file-export text-[11px] text-white/50" />}
+              <span>Create</span>
             </button>
           </div>
 
@@ -339,11 +339,11 @@ export function DataStorage({
             <button
               onClick={startImportFlow}
               disabled={isBackingUp}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-5 py-2 text-[12px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-40">
+              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97] disabled:opacity-40">
               {status.type === "loading" && status.action === "import" ?
-                <i className="fa-solid fa-circle-notch fa-spin" />
-              : <i className="fa-solid fa-file-import text-[11px] opacity-40" />}
-              Restore
+                <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
+              : <i className="fa-solid fa-file-import text-[11px] text-white/50" />}
+              <span>Restore</span>
             </button>
           </div>
         </div>
@@ -371,17 +371,17 @@ export function DataStorage({
                 onClick={async () => {
                   await window.facenoxElectron?.openDataDir()
                 }}
-                className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-5 py-2 text-[12px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
-                <i className="fa-regular fa-folder-open text-[11px] opacity-40" />
-                Open Folder
+                className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
+                <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
+                <span>Open Folder</span>
               </button>
               <button
                 onClick={async () => {
                   await window.facenoxElectron?.openLogFile()
                 }}
-                className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-5 py-2 text-[12px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
-                <i className="fa-regular fa-file-lines text-[11px] opacity-40" />
-                Open Log
+                className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
+                <i className="fa-regular fa-file-lines text-[11px] text-white/50" />
+                <span>Open Log</span>
               </button>
             </div>
           </div>
@@ -404,9 +404,9 @@ export function DataStorage({
               onClick={async () => {
                 await window.facenoxElectron?.openInstallDir()
               }}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-5 py-2 text-[12px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
-              <i className="fa-regular fa-folder text-[11px] opacity-40" />
-              Open Folder
+              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
+              <i className="fa-regular fa-folder text-[11px] text-white/50" />
+              <span>Open Folder</span>
             </button>
           </div>
         </div>
