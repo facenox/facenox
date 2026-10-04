@@ -78,7 +78,7 @@ const AttendanceListSkeleton = memo(function AttendanceListSkeleton({
         </div>
       )}
 
-      <div className="hover-scrollbar flex min-h-0 flex-1 flex-col space-y-0.5 overflow-y-auto px-2">
+      <div className="hover-scrollbar flex min-h-0 flex-1 flex-col space-y-0.5 overflow-y-auto pr-0 pl-2">
         {Array.from({ length: 6 }).map((_, index) => (
           <div key={index} className="flex items-center justify-between rounded-lg px-2.5 py-1.5">
             <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -576,7 +576,7 @@ export const AttendancePanel = memo(function AttendancePanel({
         (isPanelLoading ? <AttendanceListSkeleton showSearch={Boolean(currentGroup)} />
         : isPanelSwitchPending ? <div className="flex min-h-0 flex-1" />
         : <div
-            className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-2"
+            className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto pr-0 pl-2"
             style={{
               maskImage:
                 visibleRecords.length > 0 ?

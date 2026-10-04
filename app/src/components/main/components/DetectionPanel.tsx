@@ -264,7 +264,7 @@ export function DetectionPanel({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="w-full space-y-0.5 px-2 py-0.5">
+          className="w-full space-y-0.5 py-0.5 pr-0 pl-2">
           <AnimatePresence mode="popLayout" initial={false}>
             {filteredFaces.map((face) => {
               const trackId = face.track_id!
