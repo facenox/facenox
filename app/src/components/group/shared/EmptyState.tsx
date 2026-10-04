@@ -27,15 +27,19 @@ export function EmptyState({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-      className={`flex h-full min-h-0 w-full flex-1 flex-col items-center justify-center p-8 px-6 text-center ${className}`}>
+      className={`flex h-full min-h-0 w-full max-w-full flex-1 flex-col items-center justify-center p-8 px-6 text-center ${className}`}>
       <div className="text-white/35">
         <i className={iconClass} />
       </div>
 
-      <div className="mt-3.5 space-y-1">
-        <h3 className="text-sm font-semibold text-white/90">{title}</h3>
+      <div className="mt-3.5 max-w-full space-y-1 px-4">
+        <h3 className="text-sm font-semibold [overflow-wrap:anywhere] break-words text-white/90">
+          {title}
+        </h3>
         {description && (
-          <p className="mx-auto max-w-sm text-xs leading-relaxed text-white/55">{description}</p>
+          <p className="mx-auto max-w-md text-xs leading-relaxed [overflow-wrap:anywhere] break-words text-white/55">
+            {description}
+          </p>
         )}
       </div>
 
