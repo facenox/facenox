@@ -244,7 +244,7 @@ export const Sidebar = memo(function Sidebar({
           willChange: "width",
         }}>
         <div
-          className={`border-b border-white/10 px-3 py-1 transition-opacity duration-200 ${isCollapsed ? "pointer-events-none opacity-0" : "opacity-100"}`}
+          className={`border-b border-white/10 px-2 py-1 transition-opacity duration-200 ${isCollapsed ? "pointer-events-none opacity-0" : "opacity-100"}`}
           style={{ minWidth: isResizing ? undefined : sidebarWidth }}>
           <div className="flex items-center justify-between gap-2">
             <Tooltip

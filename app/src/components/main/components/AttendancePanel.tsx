@@ -43,7 +43,7 @@ const ScrollCenteredEmptyState = memo(function ScrollCenteredEmptyState({
   className?: string
 }) {
   return (
-    <div className={`flex min-h-0 flex-1 items-center justify-center pl-[10px] ${className}`}>
+    <div className={`flex min-h-full flex-1 items-center justify-center ${className}`}>
       {children}
     </div>
   )
@@ -51,7 +51,7 @@ const ScrollCenteredEmptyState = memo(function ScrollCenteredEmptyState({
 
 const SidebarTopSkeleton = memo(function SidebarTopSkeleton() {
   return (
-    <div className="shrink-0 px-3 py-2 pb-1.5" data-testid="attendance-panel-shell-skeleton">
+    <div className="shrink-0 px-2 pt-2 pb-1" data-testid="attendance-panel-shell-skeleton">
       <div className="flex items-center gap-0">
         <div className="h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/5" />
         <div className="h-9 w-9 border border-r-0 border-white/10 bg-white/5" />
@@ -69,7 +69,7 @@ const AttendanceListSkeleton = memo(function AttendanceListSkeleton({
   return (
     <>
       {showSearch && (
-        <div className="shrink-0 px-3 pb-3" data-testid="attendance-panel-search-skeleton">
+        <div className="shrink-0 px-2 pb-1.5" data-testid="attendance-panel-search-skeleton">
           <div className="flex items-center">
             <div className="h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/4" />
             <div className="h-9 w-9 border border-r-0 border-white/10 bg-white/4" />
@@ -78,12 +78,10 @@ const AttendanceListSkeleton = memo(function AttendanceListSkeleton({
         </div>
       )}
 
-      <div className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="hover-scrollbar flex min-h-0 flex-1 flex-col space-y-0.5 overflow-y-auto px-2">
         {Array.from({ length: 6 }).map((_, index) => (
-          <div
-            key={index}
-            className="border-b border-l-2 border-white/5 border-l-transparent py-2.5 pr-3 pl-4">
-            <div className="flex items-center gap-3 py-0.5">
+          <div key={index} className="flex items-center justify-between rounded-lg px-2.5 py-1.5">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
               <div className="h-3.5 flex-1 rounded bg-white/7" />
               <div className="h-5 w-16 rounded-full border border-white/10 bg-white/5" />
               <div className="h-3 w-12 rounded bg-white/7" />
@@ -215,8 +213,8 @@ const AttendanceRecordItem = memo(
           }
         }}
         onMouseLeave={() => setIsHovered(false)}
-        className={`group relative border-b border-l-2 border-white/5 py-2.5 pr-3 pl-4 transition-colors hover:bg-[rgba(22,28,36,0.52)] ${timeStatus?.borderColor || "border-l-transparent"}`}>
-        <div className="flex items-center gap-3 py-0.5">
+        className="group relative flex items-center justify-between rounded-lg px-2.5 py-1.5 transition-colors hover:bg-white/[0.04]">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-1.5 truncate">
             <MemberTooltip
               member={member}
@@ -242,7 +240,7 @@ const AttendanceRecordItem = memo(
               </span>
             )}
 
-            <div className="relative flex h-6 w-[54px] shrink-0 items-center justify-center overflow-hidden">
+            <div className="relative flex h-6 w-[54px] shrink-0 items-center justify-end overflow-hidden">
               <AnimatePresence initial={false}>
                 {isHovered && onVoidManual ?
                   <motion.div
@@ -251,7 +249,7 @@ const AttendanceRecordItem = memo(
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 8 }}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute flex h-6 w-6 items-center justify-center">
+                    className="absolute right-0 flex h-6 w-6 items-center justify-center">
                     <button
                       type="button"
                       onClick={(event) => {
@@ -269,7 +267,7 @@ const AttendanceRecordItem = memo(
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -8 }}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute block w-full text-center font-mono text-[11px] text-white/55 tabular-nums">
+                    className="absolute right-0 block w-full text-right font-mono text-[11px] text-white/55 tabular-nums">
                     {record.timestamp.toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -419,7 +417,7 @@ export const AttendancePanel = memo(function AttendancePanel({
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {attendanceGroups.length > 0 ?
-        <div className="shrink-0 px-3 py-2 pb-1.5">
+        <div className="shrink-0 px-2 pt-2 pb-1">
           <div className="flex items-center">
             <div className="min-w-30 flex-1">
               <Dropdown
@@ -483,7 +481,7 @@ export const AttendancePanel = memo(function AttendancePanel({
             <motion.div
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3 py-2 text-xs">
+              className="mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3 py-1.5 text-xs">
               <div className="flex min-w-0 items-center">
                 <span className="truncate text-[11.5px] font-medium text-amber-300/90">
                   {unenrolledMembersCount} member
@@ -512,7 +510,7 @@ export const AttendancePanel = memo(function AttendancePanel({
       }
 
       {!isPanelLoading && !isPanelSwitchPending && recentAttendance.length > 0 && (
-        <div className="shrink-0 px-3 pb-3">
+        <div className="shrink-0 px-2 pb-1.5">
           <div className="group/bar flex min-w-0 flex-1 items-center">
             <div className="relative flex-1">
               <svg
@@ -575,11 +573,16 @@ export const AttendancePanel = memo(function AttendancePanel({
         (isPanelLoading ? <AttendanceListSkeleton showSearch={Boolean(currentGroup)} />
         : isPanelSwitchPending ? <div className="flex min-h-0 flex-1" />
         : <div
-            className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto"
+            className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-2"
             style={{
-              maskImage: "linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)",
+              maskImage:
+                visibleRecords.length > 0 ?
+                  "linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)"
+                : undefined,
               WebkitMaskImage:
-                "linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)",
+                visibleRecords.length > 0 ?
+                  "linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)"
+                : undefined,
             }}>
             <AnimatePresence mode="wait">
               {visibleRecords.length > 0 ?
@@ -588,7 +591,8 @@ export const AttendancePanel = memo(function AttendancePanel({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  className="space-y-0.5">
                   {(() => {
                     const recordCheckInStatus = buildRecordCheckInStatusMap(processedRecords)
 
@@ -638,7 +642,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                   })()}
 
                   {hasMore && (
-                    <div className="px-2 py-2">
+                    <div className="py-2">
                       <button
                         onClick={handleLoadMore}
                         className="w-full rounded-lg border border-white/5 bg-white/5 py-2 text-xs font-semibold text-white/80 transition-all hover:border-white/10 hover:bg-white/[0.08] active:scale-[0.99]">
@@ -654,7 +658,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex flex-1 flex-col">
+                  className="flex min-h-full flex-1 flex-col">
                   <ScrollCenteredEmptyState>
                     <div className="text-center text-sm text-white/65">
                       No results for &quot;{searchQuery}&quot;
@@ -667,7 +671,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex flex-1 flex-col">
+                  className="flex min-h-full flex-1 flex-col">
                   {!currentGroup ?
                     <ScrollCenteredEmptyState>
                       <div className="flex flex-col items-center justify-center text-center">

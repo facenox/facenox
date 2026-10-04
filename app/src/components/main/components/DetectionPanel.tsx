@@ -45,13 +45,10 @@ const DetectionCard = memo(
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -8 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className={`group relative border-b border-l-2 border-white/5 py-2.5 pr-3 pl-4 transition-colors hover:bg-[rgba(22,28,36,0.52)] ${isActive ? "border-l-cyan-500/50" : "border-l-transparent"}`}
-        style={
-          isActive ?
-            { background: "linear-gradient(to right, rgba(34, 211, 238, 0.06), transparent)" }
-          : undefined
-        }>
-        <div className="flex items-center justify-between gap-3 py-0.5">
+        className={`group relative rounded-lg px-2.5 py-1.5 transition-colors hover:bg-white/[0.04] ${
+          isActive ? "bg-cyan-500/10" : ""
+        }`}>
+        <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
             <AnimatePresence mode="wait">
               {isRecognized ?
@@ -175,7 +172,7 @@ export function DetectionPanel({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
-          className="flex min-h-0 w-full flex-1 items-center justify-center pl-[10px]">
+          className="flex min-h-0 w-full flex-1 items-center justify-center">
           <div className="relative flex flex-col items-center">
             <div className="relative h-20 w-20">
               <div
@@ -263,7 +260,7 @@ export function DetectionPanel({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="w-full py-0">
+          className="w-full space-y-0.5 px-2 py-0.5">
           <AnimatePresence mode="popLayout" initial={false}>
             {filteredFaces.map((face) => {
               const trackId = face.track_id!
