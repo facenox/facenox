@@ -53,7 +53,7 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
         await websocket.close(code=1008)
         return
 
-    logger.info("[WebSocket] Client %s attempting to connect...", client_id)
+    logger.debug("[WebSocket] Client %s attempting to connect...", client_id)
 
     if not is_authorized_websocket(websocket):
         logger.warning(
@@ -66,7 +66,6 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
     live_stream_service = LiveStreamService(organization_id)
     pipeline = DetectionPipeline(live_stream_service)
     await websocket.accept()
-    logger.info("[WebSocket] Client %s connected successfully", client_id)
 
     existing_ws = manager.active_connections.get(client_id)
     if existing_ws is not None and existing_ws is not websocket:
@@ -105,11 +104,12 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
             track_buffer=FACE_TRACKER_CONFIG["track_buffer"],
             frame_rate=FACE_TRACKER_CONFIG["frame_rate"],
         )
-        logger.info("[WebSocket] Created face tracker for client %s", client_id)
+        logger.debug("[WebSocket] Created face tracker for client %s", client_id)
 
     live_session_config = await live_stream_service.load_initial_config()
     logger.info(
-        "[WebSocket] Initial liveness detection state from DB: %s",
+        "[WebSocket] Client %s connected (liveness: %s)",
+        client_id,
         live_session_config.enable_liveness_detection,
     )
 
@@ -124,9 +124,8 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                 }
             )
         )
-        logger.info("[WebSocket] Sent connection confirmation to client %s", client_id)
-
-        logger.info("[WebSocket] Starting message loop for client %s", client_id)
+        logger.debug("[WebSocket] Sent connection confirmation to client %s", client_id)
+        logger.debug("[WebSocket] Starting message loop for client %s", client_id)
 
         while True:
             try:

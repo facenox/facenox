@@ -60,6 +60,16 @@ def get_logging_config():
                 "handlers": ["console", "file"],
                 "propagate": False,
             },
+            "httpx": {
+                "level": "WARNING",
+                "handlers": ["file"],
+                "propagate": False,
+            },
+            "httpcore": {
+                "level": "WARNING",
+                "handlers": ["file"],
+                "propagate": False,
+            },
             "sqlalchemy.engine": {
                 "level": "WARNING",
                 "handlers": ["console", "file"],
