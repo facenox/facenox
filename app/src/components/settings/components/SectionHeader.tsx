@@ -76,7 +76,7 @@ interface ActionsProps {
 export function Actions({ children }: ActionsProps) {
   return (
     <div className="flex shrink-0 items-center gap-3">
-      <AnimatePresence mode="wait">{children}</AnimatePresence>
+      <AnimatePresence mode="popLayout">{children}</AnimatePresence>
     </div>
   )
 }

@@ -455,11 +455,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                         offset={6}>
                         <SectionHeader.Breadcrumb
                           key="group-name"
-                          className={
-                            groupInitialSection && groupInitialSection !== "overview" ?
-                              "max-w-[140px] sm:max-w-[180px] md:max-w-[240px] lg:max-w-[280px]"
-                            : "max-w-[180px] sm:max-w-[240px] md:max-w-[320px] lg:max-w-[380px]"
-                          }
                           active={!groupInitialSection || groupInitialSection === "overview"}
                           onClick={
                             !groupInitialSection || groupInitialSection === "overview" ?
@@ -494,9 +489,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 8 }}
-                      transition={{ duration: 0.18, ease: "easeOut" }}
-                      style={{ display: "inline-flex", alignItems: "center" }}
-                      className="shrink-0 gap-2">
+                      transition={{ duration: 0.15, ease: "easeOut" }}
+                      className="inline-flex shrink-0 items-center gap-2">
                       <SectionHeader.Separator />
                       <SectionHeader.Breadcrumb active>
                         {groupSections.find((s) => s.id === groupInitialSection)?.label ||
@@ -524,9 +518,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 8 }}
-                      transition={{ duration: 0.18, ease: "easeOut" }}
-                      style={{ display: "inline-flex", alignItems: "center" }}
-                      className="shrink-0 gap-2">
+                      transition={{ duration: 0.15, ease: "easeOut" }}
+                      className="inline-flex shrink-0 items-center gap-2">
                       <SectionHeader.Separator />
                       <SectionHeader.Breadcrumb active>
                         {headerProps.title}
