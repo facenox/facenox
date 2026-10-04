@@ -218,6 +218,7 @@ const AttendanceRecordItem = memo(
           <div className="flex min-w-0 flex-1 items-center gap-1.5 truncate">
             <MemberTooltip
               member={member}
+              displayName={displayName}
               position="top"
               showEnrollment={false}
               role={record.event_type === "check_out" ? "Exiting" : "Present"}>
@@ -454,6 +455,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                 emptyMessage="No groups available"
                 maxHeight={256}
                 buttonClassName="text-xs h-9 !bg-white/[0.02] hover:!bg-white/[0.05] !border-white/[0.08] border-r-0 rounded-r-none focus:ring-0! focus:border-white/20!"
+                optionClassName="text-xs py-1.5"
                 allowClear={false}
                 showPlaceholderOption={false}
               />
@@ -560,6 +562,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                   }
                   menuWidth={120}
                   buttonClassName={`h-9 w-full !border-white/5 !bg-white/5 group-focus-within/bar:!border-white/20 border border-l-0 rounded-l-none rounded-r-lg px-0 text-white/45 transition-all duration-200 hover:!bg-white/[0.08] hover:text-white focus:!border-white/20 focus:text-white focus:outline-none`}
+                  optionClassName="text-xs py-1.5"
                   showPlaceholderOption={false}
                   allowClear={false}
                 />

@@ -353,7 +353,7 @@ export function Tooltip({
                 visibility: coords ? "visible" : "hidden",
               }}>
               <div
-                className={`relative max-w-[240px] rounded-md border border-white/10 bg-[rgba(15,19,25,0.98)] px-2 py-1 text-[10px] leading-snug font-medium whitespace-normal text-white/90 ${className}`}>
+                className={`relative max-w-[260px] rounded-md border border-white/10 bg-[rgba(15,19,25,0.98)] px-2.5 py-1 text-[10px] leading-snug font-medium [overflow-wrap:anywhere] break-words whitespace-normal text-white/90 ${className}`}>
                 {content}
                 {coords && <div style={coords.arrowStyle} />}
               </div>

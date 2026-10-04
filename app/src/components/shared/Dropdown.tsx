@@ -291,7 +291,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -5 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
-                  className="fixed z-9999 overflow-hidden rounded-lg border border-white/5 bg-[#0d1117]/95 shadow-xl"
+                  className="fixed z-9999 overflow-hidden rounded-lg border border-white/10 bg-[#0f1319] shadow-2xl backdrop-blur-md"
                   onMouseDown={(e) => e.stopPropagation()}
                   style={{
                     top: menuPosition ? `${menuPosition.top}px` : "-9999px",
@@ -356,7 +356,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                                 onChange(null)
                                 setIsOpen(false)
                               }}
-                              className={`w-full rounded-none px-3 py-2 text-left text-sm transition-colors ${
+                              className={`w-full rounded-none px-3 py-1.5 text-left text-xs transition-colors ${
                                 !value ?
                                   "bg-cyan-500/10 font-semibold text-cyan-400"
                                 : "text-white/70 hover:bg-white/5 hover:text-white"
@@ -378,7 +378,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                                 type="button"
                                 onClick={() => handleSelect(option.value)}
                                 disabled={option.disabled}
-                                className={`flex w-full items-center gap-2 truncate rounded-none px-3 py-2 text-left text-sm transition-colors ${
+                                className={`flex w-full items-center gap-2 truncate rounded-none px-3 py-1.5 text-left text-xs transition-colors ${
                                   value === option.value ?
                                     "bg-cyan-500/10 font-semibold text-cyan-400"
                                   : option.disabled ? "cursor-not-allowed text-white/55"

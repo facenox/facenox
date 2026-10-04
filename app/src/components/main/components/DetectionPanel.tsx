@@ -60,7 +60,11 @@ const DetectionCard = memo(
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.18, ease: "easeOut" }}
                     className="min-w-0 flex-1">
-                    <MemberTooltip member={member} position="right" role="Recognized">
+                    <MemberTooltip
+                      member={member}
+                      displayName={displayName}
+                      position="right"
+                      role="Recognized">
                       <span className="block cursor-help truncate text-[13px] font-semibold text-white transition-colors hover:text-cyan-400">
                         {displayName}
                       </span>
