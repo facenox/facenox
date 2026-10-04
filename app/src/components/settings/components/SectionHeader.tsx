@@ -43,7 +43,7 @@ export const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
           ref={ref as React.Ref<HTMLButtonElement>}
           onClick={onClick}
           {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-          className={`cursor-pointer border-none bg-transparent p-0 text-[13px] transition-all duration-200 focus:outline-none ${baseColor} max-w-full truncate font-medium tracking-wide hover:text-white ${className}`}>
+          className={`inline-block cursor-pointer border-none bg-transparent p-0 align-bottom text-[13px] transition-colors duration-150 focus:outline-none ${baseColor} max-w-full truncate font-medium tracking-wide hover:text-white ${className}`}>
           {children}
         </button>
       )
@@ -53,7 +53,7 @@ export const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
       <span
         ref={ref as React.Ref<HTMLSpanElement>}
         {...(rest as React.HTMLAttributes<HTMLSpanElement>)}
-        className={`max-w-full truncate text-[13px] transition-all duration-200 ${
+        className={`inline-block max-w-full truncate align-bottom text-[13px] transition-colors duration-150 ${
           active ?
             "font-semibold tracking-wide text-white"
           : `${baseColor} font-medium tracking-wide`

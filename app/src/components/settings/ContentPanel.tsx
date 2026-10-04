@@ -246,15 +246,15 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
       if (
         groupInitialSection === "members" &&
         validInitialGroup &&
-        addMemberHandler &&
         members.length > 0 &&
         !enrollmentMode
       ) {
         actions = (
           <div className="flex items-center gap-2">
             <button
-              onClick={addMemberHandler}
-              className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
+              onClick={() => addMemberHandler?.()}
+              disabled={!addMemberHandler}
+              className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-50">
               <i className="fa-solid fa-user-plus text-[10px]"></i>
               Add Member
             </button>
@@ -269,11 +269,12 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             Back to Members
           </button>
         )
-      } else if (groupInitialSection === "reports" && reportsExportHandlers) {
+      } else if (groupInitialSection === "reports") {
         actions = (
           <button
-            onClick={reportsExportHandlers.exportCSV}
-            className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/[0.03] px-3 py-1.5 text-[11px] font-bold tracking-wide text-cyan-400 transition-all duration-200 hover:border-cyan-500/40 hover:bg-cyan-500/10 hover:text-cyan-300 active:scale-[0.97]">
+            onClick={() => reportsExportHandlers?.exportCSV()}
+            disabled={!reportsExportHandlers}
+            className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/[0.03] px-3 py-1.5 text-[11px] font-bold tracking-wide text-cyan-400 transition-all duration-200 hover:border-cyan-500/40 hover:bg-cyan-500/10 hover:text-cyan-300 active:scale-[0.97] disabled:opacity-50">
             <i className="fa-solid fa-file-csv text-[10px]" />
             Export CSV
           </button>
@@ -454,6 +455,11 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                         offset={6}>
                         <SectionHeader.Breadcrumb
                           key="group-name"
+                          className={
+                            groupInitialSection && groupInitialSection !== "overview" ?
+                              "max-w-[140px] sm:max-w-[180px] md:max-w-[240px] lg:max-w-[280px]"
+                            : "max-w-[180px] sm:max-w-[240px] md:max-w-[320px] lg:max-w-[380px]"
+                          }
                           active={!groupInitialSection || groupInitialSection === "overview"}
                           onClick={
                             !groupInitialSection || groupInitialSection === "overview" ?
