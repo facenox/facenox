@@ -351,7 +351,10 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
 
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
-      <div className="overflow-hidden">
+      <motion.div
+        layout
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="overflow-hidden">
         {/* Elevated Header Row with Connect/Connected Device Details and Actions */}
         <div className="flex items-start justify-between gap-8 border-b border-white/5 pt-6 pb-4">
           <div className="max-w-xl min-w-0 flex-1">
@@ -395,11 +398,20 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
           </div>
         </div>
 
-        <div className="py-2">
+        <motion.div
+          layout
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="py-2">
           {/* Connection Actions Row */}
-          <div className="flex flex-col gap-4 py-4">
+          <motion.div
+            layout
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col gap-4 py-4">
             {!config.connected ?
-              <div className="space-y-6 pt-1">
+              <motion.div
+                layout
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-6 pt-1">
                 <AnimatePresence mode="wait">
                   {isInitiating && !reversePairing ?
                     <motion.div
@@ -518,12 +530,11 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         </div>
 
                         {/* Live waiting indicator */}
-                        <div className="flex items-center justify-center gap-1.5 text-xs text-white/40">
+                        <div className="flex items-center justify-center gap-2 text-xs text-white/40">
                           <span>Waiting for authorization</span>
-                          <span className="text-white/20">·</span>
                           <span className="font-mono text-white/30">
-                            {Math.floor(secondsLeft / 60)}:
-                            {(secondsLeft % 60).toString().padStart(2, "0")}
+                            ({Math.floor(secondsLeft / 60)}:
+                            {(secondsLeft % 60).toString().padStart(2, "0")})
                           </span>
                         </div>
                       </motion.div>
@@ -532,39 +543,59 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                 </AnimatePresence>
 
                 {/* Subtle Collapsible Manual Fallback */}
-                <div className="flex justify-center pt-2">
-                  {!showManualInput ?
-                    <button
-                      type="button"
-                      onClick={() => setShowManualInput(true)}
-                      className="cursor-pointer text-[11px] text-white/30 transition-colors hover:text-white/60">
-                      Have a pairing code from the web dashboard? Enter it here &rarr;
-                    </button>
-                  : <div className="flex max-w-sm items-center gap-2 pt-1">
-                      <input
-                        type="text"
-                        placeholder="ABCD2345"
-                        value={pairingCode}
-                        onChange={(e) => setPairingCode(e.target.value.toUpperCase())}
-                        className="h-8 flex-1 rounded border border-white/10 bg-transparent px-3 font-mono text-xs font-semibold tracking-widest text-white uppercase outline-none focus:border-white/20"
-                      />
-                      <button
-                        onClick={handlePair}
-                        disabled={busyAction !== null || !pairingCode}
-                        className="flex h-8 items-center gap-2 rounded border border-white/10 bg-white/5 px-3 text-xs font-medium text-white transition hover:bg-white/10 disabled:opacity-40">
-                        {busyAction === "pairing" && <Spinner size="xs" color="white" />}
-                        Connect
-                      </button>
-                      <button
+                <motion.div
+                  layout
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex justify-center pt-2">
+                  <AnimatePresence mode="wait" initial={false}>
+                    {!showManualInput ?
+                      <motion.button
+                        key="toggle-btn"
                         type="button"
-                        onClick={() => setShowManualInput(false)}
-                        className="cursor-pointer px-1 text-xs text-white/30 transition hover:text-white/60">
-                        Cancel
-                      </button>
-                    </div>
-                  }
-                </div>
-              </div>
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        onClick={() => setShowManualInput(true)}
+                        className="cursor-pointer text-[11px] text-white/30 transition-colors hover:text-white/60">
+                        Have a pairing code from the web dashboard? Enter it here &rarr;
+                      </motion.button>
+                    : <motion.div
+                        key="manual-input"
+                        initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex max-w-sm items-center gap-2 pt-1">
+                        <input
+                          type="text"
+                          placeholder="ABCD2345"
+                          value={pairingCode}
+                          onChange={(e) => setPairingCode(e.target.value.toUpperCase())}
+                          className="h-8 flex-1 rounded border border-white/10 bg-transparent px-3 font-mono text-xs font-semibold tracking-widest text-white uppercase outline-none focus:border-white/20"
+                          autoFocus
+                        />
+                        <button
+                          onClick={handlePair}
+                          disabled={busyAction !== null || !pairingCode}
+                          className="flex h-8 items-center gap-2 rounded border border-white/10 bg-white/5 px-3 text-xs font-medium text-white transition hover:bg-white/10 disabled:opacity-40">
+                          {busyAction === "pairing" && <Spinner size="xs" color="white" />}
+                          Connect
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowManualInput(false)
+                            setPairingCode("")
+                          }}
+                          className="cursor-pointer px-1 text-xs text-white/30 transition hover:text-white/60">
+                          Cancel
+                        </button>
+                      </motion.div>
+                    }
+                  </AnimatePresence>
+                </motion.div>
+              </motion.div>
             : <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1 text-xs">
                   {config.lastSyncStatus === "error" ?
@@ -620,18 +651,22 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                 </div>
               </div>
             }
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         <AnimatePresence>
           {showAdvanced && (
             <motion.div
+              layout
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="overflow-hidden">
-              <div className="mt-4 grid gap-4 border-t border-white/5 pt-4">
+              <motion.div
+                layout
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="mt-4 grid gap-4 border-t border-white/5 pt-4">
                 {config.connected && config.deviceId && (
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
@@ -708,11 +743,11 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     Save Configuration
                   </button>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
       <DataBoundariesModal
         isOpen={showPrivacyModal}
