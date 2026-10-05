@@ -224,6 +224,7 @@ export class WindowManager {
 
   static createWindow(): void {
     const mainWindow = new BrowserWindow({
+      title: "Facenox",
       width: 1280,
       height: 600,
       minWidth: 800,
