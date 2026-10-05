@@ -246,10 +246,9 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
               disabled={!(group.settings?.late_threshold_enabled ?? false)}
               disabledTooltipText={
                 <span>
-                  Late tracking is disabled. Go to{" "}
-                  <span className="font-medium text-cyan-400">General</span> and enable{" "}
-                  <span className="font-medium text-cyan-400">Late Tracking</span> to set a
-                  threshold.
+                  Late tracking is disabled. Enable it in{" "}
+                  <span className="font-medium text-cyan-400">General</span> settings to
+                  automatically flag and count late arrivals.
                 </span>
               }
             />
