@@ -109,16 +109,16 @@ export function Modal({
             <div className="p-5">
               {(title || !hideCloseButton || headerActions) && (
                 <div
-                  className={`flex items-start ${title ? "mb-5 justify-between" : "mb-2 justify-end"}`}>
+                  className={`flex items-start ${title ? "mb-5 justify-between gap-4" : "mb-2 justify-end"}`}>
                   {title && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2 pr-2">
                       {icon}
-                      <div className="text-base leading-none font-semibold tracking-tight text-white">
+                      <div className="min-w-0 flex-1 text-base leading-none font-semibold tracking-tight text-white">
                         {title}
                       </div>
                     </div>
                   )}
-                  <div className="flex items-center gap-4">
+                  <div className="flex shrink-0 items-center gap-4">
                     {headerActions}
                     {!hideCloseButton && onClose && <ModalCloseButton onClick={onClose} />}
                   </div>

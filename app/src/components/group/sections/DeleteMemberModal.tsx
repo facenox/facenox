@@ -21,9 +21,9 @@ export function DeleteMemberModal({ isOpen, member, onClose, onConfirm }: Delete
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Remove Member" maxWidth="md">
       <div className="mb-6">
-        <p className="mb-4 text-white">
-          Are you sure you want to remove <strong>&quot;{memberSnapshot.name}&quot;</strong> from
-          this group?
+        <p className="mb-4 break-words text-white">
+          Are you sure you want to remove{" "}
+          <strong className="break-all">&quot;{memberSnapshot.name}&quot;</strong> from this group?
         </p>
         <div className="rounded-lg border border-red-500/40 bg-red-900/30 p-3">
           <p className="text-sm text-red-300">

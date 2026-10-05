@@ -335,10 +335,15 @@ export function AddMember({
         onClose()
       }}
       title={
-        <div>
-          <h3 className="mb-1 text-xl font-semibold tracking-tight">Add Members</h3>
-          <p className="text-xs font-normal text-white/65">
-            {modalSubtitle} <span className="font-medium text-cyan-400/80">{group.name}</span>
+        <div className="min-w-0">
+          <h3 className="mb-1 truncate text-xl font-semibold tracking-tight">Add Members</h3>
+          <p className="flex items-center gap-1.5 text-xs font-normal text-white/65">
+            <span className="shrink-0">{modalSubtitle}</span>
+            <span
+              className="inline-block max-w-[260px] truncate align-bottom font-medium text-cyan-400/80 sm:max-w-[340px]"
+              title={group.name}>
+              {group.name}
+            </span>
           </p>
         </div>
       }

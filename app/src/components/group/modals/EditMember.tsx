@@ -84,10 +84,15 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
       isOpen={isOpen}
       onClose={handleClose}
       title={
-        <div>
-          <h3 className="mb-1 text-xl font-bold tracking-tight text-white">Edit Member</h3>
-          <p className="text-[11px] font-bold tracking-wider text-white/55">
-            Update details for <span className="text-white/65">{member.name}</span>
+        <div className="min-w-0">
+          <h3 className="mb-1 truncate text-xl font-bold tracking-tight text-white">Edit Member</h3>
+          <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-white/55">
+            <span className="shrink-0">Update details for</span>
+            <span
+              className="inline-block max-w-[200px] truncate align-bottom text-white/65 sm:max-w-[260px]"
+              title={member.name}>
+              {member.name}
+            </span>
           </p>
         </div>
       }
