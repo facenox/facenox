@@ -281,38 +281,55 @@ function TablePagination({
       </div>
       {totalPages > 1 && (
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => onPageChange(0)}
-            disabled={page === 0}
-            className="flex h-7 items-center rounded px-2 text-[11px] font-medium text-white/55 transition-colors hover:text-white/80 disabled:opacity-30">
-            First
-          </button>
-          <button
-            onClick={() => onPageChange(page - 1)}
-            disabled={page === 0}
-            className="flex h-7 items-center rounded px-2 text-[11px] font-medium text-white/55 transition-colors hover:text-white/80 disabled:opacity-30">
-            Prev
-          </button>
+          <Tooltip content="First page" position="top" offset={6}>
+            <button
+              type="button"
+              onClick={() => onPageChange(0)}
+              disabled={page === 0}
+              aria-label="First page"
+              className="flex h-7 w-7 items-center justify-center rounded border border-transparent text-white/50 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-25">
+              <i className="fa-solid fa-angles-left text-[10px]" />
+            </button>
+          </Tooltip>
+          <Tooltip content="Previous page" position="top" offset={6}>
+            <button
+              type="button"
+              onClick={() => onPageChange(page - 1)}
+              disabled={page === 0}
+              aria-label="Previous page"
+              className="flex h-7 w-7 items-center justify-center rounded border border-transparent text-white/50 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-25">
+              <i className="fa-solid fa-chevron-left text-[10px]" />
+            </button>
+          </Tooltip>
           <motion.span
             key={`page-label-${page}`}
-            initial={{ opacity: 0, y: -4 }}
+            initial={{ opacity: 0, y: -2 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.12, ease: "easeOut" }}
-            className="flex h-7 items-center px-3 text-[11px] font-medium text-white/55">
-            Page {page + 1} of {totalPages}
+            className="flex h-7 items-center px-2 text-[11px] font-medium text-white/60 select-none">
+            Page <span className="mx-1 font-semibold text-white/90">{page + 1}</span> of{" "}
+            <span className="ml-1 font-semibold text-white/90">{totalPages}</span>
           </motion.span>
-          <button
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages - 1}
-            className="flex h-7 items-center rounded px-2 text-[11px] font-medium text-white/55 transition-colors hover:text-white/80 disabled:opacity-30">
-            Next
-          </button>
-          <button
-            onClick={() => onPageChange(totalPages - 1)}
-            disabled={page >= totalPages - 1}
-            className="flex h-7 items-center rounded px-2 text-[11px] font-medium text-white/55 transition-colors hover:text-white/80 disabled:opacity-30">
-            Last
-          </button>
+          <Tooltip content="Next page" position="top" offset={6}>
+            <button
+              type="button"
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages - 1}
+              aria-label="Next page"
+              className="flex h-7 w-7 items-center justify-center rounded border border-transparent text-white/50 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-25">
+              <i className="fa-solid fa-chevron-right text-[10px]" />
+            </button>
+          </Tooltip>
+          <Tooltip content="Last page" position="top" offset={6}>
+            <button
+              type="button"
+              onClick={() => onPageChange(totalPages - 1)}
+              disabled={page >= totalPages - 1}
+              aria-label="Last page"
+              className="flex h-7 w-7 items-center justify-center rounded border border-transparent text-white/50 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-25">
+              <i className="fa-solid fa-angles-right text-[10px]" />
+            </button>
+          </Tooltip>
         </div>
       )}
     </div>
