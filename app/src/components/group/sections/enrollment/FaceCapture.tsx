@@ -263,11 +263,9 @@ export function FaceCapture({
         title="Success"
         maxWidth="sm"
         hideCloseButton={true}>
-        <div className="flex flex-col items-center gap-4 py-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-500/20">
-            <i className="fa-solid fa-check text-xl text-cyan-400"></i>
-          </div>
-          <p className="text-center text-sm font-medium text-cyan-200/60">{successMessage}</p>
+        <div className="flex flex-col items-center gap-3 py-2">
+          <i className="fa-solid fa-check text-2xl text-cyan-400" />
+          <p className="text-center text-sm font-medium text-white/85">{successMessage}</p>
 
           <div className="mt-6 flex w-full items-center justify-between">
             {/* Subtle countdown text on the left */}
