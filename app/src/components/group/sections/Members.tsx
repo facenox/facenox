@@ -598,7 +598,6 @@ export function Members({
                           }
                         }}
                         className="flex items-center gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-red-400 transition-all hover:bg-red-500/20">
-                        <i className="fa-solid fa-trash-can text-[9px]" />
                         DELETE ({selectedIds.size})
                       </motion.button>
                     )}

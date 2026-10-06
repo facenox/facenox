@@ -1,8 +1,8 @@
 import { useEffect } from "react"
-import { ErrorMessage } from "@/components/common"
+import { ErrorMessage, Spinner } from "@/components/common"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { useBulkEnrollment } from "@/components/group/sections/enrollment/hooks/useBulkEnrollment"
-import { BulkUploadArea } from "@/components/group/shared"
+import { BulkUploadArea, EmptyState } from "@/components/group/shared"
 import { FaceAssignmentGrid } from "@/components/group/sections/enrollment/components/FaceAssignmentGrid"
 import { EnrollmentResults } from "@/components/group/sections/enrollment/components/EnrollmentResults"
 
@@ -56,6 +56,8 @@ export function BulkEnrollment({
   const assignedCount = detectedFaces.filter((f) => f.assignedPersonId).length
   const successCount = enrollmentResults?.filter((r) => r.success).length || 0
   const failedCount = enrollmentResults?.filter((r) => !r.success).length || 0
+
+  const isInitialDetecting = uploadedFiles.length > 0 && isDetecting && detectedFaces.length === 0
 
   return (
     <div className={`relative flex h-full flex-col overflow-hidden ${className ?? ""}`}>
@@ -122,9 +124,30 @@ export function BulkEnrollment({
       {/* Main scroll area */}
       <div
         className={`custom-scroll flex-1 overflow-y-auto px-8 py-8 ${
-          !enrollmentResults && uploadedFiles.length === 0 ? "flex flex-col justify-center" : ""
+          !enrollmentResults && (uploadedFiles.length === 0 || isInitialDetecting) ?
+            "flex flex-col justify-center"
+          : ""
         }`}>
-        {!enrollmentResults && (
+        {!enrollmentResults && uploadedFiles.length === 0 && (
+          <BulkUploadArea
+            uploadedCount={0}
+            isDetecting={false}
+            onFilesSelected={handleFilesSelected}
+            onClear={handleClearFiles}
+          />
+        )}
+
+        {!enrollmentResults && isInitialDetecting && (
+          <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
+            <Spinner size="md" color="cyan" className="mb-4" />
+            <h4 className="text-sm font-semibold tracking-tight text-white/90">
+              Analyzing photos…
+            </h4>
+            <p className="mt-1 text-xs text-white/40">Detecting faces across uploaded images</p>
+          </div>
+        )}
+
+        {!enrollmentResults && uploadedFiles.length > 0 && !isInitialDetecting && (
           <BulkUploadArea
             uploadedCount={uploadedFiles.length}
             isDetecting={isDetecting}
@@ -133,7 +156,7 @@ export function BulkEnrollment({
           />
         )}
 
-        {detectedFaces.length > 0 && !enrollmentResults && (
+        {!enrollmentResults && detectedFaces.length > 0 && (
           <FaceAssignmentGrid
             detectedFaces={detectedFaces}
             members={members}
@@ -143,6 +166,19 @@ export function BulkEnrollment({
             onUnassign={handleUnassign}
           />
         )}
+
+        {!enrollmentResults &&
+          !isDetecting &&
+          uploadedFiles.length > 0 &&
+          detectedFaces.length === 0 && (
+            <div className="py-8">
+              <EmptyState
+                iconClass="fa-solid fa-face-frown text-2xl"
+                title="No faces detected"
+                description="We couldn't detect any clear faces in the uploaded images. Please try uploading clearer, front-facing photos."
+              />
+            </div>
+          )}
 
         {enrollmentResults && (
           <EnrollmentResults

@@ -1,4 +1,5 @@
 import { Tooltip } from "@/components/shared"
+import { Spinner } from "@/components/common"
 
 interface BulkUploadAreaProps {
   uploadedCount: number
@@ -20,12 +21,12 @@ export function BulkUploadArea({
         <div className="flex items-center gap-3">
           <div className="flex h-5 w-5 shrink-0 items-center justify-center">
             {isDetecting ?
-              <i className="fa-solid fa-circle-notch fa-spin text-sm text-amber-400" />
+              <Spinner size="xs" color="cyan" />
             : <i className="fa-solid fa-circle-check text-sm text-cyan-400" />}
           </div>
           <span className="text-[13px] font-semibold text-white">
             {isDetecting ?
-              "Analyzing images…"
+              "Analyzing photos…"
             : `${uploadedCount} ${uploadedCount === 1 ? "image" : "images"} uploaded`}
           </span>
         </div>
