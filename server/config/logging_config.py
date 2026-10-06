@@ -1,4 +1,30 @@
+import logging
 import os
+
+
+class AccessLogFilter(logging.Filter):
+    """
+    Suppresses routine root health check ('GET /') and CORS preflight ('OPTIONS')
+    access logs to keep console and log files focused on meaningful events.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not record.args:
+            return True
+
+        args_str = " ".join(str(a) for a in record.args)
+
+        # Suppress routine root health check returning 200 OK
+        if (
+            "GET / " in args_str or 'GET /"' in args_str or "GET / HTTP" in args_str
+        ) and "200" in args_str:
+            return False
+
+        # Suppress routine CORS preflight returning 200 OK
+        if "OPTIONS " in args_str and "200" in args_str:
+            return False
+
+        return True
 
 
 def get_logging_config():
@@ -13,6 +39,11 @@ def get_logging_config():
     config = {
         "version": 1,
         "disable_existing_loggers": False,
+        "filters": {
+            "access_filter": {
+                "()": AccessLogFilter,
+            },
+        },
         "formatters": {
             "default": {
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -53,6 +84,7 @@ def get_logging_config():
             "uvicorn.access": {
                 "level": "INFO",
                 "handlers": ["console", "file"],
+                "filters": ["access_filter"],
                 "propagate": False,
             },
             "fastapi": {
