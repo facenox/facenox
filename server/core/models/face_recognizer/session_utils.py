@@ -44,7 +44,7 @@ def init_face_recognizer_session(
 
         input_name = session.get_inputs()[0].name
 
-        logger.info(f"Face recognizer model loaded successfully from {model_path}")
+        logger.debug(f"Face recognizer model loaded successfully from {model_path}")
         return session, input_name
 
     except Exception as e:

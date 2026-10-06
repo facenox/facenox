@@ -88,6 +88,9 @@ async def lifespan(app: FastAPI):
         # async-only step: DB migration + cache warm-up (must run after __init__)
         await face_recognizer.initialize()
         emit_startup_progress(6, "Recognition data ready")
+        logger.info(
+            "AI models initialized successfully (FaceDetector, LivenessDetector, FaceRecognizer)"
+        )
 
         set_model_references(liveness_detector, None, face_recognizer, face_detector)
 
