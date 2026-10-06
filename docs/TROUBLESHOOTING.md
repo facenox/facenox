@@ -51,6 +51,15 @@ lsof -i :7400
 kill -9 <PID>
 ```
 
+## Windows SmartScreen or Smart App Control (SAC) blocks execution
+
+When launching an installer or portable release on Windows:
+
+- **Windows SmartScreen:** If you see *"Windows protected your PC"*, click **More info** → **Run anyway**.
+- **Smart App Control (SAC) on Windows 11:** SAC operates on a cloud-reputation model and blocks unsigned downloads without offering a "Run anyway" button in Enforce mode.
+  - **Unblock downloaded files:** Right-click the `.exe` file → open **Properties** → check the **Unblock** box under Security → click **Apply**.
+  - **Developer Mode / SAC Configuration:** If developing or testing unsigned builds, configure Developer Mode in *Settings > System > For developers* or adjust Smart App Control in *Windows Security > App & browser control*.
+
 ## `ImportError` or DLL errors on Windows
 
 This usually means a missing runtime dependency or a broken Python environment.

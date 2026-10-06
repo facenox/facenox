@@ -330,8 +330,8 @@ export function DataStorage({
                 {isPaired && (
                   <span className="mt-1 block font-bold text-amber-500/80">
                     <i className="fa-solid fa-triangle-exclamation mr-1" />
-                    Warning: Restoring this backup will overwrite the active connected directories
-                    on the next sync pull.
+                    Restoring this backup will overwrite the active connected directories on the
+                    next sync pull.
                   </span>
                 )}
               </p>

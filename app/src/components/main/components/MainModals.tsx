@@ -40,6 +40,7 @@ export function MainModals({
     attendanceGroups,
     setAttendanceGroups,
     groupMembers,
+    setGroupMembers,
     showGroupManagement,
     setShowGroupManagement,
     showDeleteConfirmation,
@@ -84,8 +85,18 @@ export function MainModals({
         : [...attendanceGroups, updatedGroup],
       )
       useGroupStore.getState().setSelectedGroup(updatedGroup)
+
+      if (updatedGroup.id && updatedGroup.id !== "all") {
+        attendanceManager
+          .getGroupMembers(updatedGroup.id)
+          .then((members) => {
+            setGroupMembers(members)
+            useGroupStore.getState().setMembers(members)
+          })
+          .catch(console.error)
+      }
     },
-    [attendanceGroups, setAttendanceGroups, setCurrentGroup],
+    [attendanceGroups, setAttendanceGroups, setCurrentGroup, setGroupMembers],
   )
 
   return (

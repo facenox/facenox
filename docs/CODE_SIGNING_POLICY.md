@@ -10,6 +10,15 @@ Facenox desktop releases are currently **unsigned** while we finish our code-sig
 - **Security Auditing:** Every commit is automatically scanned by **GitHub CodeQL** for potential vulnerabilities.
 - **Provenance:** Treat a build as official only if it is attached to an official GitHub release in this repository.
 
+### Windows 11 Smart App Control & SmartScreen Notice
+
+Because preview/beta builds are unsigned and newly released binaries have not yet accumulated cloud reputation:
+
+- **Windows SmartScreen:** May display *"Windows protected your PC"*. You can proceed by clicking **More info** → **Run anyway**.
+- **Windows 11 Smart App Control (SAC):** If Smart App Control is enabled in **Enforce mode**, Windows may block unsigned executables from the internet without displaying the *"Run anyway"* bypass button.
+  - To unblock a downloaded binary: Right-click the `.exe` installer → select **Properties** → check the **Unblock** box at the bottom under Security → click **Apply**.
+  - For developers and test workstations: You can run Facenox from source in **Developer Mode** or adjust SAC settings in *Windows Security > App & browser control > Smart App Control*.
+
 Once code signing is live, we will update this page with:
 
 - the signing provider or certificate details

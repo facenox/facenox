@@ -4,6 +4,7 @@
  */
 
 import { attendanceManager } from "@/services"
+import { ALL_GROUPS_ID } from "@/components/main/hooks/useAttendanceGroups"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
 /**
@@ -11,15 +12,10 @@ import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
  *
  * @param personId The unique identifier of the member to search.
  * @param currentGroup The group context to validate membership against. If provided,
- *   the returned member must match the group ID, otherwise `null` is returned.
+ *   the returned member must match the group ID (unless in All Groups kiosk mode), otherwise `null` is returned.
  * @param memberCacheRef A reference to the Map caching the member lookups.
  * @returns A promise resolving to the member object and their computed display name,
  *   or `null` if the member is invalid or not in the target group.
- *
- * @remarks
- * In multi-camera or high-throughput recognition scenarios, this helper mitigates
- * database lock issues and IPC bottleneck overhead by caching lookup results locally
- * (including negative caching as `null` to avoid constant lookups for missing records).
  */
 export async function getMemberFromCache(
   personId: string,
@@ -29,28 +25,26 @@ export async function getMemberFromCache(
   try {
     if (!memberCacheRef.current) return null
     let member = memberCacheRef.current.get(personId)
-    if (!member && member !== null) {
-      member = await attendanceManager.getMember(personId)
-      memberCacheRef.current.set(personId, member || null)
+    if (member === undefined) {
+      member = (await attendanceManager.getMember(personId)) || null
+      if (member) {
+        memberCacheRef.current.set(personId, member)
+      }
     }
 
-    if (currentGroup) {
-      if (!member) {
-        return null
-      }
-      const memberName = member.name || personId
+    if (!member) {
+      return null
+    }
+
+    if (currentGroup && currentGroup.id !== ALL_GROUPS_ID && currentGroup.id !== "all") {
       if (member.group_id !== currentGroup.id) {
         return null
       }
-      return { member, memberName }
-    } else {
-      const memberName = member?.name || personId
-      return { member: member || null, memberName }
     }
+
+    const memberName = member.name || personId
+    return { member, memberName }
   } catch {
-    if (memberCacheRef.current) {
-      memberCacheRef.current.set(personId, null)
-    }
     if (currentGroup) {
       return null
     } else {

@@ -115,9 +115,20 @@ export function useGroupData(
     if (!isEmbedded) return
 
     const selectedGroupId = initialGroup?.id ?? null
-    const nextMembers: AttendanceMember[] = selectedGroupId ? embeddedMembers : []
-    setMembers(nextMembers)
-  }, [isEmbedded, embeddedMembers, initialGroup?.id, setMembers])
+    if (!selectedGroupId) {
+      setMembers([])
+      return
+    }
+
+    if (
+      embeddedMembers.length > 0 &&
+      embeddedMembers.every((m) => m.group_id === selectedGroupId)
+    ) {
+      setMembers(embeddedMembers)
+    } else {
+      fetchGroupDetails(selectedGroupId)
+    }
+  }, [isEmbedded, embeddedMembers, initialGroup?.id, setMembers, fetchGroupDetails])
 
   // Load groups on mount only (not on every fetchGroups reference change)
   const hasLoadedGroupsRef = useRef(false)
@@ -134,14 +145,16 @@ export function useGroupData(
 
   // Load group details when selected group changes
   useEffect(() => {
-    if (isEmbedded) {
-      return
-    }
+    if (selectedGroup?.id) {
+      const currentMembers = useGroupStore.getState().members
+      const membersMatchGroup =
+        currentMembers.length > 0 && currentMembers.every((m) => m.group_id === selectedGroup.id)
 
-    if (selectedGroup) {
-      fetchGroupDetails(selectedGroup.id)
+      if (!membersMatchGroup) {
+        fetchGroupDetails(selectedGroup.id)
+      }
     }
-  }, [selectedGroup, fetchGroupDetails, isEmbedded])
+  }, [selectedGroup?.id, fetchGroupDetails])
 
   return {
     selectedGroup,

@@ -337,8 +337,8 @@ export const ManualEntryModal = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-[rgba(22,28,36,0.44)] py-12">
-                  <i className="fa-solid fa-user-slash mb-3 text-xl text-white/10"></i>
+                  className="flex flex-col items-center justify-center py-12 text-center">
+                  <i className="fa-solid fa-user-slash mb-3 text-xl text-white/15"></i>
                   <p className="text-[11px] font-bold tracking-wider text-white/55">
                     No results found
                   </p>
