@@ -450,11 +450,22 @@ class AttendanceService:
 
         normalized_rule = self._normalize_rule(
             session_rule,
-            late_threshold_minutes=group.late_threshold_minutes or 15,
-            class_start_time=group.class_start_time
-            or time_health.current_time_local.strftime("%H:%M"),
-            late_threshold_enabled=group.late_threshold_enabled or False,
-            track_checkout=getattr(group, "track_checkout", False),
+            late_threshold_minutes=(
+                group.late_threshold_minutes
+                if group and group.late_threshold_minutes is not None
+                else 15
+            ),
+            class_start_time=(
+                group.class_start_time
+                if group and group.class_start_time
+                else time_health.current_time_local.strftime("%H:%M")
+            ),
+            late_threshold_enabled=(
+                group.late_threshold_enabled
+                if group and group.late_threshold_enabled is not None
+                else False
+            ),
+            track_checkout=getattr(group, "track_checkout", False) if group else False,
         )
 
         # Determine event type and session data
