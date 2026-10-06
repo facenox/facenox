@@ -4,13 +4,15 @@ import { Modal } from "@/components/common"
 
 interface DeleteMemberModalProps {
   isOpen: boolean
-  member: AttendanceMember | null
+  member: (AttendanceMember & { displayName?: string }) | null
   onClose: () => void
   onConfirm: () => void
 }
 
 export function DeleteMemberModal({ isOpen, member, onClose, onConfirm }: DeleteMemberModalProps) {
-  const [memberSnapshot, setMemberSnapshot] = useState<AttendanceMember | null>(null)
+  const [memberSnapshot, setMemberSnapshot] = useState<
+    (AttendanceMember & { displayName?: string }) | null
+  >(null)
 
   if (member && member !== memberSnapshot) {
     setMemberSnapshot(member)
@@ -18,12 +20,14 @@ export function DeleteMemberModal({ isOpen, member, onClose, onConfirm }: Delete
 
   if (!memberSnapshot) return null
 
+  const memberDisplayName = memberSnapshot.displayName || memberSnapshot.name
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Remove Member" maxWidth="md">
       <div className="mb-6">
         <p className="mb-4 break-words text-white">
           Are you sure you want to remove{" "}
-          <strong className="break-all">&quot;{memberSnapshot.name}&quot;</strong> from this group?
+          <strong className="break-all">&quot;{memberDisplayName}&quot;</strong> from this group?
         </p>
         <div className="rounded-lg border border-red-500/40 bg-red-900/30 p-3">
           <p className="text-sm text-red-300">

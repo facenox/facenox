@@ -4,6 +4,7 @@ import { attendanceManager } from "@/services/AttendanceManager"
 import { ErrorMessage, Modal } from "@/components/common"
 import { Tooltip, InfoPopover } from "@/components/shared"
 import { useAttendanceStore } from "@/components/main/stores"
+import { createDisplayNameMap } from "@/utils/displayNameUtils"
 import type { AttendanceMember, AttendanceGroup } from "@/components/main/types"
 
 interface ManualEntryModalProps {
@@ -34,6 +35,8 @@ export const ManualEntryModal = ({
   const [faceDataMap, setFaceDataMap] = useState<Map<string, boolean>>(new Map())
   const [scrollTop, setScrollTop] = useState(0)
 
+  const displayNameMap = useMemo(() => createDisplayNameMap(members), [members])
+
   useEffect(() => {
     setScrollTop(0)
   }, [searchQuery])
@@ -55,10 +58,19 @@ export const ManualEntryModal = ({
   }, [currentGroup?.id])
 
   const sortedAllMembers = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim()
     return members
-      .filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  }, [members, searchQuery])
+      .filter((m) => {
+        if (!query) return true
+        const dName = displayNameMap.get(m.person_id) || m.name
+        return m.name.toLowerCase().includes(query) || dName.toLowerCase().includes(query)
+      })
+      .sort((a, b) => {
+        const nameA = displayNameMap.get(a.person_id) || a.name
+        const nameB = displayNameMap.get(b.person_id) || b.name
+        return nameA.localeCompare(nameB)
+      })
+  }, [members, searchQuery, displayNameMap])
 
   const noFaceCount = useMemo(() => {
     return sortedAllMembers.filter((m) => faceDataMap.size > 0 && !faceDataMap.get(m.person_id))
@@ -149,8 +161,11 @@ export const ManualEntryModal = ({
         {confirmingMember ?
           <div className="space-y-4 py-1">
             <p className="text-xs leading-relaxed text-white/80">
-              Mark <strong className="font-semibold text-white">{confirmingMember.name}</strong> as
-              present manually
+              Mark{" "}
+              <strong className="font-semibold text-white">
+                {displayNameMap.get(confirmingMember.person_id) || confirmingMember.name}
+              </strong>{" "}
+              as present manually
               {currentGroup?.name ?
                 <>
                   {" "}
@@ -298,7 +313,7 @@ export const ManualEntryModal = ({
                               : "cursor-pointer hover:bg-white/5 active:scale-[0.995]"
                             }`}>
                             <span className="flex-1 truncate text-[12px] font-bold text-white/70 transition-colors group-hover/item:text-white">
-                              {member.name}
+                              {displayNameMap.get(member.person_id) || member.name}
                             </span>
 
                             <div className="flex min-w-[96px] shrink-0 items-center justify-end">

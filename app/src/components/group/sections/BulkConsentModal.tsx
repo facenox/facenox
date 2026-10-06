@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react"
 import { Modal } from "@/components/common"
+import { createDisplayNameMap } from "@/utils/displayNameUtils"
 import type { AttendanceMember } from "@/types/recognition"
 
 interface BulkConsentModalProps {
@@ -12,6 +13,7 @@ interface BulkConsentModalProps {
 export function BulkConsentModal({ isOpen, onClose, onConfirm, members }: BulkConsentModalProps) {
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
 
+  const displayNameMap = useMemo(() => createDisplayNameMap(members), [members])
   const pendingMembers = useMemo(() => members.filter((m) => !m.has_consent), [members])
 
   const allChecked = pendingMembers.length > 0 && checkedIds.size === pendingMembers.length
@@ -75,7 +77,9 @@ export function BulkConsentModal({ isOpen, onClose, onConfirm, members }: BulkCo
                 <i className="fa-solid fa-check absolute text-[8px] text-cyan-400 opacity-0 transition-opacity peer-checked:opacity-100" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-white/90">{member.name}</div>
+                <div className="truncate text-sm font-semibold text-white/90">
+                  {displayNameMap.get(member.person_id) || member.name}
+                </div>
                 {member.role && (
                   <div className="text-[11px] font-medium text-white/55">{member.role}</div>
                 )}

@@ -291,11 +291,12 @@ export function Members({
   }
 
   const handleResetFace = useCallback(
-    async (member: AttendanceMember) => {
+    async (member: AttendanceMember & { displayName?: string }) => {
       try {
+        const targetName = member.displayName || member.name
         const confirmed = await dialog.confirm({
           title: "Remove Enrollment",
-          message: `Are you sure you want to remove the enrollment for ${member.name}? They will need to re-enroll to be recognized.`,
+          message: `Are you sure you want to remove the enrollment for ${targetName}? They will need to re-enroll to be recognized.`,
           confirmText: "Remove",
           confirmVariant: "danger",
         })
@@ -748,7 +749,7 @@ export function Members({
             {mode === "bulk" && source === "upload" && (
               <BulkEnrollment
                 group={group}
-                members={selectedMembersList.filter(
+                members={(selectedMembersList.length > 0 ? selectedMembersList : members).filter(
                   (m) => Boolean(group?.settings?.biometric_consent_certified) || !!m.has_consent,
                 )}
                 onRefresh={onMembersChange}

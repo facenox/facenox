@@ -8,9 +8,9 @@ interface MemberRowProps {
   isSelected?: boolean
   isSelectionMode?: boolean
   onToggleSelect?: (personId: string) => void
-  onEdit?: (member: AttendanceMember) => void
-  onDelete?: (member: AttendanceMember) => void
-  onResetFace: (member: AttendanceMember) => void
+  onEdit?: (member: AttendanceMember & { displayName?: string }) => void
+  onDelete?: (member: AttendanceMember & { displayName?: string }) => void
+  onResetFace: (member: AttendanceMember & { displayName?: string }) => void
   isConsentCertified?: boolean
 }
 
