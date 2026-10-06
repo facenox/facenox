@@ -1,5 +1,10 @@
 import { useMemo } from "react"
-import { generateDateRange, createDisplayNameMap, parseLocalDate, formatDuration } from "@/utils"
+import {
+  generateDateRange,
+  createDisplayNameMap,
+  parseLocalDate,
+  getLocalDateString,
+} from "@/utils"
 import type {
   AttendanceSession,
   AttendanceMember,
@@ -38,48 +43,29 @@ export function useReportTransform(
     return map
   }, [sessions])
 
-  const filteredRows = useMemo(() => {
+  // 1. Generate base raw rows for the date range
+  const allRows = useMemo(() => {
     const allDates = generateDateRange(startDateStr, endDateStr)
     const rows: RowData[] = []
+    const todayStr = getLocalDateString()
 
     for (const member of members) {
-      let memberJoinedAt: Date | null = null
-      if (member.joined_at instanceof Date) {
-        memberJoinedAt = member.joined_at
-      } else if (member.joined_at) {
-        memberJoinedAt = new Date(member.joined_at)
-        if (Number.isNaN(memberJoinedAt.getTime())) {
-          memberJoinedAt = null
-        }
-      }
-
-      if (memberJoinedAt) {
-        memberJoinedAt.setHours(0, 0, 0, 0)
+      let memberJoinedStr: string | null = null
+      const rawJoinedAt = member.joined_at as unknown
+      if (rawJoinedAt instanceof Date) {
+        memberJoinedStr = getLocalDateString(rawJoinedAt)
+      } else if (typeof rawJoinedAt === "string") {
+        memberJoinedStr = rawJoinedAt.split("T")[0]
       }
 
       for (const date of allDates) {
-        const dateObj = parseLocalDate(date)
-        dateObj.setHours(0, 0, 0, 0)
-        const isBeforeJoined = memberJoinedAt && dateObj < memberJoinedAt
-
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const isFutureEnrollment = memberJoinedAt && memberJoinedAt > today
-        const isFutureDate = dateObj > today
-
-        const shouldShowNoRecords = isBeforeJoined || isFutureEnrollment || isFutureDate
+        const isBeforeJoined = Boolean(memberJoinedStr && date < memberJoinedStr)
+        const isFutureDate = date > todayStr
+        const shouldShowNoRecords = isBeforeJoined || isFutureDate
 
         const sessionKey = `${member.person_id}_${date}`
         const session = sessionsMap.get(sessionKey) || null
-
-        let finalSession: AttendanceSession | null
-        if (shouldShowNoRecords) {
-          finalSession = null
-        } else if (session) {
-          finalSession = session
-        } else {
-          finalSession = null
-        }
+        const finalSession = shouldShowNoRecords ? null : session
 
         let status: ReportStatusFilter
         if (shouldShowNoRecords) {
@@ -89,16 +75,15 @@ export function useReportTransform(
         } else if (finalSession.is_late) {
           status = "late"
         } else {
-          // Map session status to ReportStatusFilter.
           status = finalSession.status as ReportStatusFilter
         }
 
-        const isLate = finalSession?.is_late || false
+        const isLate = Boolean(finalSession?.is_late)
         const lateMinutes = finalSession?.late_minutes || 0
 
         rows.push({
           person_id: member.person_id,
-          name: displayNameMap.get(member.person_id) || "Unknown",
+          name: displayNameMap.get(member.person_id) || member.name || "Unknown",
           date: date,
           check_in_time: finalSession?.check_in_time,
           check_out_time: finalSession?.check_out_time,
@@ -111,142 +96,41 @@ export function useReportTransform(
         })
       }
     }
+    return rows
+  }, [sessionsMap, members, displayNameMap, startDateStr, endDateStr])
 
-    return rows.filter((r) => {
+  // 2. Filter rows based on status and search query
+  const filteredRows = useMemo(() => {
+    const query = search.trim().toLowerCase()
+
+    return allRows.filter((r) => {
       if (statusFilter !== "all") {
         if (statusFilter === "present") {
-          // Present includes both plain 'present' and 'late' (since late means they arrived)
-          // But technically 'late' status isn't assigned to r.status in the loop above yet unless check?
-          // Wait, previous logic assigned r.status = finalSession.status.
-          // If session status is 'present', r.is_late might be true.
-          // So we check:
-
-          // Note: If backend says status='late', then r.status='late'.
-          // If backend says status='present' + is_late=true, then r.status='present'.
-          // To be safe:
           if (r.status !== "present" && r.status !== "late" && !r.is_late) return false
         } else if (statusFilter === "late") {
-          // Strict LATE filter
           if (!r.is_late && r.status !== "late") return false
         } else {
-          // 'absent' or 'no_records'
           if (r.status !== statusFilter) return false
         }
       }
 
-      if (search) {
-        const q = search.toLowerCase()
+      if (query) {
+        const nameMatch = r.name.toLowerCase().includes(query)
+        const statusMatch = r.status.toLowerCase().includes(query)
+        const dateMatch = r.date.includes(query)
+        const notesMatch = r.notes ? r.notes.toLowerCase().includes(query) : false
+        const idMatch = r.person_id.toLowerCase().includes(query)
 
-        // High-performance shortcut: Check if the search query matches name, status, notes, or raw date string first.
-        // Since 99% of searches are for names or basic statuses, this saves massive CPU cycles by avoiding V8 i18n engines.
-        const nameLower = r.name.toLowerCase()
-        const statusLower = r.status.toLowerCase()
-        const notesLower = r.notes.toLowerCase()
-        const dateRawLower = r.date.toLowerCase()
-
-        const hasBasicMatch =
-          nameLower.includes(q) ||
-          statusLower.includes(q) ||
-          notesLower.includes(q) ||
-          dateRawLower.includes(q)
-
-        if (hasBasicMatch) {
-          return true
+        if (!nameMatch && !statusMatch && !dateMatch && !notesMatch && !idMatch) {
+          return false
         }
-
-        const formattedDate = new Date(r.date).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
-
-        let checkInFormatted = ""
-        if (r.check_in_time) {
-          try {
-            const d = new Date(r.check_in_time)
-            const t12_2dig = d.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            })
-            const t12_num = d.toLocaleTimeString([], {
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-            })
-            const t24_2dig = d.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })
-            const t24_num = d.toLocaleTimeString([], {
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: false,
-            })
-            checkInFormatted = `${t12_2dig} ${t12_num} ${t24_2dig} ${t24_num}`
-          } catch {
-            checkInFormatted = ""
-          }
-        }
-
-        let checkOutFormatted = ""
-        if (r.check_out_time) {
-          try {
-            const d = new Date(r.check_out_time)
-            const t12_2dig = d.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            })
-            const t12_num = d.toLocaleTimeString([], {
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-            })
-            const t24_2dig = d.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })
-            const t24_num = d.toLocaleTimeString([], {
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: false,
-            })
-            checkOutFormatted = `${t12_2dig} ${t12_num} ${t24_2dig} ${t24_num}`
-          } catch {
-            checkOutFormatted = ""
-          }
-        }
-
-        let totalHoursFormatted = ""
-        if (r.total_hours !== undefined && r.total_hours !== null) {
-          try {
-            const totalMins = Math.round(r.total_hours * 60)
-            totalHoursFormatted = `${formatDuration(totalMins)} ${r.total_hours}h`
-          } catch {
-            totalHoursFormatted = ""
-          }
-        }
-
-        let lateFormatted = ""
-        if (r.late_minutes && r.late_minutes > 0) {
-          try {
-            lateFormatted = `+${formatDuration(r.late_minutes)} late`
-          } catch {
-            lateFormatted = ""
-          }
-        }
-
-        const hay =
-          `${r.name} ${r.status} ${r.notes} ${r.date} ${formattedDate} ${checkInFormatted} ${checkOutFormatted} ${totalHoursFormatted} ${lateFormatted}`.toLowerCase()
-        if (!hay.includes(q)) return false
       }
+
       return true
     })
-  }, [sessionsMap, members, displayNameMap, statusFilter, search, startDateStr, endDateStr])
+  }, [allRows, statusFilter, search])
 
+  // 3. Group rows
   const groupedRows = useMemo(() => {
     if (groupBy === "none") return { __all__: filteredRows } as Record<string, typeof filteredRows>
     const groups: Record<string, typeof filteredRows> = {}

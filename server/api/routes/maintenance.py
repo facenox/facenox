@@ -327,52 +327,48 @@ async def import_metadata(
             group_query = select(AttendanceGroup).where(
                 AttendanceGroup.is_deleted.is_(False),
                 AttendanceGroup.remote_id.isnot(None),
-                AttendanceGroup.id.notin_(pulled_group_ids),
-                AttendanceGroup.remote_id.notin_(pulled_group_ids),
             )
             group_query = repo._apply_org_scope(group_query, AttendanceGroup)
             result = await repo.session.execute(group_query)
             for g in result.scalars().all():
-                await repo.delete_group(g.id)
+                if g.id not in pulled_group_ids and g.remote_id not in pulled_group_ids:
+                    await repo.delete_group(g.id)
 
         pulled_member_ids = {m.person_id for m in request.members} | {
             m.remote_id for m in request.members if m.remote_id
         }
+        pruned_faces = 0
         if pulled_member_ids:
             member_query = select(AttendanceMember).where(
                 AttendanceMember.is_deleted.is_(False),
                 AttendanceMember.remote_id.isnot(None),
-                AttendanceMember.person_id.notin_(pulled_member_ids),
-                AttendanceMember.remote_id.notin_(pulled_member_ids),
             )
             member_query = repo._apply_org_scope(member_query, AttendanceMember)
             result = await repo.session.execute(member_query)
+            person_ids_to_prune = set()
             for m in result.scalars().all():
-                m.is_active = False
-                m.is_deleted = True
+                if (
+                    m.person_id not in pulled_member_ids
+                    and m.remote_id not in pulled_member_ids
+                ):
+                    m.is_active = False
+                    m.is_deleted = True
+                    person_ids_to_prune.add(m.person_id)
 
-        # Prune orphan face embeddings for remote members that were removed from the cloud
-        pruned_faces = 0
-        if pulled_member_ids:
-            members_to_prune_stmt = select(AttendanceMember.person_id).where(
-                AttendanceMember.remote_id.isnot(None),
-                AttendanceMember.person_id.notin_(pulled_member_ids),
-            )
-            members_to_prune_stmt = repo._apply_org_scope(
-                members_to_prune_stmt, AttendanceMember
-            )
-            m_res = await repo.session.execute(members_to_prune_stmt)
-            person_ids_to_prune = set(m_res.scalars().all())
-
+            # Prune orphan face embeddings for remote members that were removed from the cloud
             if person_ids_to_prune:
-                faces_to_prune = select(Face).where(
-                    Face.person_id.in_(person_ids_to_prune),
-                    Face.organization_id == repo.organization_id,
-                )
-                face_result = await repo.session.execute(faces_to_prune)
-                for face in face_result.scalars().all():
-                    await repo.session.delete(face)
-                    pruned_faces += 1
+                pids_list = list(person_ids_to_prune)
+                chunk_size = 500
+                for i in range(0, len(pids_list), chunk_size):
+                    chunk = pids_list[i : i + chunk_size]
+                    faces_to_prune = select(Face).where(
+                        Face.person_id.in_(chunk),
+                        Face.organization_id == repo.organization_id,
+                    )
+                    face_result = await repo.session.execute(faces_to_prune)
+                    for face in face_result.scalars().all():
+                        await repo.session.delete(face)
+                        pruned_faces += 1
 
         await repo.session.commit()
 

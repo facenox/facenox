@@ -1,7 +1,7 @@
 from typing import Optional, List, Any, Dict
 from datetime import datetime, timedelta
 import logging
-from sqlalchemy import select, desc, func, update
+from sqlalchemy import select, desc, func, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 import ulid
 
@@ -344,13 +344,16 @@ class AttendanceRepository:
 
         existing_members_map = {}
         if person_ids:
-            query = select(AttendanceMember).where(
-                AttendanceMember.person_id.in_(person_ids)
-            )
-            query = self._apply_org_scope(query, AttendanceMember)
-            result = await self.session.execute(query)
-            for m in result.scalars().all():
-                existing_members_map[m.person_id] = m
+            chunk_size = 500
+            for i in range(0, len(person_ids), chunk_size):
+                chunk = person_ids[i : i + chunk_size]
+                query = select(AttendanceMember).where(
+                    AttendanceMember.person_id.in_(chunk)
+                )
+                query = self._apply_org_scope(query, AttendanceMember)
+                result = await self.session.execute(query)
+                for m in result.scalars().all():
+                    existing_members_map[m.person_id] = m
 
         results = []
         for m_data in members_data:
@@ -522,37 +525,38 @@ class AttendanceRepository:
 
     async def remove_members_bulk(self, person_ids: List[str]) -> List[dict]:
         results = []
-        members_query = select(AttendanceMember).where(
-            AttendanceMember.person_id.in_(person_ids)
-        )
-        members_query = self._apply_org_scope(members_query, AttendanceMember)
-        members_result = await self.session.execute(members_query)
-        existing_ids = {m.person_id for m in members_result.scalars().all()}
+        existing_members = []
+        chunk_size = 500
+        for i in range(0, len(person_ids), chunk_size):
+            chunk = person_ids[i : i + chunk_size]
+            members_query = select(AttendanceMember).where(
+                AttendanceMember.person_id.in_(chunk)
+            )
+            members_query = self._apply_org_scope(members_query, AttendanceMember)
+            members_result = await self.session.execute(members_query)
+            existing_members.extend(members_result.scalars().all())
+
+        existing_map = {m.person_id: m for m in existing_members}
+        found_pids = list(existing_map.keys())
+
+        if found_pids:
+            for i in range(0, len(found_pids), chunk_size):
+                chunk = found_pids[i : i + chunk_size]
+                delete_faces_query = delete(Face).where(Face.person_id.in_(chunk))
+                delete_faces_query = self._apply_org_scope(delete_faces_query, Face)
+                await self.session.execute(delete_faces_query)
+
+            for m in existing_members:
+                m.is_active = False
+                m.is_deleted = True
 
         for pid in person_ids:
-            if pid not in existing_ids:
+            if pid in existing_map:
+                results.append({"success": True, "person_id": pid})
+            else:
                 results.append(
                     {"success": False, "person_id": pid, "error": "Member not found"}
                 )
-                continue
-
-            face_query = select(Face).where(Face.person_id == pid)
-            face_query = self._apply_org_scope(face_query, Face)
-            face_result = await self.session.execute(face_query)
-            face = face_result.scalars().first()
-            if face:
-                await self.session.delete(face)
-
-            member_query = select(AttendanceMember).where(
-                AttendanceMember.person_id == pid
-            )
-            member_query = self._apply_org_scope(member_query, AttendanceMember)
-            member_result = await self.session.execute(member_query)
-            member = member_result.scalars().first()
-            member.is_active = False
-            member.is_deleted = True
-
-            results.append({"success": True, "person_id": pid})
 
         from core.lifespan import face_recognizer
 
@@ -742,12 +746,18 @@ class AttendanceRepository:
         if not sessions_data:
             return []
 
-        person_ids = {sd["person_id"] for sd in sessions_data}
-        member_query = select(AttendanceMember).where(
-            AttendanceMember.person_id.in_(person_ids)
-        )
-        member_result = await self.session.execute(member_query)
-        members_map = {m.person_id: m for m in member_result.scalars().all()}
+        person_ids = list({sd["person_id"] for sd in sessions_data})
+        members_map = {}
+        chunk_size = 500
+        for i in range(0, len(person_ids), chunk_size):
+            chunk = person_ids[i : i + chunk_size]
+            member_query = select(AttendanceMember).where(
+                AttendanceMember.person_id.in_(chunk)
+            )
+            member_query = self._apply_org_scope(member_query, AttendanceMember)
+            member_result = await self.session.execute(member_query)
+            for m in member_result.scalars().all():
+                members_map[m.person_id] = m
 
         # Reflect database columns dynamically from the ORM model definition
         session_columns = AttendanceSession.__table__.columns.keys()
@@ -811,7 +821,9 @@ class AttendanceRepository:
             set_=dynamic_set,
         )
 
-        await self.session.execute(upsert_stmt, values_to_insert)
+        for i in range(0, len(values_to_insert), chunk_size):
+            batch = values_to_insert[i : i + chunk_size]
+            await self.session.execute(upsert_stmt, batch)
 
         return values_to_insert
 

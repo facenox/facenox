@@ -8,7 +8,7 @@ engine = create_async_engine(
     DATABASE_URL,
     connect_args={
         "check_same_thread": False,  # Needed for SQLite
-        "timeout": 15.0,  # 15s driver level lock wait
+        "timeout": 30.0,  # 30s driver level lock wait
     },
     echo=False,
 )
@@ -21,7 +21,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute("PRAGMA synchronous=NORMAL")
-    cursor.execute("PRAGMA busy_timeout=15000")
+    cursor.execute("PRAGMA busy_timeout=30000")
     cursor.execute("PRAGMA cache_size=-64000")  # 64MB Page Cache
     cursor.execute("PRAGMA temp_store=MEMORY")
     cursor.close()

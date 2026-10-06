@@ -82,7 +82,6 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
   const [activitySearch, setActivitySearch] = useState("")
   const [dateFilter, setDateFilter] = useState<DateFilter>("today")
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false)
-  const [showSpinner, setShowSpinner] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [shouldKeepExpanded, setShouldKeepExpanded] = useState(false)
   const filterDropdownRef = useRef<HTMLDivElement>(null)
@@ -120,15 +119,6 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
   const recordsLoading = useGroupStore((state) => state.loading)
 
   useEffect(() => {
-    if (stats) {
-      setShowSpinner(false)
-      return
-    }
-
-    setShowSpinner(true)
-  }, [stats])
-
-  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target as Node)) {
         setFilterDropdownOpen(false)
@@ -161,10 +151,9 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
   }, [recentRecords, activitySearch, displayNameMap])
 
   const loadOverviewData = useCallback(async () => {
-    if (members.length === 0) return
     const { start, end } = getDateRange(dateFilter)
     await fetchOverviewData(group.id, start, end, false)
-  }, [group.id, members.length, dateFilter, fetchOverviewData])
+  }, [group.id, dateFilter, fetchOverviewData])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -173,28 +162,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
     return () => clearTimeout(timer)
   }, [loadOverviewData])
 
-  if (members.length === 0) {
-    return (
-      <EmptyState
-        title="This group has no members"
-        description="Add, edit, and remove members to manage profiles and attendance."
-        action={
-          onAddMember ?
-            {
-              label: "Add Member",
-              onClick: onAddMember,
-              iconClass: "fa-solid fa-user-plus text-[10px]",
-            }
-          : undefined
-        }
-      />
-    )
-  }
-
   if (!stats) {
-    if (!showSpinner) {
-      return <div className="h-full w-full bg-transparent" />
-    }
     return (
       <div className="flex h-full w-full items-center justify-center py-32">
         <motion.div
@@ -210,6 +178,24 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
           </div>
         </motion.div>
       </div>
+    )
+  }
+
+  if (stats.total_members === 0 && members.length === 0) {
+    return (
+      <EmptyState
+        title="This group has no members"
+        description="Add, edit, and remove members to manage profiles and attendance."
+        action={
+          onAddMember ?
+            {
+              label: "Add Member",
+              onClick: onAddMember,
+              iconClass: "fa-solid fa-user-plus text-[10px]",
+            }
+          : undefined
+        }
+      />
     )
   }
 

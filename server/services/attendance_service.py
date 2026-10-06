@@ -305,17 +305,34 @@ class AttendanceService:
         absent_today = 0
         late_today = 0
 
-        session_map = {session.person_id: session for session in sessions}
+        session_map = {}
+        for session in sessions:
+            pid = (
+                session.get("person_id")
+                if isinstance(session, dict)
+                else getattr(session, "person_id", None)
+            )
+            if pid:
+                session_map[pid] = session
 
         for member in members:
             person_id = member.person_id
             session = session_map.get(person_id)
 
             if session:
-                status = session.status
+                status = (
+                    session.get("status")
+                    if isinstance(session, dict)
+                    else getattr(session, "status", None)
+                )
+                is_late = (
+                    session.get("is_late")
+                    if isinstance(session, dict)
+                    else getattr(session, "is_late", False)
+                )
                 if status == "present":
                     present_today += 1
-                    if session.is_late:
+                    if is_late:
                         late_today += 1
                 else:
                     absent_today += 1

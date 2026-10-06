@@ -68,7 +68,9 @@ async def get_group_stats(
             members_task, rules_task, sessions_task
         )
 
-        # Trigger self-healing computation if stats are queried for a date with no session states,
+        service = AttendanceService(repo)
+
+        # Trigger self-healing computation in memory if stats are queried for a date with no session states,
         # or if existing records show inconsistent check-in details due to partial raw logs.
         needs_recompute = not sessions
         if sessions:
@@ -83,8 +85,7 @@ async def get_group_stats(
                 group_id=group_id, start_date=start_of_day, end_date=end_of_day
             )
 
-            service = AttendanceService(repo)
-            session_dicts = service.compute_sessions_from_records(
+            sessions = service.compute_sessions_from_records(
                 records=records,
                 members=members,
                 late_threshold_minutes=group.late_threshold_minutes or 15,
@@ -96,14 +97,6 @@ async def get_group_stats(
                 rule_history=rule_history,
             )
 
-            await repo.upsert_sessions(session_dicts)
-            await repo.session.commit()
-
-        sessions = await repo.get_sessions(
-            group_id=group_id, start_date=target_date, end_date=target_date
-        )
-
-        service = AttendanceService(repo)
         stats = service.calculate_group_stats(members, sessions)
 
         return AttendanceStatsResponse(**stats)

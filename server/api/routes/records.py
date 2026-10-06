@@ -192,56 +192,68 @@ async def get_sessions(
             end_date=end_date,
         )
 
-        # Recompute sessions from records
+        # Recompute sessions from records only if missing or out of sync
         if group_id and start_date:
             group = await repo.get_group(group_id)
             if not group:
                 raise HTTPException(status_code=404, detail="Group not found")
 
-            rule_history = await repo.get_group_rules(group_id)
+            members = None
+            rule_history = None
+            needs_commit = False
 
-            members = await repo.get_group_members(group_id)
             end_date_to_use = end_date or start_date
             start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
             end_datetime = datetime.strptime(end_date_to_use, "%Y-%m-%d")
 
-            computed_sessions = []
             current_date = start_datetime
             while current_date <= end_datetime:
                 date_str = current_date.strftime("%Y-%m-%d")
-                day_start, day_end = local_day_bounds(date_str)
-
-                records = await repo.get_records(
-                    group_id=group_id, start_date=day_start, end_date=day_end
-                )
-
                 existing_day_sessions = [s for s in sessions if s.date == date_str]
 
-                service = AttendanceService(repo)
-                day_sessions = service.compute_sessions_from_records(
-                    records=records,
-                    members=members,
-                    late_threshold_minutes=group.late_threshold_minutes or 15,
-                    target_date=date_str,
-                    class_start_time=group.class_start_time,
-                    late_threshold_enabled=group.late_threshold_enabled or False,
-                    existing_sessions=existing_day_sessions,
-                    track_checkout=getattr(group, "track_checkout", False),
-                    rule_history=rule_history,
+                if members is None:
+                    members = await repo.get_group_members(group_id)
+
+                day_needs_recompute = len(existing_day_sessions) < len(members) or any(
+                    s.status == "present" and s.check_in_time is None
+                    for s in existing_day_sessions
                 )
 
-                await repo.upsert_sessions(day_sessions)
+                if day_needs_recompute:
+                    if rule_history is None:
+                        rule_history = await repo.get_group_rules(group_id)
 
-                computed_sessions.extend(day_sessions)
+                    day_start, day_end = local_day_bounds(date_str)
+
+                    records = await repo.get_records(
+                        group_id=group_id, start_date=day_start, end_date=day_end
+                    )
+
+                    service = AttendanceService(repo)
+                    day_sessions = service.compute_sessions_from_records(
+                        records=records,
+                        members=members,
+                        late_threshold_minutes=group.late_threshold_minutes or 15,
+                        target_date=date_str,
+                        class_start_time=group.class_start_time,
+                        late_threshold_enabled=group.late_threshold_enabled or False,
+                        existing_sessions=existing_day_sessions,
+                        track_checkout=getattr(group, "track_checkout", False),
+                        rule_history=rule_history,
+                    )
+
+                    await repo.upsert_sessions(day_sessions)
+                    needs_commit = True
+
                 current_date += timedelta(days=1)
 
-            await repo.session.commit()
-
-            sessions = await repo.get_sessions(
-                group_id=group_id,
-                start_date=start_date,
-                end_date=end_date_to_use,
-            )
+            if needs_commit:
+                await repo.session.commit()
+                sessions = await repo.get_sessions(
+                    group_id=group_id,
+                    start_date=start_date,
+                    end_date=end_date_to_use,
+                )
 
         return sessions
 

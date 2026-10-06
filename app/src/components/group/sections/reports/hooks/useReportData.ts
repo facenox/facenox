@@ -17,7 +17,7 @@ export function useReportData(
   const [report, setReport] = useState<AttendanceReport | null>(null)
   const [sessions, setSessions] = useState<AttendanceSession[]>([])
   const [members, setMembers] = useState<AttendanceMember[]>(initialMembers)
-  const [loading, setLoading] = useState(initialMembers.length > 0)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const initialMembersRef = useRef(initialMembers)
@@ -31,26 +31,23 @@ export function useReportData(
     setSessions([])
     setMembers(initialMembersRef.current)
     setError(null)
-    setLoading(initialMembersRef.current.length > 0)
+    setLoading(true)
   }, [group.id])
 
   // Sync local members list when background hydration completes or changes reference
   useEffect(() => {
-    setMembers(initialMembers)
+    if (initialMembers.length > 0) {
+      setMembers(initialMembers)
+    }
   }, [initialMembers])
 
   const generateReport = useCallback(async () => {
-    if (members.length === 0) {
-      setLoading(false)
-      return
-    }
-
     const startDate = parseLocalDate(startDateStr)
     const endDate = parseLocalDate(endDateStr)
 
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
       setError("Please select valid report dates.")
-      setLoading(false) // Make sure we stop loading
+      setLoading(false)
       return
     }
 
@@ -71,7 +68,9 @@ export function useReportData(
           start_date: getLocalDateString(startDate),
           end_date: getLocalDateString(endDate),
         }),
-        attendanceManager.getGroupMembers(group.id),
+        initialMembersRef.current.length > 0 ?
+          Promise.resolve(initialMembersRef.current)
+        : attendanceManager.getGroupMembers(group.id),
       ])
       setReport(generatedReport)
       setSessions(loadedSessions)
@@ -82,7 +81,7 @@ export function useReportData(
     } finally {
       setLoading(false)
     }
-  }, [group.id, startDateStr, endDateStr, members.length])
+  }, [group.id, startDateStr, endDateStr])
 
   return {
     report,

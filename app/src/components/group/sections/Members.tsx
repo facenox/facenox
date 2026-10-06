@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { attendanceManager } from "@/services"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
@@ -108,6 +108,36 @@ export function Members({
     })
   }, [])
 
+  const membersWithDisplayNames = useMemo(() => generateDisplayNames(members), [members])
+
+  const filteredMembers = useMemo(() => {
+    let result = membersWithDisplayNames
+
+    if (memberSearch.trim()) {
+      const query = memberSearch.toLowerCase()
+      result = result.filter(
+        (member) =>
+          member.name.toLowerCase().includes(query) ||
+          member.displayName.toLowerCase().includes(query) ||
+          member.person_id.toLowerCase().includes(query) ||
+          (member.role || "member").toLowerCase().includes(query),
+      )
+    }
+
+    if (enrollmentFilter !== "all") {
+      result = result.filter((member) => {
+        const isEnrolled = member.has_face_data
+        return enrollmentFilter === "enrolled" ? isEnrolled : !isEnrolled
+      })
+    }
+
+    return [...result].sort((a, b) => {
+      if (!a.has_face_data && b.has_face_data) return -1
+      if (a.has_face_data && !b.has_face_data) return 1
+      return a.displayName.localeCompare(b.displayName)
+    })
+  }, [membersWithDisplayNames, memberSearch, enrollmentFilter])
+
   const toggleSelectAll = () => {
     if (selectedIds.size === filteredMembers.length) {
       setSelectedIds(new Set())
@@ -115,34 +145,6 @@ export function Members({
       setSelectedIds(new Set(filteredMembers.map((m) => m.person_id)))
     }
   }
-
-  const membersWithDisplayNames = generateDisplayNames(members)
-
-  let filteredMembers = membersWithDisplayNames
-
-  if (memberSearch.trim()) {
-    const query = memberSearch.toLowerCase()
-    filteredMembers = filteredMembers.filter(
-      (member) =>
-        member.name.toLowerCase().includes(query) ||
-        member.displayName.toLowerCase().includes(query) ||
-        member.person_id.toLowerCase().includes(query) ||
-        (member.role || "member").toLowerCase().includes(query),
-    )
-  }
-
-  if (enrollmentFilter !== "all") {
-    filteredMembers = filteredMembers.filter((member) => {
-      const isEnrolled = member.has_face_data
-      return enrollmentFilter === "enrolled" ? isEnrolled : !isEnrolled
-    })
-  }
-
-  filteredMembers = [...filteredMembers].sort((a, b) => {
-    if (!a.has_face_data && b.has_face_data) return -1
-    if (a.has_face_data && !b.has_face_data) return 1
-    return a.displayName.localeCompare(b.displayName)
-  })
 
   // Reset scroll state and position when filter or search changes
   useEffect(() => {
@@ -216,17 +218,17 @@ export function Members({
   const paddingTop = startIndex * ITEM_HEIGHT
   const paddingBottom = Math.max(0, (filteredMembers.length - 1 - endIndex) * ITEM_HEIGHT)
 
-  const selectedMembersList = (() => {
+  const isConsentCertified = Boolean(group?.settings?.biometric_consent_certified)
+
+  const selectedMembersList = useMemo(() => {
     if (selectedIds.size === 0) return []
     return filteredMembers.filter((m) => selectedIds.has(m.person_id))
-  })()
+  }, [selectedIds, filteredMembers])
 
-  const selectedStats = (() => {
+  const selectedStats = useMemo(() => {
     let ready = 0
     let noConsent = 0
     let enrolled = 0
-
-    const isConsentCertified = Boolean(group?.settings?.biometric_consent_certified)
 
     selectedMembersList.forEach((m) => {
       const hasConsent = isConsentCertified || !!m.has_consent
@@ -241,7 +243,7 @@ export function Members({
       total: selectedMembersList.length,
       eligible: ready + enrolled,
     }
-  })()
+  }, [selectedMembersList, isConsentCertified])
 
   const handleBulkConsent = async (confirmedIds: string[]) => {
     try {

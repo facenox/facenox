@@ -236,9 +236,10 @@ async def get_group_persons(
         if face_recognizer:
             all_persons_task = face_recognizer.get_all_persons(repo.organization_id)
             members, all_persons = await asyncio.gather(members_task, all_persons_task)
+            all_persons_set = set(all_persons)
         else:
             members = await members_task
-            all_persons = []
+            all_persons_set = set()
 
         if not face_recognizer:
             return [
@@ -256,23 +257,20 @@ async def get_group_persons(
                 for member in members
             ]
 
-        persons_with_face_data = []
-
-        for member in members:
-            has_face_data = member.person_id in all_persons
-            persons_with_face_data.append(
-                {
-                    "person_id": member.person_id,
-                    "group_id": member.group_id,
-                    "name": member.name,
-                    "role": member.role,
-                    "email": member.email,
-                    "has_face_data": has_face_data,
-                    "joined_at": member.joined_at,
-                    "is_active": member.is_active,
-                    "has_consent": member.has_consent,
-                }
-            )
+        persons_with_face_data = [
+            {
+                "person_id": member.person_id,
+                "group_id": member.group_id,
+                "name": member.name,
+                "role": member.role,
+                "email": member.email,
+                "has_face_data": member.person_id in all_persons_set,
+                "joined_at": member.joined_at,
+                "is_active": member.is_active,
+                "has_consent": member.has_consent,
+            }
+            for member in members
+        ]
 
         return persons_with_face_data
 
