@@ -96,6 +96,7 @@ export const useSettings = ({
   const [hasSelectedMember, setHasSelectedMember] = useState(false)
   const [reportsExportHandlers, setReportsExportHandlers] = useState<{
     exportCSV: () => void
+    exportAllGroupsCSV?: () => void
   } | null>(null)
   const [addMemberHandler, setAddMemberHandler] = useState<(() => void) | null>(null)
 
@@ -265,9 +266,12 @@ export const useSettings = ({
     setActiveSection("attendance")
   }, [setActiveSection])
 
-  const handleExportHandlersReady = useCallback((handlers: { exportCSV: () => void }) => {
-    setReportsExportHandlers(handlers)
-  }, [])
+  const handleExportHandlersReady = useCallback(
+    (handlers: { exportCSV: () => void; exportAllGroupsCSV?: () => void }) => {
+      setReportsExportHandlers(handlers)
+    },
+    [],
+  )
 
   const handleAddMemberHandlerReady = useCallback((handler: () => void) => {
     setAddMemberHandler(() => handler)

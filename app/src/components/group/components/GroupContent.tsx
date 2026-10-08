@@ -9,7 +9,10 @@ interface GroupContentProps {
   deselectMemberTrigger?: number
   onHasSelectedMemberChange?: (hasSelectedMember: boolean) => void
   onDaysTrackedChange?: (daysTracked: number, loading: boolean) => void
-  onExportHandlersReady?: (handlers: { exportCSV: () => void }) => void
+  onExportHandlersReady?: (handlers: {
+    exportCSV: () => void
+    exportAllGroupsCSV?: () => void
+  }) => void
 }
 
 function GroupContentComponent({

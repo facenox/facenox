@@ -10,6 +10,7 @@ const mockUseReportData = vi.fn()
 const mockUseReportViews = vi.fn()
 const mockUseReportTransform = vi.fn()
 const mockExportReportToCSV = vi.fn()
+const mockExportAllGroupsReportToCSV = vi.fn()
 
 vi.mock("framer-motion", () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => children,
@@ -34,6 +35,7 @@ vi.mock("@/components/group/sections/reports/hooks/useReportTransform", () => ({
 
 vi.mock("@/components/group/sections/reports/utils/exportUtils", () => ({
   exportReportToCSV: (...args: unknown[]) => mockExportReportToCSV(...args),
+  exportAllGroupsReportToCSV: (...args: unknown[]) => mockExportAllGroupsReportToCSV(...args),
 }))
 
 vi.mock("@/components/group/sections/reports/components/ReportToolbar", () => ({
@@ -194,10 +196,15 @@ describe("Reports", () => {
     expect(onDaysTrackedChange).toHaveBeenCalledWith(7, false)
     expect(onExportHandlersReady).toHaveBeenCalled()
 
-    const handlers = onExportHandlersReady.mock.calls.at(-1)?.[0] as { exportCSV: () => void }
+    const handlers = onExportHandlersReady.mock.calls.at(-1)?.[0] as {
+      exportCSV: () => void
+      exportAllGroupsCSV: () => void
+    }
     handlers.exportCSV()
-
     expect(mockExportReportToCSV).toHaveBeenCalled()
+
+    handlers.exportAllGroupsCSV()
+    expect(mockExportAllGroupsReportToCSV).toHaveBeenCalled()
   })
 
   it("shows report errors above the content", () => {

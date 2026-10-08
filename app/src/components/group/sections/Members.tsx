@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { attendanceManager } from "@/services"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
-import { useAttendanceStore } from "@/components/main/stores"
+import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { generateDisplayNames } from "@/utils"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { EmptyState } from "@/components/group/shared/EmptyState"
@@ -246,18 +246,50 @@ export function Members({
   }, [selectedMembersList, isConsentCertified])
 
   const handleBulkConsent = async (confirmedIds: string[]) => {
+    if (confirmedIds.length === 0) return
+    const idSet = new Set(confirmedIds)
+
+    // Optimistically update stores immediately so banner and list reflect instant consent
+    const prevGroupMembers = useGroupStore.getState().members
+    const prevAttendanceMembers = useAttendanceStore.getState().groupMembers
+
+    useGroupStore.setState({
+      members: prevGroupMembers.map((m) =>
+        idSet.has(m.person_id) ? { ...m, has_consent: true } : m,
+      ),
+    })
+    useAttendanceStore.setState({
+      groupMembers: prevAttendanceMembers.map((m) =>
+        idSet.has(m.person_id) ? { ...m, has_consent: true } : m,
+      ),
+    })
+
+    setIsBulkConsentModalOpen(false)
+    useUIStore
+      .getState()
+      .setSuccess(`Granted biometric consent for ${confirmedIds.length.toLocaleString()} members.`)
+
     try {
-      await Promise.all(
-        confirmedIds.map((id) =>
-          attendanceManager.updateMember(id, {
-            has_consent: true,
-          }),
-        ),
-      )
+      const CHUNK_SIZE = 25
+      for (let i = 0; i < confirmedIds.length; i += CHUNK_SIZE) {
+        const chunk = confirmedIds.slice(i, i + CHUNK_SIZE)
+        await Promise.all(
+          chunk.map((id) =>
+            attendanceManager.updateMember(id, {
+              has_consent: true,
+            }),
+          ),
+        )
+      }
       onMembersChange()
-      setIsBulkConsentModalOpen(false)
     } catch (err) {
       console.error("Error updating bulk consent:", err)
+      useUIStore
+        .getState()
+        .setError(err instanceof Error ? err.message : "Failed to update bulk consent.")
+      useGroupStore.setState({ members: prevGroupMembers })
+      useAttendanceStore.setState({ groupMembers: prevAttendanceMembers })
+      onMembersChange()
     }
   }
 

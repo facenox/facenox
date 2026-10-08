@@ -12,7 +12,7 @@ import { SectionHeader } from "./components/SectionHeader"
 import { useGroupUIStore } from "@/components/group/stores"
 import { useUIStore } from "@/components/main/stores"
 import { attendanceManager } from "@/services"
-import { Tooltip } from "@/components/shared"
+import { Tooltip, Dropdown } from "@/components/shared"
 import { isOfficialCloudUrl } from "../../services/syncDefaults"
 import type {
   QuickSettings,
@@ -33,7 +33,10 @@ interface ContentPanelProps {
   deselectMemberTrigger: number
   setDeselectMemberTrigger: (trigger: number) => void
   setHasSelectedMember: (hasSelected: boolean) => void
-  handleExportHandlersReady: (handlers: { exportCSV: () => void }) => void
+  handleExportHandlersReady: (handlers: {
+    exportCSV: () => void
+    exportAllGroupsCSV?: () => void
+  }) => void
   handleAddMemberHandlerReady: (handler: () => void) => void
   handleGroupsChanged: (newGroup?: AttendanceGroup) => void
   handleGroupBack: () => void
@@ -54,6 +57,7 @@ interface ContentPanelProps {
   members: AttendanceMember[]
   reportsExportHandlers: {
     exportCSV: () => void
+    exportAllGroupsCSV?: () => void
   } | null
   addMemberHandler: (() => void) | null
   hasSelectedMember: boolean
@@ -270,15 +274,54 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
           </button>
         )
       } else if (groupInitialSection === "reports") {
-        actions = (
-          <button
-            onClick={() => reportsExportHandlers?.exportCSV()}
-            disabled={!reportsExportHandlers}
-            className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/[0.03] px-3 py-1.5 text-[11px] font-bold tracking-wide text-cyan-400 transition-all duration-200 hover:border-cyan-500/40 hover:bg-cyan-500/10 hover:text-cyan-300 active:scale-[0.97] disabled:opacity-50">
-            <i className="fa-solid fa-file-csv text-[10px]" />
-            Export CSV
-          </button>
-        )
+        actions =
+          dropdownGroups.length > 1 ?
+            <Dropdown
+              options={[
+                {
+                  value: "current",
+                  label: "Export Current Group",
+                  icon: "fa-solid fa-file-csv",
+                },
+                {
+                  value: "all",
+                  label: "Export All Groups",
+                  icon: "fa-solid fa-layer-group",
+                },
+              ]}
+              value={null}
+              onChange={(val) => {
+                if (val === "current") {
+                  reportsExportHandlers?.exportCSV()
+                } else if (val === "all") {
+                  reportsExportHandlers?.exportAllGroupsCSV?.()
+                }
+              }}
+              showPlaceholderOption={false}
+              allowClear={false}
+              align="right"
+              menuWidth={180}
+              className="inline-flex items-center"
+              buttonClassName="!border-0 !bg-transparent !p-0 hover:!bg-transparent focus:!bg-transparent"
+              trigger={
+                <button
+                  type="button"
+                  disabled={!reportsExportHandlers}
+                  className="flex items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/[0.03] px-3 py-1.5 text-[11px] font-bold tracking-wide text-cyan-400 transition-all duration-200 hover:border-cyan-500/40 hover:bg-cyan-500/10 hover:text-cyan-300 active:scale-[0.97] disabled:opacity-50">
+                  <i className="fa-solid fa-file-csv text-[10px]" />
+                  <span>Export</span>
+                  <i className="fa-solid fa-chevron-down ml-0.5 text-[8px] opacity-70" />
+                </button>
+              }
+            />
+          : <button
+              onClick={() => reportsExportHandlers?.exportCSV()}
+              disabled={!reportsExportHandlers}
+              title="Export CSV for this group"
+              className="flex items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/[0.03] px-3 py-1.5 text-[11px] font-bold tracking-wide text-cyan-400 transition-all duration-200 hover:border-cyan-500/40 hover:bg-cyan-500/10 hover:text-cyan-300 active:scale-[0.97] disabled:opacity-50">
+              <i className="fa-solid fa-file-csv text-[10px]" />
+              Export CSV
+            </button>
       }
 
       const isOverview = !groupInitialSection || groupInitialSection === "overview"
