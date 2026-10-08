@@ -335,7 +335,6 @@ export function FaceCapture({
                       videoRef={videoRef}
                       isStreaming={isStreaming}
                       isVideoReady={isVideoReady}
-                      cameraError={cameraError}
                       onStart={startCamera}
                       onStop={stopCamera}
                       source={source}

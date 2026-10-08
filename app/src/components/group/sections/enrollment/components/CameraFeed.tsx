@@ -6,7 +6,6 @@ interface CameraFeedProps {
   videoRef: React.RefObject<HTMLVideoElement | null>
   isStreaming: boolean
   isVideoReady: boolean
-  cameraError: string | null
   onStart: (deviceId?: string) => void
   onStop: () => void
   source: CaptureSource
@@ -20,7 +19,6 @@ export function CameraFeed({
   videoRef,
   isStreaming,
   isVideoReady,
-  cameraError,
   onStart,
   onStop,
   source,
@@ -67,38 +65,24 @@ export function CameraFeed({
 
       {!isStreaming && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-          <div className="space-y-4 text-center">
-            {cameraError ?
-              <div className="flex flex-col items-center gap-4">
-                <div className="max-w-[280px] rounded-lg border border-red-500/20 bg-red-500/10 p-4">
-                  <div className="text-[11px] font-medium text-red-200/60">{cameraError}</div>
-                </div>
-                <button
-                  onClick={() => onStart()}
-                  className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-6 py-2 text-[12px] font-medium text-white/70 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white">
-                  Retry Camera
-                </button>
-              </div>
-            : <div className="relative flex flex-col items-center justify-center opacity-20">
-                <svg
-                  className="h-10 w-10 animate-pulse text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-            }
+          <div className="relative flex flex-col items-center justify-center opacity-20">
+            <svg
+              className="h-10 w-10 animate-pulse text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
           </div>
         </div>
       )}
 
-      {isStreaming && !isVideoReady && !cameraError && (
+      {isStreaming && !isVideoReady && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-cyan-400" />
         </div>

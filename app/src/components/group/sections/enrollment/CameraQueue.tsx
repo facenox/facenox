@@ -40,9 +40,6 @@ export function CameraQueue({
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showCompletion, setShowCompletion] = useState(false)
-  const [showConsentNotice, setShowConsentNotice] = useState(
-    () => localStorage.getItem("facenox.enrollment.consent_notice_dismissed") !== "1",
-  )
   const [lastBbox, setLastBbox] = useState<{
     bbox: [number, number, number, number]
     width: number
@@ -457,33 +454,6 @@ export function CameraQueue({
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
               className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-hidden p-6">
-              {/* One-time compliance notice: shown only on first enrollment session */}
-              <AnimatePresence>
-                {showConsentNotice && (
-                  <motion.div
-                    key="consent-notice"
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute top-3 right-3 left-3 z-20 flex items-start justify-between gap-3 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3.5 py-2.5">
-                    <p className="text-[10px] leading-relaxed text-amber-200/70">
-                      <span className="font-semibold text-amber-200/90">Operator notice:</span>{" "}
-                      Please ensure members are informed and appropriate consent or authorization
-                      has been obtained prior to biometric enrollment.
-                    </p>
-                    <button
-                      onClick={() => {
-                        localStorage.setItem("facenox.enrollment.consent_notice_dismissed", "1")
-                        setShowConsentNotice(false)
-                      }}
-                      className="mt-0.5 shrink-0 text-[10px] font-bold text-amber-200/50 transition-colors hover:text-amber-200/90"
-                      aria-label="Dismiss compliance notice">
-                      Got it
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
               <div
                 ref={cameraContainerRef}
                 className="relative aspect-video min-h-0 w-full max-w-4xl shrink overflow-hidden rounded-xl">
@@ -520,7 +490,6 @@ export function CameraQueue({
                       videoRef={videoRef}
                       isStreaming={isStreaming}
                       isVideoReady={isVideoReady}
-                      cameraError={cameraError}
                       onStart={startCamera}
                       onStop={stopCamera}
                       source="live"
