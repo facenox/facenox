@@ -148,6 +148,7 @@ class AttendanceMemberResponse(BaseModel):
     joined_at: datetime
     is_active: bool
     has_consent: bool
+    has_face_data: bool = False
     consent_granted_at: Optional[datetime] = None
     consent_granted_by: Optional[str] = None
     remote_id: Optional[str] = None

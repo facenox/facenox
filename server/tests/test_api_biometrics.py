@@ -393,6 +393,13 @@ def test_enroll_and_list_face_data_stays_org_scoped(biometrics_env) -> None:
     assert group_persons_one.json()[0]["has_face_data"] is True
     assert group_persons_two.json()[0]["has_face_data"] is True
 
+    all_members_one = client.get("/attendance/members", headers=org_one_headers)
+    all_members_two = client.get("/attendance/members", headers=org_two_headers)
+    assert all_members_one.status_code == 200, all_members_one.text
+    assert all_members_two.status_code == 200, all_members_two.text
+    assert all_members_one.json()[0]["has_face_data"] is True
+    assert all_members_two.json()[0]["has_face_data"] is True
+
 
 def test_recognition_is_org_scoped_and_masks_nonconsenting_member(
     biometrics_env,
