@@ -601,6 +601,9 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   onLateThresholdToggle={(enabled) =>
                     updateAttendanceSetting({ lateThresholdEnabled: enabled })
                   }
+                  onClassStartTimeChange={(time) =>
+                    updateAttendanceSetting({ classStartTime: time })
+                  }
                   onAttendanceCooldownChange={(seconds) =>
                     updateAttendanceSetting({ attendanceCooldownSeconds: seconds })
                   }
