@@ -52,7 +52,7 @@ const formatValidationError = (
 /**
  * A modal dialog that allows enrollment of a single new member
  * or multiple new members in bulk via a comma-separated list or file import.
- * Includes biometric consent verification and duplicate warnings.
+ * Includes duplicate warnings.
  */
 export function AddMember({
   isOpen,
@@ -85,7 +85,6 @@ export function AddMember({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmDuplicate, setConfirmDuplicate] = useState(false)
-  const [hasConsent, setHasConsent] = useState(false)
 
   // Inline Face Enrollment states
   const [isFaceSectionOpen, setIsFaceSectionOpen] = useState(false)
@@ -97,16 +96,6 @@ export function AddMember({
   const lastAddedTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const { videoRef, isStreaming, startCamera, stopCamera } = useCamera()
-
-  const isConsentCertified = Boolean(group?.settings?.biometric_consent_certified)
-
-  useEffect(() => {
-    if (isConsentCertified) {
-      setHasConsent(true)
-    } else if (isOpen) {
-      setHasConsent(false)
-    }
-  }, [isConsentCertified, isOpen])
 
   useEffect(() => {
     if (!isOpen) {
@@ -153,7 +142,6 @@ export function AddMember({
     setFaceError(null)
     setIsFaceSectionOpen(false)
     setLastAddedSuccess(null)
-    setHasConsent(isConsentCertified)
   }
 
   const handleSnapPhoto = useCallback(async () => {
@@ -310,7 +298,6 @@ export function AddMember({
       await waitForNextPaint()
       const newMember = await attendanceManager.addMember(group.id, newMemberName.trim(), {
         role: newMemberRole.trim() || undefined,
-        hasConsent: true,
       })
 
       let faceEnrolled = false
@@ -403,7 +390,6 @@ export function AddMember({
         name: string
         role?: string
         email?: string
-        hasConsent?: boolean
       }> = []
       const errors: string[] = []
       let failedPrecheck = 0
@@ -422,7 +408,6 @@ export function AddMember({
         membersToCreate.push({
           name,
           role: role || undefined,
-          hasConsent: true,
         })
       }
 
@@ -826,36 +811,6 @@ export function AddMember({
                     }
                   </AnimatePresence>
                 </div>
-
-                {/* Explicit Certification Consent Checkbox */}
-                {!isConsentCertified && (
-                  <label className="group mt-3 flex cursor-pointer items-start gap-2.5 py-1.5 select-none">
-                    <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
-                      <input
-                        type="checkbox"
-                        checked={hasConsent}
-                        onChange={(e) => setHasConsent(e.target.checked)}
-                        className="peer sr-only"
-                      />
-                      <div className="flex h-4 w-4 items-center justify-center rounded border border-white/10 bg-white/5 transition-all duration-150 group-hover:border-white/20 peer-checked:border-cyan-500 peer-checked:bg-cyan-500 peer-focus-visible:border-cyan-400 peer-focus-visible:ring-2 peer-focus-visible:ring-cyan-400">
-                        <svg
-                          className={`h-2.5 w-2.5 text-slate-950 transition-opacity duration-150 ${
-                            hasConsent ? "opacity-100" : "opacity-0"
-                          }`}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    </div>
-                    <span className="text-[11px] leading-relaxed text-white/45 transition-colors duration-150 group-hover:text-white/65 peer-focus-visible:text-white">
-                      I certify that explicit biometric consent has been obtained for this member in
-                      accordance with the Data Privacy Act.
-                    </span>
-                  </label>
-                )}
               </motion.div>
             : <motion.div
                 key="bulk"
@@ -896,36 +851,6 @@ export function AddMember({
                     </label>
                   </div>
                 </div>
-
-                {/* Explicit Certification Consent Checkbox for Bulk */}
-                {!isConsentCertified && (
-                  <label className="group mt-3 flex cursor-pointer items-start gap-2.5 py-1.5 select-none">
-                    <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
-                      <input
-                        type="checkbox"
-                        checked={hasConsent}
-                        onChange={(e) => setHasConsent(e.target.checked)}
-                        className="peer sr-only"
-                      />
-                      <div className="flex h-4 w-4 items-center justify-center rounded border border-white/10 bg-white/5 transition-all duration-150 group-hover:border-white/20 peer-checked:border-cyan-500 peer-checked:bg-cyan-500 peer-focus-visible:border-cyan-400 peer-focus-visible:ring-2 peer-focus-visible:ring-cyan-400">
-                        <svg
-                          className={`h-2.5 w-2.5 text-slate-950 transition-opacity duration-150 ${
-                            hasConsent ? "opacity-100" : "opacity-0"
-                          }`}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    </div>
-                    <span className="text-[11px] leading-relaxed text-white/45 transition-colors duration-150 group-hover:text-white/65 peer-focus-visible:text-white">
-                      I certify that explicit biometric consent has been obtained for all imported
-                      individuals in accordance with the Data Privacy Act.
-                    </span>
-                  </label>
-                )}
 
                 {/* Bulk Results */}
                 {bulkResults && (
@@ -1001,7 +926,6 @@ export function AddMember({
                   disabled={
                     loading ||
                     isProcessingBulk ||
-                    !hasConsent ||
                     (!isBulkMode && !newMemberName.trim()) ||
                     (isBulkMode && !bulkMembersText.trim()) ||
                     isProcessingFace

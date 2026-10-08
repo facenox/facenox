@@ -32,7 +32,6 @@ export class MemberManager {
       personId?: string
       role?: string
       email?: string
-      hasConsent?: boolean
     },
   ): Promise<AttendanceMember> {
     const memberData: {
@@ -40,14 +39,12 @@ export class MemberManager {
       name: string
       role?: string
       email?: string
-      has_consent?: boolean
       person_id?: string
     } = {
       group_id: groupId,
       name,
       role: options?.role,
       email: options?.email,
-      has_consent: options?.hasConsent ?? false,
     }
 
     if (options?.personId) {
@@ -70,7 +67,6 @@ export class MemberManager {
       name: string
       role?: string
       email?: string
-      hasConsent?: boolean
       personId?: string
     }>,
     groupId: string,
@@ -86,7 +82,6 @@ export class MemberManager {
         name: m.name,
         role: m.role || undefined,
         email: m.email || undefined,
-        has_consent: m.hasConsent ?? false,
         person_id: m.personId || undefined,
       })),
     }

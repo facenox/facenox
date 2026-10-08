@@ -389,6 +389,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     }
   }, [
     activeSection,
+    dropdownGroups.length,
     groupInitialSection,
     groupSections,
     validInitialGroup,
@@ -659,9 +660,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   }
                   onDataRetentionChange={(days) =>
                     updateAttendanceSetting({ dataRetentionDays: days })
-                  }
-                  onBiometricConsentToggle={(enabled) =>
-                    updateAttendanceSetting({ biometricConsentCertified: enabled })
                   }
                   hasSelectedGroup={!!validInitialGroup}
                   isPaired={isPaired}

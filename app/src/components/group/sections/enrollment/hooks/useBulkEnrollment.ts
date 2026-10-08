@@ -326,7 +326,6 @@ export function useBulkEnrollment(
         try {
           const newMember = await attendanceManager.addMember(group.id, memberName, {
             role: face.parsedRole || undefined,
-            hasConsent: true,
           })
           face.assignedPersonId = newMember.person_id
           newlyCreatedMembers.push(newMember)

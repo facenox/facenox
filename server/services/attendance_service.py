@@ -592,11 +592,6 @@ class AttendanceService:
         if member.group_id != group_id:
             raise ValueError("Member does not belong to this group")
 
-        if not member.has_consent:
-            raise PermissionError(
-                "Biometric consent is required before face enrollment"
-            )
-
         from hooks import process_face_detection
 
         detections = await process_face_detection(
@@ -777,18 +772,6 @@ class AttendanceService:
                     failed_count += 1
                     results.append(
                         {"index": idx, "success": False, "error": "Invalid member"}
-                    )
-                    continue
-
-                if not member.has_consent:
-                    failed_count += 1
-                    results.append(
-                        {
-                            "index": idx,
-                            "person_id": person_id,
-                            "success": False,
-                            "error": "Biometric consent required",
-                        }
                     )
                     continue
 

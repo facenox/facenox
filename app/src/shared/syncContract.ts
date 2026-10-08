@@ -7,7 +7,6 @@ export const groupSettingsSchema = z.object({
   late_threshold_enabled: z.boolean().default(false),
   class_start_time: z.string().nullable().optional(),
   track_checkout: z.boolean().default(false),
-  biometric_consent_certified: z.boolean().default(false),
 })
 
 export const attendanceGroupSchema = z.object({
@@ -28,9 +27,6 @@ export const attendanceMemberSchema = z.object({
   email: z.string().email().nullable().optional().or(z.literal("")),
   joined_at: z.string().datetime(),
   is_active: z.boolean(),
-  has_consent: z.boolean(),
-  consent_granted_at: z.string().datetime().nullable().optional(),
-  consent_granted_by: z.string().nullable().optional(),
   remote_id: z.string().nullable().optional(),
 })
 

@@ -2,7 +2,7 @@
 
 Thanks for considering contributing!
 
-Facenox is a local-first desktop product with a privacy-sensitive domain. Changes that affect biometrics, consent, storage, exports, sync, or deletion need extra care and clear documentation.
+Facenox is a local-first desktop product with a privacy-sensitive domain. Changes that affect biometrics, storage, exports, sync, or deletion need extra care and clear documentation.
 
 ## Before You Start
 
@@ -84,7 +84,6 @@ If your change affects any of these, update the docs in the same pull request:
 
 - product boundary
 - storage behavior
-- consent behavior
 - backup or restore behavior
 - Facenox Cloud integration behavior
 - security or privacy expectations

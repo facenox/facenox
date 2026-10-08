@@ -145,9 +145,6 @@ export function MainModals({
                 (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
                   ?.track_checkout ?? false,
               dataRetentionDays: dataRetentionDays,
-              biometricConsentCertified:
-                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
-                  ?.biometric_consent_certified ?? false,
             }}
             onAttendanceSettingsChange={async (updates) => {
               if (updates.enableSpoofDetection !== undefined) {
@@ -160,24 +157,6 @@ export function MainModals({
 
               const editableGroup =
                 currentGroup && currentGroup.id !== "all" ? currentGroup : attendanceGroups[0]
-
-              if (updates.biometricConsentCertified !== undefined && editableGroup) {
-                const updatedSettings = {
-                  ...editableGroup.settings,
-                  biometric_consent_certified: updates.biometricConsentCertified,
-                }
-                try {
-                  await attendanceManager.updateGroup(editableGroup.id, {
-                    settings: updatedSettings,
-                  })
-                  syncUpdatedGroupLocally({
-                    ...editableGroup,
-                    settings: updatedSettings,
-                  })
-                } catch (error) {
-                  console.error("Failed to update biometric consent certification setting:", error)
-                }
-              }
 
               if (updates.trackCheckout !== undefined && editableGroup) {
                 const updatedSettings = {

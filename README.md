@@ -65,7 +65,7 @@ _Configuration controls for core attendance mechanics, including Entry/Exit mode
 ### Security & Anti-Spoofing
 
 ![Security Settings](docs/assets/screenshots/07-settings-security.png)
-_Configuration panel for Anti-spoofing (Liveness Verification) toggles, Global Group Consent enforcement, and Data Retention policies._
+_Configuration panel for Anti-spoofing (Liveness Verification) toggles and Data Retention policies._
 
 ### Data & Storage
 
@@ -97,7 +97,6 @@ Most face recognition systems rely on cloud-based biometrics. Facenox doesn't. B
 
 - **On-Device AI Inference:** Real-time face detection with recognition, ByteTrack multi-subject tracking, and liveness verification running entirely on local machine.
 - **Cross-Platform:** Supports Windows, macOS, and Linux.
-- **Consent-Aware:** Built-in compliance for biometric enrollment and deletion consent.
 - **Directory Management:** Full control over group and member directories.
 - **Attendance Tracking:** Automated session recording and CSV/JSON exports.
 - **Secure Storage:** Encrypted local biometric storage and password-protected `.facenox` backups.
@@ -247,7 +246,7 @@ Facenox is in active development. Until code-signing is finalized in a future re
 - [INSTALLATION.md](docs/INSTALLATION.md): Local development setup.
 - [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md): Common setup and runtime issues.
 - [CODE_SIGNING_POLICY.md](docs/CODE_SIGNING_POLICY.md): Release identity and trust rules.
-- [PRIVACY.md](docs/PRIVACY.md): Data handling and consent policy.
+- [PRIVACY.md](docs/PRIVACY.md): Data handling and privacy policy.
 - [SECURITY.md](SECURITY.md): Vulnerability reporting policy.
 - [TESTING.md](app/TESTING.md): Frontend and Electron app testing conventions.
 

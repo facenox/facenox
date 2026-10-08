@@ -288,7 +288,7 @@ async def test_purge_history(maintenance_env) -> None:
 
 
 @pytest.mark.asyncio
-async def test_import_metadata_sync_pruning_and_consent_preservation(
+async def test_import_metadata_sync_pruning(
     maintenance_env,
 ) -> None:
     client = maintenance_env["client"]
@@ -314,7 +314,6 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
                 "person_id": "member-1",
                 "group_id": "group-1",
                 "name": "Alice",
-                "has_consent": True,
                 "remote_id": "member-1",
             }
         )
@@ -326,7 +325,6 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
                 "person_id": "member-4",
                 "group_id": "group-1",
                 "name": "David",
-                "has_consent": True,
                 "remote_id": "member-4",
             }
         )
@@ -341,7 +339,6 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
                 "person_id": "member-2",
                 "group_id": "group-2",
                 "name": "Bob",
-                "has_consent": True,
                 "remote_id": "member-2",
             }
         )
@@ -356,7 +353,6 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
                 "person_id": "member-3",
                 "group_id": "group-3",
                 "name": "Charlie",
-                "has_consent": True,
                 "remote_id": "member-3",
             }
         )
@@ -366,10 +362,6 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
 
     # Define import-metadata payload
     # G1 and G2 are pulled (G3 is missing => G3 and Charlie should be pruned)
-    # Alice has_consent remains True (cloud True => local True, no change)
-    # Bob has_consent: cloud sends False, but local is True => local consent preserved (NOT revoked)
-    # Consent revocation via pull is blocked to prevent breaking recognition for
-    # members enrolled before cloud pairing. True revocations require is_active=False.
     # David (member-4) is missing => David should be pruned and counted in pruned_faces
     import_payload = {
         "groups": [
@@ -382,14 +374,12 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
                 "group_id": "group-1",
                 "name": "Alice",
                 "is_active": True,
-                "has_consent": True,
             },
             {
                 "person_id": "member-2",
                 "group_id": "group-2",
                 "name": "Bob",
                 "is_active": True,
-                "has_consent": False,  # Cloud sends False, but local True is preserved
             },
         ],
     }
@@ -409,9 +399,7 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
     assert (
         res_data["pruned_faces"] == 1
     )  # David's face pruned (Charlie was pruned via group deletion)
-    assert (
-        res_data["erased_faces"] == 0
-    )  # Bob's face NOT erased — local consent preserved
+    assert res_data["erased_faces"] == 0
 
     # Verify DB state
     async with session_factory() as session:
@@ -448,15 +436,7 @@ async def test_import_metadata_sync_pruning_and_consent_preservation(
         res_f4 = await session.execute(select(Face).where(Face.person_id == "member-4"))
         assert res_f4.scalars().first() is None
 
-        # Member 2 (Bob) consent is preserved — cloud's False did NOT overwrite local True
-        res_bob = await session.execute(
-            select(AttendanceMember).where(AttendanceMember.person_id == "member-2")
-        )
-        bob = res_bob.scalars().first()
-        assert bob.has_consent is True
-
     # Verify mock face recognizer state
-    # Bob (member-2) was NOT erased — local consent took precedence over cloud's False
     assert "member-2" in recognizer.enrolled["org-1"]
     # Cache should still have been refreshed
     assert "org-1" in recognizer.refreshed_orgs
@@ -484,7 +464,6 @@ async def test_import_metadata_preserves_local_groups_and_empty_pull_safety(
                 "person_id": "local-member-1",
                 "group_id": "local-group-1",
                 "name": "Local Alice",
-                "has_consent": True,
             }
         )
         await face_repo.upsert_face("local-member-1", b"LocalAliceEmb", 128)
@@ -529,7 +508,6 @@ async def test_import_metadata_preserves_local_groups_and_empty_pull_safety(
                 "group_id": "cloud-group-1",
                 "name": "Cloud User",
                 "is_active": True,
-                "has_consent": True,
             }
         ],
     }

@@ -22,9 +22,7 @@ const mockGroup: AttendanceGroup = {
   name: "Class 10-A",
   created_at: new Date("2026-10-08T00:00:00Z"),
   is_active: true,
-  settings: {
-    biometric_consent_certified: true,
-  },
+  settings: {},
 }
 
 const mockMembers: AttendanceMember[] = [
@@ -36,7 +34,6 @@ const mockMembers: AttendanceMember[] = [
     group_id: "group-1",
     joined_at: new Date("2026-10-08T00:00:00Z"),
     is_active: true,
-    has_consent: true,
   },
 ]
 describe("useBulkEnrollment", () => {

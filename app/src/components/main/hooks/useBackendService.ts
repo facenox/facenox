@@ -335,7 +335,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
                         processing_time: face.recognition.processing_time,
                         error: face.recognition.error ?? null,
                         memberName: face.recognition.memberName,
-                        has_consent: face.recognition.has_consent,
                       }
                     : undefined,
                 }

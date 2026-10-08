@@ -25,7 +25,6 @@ export const createAllGroupsVirtualGroup = (totalGroupsCount: number): Attendanc
     late_threshold_enabled: false,
     class_start_time: "08:00",
     track_checkout: false,
-    biometric_consent_certified: false,
   },
 })
 

@@ -59,7 +59,6 @@ graph TD
 
 - groups and members
 - attendance records and sessions
-- consent metadata
 - encrypted biometric templates
 - audit and settings data
 

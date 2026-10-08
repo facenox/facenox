@@ -2,9 +2,7 @@ import logging
 import inspect
 from typing import List, Optional, Set
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy import select
 
-import core.lifespan
 from api.schemas import (
     AttendanceMemberCreate,
     AttendanceMemberUpdate,
@@ -15,7 +13,6 @@ from api.schemas import (
     SuccessResponse,
 )
 from api.deps import get_repository
-from database.models import Face
 from database.repository import AttendanceRepository
 from services.attendance_service import AttendanceService
 
@@ -64,10 +61,7 @@ async def get_members(repo: AttendanceRepository = Depends(get_repository)):
                 "email": member.email,
                 "joined_at": member.joined_at,
                 "is_active": member.is_active,
-                "has_consent": member.has_consent,
                 "has_face_data": member.person_id in all_persons_set,
-                "consent_granted_at": member.consent_granted_at,
-                "consent_granted_by": member.consent_granted_by,
                 "remote_id": member.remote_id,
             }
             for member in members
@@ -220,10 +214,7 @@ async def get_member(
             "email": member.email,
             "joined_at": member.joined_at,
             "is_active": member.is_active,
-            "has_consent": member.has_consent,
             "has_face_data": has_face_data,
-            "consent_granted_at": member.consent_granted_at,
-            "consent_granted_by": member.consent_granted_by,
             "remote_id": member.remote_id,
         }
 
@@ -263,57 +254,13 @@ async def update_member(
         if not updated_member:
             raise HTTPException(status_code=500, detail="Failed to update member")
 
-        # Audit consent changes
-        new_consent = update_data.get("has_consent")
-        if new_consent is True and not existing_member.has_consent:
-            await repo.add_audit_log(
-                action="CONSENT_GRANTED",
-                target_type="member",
-                target_id=person_id,
-                details=f"granted_by={update_data.get('consent_granted_by', 'admin')}",
-            )
-        elif new_consent is False and existing_member.has_consent:
-            await repo.add_audit_log(
-                action="CONSENT_REVOKED",
-                target_type="member",
-                target_id=person_id,
-            )
-            # DPA/GDPR: revoked consent means the biometric must be erased
-            face_query = select(Face).where(Face.person_id == person_id)
-            if repo.organization_id:
-                face_query = face_query.where(
-                    Face.organization_id == repo.organization_id
-                )
-            face_result = await repo.session.execute(face_query)
-            face = face_result.scalars().first()
-            if face:
-                try:
-                    if core.lifespan.face_recognizer:
-                        await core.lifespan.face_recognizer.remove_person(
-                            person_id, repo.organization_id
-                        )
-                    else:
-                        await repo.session.delete(face)
-                    logger.info(
-                        f"Biometric data erased for {person_id} after consent revocation"
-                    )
-                except Exception as bio_err:
-                    logger.error(
-                        f"Failed to erase biometric for {person_id}: {bio_err}"
-                    )
-
-        # Log profile update (if anything other than consent was changed)
-        non_audit_fields = [
-            f
-            for f in update_data.keys()
-            if f not in ["has_consent", "consent_granted_by"]
-        ]
-        if non_audit_fields:
+        # Log profile update
+        if update_data:
             await repo.add_audit_log(
                 action="MEMBER_UPDATED",
                 target_type="member",
                 target_id=person_id,
-                details=f"Fields updated: {', '.join(non_audit_fields)}",
+                details=f"Fields updated: {', '.join(update_data.keys())}",
             )
 
         await repo.session.commit()

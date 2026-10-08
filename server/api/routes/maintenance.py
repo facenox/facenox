@@ -176,10 +176,6 @@ async def import_metadata(
 
             remote_id = group.remote_id or group.id
             group_settings = group.settings or {}
-            if group.biometric_consent_certified is not None:
-                group_settings["biometric_consent_certified"] = (
-                    group.biometric_consent_certified
-                )
             group_payload = {
                 "id": group.id,
                 "name": group.name,
@@ -210,10 +206,6 @@ async def import_metadata(
                     existing_group.class_start_time = settings["class_start_time"]
                 if "track_checkout" in settings:
                     existing_group.track_checkout = settings["track_checkout"]
-                if group.biometric_consent_certified is not None:
-                    existing_group.biometric_consent_certified = (
-                        group.biometric_consent_certified
-                    )
 
                 # Re-assert group rule when reviving to prevent stale
                 # attendance config (thresholds, class start time, etc.)
@@ -234,7 +226,6 @@ async def import_metadata(
             groups_count += 1
 
         members_count = 0
-        revoked_consent_ids: list[str] = []
         for member in request.members:
             stmt = select(AttendanceMember).where(
                 AttendanceMember.person_id == member.person_id,
@@ -258,9 +249,6 @@ async def import_metadata(
                 "role": member.role,
                 "email": member.email,
                 "is_active": True,
-                "has_consent": member.has_consent,
-                "consent_granted_at": member.consent_granted_at,
-                "consent_granted_by": member.consent_granted_by,
                 "remote_id": remote_id,
             }
             if member.id:
@@ -268,25 +256,6 @@ async def import_metadata(
             if member.joined_at:
                 member_payload["joined_at"] = member.joined_at
             if existing_member:
-                # Consent preservation: local consent is the source of truth.
-                # Cloud pull must NEVER downgrade consent that was already granted
-                # locally (e.g. enrolled before pairing). Doing so would cause the
-                # recognition engine to mask the member as "Protected" even though
-                # their face is enrolled and consent was explicitly granted on-device.
-                #
-                # Allowed:  False (local) → True  (cloud)  — cloud grants consent
-                # Blocked:  True  (local) → False (cloud)  — would break recognition
-                #
-                # True revocations are handled by is_active=False (member removal above).
-                if existing_member.has_consent and not member.has_consent:
-                    # Preserve local consent — do not propagate the cloud's False value.
-                    member_payload["has_consent"] = True
-                    member_payload["consent_granted_at"] = (
-                        existing_member.consent_granted_at
-                    )
-                    member_payload["consent_granted_by"] = (
-                        existing_member.consent_granted_by
-                    )
                 existing_member.is_deleted = False
                 existing_member.is_active = True
                 await repo.update_member(member.person_id, member_payload)
@@ -378,15 +347,7 @@ async def import_metadata(
         if face_recognizer:
             await face_recognizer.refresh_cache(repo.organization_id)
 
-        # Erase biometrics for members whose consent was revoked (GDPR Art. 17)
         erased_faces = 0
-        if revoked_consent_ids and face_recognizer:
-            for pid in revoked_consent_ids:
-                result = await face_recognizer.remove_person(pid, repo.organization_id)
-                if result.get("success"):
-                    erased_faces += 1
-            if erased_faces:
-                await face_recognizer.refresh_cache(repo.organization_id)
 
         await repo.add_audit_log(
             action="METADATA_PULL_IMPORTED",

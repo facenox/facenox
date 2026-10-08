@@ -90,7 +90,6 @@ describe("exportUtils", () => {
         name: "Alice Smith",
         joined_at: new Date("2026-01-01"),
         is_active: true,
-        has_consent: true,
       },
     ]
 
@@ -101,7 +100,6 @@ describe("exportUtils", () => {
         name: "Bob Jones",
         joined_at: new Date("2026-01-01"),
         is_active: true,
-        has_consent: true,
       },
     ]
 

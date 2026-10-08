@@ -3,7 +3,6 @@ import { TRACKING_HISTORY_LIMIT } from "@/components/main/constants"
 
 export interface ExtendedFaceRecognitionResponse extends FaceRecognitionResponse {
   memberName?: string
-  has_consent?: boolean
 }
 
 export const trimTrackingHistory = <T>(history: T[]): T[] => {

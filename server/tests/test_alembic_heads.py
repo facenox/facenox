@@ -12,4 +12,4 @@ def test_alembic_has_single_head():
 
     heads = script_dir.get_heads()
     assert len(heads) == 1, f"Expected a single migration head, found: {heads}"
-    assert heads == ["e3b4c5d6e7f8"]
+    assert heads == ["f2b3c4d5e6f7"]

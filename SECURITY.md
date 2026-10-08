@@ -37,7 +37,7 @@ Reports are normally acknowledged within 48 to 72 hours. The exact fix timeline 
 Examples of high-severity issues include:
 
 - extracting raw face images or biometric templates unexpectedly
-- bypassing consent checks for enrollment or recognition
+- bypassing authorization checks for enrollment or recognition
 - reading another organization's cloud sync data through a tenant-isolation bug
 - modifying attendance or audit data without authorization
 

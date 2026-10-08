@@ -92,29 +92,15 @@ class LiveStreamService:
                 "success": bool(result.get("success", False)),
                 "person_id": None,
                 "name": None,
-                "has_consent": None,
                 "similarity": similarity,
                 "processing_time": 0.0,
                 "error": error,
-            }
-
-        has_consent = bool(member_info and member_info.get("has_consent"))
-        if not has_consent:
-            return {
-                "success": True,
-                "person_id": PROTECTED_IDENTITY,
-                "name": "Protected",
-                "has_consent": False,
-                "similarity": similarity,
-                "processing_time": 0.0,
-                "error": None,
             }
 
         return {
             "success": True,
             "person_id": person_id,
             "name": (member_info or {}).get("name") or person_id,
-            "has_consent": True,
             "similarity": similarity,
             "processing_time": 0.0,
             "error": error,
@@ -256,7 +242,6 @@ class LiveStreamService:
                     member.person_id: {
                         "name": member.name,
                         "role": member.role,
-                        "has_consent": member.has_consent,
                     }
                     for member in members
                     if member.is_active
@@ -275,7 +260,6 @@ class LiveStreamService:
                         member.person_id: {
                             "name": member.name,
                             "role": member.role,
-                            "has_consent": member.has_consent,
                         }
                         for member in members
                         if member.is_active

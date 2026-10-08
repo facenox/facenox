@@ -65,7 +65,6 @@ class GroupSettings(BaseModel):
     late_threshold_enabled: bool = False
     class_start_time: Optional[str] = None  # HH:MM, defaults to creation time
     track_checkout: bool = False
-    biometric_consent_certified: bool = False
 
 
 class AttendanceGroupCreate(BaseModel):
@@ -124,8 +123,6 @@ class AttendanceMemberCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     role: Optional[str] = Field(None, max_length=100)
     email: Optional[str] = Field(None, max_length=255)
-    has_consent: bool = False
-    consent_granted_by: Optional[str] = Field(None, max_length=100)
 
 
 class AttendanceMemberUpdate(BaseModel):
@@ -134,8 +131,6 @@ class AttendanceMemberUpdate(BaseModel):
     role: Optional[str] = Field(None, max_length=100)
     email: Optional[str] = Field(None, max_length=255)
     is_active: Optional[bool] = None
-    has_consent: Optional[bool] = None
-    consent_granted_by: Optional[str] = Field(None, max_length=100)
 
 
 class AttendanceMemberResponse(BaseModel):
@@ -147,15 +142,12 @@ class AttendanceMemberResponse(BaseModel):
     email: Optional[str]
     joined_at: datetime
     is_active: bool
-    has_consent: bool
     has_face_data: bool = False
-    consent_granted_at: Optional[datetime] = None
-    consent_granted_by: Optional[str] = None
     remote_id: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
-    @field_validator("joined_at", "consent_granted_at", mode="before")
+    @field_validator("joined_at", mode="before")
     @classmethod
     def _normalize_member_datetimes(
         cls, value: Optional[datetime]
@@ -421,7 +413,6 @@ class ImportedGroup(BaseModel):
     settings: Optional[Dict] = None
     remote_id: Optional[str] = None
     created_at: Optional[datetime] = None
-    biometric_consent_certified: Optional[bool] = None
 
 
 class ImportedMember(BaseModel):
@@ -432,9 +423,6 @@ class ImportedMember(BaseModel):
     role: Optional[str] = None
     email: Optional[str] = None
     is_active: bool = True
-    has_consent: bool = False
-    consent_granted_at: Optional[datetime] = None
-    consent_granted_by: Optional[str] = None
     remote_id: Optional[str] = None
     joined_at: Optional[datetime] = None
 

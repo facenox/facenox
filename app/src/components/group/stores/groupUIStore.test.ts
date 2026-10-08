@@ -99,7 +99,6 @@ describe("groupUIStore", () => {
       name: "Alice",
       joined_at: new Date(),
       is_active: true,
-      has_consent: true,
     }
 
     useGroupUIStore.getState().openEditMember(member)

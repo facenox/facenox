@@ -60,7 +60,6 @@ describe("groupStore", () => {
           name: "Alice",
           joined_at: new Date(),
           is_active: true,
-          has_consent: true,
         },
       ],
     })
@@ -101,7 +100,6 @@ describe("groupStore", () => {
           name: "Alice",
           joined_at: new Date(),
           is_active: true,
-          has_consent: true,
         },
       ],
     })
@@ -122,7 +120,6 @@ describe("groupStore", () => {
         name: "Alice",
         joined_at: new Date(),
         is_active: true,
-        has_consent: true,
       },
     ]
     mockAttendanceManager.getGroupMembers.mockResolvedValue(members)

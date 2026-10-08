@@ -2,13 +2,12 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { attendanceManager } from "@/services"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
-import { useAttendanceStore, useUIStore } from "@/components/main/stores"
+import { useAttendanceStore } from "@/components/main/stores"
 import { generateDisplayNames } from "@/utils"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { EmptyState } from "@/components/group/shared/EmptyState"
 import { Dropdown, useDialog, Tooltip } from "@/components/shared"
 import { DeleteMemberModal } from "./DeleteMemberModal"
-import { BulkConsentModal } from "./BulkConsentModal"
 import { FaceCapture } from "./enrollment/FaceCapture"
 import { CameraQueue } from "./enrollment/CameraQueue"
 import { BulkEnrollment } from "./enrollment/BulkEnrollment"
@@ -48,8 +47,6 @@ export function Members({
   )
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [memberToDelete, setMemberToDelete] = useState<AttendanceMember | null>(null)
-  const [isBulkConsentModalOpen, setIsBulkConsentModalOpen] = useState(false)
-  const [bulkConsentScope, setBulkConsentScope] = useState<"all" | "selected">("all")
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [shouldKeepExpanded, setShouldKeepExpanded] = useState(false)
   const [scrollTop, setScrollTop] = useState(0)
@@ -65,7 +62,7 @@ export function Members({
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (selectedIds.size === 0) return
-      if (isBulkConsentModalOpen || memberToDelete) return
+      if (memberToDelete) return
       const target = e.target as HTMLElement
       if (
         target.closest(
@@ -77,7 +74,7 @@ export function Members({
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [selectedIds.size, isBulkConsentModalOpen, memberToDelete])
+  }, [selectedIds.size, memberToDelete])
 
   const handleSearchFocus = () => {
     setIsSearchFocused(true)
@@ -218,8 +215,6 @@ export function Members({
   const paddingTop = startIndex * ITEM_HEIGHT
   const paddingBottom = Math.max(0, (filteredMembers.length - 1 - endIndex) * ITEM_HEIGHT)
 
-  const isConsentCertified = Boolean(group?.settings?.biometric_consent_certified)
-
   const selectedMembersList = useMemo(() => {
     if (selectedIds.size === 0) return []
     return filteredMembers.filter((m) => selectedIds.has(m.person_id))
@@ -227,71 +222,19 @@ export function Members({
 
   const selectedStats = useMemo(() => {
     let ready = 0
-    let noConsent = 0
     let enrolled = 0
 
     selectedMembersList.forEach((m) => {
-      const hasConsent = isConsentCertified || !!m.has_consent
-      if (!hasConsent) noConsent++
-      else if (m.has_face_data) enrolled++
+      if (m.has_face_data) enrolled++
       else ready++
     })
     return {
       ready,
-      noConsent,
       enrolled,
       total: selectedMembersList.length,
-      eligible: ready + enrolled,
+      eligible: selectedMembersList.length,
     }
-  }, [selectedMembersList, isConsentCertified])
-
-  const handleBulkConsent = async (confirmedIds: string[]) => {
-    if (confirmedIds.length === 0) return
-    const idSet = new Set(confirmedIds)
-
-    // Optimistically update stores immediately so banner and list reflect instant consent
-    const prevGroupMembers = useGroupStore.getState().members
-    const prevAttendanceMembers = useAttendanceStore.getState().groupMembers
-
-    useGroupStore.setState({
-      members: prevGroupMembers.map((m) =>
-        idSet.has(m.person_id) ? { ...m, has_consent: true } : m,
-      ),
-    })
-    useAttendanceStore.setState({
-      groupMembers: prevAttendanceMembers.map((m) =>
-        idSet.has(m.person_id) ? { ...m, has_consent: true } : m,
-      ),
-    })
-
-    setIsBulkConsentModalOpen(false)
-    useUIStore
-      .getState()
-      .setSuccess(`Granted biometric consent for ${confirmedIds.length.toLocaleString()} members.`)
-
-    try {
-      const CHUNK_SIZE = 25
-      for (let i = 0; i < confirmedIds.length; i += CHUNK_SIZE) {
-        const chunk = confirmedIds.slice(i, i + CHUNK_SIZE)
-        await Promise.all(
-          chunk.map((id) =>
-            attendanceManager.updateMember(id, {
-              has_consent: true,
-            }),
-          ),
-        )
-      }
-      onMembersChange()
-    } catch (err) {
-      console.error("Error updating bulk consent:", err)
-      useUIStore
-        .getState()
-        .setError(err instanceof Error ? err.message : "Failed to update bulk consent.")
-      useGroupStore.setState({ members: prevGroupMembers })
-      useAttendanceStore.setState({ groupMembers: prevAttendanceMembers })
-      onMembersChange()
-    }
-  }
+  }, [selectedMembersList])
 
   const removeMember = useCallback(
     async (member: AttendanceMember) => {
@@ -459,11 +402,6 @@ export function Members({
                         {selectedStats.enrolled > 0 && (
                           <span className="text-white/55">{selectedStats.enrolled} enrolled</span>
                         )}
-                        {selectedStats.noConsent > 0 && (
-                          <span className="text-amber-400">
-                            {selectedStats.noConsent} no consent
-                          </span>
-                        )}
                       </div>
                     </div>
                   : <span>
@@ -474,21 +412,6 @@ export function Members({
                 </div>
                 <div className="flex items-center gap-4">
                   <AnimatePresence>
-                    {selectedIds.size >= 2 && selectedStats.noConsent > 0 && (
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                        onClick={() => {
-                          setBulkConsentScope("selected")
-                          setIsBulkConsentModalOpen(true)
-                        }}
-                        className="flex items-center gap-2 rounded-md border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-amber-400 transition-all hover:bg-amber-500/20">
-                        GRANT CONSENT ({selectedStats.noConsent})
-                      </motion.button>
-                    )}
-
                     {selectedIds.size >= 2 && selectedStats.eligible === 1 && (
                       <motion.div
                         key="enroll-single"
@@ -503,11 +426,7 @@ export function Members({
                             : "Proceed to enroll member"
                           }>
                           <motion.button
-                            onClick={() =>
-                              jumpToEnrollment(
-                                selectedMembersList.find((m) => m.has_consent)!.person_id,
-                              )
-                            }
+                            onClick={() => jumpToEnrollment(selectedMembersList[0].person_id)}
                             className={`flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] font-bold tracking-wider transition-all ${
                               selectedStats.enrolled > 0 ?
                                 "border border-white/10 bg-transparent text-white/65 hover:bg-white/5 hover:text-white"
@@ -723,7 +642,6 @@ export function Members({
                         onEdit={onEdit}
                         onDelete={setMemberToDelete}
                         onResetFace={handleResetFace}
-                        isConsentCertified={Boolean(group?.settings?.biometric_consent_certified)}
                       />
                     </div>
                   ))}
@@ -732,40 +650,11 @@ export function Members({
             </AnimatePresence>
           </div>
 
-          {/* Consent banner */}
-          {!group?.settings?.biometric_consent_certified && members.some((m) => !m.has_consent) && (
-            <div className="pointer-events-none absolute right-0 bottom-6 left-0 z-40 flex justify-center">
-              <div className="animate-in fade-in slide-in-from-bottom-4 pointer-events-auto flex items-center gap-4 rounded-lg border border-white/10 bg-[#0d1117]/95 px-4 py-2 text-[11px] font-medium text-white/65 shadow-xl duration-500">
-                <div className="flex items-center gap-2">
-                  <i className="fa-solid fa-triangle-exclamation shrink-0 text-amber-500/80" />
-                  <span className="leading-snug whitespace-nowrap">
-                    Some members need biometric consent.
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    setBulkConsentScope("all")
-                    setIsBulkConsentModalOpen(true)
-                  }}
-                  className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wider text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
-                  Grant all
-                </button>
-              </div>
-            </div>
-          )}
-
           <DeleteMemberModal
             isOpen={!!memberToDelete}
             member={memberToDelete}
             onClose={() => setMemberToDelete(null)}
             onConfirm={confirmRemoveMember}
-          />
-
-          <BulkConsentModal
-            isOpen={isBulkConsentModalOpen}
-            onClose={() => setIsBulkConsentModalOpen(false)}
-            onConfirm={handleBulkConsent}
-            members={bulkConsentScope === "selected" ? selectedMembersList : members}
           />
         </motion.div>
       }
@@ -782,9 +671,7 @@ export function Members({
             {mode === "bulk" && source === "upload" && (
               <BulkEnrollment
                 group={group}
-                members={(selectedMembersList.length > 0 ? selectedMembersList : members).filter(
-                  (m) => Boolean(group?.settings?.biometric_consent_certified) || !!m.has_consent,
-                )}
+                members={selectedMembersList.length > 0 ? selectedMembersList : members}
                 onRefresh={onMembersChange}
                 onClose={resetEnrollment}
                 className="flex-1"
@@ -794,11 +681,7 @@ export function Members({
               <CameraQueue
                 group={group}
                 members={members}
-                preselectedIds={selectedMembersList
-                  .filter(
-                    (m) => Boolean(group?.settings?.biometric_consent_certified) || !!m.has_consent,
-                  )
-                  .map((m) => m.person_id)}
+                preselectedIds={selectedMembersList.map((m) => m.person_id)}
                 onRefresh={onMembersChange}
                 onClose={resetEnrollment}
               />

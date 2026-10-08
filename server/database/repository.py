@@ -101,9 +101,6 @@ class AttendanceRepository:
         track_checkout = settings.get("track_checkout")
         if track_checkout is None:
             track_checkout = False
-        biometric_consent_certified = settings.get("biometric_consent_certified")
-        if biometric_consent_certified is None:
-            biometric_consent_certified = False
 
         group = AttendanceGroup(
             id=group_data["id"],
@@ -114,7 +111,6 @@ class AttendanceRepository:
             late_threshold_enabled=late_threshold_enabled,
             class_start_time=class_start_time,
             track_checkout=track_checkout,
-            biometric_consent_certified=biometric_consent_certified,
             organization_id=self.organization_id,
             is_active=True,
             is_deleted=False,
@@ -231,10 +227,6 @@ class AttendanceRepository:
                     group.class_start_time = value["class_start_time"]
                 if "track_checkout" in value:
                     group.track_checkout = value["track_checkout"]
-                if "biometric_consent_certified" in value:
-                    group.biometric_consent_certified = value[
-                        "biometric_consent_certified"
-                    ]
             elif hasattr(group, key):
                 setattr(group, key, value)
 
@@ -279,7 +271,6 @@ class AttendanceRepository:
 
     # Member Methods
     async def add_member(self, member_data: Dict[str, Any]) -> AttendanceMember:
-        has_consent = member_data.get("has_consent", False)
         existing_query = select(AttendanceMember).where(
             AttendanceMember.person_id == member_data["person_id"]
         )
@@ -292,15 +283,6 @@ class AttendanceRepository:
                 existing_member.name = member_data["name"]
                 existing_member.role = member_data.get("role")
                 existing_member.email = member_data.get("email")
-                existing_member.has_consent = has_consent
-                existing_member.consent_granted_at = (
-                    to_storage_local(local_now()) if has_consent else None
-                )
-                existing_member.consent_granted_by = (
-                    member_data.get("consent_granted_by", "admin")
-                    if has_consent
-                    else None
-                )
                 existing_member.is_active = True
                 existing_member.is_deleted = False
                 existing_member.last_modified_at = to_storage_local(local_now())
@@ -319,15 +301,6 @@ class AttendanceRepository:
                 email=member_data.get("email"),
                 joined_at=to_storage_local(member_data.get("joined_at") or local_now()),
                 last_modified_at=to_storage_local(local_now()),
-                has_consent=has_consent,
-                consent_granted_at=(
-                    to_storage_local(local_now()) if has_consent else None
-                ),
-                consent_granted_by=(
-                    member_data.get("consent_granted_by", "admin")
-                    if has_consent
-                    else None
-                ),
                 is_active=True,
                 is_deleted=False,
                 organization_id=self.organization_id,
@@ -358,7 +331,6 @@ class AttendanceRepository:
         results = []
         for m_data in members_data:
             person_id = m_data.get("person_id")
-            has_consent = m_data.get("has_consent", False)
 
             if not person_id:
                 person_id = f"p_{ulid.ulid().lower()}"
@@ -371,15 +343,6 @@ class AttendanceRepository:
                     existing_member.name = m_data["name"]
                     existing_member.role = m_data.get("role")
                     existing_member.email = m_data.get("email")
-                    existing_member.has_consent = has_consent
-                    existing_member.consent_granted_at = (
-                        to_storage_local(local_now()) if has_consent else None
-                    )
-                    existing_member.consent_granted_by = (
-                        m_data.get("consent_granted_by", "admin")
-                        if has_consent
-                        else None
-                    )
                     existing_member.is_active = True
                     existing_member.is_deleted = False
                     existing_member.last_modified_at = to_storage_local(local_now())
@@ -408,15 +371,6 @@ class AttendanceRepository:
                     email=m_data.get("email"),
                     joined_at=to_storage_local(m_data.get("joined_at") or local_now()),
                     last_modified_at=to_storage_local(local_now()),
-                    has_consent=has_consent,
-                    consent_granted_at=(
-                        to_storage_local(local_now()) if has_consent else None
-                    ),
-                    consent_granted_by=(
-                        m_data.get("consent_granted_by", "admin")
-                        if has_consent
-                        else None
-                    ),
                     is_active=True,
                     is_deleted=False,
                     organization_id=self.organization_id,
@@ -478,16 +432,6 @@ class AttendanceRepository:
         member = await self.get_member(person_id)
         if not member:
             return None
-
-        # Track consent changes for timestamp bookkeeping
-        new_consent = updates.get("has_consent")
-        if new_consent is True and not member.has_consent:
-            updates["consent_granted_at"] = to_storage_local(local_now())
-            if "consent_granted_by" not in updates:
-                updates["consent_granted_by"] = "admin"
-        elif new_consent is False and member.has_consent:
-            updates["consent_granted_at"] = None
-            updates["consent_granted_by"] = None
 
         for key, value in updates.items():
             if hasattr(member, key):

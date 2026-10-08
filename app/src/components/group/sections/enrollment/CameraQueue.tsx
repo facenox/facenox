@@ -35,13 +35,14 @@ export function CameraQueue({
   onRefresh,
   onClose,
 }: CameraQueueProps) {
-  const isConsentCertified = Boolean(group?.settings?.biometric_consent_certified)
-
   const [memberQueue, setMemberQueue] = useState<QueuedMember[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showCompletion, setShowCompletion] = useState(false)
+  const [showConsentNotice, setShowConsentNotice] = useState(
+    () => localStorage.getItem("facenox.enrollment.consent_notice_dismissed") !== "1",
+  )
   const [lastBbox, setLastBbox] = useState<{
     bbox: [number, number, number, number]
     width: number
@@ -239,13 +240,6 @@ export function CameraQueue({
       return
     }
 
-    // Check for member-level consent
-    const memberRecord = members.find((m) => m.person_id === currentMember.personId)
-    if (!isConsentCertified && !memberRecord?.has_consent) {
-      setError(`Cannot capture: ${currentMember.name} has not provided biometric consent.`)
-      return
-    }
-
     // Update status
     setMemberQueue((prev) =>
       prev.map((m, idx) =>
@@ -345,16 +339,7 @@ export function CameraQueue({
     } finally {
       setIsProcessing(false)
     }
-  }, [
-    currentMember,
-    currentIndex,
-    memberQueue,
-    group.id,
-    isConsentCertified,
-    videoRef,
-    members,
-    findNextPendingIndex,
-  ])
+  }, [currentMember, currentIndex, memberQueue, group.id, videoRef, findNextPendingIndex])
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -363,12 +348,7 @@ export function CameraQueue({
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault()
         if (!isProcessing && isVideoReady) {
-          const mRecord = members.find((m) => m.person_id === currentMember.personId)
-          if (isConsentCertified || mRecord?.has_consent) {
-            void capturePhoto()
-          } else {
-            setError(`Consent required for ${currentMember.name}`)
-          }
+          void capturePhoto()
         }
       } else if (e.key === "n" || e.key === "N" || e.key === "ArrowRight") {
         e.preventDefault()
@@ -426,7 +406,6 @@ export function CameraQueue({
     isQueueFinished,
     findNextPendingIndex,
     onClose,
-    isConsentCertified,
   ])
 
   // Automatically start camera in queue mode if queue is started and not already streaming
@@ -478,6 +457,33 @@ export function CameraQueue({
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
               className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-hidden p-6">
+              {/* One-time compliance notice: shown only on first enrollment session */}
+              <AnimatePresence>
+                {showConsentNotice && (
+                  <motion.div
+                    key="consent-notice"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-3 right-3 left-3 z-20 flex items-start justify-between gap-3 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3.5 py-2.5">
+                    <p className="text-[10px] leading-relaxed text-amber-200/70">
+                      <span className="font-semibold text-amber-200/90">Operator notice:</span>{" "}
+                      Please ensure members are informed and appropriate consent or authorization
+                      has been obtained prior to biometric enrollment.
+                    </p>
+                    <button
+                      onClick={() => {
+                        localStorage.setItem("facenox.enrollment.consent_notice_dismissed", "1")
+                        setShowConsentNotice(false)
+                      }}
+                      className="mt-0.5 shrink-0 text-[10px] font-bold text-amber-200/50 transition-colors hover:text-amber-200/90"
+                      aria-label="Dismiss compliance notice">
+                      Got it
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div
                 ref={cameraContainerRef}
                 className="relative aspect-video min-h-0 w-full max-w-4xl shrink overflow-hidden rounded-xl">
@@ -532,35 +538,6 @@ export function CameraQueue({
                       </div>
                     )}
 
-                    {/* Privacy Shield Overlay */}
-                    {(() => {
-                      const mRec = members.find((m) => m.person_id === currentMember?.personId)
-                      const hasConsent = isConsentCertified || !!mRec?.has_consent
-                      if (currentMember && !hasConsent && isStreaming) {
-                        return (
-                          <div className="animate-in fade-in absolute inset-0 z-5 flex items-center justify-center bg-black/60 duration-700">
-                            <div className="flex flex-col items-center gap-4 text-white/20">
-                              <div className="relative">
-                                <i className="fa-solid fa-shield-halved text-7xl opacity-10"></i>
-                                <div className="absolute inset-0 flex translate-y-2 items-center justify-center">
-                                  <i className="fa-solid fa-lock text-xl text-white opacity-30"></i>
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-center gap-1">
-                                <div className="text-[10px] font-medium opacity-20">
-                                  Privacy Shield
-                                </div>
-                                <div className="text-[9px] font-medium tracking-tight text-white/20">
-                                  Biometric Authorization Required
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      }
-                      return null
-                    })()}
-
                     <AnimatePresence mode="wait">
                       {currentMember && (
                         <motion.div
@@ -581,18 +558,6 @@ export function CameraQueue({
                               {currentMember.role}
                             </div>
                           )}
-                          {(() => {
-                            const mRec = members.find((m) => m.person_id === currentMember.personId)
-                            if (!isConsentCertified && !mRec?.has_consent) {
-                              return (
-                                <div className="pointer-events-auto mt-2 flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-[10px] font-medium text-amber-200/60 shadow-[0_0_15px_rgba(245,158,11,0.05)]">
-                                  <i className="fa-solid fa-shield-slash text-[9px]"></i>
-                                  Biometric Consent Missing
-                                </div>
-                              )
-                            }
-                            return null
-                          })()}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -711,37 +676,14 @@ export function CameraQueue({
                   <div className="flex flex-1 justify-center">
                     <button
                       onClick={() => void capturePhoto()}
-                      disabled={
-                        !isVideoReady ||
-                        isProcessing ||
-                        !currentMember ||
-                        !!cameraError ||
-                        !(
-                          isConsentCertified ||
-                          !!members.find((m) => m.person_id === currentMember?.personId)
-                            ?.has_consent
-                        )
-                      }
+                      disabled={!isVideoReady || isProcessing || !currentMember || !!cameraError}
                       className="group flex h-16 w-16 items-center justify-center rounded-full bg-white/10 p-1 transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
                       title="Capture Face">
                       {isProcessing ?
                         <div className="flex h-full w-full items-center justify-center rounded-full bg-white/10">
                           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
                         </div>
-                      : (() => {
-                          const mRec = members.find((m) => m.person_id === currentMember?.personId)
-                          const hasConsent = isConsentCertified || !!mRec?.has_consent
-                          if (currentMember && !hasConsent) {
-                            return (
-                              <div className="flex h-full w-full items-center justify-center rounded-full bg-white/5 text-white/25">
-                                <i className="fa-solid fa-lock text-sm"></i>
-                              </div>
-                            )
-                          }
-                          return (
-                            <div className="h-full w-full rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-transform group-active:scale-90" />
-                          )
-                        })()
+                      : <div className="h-full w-full rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-transform group-active:scale-90" />
                       }
                     </button>
                   </div>

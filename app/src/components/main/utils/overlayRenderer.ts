@@ -21,7 +21,6 @@ export const getFaceColor = (
     (!enableSpoofDetection || livenessStatus === "real")
 
   if (isRecognized) {
-    if (recognitionResult?.has_consent === false) return "#6366f1"
     return "#22d3ee"
   }
 
@@ -193,7 +192,6 @@ export const drawOverlays = ({
     const y2 = (bbox.y + bbox.height) * scaleY + offsetY
 
     const width = x2 - x1
-    const height = y2 - y1
 
     if (!isFinite(x1) || !isFinite(y1) || !isFinite(x2) || !isFinite(y2)) return
 
@@ -212,49 +210,11 @@ export const drawOverlays = ({
       recognitionEnabled &&
       recognitionResult?.person_id &&
       (!enableSpoofDetection || face.liveness?.status === "real")
-    const isBlocked = recognitionResult?.has_consent === false
 
     ctx.save()
     ctx.globalAlpha = face.renderOpacity ?? 1
 
-    if (isBlocked) {
-      ctx.save()
-      const cornerRadius = 8
-      ctx.beginPath()
-      drawRoundedRect(ctx, x1, y1, width, height, cornerRadius)
-      ctx.clip()
-
-      ctx.filter = "blur(20px)"
-      if (quickSettings.cameraMirrored) {
-        ctx.translate(displayWidth, 0)
-        ctx.scale(-1, 1)
-        ctx.drawImage(
-          video,
-          0,
-          0,
-          video.videoWidth,
-          video.videoHeight,
-          offsetX,
-          offsetY,
-          displayWidth - 2 * offsetX,
-          displayHeight - 2 * offsetY,
-        )
-      } else {
-        ctx.drawImage(
-          video,
-          0,
-          0,
-          video.videoWidth,
-          video.videoHeight,
-          offsetX,
-          offsetY,
-          displayWidth - 2 * offsetX,
-          displayHeight - 2 * offsetY,
-        )
-      }
-      ctx.filter = "none"
-      ctx.restore()
-    } else if (quickSettings.showTrackingBoxes !== false) {
+    if (quickSettings.showTrackingBoxes !== false) {
       setupCanvasContext(ctx, color)
       drawBoundingBox(ctx, x1, y1, x2, y2)
     }
@@ -265,11 +225,7 @@ export const drawOverlays = ({
     let labelTone: "recognition" | "guidance-warning" | "guidance-failure" = "recognition"
 
     if (isActuallyRecognized && recognitionResult && quickSettings.showRecognitionNames) {
-      if (recognitionResult.has_consent === false) {
-        label = "No Consent"
-      } else {
-        label = recognitionResult.name || recognitionResult.person_id || ""
-      }
+      label = recognitionResult.name || recognitionResult.person_id || ""
       shouldShowLabel = !!label
     }
 
@@ -280,8 +236,6 @@ export const drawOverlays = ({
     }
 
     if (shouldShowLabel) {
-      const isShield = labelTone === "recognition" && recognitionResult?.has_consent === false
-
       // Sequential smoothly-fading dots animation loop
       const isVerifyingState = label === "Verifying..."
       const text = label
@@ -301,14 +255,7 @@ export const drawOverlays = ({
       // Premium Minimalist Floating Design:
       // All guidance and warning prompts float in a clean, solid white (#f8fafc) to reduce visual clutter.
       // Cyan is strictly reserved for successfully verified member names, keeping the viewport calm and premium.
-      let textColor = "#f8fafc" // solid white by default for all guidance prompts
-      if (labelTone === "recognition") {
-        if (isShield) {
-          textColor = "#818cf8" // indigo-400 for No Consent shield
-        } else {
-          textColor = color // status color (cyan for verified success)
-        }
-      }
+      const textColor = labelTone === "recognition" ? color : "#f8fafc"
 
       ctx.textBaseline = "middle"
 

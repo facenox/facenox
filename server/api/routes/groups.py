@@ -251,7 +251,6 @@ async def get_group_persons(
                     "email": member.email,
                     "joined_at": member.joined_at,
                     "is_active": member.is_active,
-                    "has_consent": member.has_consent,
                     "has_face_data": False,
                 }
                 for member in members
@@ -267,7 +266,6 @@ async def get_group_persons(
                 "has_face_data": member.person_id in all_persons_set,
                 "joined_at": member.joined_at,
                 "is_active": member.is_active,
-                "has_consent": member.has_consent,
             }
             for member in members
         ]

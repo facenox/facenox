@@ -137,10 +137,11 @@ def check_and_stamp_baseline(db_path, alembic_cfg):
 
         if "description" not in group_cols:
             # Column 'description' was dropped in 2c0e0f2c3bf3
-            if "biometric_consent_certified" in group_cols:
-                target_revision = "e2f3a4b5c6d7"  # Head
-            elif "is_voided" in record_cols:
-                target_revision = "d1e2f3a4b5c6"
+            if "is_voided" in record_cols:
+                # Post-merge schemas: stamp at the merge node or later.
+                # The drop-consent migration (f2b3c4d5e6f7) is the current head;
+                # stamping at c9d8e7f6a5b4 lets Alembic run forward from there.
+                target_revision = "c9d8e7f6a5b4"
             elif has_rules_table:
                 target_revision = (
                     "c9d8e7f6a5b4"  # Merge node for rules and face settings

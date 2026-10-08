@@ -20,7 +20,6 @@ const member = {
   joined_at: "2026-04-01T00:00:00.000Z",
   is_active: true,
   has_face_data: true,
-  has_consent: true,
 }
 
 const record = {

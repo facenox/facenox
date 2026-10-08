@@ -21,21 +21,18 @@ interface DetectionPanelProps {
 
 const DetectionCard = memo(
   ({
-    recognitionResult,
     isRecognized,
     displayName,
     member,
     trackedFace,
     isDone,
   }: {
-    recognitionResult: ExtendedFaceRecognitionResponse | undefined
     isRecognized: boolean
     displayName: string
     member?: AttendanceMember | null
     trackedFace: TrackedFace | undefined
     isDone: boolean
   }) => {
-    const hasConsent = recognitionResult?.has_consent !== false
     const isActive = trackedFace?.isLocked || isRecognized
 
     return (
@@ -52,37 +49,23 @@ const DetectionCard = memo(
           <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
             <AnimatePresence mode="wait">
               {isRecognized ?
-                hasConsent ?
-                  <motion.div
-                    key="recognized"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="min-w-0 flex-1">
-                    <MemberTooltip
-                      member={member}
-                      displayName={displayName}
-                      position="right"
-                      role="Recognized">
-                      <span className="block cursor-help truncate text-[13px] font-semibold text-white transition-colors hover:text-cyan-400">
-                        {displayName}
-                      </span>
-                    </MemberTooltip>
-                  </motion.div>
-                : <motion.div
-                    key="no-consent"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="flex items-center gap-1.5 opacity-80">
-                    <i className="fa-solid fa-eye-slash text-xs text-indigo-400"></i>
-                    <span className="text-[11px] font-bold tracking-tight text-indigo-400/90 uppercase">
-                      No Consent
+                <motion.div
+                  key="recognized"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="min-w-0 flex-1">
+                  <MemberTooltip
+                    member={member}
+                    displayName={displayName}
+                    position="right"
+                    role="Recognized">
+                    <span className="block cursor-help truncate text-[13px] font-semibold text-white transition-colors hover:text-cyan-400">
+                      {displayName}
                     </span>
-                  </motion.div>
-
+                  </MemberTooltip>
+                </motion.div>
               : <motion.span
                   key="searching"
                   initial={{ opacity: 0, y: 4 }}
@@ -291,7 +274,6 @@ export function DetectionPanel({
               return (
                 <DetectionCard
                   key={trackId}
-                  recognitionResult={recognitionResult}
                   isRecognized={isRecognized}
                   displayName={displayName}
                   member={

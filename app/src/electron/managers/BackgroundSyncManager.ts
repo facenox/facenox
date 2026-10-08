@@ -84,7 +84,6 @@ function normalizeAttendanceExportForRemote(
               late_threshold_enabled: false,
               class_start_time: null,
               track_checkout: false,
-              biometric_consent_certified: false,
             },
       }
     }),
@@ -97,13 +96,9 @@ function normalizeAttendanceExportForRemote(
         id,
         person_id: personId,
         group_id: String((candidate as { group_id?: unknown }).group_id || "default"),
-        has_consent: Boolean((candidate as { has_consent?: unknown }).has_consent),
         joined_at:
           toRemoteIsoDateTime((candidate as { joined_at?: unknown }).joined_at) ??
           new Date().toISOString(),
-        consent_granted_at: toRemoteIsoDateTime(
-          (candidate as { consent_granted_at?: unknown }).consent_granted_at,
-        ),
       }
     }),
     records: records.map((record) => {

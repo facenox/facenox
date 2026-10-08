@@ -19,19 +19,18 @@ This page covers the shipped desktop feature set and the scope of the current Fa
 - Configure attendance timing behavior in settings.
 - Review historical attendance data and export reports.
 
-### Consent-aware biometrics
-
-- Biometric enrollment is blocked until consent exists for the member.
-- Members without active consent are excluded from matching.
-- Revoking consent removes the member's biometric template.
-- The registration flow can visually shield members who do not yet have consent.
-
+### Privacy-first biometric architecture
+ 
+- Instant, frictionless biometric enrollment via live camera capture or batch photo import.
+- Raw camera frames are processed in-memory and never written to disk or transmitted to external servers.
+- Embeddings are encrypted at rest locally and purged when a member is deleted.
+- Integrated privacy notices and terms in Settings support Data Controller compliance requirements.
+ 
 ### Local storage and portability
-
+ 
 - The local database stores groups, members, attendance, settings, and audit data.
-- Biometric templates are encrypted at rest in the local store.
-- Backup exports create password-protected `.facenox` files.
-- Backup imports can restore attendance data and biometric templates when consent is present in the imported data.
+- Biometric templates are encrypted at rest in the local store using AES-256.
+- Backup exports create password-protected `.facenox` files for full portability.
 
 ### Operational features
 

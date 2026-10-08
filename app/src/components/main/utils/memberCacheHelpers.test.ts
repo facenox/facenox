@@ -36,7 +36,6 @@ describe("getMemberFromCache", () => {
     name: "Alice",
     group_id: "group-1",
     role: "student",
-    has_consent: true,
     has_face_data: true,
     is_active: true,
     is_deleted: false,

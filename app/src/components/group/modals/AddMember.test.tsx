@@ -38,9 +38,7 @@ const mockGroup: AttendanceGroup = {
   name: "Grade 10 - Rizal",
   created_at: new Date("2026-10-08T00:00:00Z"),
   is_active: true,
-  settings: {
-    biometric_consent_certified: true,
-  },
+  settings: {},
 }
 
 describe("AddMember Modal", () => {
@@ -79,7 +77,6 @@ describe("AddMember Modal", () => {
       group_id: "group-1",
       joined_at: new Date(),
       is_active: true,
-      has_consent: true,
       has_face_data: false,
     }
 
@@ -108,7 +105,6 @@ describe("AddMember Modal", () => {
     await waitFor(() => {
       expect(attendanceManager.addMember).toHaveBeenCalledWith("group-1", "Juan Dela Cruz", {
         role: "Student",
-        hasConsent: true,
       })
       expect(onSuccess).toHaveBeenCalled()
       expect(onClose).toHaveBeenCalled()

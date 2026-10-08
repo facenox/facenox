@@ -555,11 +555,11 @@ export function DataStorage({
                       Clear Group Directory
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Permanently deletes all groups, member profiles, and their consent records.
-                      This wipes out the entire local directory structure.{" "}
+                      Permanently deletes all groups, member profiles, and enrolled biometric face
+                      data. This wipes out the entire local directory structure.{" "}
                       <span className="font-semibold text-white/80">
-                        After clearing, consent must be re-granted for each member before
-                        re-enrollment will work.
+                        After clearing, members will need to be re-created and enrolled for
+                        recognition to work.
                       </span>
                     </p>
                   </div>

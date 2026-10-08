@@ -256,9 +256,6 @@ async def import_backup(
                         ),
                         class_start_time=settings_dict.get("class_start_time", "08:00"),
                         track_checkout=settings_dict.get("track_checkout", False),
-                        biometric_consent_certified=settings_dict.get(
-                            "biometric_consent_certified", False
-                        ),
                         organization_id=repo.organization_id,
                         is_active=group.is_active,
                         is_deleted=False,
@@ -279,10 +276,6 @@ async def import_backup(
                     )
                     existing.track_checkout = settings_dict.get(
                         "track_checkout", existing.track_checkout
-                    )
-                    existing.biometric_consent_certified = settings_dict.get(
-                        "biometric_consent_certified",
-                        existing.biometric_consent_certified,
                     )
                 existing.is_active = group.is_active
                 existing.is_deleted = False
@@ -334,13 +327,6 @@ async def import_backup(
                         name=member.name,
                         role=member.role,
                         email=member.email,
-                        has_consent=member.has_consent,
-                        consent_granted_at=(
-                            to_storage_local(member.consent_granted_at)
-                            if member.consent_granted_at
-                            else None
-                        ),
-                        consent_granted_by=member.consent_granted_by,
                         is_active=member.is_active,
                         is_deleted=False,
                         organization_id=repo.organization_id,
@@ -350,13 +336,6 @@ async def import_backup(
                 existing.name = member.name
                 existing.role = member.role
                 existing.email = member.email
-                existing.has_consent = member.has_consent
-                existing.consent_granted_at = (
-                    to_storage_local(member.consent_granted_at)
-                    if member.consent_granted_at
-                    else None
-                )
-                existing.consent_granted_by = member.consent_granted_by
                 existing.is_active = member.is_active
                 existing.is_deleted = False
             imported_members += 1
@@ -444,11 +423,7 @@ async def import_backup(
             )
             member = member_result.scalars().first()
             # Security check: skip redacted biometrics
-            if (
-                not member
-                or not member.has_consent
-                or "[REDACTED" in entry.embedding_b64
-            ):
+            if not member or "[REDACTED" in entry.embedding_b64:
                 skipped += 1
                 continue
 

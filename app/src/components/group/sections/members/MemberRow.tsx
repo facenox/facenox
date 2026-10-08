@@ -11,7 +11,6 @@ interface MemberRowProps {
   onEdit?: (member: AttendanceMember & { displayName?: string }) => void
   onDelete?: (member: AttendanceMember & { displayName?: string }) => void
   onResetFace: (member: AttendanceMember & { displayName?: string }) => void
-  isConsentCertified?: boolean
 }
 
 export const MemberRow = React.memo(
@@ -23,7 +22,6 @@ export const MemberRow = React.memo(
     onEdit,
     onDelete,
     onResetFace,
-    isConsentCertified,
   }: MemberRowProps) {
     const isEnrolled = !!member.has_face_data
 
@@ -48,11 +46,6 @@ export const MemberRow = React.memo(
                   <span className="block truncate">{member.displayName}</span>
                 </Tooltip>
               : <span className="block truncate">{member.displayName}</span>}
-              {!member.has_consent && !isConsentCertified && (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[8px] font-black tracking-widest text-amber-500/80 uppercase">
-                  No Consent
-                </span>
-              )}
             </div>
 
             <div className="flex min-w-0 items-center gap-2 text-[11px] font-medium text-white/55">
@@ -125,8 +118,7 @@ export const MemberRow = React.memo(
     return (
       prevProps.member === nextProps.member &&
       prevProps.isSelected === nextProps.isSelected &&
-      prevProps.isSelectionMode === nextProps.isSelectionMode &&
-      prevProps.isConsentCertified === nextProps.isConsentCertified
+      prevProps.isSelectionMode === nextProps.isSelectionMode
     )
   },
 )

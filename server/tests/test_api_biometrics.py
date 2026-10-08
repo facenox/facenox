@@ -302,8 +302,6 @@ def _create_member(
     group_id: str,
     person_id: str,
     name: str,
-    *,
-    has_consent: bool,
 ) -> None:
     response = client.post(
         "/attendance/members",
@@ -312,8 +310,6 @@ def _create_member(
             "person_id": person_id,
             "group_id": group_id,
             "name": name,
-            "has_consent": has_consent,
-            "consent_granted_by": "integration-test" if has_consent else None,
         },
     )
     assert response.status_code == 200, response.text
@@ -342,7 +338,6 @@ def test_enroll_and_list_face_data_stays_org_scoped(biometrics_env) -> None:
         group_one_id,
         "shared-person",
         "Alice Org One",
-        has_consent=True,
     )
     _create_member(
         client,
@@ -350,7 +345,6 @@ def test_enroll_and_list_face_data_stays_org_scoped(biometrics_env) -> None:
         group_two_id,
         "shared-person",
         "Bob Org Two",
-        has_consent=True,
     )
 
     image_bytes = _make_image_bytes()
@@ -401,11 +395,10 @@ def test_enroll_and_list_face_data_stays_org_scoped(biometrics_env) -> None:
     assert all_members_two.json()[0]["has_face_data"] is True
 
 
-def test_recognition_is_org_scoped_and_masks_nonconsenting_member(
+def test_recognition_is_org_scoped(
     biometrics_env,
 ) -> None:
     client = biometrics_env["client"]
-    fake_recognizer = biometrics_env["recognizer"]
     org_one_headers = _headers("org-one")
     org_two_headers = _headers("org-two")
     group_one_id = _create_group(client, org_one_headers, "Recognition One")
@@ -417,7 +410,6 @@ def test_recognition_is_org_scoped_and_masks_nonconsenting_member(
         group_one_id,
         "shared-person",
         "Alice Org One",
-        has_consent=True,
     )
     _create_member(
         client,
@@ -425,28 +417,19 @@ def test_recognition_is_org_scoped_and_masks_nonconsenting_member(
         group_two_id,
         "shared-person",
         "Bob Org Two",
-        has_consent=False,
     )
 
     image_bytes = _make_image_bytes()
     enroll_metadata = _enroll_metadata()
 
-    for group_id, headers in (
-        (group_one_id, org_one_headers),
-        (group_two_id, org_two_headers),
-    ):
-        response = client.post(
-            f"/attendance/groups/{group_id}/persons/shared-person/enroll-face",
-            headers=headers,
-            data={"metadata": enroll_metadata},
-            files={"image": ("face.jpg", image_bytes, "image/jpeg")},
-        )
-        if headers is org_one_headers:
-            assert response.status_code == 200, response.text
-        else:
-            assert response.status_code == 403, response.text
-
-    fake_recognizer.enrolled["org-two"]["shared-person"] = {"shape": (48, 48, 3)}
+    # Enroll shared-person in org-one only
+    response = client.post(
+        f"/attendance/groups/{group_one_id}/persons/shared-person/enroll-face",
+        headers=org_one_headers,
+        data={"metadata": enroll_metadata},
+        files={"image": ("face.jpg", image_bytes, "image/jpeg")},
+    )
+    assert response.status_code == 200, response.text
 
     recognize_metadata_one = json.dumps(
         {
@@ -481,18 +464,14 @@ def test_recognition_is_org_scoped_and_masks_nonconsenting_member(
     assert recognized_two.status_code == 200, recognized_two.text
     assert recognized_one.json()["success"] is True
     assert recognized_one.json()["person_id"] == "shared-person"
-    assert recognized_two.json()["success"] is True
-    assert recognized_two.json()["person_id"] == "PROTECTED_IDENTITY"
-    assert recognized_two.json()["error"] == "Biometric consent missing"
+    assert recognized_two.json()["success"] is False
 
 
 def test_detection_websocket_processes_frame_bytes(biometrics_env) -> None:
     client = biometrics_env["client"]
     org_headers = _headers("org-ws")
     group_id = _create_group(client, org_headers, "WebSocket Group")
-    _create_member(
-        client, org_headers, group_id, "ws-person", "WebSocket Person", has_consent=True
-    )
+    _create_member(client, org_headers, group_id, "ws-person", "WebSocket Person")
 
     from utils.websocket_manager import manager
 
@@ -528,9 +507,7 @@ def test_detection_websocket_live_pipeline_embeds_recognition_and_logs_once(
     client = biometrics_env["client"]
     org_headers = _headers("org-live")
     group_id = _create_group(client, org_headers, "Live Group")
-    _create_member(
-        client, org_headers, group_id, "live-person", "Live Person", has_consent=True
-    )
+    _create_member(client, org_headers, group_id, "live-person", "Live Person")
 
     image_bytes = _make_image_bytes()
     enroll = client.post(
@@ -563,7 +540,6 @@ def test_detection_websocket_live_pipeline_embeds_recognition_and_logs_once(
         face = detection["faces"][0]
         assert face["recognition"]["person_id"] == "live-person"
         assert face["recognition"]["name"] == "Live Person"
-        assert face["recognition"]["has_consent"] is True
 
         attendance_event = websocket.receive_json()
         assert attendance_event["type"] == "attendance_event"
@@ -599,7 +575,6 @@ def test_detection_websocket_group_switch_refreshes_live_recognition_context(
         second_group_id,
         "switch-person",
         "Switch Person",
-        has_consent=True,
     )
 
     image_bytes = _make_image_bytes()
@@ -647,9 +622,7 @@ def test_detection_websocket_requires_real_liveness_for_identity_when_enabled(
     client = biometrics_env["client"]
     headers = _headers("org-strict-live")
     group_id = _create_group(client, headers, "Strict Live Group")
-    _create_member(
-        client, headers, group_id, "strict-person", "Strict Person", has_consent=True
-    )
+    _create_member(client, headers, group_id, "strict-person", "Strict Person")
 
     image_bytes = _make_image_bytes()
     enroll = client.post(
@@ -708,9 +681,7 @@ def test_detection_websocket_blocks_identity_when_face_must_be_centered(
     client = biometrics_env["client"]
     headers = _headers("org-center-live")
     group_id = _create_group(client, headers, "Center Live Group")
-    _create_member(
-        client, headers, group_id, "center-person", "Center Person", has_consent=True
-    )
+    _create_member(client, headers, group_id, "center-person", "Center Person")
 
     image_bytes = _make_image_bytes()
     enroll = client.post(
@@ -773,9 +744,7 @@ def test_detection_websocket_logs_attendance_when_liveness_is_disabled(
     client = biometrics_env["client"]
     headers = _headers("org-live-no-liveness")
     group_id = _create_group(client, headers, "No Liveness Group")
-    _create_member(
-        client, headers, group_id, "no-live-person", "No Live Person", has_consent=True
-    )
+    _create_member(client, headers, group_id, "no-live-person", "No Live Person")
 
     image_bytes = _make_image_bytes()
     enroll = client.post(
@@ -841,7 +810,6 @@ def test_biometric_endpoints_reject_images_without_detectable_face(
         group_id,
         "hardening-person",
         "Hardening Person",
-        has_consent=True,
     )
 
     blank_image_bytes = _make_blank_image_bytes()
@@ -916,10 +884,8 @@ def test_recognition_and_websocket_all_groups_mode(biometrics_env) -> None:
     group_a = _create_group(client, headers, "Teachers")
     group_b = _create_group(client, headers, "Admins")
 
-    _create_member(
-        client, headers, group_a, "person-a", "Teacher Alice", has_consent=True
-    )
-    _create_member(client, headers, group_b, "person-b", "Admin Bob", has_consent=True)
+    _create_member(client, headers, group_a, "person-a", "Teacher Alice")
+    _create_member(client, headers, group_b, "person-b", "Admin Bob")
 
     image_bytes = _make_image_bytes()
     enroll_a = client.post(

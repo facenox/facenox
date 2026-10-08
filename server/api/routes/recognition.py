@@ -99,19 +99,6 @@ async def recognize_face(
         similarity = result.get("similarity", 0.0)
         error = result.get("error")
 
-        # Privacy safeguard: Ensure identity matches are suppressed for non-consenting users
-        if success and person_id:
-            member = await repo.get_member(person_id)
-            if not member or not member.has_consent:
-                logger.warning(
-                    f"Recognition attempted for user {person_id} without consent. Blocking identity leak."
-                )
-                success = (
-                    True  # Signal Success to trigger UI features, but mask the identity
-                )
-                person_id = "PROTECTED_IDENTITY"
-                error = "Biometric consent missing"
-
         processing_time = time.time() - start_time
 
         return FaceRecognitionResponse(

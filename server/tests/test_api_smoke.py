@@ -42,8 +42,6 @@ def test_org_scoped_http_flow_supports_same_person_id_across_orgs(
             "person_id": "shared-person",
             "group_id": group_one_id,
             "name": "Alice Org One",
-            "has_consent": True,
-            "consent_granted_by": "smoke-test",
         },
     )
     assert member_one.status_code == 200, member_one.text
@@ -55,8 +53,6 @@ def test_org_scoped_http_flow_supports_same_person_id_across_orgs(
             "person_id": "shared-person",
             "group_id": group_two_id,
             "name": "Bob Org Two",
-            "has_consent": True,
-            "consent_granted_by": "smoke-test",
         },
     )
     assert member_two.status_code == 200, member_two.text
@@ -194,8 +190,6 @@ def test_manual_attendance_record_can_be_voided_and_recomputes_sessions(
             "person_id": "manual-person",
             "group_id": group_id,
             "name": "Manual Member",
-            "has_consent": True,
-            "consent_granted_by": "smoke-test",
         },
     )
     assert member.status_code == 200, member.text
@@ -293,8 +287,6 @@ def test_auto_attendance_record_can_be_voided(test_client, set_api_token) -> Non
             "person_id": "auto-person",
             "group_id": group_id,
             "name": "Auto Member",
-            "has_consent": True,
-            "consent_granted_by": "smoke-test",
         },
     )
     assert member.status_code == 200, member.text

@@ -70,12 +70,20 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
           {/* Section 5 */}
           <div className="space-y-1">
             <div className="text-[13px] font-semibold text-white/90">
-              Compliance tools & disclaimers
+              Compliance and data responsibility
             </div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Facenox provides consent logging, data export, and secure purge controls to assist
-              with privacy regulations. Note that compliance ultimately depends on your
-              organization&apos;s operational policies and notices.
+              Facenox operates strictly as a{" "}
+              <span className="font-medium text-white/75">Data Processor</span>. The organization or
+              administrator deploying this software acts as the{" "}
+              <span className="font-medium text-white/75">Data Controller</span> and is responsible
+              for establishing lawful basis or consent prior to biometric enrollment, in accordance
+              with applicable data privacy laws.
+            </p>
+            <p className="pt-1 text-[11px] leading-relaxed text-white/35">
+              Facenox provides the local technical safeguards (encrypted storage, local inference,
+              and deletion controls), but operational compliance and privacy policies remain the
+              responsibility of the operator.
             </p>
           </div>
         </div>

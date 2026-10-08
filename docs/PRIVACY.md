@@ -18,7 +18,6 @@ By default, the desktop app stores the following data on the local machine:
 
 - groups and members
 - attendance records and attendance sessions
-- consent status and related metadata
 - application settings
 - audit entries
 - encrypted biometric templates
@@ -38,20 +37,17 @@ Facenox is not designed as a raw face-image archive.
 - **Liveness Detection:** Anti-spoofing analysis executes locally on-device. No photos or video frames used for liveness checks are ever written to disk.
 - **Storage:** Templates are encrypted at rest locally using **AES-256**.
 
-## Consent Rules
+## Legal Responsibility and Compliance
 
-- Biometric enrollment requires consent.
-- Members without active consent are excluded from biometric matching.
-- Revoking consent removes the member's biometric template.
-- Deleting a member removes the associated biometric template.
-
-These controls help enforce a narrow recognition scope inside the application. They do not replace your own notices, legal basis, or retention policy.
+- **Data Processor vs Data Controller:** Facenox (the desktop application and cloud sync pipeline) operates strictly as a **Data Processor**. Deploying organizations (schools, enterprises, institutions) act as the **Data Controller** responsible for securing appropriate organizational waivers prior to biometric enrollment.
+- **Biometric Template Lifecycle:** Enrolling a member stores their encrypted mathematical vector. Deleting a member permanently purges their biometric template from both local storage and cloud sync.
+- **Compliance Disclosures:** Institutional compliance is supported via the integrated disclosures in **Settings ➔ About ➔ Privacy & Data Handling** and the organization's EULA/Terms of Service.
 
 ## Backups and Restore
 
 - Backup exports are password-protected `.facenox` files.
 - Backup exports can include biometric templates so a restore does not require full re-enrollment.
-- Restores still depend on the consent information present in the imported data.
+- Restores re-import the member metadata and biometric templates preserved in the backup package.
 
 If you export a backup, treat the backup file as sensitive data.
 
@@ -108,7 +104,7 @@ Facenox includes controls that can support privacy-conscious deployments, but th
 
 Operators are still responsible for:
 
-- notices and consent flows
+- institutional privacy notices and policies
 - lawful basis and documentation
 - retention and deletion policy
 - access control

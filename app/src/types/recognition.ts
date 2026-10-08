@@ -135,7 +135,6 @@ export interface AttendanceGroup {
     late_threshold_enabled?: boolean
     class_start_time?: string
     track_checkout?: boolean
-    biometric_consent_certified?: boolean
   }
   remote_id?: string | null
 }
@@ -150,7 +149,6 @@ export interface AttendanceMember {
   joined_at: Date
   is_active: boolean
   has_face_data?: boolean
-  has_consent: boolean
   remote_id?: string | null
 }
 

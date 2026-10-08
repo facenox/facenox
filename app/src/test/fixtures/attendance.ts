@@ -44,7 +44,6 @@ export function createAttendanceMember(
     joined_at: new Date("2026-04-01T00:00:00.000Z"),
     is_active: true,
     has_face_data: true,
-    has_consent: true,
     ...overrides,
   }
 }

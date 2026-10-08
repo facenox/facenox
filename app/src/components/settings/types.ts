@@ -25,7 +25,6 @@ export interface AttendanceSettings {
   dataRetentionDays?: number
   cloudRetentionDays?: number
   forceLiveness?: boolean
-  biometricConsentCertified?: boolean
 }
 
 export interface SettingsOverview {

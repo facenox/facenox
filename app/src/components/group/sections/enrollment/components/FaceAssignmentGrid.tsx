@@ -178,11 +178,11 @@ function MemberAssignCombobox({
                     : availableMembers.length === 0 ?
                       <div className="space-y-1">
                         <p className="text-[11px] font-medium text-amber-400/90">
-                          No eligible members
+                          No available members
                         </p>
                         <p className="text-[10px] leading-relaxed text-white/40">
                           {totalMembersCount > 0 ?
-                            "Biometric consent is required before enrolling face data."
+                            "All members in this group are already enrolled."
                           : "No members in group."}
                         </p>
                       </div>

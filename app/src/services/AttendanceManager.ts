@@ -97,7 +97,6 @@ export class AttendanceManager {
       personId?: string
       role?: string
       email?: string
-      hasConsent?: boolean
     },
   ): Promise<AttendanceMember> {
     return this.memberManager.addMember(groupId, name, options)
@@ -108,7 +107,6 @@ export class AttendanceManager {
       name: string
       role?: string
       email?: string
-      hasConsent?: boolean
       personId?: string
     }>,
     groupId: string,

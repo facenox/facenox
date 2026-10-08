@@ -520,7 +520,6 @@ async def main():
         "id": "test_group_id",
         "name": "LFW Scale Test Group",
         "settings": {
-            "biometric_consent_certified": True,
             "late_threshold_enabled": False,
         },
     }
@@ -570,7 +569,6 @@ async def main():
             "person_id": person_id,
             "group_id": "test_group_id",
             "name": person_name.replace("_", " "),
-            "has_consent": True,
             "role": "member",
         }
         await repo.add_member(member_data)
