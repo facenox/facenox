@@ -36,9 +36,8 @@ vi.mock("@/components/group/sections/enrollment/hooks/useCamera", () => ({
 const mockGroup: AttendanceGroup = {
   id: "group-1",
   name: "Grade 10 - Rizal",
-  description: "Section Rizal",
-  created_at: "2026-10-08T00:00:00Z",
-  member_count: 0,
+  created_at: new Date("2026-10-08T00:00:00Z"),
+  is_active: true,
   settings: {
     biometric_consent_certified: true,
   },
