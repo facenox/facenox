@@ -288,6 +288,19 @@ export class BackgroundSyncManager {
       })
 
       this.ablyChannel = this.ablyClient.channels.get(`site:${siteId}`)
+
+      // 1. Listen for instant remote management commands (e.g., WIPE, UPGRADE)
+      this.ablyChannel.subscribe("remote_command", (message) => {
+        const payload = message?.data as { deviceId?: string; command?: string } | undefined
+        const currentDeviceId = this.getSyncConfig().deviceId
+        if (payload?.deviceId && payload.deviceId !== currentDeviceId) {
+          return
+        }
+        console.log("[Ably] Instant remote command notification received from cloud:", message.data)
+        void this.pollCommands()
+      })
+
+      // 2. Listen for realtime metadata and attendance sync triggers
       this.ablyChannel.subscribe("sync_required", (message) => {
         const payload = message?.data as
           { deviceId?: string; source?: string; type?: string } | undefined
@@ -357,10 +370,10 @@ export class BackgroundSyncManager {
     // Initial command poll on startup
     void this.pollCommands()
 
-    // Start dedicated command polling timer (every 30 seconds for WIPE, UPGRADE, etc.)
+    // Fallback background command polling (every 15 minutes as safety net for offline recovery)
     this.commandTimer = setInterval(() => {
       void this.pollCommands()
-    }, 30_000)
+    }, 15 * 60 * 1000)
   }
 
   stop() {
