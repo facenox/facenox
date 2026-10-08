@@ -182,7 +182,7 @@ export const ManualEntryModal = ({
                 placeholder="Add a reason / note for manual entry (Optional)..."
                 value={manualNote}
                 onChange={(e) => setManualNote(e.target.value)}
-                className="h-9 w-full rounded-lg border border-white/5 bg-white/5 pr-4 pl-9 text-[11px] font-bold tracking-wider text-white transition-all duration-300 outline-none placeholder:text-white/30 focus:border-white/30 focus:bg-white/[0.08] focus:outline-none"
+                className="h-9 w-full rounded-lg border border-white/5 bg-white/5 pr-4 pl-9 text-[11px] font-bold tracking-wider text-white transition-all duration-300 outline-none placeholder:text-white/35 focus:border-white/30 focus:bg-white/[0.08] focus:outline-none"
                 autoFocus
               />
             </div>
@@ -226,7 +226,7 @@ export const ManualEntryModal = ({
                   placeholder="Search members..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`h-9 w-full ${onAddMember ? "rounded-r-none border-r-0" : "rounded-r-lg"} rounded-l-lg border border-white/5 bg-white/5 py-2 pr-4 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none placeholder:text-white/30 focus:border-white/20 focus:bg-white/[0.08] focus-visible:outline-none`}
+                  className={`h-9 w-full ${onAddMember ? "rounded-r-none border-r-0" : "rounded-r-lg"} rounded-l-lg border border-white/5 bg-white/5 py-2 pr-4 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none placeholder:text-white/35 focus:border-white/20 focus:bg-white/[0.08] focus-visible:outline-none`}
                 />
               </div>
               {onAddMember && (

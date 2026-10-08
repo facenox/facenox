@@ -438,7 +438,7 @@ export function DataStorage({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search group name or ID..."
-              className="h-full w-full rounded-lg border border-white/5 bg-white/5 py-2 pr-7 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/search:border-white/20 placeholder:text-white/30 focus:bg-white/[0.08]"
+              className="h-full w-full rounded-lg border border-white/5 bg-white/5 py-2 pr-7 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/search:border-white/20 placeholder:text-white/35 focus:bg-white/[0.08]"
             />
             {searchQuery && (
               <button

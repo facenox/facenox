@@ -88,6 +88,7 @@ export function AddMember({
   const [hasConsent, setHasConsent] = useState(false)
 
   // Inline Face Enrollment states
+  const [isFaceSectionOpen, setIsFaceSectionOpen] = useState(false)
   const [capturedFace, setCapturedFace] = useState<CapturedFaceData | null>(null)
   const [faceInputMode, setFaceInputMode] = useState<"camera" | "upload">("camera")
   const [isProcessingFace, setIsProcessingFace] = useState(false)
@@ -150,6 +151,7 @@ export function AddMember({
     setError(null)
     setCapturedFace(null)
     setFaceError(null)
+    setIsFaceSectionOpen(false)
     setLastAddedSuccess(null)
     setHasConsent(isConsentCertified)
   }
@@ -587,185 +589,242 @@ export function AddMember({
                 exit={{ opacity: 0, x: 10 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="grid gap-4">
-                <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="pl-1 text-[11px] font-medium text-white/65">Name</span>
-                  <FormInput
-                    ref={nameInputRef}
-                    value={newMemberName}
-                    onChange={(event) => setNewMemberName(event.target.value)}
-                    placeholder=""
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAddMember(false)
-                    }}
-                    focusColor={
-                      isDuplicate && !confirmDuplicate ? "border-amber-400" : "border-cyan-500/60"
-                    }
-                    className={`${isDuplicate && !confirmDuplicate ? "border-amber-500/50" : ""}`}
-                  />
-                  {isDuplicate && !confirmDuplicate && (
-                    <div className="mt-1 flex items-center gap-2 text-[11px] text-amber-400/80">
-                      <i className="fa-solid fa-triangle-exclamation text-[10px]"></i> A member with
-                      this name already exists.
-                    </div>
-                  )}
-                </label>
-                <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="pl-1 text-[11px] font-medium text-white/65">
-                    Role <span className="opacity-50">(Optional)</span>
-                  </span>
-                  <FormInput
-                    value={newMemberRole}
-                    onChange={(event) => setNewMemberRole(event.target.value)}
-                    placeholder=""
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAddMember(false)
-                    }}
-                    focusColor="border-cyan-500/60"
-                  />
-                </label>
-
-                {/* Inline Face Enrollment Section */}
-                <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-[11px] font-medium text-white/65">
-                      <i className="fa-solid fa-id-badge text-[11px] text-cyan-400" />
-                      Face Biometrics <span className="opacity-50">(Optional)</span>
-                    </span>
-                    {capturedFace && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCapturedFace(null)
-                          setFaceError(null)
-                        }}
-                        className="text-[10px] font-medium text-red-400/80 transition-colors hover:text-red-300">
-                        Remove
-                      </button>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
+                  <div className="flex flex-col sm:col-span-8">
+                    <FormInput
+                      ref={nameInputRef}
+                      value={newMemberName}
+                      onChange={(event) => setNewMemberName(event.target.value)}
+                      placeholder="Name"
+                      aria-label="Name"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleAddMember(false)
+                      }}
+                      focusColor={
+                        isDuplicate && !confirmDuplicate ? "border-amber-400" : "border-white/20"
+                      }
+                      className={`${isDuplicate && !confirmDuplicate ? "border-amber-500/50" : ""}`}
+                    />
+                    {isDuplicate && !confirmDuplicate && (
+                      <div className="mt-1 flex items-center gap-2 text-[11px] text-amber-400/80">
+                        <i className="fa-solid fa-triangle-exclamation text-[10px]"></i> A member
+                        with this name already exists.
+                      </div>
                     )}
                   </div>
+                  <div className="flex flex-col sm:col-span-4">
+                    <FormInput
+                      value={newMemberRole}
+                      onChange={(event) => setNewMemberRole(event.target.value)}
+                      placeholder="Role (optional)"
+                      aria-label="Role (optional)"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleAddMember(false)
+                      }}
+                      focusColor="border-white/20"
+                    />
+                  </div>
+                </div>
 
-                  {capturedFace ?
-                    <div className="mt-2.5 flex items-center gap-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-2.5">
-                      <img
-                        src={capturedFace.dataUrl}
-                        alt="Captured face preview"
-                        className="h-11 w-11 rounded-full border border-cyan-500/30 object-cover"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 text-[11px] font-medium text-cyan-300">
-                          <i className="fa-solid fa-circle-check text-[10px]" />
-                          Face detected & ready
+                {/* Inline Face Enrollment Section */}
+                <div className="overflow-hidden">
+                  <AnimatePresence mode="wait" initial={false}>
+                    {capturedFace ?
+                      <motion.div
+                        key="captured"
+                        initial={{ opacity: 0, y: -6, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: "auto" }}
+                        exit={{ opacity: 0, y: -6, height: 0 }}
+                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2.5">
+                        <img
+                          src={capturedFace.dataUrl}
+                          alt="Captured face preview"
+                          className="h-9 w-9 rounded-full border border-cyan-500/30 object-cover"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[11px] font-medium text-cyan-300">Face enrolled</div>
                         </div>
-                        <p className="truncate text-[10px] text-white/45">
-                          Confidence: {Math.round(capturedFace.confidence * 100)}%
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCapturedFace(null)
-                          setFaceError(null)
-                        }}
-                        className="rounded px-2.5 py-1 text-[10px] font-medium text-white/60 transition-colors hover:bg-white/10">
-                        Retake
-                      </button>
-                    </div>
-                  : <div className="mt-2.5 space-y-2.5">
-                      {/* Source Toggle Pills */}
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFaceInputMode("camera")
-                            if (!isStreaming) {
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCapturedFace(null)
+                              setFaceError(null)
+                              setIsFaceSectionOpen(true)
+                              setFaceInputMode("camera")
                               startCamera().catch(console.error)
-                            }
-                          }}
-                          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
-                            faceInputMode === "camera" ?
-                              "border border-cyan-500/30 bg-cyan-500/15 text-cyan-300"
-                            : "border border-white/5 bg-white/5 text-white/55 hover:text-white/80"
-                          }`}>
-                          <i className="fa-solid fa-camera text-[10px]" />
-                          Camera
-                        </button>
+                            }}
+                            className="rounded px-2.5 py-1 text-[11px] font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white">
+                            Retake
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCapturedFace(null)
+                              setFaceError(null)
+                              setIsFaceSectionOpen(false)
+                            }}
+                            className="rounded px-2.5 py-1 text-[11px] font-medium text-red-400/80 transition-colors hover:bg-red-500/10 hover:text-red-300">
+                            Remove
+                          </button>
+                        </div>
+                      </motion.div>
+                    : !isFaceSectionOpen ?
+                      <motion.div
+                        key="collapsed"
+                        initial={{ opacity: 0, y: 3 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -3 }}
+                        transition={{ duration: 0.18, ease: "easeOut" }}
+                        className="flex items-center justify-between py-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-medium text-white/80">
+                            Face Enrollment
+                          </span>
+                          <span className="text-[10px] text-white/35">can be added later</span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
-                            setFaceInputMode("upload")
-                            stopCamera()
+                            setIsFaceSectionOpen(true)
+                            setFaceInputMode("camera")
+                            startCamera().catch(console.error)
                           }}
-                          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
-                            faceInputMode === "upload" ?
-                              "border border-cyan-500/30 bg-cyan-500/15 text-cyan-300"
-                            : "border border-white/5 bg-white/5 text-white/55 hover:text-white/80"
-                          }`}>
-                          <i className="fa-solid fa-cloud-arrow-up text-[10px]" />
-                          Upload Photo
+                          className="text-[11px] font-medium text-cyan-400 transition-colors hover:text-cyan-300">
+                          + Enroll now
                         </button>
-                      </div>
+                      </motion.div>
+                    : <motion.div
+                        key="expanded"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                        <div className="mb-2.5 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-medium text-white/80">
+                              Face Enrollment
+                            </span>
+                            <span className="text-[10px] text-white/35">can be added later</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsFaceSectionOpen(false)
+                              stopCamera()
+                            }}
+                            className="text-[10px] font-medium text-white/40 transition-colors hover:text-white/70">
+                            Hide
+                          </button>
+                        </div>
 
-                      {faceInputMode === "camera" ?
-                        <div className="relative flex aspect-video max-h-44 w-full items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-[var(--bg-canvas)]">
-                          <video
-                            ref={videoRef}
-                            className="h-full w-full scale-x-[-1] object-cover"
-                            playsInline
-                            muted
-                          />
-                          {isStreaming && (
-                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
-                              <button
-                                type="button"
-                                onClick={handleSnapPhoto}
-                                disabled={isProcessingFace}
-                                className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500 px-3.5 py-1 text-[11px] font-bold text-slate-950 shadow-lg transition-all hover:bg-cyan-400 active:scale-95 disabled:opacity-50">
-                                <i className="fa-solid fa-camera text-[10px]" />
-                                {isProcessingFace ? "Analyzing..." : "Capture Face"}
-                              </button>
-                            </div>
-                          )}
-                          {!isStreaming && (
+                        <div className="space-y-2.5">
+                          {/* Source Toggle Pills */}
+                          <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => startCamera().catch(console.error)}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10">
-                              <i className="fa-solid fa-video text-[10px]" />
-                              Start Camera
+                              onClick={() => {
+                                setFaceInputMode("camera")
+                                if (!isStreaming) {
+                                  startCamera().catch(console.error)
+                                }
+                              }}
+                              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
+                                faceInputMode === "camera" ?
+                                  "border border-cyan-500/30 bg-cyan-500/15 text-cyan-300"
+                                : "border border-white/5 bg-white/5 text-white/55 hover:text-white/80"
+                              }`}>
+                              <i className="fa-solid fa-camera text-[10px]" />
+                              Camera
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFaceInputMode("upload")
+                                stopCamera()
+                              }}
+                              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
+                                faceInputMode === "upload" ?
+                                  "border border-cyan-500/30 bg-cyan-500/15 text-cyan-300"
+                                : "border border-white/5 bg-white/5 text-white/55 hover:text-white/80"
+                              }`}>
+                              <i className="fa-solid fa-cloud-arrow-up text-[10px]" />
+                              Upload Photo
+                            </button>
+                          </div>
+
+                          {faceInputMode === "camera" ?
+                            <div className="relative flex h-52 w-full items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/60">
+                              <video
+                                ref={videoRef}
+                                className={`absolute inset-0 h-full w-full scale-x-[-1] object-cover ${
+                                  isStreaming ? "opacity-100" : "pointer-events-none opacity-0"
+                                }`}
+                                playsInline
+                                muted
+                              />
+                              {isStreaming && (
+                                <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2">
+                                  <button
+                                    type="button"
+                                    onClick={handleSnapPhoto}
+                                    disabled={isProcessingFace}
+                                    className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500 px-4 py-1.5 text-[11px] font-bold text-slate-950 shadow-lg transition-all hover:bg-cyan-400 active:scale-95 disabled:opacity-50">
+                                    <i className="fa-solid fa-camera text-[10px]" />
+                                    {isProcessingFace ? "Analyzing..." : "Capture Face"}
+                                  </button>
+                                </div>
+                              )}
+                              {!isStreaming && (
+                                <div className="z-10 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => startCamera().catch(console.error)}
+                                    className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-medium text-white/80 transition-all hover:bg-white/10 hover:text-white active:scale-95">
+                                    <i className="fa-solid fa-video text-[11px] text-cyan-400" />
+                                    Start Camera
+                                  </button>
+                                  <span className="text-[10px] text-white/35">
+                                    Click to preview and capture live portrait
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          : <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] p-4 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/[0.02]">
+                              <i className="fa-solid fa-image mb-1 text-lg text-white/30" />
+                              <span className="text-[11px] font-medium text-white/70">
+                                {isProcessingFace ?
+                                  "Analyzing face..."
+                                : "Click or drop portrait photo"}
+                              </span>
+                              <span className="mt-0.5 text-[10px] text-white/40">
+                                JPG, PNG up to 10MB
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) void handleProcessUploadedFile(file)
+                                  e.target.value = ""
+                                }}
+                              />
+                            </label>
+                          }
+
+                          {faceError && (
+                            <div className="flex items-center gap-1.5 pl-1 text-[11px] text-red-400/90">
+                              <i className="fa-solid fa-circle-exclamation text-[10px]" />
+                              {faceError}
+                            </div>
                           )}
                         </div>
-                      : <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] p-4 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/[0.02]">
-                          <i className="fa-solid fa-image mb-1 text-lg text-white/30" />
-                          <span className="text-[11px] font-medium text-white/70">
-                            {isProcessingFace ?
-                              "Analyzing face..."
-                            : "Click or drop portrait photo"}
-                          </span>
-                          <span className="mt-0.5 text-[10px] text-white/40">
-                            JPG, PNG up to 10MB
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0]
-                              if (file) void handleProcessUploadedFile(file)
-                              e.target.value = ""
-                            }}
-                          />
-                        </label>
-                      }
-
-                      {faceError && (
-                        <div className="flex items-center gap-1.5 pl-1 text-[11px] text-red-400/90">
-                          <i className="fa-solid fa-circle-exclamation text-[10px]" />
-                          {faceError}
-                        </div>
-                      )}
-                    </div>
-                  }
+                      </motion.div>
+                    }
+                  </AnimatePresence>
                 </div>
 
                 {/* Explicit Certification Consent Checkbox */}
@@ -814,7 +873,7 @@ export function AddMember({
                         setBulkResults(null)
                       }
                     }}
-                    className="custom-scroll min-h-[132px] w-full resize-none rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-3 font-mono text-sm transition-all duration-300 outline-none focus:border-white/20 focus:bg-[rgba(28,35,44,0.82)]"
+                    className="custom-scroll min-h-[132px] w-full resize-none rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-3 font-mono text-sm transition-all duration-300 outline-none placeholder:font-sans placeholder:text-sm placeholder:font-normal placeholder:text-white/35 focus:border-white/20 focus:bg-[rgba(28,35,44,0.82)]"
                     placeholder="Enter one member per line"
                   />
                   <div className="mt-2 flex items-center justify-between">
@@ -889,14 +948,17 @@ export function AddMember({
                         }
                       </div>
                       <span className="text-[11px] font-medium text-white/55">
-                        {bulkResults.success} added • {bulkResults.failed} failed
+                        {bulkResults.success} added, {bulkResults.failed} failed
                       </span>
                     </div>
                     {bulkResults.errors.length > 0 && (
-                      <div className="custom-scroll mt-3 max-h-32 space-y-1.5 overflow-y-auto pl-5">
+                      <div className="custom-scroll mt-3 max-h-32 space-y-1.5 overflow-y-auto pl-1">
                         {bulkResults.errors.map((err: string, idx: number) => (
-                          <div key={idx} className="text-[11px] leading-relaxed text-red-400/90">
-                            • {err}
+                          <div
+                            key={idx}
+                            className="flex items-start gap-1.5 text-[11px] leading-relaxed text-red-400/90">
+                            <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-red-400/60" />
+                            <span>{err}</span>
                           </div>
                         ))}
                       </div>
@@ -930,15 +992,6 @@ export function AddMember({
                   className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
                   Cancel
                 </button>
-                {!isBulkMode && (
-                  <button
-                    type="button"
-                    onClick={() => void handleAddMember(true)}
-                    disabled={loading || !hasConsent || !newMemberName.trim() || isProcessingFace}
-                    className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-[11px] font-semibold tracking-wider text-cyan-300 transition-all duration-200 hover:bg-cyan-500/20 hover:text-cyan-200 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-30">
-                    Save & Add Next
-                  </button>
-                )}
                 <button
                   onClick={
                     isBulkMode ?

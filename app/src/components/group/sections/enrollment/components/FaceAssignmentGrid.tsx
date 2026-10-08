@@ -122,7 +122,7 @@ function MemberAssignCombobox({
           setSearch("")
           setActiveIndex(0)
         }}
-        className="flex w-full items-center justify-between border-b border-white/10 bg-transparent py-1.5 text-left text-[11px] font-medium text-white/55 transition-colors hover:border-white/25 hover:text-white/80 focus:border-cyan-500/50 focus:text-white focus:outline-none">
+        className="flex w-full items-center justify-between border-b border-white/10 bg-transparent py-1.5 text-left text-[11px] font-medium text-white/55 transition-colors hover:border-white/25 hover:text-white/80 focus:border-white/25 focus:text-white focus:outline-none">
         <span className="truncate">Assign member…</span>
         <i
           className={`fa-solid fa-chevron-down text-[9px] text-white/40 transition-transform duration-200 ${
@@ -163,7 +163,7 @@ function MemberAssignCombobox({
                       `Search ${availableMembers.length.toLocaleString()} members...`
                     : "Search member..."
                   }
-                  className="w-full rounded-lg border border-white/10 bg-white/5 py-1.5 pr-3 pl-8 text-xs text-white placeholder-white/40 transition-colors focus:border-cyan-500/50 focus:bg-white/[0.08] focus:outline-none"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 py-1.5 pr-3 pl-8 text-xs text-white placeholder-white/40 transition-colors focus:border-white/25 focus:bg-white/[0.08] focus:outline-none"
                 />
               </div>
 
@@ -239,6 +239,8 @@ interface FaceAssignmentGridProps {
   assignedCount: number
   onAssignMember: (faceId: string, personId: string) => void
   onUnassign: (faceId: string) => void
+  onUpdateCustomName?: (faceId: string, newName: string) => void
+  onSetNewMember?: (faceId: string, name?: string) => void
 }
 
 export function FaceAssignmentGrid({
@@ -248,33 +250,61 @@ export function FaceAssignmentGrid({
   assignedCount,
   onAssignMember,
   onUnassign,
+  onUpdateCustomName,
+  onSetNewMember,
 }: FaceAssignmentGridProps) {
   const displayNameMap = useMemo(() => createDisplayNameMap(members), [members])
 
+  const newMembersCount = useMemo(
+    () =>
+      detectedFaces.filter(
+        (f) => f.isNewMember && !f.assignedPersonId && (f.customMemberName || f.parsedName)?.trim(),
+      ).length,
+    [detectedFaces],
+  )
+
+  const autoMatchedCount = useMemo(
+    () => detectedFaces.filter((f) => f.isAutoMatched && f.assignedPersonId).length,
+    [detectedFaces],
+  )
+
+  const readyTotal = assignedCount + newMembersCount
+
   return (
     <div className="flex flex-col gap-6">
-      {/* Meta row — no pills, just inline text */}
-      <div className="flex items-baseline gap-2 text-[11px]">
-        <span className="font-semibold text-white">
-          {assignedCount}
-          <span className="text-white/30">/{detectedFaces.length}</span>
-        </span>
-        <span className="text-white/35">assigned</span>
+      {/* Meta row */}
+      <div className="flex flex-wrap items-center gap-2.5 text-[11px]">
+        <div className="flex items-center gap-1.5">
+          <span className="font-semibold text-white">
+            {readyTotal}
+            <span className="text-white/30">/{detectedFaces.length}</span>
+          </span>
+          <span className="text-white/45">ready to enroll</span>
+        </div>
+        {autoMatchedCount > 0 && (
+          <span className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-400">
+            <i className="fa-solid fa-circle-check mr-1 text-[10px]" />
+            {autoMatchedCount} auto-matched
+          </span>
+        )}
+        {newMembersCount > 0 && (
+          <span className="rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 font-medium text-cyan-400">
+            <i className="fa-solid fa-user-plus mr-1 text-[10px]" />
+            {newMembersCount} new to create
+          </span>
+        )}
         {availableMembers.length > 0 && (
-          <>
-            <span className="text-white/15">·</span>
-            <span className="text-white/35">
-              {availableMembers.length} {availableMembers.length === 1 ? "member" : "members"}{" "}
-              remaining
-            </span>
-          </>
+          <span className="text-white/35">
+            {availableMembers.length} {availableMembers.length === 1 ? "member" : "members"} in
+            group
+          </span>
         )}
       </div>
 
       {/* Face grid — auto-fill, cards fill available width */}
       <div
         className="grid gap-x-5 gap-y-7"
-        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
+        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))" }}>
         {detectedFaces.map((face) => {
           const assignedMember =
             face.assignedPersonId ?
@@ -285,17 +315,35 @@ export function FaceAssignmentGrid({
               displayNameMap.get(assignedMember.person_id) || assignedMember.name
             : null
 
+          const isAssigned = Boolean(face.assignedPersonId)
+          const isNew = Boolean(face.isNewMember && !face.assignedPersonId)
+
           return (
             <div key={face.faceId} className="group flex flex-col gap-2">
               {/* Image — full bleed, rounded, no border */}
-              <div className="relative aspect-square overflow-hidden rounded-xl">
+              <div className="relative aspect-square overflow-hidden rounded-xl bg-white/[0.02]">
                 <img
                   src={face.previewUrl}
                   alt="Detected face"
                   className={`h-full w-full object-cover transition-all duration-300 ${
-                    face.assignedPersonId ? "brightness-90" : "brightness-75"
+                    isAssigned || isNew ? "brightness-95" : "brightness-75"
                   }`}
                 />
+
+                {/* Status Badges Overlay */}
+                {face.isAutoMatched && isAssigned && (
+                  <div className="absolute top-2 left-2 rounded-md bg-emerald-950/80 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300 backdrop-blur-sm">
+                    <i className="fa-solid fa-check mr-1" />
+                    Matched
+                  </div>
+                )}
+
+                {isNew && (
+                  <div className="absolute top-2 left-2 rounded-md bg-cyan-950/80 px-1.5 py-0.5 text-[9px] font-semibold text-cyan-300 backdrop-blur-sm">
+                    <i className="fa-solid fa-plus mr-1" />
+                    New
+                  </div>
+                )}
 
                 {/* Quality warning — bottom overlay strip */}
                 {!face.isAcceptable && (
@@ -307,28 +355,66 @@ export function FaceAssignmentGrid({
                   </div>
                 )}
 
-                {/* Unassign on hover — subtle overlay button */}
-                {face.assignedPersonId && (
+                {/* Change/Reassign on hover */}
+                {(isAssigned || isNew) && (
                   <button
-                    onClick={() => onUnassign(face.faceId)}
+                    type="button"
+                    onClick={() => {
+                      if (isAssigned) {
+                        onUnassign(face.faceId)
+                      } else {
+                        onUnassign(face.faceId)
+                      }
+                    }}
                     className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/40 group-hover:opacity-100">
-                    <span className="text-[11px] font-semibold text-white/80">Change</span>
+                    <span className="rounded-md bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white/90 backdrop-blur-sm">
+                      Change
+                    </span>
                   </button>
                 )}
               </div>
 
-              {/* Assignment label / dropdown — below image, no container */}
-              {!face.assignedPersonId ?
-                <MemberAssignCombobox
-                  availableMembers={availableMembers}
-                  displayNameMap={displayNameMap}
-                  totalMembersCount={members.length}
-                  onSelect={(personId) => onAssignMember(face.faceId, personId)}
-                />
-              : <div className="flex items-center justify-between px-0.5">
+              {/* Assignment controls */}
+              {isAssigned ?
+                <div className="flex items-center justify-between px-0.5">
                   <span className="truncate text-[12px] font-semibold text-white">
                     {assignedDisplayName}
                   </span>
+                </div>
+              : isNew ?
+                <div className="flex flex-col gap-1">
+                  <input
+                    type="text"
+                    value={face.customMemberName || ""}
+                    onChange={(e) => onUpdateCustomName?.(face.faceId, e.target.value)}
+                    placeholder="Enter name"
+                    className="w-full rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-xs font-medium text-cyan-200 placeholder-white/30 transition-colors outline-none focus:border-cyan-400 focus:bg-cyan-500/20"
+                  />
+                  <div className="flex items-center justify-between px-0.5">
+                    <span className="text-[10px] text-white/35">Will be created</span>
+                    <button
+                      type="button"
+                      onClick={() => onUnassign(face.faceId)}
+                      className="text-[10px] text-white/40 hover:text-white/70">
+                      Pick existing
+                    </button>
+                  </div>
+                </div>
+              : <div className="flex flex-col gap-1.5">
+                  <MemberAssignCombobox
+                    availableMembers={availableMembers}
+                    displayNameMap={displayNameMap}
+                    totalMembersCount={members.length}
+                    onSelect={(personId) => onAssignMember(face.faceId, personId)}
+                  />
+                  {face.parsedName && (
+                    <button
+                      type="button"
+                      onClick={() => onSetNewMember?.(face.faceId, face.parsedName)}
+                      className="text-left text-[10px] text-cyan-400/80 hover:text-cyan-300">
+                      {`+ Create "${face.parsedName}"`}
+                    </button>
+                  )}
                 </div>
               }
             </div>

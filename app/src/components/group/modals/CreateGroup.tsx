@@ -82,9 +82,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
               }}
               placeholder=""
               maxLength={100}
-              focusColor={
-                isDuplicate && !confirmDuplicate ? "border-amber-400" : "border-cyan-500/60"
-              }
+              focusColor={isDuplicate && !confirmDuplicate ? "border-amber-400" : "border-white/20"}
               className={isDuplicate && !confirmDuplicate ? "border-amber-500/50" : ""}
             />
             {isDuplicate && !confirmDuplicate && (

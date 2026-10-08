@@ -48,7 +48,7 @@ describe("AddMember Modal", () => {
     vi.clearAllMocks()
   })
 
-  it("renders Name, Role, Face Biometrics section, and action buttons in Single mode", () => {
+  it("renders Name, Role, Face Enrollment section, and action buttons in Single mode", () => {
     render(
       <AddMember
         isOpen={true}
@@ -60,13 +60,14 @@ describe("AddMember Modal", () => {
     )
 
     expect(screen.getByText("Add Members")).toBeInTheDocument()
-    expect(screen.getByText("Name")).toBeInTheDocument()
-    expect(screen.getByText("Face Biometrics")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Save & Add Next/i })).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("Name")).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("Role (optional)")).toBeInTheDocument()
+    expect(screen.getByText("Face Enrollment")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Add Member/i })).toBeInTheDocument()
   })
 
-  it("supports 'Save & Add Next' by adding member, keeping modal open, and resetting form", async () => {
+  it("adds member successfully and closes modal", async () => {
     const onSuccess = vi.fn()
     const onClose = vi.fn()
 
@@ -101,8 +102,8 @@ describe("AddMember Modal", () => {
     fireEvent.change(nameInput, { target: { value: "Juan Dela Cruz" } })
     fireEvent.change(roleInput, { target: { value: "Student" } })
 
-    const saveAndAddNextBtn = screen.getByRole("button", { name: /Save & Add Next/i })
-    fireEvent.click(saveAndAddNextBtn)
+    const addMemberBtn = screen.getByRole("button", { name: /Add Member/i })
+    fireEvent.click(addMemberBtn)
 
     await waitFor(() => {
       expect(attendanceManager.addMember).toHaveBeenCalledWith("group-1", "Juan Dela Cruz", {
@@ -110,8 +111,7 @@ describe("AddMember Modal", () => {
         hasConsent: true,
       })
       expect(onSuccess).toHaveBeenCalled()
-      expect(onClose).not.toHaveBeenCalled()
-      expect(screen.getByText(/Juan Dela Cruz added/i)).toBeInTheDocument()
+      expect(onClose).toHaveBeenCalled()
     })
   })
 })

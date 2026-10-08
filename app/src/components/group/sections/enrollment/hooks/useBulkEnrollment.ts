@@ -8,6 +8,9 @@ import type {
 } from "@/components/group/sections/enrollment/types"
 import { attendanceManager } from "@/services/AttendanceManager"
 import { makeId, readFileAsDataUrl } from "@/utils/imageHelpers"
+import { parsePhotoFilename } from "@/utils/filenameParser"
+import { useGroupStore } from "@/components/group/stores"
+import { useAttendanceStore } from "@/components/main/stores"
 
 export interface PendingDuplicateFiles {
   duplicates: File[]
@@ -108,6 +111,11 @@ export function useBulkEnrollment(
           const dataUrl = await readFileAsDataUrl(file)
           const absoluteImageId = `image_${imageIdx + startIndex}`
 
+          // Smart Filename Parsing & Auto-Matching
+          const { name: parsedName, role: parsedRole } = parsePhotoFilename(file.name)
+          const normalizedParsed = parsedName.toLowerCase()
+          const matchedMember = members.find((m) => m.name.toLowerCase() === normalizedParsed)
+
           for (const face of imageResult.faces) {
             const previewUrl = await createFacePreview(dataUrl, face.bbox)
 
@@ -120,8 +128,14 @@ export function useBulkEnrollment(
               qualityScore: face.quality_score,
               isAcceptable: face.is_acceptable,
               suggestions: face.suggestions || [],
-              assignedPersonId: null,
+              assignedPersonId: matchedMember ? matchedMember.person_id : null,
               previewUrl,
+              filename: file.name,
+              parsedName,
+              parsedRole,
+              isAutoMatched: Boolean(matchedMember),
+              isNewMember: !matchedMember,
+              customMemberName: matchedMember ? matchedMember.name : parsedName,
             })
           }
         }
@@ -142,7 +156,7 @@ export function useBulkEnrollment(
         setIsDetecting(false)
       }
     },
-    [uploadedFiles, group.id, createFacePreview],
+    [uploadedFiles, group.id, createFacePreview, members],
   )
 
   const isFileDuplicate = useCallback(
@@ -226,22 +240,73 @@ export function useBulkEnrollment(
     setPendingDuplicates(null)
   }, [])
 
-  const handleAssignMember = useCallback((faceId: string, personId: string) => {
-    setDetectedFaces((prev) =>
-      prev.map((face) => (face.faceId === faceId ? { ...face, assignedPersonId: personId } : face)),
-    )
-  }, [])
+  const handleAssignMember = useCallback(
+    (faceId: string, personId: string) => {
+      setDetectedFaces((prev) =>
+        prev.map((face) => {
+          if (face.faceId !== faceId) return face
+          const matched = members.find((m) => m.person_id === personId)
+          return {
+            ...face,
+            assignedPersonId: personId,
+            isAutoMatched: false,
+            isNewMember: false,
+            customMemberName: matched?.name || face.customMemberName,
+          }
+        }),
+      )
+    },
+    [members],
+  )
 
   const handleUnassign = useCallback((faceId: string) => {
     setDetectedFaces((prev) =>
-      prev.map((face) => (face.faceId === faceId ? { ...face, assignedPersonId: null } : face)),
+      prev.map((face) => {
+        if (face.faceId !== faceId) return face
+        return {
+          ...face,
+          assignedPersonId: null,
+          isAutoMatched: false,
+          isNewMember: false,
+        }
+      }),
+    )
+  }, [])
+
+  const handleSetNewMember = useCallback((faceId: string, name?: string) => {
+    setDetectedFaces((prev) =>
+      prev.map((face) => {
+        if (face.faceId !== faceId) return face
+        return {
+          ...face,
+          assignedPersonId: null,
+          isAutoMatched: false,
+          isNewMember: true,
+          customMemberName: name !== undefined ? name : face.customMemberName || face.parsedName,
+        }
+      }),
+    )
+  }, [])
+
+  const handleUpdateCustomName = useCallback((faceId: string, newName: string) => {
+    setDetectedFaces((prev) =>
+      prev.map((face) => {
+        if (face.faceId !== faceId) return face
+        return {
+          ...face,
+          customMemberName: newName,
+        }
+      }),
     )
   }, [])
 
   const handleBulkEnroll = useCallback(async () => {
-    const assignedFaces = detectedFaces.filter((f) => f.assignedPersonId)
-    if (assignedFaces.length === 0) {
-      setError("Please assign at least one face to a member")
+    const facesToEnroll = detectedFaces.filter(
+      (f) => f.assignedPersonId || (f.isNewMember && (f.customMemberName || f.parsedName)?.trim()),
+    )
+
+    if (facesToEnroll.length === 0) {
+      setError("Please assign at least one face to a member or enter a name")
       return
     }
 
@@ -250,7 +315,42 @@ export function useBulkEnrollment(
     setEnrollmentResults(null)
 
     try {
-      const enrollments = assignedFaces.map((face) => {
+      // 1. Auto-create new members if needed
+      const facesNeedingCreation = facesToEnroll.filter((f) => f.isNewMember && !f.assignedPersonId)
+      const newlyCreatedMembers: AttendanceMember[] = []
+
+      for (const face of facesNeedingCreation) {
+        const memberName = (face.customMemberName || face.parsedName || "Member").trim()
+        if (!memberName) continue
+
+        try {
+          const newMember = await attendanceManager.addMember(group.id, memberName, {
+            role: face.parsedRole || undefined,
+            hasConsent: true,
+          })
+          face.assignedPersonId = newMember.person_id
+          newlyCreatedMembers.push(newMember)
+        } catch (addErr) {
+          console.warn(`Failed to auto-create member ${memberName}:`, addErr)
+        }
+      }
+
+      if (newlyCreatedMembers.length > 0) {
+        useGroupStore.setState({
+          members: [...useGroupStore.getState().members, ...newlyCreatedMembers],
+        })
+        useAttendanceStore.setState({
+          groupMembers: [...useAttendanceStore.getState().groupMembers, ...newlyCreatedMembers],
+        })
+      }
+
+      // 2. Enroll all assigned faces
+      const readyFaces = facesToEnroll.filter((f) => f.assignedPersonId)
+      if (readyFaces.length === 0) {
+        throw new Error("No members could be prepared for enrollment.")
+      }
+
+      const enrollments = readyFaces.map((face) => {
         const imageIdx = parseInt(face.imageId.replace("image_", ""))
         const file = uploadedFiles[imageIdx]
         return {
@@ -266,14 +366,13 @@ export function useBulkEnrollment(
         group.id,
         enrollments,
         uploadedFiles
-          .filter((_, i) =>
-            assignedFaces.some((f) => parseInt(f.imageId.replace("image_", "")) === i),
-          )
+          .filter((_, i) => readyFaces.some((f) => parseInt(f.imageId.replace("image_", "")) === i))
           .map((file) => ({
             file,
             filename: file.name,
           })),
       )
+
       const results: BulkEnrollmentResult[] = result.results.map((r: BulkEnrollResponseItem) => ({
         personId: r.person_id,
         memberName: r.member_name || "",
@@ -310,6 +409,8 @@ export function useBulkEnrollment(
     handleDismissDuplicates,
     handleAssignMember,
     handleUnassign,
+    handleSetNewMember,
+    handleUpdateCustomName,
     handleBulkEnroll,
     handleClearFiles,
   }

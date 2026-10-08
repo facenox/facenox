@@ -419,7 +419,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                           }
                         }}
                         disabled={isSavingGroupName}
-                        className="w-44 max-w-[200px] shrink rounded-md border border-white/10 bg-[rgba(22,28,36,0.68)] px-2.5 py-0.5 text-xs font-medium text-white transition-all duration-200 outline-none placeholder:text-white/40 focus:border-cyan-500/40 focus:bg-[rgba(28,35,44,0.85)] focus:ring-1 focus:ring-cyan-500/20"
+                        className="w-44 max-w-[200px] shrink rounded-md border border-white/10 bg-[rgba(22,28,36,0.68)] px-2.5 py-0.5 text-xs font-medium text-white transition-all duration-200 outline-none placeholder:text-white/35 focus:border-white/25 focus:bg-[rgba(28,35,44,0.85)]"
                       />
                       <Tooltip content="Save (Enter)" position="bottom" offset={6}>
                         <button

@@ -64,7 +64,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
               onChange={(event) => setName(event.target.value)}
               placeholder=""
               maxLength={100}
-              focusColor="border-cyan-500/60"
+              focusColor="border-white/20"
             />
           </label>
         </div>
