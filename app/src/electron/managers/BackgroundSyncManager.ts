@@ -234,6 +234,60 @@ export class BackgroundSyncManager {
     state.mainWindow?.webContents.send("sync:data-changed")
   }
 
+  private async applyRemotePolicy(policy?: Record<string, unknown> | null) {
+    if (!policy || typeof policy !== "object") return
+
+    if (typeof policy.forceLiveness === "boolean") {
+      persistentStore.set("sync.policy.forceLiveness", policy.forceLiveness)
+    }
+    if (typeof policy.trackCheckout === "boolean") {
+      persistentStore.set("sync.policy.trackCheckout", policy.trackCheckout)
+    }
+    if (typeof policy.lateThresholdEnabled === "boolean") {
+      persistentStore.set("sync.policy.lateThresholdEnabled", policy.lateThresholdEnabled)
+    }
+    if (typeof policy.lateThresholdMinutes === "number") {
+      persistentStore.set("sync.policy.lateThresholdMinutes", policy.lateThresholdMinutes)
+    }
+    if (typeof policy.attendanceCooldownSeconds === "number") {
+      persistentStore.set(
+        "sync.policy.attendanceCooldownSeconds",
+        policy.attendanceCooldownSeconds,
+      )
+    }
+    if (typeof policy.dataRetentionDays === "number") {
+      persistentStore.set("sync.policy.dataRetentionDays", policy.dataRetentionDays)
+      if (policy.dataRetentionDays > 0) {
+        try {
+          const settingsRes = await fetch(`${backendService.getUrl()}/attendance/settings`, {
+            method: "GET",
+            headers: authHeaders(),
+            signal: AbortSignal.timeout(5000),
+          })
+          if (settingsRes.ok) {
+            const currentSettings = (await settingsRes.json()) as {
+              data_retention_days?: number
+            }
+            const currentLocal = currentSettings.data_retention_days ?? 0
+            if (currentLocal === 0 || currentLocal > policy.dataRetentionDays) {
+              await fetch(`${backendService.getUrl()}/attendance/settings`, {
+                method: "PUT",
+                headers: authHeaders({ "Content-Type": "application/json" }),
+                body: JSON.stringify({ data_retention_days: policy.dataRetentionDays }),
+                signal: AbortSignal.timeout(5000),
+              })
+              console.log(
+                `[Sync] Local data retention clamped to cloud ceiling: ${policy.dataRetentionDays} days (was ${currentLocal === 0 ? "forever" : `${currentLocal} days`})`,
+              )
+            }
+          }
+        } catch (err) {
+          console.warn("[Sync] Failed to clamp local data retention against cloud ceiling:", err)
+        }
+      }
+    }
+  }
+
   private initRealtimeListener() {
     this.teardownRealtimeListener()
 
@@ -547,6 +601,11 @@ export class BackgroundSyncManager {
         groups: Array<Record<string, unknown>>
         members: Array<Record<string, unknown>>
         face_embeddings?: Array<FaceEmbedding>
+        policy?: Record<string, unknown>
+      }
+
+      if (pullPayload.policy) {
+        await this.applyRemotePolicy(pullPayload.policy)
       }
 
       const importResponse = await fetch(`${backendService.getUrl()}/attendance/import-metadata`, {
@@ -847,69 +906,7 @@ export class BackgroundSyncManager {
 
       // Process Remote Policy from Dashboard
       if (lastPushResponsePayload?.policy && typeof lastPushResponsePayload.policy === "object") {
-        const policy = lastPushResponsePayload.policy as {
-          forceLiveness?: boolean
-          trackCheckout?: boolean
-          lateThresholdEnabled?: boolean
-          lateThresholdMinutes?: number
-          attendanceCooldownSeconds?: number
-          dataRetentionDays?: number
-        }
-        if (typeof policy.forceLiveness === "boolean") {
-          persistentStore.set("sync.policy.forceLiveness", policy.forceLiveness)
-        }
-        if (typeof policy.trackCheckout === "boolean") {
-          persistentStore.set("sync.policy.trackCheckout", policy.trackCheckout)
-        }
-        if (typeof policy.lateThresholdEnabled === "boolean") {
-          persistentStore.set("sync.policy.lateThresholdEnabled", policy.lateThresholdEnabled)
-        }
-        if (typeof policy.lateThresholdMinutes === "number") {
-          persistentStore.set("sync.policy.lateThresholdMinutes", policy.lateThresholdMinutes)
-        }
-        if (typeof policy.attendanceCooldownSeconds === "number") {
-          persistentStore.set(
-            "sync.policy.attendanceCooldownSeconds",
-            policy.attendanceCooldownSeconds,
-          )
-        }
-        if (typeof policy.dataRetentionDays === "number") {
-          persistentStore.set("sync.policy.dataRetentionDays", policy.dataRetentionDays)
-          // Hybrid ceiling enforcement: If cloud policy enforces a retention limit (> 0),
-          // clamp local SQLite data_retention_days so it does not exceed the organization's compliance ceiling.
-          if (policy.dataRetentionDays > 0) {
-            try {
-              const settingsRes = await fetch(`${backendService.getUrl()}/attendance/settings`, {
-                method: "GET",
-                headers: authHeaders(),
-                signal: AbortSignal.timeout(5000),
-              })
-              if (settingsRes.ok) {
-                const currentSettings = (await settingsRes.json()) as {
-                  data_retention_days?: number
-                }
-                const currentLocal = currentSettings.data_retention_days ?? 0
-                // 0 means keep forever, which exceeds any finite cloud ceiling. Also clamp if local > cloud.
-                if (currentLocal === 0 || currentLocal > policy.dataRetentionDays) {
-                  await fetch(`${backendService.getUrl()}/attendance/settings`, {
-                    method: "PUT",
-                    headers: authHeaders({ "Content-Type": "application/json" }),
-                    body: JSON.stringify({ data_retention_days: policy.dataRetentionDays }),
-                    signal: AbortSignal.timeout(5000),
-                  })
-                  console.log(
-                    `[Sync] Local data retention clamped to cloud ceiling: ${policy.dataRetentionDays} days (was ${currentLocal === 0 ? "forever" : `${currentLocal} days`})`,
-                  )
-                }
-              }
-            } catch (err) {
-              console.warn(
-                "[Sync] Failed to clamp local data retention against cloud ceiling:",
-                err,
-              )
-            }
-          }
-        }
+        await this.applyRemotePolicy(lastPushResponsePayload.policy as Record<string, unknown>)
       }
       const syncedAt = new Date().toISOString()
 
