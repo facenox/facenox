@@ -49,11 +49,16 @@ export function BulkEnrollment({
     handleDismissDuplicates,
     handleAssignMember,
     handleUnassign,
+    handleSetNewMember,
+    handleUpdateCustomName,
     handleBulkEnroll,
     handleClearFiles,
   } = useBulkEnrollment(group, members, onRefresh)
 
   const assignedCount = detectedFaces.filter((f) => f.assignedPersonId).length
+  const readyCount = detectedFaces.filter(
+    (f) => f.assignedPersonId || (f.isNewMember && (f.customMemberName || f.parsedName)?.trim()),
+  ).length
   const successCount = enrollmentResults?.filter((r) => r.success).length || 0
   const failedCount = enrollmentResults?.filter((r) => !r.success).length || 0
 
@@ -164,6 +169,8 @@ export function BulkEnrollment({
             assignedCount={assignedCount}
             onAssignMember={handleAssignMember}
             onUnassign={handleUnassign}
+            onUpdateCustomName={handleUpdateCustomName}
+            onSetNewMember={handleSetNewMember}
           />
         )}
 
@@ -190,8 +197,8 @@ export function BulkEnrollment({
         )}
       </div>
 
-      {/* Sticky bottom — enroll CTA, only when faces are assigned */}
-      {assignedCount > 0 && !enrollmentResults && (
+      {/* Sticky bottom — enroll CTA, when faces are assigned or ready */}
+      {readyCount > 0 && !enrollmentResults && (
         <div className="shrink-0 px-8 py-4">
           <button
             onClick={handleBulkEnroll}
@@ -201,11 +208,11 @@ export function BulkEnrollment({
               <>
                 <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/15 border-t-cyan-400/60" />
                 <span>
-                  Enrolling {assignedCount} {assignedCount === 1 ? "face" : "faces"}…
+                  Enrolling {readyCount} {readyCount === 1 ? "person" : "people"}…
                 </span>
               </>
             : <span>
-                Enroll {assignedCount} {assignedCount === 1 ? "Face" : "Faces"}
+                Enroll {readyCount} {readyCount === 1 ? "Person" : "People"}
               </span>
             }
           </button>

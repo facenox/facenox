@@ -250,10 +250,7 @@ export class BackgroundSyncManager {
       persistentStore.set("sync.policy.lateThresholdMinutes", policy.lateThresholdMinutes)
     }
     if (typeof policy.attendanceCooldownSeconds === "number") {
-      persistentStore.set(
-        "sync.policy.attendanceCooldownSeconds",
-        policy.attendanceCooldownSeconds,
-      )
+      persistentStore.set("sync.policy.attendanceCooldownSeconds", policy.attendanceCooldownSeconds)
     }
     if (typeof policy.dataRetentionDays === "number") {
       persistentStore.set("sync.policy.dataRetentionDays", policy.dataRetentionDays)
@@ -425,9 +422,12 @@ export class BackgroundSyncManager {
     void this.pollCommands()
 
     // Fallback background command polling (every 15 minutes as safety net for offline recovery)
-    this.commandTimer = setInterval(() => {
-      void this.pollCommands()
-    }, 15 * 60 * 1000)
+    this.commandTimer = setInterval(
+      () => {
+        void this.pollCommands()
+      },
+      15 * 60 * 1000,
+    )
   }
 
   stop() {

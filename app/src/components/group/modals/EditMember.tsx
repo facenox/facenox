@@ -108,7 +108,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder=""
-              focusColor="border-cyan-400/30"
+              focusColor="border-white/20"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
@@ -119,7 +119,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
               value={role}
               onChange={(event) => setRole(event.target.value)}
               placeholder=""
-              focusColor="border-cyan-400/30"
+              focusColor="border-white/20"
             />
           </label>
 

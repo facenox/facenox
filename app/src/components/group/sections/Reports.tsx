@@ -9,7 +9,10 @@ import { useReportViews } from "@/components/group/sections/reports/hooks/useRep
 import { useReportTransform } from "@/components/group/sections/reports/hooks/useReportTransform"
 import { ReportToolbar } from "@/components/group/sections/reports/components/ReportToolbar"
 import { ReportTable } from "@/components/group/sections/reports/components/ReportTable"
-import { exportReportToCSV } from "@/components/group/sections/reports/utils/exportUtils"
+import {
+  exportReportToCSV,
+  exportAllGroupsReportToCSV,
+} from "@/components/group/sections/reports/utils/exportUtils"
 import { EmptyState } from "@/components/group/shared/EmptyState"
 import { EditSessionModal } from "@/components/group/sections/reports/components/EditSessionModal"
 import { attendanceManager } from "@/services/AttendanceManager"
@@ -20,7 +23,10 @@ import type { ColumnKey, RowData } from "@/components/group/sections/reports/typ
 interface ReportsProps {
   group: AttendanceGroup
   onDaysTrackedChange?: (daysTracked: number, loading: boolean) => void
-  onExportHandlersReady?: (handlers: { exportCSV: () => void }) => void
+  onExportHandlersReady?: (handlers: {
+    exportCSV: () => void
+    exportAllGroupsCSV?: () => void
+  }) => void
   onAddMember?: () => void
   isPaired?: boolean
 }
@@ -112,13 +118,19 @@ export function Reports({
     )
   }, [groupedRows, visibleColumns, allColumns, group.name, reportStartDate, reportEndDate])
 
+  const handleExportAllGroupsCSV = useCallback(async () => {
+    const allGroups = useGroupStore.getState().groups
+    await exportAllGroupsReportToCSV(allGroups, reportStartDate, reportEndDate)
+  }, [reportStartDate, reportEndDate])
+
   useEffect(() => {
     if (onExportHandlersReady && members.length > 0 && !loading) {
       onExportHandlersReady({
         exportCSV: handleExportCSV,
+        exportAllGroupsCSV: handleExportAllGroupsCSV,
       })
     }
-  }, [onExportHandlersReady, handleExportCSV, members.length, loading])
+  }, [onExportHandlersReady, handleExportCSV, handleExportAllGroupsCSV, members.length, loading])
 
   return (
     <section className="flex h-full w-full flex-col overflow-hidden bg-transparent">

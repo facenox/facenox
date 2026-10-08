@@ -59,7 +59,7 @@ export function GroupManagementModal({
               onChange={(e) => setNewGroupName(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder=""
-              focusColor="border-cyan-500/60"
+              focusColor="border-white/20"
             />
           </label>
         </div>

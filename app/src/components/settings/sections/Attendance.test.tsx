@@ -147,3 +147,77 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     expect(input).not.toBeDisabled()
   })
 })
+
+describe("Attendance Late Tracking & Scheduled Start Time Settings", () => {
+  const baseSettings: AttendanceSettings = {
+    lateThresholdEnabled: true,
+    lateThresholdMinutes: 15,
+    classStartTime: "09:30",
+    attendanceCooldownSeconds: 60,
+    enableSpoofDetection: false,
+    maxRecognitionFacesPerFrame: 5,
+    trackCheckout: false,
+    dataRetentionDays: 0,
+  }
+
+  it("renders scheduled start time and allows modifying it when group is selected and late tracking is enabled", () => {
+    const onClassStartTimeChange = vi.fn()
+    const onLateThresholdChange = vi.fn()
+
+    render(
+      <Attendance
+        attendanceSettings={baseSettings}
+        onLateThresholdChange={onLateThresholdChange}
+        onLateThresholdToggle={vi.fn()}
+        onClassStartTimeChange={onClassStartTimeChange}
+        onAttendanceCooldownChange={vi.fn()}
+        onSpoofDetectionToggle={vi.fn()}
+        onMaxRecognitionFacesChange={vi.fn()}
+        onTrackCheckoutToggle={vi.fn()}
+        onDataRetentionChange={vi.fn()}
+        hasSelectedGroup={true}
+        isPaired={false}
+      />,
+    )
+
+    expect(screen.getByText("Scheduled start time:")).toBeInTheDocument()
+    expect(screen.getByText("9:30")).toBeInTheDocument()
+    expect(screen.getByText("AM")).toBeInTheDocument()
+
+    const timeInput = screen.getByLabelText("Scheduled start time") as HTMLInputElement
+    expect(timeInput).toBeInTheDocument()
+    expect(timeInput.value).toBe("09:30")
+
+    fireEvent.change(timeInput, { target: { value: "14:00" } })
+    expect(onClassStartTimeChange).toHaveBeenCalledWith("14:00")
+
+    // Threshold buttons are also interactive
+    const thresholdBtn = screen.getByRole("button", { name: "45m" })
+    fireEvent.click(thresholdBtn)
+    expect(onLateThresholdChange).toHaveBeenCalledWith(45)
+  })
+
+  it("hides scheduled start time sub-panel when late tracking is disabled", () => {
+    render(
+      <Attendance
+        attendanceSettings={{
+          ...baseSettings,
+          lateThresholdEnabled: false,
+        }}
+        onLateThresholdChange={vi.fn()}
+        onLateThresholdToggle={vi.fn()}
+        onClassStartTimeChange={vi.fn()}
+        onAttendanceCooldownChange={vi.fn()}
+        onSpoofDetectionToggle={vi.fn()}
+        onMaxRecognitionFacesChange={vi.fn()}
+        onTrackCheckoutToggle={vi.fn()}
+        onDataRetentionChange={vi.fn()}
+        hasSelectedGroup={true}
+        isPaired={false}
+      />,
+    )
+
+    expect(screen.queryByText("Scheduled start time:")).not.toBeInTheDocument()
+    expect(screen.queryByText("Late threshold:")).not.toBeInTheDocument()
+  })
+})

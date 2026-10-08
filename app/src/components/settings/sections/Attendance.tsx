@@ -8,6 +8,7 @@ interface AttendanceProps {
   attendanceSettings: AttendanceSettings
   onLateThresholdChange: (minutes: number) => void
   onLateThresholdToggle: (enabled: boolean) => void
+  onClassStartTimeChange?: (time: string) => void
   onAttendanceCooldownChange: (seconds: number) => void
   onSpoofDetectionToggle: (enabled: boolean) => void
   onMaxRecognitionFacesChange: (count: number) => void
@@ -21,10 +22,26 @@ interface AttendanceProps {
 const SETTINGS_STATUS_SWAP_DURATION = 0.14
 const SETTINGS_PANEL_ANIMATION_DURATION = 0.18
 
+const formatTimeDisplay = (time?: string) => {
+  if (!time) return { time: "08:00", period: "AM" }
+  try {
+    const [hours, minutes] = time.split(":").map(Number)
+    const period = hours >= 12 ? "PM" : "AM"
+    const displayHours = hours % 12 || 12
+    return {
+      time: `${displayHours}:${String(minutes).padStart(2, "0")}`,
+      period,
+    }
+  } catch {
+    return { time: time || "08:00", period: "" }
+  }
+}
+
 export function Attendance({
   attendanceSettings,
   onLateThresholdChange,
   onLateThresholdToggle,
+  onClassStartTimeChange,
   onAttendanceCooldownChange,
   onSpoofDetectionToggle,
   onMaxRecognitionFacesChange,
@@ -188,35 +205,64 @@ export function Attendance({
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
                   className="overflow-hidden">
-                  <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
-                    <div className="absolute top-0 bottom-1/2 left-0 w-px rounded-bl-xs bg-white/10"></div>
-                    <div className="absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10"></div>
+                  <div className="flex flex-col">
+                    {/* Scheduled Start Time */}
+                    <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
+                      <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10" />
+                      <div className="pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10" />
 
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs text-white/65">Late threshold:</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs text-white/65">Scheduled start time:</div>
+                      </div>
+                      <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 hover:border-cyan-500/40 hover:bg-white/8">
+                        <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-cyan-400" />
+                        <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
+                          <span>{formatTimeDisplay(attendanceSettings.classStartTime).time}</span>
+                          <span className="text-[10px] font-medium text-white/55">
+                            {formatTimeDisplay(attendanceSettings.classStartTime).period}
+                          </span>
+                        </div>
+                        <input
+                          type="time"
+                          aria-label="Scheduled start time"
+                          value={attendanceSettings.classStartTime || "08:00"}
+                          onChange={(e) => onClassStartTimeChange?.(e.target.value)}
+                          onClick={(e) => e.currentTarget.showPicker?.()}
+                          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                        />
+                      </div>
                     </div>
 
-                    <div className="ml-auto flex shrink-0 items-center gap-4">
-                      {([5, 10, 15, 30, 45, 60] as const).map((mins) => (
-                        <button
-                          key={mins}
-                          type="button"
-                          onClick={() => onLateThresholdChange(mins)}
-                          className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
-                            attendanceSettings.lateThresholdMinutes === mins ?
-                              "text-cyan-400"
-                            : "text-white/40 hover:text-white/70"
-                          }`}>
-                          {mins}m
-                          {attendanceSettings.lateThresholdMinutes === mins && (
-                            <motion.div
-                              layoutId="lateUnderline"
-                              className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
-                              transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                            />
-                          )}
-                        </button>
-                      ))}
+                    {/* Late Threshold */}
+                    <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
+                      <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs text-white/65">Late threshold:</div>
+                      </div>
+
+                      <div className="ml-auto flex shrink-0 items-center gap-4">
+                        {([5, 10, 15, 30, 45, 60] as const).map((mins) => (
+                          <button
+                            key={mins}
+                            type="button"
+                            onClick={() => onLateThresholdChange(mins)}
+                            className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                              attendanceSettings.lateThresholdMinutes === mins ?
+                                "text-cyan-400"
+                              : "text-white/40 hover:text-white/70"
+                            }`}>
+                            {mins}m
+                            {attendanceSettings.lateThresholdMinutes === mins && (
+                              <motion.div
+                                layoutId="lateUnderline"
+                                className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
+                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -387,8 +433,7 @@ export function Attendance({
                   transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
                   className="overflow-hidden">
                   <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
-                    <div className="absolute top-0 bottom-1/2 left-0 w-px rounded-bl-xs bg-white/10"></div>
-                    <div className="absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10"></div>
+                    <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
 
                     <div className="min-w-0 flex-1">
                       <div className="text-xs text-white/65">Limit to:</div>
@@ -628,8 +673,7 @@ export function Attendance({
                   transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
                   className="overflow-hidden">
                   <div className="relative flex flex-col gap-2 pt-3 pb-2 pl-4">
-                    <div className="absolute top-0 bottom-1/2 left-0 w-px rounded-bl-xs bg-white/10"></div>
-                    <div className="absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10"></div>
+                    <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
 
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">

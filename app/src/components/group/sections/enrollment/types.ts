@@ -9,6 +9,12 @@ export interface DetectedFace {
   suggestions: string[]
   assignedPersonId: string | null
   previewUrl: string
+  filename?: string
+  parsedName?: string
+  parsedRole?: string
+  isAutoMatched?: boolean
+  isNewMember?: boolean
+  customMemberName?: string
 }
 
 export interface BulkEnrollmentResult {

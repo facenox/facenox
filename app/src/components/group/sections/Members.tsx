@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { attendanceManager } from "@/services"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
-import { useAttendanceStore } from "@/components/main/stores"
+import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { generateDisplayNames } from "@/utils"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { EmptyState } from "@/components/group/shared/EmptyState"
@@ -246,18 +246,50 @@ export function Members({
   }, [selectedMembersList, isConsentCertified])
 
   const handleBulkConsent = async (confirmedIds: string[]) => {
+    if (confirmedIds.length === 0) return
+    const idSet = new Set(confirmedIds)
+
+    // Optimistically update stores immediately so banner and list reflect instant consent
+    const prevGroupMembers = useGroupStore.getState().members
+    const prevAttendanceMembers = useAttendanceStore.getState().groupMembers
+
+    useGroupStore.setState({
+      members: prevGroupMembers.map((m) =>
+        idSet.has(m.person_id) ? { ...m, has_consent: true } : m,
+      ),
+    })
+    useAttendanceStore.setState({
+      groupMembers: prevAttendanceMembers.map((m) =>
+        idSet.has(m.person_id) ? { ...m, has_consent: true } : m,
+      ),
+    })
+
+    setIsBulkConsentModalOpen(false)
+    useUIStore
+      .getState()
+      .setSuccess(`Granted biometric consent for ${confirmedIds.length.toLocaleString()} members.`)
+
     try {
-      await Promise.all(
-        confirmedIds.map((id) =>
-          attendanceManager.updateMember(id, {
-            has_consent: true,
-          }),
-        ),
-      )
+      const CHUNK_SIZE = 25
+      for (let i = 0; i < confirmedIds.length; i += CHUNK_SIZE) {
+        const chunk = confirmedIds.slice(i, i + CHUNK_SIZE)
+        await Promise.all(
+          chunk.map((id) =>
+            attendanceManager.updateMember(id, {
+              has_consent: true,
+            }),
+          ),
+        )
+      }
       onMembersChange()
-      setIsBulkConsentModalOpen(false)
     } catch (err) {
       console.error("Error updating bulk consent:", err)
+      useUIStore
+        .getState()
+        .setError(err instanceof Error ? err.message : "Failed to update bulk consent.")
+      useGroupStore.setState({ members: prevGroupMembers })
+      useAttendanceStore.setState({ groupMembers: prevAttendanceMembers })
+      onMembersChange()
     }
   }
 
@@ -380,7 +412,7 @@ export function Members({
                     onFocus={handleSearchFocus}
                     onBlur={handleSearchBlur}
                     placeholder="Search name or role..."
-                    className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none placeholder:text-white/30 focus:border-white/20 focus:bg-white/[0.08]"
+                    className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none placeholder:text-white/35 focus:border-white/20 focus:bg-white/[0.08]"
                   />
                 </div>
 

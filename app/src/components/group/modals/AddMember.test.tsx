@@ -1,0 +1,117 @@
+import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { AddMember } from "./AddMember"
+import { attendanceManager } from "@/services"
+import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
+
+vi.mock("@/services", () => ({
+  attendanceManager: {
+    addMember: vi.fn(),
+    addMembersBulk: vi.fn(),
+    enrollFaceForGroupPerson: vi.fn(),
+  },
+  backendService: {
+    detectFaces: vi.fn(),
+  },
+  persistentSettings: {
+    getUIState: vi.fn().mockResolvedValue({}),
+    setUIState: vi.fn().mockResolvedValue(undefined),
+  },
+}))
+
+vi.mock("@/components/group/sections/enrollment/hooks/useCamera", () => ({
+  useCamera: () => ({
+    videoRef: { current: null },
+    cameraDevices: [],
+    selectedCamera: "",
+    setSelectedCamera: vi.fn(),
+    isStreaming: false,
+    isVideoReady: false,
+    cameraError: null,
+    startCamera: vi.fn().mockResolvedValue(undefined),
+    stopCamera: vi.fn(),
+  }),
+}))
+
+const mockGroup: AttendanceGroup = {
+  id: "group-1",
+  name: "Grade 10 - Rizal",
+  created_at: new Date("2026-10-08T00:00:00Z"),
+  is_active: true,
+  settings: {
+    biometric_consent_certified: true,
+  },
+}
+
+describe("AddMember Modal", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("renders Name, Role, Face Enrollment section, and action buttons in Single mode", () => {
+    render(
+      <AddMember
+        isOpen={true}
+        group={mockGroup}
+        existingMembers={[]}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText("Add Members")).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("Name")).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("Role (optional)")).toBeInTheDocument()
+    expect(screen.getByText("Face Enrollment")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Add Member/i })).toBeInTheDocument()
+  })
+
+  it("adds member successfully and closes modal", async () => {
+    const onSuccess = vi.fn()
+    const onClose = vi.fn()
+
+    const mockCreatedMember: AttendanceMember = {
+      id: "mem-1",
+      person_id: "person-1",
+      name: "Juan Dela Cruz",
+      role: "Student",
+      group_id: "group-1",
+      joined_at: new Date(),
+      is_active: true,
+      has_consent: true,
+      has_face_data: false,
+    }
+
+    vi.mocked(attendanceManager.addMember).mockResolvedValueOnce(mockCreatedMember)
+
+    render(
+      <AddMember
+        isOpen={true}
+        group={mockGroup}
+        existingMembers={[]}
+        onClose={onClose}
+        onSuccess={onSuccess}
+      />,
+    )
+
+    const inputs = screen.getAllByRole("textbox")
+    const nameInput = inputs[0]
+    const roleInput = inputs[1]
+
+    fireEvent.change(nameInput, { target: { value: "Juan Dela Cruz" } })
+    fireEvent.change(roleInput, { target: { value: "Student" } })
+
+    const addMemberBtn = screen.getByRole("button", { name: /Add Member/i })
+    fireEvent.click(addMemberBtn)
+
+    await waitFor(() => {
+      expect(attendanceManager.addMember).toHaveBeenCalledWith("group-1", "Juan Dela Cruz", {
+        role: "Student",
+        hasConsent: true,
+      })
+      expect(onSuccess).toHaveBeenCalled()
+      expect(onClose).toHaveBeenCalled()
+    })
+  })
+})
