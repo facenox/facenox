@@ -24,7 +24,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/members", tags=["members"])
 
 
-async def _get_enrolled_persons_set(face_recognizer, organization_id: Optional[str]) -> Set[str]:
+async def _get_enrolled_persons_set(
+    face_recognizer, organization_id: Optional[str]
+) -> Set[str]:
     if not face_recognizer or not hasattr(face_recognizer, "get_all_persons"):
         return set()
     try:
@@ -48,7 +50,9 @@ async def get_members(repo: AttendanceRepository = Depends(get_repository)):
         from core.lifespan import face_recognizer
 
         members = await repo.get_members()
-        all_persons_set = await _get_enrolled_persons_set(face_recognizer, repo.organization_id)
+        all_persons_set = await _get_enrolled_persons_set(
+            face_recognizer, repo.organization_id
+        )
 
         return [
             {
@@ -202,7 +206,9 @@ async def get_member(
         if not member:
             raise HTTPException(status_code=404, detail="Member not found")
 
-        all_persons_set = await _get_enrolled_persons_set(face_recognizer, repo.organization_id)
+        all_persons_set = await _get_enrolled_persons_set(
+            face_recognizer, repo.organization_id
+        )
         has_face_data = person_id in all_persons_set
 
         return {

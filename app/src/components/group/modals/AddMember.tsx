@@ -1,11 +1,14 @@
-import { useState, useRef, useEffect, useMemo } from "react"
+import { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import { flushSync } from "react-dom"
 import { AnimatePresence, motion } from "framer-motion"
-import { attendanceManager } from "@/services"
+import { attendanceManager, backendService } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { ErrorMessage, FormInput, Modal } from "@/components/common"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
 import { useAttendanceStore } from "@/components/main/stores"
+import { useCamera } from "@/components/group/sections/enrollment/hooks/useCamera"
+import { validateAndGetBestFace } from "@/utils/faceValidation"
+import { dataUrlToBlob } from "@/utils/dataUrl"
 
 /**
  * Properties for the AddMember component.
@@ -21,6 +24,13 @@ interface AddMemberProps {
   onClose: () => void
   /** Callback function when a member is successfully added */
   onSuccess: () => void
+}
+
+interface CapturedFaceData {
+  dataUrl: string
+  bbox: number[]
+  landmarks_5: number[][]
+  confidence: number
 }
 
 const waitForNextPaint = () =>
@@ -77,6 +87,16 @@ export function AddMember({
   const [confirmDuplicate, setConfirmDuplicate] = useState(false)
   const [hasConsent, setHasConsent] = useState(false)
 
+  // Inline Face Enrollment states
+  const [capturedFace, setCapturedFace] = useState<CapturedFaceData | null>(null)
+  const [faceInputMode, setFaceInputMode] = useState<"camera" | "upload">("camera")
+  const [isProcessingFace, setIsProcessingFace] = useState(false)
+  const [faceError, setFaceError] = useState<string | null>(null)
+  const [lastAddedSuccess, setLastAddedSuccess] = useState<string | null>(null)
+  const lastAddedTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const { videoRef, isStreaming, startCamera, stopCamera } = useCamera()
+
   const isConsentCertified = Boolean(group?.settings?.biometric_consent_certified)
 
   useEffect(() => {
@@ -86,6 +106,12 @@ export function AddMember({
       setHasConsent(false)
     }
   }, [isConsentCertified, isOpen])
+
+  useEffect(() => {
+    if (!isOpen) {
+      stopCamera()
+    }
+  }, [isOpen, stopCamera])
 
   const nameInputRef = useRef<HTMLInputElement>(null)
   const singleSubmitInFlightRef = useRef(false)
@@ -97,14 +123,23 @@ export function AddMember({
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
+      if (lastAddedTimerRef.current) {
+        clearTimeout(lastAddedTimerRef.current)
+      }
+      stopCamera()
     }
-  }, [])
+  }, [stopCamera])
 
   const resetForm = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
     }
+    if (lastAddedTimerRef.current) {
+      clearTimeout(lastAddedTimerRef.current)
+      lastAddedTimerRef.current = null
+    }
+    stopCamera()
     setNewMemberName("")
     setNewMemberRole("")
     setBulkMembersText("")
@@ -113,8 +148,97 @@ export function AddMember({
     setIsBulkMode(false)
     setConfirmDuplicate(false)
     setError(null)
+    setCapturedFace(null)
+    setFaceError(null)
+    setLastAddedSuccess(null)
     setHasConsent(isConsentCertified)
   }
+
+  const handleSnapPhoto = useCallback(async () => {
+    const video = videoRef.current
+    if (!video || !video.videoWidth || !video.videoHeight) {
+      setFaceError("Camera is not ready yet.")
+      return
+    }
+
+    try {
+      setIsProcessingFace(true)
+      setFaceError(null)
+
+      const canvas = document.createElement("canvas")
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const ctx = canvas.getContext("2d")
+      if (!ctx) throw new Error("Could not initialize image canvas.")
+
+      ctx.translate(canvas.width, 0)
+      ctx.scale(-1, 1)
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.95)
+      const blob = dataUrlToBlob(dataUrl)
+
+      const detection = await backendService.detectFaces(blob, {
+        model_type: "face_detector",
+        enableLiveness: false,
+      })
+
+      const bestFace = validateAndGetBestFace(detection)
+
+      setCapturedFace({
+        dataUrl,
+        bbox: bestFace.bbox,
+        landmarks_5: bestFace.landmarks_5,
+        confidence: bestFace.confidence,
+      })
+      stopCamera()
+    } catch (err) {
+      const msg =
+        err instanceof Error ?
+          err.message
+        : "Face detection failed. Ensure face is clearly visible."
+      setFaceError(msg)
+    } finally {
+      setIsProcessingFace(false)
+    }
+  }, [videoRef, stopCamera])
+
+  const handleProcessUploadedFile = useCallback(async (file: File) => {
+    try {
+      setIsProcessingFace(true)
+      setFaceError(null)
+
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (e) => resolve(e.target?.result as string)
+        reader.onerror = () => reject(new Error("Failed to read image file."))
+        reader.readAsDataURL(file)
+      })
+
+      const blob = dataUrlToBlob(dataUrl)
+      const detection = await backendService.detectFaces(blob, {
+        model_type: "face_detector",
+        enableLiveness: false,
+      })
+
+      const bestFace = validateAndGetBestFace(detection)
+
+      setCapturedFace({
+        dataUrl,
+        bbox: bestFace.bbox,
+        landmarks_5: bestFace.landmarks_5,
+        confidence: bestFace.confidence,
+      })
+    } catch (err) {
+      const msg =
+        err instanceof Error ?
+          err.message
+        : "Face detection failed. Ensure face is clearly visible."
+      setFaceError(msg)
+    } finally {
+      setIsProcessingFace(false)
+    }
+  }, [])
 
   useEffect(() => {
     if (!isBulkMode && nameInputRef.current) {
@@ -161,7 +285,7 @@ export function AddMember({
     setConfirmDuplicate(false)
   }, [newMemberName])
 
-  const handleAddMember = async () => {
+  const handleAddMember = async (addAnother = false) => {
     if (singleSubmitInFlightRef.current) {
       return
     }
@@ -187,6 +311,25 @@ export function AddMember({
         hasConsent: true,
       })
 
+      let faceEnrolled = false
+      if (capturedFace) {
+        try {
+          const res = await attendanceManager.enrollFaceForGroupPerson(
+            group.id,
+            newMember.person_id,
+            capturedFace.dataUrl,
+            capturedFace.bbox,
+            capturedFace.landmarks_5,
+          )
+          if (res.success) {
+            faceEnrolled = true
+            newMember.has_face_data = true
+          }
+        } catch (faceErr) {
+          console.warn("Face enrollment failed during member add:", faceErr)
+        }
+      }
+
       useGroupStore.setState({
         members: [...useGroupStore.getState().members, newMember],
       })
@@ -194,9 +337,25 @@ export function AddMember({
         groupMembers: [...useAttendanceStore.getState().groupMembers, newMember],
       })
 
-      resetForm()
       onSuccess()
-      onClose()
+
+      if (addAnother) {
+        setNewMemberName("")
+        setNewMemberRole("")
+        setCapturedFace(null)
+        setFaceError(null)
+        setConfirmDuplicate(false)
+        setError(null)
+        setLastAddedSuccess(`${newMember.name} added${faceEnrolled ? " (face enrolled)" : ""}`)
+        if (lastAddedTimerRef.current) clearTimeout(lastAddedTimerRef.current)
+        lastAddedTimerRef.current = setTimeout(() => setLastAddedSuccess(null), 3500)
+        requestAnimationFrame(() => {
+          nameInputRef.current?.focus()
+        })
+      } else {
+        resetForm()
+        onClose()
+      }
     } catch (err) {
       console.error("Error adding member:", err)
       const rawMessage = err instanceof Error ? err.message : ""
@@ -405,6 +564,17 @@ export function AddMember({
           </AnimatePresence>
         </div>
 
+        {lastAddedSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className="mb-4 flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-[11px] font-medium text-cyan-300">
+            <i className="fa-solid fa-circle-check text-[10px]" />
+            {lastAddedSuccess}
+          </motion.div>
+        )}
+
         {error && <ErrorMessage message={error} className="mb-4" />}
 
         <div className="relative min-h-[180px]">
@@ -425,7 +595,7 @@ export function AddMember({
                     onChange={(event) => setNewMemberName(event.target.value)}
                     placeholder=""
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAddMember()
+                      if (e.key === "Enter") handleAddMember(false)
                     }}
                     focusColor={
                       isDuplicate && !confirmDuplicate ? "border-amber-400" : "border-cyan-500/60"
@@ -448,11 +618,155 @@ export function AddMember({
                     onChange={(event) => setNewMemberRole(event.target.value)}
                     placeholder=""
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAddMember()
+                      if (e.key === "Enter") handleAddMember(false)
                     }}
                     focusColor="border-cyan-500/60"
                   />
                 </label>
+
+                {/* Inline Face Enrollment Section */}
+                <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[11px] font-medium text-white/65">
+                      <i className="fa-solid fa-id-badge text-[11px] text-cyan-400" />
+                      Face Biometrics <span className="opacity-50">(Optional)</span>
+                    </span>
+                    {capturedFace && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCapturedFace(null)
+                          setFaceError(null)
+                        }}
+                        className="text-[10px] font-medium text-red-400/80 transition-colors hover:text-red-300">
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  {capturedFace ?
+                    <div className="mt-2.5 flex items-center gap-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-2.5">
+                      <img
+                        src={capturedFace.dataUrl}
+                        alt="Captured face preview"
+                        className="h-11 w-11 rounded-full border border-cyan-500/30 object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 text-[11px] font-medium text-cyan-300">
+                          <i className="fa-solid fa-circle-check text-[10px]" />
+                          Face detected & ready
+                        </div>
+                        <p className="truncate text-[10px] text-white/45">
+                          Confidence: {Math.round(capturedFace.confidence * 100)}%
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCapturedFace(null)
+                          setFaceError(null)
+                        }}
+                        className="rounded px-2.5 py-1 text-[10px] font-medium text-white/60 transition-colors hover:bg-white/10">
+                        Retake
+                      </button>
+                    </div>
+                  : <div className="mt-2.5 space-y-2.5">
+                      {/* Source Toggle Pills */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFaceInputMode("camera")
+                            if (!isStreaming) {
+                              startCamera().catch(console.error)
+                            }
+                          }}
+                          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
+                            faceInputMode === "camera" ?
+                              "border border-cyan-500/30 bg-cyan-500/15 text-cyan-300"
+                            : "border border-white/5 bg-white/5 text-white/55 hover:text-white/80"
+                          }`}>
+                          <i className="fa-solid fa-camera text-[10px]" />
+                          Camera
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFaceInputMode("upload")
+                            stopCamera()
+                          }}
+                          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
+                            faceInputMode === "upload" ?
+                              "border border-cyan-500/30 bg-cyan-500/15 text-cyan-300"
+                            : "border border-white/5 bg-white/5 text-white/55 hover:text-white/80"
+                          }`}>
+                          <i className="fa-solid fa-cloud-arrow-up text-[10px]" />
+                          Upload Photo
+                        </button>
+                      </div>
+
+                      {faceInputMode === "camera" ?
+                        <div className="relative flex aspect-video max-h-44 w-full items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-[var(--bg-canvas)]">
+                          <video
+                            ref={videoRef}
+                            className="h-full w-full scale-x-[-1] object-cover"
+                            playsInline
+                            muted
+                          />
+                          {isStreaming && (
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+                              <button
+                                type="button"
+                                onClick={handleSnapPhoto}
+                                disabled={isProcessingFace}
+                                className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500 px-3.5 py-1 text-[11px] font-bold text-slate-950 shadow-lg transition-all hover:bg-cyan-400 active:scale-95 disabled:opacity-50">
+                                <i className="fa-solid fa-camera text-[10px]" />
+                                {isProcessingFace ? "Analyzing..." : "Capture Face"}
+                              </button>
+                            </div>
+                          )}
+                          {!isStreaming && (
+                            <button
+                              type="button"
+                              onClick={() => startCamera().catch(console.error)}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10">
+                              <i className="fa-solid fa-video text-[10px]" />
+                              Start Camera
+                            </button>
+                          )}
+                        </div>
+                      : <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] p-4 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/[0.02]">
+                          <i className="fa-solid fa-image mb-1 text-lg text-white/30" />
+                          <span className="text-[11px] font-medium text-white/70">
+                            {isProcessingFace ?
+                              "Analyzing face..."
+                            : "Click or drop portrait photo"}
+                          </span>
+                          <span className="mt-0.5 text-[10px] text-white/40">
+                            JPG, PNG up to 10MB
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) void handleProcessUploadedFile(file)
+                              e.target.value = ""
+                            }}
+                          />
+                        </label>
+                      }
+
+                      {faceError && (
+                        <div className="flex items-center gap-1.5 pl-1 text-[11px] text-red-400/90">
+                          <i className="fa-solid fa-circle-exclamation text-[10px]" />
+                          {faceError}
+                        </div>
+                      )}
+                    </div>
+                  }
+                </div>
 
                 {/* Explicit Certification Consent Checkbox */}
                 {!isConsentCertified && (
@@ -608,6 +922,7 @@ export function AddMember({
               </button>
             : <>
                 <button
+                  type="button"
                   onClick={() => {
                     resetForm()
                     onClose()
@@ -615,14 +930,28 @@ export function AddMember({
                   className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
                   Cancel
                 </button>
+                {!isBulkMode && (
+                  <button
+                    type="button"
+                    onClick={() => void handleAddMember(true)}
+                    disabled={loading || !hasConsent || !newMemberName.trim() || isProcessingFace}
+                    className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-[11px] font-semibold tracking-wider text-cyan-300 transition-all duration-200 hover:bg-cyan-500/20 hover:text-cyan-200 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-30">
+                    Save & Add Next
+                  </button>
+                )}
                 <button
-                  onClick={isBulkMode ? () => void handleBulkAddMembers() : handleAddMember}
+                  onClick={
+                    isBulkMode ?
+                      () => void handleBulkAddMembers()
+                    : () => void handleAddMember(false)
+                  }
                   disabled={
                     loading ||
                     isProcessingBulk ||
                     !hasConsent ||
                     (!isBulkMode && !newMemberName.trim()) ||
-                    (isBulkMode && !bulkMembersText.trim())
+                    (isBulkMode && !bulkMembersText.trim()) ||
+                    isProcessingFace
                   }
                   className={`min-w-[120px] rounded-lg px-6 py-2 text-[11px] font-bold tracking-wider transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-30 ${
                     confirmDuplicate && !isBulkMode ?
