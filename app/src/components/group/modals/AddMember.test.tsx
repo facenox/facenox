@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { AddMember } from "./AddMember"
 import { attendanceManager } from "@/services"
-import type { AttendanceGroup } from "@/types/recognition"
+import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
 vi.mock("@/services", () => ({
   attendanceManager: {
@@ -70,19 +70,19 @@ describe("AddMember Modal", () => {
     const onSuccess = vi.fn()
     const onClose = vi.fn()
 
-    const mockCreatedMember = {
+    const mockCreatedMember: AttendanceMember = {
       id: "mem-1",
       person_id: "person-1",
       name: "Juan Dela Cruz",
       role: "Student",
       group_id: "group-1",
-      joined_at: new Date().toISOString(),
+      joined_at: new Date(),
       is_active: true,
       has_consent: true,
       has_face_data: false,
     }
 
-    vi.mocked(attendanceManager.addMember).mockResolvedValueOnce(mockCreatedMember as any)
+    vi.mocked(attendanceManager.addMember).mockResolvedValueOnce(mockCreatedMember)
 
     render(
       <AddMember
