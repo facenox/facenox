@@ -1,5 +1,6 @@
 import logging
-from typing import List
+import inspect
+from typing import List, Optional, Set
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import select
 
@@ -23,12 +24,50 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/members", tags=["members"])
 
 
+async def _get_enrolled_persons_set(face_recognizer, organization_id: Optional[str]) -> Set[str]:
+    if not face_recognizer or not hasattr(face_recognizer, "get_all_persons"):
+        return set()
+    try:
+        res = face_recognizer.get_all_persons(organization_id)
+        if inspect.isawaitable(res):
+            all_persons = await res
+        elif isinstance(res, (list, set, tuple)):
+            all_persons = res
+        else:
+            all_persons = []
+        return set(all_persons)
+    except Exception as e:
+        logger.debug(f"Could not retrieve enrolled persons set: {e}")
+        return set()
+
+
 @router.get("", response_model=List[AttendanceMemberResponse])
 async def get_members(repo: AttendanceRepository = Depends(get_repository)):
-    """Get all attendance members"""
+    """Get all attendance members with face data status"""
     try:
+        from core.lifespan import face_recognizer
+
         members = await repo.get_members()
-        return members
+        all_persons_set = await _get_enrolled_persons_set(face_recognizer, repo.organization_id)
+
+        return [
+            {
+                "id": member.id,
+                "person_id": member.person_id,
+                "group_id": member.group_id,
+                "name": member.name,
+                "role": member.role,
+                "email": member.email,
+                "joined_at": member.joined_at,
+                "is_active": member.is_active,
+                "has_consent": member.has_consent,
+                "has_face_data": member.person_id in all_persons_set,
+                "consent_granted_at": member.consent_granted_at,
+                "consent_granted_by": member.consent_granted_by,
+                "remote_id": member.remote_id,
+            }
+            for member in members
+        ]
     except Exception as e:
         logger.error(f"Error getting members: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -157,11 +196,30 @@ async def get_member(
 ):
     """Get a specific attendance member"""
     try:
+        from core.lifespan import face_recognizer
+
         member = await repo.get_member(person_id)
         if not member:
             raise HTTPException(status_code=404, detail="Member not found")
 
-        return member
+        all_persons_set = await _get_enrolled_persons_set(face_recognizer, repo.organization_id)
+        has_face_data = person_id in all_persons_set
+
+        return {
+            "id": member.id,
+            "person_id": member.person_id,
+            "group_id": member.group_id,
+            "name": member.name,
+            "role": member.role,
+            "email": member.email,
+            "joined_at": member.joined_at,
+            "is_active": member.is_active,
+            "has_consent": member.has_consent,
+            "has_face_data": has_face_data,
+            "consent_granted_at": member.consent_granted_at,
+            "consent_granted_by": member.consent_granted_by,
+            "remote_id": member.remote_id,
+        }
 
     except HTTPException:
         raise
