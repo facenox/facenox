@@ -86,7 +86,7 @@ export function Modal({
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed right-0 bottom-0 left-0 z-100 flex items-center justify-center overflow-hidden px-4"
+          className="fixed inset-0 z-100 flex items-center justify-center p-4"
           style={{ top: `${windowBarHeightPx}px` }}>
           <motion.div
             initial={{ opacity: 0 }}
