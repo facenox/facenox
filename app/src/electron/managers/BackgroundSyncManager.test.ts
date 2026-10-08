@@ -91,7 +91,7 @@ describe("BackgroundSyncManager", () => {
     vi.useRealTimers()
   })
 
-  it("starts the active commandTimer and polls commands every 30 seconds", async () => {
+  it("starts the fallback commandTimer and polls commands every 15 minutes", async () => {
     const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
     const manager = new BackgroundSyncManager()
 
@@ -112,8 +112,8 @@ describe("BackgroundSyncManager", () => {
 
     fetchMock.mockClear()
 
-    // Advance by 30 seconds -> commandTimer should trigger pollCommands()
-    await vi.advanceTimersByTimeAsync(30_000)
+    // Advance by 15 minutes -> commandTimer should trigger fallback pollCommands()
+    await vi.advanceTimersByTimeAsync(15 * 60 * 1000)
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://cloud.facenox.test/api/devices/commands",
