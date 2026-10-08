@@ -3,7 +3,7 @@ import { flushSync } from "react-dom"
 import { AnimatePresence, motion } from "framer-motion"
 import { attendanceManager, backendService } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
-import { ErrorMessage, FormInput, Modal } from "@/components/common"
+import { ErrorMessage, FormInput, Modal, Spinner } from "@/components/common"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
 import { useAttendanceStore } from "@/components/main/stores"
 import { useCamera } from "@/components/group/sections/enrollment/hooks/useCamera"
@@ -96,13 +96,29 @@ export function AddMember({
   const [lastAddedSuccess, setLastAddedSuccess] = useState<string | null>(null)
   const lastAddedTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const { videoRef, isStreaming, startCamera, stopCamera } = useCamera()
+  const { videoRef, isStreaming, isVideoReady, cameraError, startCamera, stopCamera } = useCamera()
 
   useEffect(() => {
     if (!isOpen) {
       stopCamera()
     }
   }, [isOpen, stopCamera])
+
+  // Auto-start camera when face section is opened in camera mode
+  useEffect(() => {
+    let active = true
+    if (isOpen && isFaceSectionOpen && faceInputMode === "camera" && !isStreaming) {
+      const timer = setTimeout(() => {
+        if (active) {
+          startCamera().catch(console.error)
+        }
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+    return () => {
+      active = false
+    }
+  }, [isOpen, isFaceSectionOpen, faceInputMode, isStreaming, startCamera])
 
   const nameInputRef = useRef<HTMLInputElement>(null)
   const singleSubmitInFlightRef = useRef(false)
@@ -497,7 +513,7 @@ export function AddMember({
       maxWidth="lg">
       <div className="custom-scroll -m-5 mt-2 max-h-[90vh] overflow-x-hidden overflow-y-auto p-5">
         {/* Mode selector Tabs */}
-        <div className="mb-6 flex items-end justify-between border-b border-white/5">
+        <div className="mb-4 flex items-end justify-between border-b border-white/5">
           <div className="flex gap-6">
             <button
               onClick={() => {
@@ -687,8 +703,8 @@ export function AddMember({
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                        className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-                        <div className="mb-2.5 flex items-center justify-between">
+                        className="space-y-2">
+                        <div className="flex items-center justify-between px-0.5">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[11px] font-medium text-white/80">
                               Face Enrollment
@@ -706,100 +722,141 @@ export function AddMember({
                           </button>
                         </div>
 
-                        <div className="space-y-2.5">
-                          {/* Source Toggle Pills */}
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFaceInputMode("camera")
-                                if (!isStreaming) {
-                                  startCamera().catch(console.error)
-                                }
-                              }}
-                              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
-                                faceInputMode === "camera" ?
-                                  "border border-cyan-500/30 bg-cyan-500/15 text-cyan-300"
-                                : "border border-white/5 bg-white/5 text-white/55 hover:text-white/80"
-                              }`}>
-                              <i className="fa-solid fa-camera text-[10px]" />
-                              Camera
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFaceInputMode("upload")
-                                stopCamera()
-                              }}
-                              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all ${
-                                faceInputMode === "upload" ?
-                                  "border border-cyan-500/30 bg-cyan-500/15 text-cyan-300"
-                                : "border border-white/5 bg-white/5 text-white/55 hover:text-white/80"
-                              }`}>
-                              <i className="fa-solid fa-cloud-arrow-up text-[10px]" />
-                              Upload Photo
-                            </button>
-                          </div>
+                        <div>
+                          <AnimatePresence mode="wait">
+                            {faceInputMode === "camera" ?
+                              <motion.div
+                                key="face-camera-mode"
+                                initial={{ opacity: 0, scale: 0.98 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.98 }}
+                                transition={{ duration: 0.18, ease: "easeOut" }}
+                                className="relative flex h-60 w-full flex-col items-center justify-between overflow-hidden rounded-xl border border-white/10 bg-black/60 p-2.5">
+                                <video
+                                  ref={videoRef}
+                                  className={`absolute inset-0 h-full w-full scale-x-[-1] object-cover transition-opacity duration-300 ${
+                                    isStreaming && isVideoReady ? "opacity-100" : (
+                                      "pointer-events-none opacity-0"
+                                    )
+                                  }`}
+                                  playsInline
+                                  muted
+                                />
 
-                          {faceInputMode === "camera" ?
-                            <div className="relative flex h-52 w-full items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/60">
-                              <video
-                                ref={videoRef}
-                                className={`absolute inset-0 h-full w-full scale-x-[-1] object-cover ${
-                                  isStreaming ? "opacity-100" : "pointer-events-none opacity-0"
-                                }`}
-                                playsInline
-                                muted
-                              />
-                              {isStreaming && (
-                                <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2">
-                                  <button
-                                    type="button"
-                                    onClick={handleSnapPhoto}
-                                    disabled={isProcessingFace}
-                                    className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500 px-4 py-1.5 text-[11px] font-bold text-slate-950 shadow-lg transition-all hover:bg-cyan-400 active:scale-95 disabled:opacity-50">
-                                    <i className="fa-solid fa-camera text-[10px]" />
-                                    {isProcessingFace ? "Analyzing..." : "Capture Face"}
-                                  </button>
+                                {/* Top spacer */}
+                                <div className="z-10 h-1 w-full" />
+
+                                <AnimatePresence>
+                                  {(!isStreaming || !isVideoReady) && (
+                                    <motion.div
+                                      initial={{ opacity: 1 }}
+                                      exit={{ opacity: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                      className="z-10 flex flex-col items-center justify-center gap-2 p-4 text-center">
+                                      {cameraError ?
+                                        <div className="flex flex-col items-center gap-2">
+                                          <i className="fa-solid fa-circle-exclamation text-base text-red-400" />
+                                          <span className="max-w-[240px] text-[11px] font-medium text-red-200/80">
+                                            {cameraError}
+                                          </span>
+                                        </div>
+                                      : <div className="flex flex-col items-center gap-2.5">
+                                          <Spinner size="md" color="cyan" />
+                                          <span className="text-xs font-medium text-white/60">
+                                            Connecting camera...
+                                          </span>
+                                        </div>
+                                      }
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+
+                                {/* Bottom Control Bar — Matching Normal Enrollment UI */}
+                                <div className="relative z-10 flex w-full items-center justify-between px-1">
+                                  {/* Left: Upload Button */}
+                                  <div className="w-20">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setFaceInputMode("upload")
+                                        stopCamera()
+                                      }}
+                                      className="group flex items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-[10px] font-medium text-white/70 backdrop-blur-md transition-all hover:border-white/25 hover:bg-black/70 hover:text-white"
+                                      title="Upload Photo Instead">
+                                      <i className="fa-solid fa-file-image text-[10px] text-white/50 group-hover:text-white/80" />
+                                      <span>Upload</span>
+                                    </button>
+                                  </div>
+
+                                  {/* Center: Circular Shutter Trigger */}
+                                  <div className="flex flex-1 justify-center">
+                                    {isStreaming && isVideoReady && (
+                                      <button
+                                        type="button"
+                                        onClick={handleSnapPhoto}
+                                        disabled={isProcessingFace}
+                                        className="group flex h-11 w-11 items-center justify-center rounded-full bg-white/10 p-1 backdrop-blur-md transition-all hover:bg-white/20 active:scale-90 disabled:cursor-not-allowed disabled:opacity-40"
+                                        aria-label="Capture Face"
+                                        title="Capture Face">
+                                        {isProcessingFace ?
+                                          <div className="flex h-full w-full items-center justify-center rounded-full bg-white/10">
+                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                                          </div>
+                                        : <div className="h-full w-full rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.35)] transition-transform group-active:scale-90" />
+                                        }
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {/* Right spacer for balance */}
+                                  <div className="w-20" />
                                 </div>
-                              )}
-                              {!isStreaming && (
-                                <div className="z-10 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => startCamera().catch(console.error)}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-medium text-white/80 transition-all hover:bg-white/10 hover:text-white active:scale-95">
-                                    <i className="fa-solid fa-video text-[11px] text-cyan-400" />
-                                    Start Camera
-                                  </button>
-                                  <span className="text-[10px] text-white/35">
-                                    Click to preview and capture live portrait
+                              </motion.div>
+                            : <motion.div
+                                key="face-upload-mode"
+                                initial={{ opacity: 0, scale: 0.98 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.98 }}
+                                transition={{ duration: 0.18, ease: "easeOut" }}
+                                className="space-y-2">
+                                <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] p-4 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/[0.02]">
+                                  <i className="fa-solid fa-image mb-1 text-lg text-white/30" />
+                                  <span className="text-[11px] font-medium text-white/70">
+                                    {isProcessingFace ?
+                                      "Analyzing face..."
+                                    : "Click or drop portrait photo"}
                                   </span>
+                                  <span className="mt-0.5 text-[10px] text-white/40">
+                                    JPG, PNG up to 10MB
+                                  </span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0]
+                                      if (file) void handleProcessUploadedFile(file)
+                                      e.target.value = ""
+                                    }}
+                                  />
+                                </label>
+                                <div className="flex justify-start">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setFaceInputMode("camera")
+                                      if (!isStreaming) {
+                                        startCamera().catch(console.error)
+                                      }
+                                    }}
+                                    className="group flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-medium text-white/70 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white">
+                                    <i className="fa-solid fa-camera text-[10px] text-cyan-400" />
+                                    <span>Use Camera</span>
+                                  </button>
                                 </div>
-                              )}
-                            </div>
-                          : <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] p-4 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/[0.02]">
-                              <i className="fa-solid fa-image mb-1 text-lg text-white/30" />
-                              <span className="text-[11px] font-medium text-white/70">
-                                {isProcessingFace ?
-                                  "Analyzing face..."
-                                : "Click or drop portrait photo"}
-                              </span>
-                              <span className="mt-0.5 text-[10px] text-white/40">
-                                JPG, PNG up to 10MB
-                              </span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0]
-                                  if (file) void handleProcessUploadedFile(file)
-                                  e.target.value = ""
-                                }}
-                              />
-                            </label>
-                          }
+                              </motion.div>
+                            }
+                          </AnimatePresence>
 
                           {faceError && (
                             <div className="flex items-center gap-1.5 pl-1 text-[11px] text-red-400/90">
