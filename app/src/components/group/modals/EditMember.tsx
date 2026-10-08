@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { attendanceManager } from "@/services"
 import type { AttendanceMember } from "@/types/recognition"
 import { ErrorMessage, FormInput, Modal } from "@/components/common"
+import { Tooltip } from "@/components/shared"
 
 interface EditMemberProps {
   isOpen: boolean
@@ -19,7 +20,11 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen) {
+      setName(member.name)
+      setRole(member.role || "")
+      setError(null)
+
       const focusInput = () => {
         if (inputRef.current) {
           inputRef.current.focus()
@@ -31,7 +36,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
         setTimeout(focusInput, 50)
       })
     }
-  }, [isOpen])
+  }, [isOpen, member])
 
   const handleClose = () => {
     setName(member.name)
@@ -42,7 +47,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
   }
 
   const handleSave = async () => {
-    if (!name.trim()) {
+    if (!name.trim() || loading) {
       return
     }
 
@@ -70,14 +75,14 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
       onClose={handleClose}
       title={
         <div className="min-w-0">
-          <h3 className="mb-1 truncate text-xl font-bold tracking-tight text-white">Edit Member</h3>
-          <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-white/55">
+          <h3 className="mb-1 truncate text-xl font-semibold tracking-tight">Edit Member</h3>
+          <p className="flex items-center gap-1.5 text-xs font-normal text-white/65">
             <span className="shrink-0">Update details for</span>
-            <span
-              className="inline-block max-w-[200px] truncate align-bottom text-white/65 sm:max-w-[260px]"
-              title={member.name}>
-              {member.name}
-            </span>
+            <Tooltip content={member.name} position="bottom">
+              <span className="inline-block max-w-[260px] truncate align-bottom font-medium text-cyan-400/80 sm:max-w-[340px]">
+                {member.name}
+              </span>
+            </Tooltip>
           </p>
         </div>
       }
@@ -85,29 +90,34 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
       <div className="mt-2">
         {error && <ErrorMessage message={error} className="mb-4" />}
 
-        <div className="grid gap-4">
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="pl-1 text-[11px] font-medium text-white/65">Name</span>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
+          <div className="flex flex-col sm:col-span-8">
             <FormInput
               ref={inputRef}
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder=""
+              placeholder="Name"
+              aria-label="Name"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSave()
+              }}
               focusColor="border-white/20"
             />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="pl-1 text-[11px] font-medium text-white/65">
-              Role <span className="opacity-50">(Optional)</span>
-            </span>
+          </div>
+          <div className="flex flex-col sm:col-span-4">
             <FormInput
               value={role}
               onChange={(event) => setRole(event.target.value)}
-              placeholder=""
+              placeholder="Role (optional)"
+              aria-label="Role (optional)"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSave()
+              }}
               focusColor="border-white/20"
             />
-          </label>
+          </div>
         </div>
+
         <div className="mt-8 flex justify-end gap-3">
           <button
             onClick={handleClose}

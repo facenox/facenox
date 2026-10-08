@@ -7,6 +7,7 @@ import { ErrorMessage, FormInput, Modal } from "@/components/common"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
 import { useAttendanceStore } from "@/components/main/stores"
 import { useCamera } from "@/components/group/sections/enrollment/hooks/useCamera"
+import { Tooltip } from "@/components/shared"
 import { validateAndGetBestFace } from "@/utils/faceValidation"
 import { dataUrlToBlob } from "@/utils/dataUrl"
 
@@ -485,11 +486,11 @@ export function AddMember({
           <h3 className="mb-1 truncate text-xl font-semibold tracking-tight">Add Members</h3>
           <p className="flex items-center gap-1.5 text-xs font-normal text-white/65">
             <span className="shrink-0">{modalSubtitle}</span>
-            <span
-              className="inline-block max-w-[260px] truncate align-bottom font-medium text-cyan-400/80 sm:max-w-[340px]"
-              title={group.name}>
-              {group.name}
-            </span>
+            <Tooltip content={group.name} position="bottom">
+              <span className="inline-block max-w-[260px] truncate align-bottom font-medium text-cyan-400/80 sm:max-w-[340px]">
+                {group.name}
+              </span>
+            </Tooltip>
           </p>
         </div>
       }
@@ -564,7 +565,7 @@ export function AddMember({
 
         {error && <ErrorMessage message={error} className="mb-4" />}
 
-        <div className="relative min-h-[180px]">
+        <div className="relative">
           <AnimatePresence mode="wait" initial={false}>
             {!isBulkMode ?
               <motion.div
@@ -897,7 +898,7 @@ export function AddMember({
 
         {/* Action Buttons */}
         {!(isBulkMode && bulkResults && bulkResults.failed === 0) && (
-          <div className="mt-8 flex justify-end gap-3">
+          <div className="mt-6 flex justify-end gap-3">
             {isBulkMode && bulkResults ?
               <button
                 onClick={() => {
