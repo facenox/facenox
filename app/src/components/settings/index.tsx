@@ -80,6 +80,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
     { id: "overview", label: "Overview", icon: "fa-solid fa-table-cells-large" },
     { id: "reports", label: "Reports", icon: "fa-solid fa-chart-bar" },
     { id: "members", label: "Members", icon: "fa-solid fa-users" },
+    { id: "settings", label: "Settings", icon: "fa-solid fa-gear" },
   ]
 
   const sections = [

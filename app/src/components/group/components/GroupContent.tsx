@@ -1,7 +1,7 @@
 import { useMemo, memo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
-import { Members, Overview, Reports } from "@/components/group/sections"
+import { Members, Overview, Reports, GroupSettings } from "@/components/group/sections"
 import { EmptyState } from "@/components/group/shared"
 
 interface GroupContentProps {
@@ -56,7 +56,7 @@ function GroupContentComponent({
           title={hasGroups ? "Select a group to continue" : "No groups created"}
           description={
             hasGroups ?
-              "Choose a group from the sidebar to view overview, reports, and members."
+              "Choose a group from the sidebar to view overview, reports, members, and schedule settings."
             : "Create a group to start organizing members and recording attendance."
           }
           action={
@@ -114,6 +114,15 @@ function GroupContentComponent({
               deselectMemberTrigger={deselectMemberTrigger}
               onHasSelectedMemberChange={onHasSelectedMemberChange}
             />
+          </motion.div>
+        )}
+
+        {activeSection === "settings" && (
+          <motion.div
+            key={`settings-${selectedGroupId}`}
+            {...motionProps}
+            className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
+            <GroupSettings group={selectedGroup} onGroupsChanged={handleMembersChange} />
           </motion.div>
         )}
       </AnimatePresence>

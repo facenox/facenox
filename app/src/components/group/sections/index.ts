@@ -1,4 +1,5 @@
 export { Members } from "@/components/group/sections/Members"
 export { Overview } from "@/components/group/sections/Overview"
 export { Reports } from "@/components/group/sections/Reports"
+export { GroupSettings } from "@/components/group/sections/GroupSettings"
 export { FaceCapture } from "@/components/group/sections/enrollment/FaceCapture"
