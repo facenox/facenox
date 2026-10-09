@@ -22,7 +22,7 @@ interface SidebarProps {
   refreshAttendanceData: () => Promise<void>
 }
 
-const MIN_WIDTH = 56
+const MIN_WIDTH = 48
 const MIN_EXPANDED_WIDTH = 240
 const MAX_WIDTH = 340
 

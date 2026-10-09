@@ -134,7 +134,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
           </div>
 
           {/* Unified Schedule & Attendance Rules Container */}
-          <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4 divide-y divide-white/6">
+          <div className="divide-y divide-white/6 rounded-xl border border-white/8 bg-white/[0.02] p-4">
             {/* Late Tracking Row */}
             <div className={lateThresholdEnabled ? "space-y-3 pb-3" : "pb-3"}>
               <div className="flex items-center justify-between gap-3">
