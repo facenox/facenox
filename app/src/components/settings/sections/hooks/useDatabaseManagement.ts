@@ -306,11 +306,11 @@ export function useDatabaseManagement(
         if (dialog) {
           await dialog.alert({
             title: "Group not found",
-            message: "Please refresh and try again.",
+            message: "Group not found. Refresh and try again.",
             variant: "danger",
           })
         } else {
-          alert("Group not found. Please refresh and try again.")
+          alert("Group not found. Refresh and try again.")
         }
         return
       }
@@ -504,7 +504,7 @@ export function useDatabaseManagement(
         if (dialog) {
           await dialog.alert({
             title: "Purge failed",
-            message: "Failed to purge attendance history. Please try again.",
+            message: "Failed to purge attendance history. Try again.",
             variant: "danger",
           })
         } else {

@@ -602,7 +602,7 @@ export class BackendProcessManager {
     }
 
     throw new Error(
-      "Python executable not found. Please ensure Python is installed and accessible.",
+      "Python executable not found. Ensure Python is installed and accessible in system PATH.",
     )
   }
 

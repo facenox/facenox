@@ -235,7 +235,7 @@ export const useSettings = ({
       console.error("Failed to clear database:", error)
       await dialog.alert({
         title: "Clear failed",
-        message: "Failed to clear face recognition data. Please try again.",
+        message: "Failed to clear face recognition data. Try again.",
         variant: "danger",
       })
     } finally {

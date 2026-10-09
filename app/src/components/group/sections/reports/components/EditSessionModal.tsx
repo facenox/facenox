@@ -179,7 +179,7 @@ export function EditSessionModal({
       )
     } catch (err) {
       console.error(err)
-      setError("Failed to save. Please check your connection and try again.")
+      setError("Unable to save correction. Check connection and retry.")
     } finally {
       setIsSubmitting(false)
     }

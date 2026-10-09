@@ -241,7 +241,7 @@ export function useCameraControl({
         ) {
           if (hadExplicitSelection) {
             errorMessage =
-              "The selected camera could not be started with its current settings. Please reselect a camera or reconnect the device."
+              "The selected camera could not be started. Select another camera or reconnect the device."
           } else {
             errorMessage =
               "Camera does not support requested settings. Trying to start with default settings..."

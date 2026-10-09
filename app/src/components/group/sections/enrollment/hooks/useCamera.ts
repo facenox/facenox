@@ -166,7 +166,7 @@ export function useCamera() {
         if (err instanceof Error) {
           const errorName = err.name
           if (errorName === "NotAllowedError" || errorName === "PermissionDeniedError") {
-            errorMessage = "Camera access was blocked. Please allow access in browser settings."
+            errorMessage = "Camera permission was denied. Allow camera access in system settings."
           } else if (errorName === "NotFoundError" || errorName === "DevicesNotFoundError") {
             errorMessage = "No camera detected."
           } else if (errorName === "NotReadableError" || errorName === "TrackStartError") {

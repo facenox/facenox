@@ -16,7 +16,7 @@ export function UploadArea({ onFileProcessed, onError }: UploadAreaProps) {
       const file = files[0]
 
       if (!file.type.startsWith("image/")) {
-        onError("Please upload a valid image file.")
+        onError("Select a valid image file (PNG, JPG).")
         return
       }
 

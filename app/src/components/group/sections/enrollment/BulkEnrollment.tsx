@@ -182,7 +182,7 @@ export function BulkEnrollment({
               <EmptyState
                 iconClass="fa-solid fa-face-frown text-2xl"
                 title="No faces detected"
-                description="We couldn't detect any clear faces in the uploaded images. Please try uploading clearer, front-facing photos."
+                description="No clear faces detected in the uploaded images. Upload front-facing photos with balanced lighting."
               />
             </div>
           )}

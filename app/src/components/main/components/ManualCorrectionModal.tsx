@@ -40,7 +40,7 @@ export function ManualCorrectionModal({
   const handleSubmit = async () => {
     if (!trimmedReason || isSubmitting) {
       if (!trimmedReason) {
-        setError("Please enter a short reason before removing this attendance entry.")
+        setError("Enter a reason before removing this attendance entry.")
       }
       return
     }

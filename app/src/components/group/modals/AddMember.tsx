@@ -271,7 +271,7 @@ export function AddMember({
       setBulkMembersText(text)
       setBulkResults(null)
     } catch {
-      setError("Failed to read file. Please ensure it's a valid text or CSV file.")
+      setError("Unable to read file. Select a valid TXT or CSV file.")
     }
   }
 

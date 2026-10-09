@@ -83,9 +83,7 @@ export function StartTimeChip({ startTime, onTimeChange, disabled = false }: Sta
     <div ref={containerRef} className="relative">
       <Tooltip
         content={
-          outdated ?
-            "Start time may be outdated - click to update"
-          : "Click to adjust session start time"
+          outdated ? "Start time may be outdated. Click to update." : "Adjust session start time"
         }
         position="top">
         <button

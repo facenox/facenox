@@ -86,7 +86,7 @@ export function useBulkEnrollment(
     async (filesToProcess?: File[], startIndex = 0) => {
       const files = filesToProcess || uploadedFiles
       if (files.length === 0) {
-        if (!filesToProcess) setError("Please upload images first")
+        if (!filesToProcess) setError("Upload image files to begin face detection.")
         return
       }
 
@@ -306,7 +306,7 @@ export function useBulkEnrollment(
     )
 
     if (facesToEnroll.length === 0) {
-      setError("Please assign at least one face to a member or enter a name")
+      setError("Assign at least one face to a member or enter a name.")
       return
     }
 

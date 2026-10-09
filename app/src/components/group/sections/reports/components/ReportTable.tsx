@@ -185,7 +185,7 @@ function EmptyTableState({
         <div className="flex flex-col items-center gap-3">
           {!isInvalidRange && (
             <span className="text-[11px] font-semibold text-white/55">
-              Please check the error message or try resetting your filters.
+              Check the error details or try resetting your filters.
             </span>
           )}
           {isInvalidRange && onResetDates && (

@@ -378,7 +378,7 @@ export default function WindowBar() {
             <Spinner size="md" color="cyan" />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-white">Checking for updates...</p>
-              <p className="text-xs text-white/50">Connecting to the update server. Please wait.</p>
+              <p className="text-xs text-white/50">Connecting to the update server...</p>
             </div>
           </div>
         )}

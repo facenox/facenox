@@ -132,7 +132,7 @@ export const ManualEntryModal = ({
       await Promise.resolve(onSuccess())
       handleClose()
     } catch (err) {
-      setError("Failed to add record. Please try again.")
+      setError("Unable to record attendance. Check database connectivity and retry.")
       console.error(err)
     } finally {
       setIsSubmitting(false)

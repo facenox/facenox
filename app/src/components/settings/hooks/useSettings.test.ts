@@ -204,7 +204,7 @@ describe("useSettings", () => {
 
     expect(mockAlert).toHaveBeenCalledWith({
       title: "Clear failed",
-      message: "Failed to clear face recognition data. Please try again.",
+      message: "Failed to clear face recognition data. Try again.",
       variant: "danger",
     })
     expect(result.current.isLoading).toBe(false)

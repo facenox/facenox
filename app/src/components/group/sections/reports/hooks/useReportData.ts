@@ -46,7 +46,7 @@ export function useReportData(
     const endDate = parseLocalDate(endDateStr)
 
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-      setError("Please select valid report dates.")
+      setError("Select a valid report date range.")
       setLoading(false)
       return
     }

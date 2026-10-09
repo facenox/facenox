@@ -205,7 +205,7 @@ export function PinPromptModal() {
 
               {resetError && (
                 <span className="mt-2 text-center text-[11px] font-medium text-rose-400">
-                  Please type RESET to confirm.
+                  Type RESET to confirm.
                 </span>
               )}
 
@@ -305,7 +305,7 @@ export function PinPromptModal() {
                       exit={{ opacity: 0, y: -4 }}
                       className="flex items-center gap-1.5 text-[11px] font-medium text-rose-400">
                       <i className="fa-solid fa-circle-exclamation text-[10px]" /> Incorrect PIN.
-                      Please try again.
+                      Try again.
                     </motion.span>
                   )}
                 </AnimatePresence>

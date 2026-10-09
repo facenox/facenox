@@ -55,7 +55,7 @@ function getEffectiveRemoteUrl(url?: string): string {
 function formatErrorMessage(err: string | null): string {
   if (!err) return ""
   if (err.includes("<!DOCTYPE") || err.includes("<html") || err.includes("<head")) {
-    return "Server returned an unexpected HTML response. Please verify that your cloud server is running and reachable."
+    return "Server returned an unexpected HTML response. Verify that your cloud server is running and reachable."
   }
   return err
 }

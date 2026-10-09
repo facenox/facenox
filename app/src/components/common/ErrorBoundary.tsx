@@ -37,7 +37,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 Something went wrong
               </h1>
               <p className="mb-6 text-sm text-[var(--text-muted)]">
-                Please restart the application.
+                Restart the application to continue.
               </p>
               <button
                 onClick={() => window.location.reload()}
