@@ -100,7 +100,7 @@ export class AutoExportManager {
     return {
       enabled: raw?.enabled ?? false,
       time: raw?.time ?? "17:00",
-      directory: raw?.directory ?? "",
+      directory: raw?.directory || this.getDefaultExportDirectory(),
       format: raw?.format ?? "excel_workbook",
       lastExportedDate: raw?.lastExportedDate ?? null,
     }

@@ -555,7 +555,7 @@ export function DataStorage({
                       <div className="min-w-0 flex-1">
                         <div className="text-xs text-white/65">Save location:</div>
                         <div className="mt-0.5 truncate font-mono text-[11px] text-white/45 select-all">
-                          {autoExportConfig.directory || "Documents/Facenox_Reports (Default)"}
+                          {autoExportConfig.directory || "Documents/Facenox_Reports"}
                         </div>
                       </div>
 

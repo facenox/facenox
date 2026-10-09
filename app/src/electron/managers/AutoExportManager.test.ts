@@ -55,7 +55,7 @@ describe("AutoExportManager", () => {
     expect(config.enabled).toBe(false)
     expect(config.time).toBe("17:00")
     expect(config.format).toBe("excel_workbook")
-    expect(config.directory).toBe("")
+    expect(config.directory).toContain("Facenox_Reports")
     expect(config.lastExportedDate).toBeNull()
   })
 
