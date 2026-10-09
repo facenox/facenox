@@ -158,6 +158,24 @@ contextBridge.exposeInMainWorld("electronAPI", {
       return () => ipcRenderer.removeListener("sync:data-changed", listener)
     },
   },
+
+  autoExport: {
+    getConfig: () => {
+      return ipcRenderer.invoke("auto-export:get-config")
+    },
+    updateConfig: (updates: Record<string, unknown>) => {
+      return ipcRenderer.invoke("auto-export:update-config", updates)
+    },
+    triggerNow: (targetDate?: string) => {
+      return ipcRenderer.invoke("auto-export:trigger-now", targetDate)
+    },
+    selectDirectory: () => {
+      return ipcRenderer.invoke("auto-export:select-directory")
+    },
+    openDirectory: () => {
+      return ipcRenderer.invoke("auto-export:open-directory")
+    },
+  },
 })
 
 contextBridge.exposeInMainWorld("facenoxElectron", {

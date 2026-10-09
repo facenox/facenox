@@ -10,6 +10,7 @@ import { WindowManager } from "./window/WindowManager.js"
 import { TrayManager } from "./tray/TrayManager.js"
 import { registerAllHandlers } from "./ipc/index.js"
 import { syncManager } from "./managers/BackgroundSyncManager.js"
+import { autoExportManager } from "./managers/AutoExportManager.js"
 
 const main_filename = fileURLToPath(import.meta.url)
 const main_dirname = path.dirname(main_filename)
@@ -141,6 +142,7 @@ app.whenReady().then(async () => {
   WindowManager.updateSplashProgress(WindowManager.progressFromStep(7))
   WindowManager.unlockSplashDataPhase()
   syncManager.start()
+  autoExportManager.start()
 
   // Instantiate Chromium window only after CPU-bound backend boot sequence ends.
   WindowManager.createWindow()
@@ -153,6 +155,7 @@ app.whenReady().then(async () => {
   // Listen for OS resume events to notify renderer for drift corrections and restore backend readiness
   powerMonitor.on("resume", async () => {
     await backendService.checkReadiness().catch(() => {})
+    void autoExportManager.checkAndRunExport().catch(() => {})
     if (state.mainWindow && !state.mainWindow.isDestroyed()) {
       state.mainWindow.webContents.send("system:resume")
     }

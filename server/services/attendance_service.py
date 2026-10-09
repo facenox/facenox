@@ -64,6 +64,7 @@ class AttendanceService:
         *,
         late_threshold_minutes: int,
         class_start_time: Optional[str],
+        class_end_time: Optional[str] = None,
         late_threshold_enabled: bool,
         track_checkout: bool,
     ) -> Dict[str, Any]:
@@ -72,6 +73,7 @@ class AttendanceService:
                 "id": None,
                 "late_threshold_minutes": late_threshold_minutes,
                 "class_start_time": class_start_time or local_now().strftime("%H:%M"),
+                "class_end_time": class_end_time,
                 "late_threshold_enabled": late_threshold_enabled,
                 "track_checkout": track_checkout,
             }
@@ -86,6 +88,7 @@ class AttendanceService:
                 "class_start_time",
                 class_start_time or local_now().strftime("%H:%M"),
             ),
+            "class_end_time": getattr(rule, "class_end_time", class_end_time),
             "late_threshold_enabled": getattr(
                 rule, "late_threshold_enabled", late_threshold_enabled
             ),

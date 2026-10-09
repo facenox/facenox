@@ -36,6 +36,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
   const [name, setName] = useState("")
   const [lateThresholdEnabled, setLateThresholdEnabled] = useState(false)
   const [classStartTime, setClassStartTime] = useState("08:00")
+  const [classEndTime, setClassEndTime] = useState("17:00")
   const [lateThresholdMinutes, setLateThresholdMinutes] = useState(15)
   const [trackCheckout, setTrackCheckout] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -57,6 +58,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
     setName("")
     setLateThresholdEnabled(false)
     setClassStartTime("08:00")
+    setClassEndTime("17:00")
     setLateThresholdMinutes(15)
     setTrackCheckout(false)
     setLoading(false)
@@ -79,6 +81,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
       const newGroup = await attendanceManager.createGroup(name.trim(), {
         late_threshold_enabled: lateThresholdEnabled,
         class_start_time: classStartTime,
+        class_end_time: trackCheckout ? classEndTime : null,
         late_threshold_minutes: lateThresholdMinutes,
         track_checkout: trackCheckout,
       })
@@ -219,6 +222,40 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                 ariaLabel="Enable departure and check-out tracking for this group"
               />
             </div>
+
+            <AnimatePresence>
+              {trackCheckout && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="overflow-hidden pt-3">
+                  <div className="border-t border-white/6 pt-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[11px] text-white/70">Scheduled Departure Time</span>
+                      <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 hover:border-cyan-500/40 hover:bg-white/8">
+                        <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-cyan-400" />
+                        <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
+                          <span>{formatTimeDisplay(classEndTime).time}</span>
+                          <span className="text-[10px] font-medium text-white/55">
+                            {formatTimeDisplay(classEndTime).period}
+                          </span>
+                        </div>
+                        <input
+                          type="time"
+                          aria-label="Scheduled departure time"
+                          value={classEndTime}
+                          onChange={(e) => setClassEndTime(e.target.value)}
+                          onClick={(e) => e.currentTarget.showPicker?.()}
+                          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

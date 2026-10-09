@@ -65,6 +65,13 @@ export interface PersistentSettingsSchema {
     adminPinEnabled: boolean
     adminPin: string
   }
+  autoExport: {
+    enabled: boolean
+    time: string
+    directory: string
+    format: "excel_workbook" | "individual_csvs" | "combined_csv"
+    lastExportedDate: string | null
+  }
 }
 
 export const defaultSettings: PersistentSettingsSchema = {
@@ -124,5 +131,12 @@ export const defaultSettings: PersistentSettingsSchema = {
   security: {
     adminPinEnabled: false,
     adminPin: "1234",
+  },
+  autoExport: {
+    enabled: false,
+    time: "17:00",
+    directory: "",
+    format: "excel_workbook",
+    lastExportedDate: null,
   },
 }

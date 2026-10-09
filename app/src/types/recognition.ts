@@ -134,6 +134,7 @@ export interface AttendanceGroup {
     late_threshold_minutes?: number
     late_threshold_enabled?: boolean
     class_start_time?: string
+    class_end_time?: string | null
     track_checkout?: boolean
   }
   remote_id?: string | null

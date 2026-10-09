@@ -37,6 +37,8 @@ export class GroupManager {
             settings && "class_start_time" in settings ?
               (settings.class_start_time ?? "08:00")
             : "08:00",
+          class_end_time:
+            settings && "class_end_time" in settings ? (settings.class_end_time ?? null) : null,
           track_checkout:
             settings && "track_checkout" in settings ? Boolean(settings.track_checkout) : false,
         },

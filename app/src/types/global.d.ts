@@ -317,6 +317,34 @@ declare global {
     onDataChanged: (callback: () => void) => () => void
   }
 
+  interface AutoExportAPI {
+    getConfig: () => Promise<{
+      enabled: boolean
+      time: string
+      directory: string
+      format: "excel_workbook" | "individual_csvs" | "combined_csv"
+      lastExportedDate: string | null
+    }>
+    updateConfig: (
+      updates: Partial<{
+        enabled: boolean
+        time: string
+        directory: string
+        format: "excel_workbook" | "individual_csvs" | "combined_csv"
+        lastExportedDate: string | null
+      }>,
+    ) => Promise<{
+      enabled: boolean
+      time: string
+      directory: string
+      format: "excel_workbook" | "individual_csvs" | "combined_csv"
+      lastExportedDate: string | null
+    }>
+    triggerNow: (targetDate?: string) => Promise<boolean>
+    selectDirectory: () => Promise<{ canceled: boolean; path: string | null }>
+    openDirectory: () => Promise<{ success: boolean; path: string }>
+  }
+
   interface BackendServiceAPI {
     saveFaceDatabase: (databaseData: Record<string, number[]>) => Promise<unknown>
     loadFaceDatabase: () => Promise<unknown>
@@ -328,6 +356,7 @@ declare global {
     updater: UpdaterAPI
     assets: AssetsAPI
     sync: SyncAPI
+    autoExport: AutoExportAPI
   }
 
   interface Window {

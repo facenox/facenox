@@ -64,6 +64,7 @@ class GroupSettings(BaseModel):
     late_threshold_minutes: Optional[int] = 15
     late_threshold_enabled: bool = False
     class_start_time: Optional[str] = None  # HH:MM, defaults to creation time
+    class_end_time: Optional[str] = None  # HH:MM, target departure/dismissal time
     track_checkout: bool = False
 
 
@@ -101,6 +102,7 @@ class AttendanceGroupRuleResponse(BaseModel):
     late_threshold_minutes: Optional[int]
     late_threshold_enabled: bool
     class_start_time: str
+    class_end_time: Optional[str] = None
     track_checkout: bool
 
     model_config = ConfigDict(from_attributes=True)

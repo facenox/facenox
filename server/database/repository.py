@@ -85,6 +85,7 @@ class AttendanceRepository:
             "late_threshold_enabled": settings.get("late_threshold_enabled") or False,
             "class_start_time": settings.get("class_start_time")
             or local_now().strftime("%H:%M"),
+            "class_end_time": settings.get("class_end_time"),
             "track_checkout": settings.get("track_checkout") or False,
             "organization_id": self.organization_id,
         }
@@ -98,6 +99,7 @@ class AttendanceRepository:
         class_start_time = settings.get("class_start_time") or local_now().strftime(
             "%H:%M"
         )
+        class_end_time = settings.get("class_end_time")
         track_checkout = settings.get("track_checkout")
         if track_checkout is None:
             track_checkout = False
@@ -110,6 +112,7 @@ class AttendanceRepository:
             late_threshold_minutes=settings.get("late_threshold_minutes"),
             late_threshold_enabled=late_threshold_enabled,
             class_start_time=class_start_time,
+            class_end_time=class_end_time,
             track_checkout=track_checkout,
             organization_id=self.organization_id,
             is_active=True,
@@ -126,6 +129,7 @@ class AttendanceRepository:
                     "late_threshold_minutes": group.late_threshold_minutes,
                     "late_threshold_enabled": group.late_threshold_enabled,
                     "class_start_time": group.class_start_time,
+                    "class_end_time": group.class_end_time,
                     "track_checkout": group.track_checkout,
                 },
                 effective_from=to_storage_local(local_now()),
@@ -214,6 +218,7 @@ class AttendanceRepository:
             "late_threshold_minutes": group.late_threshold_minutes,
             "late_threshold_enabled": group.late_threshold_enabled,
             "class_start_time": group.class_start_time,
+            "class_end_time": group.class_end_time,
             "track_checkout": group.track_checkout,
         }
 
@@ -225,6 +230,8 @@ class AttendanceRepository:
                     group.late_threshold_enabled = value["late_threshold_enabled"]
                 if "class_start_time" in value:
                     group.class_start_time = value["class_start_time"]
+                if "class_end_time" in value:
+                    group.class_end_time = value["class_end_time"]
                 if "track_checkout" in value:
                     group.track_checkout = value["track_checkout"]
             elif hasattr(group, key):
@@ -234,6 +241,7 @@ class AttendanceRepository:
             "late_threshold_minutes": group.late_threshold_minutes,
             "late_threshold_enabled": group.late_threshold_enabled,
             "class_start_time": group.class_start_time,
+            "class_end_time": group.class_end_time,
             "track_checkout": group.track_checkout,
         }
         group.last_modified_at = to_storage_local(local_now())

@@ -5,6 +5,7 @@ import { registerSystemHandlers } from "./systemHandlers.js"
 import { registerUpdaterHandlers } from "./updaterHandlers.js"
 import { registerWindowHandlers } from "./windowHandlers.js"
 import { registerAssetHandlers } from "./assetHandlers.js"
+import { registerAutoExportHandlers } from "./autoExportHandlers.js"
 
 export function registerAllHandlers() {
   registerBackendHandlers()
@@ -14,4 +15,5 @@ export function registerAllHandlers() {
   registerUpdaterHandlers()
   registerWindowHandlers()
   registerAssetHandlers()
+  registerAutoExportHandlers()
 }

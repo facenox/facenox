@@ -60,6 +60,7 @@ class AttendanceGroup(Base, SyncMixin):
     class_start_time: Mapped[str] = mapped_column(
         String, default=lambda: datetime.now().strftime("%H:%M")
     )
+    class_end_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     track_checkout: Mapped[bool] = mapped_column(Boolean, default=False)
 
     members: Mapped[List["AttendanceMember"]] = relationship(back_populates="group")
@@ -75,6 +76,7 @@ class AttendanceGroup(Base, SyncMixin):
             "late_threshold_minutes": self.late_threshold_minutes,
             "late_threshold_enabled": self.late_threshold_enabled,
             "class_start_time": self.class_start_time,
+            "class_end_time": self.class_end_time,
             "track_checkout": self.track_checkout,
         }
 
@@ -204,6 +206,7 @@ class AttendanceGroupRule(Base, SyncMixin):
     )
     late_threshold_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     class_start_time: Mapped[str] = mapped_column(String, nullable=False)
+    class_end_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     track_checkout: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.current_timestamp()

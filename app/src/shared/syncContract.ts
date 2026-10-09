@@ -6,6 +6,7 @@ export const groupSettingsSchema = z.object({
   late_threshold_minutes: z.number().nullable().optional(),
   late_threshold_enabled: z.boolean().default(false),
   class_start_time: z.string().nullable().optional(),
+  class_end_time: z.string().nullable().optional(),
   track_checkout: z.boolean().default(false),
 })
 

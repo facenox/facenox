@@ -5,7 +5,7 @@ import type { AttendanceGroup } from "@/types/recognition"
 import { useDatabaseManagement } from "@/components/settings/sections/hooks/useDatabaseManagement"
 import { DatabaseStats } from "@/components/settings/sections/components/DatabaseStats"
 import { GroupEntry } from "@/components/settings/sections/components/GroupEntry"
-import { useDialog } from "@/components/shared"
+import { useDialog, Switch } from "@/components/shared"
 import { Modal } from "@/components/common/Modal"
 import { useUIStore } from "@/components/main/stores"
 import { EmptyState } from "@/components/group/shared"
@@ -92,6 +92,101 @@ export function DataStorage({
   const [passwordInput, setPasswordInput] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isDangerZoneOpen, setIsDangerZoneOpen] = useState(false)
+
+  // Auto-Export configuration state
+  const [autoExportConfig, setAutoExportConfig] = useState<{
+    enabled: boolean
+    time: string
+    directory: string
+    format: "excel_workbook" | "individual_csvs" | "combined_csv"
+    lastExportedDate: string | null
+  }>({
+    enabled: false,
+    time: "17:00",
+    directory: "",
+    format: "excel_workbook",
+    lastExportedDate: null,
+  })
+  const [isTriggeringAutoExport, setIsTriggeringAutoExport] = useState(false)
+
+  useEffect(() => {
+    if (!window.electronAPI?.autoExport) return
+    window.electronAPI.autoExport
+      .getConfig()
+      .then((cfg) => setAutoExportConfig(cfg))
+      .catch(console.error)
+  }, [])
+
+  const handleUpdateAutoExport = async (
+    updates: Partial<{
+      enabled: boolean
+      time: string
+      directory: string
+      format: "excel_workbook" | "individual_csvs" | "combined_csv"
+    }>,
+  ) => {
+    if (!window.electronAPI?.autoExport) return
+    try {
+      const updated = await window.electronAPI.autoExport.updateConfig(updates)
+      setAutoExportConfig(updated)
+    } catch (err) {
+      console.error("Failed to update auto export config:", err)
+      setError("Failed to save auto-export setting.")
+    }
+  }
+
+  const handleSelectExportDirectory = async () => {
+    if (!window.electronAPI?.autoExport) return
+    try {
+      const res = await window.electronAPI.autoExport.selectDirectory()
+      if (!res.canceled && typeof res.path === "string") {
+        const selectedDir = res.path
+        setAutoExportConfig((prev) => ({ ...prev, directory: selectedDir }))
+        setSuccess(`Export directory set to: ${selectedDir}`)
+      }
+    } catch (err) {
+      console.error("Failed to select directory:", err)
+      setError("Failed to open folder picker.")
+    }
+  }
+
+  const handleOpenExportDirectory = async () => {
+    if (!window.electronAPI?.autoExport) return
+    try {
+      await window.electronAPI.autoExport.openDirectory()
+    } catch (err) {
+      console.error("Failed to open directory:", err)
+      setError("Failed to open folder.")
+    }
+  }
+
+  const handleTriggerAutoExportNow = async () => {
+    if (!window.electronAPI?.autoExport) return
+    setIsTriggeringAutoExport(true)
+    try {
+      const success = await window.electronAPI.autoExport.triggerNow()
+      if (success) {
+        setSuccess("Daily attendance report exported successfully!")
+        const updated = await window.electronAPI.autoExport.getConfig()
+        setAutoExportConfig(updated)
+      } else {
+        setError("Failed to export daily report. Check logs for details.")
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to run export.")
+    } finally {
+      setIsTriggeringAutoExport(false)
+    }
+  }
+
+  const formatTimeDisplay = (timeStr: string) => {
+    if (!timeStr) return { time: "--:--", period: "AM" }
+    const [hStr, mStr] = timeStr.split(":")
+    const h = parseInt(hStr, 10)
+    const period = h >= 12 ? "PM" : "AM"
+    const displayHours = h % 12 || 12
+    return { time: `${displayHours}:${mStr}`, period }
+  }
   const handleExport = async (password: string) => {
     setStatus({ type: "loading", action: "export" })
     try {
@@ -346,6 +441,144 @@ export function DataStorage({
               <span>Restore</span>
             </button>
           </div>
+        </div>
+      </section>
+
+      {/* Automated Daily Reports (Offline Auto-Export) */}
+      <section className="space-y-8">
+        <div className="pt-2 pb-2">
+          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
+            Scheduled Reports
+          </h3>
+        </div>
+
+        <div className="rounded-xl border border-white/8 bg-[rgba(22,28,36,0.45)] p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h4 className="text-[15px] font-semibold text-white/90">Daily Auto-Export</h4>
+                <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-bold text-cyan-400">
+                  Offline-Ready
+                </span>
+              </div>
+              <p className="mt-1 text-[13px] leading-relaxed text-white/65">
+                Automatically generate and save attendance reports to a local or network folder
+                every day.
+              </p>
+            </div>
+            <Switch
+              checked={autoExportConfig.enabled}
+              onChange={(enabled) => handleUpdateAutoExport({ enabled })}
+              ariaLabel="Enable Daily Auto-Export"
+            />
+          </div>
+
+          <AnimatePresence>
+            {autoExportConfig.enabled && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="overflow-hidden pt-4">
+                <div className="space-y-4 border-t border-white/6 pt-4">
+                  {/* Schedule Time & Format in a responsive grid */}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {/* Time Picker */}
+                    <div className="rounded-lg border border-white/6 bg-white/[0.02] p-3">
+                      <label className="text-[11px] font-medium text-white/60">Export Time</label>
+                      <div className="group relative mt-1.5 flex items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 transition-all focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 hover:border-cyan-500/40">
+                        <i className="fa-regular fa-clock mr-2 text-[11px] text-white/40 group-hover:text-cyan-400" />
+                        <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
+                          <span>{formatTimeDisplay(autoExportConfig.time).time}</span>
+                          <span className="text-[10px] font-medium text-white/55">
+                            {formatTimeDisplay(autoExportConfig.time).period}
+                          </span>
+                        </div>
+                        <input
+                          type="time"
+                          value={autoExportConfig.time}
+                          onChange={(e) => handleUpdateAutoExport({ time: e.target.value })}
+                          onClick={(e) => e.currentTarget.showPicker?.()}
+                          aria-label="Auto export time"
+                          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Format Selector */}
+                    <div className="rounded-lg border border-white/6 bg-white/[0.02] p-3">
+                      <label className="text-[11px] font-medium text-white/60">Export Format</label>
+                      <select
+                        value={autoExportConfig.format}
+                        onChange={(e) =>
+                          handleUpdateAutoExport({
+                            format: e.target.value as
+                              "excel_workbook" | "individual_csvs" | "combined_csv",
+                          })
+                        }
+                        className="mt-1.5 w-full rounded-md border border-white/10 bg-[#0c121e] px-2.5 py-1.5 text-xs font-medium text-white/90 transition-all focus:border-cyan-400 focus:outline-none">
+                        <option value="excel_workbook">
+                          Excel Workbook (.xls) - Tab per Group
+                        </option>
+                        <option value="individual_csvs">Separate CSV per Group</option>
+                        <option value="combined_csv">Combined Flat CSV</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Target Folder */}
+                  <div className="rounded-lg border border-white/6 bg-white/[0.02] p-3">
+                    <label className="text-[11px] font-medium text-white/60">Save Location</label>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                      <div className="min-w-0 flex-1 truncate rounded-md border border-white/10 bg-black/20 px-3 py-1.5 font-mono text-xs text-white/80 select-all">
+                        {autoExportConfig.directory || "Documents/FaceNox_Reports (Default)"}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSelectExportDirectory}
+                        className="flex h-8 items-center gap-1.5 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3 text-xs font-medium text-white/75 transition-all hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
+                        <i className="fa-regular fa-folder text-[11px] text-white/50" />
+                        <span>Change</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleOpenExportDirectory}
+                        className="flex h-8 items-center gap-1.5 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3 text-xs font-medium text-white/75 transition-all hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
+                        <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
+                        <span>Open Folder</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Manual Test & Status Footer */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    <div className="text-[11px] text-white/45">
+                      {autoExportConfig.lastExportedDate ?
+                        <span>
+                          Last auto-export ran for:{" "}
+                          <strong className="text-white/70">
+                            {autoExportConfig.lastExportedDate}
+                          </strong>
+                        </span>
+                      : <span>No auto-export run recorded yet today.</span>}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleTriggerAutoExportNow}
+                      disabled={isTriggeringAutoExport}
+                      className="flex h-8 items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3.5 text-xs font-medium text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-[0.97] disabled:opacity-40">
+                      {isTriggeringAutoExport ?
+                        <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
+                      : <i className="fa-solid fa-bolt text-[11px]" />}
+                      <span>{isTriggeringAutoExport ? "Exporting..." : "Export Today Now"}</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </section>
 
