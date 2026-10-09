@@ -179,7 +179,6 @@ export default function Main() {
     loadAttendanceData,
     loadAttendanceDataRef,
     handleSelectGroup,
-    handleCreateGroup,
     confirmDeleteGroup,
     cancelDeleteGroup,
   } = useAttendanceGroups()
@@ -724,7 +723,6 @@ export default function Main() {
       </div>
 
       <MainModals
-        handleCreateGroup={handleCreateGroup}
         confirmDeleteGroup={confirmDeleteGroup}
         cancelDeleteGroup={cancelDeleteGroup}
         loadAttendanceDataRef={loadAttendanceDataRef}

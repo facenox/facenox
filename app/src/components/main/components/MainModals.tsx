@@ -4,13 +4,11 @@ import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { attendanceManager } from "@/services"
 import { PinPromptModal } from "@/components/common"
-import { GroupManagementModal } from "./GroupManagementModal"
+import { CreateGroup } from "@/components/group/modals/CreateGroup"
 import { DeleteConfirmationModal } from "./DeleteConfirmationModal"
 import { Settings } from "@/components/settings"
 
 interface MainModalsProps {
-  /** Callback to submit a new group creation to the backend. */
-  handleCreateGroup: () => void
   /** Callback to run the deletion sequence on the selected group. */
   confirmDeleteGroup: () => void
   /** Callback to abort the group deletion prompt. */
@@ -28,7 +26,6 @@ interface MainModalsProps {
  * (like video stream rendering) from triggering unnecessary modal render computations.
  */
 export function MainModals({
-  handleCreateGroup,
   confirmDeleteGroup,
   cancelDeleteGroup,
   loadAttendanceDataRef,
@@ -45,8 +42,6 @@ export function MainModals({
     setShowGroupManagement,
     showDeleteConfirmation,
     groupToDelete,
-    newGroupName,
-    setNewGroupName,
     attendanceCooldownSeconds,
     setAttendanceCooldownSeconds,
     enableSpoofDetection,
@@ -103,12 +98,17 @@ export function MainModals({
     <>
       <PinPromptModal />
 
-      <GroupManagementModal
-        showGroupManagement={showGroupManagement}
-        setShowGroupManagement={setShowGroupManagement}
-        newGroupName={newGroupName}
-        setNewGroupName={setNewGroupName}
-        handleCreateGroup={handleCreateGroup}
+      <CreateGroup
+        isOpen={showGroupManagement}
+        existingGroups={attendanceGroups}
+        onClose={() => setShowGroupManagement(false)}
+        onSuccess={(newGroup) => {
+          const updated = [...attendanceGroups, newGroup]
+          setAttendanceGroups(updated)
+          setCurrentGroup(newGroup)
+          useGroupStore.getState().setSelectedGroup(newGroup)
+          setShowGroupManagement(false)
+        }}
       />
 
       <AnimatePresence>

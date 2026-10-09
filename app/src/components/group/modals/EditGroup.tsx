@@ -118,15 +118,17 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
             />
           </div>
 
-          {/* Unified Schedule & Attendance Rules Container */}
-          <div className="divide-y divide-white/6 rounded-xl border border-white/8 bg-white/[0.02] p-4">
+          {/* Schedule & Attendance Rules */}
+          <div className="divide-y divide-white/6 pt-1">
             {/* Late Tracking Row */}
-            <div className={lateThresholdEnabled ? "space-y-3 pb-3" : "pb-3"}>
+            <div className="py-2">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-xs font-semibold text-white/90">Late Tracking</div>
                   <div className="text-[11px] text-white/55">
-                    Flag members who arrive past the scheduled start time.
+                    {lateThresholdEnabled ?
+                      "Flag members as late when arriving after the scheduled start time."
+                    : "Late tracking is disabled."}
                   </div>
                 </div>
                 <Switch
@@ -143,11 +145,16 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="overflow-hidden pt-3">
-                    <div className="space-y-3 border-t border-white/6 pt-3">
+                    className="overflow-hidden">
+                    <div className="flex flex-col pt-1">
                       {/* Scheduled Start Time */}
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-[11px] text-white/70">Scheduled Start Time</span>
+                      <div className="relative flex items-center gap-4 py-2 pl-4">
+                        <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10" />
+                        <div className="pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10" />
+
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs text-white/65">Scheduled start time:</div>
+                        </div>
                         <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 hover:border-cyan-500/40 hover:bg-white/8">
                           <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-cyan-400" />
                           <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
@@ -168,20 +175,32 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                       </div>
 
                       {/* Late Grace Period */}
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-[11px] text-white/70">Late threshold</span>
-                        <div className="flex items-center gap-1.5">
+                      <div className="relative flex items-center gap-4 py-2 pl-4">
+                        <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs text-white/65">Late threshold:</div>
+                        </div>
+
+                        <div className="ml-auto flex shrink-0 items-center gap-3">
                           {([0, 5, 10, 15, 30, 45, 60] as const).map((mins) => (
                             <button
                               key={mins}
                               type="button"
                               onClick={() => setLateThresholdMinutes(mins)}
-                              className={`rounded px-1.5 py-0.5 text-[11px] font-bold transition-all ${
-                                lateThresholdMinutes === mins ?
-                                  "bg-cyan-500/20 text-cyan-400 ring-1 ring-cyan-500/50"
-                                : "text-white/40 hover:bg-white/5 hover:text-white/80"
+                              className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                                lateThresholdMinutes === mins ? "text-cyan-400" : (
+                                  "text-white/40 hover:text-white/70"
+                                )
                               }`}>
                               {mins === 0 ? "Exact" : `${mins}m`}
+                              {lateThresholdMinutes === mins && (
+                                <motion.div
+                                  layoutId="editGroupLateUnderline"
+                                  className="absolute right-1 bottom-[-2px] left-1 h-[2px] rounded-[1px] bg-cyan-400"
+                                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                />
+                              )}
                             </button>
                           ))}
                         </div>
@@ -193,12 +212,14 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
             </div>
 
             {/* Departure & Checkout Tracking Row */}
-            <div className={trackCheckout ? "space-y-3 pt-3" : "pt-3"}>
+            <div className="py-2">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-xs font-semibold text-white/90">Entry & Exit Tracking</div>
                   <div className="text-[11px] text-white/55">
-                    Record both arrival (Time In) and departure (Time Out) events.
+                    {trackCheckout ?
+                      "Record both arrival (Time In) and departure (Time Out) events."
+                    : "Only recording arrival times."}
                   </div>
                 </div>
                 <Switch
@@ -215,10 +236,14 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="overflow-hidden pt-3">
-                    <div className="border-t border-white/6 pt-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-[11px] text-white/70">Scheduled End Time</span>
+                    className="overflow-hidden">
+                    <div className="flex flex-col pt-1">
+                      <div className="relative flex items-center gap-4 py-2 pl-4">
+                        <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs text-white/65">Scheduled end time:</div>
+                        </div>
                         <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 hover:border-cyan-500/40 hover:bg-white/8">
                           <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-cyan-400" />
                           <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
