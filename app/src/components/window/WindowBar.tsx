@@ -263,8 +263,23 @@ export default function WindowBar() {
           if (syncConfig.lastSyncStatus === "error") {
             badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
             iconClass = "fa-solid fa-triangle-exclamation text-amber-400 text-[9px]"
-            statusText = "Sync Warning"
-            tooltipContent = `Sync issue: ${syncConfig.lastSyncMessage || "Network connection error."} Click to open Cloud Sync.`
+            const isQuota =
+              syncConfig.lastSyncMessage?.includes("Plan limit exceeded") ||
+              syncConfig.lastSyncMessage?.includes("PLAN_QUOTA_HARD_EXCEEDED") ||
+              syncConfig.lastSyncMessage?.includes("Plan member limit exceeded") ||
+              syncConfig.lastSyncMessage?.includes("Total active members reached")
+
+            statusText = isQuota ? "Plan Limit Reached" : "Sync Warning"
+
+            const cleanMsg = (syncConfig.lastSyncMessage || "Network connection error.")
+              .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
+              .replace(/^Sync rejected:\s*/i, "")
+              .replace(/^Error:\s*/i, "")
+
+            tooltipContent =
+              isQuota ?
+                "Plan limit reached: Active members exceed cloud subscription. Click to open Cloud Sync."
+              : `Sync issue: ${cleanMsg} Click to open Cloud Sync.`
           }
 
           return (

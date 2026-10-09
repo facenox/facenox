@@ -409,4 +409,99 @@ describe("BackgroundSyncManager", () => {
     expect(pushCalls[2].body.snapshot_id).toContain("part-3-of-3")
     expect(pushCalls[2].headers["X-Sync-Chunk"]).toBe("true")
   })
+
+  it("chunks large member lists (> 500 members) into multiple batched push requests", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const manager = new BackgroundSyncManager()
+    const membersList = Array.from({ length: 1200 }, (_, i) => ({
+      person_id: `person-${i}`,
+      group_id: "group-1",
+      name: `Member ${i}`,
+      role: "Student",
+      is_active: true,
+      joined_at: new Date().toISOString(),
+    }))
+
+    const pushCalls: Array<{ body: SyncPushPayload; headers: Record<string, string> }> = []
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes("/attendance/export-embeddings")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ embeddings: [] }),
+        } as Response
+      }
+      if (url.includes("/attendance/export")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            exported_at: "2026-10-09T18:00:00.000Z",
+            groups: [{ id: "group-1", name: "Grade 10", is_active: true }],
+            members: membersList,
+            sessions: [],
+            records: [],
+            settings: {
+              late_threshold_minutes: 15,
+              enable_location_tracking: false,
+              confidence_threshold: 0.8,
+              attendance_cooldown_seconds: 60,
+              relog_cooldown_seconds: 60,
+              enable_liveness_detection: false,
+              max_recognition_faces_per_frame: 1,
+              data_retention_days: 7,
+            },
+          }),
+        } as Response
+      }
+      if (url.includes("/api/sync/pull")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            organization_id: "org-1",
+            site_id: "site-test-123",
+            synced_at: new Date().toISOString(),
+            groups: [],
+            members: [],
+            face_embeddings: [],
+          }),
+        } as Response
+      }
+      if (url.includes("/api/sync/push")) {
+        const body = JSON.parse(init?.body as string)
+        pushCalls.push({
+          body,
+          headers: (init?.headers ?? {}) as Record<string, string>,
+        })
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({ ok: true, status: "accepted" }),
+        } as Response
+      }
+      if (url.includes("/api/devices/commands")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ commands: [] }),
+        } as Response
+      }
+      return { ok: true, status: 200, json: async () => ({}) } as Response
+    })
+
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const result = await manager.performSync()
+
+    expect(result.success).toBe(true)
+    // 1200 members / 500 per chunk = 3 chunks
+    expect(pushCalls).toHaveLength(3)
+    expect(pushCalls[0].body.attendance_export.members).toHaveLength(500)
+    expect(pushCalls[0].body.snapshot_id).toContain("part-1-of-3")
+    expect(pushCalls[1].body.attendance_export.members).toHaveLength(500)
+    expect(pushCalls[1].body.snapshot_id).toContain("part-2-of-3")
+    expect(pushCalls[2].body.attendance_export.members).toHaveLength(200)
+    expect(pushCalls[2].body.snapshot_id).toContain("part-3-of-3")
+  })
 })

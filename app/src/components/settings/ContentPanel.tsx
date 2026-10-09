@@ -351,39 +351,52 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             AUDIT LOG
           </button>
         : activeSection === "remote-sync" && syncConfig ?
-          <div className="flex items-center gap-2">
-            {!isOfficialCloudUrl(syncConfig.remoteBaseUrl) && (
-              <Tooltip
-                content={`Custom sync destination: ${syncConfig.remoteBaseUrl}`}
-                position="bottom">
-                <span className="text-[9px] font-extrabold tracking-widest text-white/45 uppercase select-none">
-                  Custom Server
-                </span>
-              </Tooltip>
-            )}
-            <Tooltip
-              content={
-                syncConfig.connected ?
-                  `Linked to ${syncConfig.organizationName || "Facenox Cloud"} • Location: ${syncConfig.siteName || "Default Branch"}`
-                : "Operating locally • Not connected to Facenox Cloud"
-              }
-              position="bottom">
-              <div
-                className={`cursor-help rounded border px-2 py-0.5 text-[9px] font-extrabold tracking-widest uppercase transition-all duration-200 ${
-                  syncConfig.connected ?
-                    syncConfig.lastSyncStatus === "error" ?
-                      "border-red-500/20 bg-red-500/10 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.1)]"
-                    : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.1)]"
-                  : "border-white/5 bg-white/5 text-white/50"
-                }`}>
-                {syncConfig.connected ?
-                  syncConfig.lastSyncStatus === "error" ?
-                    "Sync Failed"
-                  : "Synced"
-                : "Local"}
+          (() => {
+            const isQuota =
+              syncConfig.lastSyncMessage?.includes("Plan limit exceeded") ||
+              syncConfig.lastSyncMessage?.includes("PLAN_QUOTA_HARD_EXCEEDED") ||
+              syncConfig.lastSyncMessage?.includes("Plan member limit exceeded") ||
+              syncConfig.lastSyncMessage?.includes("Total active members reached")
+
+            return (
+              <div className="flex items-center gap-2">
+                {!isOfficialCloudUrl(syncConfig.remoteBaseUrl) && (
+                  <Tooltip
+                    content={`Custom sync destination: ${syncConfig.remoteBaseUrl}`}
+                    position="bottom">
+                    <span className="text-[9px] font-extrabold tracking-widest text-white/45 uppercase select-none">
+                      Custom Server
+                    </span>
+                  </Tooltip>
+                )}
+                <Tooltip
+                  content={
+                    syncConfig.connected ?
+                      `Linked to ${syncConfig.organizationName || "Facenox Cloud"} • Location: ${syncConfig.siteName || "Default Branch"}`
+                    : "Operating locally • Not connected to Facenox Cloud"
+                  }
+                  position="bottom">
+                  <div
+                    className={`cursor-help rounded border px-2 py-0.5 text-[9px] font-extrabold tracking-widest uppercase transition-all duration-200 ${
+                      syncConfig.connected ?
+                        syncConfig.lastSyncStatus === "error" ?
+                          isQuota ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
+                          : "border-red-500/20 bg-red-500/10 text-red-400"
+                        : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                      : "border-white/5 bg-white/5 text-white/50"
+                    }`}>
+                    {syncConfig.connected ?
+                      syncConfig.lastSyncStatus === "error" ?
+                        isQuota ?
+                          "Plan Limit"
+                        : "Sync Warning"
+                      : "Synced"
+                    : "Local"}
+                  </div>
+                </Tooltip>
               </div>
-            </Tooltip>
-          </div>
+            )
+          })()
         : null,
       isGroupSection: false,
     }

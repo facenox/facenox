@@ -788,14 +788,50 @@ export class BackgroundSyncManager {
         }
       }
 
-      // Step 3: Chunked Push (max 250 records per request to satisfy Vercel 4.5MB & PG 65535 parameter limit)
+      // Step 3: Multi-Resource Chunked Push (Records, Members, Embeddings, Sessions)
+      // Caps per-chunk payloads to < 500 KB to safely satisfy Vercel 4.5MB & PG 65,535 parameter limits
+      const RECORD_CHUNK_SIZE = 250
+      const MEMBER_CHUNK_SIZE = 500
+      const EMBEDDING_CHUNK_SIZE = 100
+      const SESSION_CHUNK_SIZE = 250
+
       const allRecords = attendanceExport.records || []
-      const CHUNK_SIZE = 250
-      const totalChunks = Math.max(1, Math.ceil(allRecords.length / CHUNK_SIZE))
+      const allMembers = attendanceExport.members || []
+      const allSessions = attendanceExport.sessions || []
+      const allEmbeddings = faceEmbeddings || []
+
+      const recordChunksCount = Math.ceil(allRecords.length / RECORD_CHUNK_SIZE)
+      const memberChunksCount = Math.ceil(allMembers.length / MEMBER_CHUNK_SIZE)
+      const sessionChunksCount = Math.ceil(allSessions.length / SESSION_CHUNK_SIZE)
+      const embeddingChunksCount = Math.ceil(allEmbeddings.length / EMBEDDING_CHUNK_SIZE)
+
+      const totalChunks = Math.max(
+        1,
+        recordChunksCount,
+        memberChunksCount,
+        sessionChunksCount,
+        embeddingChunksCount,
+      )
       let lastPushResponsePayload: Record<string, unknown> | null = null
 
       for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
-        const chunkRecords = allRecords.slice(chunkIdx * CHUNK_SIZE, (chunkIdx + 1) * CHUNK_SIZE)
+        const chunkRecords = allRecords.slice(
+          chunkIdx * RECORD_CHUNK_SIZE,
+          (chunkIdx + 1) * RECORD_CHUNK_SIZE,
+        )
+        const chunkMembers = allMembers.slice(
+          chunkIdx * MEMBER_CHUNK_SIZE,
+          (chunkIdx + 1) * MEMBER_CHUNK_SIZE,
+        )
+        const chunkSessions = allSessions.slice(
+          chunkIdx * SESSION_CHUNK_SIZE,
+          (chunkIdx + 1) * SESSION_CHUNK_SIZE,
+        )
+        const chunkEmbeddings = allEmbeddings.slice(
+          chunkIdx * EMBEDDING_CHUNK_SIZE,
+          (chunkIdx + 1) * EMBEDDING_CHUNK_SIZE,
+        )
+
         const isFirstChunk = chunkIdx === 0
         const snapshotId =
           totalChunks > 1 ?
@@ -811,12 +847,12 @@ export class BackgroundSyncManager {
           exported_at: exportedAt,
           attendance_export: {
             ...attendanceExport,
-            // Only send auxiliary metadata on first chunk to avoid redundant data transfer
+            // Auxiliary group metadata sent on first chunk
             groups: isFirstChunk ? attendanceExport.groups : [],
-            members: isFirstChunk ? attendanceExport.members : [],
-            sessions: isFirstChunk ? attendanceExport.sessions : [],
+            members: chunkMembers,
+            sessions: chunkSessions,
             records: chunkRecords,
-            face_embeddings: isFirstChunk && faceEmbeddings.length > 0 ? faceEmbeddings : undefined,
+            face_embeddings: chunkEmbeddings.length > 0 ? chunkEmbeddings : undefined,
           },
         }
         const validatedPayload = syncPushSchema.parse(syncPayload)
@@ -876,16 +912,16 @@ export class BackgroundSyncManager {
         }
 
         if (!remoteResponse.ok) {
-          let detail =
+          const detail =
             typeof responsePayload?.message === "string" ? responsePayload.message
             : typeof responsePayload?.error === "string" ? responsePayload.error
             : responseText || `HTTP ${remoteResponse.status}`
 
-          if (detail.startsWith("Sync rejected: ")) {
-            detail = detail.replace("Sync rejected: ", "")
-          }
-
-          throw new Error(`Sync failed on chunk ${chunkIdx + 1}/${totalChunks}: ${detail}`)
+          console.warn(
+            `[Sync] Remote push rejected on chunk ${chunkIdx + 1}/${totalChunks}:`,
+            detail,
+          )
+          throw new Error(detail)
         }
       }
 

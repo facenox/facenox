@@ -10,6 +10,7 @@ import {
   OFFICIAL_REMOTE_BASE_URL,
   isOfficialCloudUrl,
 } from "../../../services/syncDefaults"
+import { formatErrorMessage, parseSyncError } from "./syncErrorUtils.js"
 
 type RemoteSyncConfig = {
   enabled: boolean
@@ -50,14 +51,6 @@ const defaultConfig: RemoteSyncConfig = {
 function getEffectiveRemoteUrl(url?: string): string {
   const clean = (url || "").trim()
   return !clean || isOfficialCloudUrl(clean) ? OFFICIAL_REMOTE_BASE_URL : clean
-}
-
-function formatErrorMessage(err: string | null): string {
-  if (!err) return ""
-  if (err.includes("<!DOCTYPE") || err.includes("<html") || err.includes("<head")) {
-    return "Server returned an unexpected HTML response. Verify that your cloud server is running and reachable."
-  }
-  return err
 }
 
 interface SyncProps {
@@ -331,10 +324,13 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       if (result.success) {
         setSuccess("Sync completed successfully.")
       } else {
-        setError(result.message || "Manual sync failed.")
+        const parsed = parseSyncError(result.message)
+        setError(parsed.description || "Manual sync failed.")
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Manual sync failed.")
+      const rawMsg = error instanceof Error ? error.message : "Manual sync failed."
+      const parsed = parseSyncError(rawMsg)
+      setError(parsed.description || "Manual sync failed.")
     } finally {
       setBusyAction(null)
     }
@@ -343,11 +339,6 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   const effectiveUrl = getEffectiveRemoteUrl(remoteBaseUrl || config.remoteBaseUrl)
   const isCustomServer = !isOfficialCloudUrl(effectiveUrl)
   const serverDisplayName = isCustomServer ? "Custom Server" : "Facenox Cloud"
-
-  const syncTone =
-    config.lastSyncStatus === "success" ? "text-white/60"
-    : config.lastSyncStatus === "error" ? "text-red-400"
-    : "text-white/45"
 
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
@@ -596,55 +587,102 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                   </AnimatePresence>
                 </motion.div>
               </motion.div>
-            : <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-1 text-xs">
+            : <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1.5 text-xs">
                   {config.lastSyncStatus === "error" ?
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5 font-medium text-red-400">
-                        <i className="fa-solid fa-circle-exclamation text-[11px]" />
-                        <span>{config.lastSyncMessage || "Sync error"}</span>
-                      </div>
-                      {config.unsyncedRecordsCount !== undefined &&
-                        config.unsyncedRecordsCount > 0 && (
-                          <div className="text-[11px] text-white/45">
-                            {config.unsyncedRecordsCount} record(s) queued for upload
+                    (() => {
+                      const errInfo = parseSyncError(config.lastSyncMessage)
+                      const isOfficial = isOfficialCloudUrl(config.remoteBaseUrl)
+
+                      if (errInfo.isPlanQuota) {
+                        return (
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2 font-medium text-amber-400">
+                              <span>
+                                Plan limit reached ({errInfo.currentPeople ?? 0} /{" "}
+                                {errInfo.peopleLimit ?? 0} members)
+                              </span>
+                              {isOfficial && (
+                                <a
+                                  href={`${getEffectiveRemoteUrl(config.remoteBaseUrl)}${errInfo.actionUrl || "/pricing"}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-amber-300 underline underline-offset-2 transition hover:text-amber-200">
+                                  Upgrade plan to resume ↗
+                                </a>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-white/40">
+                              {config.unsyncedRecordsCount !== undefined &&
+                                config.unsyncedRecordsCount > 0 && (
+                                  <span>{config.unsyncedRecordsCount} record(s) queued</span>
+                                )}
+                              <span>
+                                {config.lastSyncedAt ?
+                                  `Last synced ${new Date(config.lastSyncedAt).toLocaleString()}`
+                                : "No successful sync yet"}
+                              </span>
+                            </div>
                           </div>
-                        )}
-                    </div>
-                  : config.unsyncedRecordsCount !== undefined && config.unsyncedRecordsCount > 0 ?
-                    <div className="flex items-center gap-2 font-semibold text-amber-400/90">
-                      <span className="relative flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-[1px] bg-amber-400 opacity-75"></span>
-                        <span className="relative inline-flex h-2 w-2 rounded-[1px] bg-amber-500"></span>
-                      </span>
-                      <span>{config.unsyncedRecordsCount} record(s) queued</span>
-                    </div>
-                  : <div className="flex items-center gap-1.5 font-medium text-emerald-400">
-                      <i className="fa-solid fa-check text-[11px]" />
-                      <span>All synced</span>
+                        )
+                      }
+
+                      return (
+                        <div className="space-y-1">
+                          <div className="font-medium text-amber-400/90">
+                            <span>
+                              {errInfo.title}: {errInfo.description}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-[11px] text-white/40">
+                            {config.unsyncedRecordsCount !== undefined &&
+                              config.unsyncedRecordsCount > 0 && (
+                                <span>{config.unsyncedRecordsCount} record(s) queued</span>
+                              )}
+                            <span>
+                              {config.lastSyncedAt ?
+                                `Last synced ${new Date(config.lastSyncedAt).toLocaleString()}`
+                              : "No successful sync yet"}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })()
+                  : <div className="space-y-1">
+                      {(
+                        config.unsyncedRecordsCount !== undefined && config.unsyncedRecordsCount > 0
+                      ) ?
+                        <div className="font-medium text-amber-400">
+                          <span>{config.unsyncedRecordsCount} record(s) queued for upload</span>
+                        </div>
+                      : <div className="flex items-center gap-1.5 font-medium text-emerald-400">
+                          <i className="fa-solid fa-check text-[10px]" />
+                          <span>All records synchronized</span>
+                        </div>
+                      }
+                      <div className="text-[11px] text-white/40">
+                        {config.lastSyncedAt ?
+                          `Last synced ${new Date(config.lastSyncedAt).toLocaleString()}`
+                        : "Ready to sync"}
+                      </div>
                     </div>
                   }
-                  <div className={`text-xs ${syncTone}`}>
-                    {config.lastSyncedAt ?
-                      `Last sync: ${new Date(config.lastSyncedAt).toLocaleString()}`
-                    : "No successful sync yet."}
-                  </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex shrink-0 items-center gap-2 pt-0.5">
                   <button
                     onClick={handleManualSync}
                     disabled={busyAction !== null}
-                    className="flex items-center gap-2 rounded border border-white/10 bg-transparent px-4 py-1.5 text-xs font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
+                    className="flex items-center gap-1.5 rounded border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-white/80 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
                     {busyAction === "syncing" ?
                       <Spinner size="xs" color="white" />
-                    : <i className="fa-solid fa-arrows-rotate text-[11px]" />}
+                    : <i className="fa-solid fa-arrows-rotate text-[10px]" />}
                     Sync Now
                   </button>
                   <button
                     onClick={handleDisconnect}
                     disabled={busyAction !== null}
-                    className="flex items-center gap-2 rounded border border-red-500/20 bg-red-500/[0.03] px-4 py-1.5 text-xs font-semibold text-red-400 transition-all hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40">
+                    className="flex items-center gap-1.5 rounded border border-white/10 bg-transparent px-3 py-1.5 text-xs font-medium text-white/50 transition-all hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40">
                     {busyAction === "disconnecting" && <Spinner size="xs" color="white" />}
                     Disconnect
                   </button>
