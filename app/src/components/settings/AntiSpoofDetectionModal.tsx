@@ -38,11 +38,11 @@ export function AntiSpoofDetectionModal({
         "Admin setup slide showing a clear camera lens and sharp face preview for anti-spoof setup.",
     },
     {
-      title: "Motion verification",
+      title: "Passive verification",
       description:
-        "Users will be prompted to gently turn their head once to confirm physical presence.",
+        "No active gestures or head turns required. The system analyzes micro-motion and depth cues automatically.",
       imageSrc: "./assets/anti-spoof/check-head-turn.png",
-      imageAlt: "Admin setup slide showing motion verification for anti-spoof setup.",
+      imageAlt: "Admin setup slide showing passive biometric presence verification.",
     },
   ] as const
   const [step, setStep] = useState(0)

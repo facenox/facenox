@@ -79,7 +79,7 @@ describe("Display & Audio Settings Section", () => {
     )
 
     expect(screen.getByText("Audio Feedback")).toBeInTheDocument()
-    expect(screen.getByText("Play a sound on successful recognition.")).toBeInTheDocument()
+    expect(screen.getByText("Play sound chime on successful face recognition.")).toBeInTheDocument()
 
     expect(screen.getByText("Tone:")).toBeInTheDocument()
     const testBtn = screen.getByRole("button", { name: /test recognition sound/i })

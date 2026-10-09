@@ -73,8 +73,7 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-[420px]" title="Export Audit Log">
       <div className="space-y-6">
         <p className="text-[12px] leading-relaxed text-white/55">
-          Select a date range to scope down the exported CSV log. This will dynamically filter
-          server audit events in real-time.
+          Filter and export system audit events within a specified date range to CSV.
         </p>
 
         {/* Underline Preset Selector */}

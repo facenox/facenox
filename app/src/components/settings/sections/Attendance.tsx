@@ -91,11 +91,11 @@ export function Attendance({
                 <div className="text-sm font-medium text-white/90">Duplicate Prevention</div>
                 <InfoPopover
                   title="Duplicate Prevention"
-                  description="Automatically filters out repeated scans from the same person to keep reports clean."
+                  description="Filters repeated scans from the same person within the selected cooldown window."
                   details={[
-                    "Always active to ensure clean and consolidated attendance records.",
-                    "Short Window: Best for high-traffic areas or tracking movement.",
-                    "Long Window: Recommended for simple daily attendance.",
+                    "Prevents duplicate check-in entries to keep attendance records clean.",
+                    "Use 5s–1m in high-traffic doors or when tracking continuous movement.",
+                    "Use 5m–30m for standard daily check-in kiosks.",
                   ]}
                   side="right"
                 />
@@ -109,8 +109,7 @@ export function Attendance({
                     exit={{ opacity: 0, y: 2 }}
                     transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                     className="text-xs font-normal text-white/65">
-                    Automatically filters out repeated scans from the same person to keep reports
-                    clean.
+                    Filter repeated scans from the same person within the cooldown window.
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -149,12 +148,11 @@ export function Attendance({
                   <div className="text-sm font-medium text-white/90">Recognition Limit</div>
                   <InfoPopover
                     title="Recognition Limit"
-                    description="Limits how many faces are recognized per frame to optimize performance on this physical device."
+                    description="Sets the maximum number of faces recognized simultaneously per camera frame."
                     details={[
-                      "Hardware-specific: Adjust based on this device's CPU/GPU load and camera location.",
-                      "Lower limits (1-5) improve processing speed and prevent frame drops.",
-                      "If disabled, the system will attempt to recognize all faces detected in each frame.",
-                      "The system prioritizes the largest, closest faces first.",
+                      "Limits of 1–5 maximize frame rate and eliminate lag on standard PCs.",
+                      "Prioritizes matching the largest and closest faces in the scene first.",
+                      "Disabling the limit processes every detected face simultaneously.",
                     ]}
                     side="right"
                   />
@@ -235,12 +233,12 @@ export function Attendance({
                 <div className="text-sm font-medium text-white/90">Liveness Verification</div>
                 <InfoPopover
                   title="Liveness Verification"
-                  description="Requires a live face before recording attendance, helping block photo and screen replay attempts."
+                  description="Verifies physical presence to block printed photos, screen replays, and spoofing attempts."
                   details={[
-                    "Prevents spoofing using real-time passive liveness checks.",
-                    "Can be toggled per device based on camera quality and lighting, unless enforced by organization policy.",
-                    "Works best with balanced lighting and a clear front-facing view.",
-                    "May slightly increase recognition processing time on lower-powered devices.",
+                    "Analyzes face texture, micro-motion, and depth cues in real time.",
+                    "Works best with balanced ambient lighting and direct front-facing camera angles.",
+                    "May slightly increase processing time on lower-powered CPUs.",
+                    "Locked automatically when enforced by your organization policy.",
                   ]}
                   side="right"
                 />
@@ -255,10 +253,10 @@ export function Attendance({
                     transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                     className="text-xs font-normal text-white/65">
                     {attendanceSettings.forceLiveness ?
-                      "Managed by your organization."
+                      "Enforced and managed by your organization policy."
                     : attendanceSettings.enableSpoofDetection ?
-                      "Verifies physical presence to prevent spoofing."
-                    : "Liveness verification is disabled."}
+                      "Verify real physical presence and block photo or screen spoofing."
+                    : "Anti-spoofing is disabled. Run passive face recognition only."}
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -290,15 +288,15 @@ export function Attendance({
                     </span>
                   : null)}
                 <InfoPopover
-                  title="Data Retention"
-                  description="Controls how long past attendance check-in logs are kept on this device. Member profiles and enrolled face signatures are never deleted."
+                  title="Retention Policy"
+                  description="Controls how long past attendance check-in logs are stored before automatic cleanup."
                   details={[
-                    "Pruning runs automatically every 24 hours on this device.",
-                    "Only past attendance check-in and checkout logs are deleted to free up disk space.",
-                    "Member profiles, groups, and enrolled face data remain safe forever.",
+                    "Runs automatic cleanup in the background every 24 hours to free disk space.",
+                    "Member profiles, groups, and enrolled face data are never deleted.",
+                    "Shorter retention periods keep the database fast and comply with privacy regulations.",
                     isPaired && cloudCeiling ?
-                      `When paired, local retention cannot exceed your cloud subscription window of ${cloudCeiling} days.`
-                    : "Setting this to 0 disables automatic deletion and keeps local attendance logs indefinitely.",
+                      `Local retention cannot exceed your cloud subscription window of ${cloudCeiling} days.`
+                    : "Setting this to 0 keeps local attendance history indefinitely.",
                   ]}
                   detailsNode={[
                     <div
@@ -391,11 +389,11 @@ export function Attendance({
                   <div className="text-sm font-medium text-white/90">Administrator PIN Lock</div>
                   <InfoPopover
                     title="Administrator PIN Lock"
-                    description="Protects settings and kiosk configuration with a 4-digit PIN code so visitors cannot alter settings or member records."
+                    description="Restricts access to kiosk preferences and member rosters behind a 4-digit security PIN."
                     details={[
-                      "Recommended for unattended kiosks in lobbies, entrances, or classrooms.",
-                      "Requires the 4-digit PIN whenever anyone clicks Settings or presses Ctrl+,.",
-                      "Default PIN is 1234. Change it anytime below.",
+                      "Recommended for unattended kiosks placed in open lobbies, hallways, or classrooms.",
+                      "Prompts for your PIN when clicking Settings or pressing the Ctrl+, shortcut.",
+                      "Default PIN is 1234. Update it in the sub-panel below.",
                     ]}
                     side="right"
                   />
@@ -410,8 +408,8 @@ export function Attendance({
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                       className="text-xs font-normal text-white/65">
                       {adminPinEnabled ?
-                        "Settings are protected with an administrator PIN."
-                      : "PIN lock is disabled. Anyone can access settings."}
+                        "Protect settings and kiosk controls with a 4-digit PIN."
+                      : "PIN lock is disabled. Anyone can access kiosk settings."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -438,7 +436,7 @@ export function Attendance({
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="text-xs font-medium text-white/80">
-                          Set 4-Digit Administrator PIN:
+                          Set 4-digit administrator PIN:
                         </div>
                         <div className="mt-0.5 text-[11px]">
                           {isSaved ?

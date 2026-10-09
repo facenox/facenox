@@ -137,15 +137,15 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
           <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-xs font-semibold text-white/90">Late Tracking Schedule</div>
+                <div className="text-xs font-semibold text-white/90">Late Tracking</div>
                 <div className="text-[11px] text-white/55">
-                  Track arrival times and flag late attendees for this group.
+                  Flag members who arrive past the scheduled start time.
                 </div>
               </div>
               <Switch
                 checked={lateThresholdEnabled}
                 onChange={setLateThresholdEnabled}
-                ariaLabel="Enable late tracking for this group"
+                ariaLabel="Late Tracking"
               />
             </div>
 
@@ -182,7 +182,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
 
                     {/* Late Grace Period */}
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-[11px] text-white/70">Late Grace Period</span>
+                      <span className="text-[11px] text-white/70">Late threshold</span>
                       <div className="flex items-center gap-1.5">
                         {([0, 5, 10, 15, 30, 45, 60] as const).map((mins) => (
                           <button
@@ -209,9 +209,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
           <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-xs font-semibold text-white/90">
-                  Track Departure / Check-Out
-                </div>
+                <div className="text-xs font-semibold text-white/90">Entry & Exit Tracking</div>
                 <div className="text-[11px] text-white/55">
                   Record both arrival (Time In) and departure (Time Out) events.
                 </div>
@@ -219,7 +217,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
               <Switch
                 checked={trackCheckout}
                 onChange={setTrackCheckout}
-                ariaLabel="Enable departure and check-out tracking for this group"
+                ariaLabel="Entry & Exit Tracking"
               />
             </div>
 

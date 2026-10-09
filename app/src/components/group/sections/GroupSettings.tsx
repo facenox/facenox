@@ -146,9 +146,11 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                     <div className="text-sm font-medium text-white/90">Late Tracking</div>
                     <InfoPopover
                       title="Late Tracking"
-                      description="Marks members as late if they arrive after the scheduled start time plus the specified threshold."
+                      description="Flags members who arrive past the scheduled start time plus your grace period."
                       details={[
-                        "If enabled, late status will be reflected in Overview and Reports.",
+                        "Sets the official target arrival time for members in this group.",
+                        "Grants extra minutes of grace before flagging members as late.",
+                        "Displays late flags across Overview, Member history, and CSV reports.",
                       ]}
                       side="right"
                     />
@@ -259,11 +261,11 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                     <div className="text-sm font-medium text-white/90">Entry & Exit Tracking</div>
                     <InfoPopover
                       title="Entry & Exit Tracking"
-                      description="Records arrival (Time In) on the first scan, and departure (Time Out) on the most recent scan of the day."
+                      description="Tracks both initial check-in and final departure timestamps for each member per day."
                       details={[
-                        "Single scans count as arrival only.",
-                        "Subsequent scans update the departure time.",
-                        "Total hours are calculated automatically.",
+                        "The first scan of the day registers the arrival time.",
+                        "Subsequent scans throughout the day update the departure time.",
+                        "Automatically calculates total active hours between check-in and departure.",
                       ]}
                       side="right"
                     />

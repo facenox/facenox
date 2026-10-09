@@ -458,8 +458,7 @@ export function DataStorage({
               <div className="min-w-0 flex-1">
                 <h4 className="text-[15px] font-semibold text-white/90">Daily Auto-Export</h4>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                  Automatically save attendance reports to a local or network folder on a set daily
-                  schedule.
+                  Export attendance reports to a local or network folder on a set daily schedule.
                 </p>
               </div>
               <Switch
@@ -817,12 +816,8 @@ export function DataStorage({
                       Clear Group Directory
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Permanently deletes all groups, member profiles, and enrolled biometric face
-                      data. This wipes out the entire local directory structure.{" "}
-                      <span className="font-semibold text-white/80">
-                        After clearing, members will need to be re-created and enrolled for
-                        recognition to work.
-                      </span>
+                      Permanently delete all groups, member profiles, and enrolled biometric face
+                      data. Members must be re-created and enrolled for recognition to work.
                     </p>
                   </div>
                   <button
@@ -841,7 +836,7 @@ export function DataStorage({
                   <div className="min-w-0 flex-1 text-left">
                     <h4 className="text-[15px] font-semibold text-red-400/80">Reset Face Data</h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Wipes all face recognition signatures. Enrolled members will need to re-enroll
+                      Wipe all face recognition signatures. Enrolled members will need to re-enroll
                       their face profiles.
                       {isPaired && (
                         <span className="mt-1 block font-bold text-red-400/90">
@@ -867,9 +862,9 @@ export function DataStorage({
                       Purge Attendance History
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Permanently wipes all daily attendance check-ins, checkout timestamps, and
-                      history records. Configured groups, member profiles, and enrolled face
-                      profiles will remain safe.
+                      Permanently wipe all daily attendance check-ins, checkout timestamps, and
+                      history records. Groups, member profiles, and enrolled face profiles are
+                      preserved.
                       {isPaired && (
                         <span className="mt-1 block font-bold text-red-400/90">
                           <i className="fa-solid fa-lock mr-1" />

@@ -146,32 +146,32 @@ export function Display({
       key: "cameraMirrored" as keyof QuickSettings,
       label: "Mirror View",
       descriptions: {
-        on: "Flips camera feed horizontally.",
-        off: "Standard camera view.",
+        on: "Flip camera feed horizontally.",
+        off: "Show standard camera orientation.",
       },
     },
     {
       key: "showRecognitionNames" as keyof QuickSettings,
       label: "Show Names",
       descriptions: {
-        on: "Displays recognized member names overlaying the camera feed.",
-        off: "Hide names, showing only face tracking boxes.",
+        on: "Display recognized member names on camera overlay.",
+        off: "Hide names to show tracking boxes only.",
       },
     },
     {
       key: "showTrackingBoxes" as keyof QuickSettings,
       label: "Show Tracking Boxes",
       descriptions: {
-        on: "Displays bounding boxes and tracking reticles around detected faces.",
-        off: "Hides bounding boxes for an unobtrusive, clean display.",
+        on: "Display tracking reticles around detected faces.",
+        off: "Hide tracking boxes for a clean camera display.",
       },
     },
     {
       key: "cameraFitCover" as keyof QuickSettings,
       label: "Fill Viewport",
       descriptions: {
-        on: "Expands camera feed to fill the entire container (may crop outer edges).",
-        off: "Fits entire camera frame without cropping (standard letterbox).",
+        on: "Expand camera feed to fill screen edge-to-edge.",
+        off: "Fit entire camera frame with standard letterbox.",
       },
     },
   ]
@@ -340,8 +340,8 @@ export function Display({
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                       className="text-xs font-medium text-white/65">
                       {audioSettings.recognitionSoundEnabled ?
-                        "Play a sound on successful recognition."
-                      : "Mute all recognition sounds."}
+                        "Play sound chime on successful face recognition."
+                      : "Mute all face recognition sound chimes."}
                     </motion.div>
                   </AnimatePresence>
                 </div>

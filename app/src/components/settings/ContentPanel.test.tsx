@@ -172,10 +172,10 @@ describe("ContentPanel anti-spoof prompt", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
 
-    expect(await screen.findByText("Motion verification")).toBeInTheDocument()
+    expect(await screen.findByText("Passive verification")).toBeInTheDocument()
     expect(
       await screen.findByAltText(
-        "Admin setup slide showing motion verification for anti-spoof setup.",
+        "Admin setup slide showing passive biometric presence verification.",
       ),
     ).toBeInTheDocument()
 

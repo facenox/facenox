@@ -148,11 +148,11 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
   })
 })
 
-describe("Attendance Late Tracking & Scheduled Start Time Settings", () => {
+describe("Global General Preferences Controls", () => {
   const baseSettings: AttendanceSettings = {
-    lateThresholdEnabled: true,
+    lateThresholdEnabled: false,
     lateThresholdMinutes: 15,
-    classStartTime: "09:30",
+    classStartTime: "08:00",
     attendanceCooldownSeconds: 60,
     enableSpoofDetection: false,
     maxRecognitionFacesPerFrame: 5,
@@ -160,125 +160,90 @@ describe("Attendance Late Tracking & Scheduled Start Time Settings", () => {
     dataRetentionDays: 0,
   }
 
-  it("renders scheduled start time and allows modifying it when group is selected and late tracking is enabled", () => {
-    const onClassStartTimeChange = vi.fn()
-    const onLateThresholdChange = vi.fn()
-
+  it("renders Duplicate Prevention with active phrasing and cooldown buttons", () => {
+    const onCooldownChange = vi.fn()
     render(
       <Attendance
         attendanceSettings={baseSettings}
-        onLateThresholdChange={onLateThresholdChange}
-        onLateThresholdToggle={vi.fn()}
-        onClassStartTimeChange={onClassStartTimeChange}
-        onAttendanceCooldownChange={vi.fn()}
+        onAttendanceCooldownChange={onCooldownChange}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
-        onTrackCheckoutToggle={vi.fn()}
         onDataRetentionChange={vi.fn()}
-        hasSelectedGroup={true}
-        isPaired={false}
       />,
     )
 
-    expect(screen.getByText("Scheduled start time:")).toBeInTheDocument()
-    expect(screen.getByText("9:30")).toBeInTheDocument()
-    expect(screen.getByText("AM")).toBeInTheDocument()
+    expect(screen.getByText("Duplicate Prevention")).toBeInTheDocument()
+    expect(
+      screen.getByText("Filter repeated scans from the same person within the cooldown window."),
+    ).toBeInTheDocument()
 
-    const timeInput = screen.getByLabelText("Scheduled start time") as HTMLInputElement
-    expect(timeInput).toBeInTheDocument()
-    expect(timeInput.value).toBe("09:30")
-
-    fireEvent.change(timeInput, { target: { value: "14:00" } })
-    expect(onClassStartTimeChange).toHaveBeenCalledWith("14:00")
-
-    // Threshold buttons are also interactive
-    const thresholdBtn = screen.getByRole("button", { name: "45m" })
-    fireEvent.click(thresholdBtn)
-    expect(onLateThresholdChange).toHaveBeenCalledWith(45)
+    const btn5m = screen.getByRole("button", { name: "5m" })
+    fireEvent.click(btn5m)
+    expect(onCooldownChange).toHaveBeenCalledWith(300)
   })
 
-  it("hides scheduled start time sub-panel when late tracking is disabled", () => {
+  it("renders Liveness Verification toggle and toggles spoof detection", () => {
+    const onSpoofToggle = vi.fn()
     render(
       <Attendance
-        attendanceSettings={{
-          ...baseSettings,
-          lateThresholdEnabled: false,
-        }}
-        onLateThresholdChange={vi.fn()}
-        onLateThresholdToggle={vi.fn()}
-        onClassStartTimeChange={vi.fn()}
+        attendanceSettings={baseSettings}
         onAttendanceCooldownChange={vi.fn()}
-        onSpoofDetectionToggle={vi.fn()}
+        onSpoofDetectionToggle={onSpoofToggle}
         onMaxRecognitionFacesChange={vi.fn()}
-        onTrackCheckoutToggle={vi.fn()}
         onDataRetentionChange={vi.fn()}
-        hasSelectedGroup={true}
-        isPaired={false}
       />,
     )
 
-    expect(screen.queryByText("Scheduled start time:")).not.toBeInTheDocument()
-    expect(screen.queryByText("Late threshold:")).not.toBeInTheDocument()
+    expect(screen.getByText("Liveness Verification")).toBeInTheDocument()
+    expect(
+      screen.getByText("Anti-spoofing is disabled. Run passive face recognition only."),
+    ).toBeInTheDocument()
+
+    const livenessSwitch = screen.getByRole("switch", {
+      name: "Liveness Verification (Anti-Spoof)",
+    })
+    fireEvent.click(livenessSwitch)
+    expect(onSpoofToggle).toHaveBeenCalledWith(true)
   })
 
-  it("renders scheduled end time and allows modifying it when group is selected and track checkout is enabled", () => {
-    const onClassEndTimeChange = vi.fn()
-
+  it("renders Recognition Limit and handles face count changes", () => {
+    const onMaxFacesChange = vi.fn()
     render(
       <Attendance
-        attendanceSettings={{
-          ...baseSettings,
-          trackCheckout: true,
-          classEndTime: "16:30",
-        }}
-        onLateThresholdChange={vi.fn()}
-        onLateThresholdToggle={vi.fn()}
-        onClassStartTimeChange={vi.fn()}
-        onClassEndTimeChange={onClassEndTimeChange}
+        attendanceSettings={baseSettings}
         onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
-        onMaxRecognitionFacesChange={vi.fn()}
-        onTrackCheckoutToggle={vi.fn()}
+        onMaxRecognitionFacesChange={onMaxFacesChange}
         onDataRetentionChange={vi.fn()}
-        hasSelectedGroup={true}
-        isPaired={false}
       />,
     )
 
-    expect(screen.getByText("Scheduled end time:")).toBeInTheDocument()
-    expect(screen.getByText("4:30")).toBeInTheDocument()
-    expect(screen.getByText("PM")).toBeInTheDocument()
+    expect(screen.getByText("Recognition Limit")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "Limit the maximum number of faces recognized per frame to optimize performance.",
+      ),
+    ).toBeInTheDocument()
 
-    const timeInput = screen.getByLabelText("Scheduled end time") as HTMLInputElement
-    expect(timeInput).toBeInTheDocument()
-    expect(timeInput.value).toBe("16:30")
-
-    fireEvent.change(timeInput, { target: { value: "17:30" } })
-    expect(onClassEndTimeChange).toHaveBeenCalledWith("17:30")
+    const faceBtn10 = screen.getByRole("button", { name: "10" })
+    fireEvent.click(faceBtn10)
+    expect(onMaxFacesChange).toHaveBeenCalledWith(10)
   })
 
-  it("hides scheduled end time sub-panel when track checkout is disabled", () => {
+  it("renders Administrator PIN Lock toggle and controls", () => {
     render(
       <Attendance
-        attendanceSettings={{
-          ...baseSettings,
-          trackCheckout: false,
-          classEndTime: "17:00",
-        }}
-        onLateThresholdChange={vi.fn()}
-        onLateThresholdToggle={vi.fn()}
-        onClassStartTimeChange={vi.fn()}
-        onClassEndTimeChange={vi.fn()}
+        attendanceSettings={baseSettings}
         onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
-        onTrackCheckoutToggle={vi.fn()}
         onDataRetentionChange={vi.fn()}
-        hasSelectedGroup={true}
-        isPaired={false}
       />,
     )
 
-    expect(screen.queryByText("Scheduled end time:")).not.toBeInTheDocument()
+    expect(screen.getByText("Administrator PIN Lock")).toBeInTheDocument()
+    expect(
+      screen.getByText("PIN lock is disabled. Anyone can access kiosk settings."),
+    ).toBeInTheDocument()
   })
 })

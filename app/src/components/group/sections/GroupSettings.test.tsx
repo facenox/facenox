@@ -41,9 +41,8 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
     render(<GroupSettings group={group} />)
 
     expect(screen.getByText(/Schedule & Attendance Rules/i)).toBeInTheDocument()
-    expect(screen.getByText("Engineering Team")).toBeInTheDocument()
     expect(screen.getByText("Late Tracking")).toBeInTheDocument()
-    expect(screen.getByText("Track Departure / Check-Out")).toBeInTheDocument()
+    expect(screen.getByText("Entry & Exit Tracking")).toBeInTheDocument()
     expect(screen.getByText("Exact")).toBeInTheDocument()
     expect(screen.getByText("10m")).toBeInTheDocument()
   })
@@ -89,7 +88,7 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
     render(<GroupSettings group={group} />)
 
     const switchBtn = screen.getByRole("switch", {
-      name: /Enable departure and check-out tracking for this group/i,
+      name: "Entry & Exit Tracking",
     })
     fireEvent.click(switchBtn)
 
