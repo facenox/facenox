@@ -648,6 +648,9 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   onClassStartTimeChange={(time) =>
                     updateAttendanceSetting({ classStartTime: time })
                   }
+                  onClassEndTimeChange={(time) =>
+                    updateAttendanceSetting({ classEndTime: time })
+                  }
                   onAttendanceCooldownChange={(seconds) =>
                     updateAttendanceSetting({ attendanceCooldownSeconds: seconds })
                   }

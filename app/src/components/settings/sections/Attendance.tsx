@@ -9,6 +9,7 @@ interface AttendanceProps {
   onLateThresholdChange: (minutes: number) => void
   onLateThresholdToggle: (enabled: boolean) => void
   onClassStartTimeChange?: (time: string) => void
+  onClassEndTimeChange?: (time: string) => void
   onAttendanceCooldownChange: (seconds: number) => void
   onSpoofDetectionToggle: (enabled: boolean) => void
   onMaxRecognitionFacesChange: (count: number) => void
@@ -21,7 +22,7 @@ interface AttendanceProps {
 const SETTINGS_STATUS_SWAP_DURATION = 0.14
 const SETTINGS_PANEL_ANIMATION_DURATION = 0.18
 
-const formatTimeDisplay = (time?: string) => {
+const formatTimeDisplay = (time?: string | null) => {
   if (!time) return { time: "08:00", period: "AM" }
   try {
     const [hours, minutes] = time.split(":").map(Number)
@@ -41,6 +42,7 @@ export function Attendance({
   onLateThresholdChange,
   onLateThresholdToggle,
   onClassStartTimeChange,
+  onClassEndTimeChange,
   onAttendanceCooldownChange,
   onSpoofDetectionToggle,
   onMaxRecognitionFacesChange,
@@ -110,52 +112,6 @@ export function Attendance({
         </div>
 
         <div className="py-2">
-          <div className="flex flex-col">
-            <div className="flex items-center gap-4 py-4">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <div className="text-sm font-medium text-white/90">Entry & Exit Tracking</div>
-                  <InfoPopover
-                    title="Entry & Exit Tracking"
-                    description="Records arrival (Time In) on the first scan, and departure (Time Out) on the most recent scan of the day."
-                    details={[
-                      "Single scans count as arrival only.",
-                      "Subsequent scans update the departure time.",
-                      "Total hours are calculated automatically.",
-                    ]}
-                    side="right"
-                  />
-                </div>
-                <div className="relative min-h-4">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={`${hasSelectedGroup}-${attendanceSettings.trackCheckout}`}
-                      initial={{ opacity: 0, y: -2 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 2 }}
-                      transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                      className="text-xs font-normal text-white/65">
-                      {!hasSelectedGroup ?
-                        "Select a group to enable this feature"
-                      : attendanceSettings.trackCheckout ?
-                        "Record both arrival and departure times."
-                      : "Only record arrival times."}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              <Switch
-                checked={attendanceSettings.trackCheckout}
-                onChange={onTrackCheckoutToggle}
-                disabled={!hasSelectedGroup}
-                ariaLabel="Entry & Exit Tracking"
-              />
-            </div>
-          </div>
-
-          <div className="h-px w-full bg-white/8" />
-
           <div className="flex flex-col">
             <div className="flex items-center gap-4 py-4">
               <div className="min-w-0 flex-1">
@@ -260,6 +216,92 @@ export function Attendance({
                             )}
                           </button>
                         ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="h-px w-full bg-white/8" />
+
+          <div className="flex flex-col">
+            <div className="flex items-center gap-4 py-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="text-sm font-medium text-white/90">Entry & Exit Tracking</div>
+                  <InfoPopover
+                    title="Entry & Exit Tracking"
+                    description="Records arrival (Time In) on the first scan, and departure (Time Out) on the most recent scan of the day."
+                    details={[
+                      "Single scans count as arrival only.",
+                      "Subsequent scans update the departure time.",
+                      "Total hours are calculated automatically.",
+                    ]}
+                    side="right"
+                  />
+                </div>
+                <div className="relative min-h-4">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`${hasSelectedGroup}-${attendanceSettings.trackCheckout}`}
+                      initial={{ opacity: 0, y: -2 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 2 }}
+                      transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
+                      className="text-xs font-normal text-white/65">
+                      {!hasSelectedGroup ?
+                        "Select a group to enable this feature"
+                      : attendanceSettings.trackCheckout ?
+                        "Record both arrival and departure times."
+                      : "Only record arrival times."}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              <Switch
+                checked={attendanceSettings.trackCheckout}
+                onChange={onTrackCheckoutToggle}
+                disabled={!hasSelectedGroup}
+                ariaLabel="Entry & Exit Tracking"
+              />
+            </div>
+
+            <AnimatePresence>
+              {attendanceSettings.trackCheckout && hasSelectedGroup && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
+                  className="overflow-hidden">
+                  <div className="flex flex-col">
+                    {/* Scheduled End Time */}
+                    <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
+                      <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10" />
+                      <div className="pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10" />
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs text-white/65">Scheduled end time:</div>
+                      </div>
+                      <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 hover:border-cyan-500/40 hover:bg-white/8">
+                        <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-cyan-400" />
+                        <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
+                          <span>{formatTimeDisplay(attendanceSettings.classEndTime || "17:00").time}</span>
+                          <span className="text-[10px] font-medium text-white/55">
+                            {formatTimeDisplay(attendanceSettings.classEndTime || "17:00").period}
+                          </span>
+                        </div>
+                        <input
+                          type="time"
+                          aria-label="Scheduled end time"
+                          value={attendanceSettings.classEndTime || "17:00"}
+                          onChange={(e) => onClassEndTimeChange?.(e.target.value)}
+                          onClick={(e) => e.currentTarget.showPicker?.()}
+                          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                        />
                       </div>
                     </div>
                   </div>

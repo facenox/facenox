@@ -138,6 +138,9 @@ export function MainModals({
               classStartTime:
                 (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
                   ?.class_start_time ?? "08:00",
+              classEndTime:
+                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
+                  ?.class_end_time ?? null,
               attendanceCooldownSeconds: attendanceCooldownSeconds,
               enableSpoofDetection: enableSpoofDetection,
               maxRecognitionFacesPerFrame: maxRecognitionFacesPerFrame,
@@ -202,7 +205,8 @@ export function MainModals({
                 editableGroup &&
                 (updates.lateThresholdEnabled !== undefined ||
                   updates.lateThresholdMinutes !== undefined ||
-                  updates.classStartTime !== undefined)
+                  updates.classStartTime !== undefined ||
+                  updates.classEndTime !== undefined)
               ) {
                 const updatedSettings = {
                   ...editableGroup.settings,
@@ -214,6 +218,9 @@ export function MainModals({
                   }),
                   ...(updates.classStartTime !== undefined && {
                     class_start_time: updates.classStartTime,
+                  }),
+                  ...(updates.classEndTime !== undefined && {
+                    class_end_time: updates.classEndTime,
                   }),
                 }
                 try {

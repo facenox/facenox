@@ -18,6 +18,7 @@ export interface AttendanceSettings {
   lateThresholdEnabled: boolean
   lateThresholdMinutes: number
   classStartTime: string
+  classEndTime?: string | null
   attendanceCooldownSeconds: number
   enableSpoofDetection: boolean
   maxRecognitionFacesPerFrame: number

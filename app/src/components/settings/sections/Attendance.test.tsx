@@ -220,4 +220,65 @@ describe("Attendance Late Tracking & Scheduled Start Time Settings", () => {
     expect(screen.queryByText("Scheduled start time:")).not.toBeInTheDocument()
     expect(screen.queryByText("Late threshold:")).not.toBeInTheDocument()
   })
+
+  it("renders scheduled end time and allows modifying it when group is selected and track checkout is enabled", () => {
+    const onClassEndTimeChange = vi.fn()
+
+    render(
+      <Attendance
+        attendanceSettings={{
+          ...baseSettings,
+          trackCheckout: true,
+          classEndTime: "16:30",
+        }}
+        onLateThresholdChange={vi.fn()}
+        onLateThresholdToggle={vi.fn()}
+        onClassStartTimeChange={vi.fn()}
+        onClassEndTimeChange={onClassEndTimeChange}
+        onAttendanceCooldownChange={vi.fn()}
+        onSpoofDetectionToggle={vi.fn()}
+        onMaxRecognitionFacesChange={vi.fn()}
+        onTrackCheckoutToggle={vi.fn()}
+        onDataRetentionChange={vi.fn()}
+        hasSelectedGroup={true}
+        isPaired={false}
+      />,
+    )
+
+    expect(screen.getByText("Scheduled end time:")).toBeInTheDocument()
+    expect(screen.getByText("4:30")).toBeInTheDocument()
+    expect(screen.getByText("PM")).toBeInTheDocument()
+
+    const timeInput = screen.getByLabelText("Scheduled end time") as HTMLInputElement
+    expect(timeInput).toBeInTheDocument()
+    expect(timeInput.value).toBe("16:30")
+
+    fireEvent.change(timeInput, { target: { value: "17:30" } })
+    expect(onClassEndTimeChange).toHaveBeenCalledWith("17:30")
+  })
+
+  it("hides scheduled end time sub-panel when track checkout is disabled", () => {
+    render(
+      <Attendance
+        attendanceSettings={{
+          ...baseSettings,
+          trackCheckout: false,
+          classEndTime: "17:00",
+        }}
+        onLateThresholdChange={vi.fn()}
+        onLateThresholdToggle={vi.fn()}
+        onClassStartTimeChange={vi.fn()}
+        onClassEndTimeChange={vi.fn()}
+        onAttendanceCooldownChange={vi.fn()}
+        onSpoofDetectionToggle={vi.fn()}
+        onMaxRecognitionFacesChange={vi.fn()}
+        onTrackCheckoutToggle={vi.fn()}
+        onDataRetentionChange={vi.fn()}
+        hasSelectedGroup={true}
+        isPaired={false}
+      />,
+    )
+
+    expect(screen.queryByText("Scheduled end time:")).not.toBeInTheDocument()
+  })
 })
