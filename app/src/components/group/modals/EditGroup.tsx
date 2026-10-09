@@ -168,18 +168,18 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                     {/* Late Grace Period */}
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-[11px] text-white/70">Late Grace Period</span>
-                      <div className="flex items-center gap-2">
-                        {([5, 10, 15, 30, 45, 60] as const).map((mins) => (
+                      <div className="flex items-center gap-1.5">
+                        {([0, 5, 10, 15, 30, 45, 60] as const).map((mins) => (
                           <button
                             key={mins}
                             type="button"
                             onClick={() => setLateThresholdMinutes(mins)}
-                            className={`rounded px-2 py-0.5 text-[11px] font-bold transition-all ${
+                            className={`rounded px-1.5 py-0.5 text-[11px] font-bold transition-all ${
                               lateThresholdMinutes === mins ?
                                 "bg-cyan-500/20 text-cyan-400 ring-1 ring-cyan-500/50"
                               : "text-white/40 hover:bg-white/5 hover:text-white/80"
                             }`}>
-                            {mins}m
+                            {mins === 0 ? "Exact" : `${mins}m`}
                           </button>
                         ))}
                       </div>

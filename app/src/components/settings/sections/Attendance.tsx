@@ -195,18 +195,18 @@ export function Attendance({
                         <div className="text-xs text-white/65">Late threshold:</div>
                       </div>
 
-                      <div className="ml-auto flex shrink-0 items-center gap-4">
-                        {([5, 10, 15, 30, 45, 60] as const).map((mins) => (
+                      <div className="ml-auto flex shrink-0 items-center gap-3.5">
+                        {([0, 5, 10, 15, 30, 45, 60] as const).map((mins) => (
                           <button
                             key={mins}
                             type="button"
                             onClick={() => onLateThresholdChange(mins)}
-                            className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                            className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
                               attendanceSettings.lateThresholdMinutes === mins ?
                                 "text-cyan-400"
                               : "text-white/40 hover:text-white/70"
                             }`}>
-                            {mins}m
+                            {mins === 0 ? "Exact" : `${mins}m`}
                             {attendanceSettings.lateThresholdMinutes === mins && (
                               <motion.div
                                 layoutId="lateUnderline"

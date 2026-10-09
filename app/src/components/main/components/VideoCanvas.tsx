@@ -2,7 +2,6 @@ import { memo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { RefObject } from "react"
 import { Spinner } from "@/components/common"
-import { StartTimeChip } from "./StartTimeChip"
 import { ActiveHeadTurnGuide } from "./ActiveHeadTurnGuide"
 import { useDetectionStore } from "@/components/main/stores"
 import type { QuickSettings } from "@/components/settings"
@@ -43,7 +42,6 @@ export const VideoCanvas = memo(function VideoCanvas({
   hasMembers = false,
   lateTrackingEnabled,
   classStartTime = null,
-  onStartTimeChange,
   currentGroup = null,
   enableSpoofDetection = false,
   attendanceCooldownSeconds = 30,
@@ -69,47 +67,6 @@ export const VideoCanvas = memo(function VideoCanvas({
     return `${secs / 60}m`
   }
 
-  const tooltipContent =
-    currentGroup ?
-      <div className="flex min-w-48 flex-col gap-1.5 p-1 text-[11px] text-white/60 select-none">
-        <div className="mb-0.5 text-[10px] font-bold tracking-wider text-white/30 uppercase">
-          Active Settings
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <span>Entry & Exit</span>
-          <span className="text-right font-medium text-white/80">
-            {currentGroup.settings?.track_checkout ? "Track check-outs" : "Arrivals only"}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <span>Late Tracking</span>
-          <span className="text-right font-medium text-white/80">
-            {currentGroup.settings?.late_threshold_enabled ?
-              `${currentGroup.settings?.late_threshold_minutes}m`
-            : "Disabled"}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <span>Duplicate Prevention</span>
-          <span className="text-right font-medium text-white/80">
-            {formatCooldown(attendanceCooldownSeconds)}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <span>Recognition Limit</span>
-          <span className="text-right font-medium text-white/80">
-            {maxRecognitionFacesPerFrame > 0 ? maxRecognitionFacesPerFrame : "Unlimited"}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <span>Liveness Verification</span>
-          <span className="text-right font-medium text-white/80">
-            {enableSpoofDetection ? "Enabled" : "Disabled"}
-          </span>
-        </div>
-      </div>
-    : null
-
   const isTimeOutdated = (): boolean => {
     try {
       if (!lateTrackingEnabled || !classStartTime) return false
@@ -127,6 +84,75 @@ export const VideoCanvas = memo(function VideoCanvas({
   }
 
   const outdated = isTimeOutdated()
+
+  const format12hTime = (timeStr?: string | null) => {
+    if (!timeStr) return "08:00 AM"
+    try {
+      const [hours, minutes] = timeStr.split(":").map(Number)
+      const period = hours >= 12 ? "PM" : "AM"
+      const displayHours = hours % 12 || 12
+      return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`
+    } catch {
+      return timeStr
+    }
+  }
+
+  const tooltipContent =
+    currentGroup ?
+      <div className="flex min-w-56 flex-col gap-1.5 p-1 text-[11px] text-white/60 select-none">
+        <div className="mb-0.5 text-[10px] font-bold tracking-wider text-white/30 uppercase">
+          Active Settings
+        </div>
+
+        {/* 1. Late Tracking */}
+        <div className="flex items-center justify-between gap-4">
+          <span>Late Tracking</span>
+          <span className="text-right font-mono font-medium text-white/85">
+            {currentGroup.settings?.late_threshold_enabled ?
+              (currentGroup.settings?.late_threshold_minutes ?? 0) > 0 ?
+                `${format12hTime(currentGroup.settings?.class_start_time)} (+${currentGroup.settings?.late_threshold_minutes}m)`
+              : `${format12hTime(currentGroup.settings?.class_start_time)} (Exact)`
+            : <span className="font-sans text-white/40">Disabled</span>}
+          </span>
+        </div>
+
+        {/* 2. Entry & Exit */}
+        <div className="flex items-center justify-between gap-4">
+          <span>Entry & Exit</span>
+          <span className="text-right font-mono font-medium text-white/85">
+            {currentGroup.settings?.track_checkout ?
+              currentGroup.settings?.class_end_time ?
+                `Enabled (${format12hTime(currentGroup.settings.class_end_time)})`
+              : "Enabled"
+            : <span className="font-sans text-white/40">Disabled</span>}
+          </span>
+        </div>
+
+        {/* 3. Duplicate Filter */}
+        <div className="flex items-center justify-between gap-4">
+          <span>Duplicate Filter</span>
+          <span className="text-right font-medium text-white/85">
+            {formatCooldown(attendanceCooldownSeconds)} cooldown
+          </span>
+        </div>
+
+        {/* 4. Recognition Limit */}
+        <div className="flex items-center justify-between gap-4">
+          <span>Face Limit</span>
+          <span className="text-right font-medium text-white/85">
+            {maxRecognitionFacesPerFrame > 0 ? `${maxRecognitionFacesPerFrame} faces` : "Unlimited"}
+          </span>
+        </div>
+
+        {/* 5. Anti-Spoofing */}
+        <div className="flex items-center justify-between gap-4">
+          <span>Anti-Spoofing</span>
+          <span className="text-right font-medium text-white/85">
+            {enableSpoofDetection ? "Enabled" : <span className="text-white/40">Disabled</span>}
+          </span>
+        </div>
+      </div>
+    : null
 
   const emptyStateText =
     !isShellReady ? "Loading groups and settings..."
@@ -240,27 +266,9 @@ export const VideoCanvas = memo(function VideoCanvas({
                       />
                     </svg>
                   </div>
-                  {(emptyStateText ||
-                    (hasSelectedGroup &&
-                      currentGroup?.id !== "all" &&
-                      hasEnrolledFaces &&
-                      onStartTimeChange &&
-                      lateTrackingEnabled)) && (
+                  {emptyStateText && (
                     <div className="absolute top-full left-1/2 mt-4 flex w-max max-w-xl -translate-x-1/2 flex-col items-center gap-3 px-6 text-center text-xs text-white/65">
-                      {emptyStateText && <p className="text-white/65">{emptyStateText}</p>}
-
-                      {hasSelectedGroup &&
-                        currentGroup?.id !== "all" &&
-                        hasEnrolledFaces &&
-                        onStartTimeChange &&
-                        lateTrackingEnabled && (
-                          <div className="pointer-events-auto">
-                            <StartTimeChip
-                              startTime={classStartTime}
-                              onTimeChange={onStartTimeChange}
-                            />
-                          </div>
-                        )}
+                      <p className="text-white/65">{emptyStateText}</p>
                     </div>
                   )}
                 </motion.div>
