@@ -652,7 +652,8 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       {(
                         config.unsyncedRecordsCount !== undefined && config.unsyncedRecordsCount > 0
                       ) ?
-                        <div className="font-medium text-amber-400">
+                        <div className="flex items-center gap-1.5 font-medium text-sky-400">
+                          <i className="fa-solid fa-cloud-arrow-up text-[10px]" />
                           <span>{config.unsyncedRecordsCount} record(s) queued for upload</span>
                         </div>
                       : <div className="flex items-center gap-1.5 font-medium text-emerald-400">
