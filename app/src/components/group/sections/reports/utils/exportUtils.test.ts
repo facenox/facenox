@@ -1,5 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest"
-import { exportReportToCSV, exportAllGroupsReportToCSV } from "./exportUtils"
+import {
+  exportReportToCSV,
+  exportAllGroupsReportToCSV,
+  exportAllGroupsReportToExcel,
+  exportAllGroupsReportToIndividualCSVs,
+} from "./exportUtils"
 import { attendanceManager } from "@/services/AttendanceManager"
 import type { AttendanceGroup, AttendanceMember, AttendanceSession } from "@/types/recognition"
 import type { RowData } from "../types"
@@ -153,6 +158,80 @@ describe("exportUtils", () => {
     expect(appendSpy).toHaveBeenCalled()
     expect(clickSpy).toHaveBeenCalled()
     expect(removeSpy).toHaveBeenCalled()
+
+    appendSpy.mockRestore()
+    removeSpy.mockRestore()
+  })
+
+  it("exports multi-sheet Excel workbook for all groups", async () => {
+    const clickSpy = vi.fn()
+    const appendSpy = vi.spyOn(document.body, "appendChild").mockImplementation((node) => {
+      if (node instanceof HTMLAnchorElement) {
+        node.click = clickSpy
+      }
+      return node
+    })
+    const removeSpy = vi.spyOn(document.body, "removeChild").mockImplementation((node) => node)
+
+    const mockGroups: AttendanceGroup[] = [
+      { id: "group-1", name: "Teachers", created_at: new Date(), is_active: true, settings: {} },
+      { id: "group-2", name: "Staff", created_at: new Date(), is_active: true, settings: {} },
+    ]
+
+    vi.spyOn(attendanceManager, "getGroupMembers").mockImplementation(async (gid) => [
+      {
+        person_id: `p-${gid}`,
+        group_id: gid,
+        name: `Member ${gid}`,
+        joined_at: new Date("2026-01-01"),
+        is_active: true,
+      },
+    ])
+
+    vi.spyOn(attendanceManager, "getSessions").mockImplementation(async () => [])
+
+    const result = await exportAllGroupsReportToExcel(mockGroups, "2026-10-08", "2026-10-08")
+    expect(result.success).toBe(true)
+    expect(clickSpy).toHaveBeenCalled()
+
+    appendSpy.mockRestore()
+    removeSpy.mockRestore()
+  })
+
+  it("exports individual CSV files for all groups", async () => {
+    const clickSpy = vi.fn()
+    const appendSpy = vi.spyOn(document.body, "appendChild").mockImplementation((node) => {
+      if (node instanceof HTMLAnchorElement) {
+        node.click = clickSpy
+      }
+      return node
+    })
+    const removeSpy = vi.spyOn(document.body, "removeChild").mockImplementation((node) => node)
+
+    const mockGroups: AttendanceGroup[] = [
+      { id: "group-1", name: "Teachers", created_at: new Date(), is_active: true, settings: {} },
+      { id: "group-2", name: "Staff", created_at: new Date(), is_active: true, settings: {} },
+    ]
+
+    vi.spyOn(attendanceManager, "getGroupMembers").mockImplementation(async (gid) => [
+      {
+        person_id: `p-${gid}`,
+        group_id: gid,
+        name: `Member ${gid}`,
+        joined_at: new Date("2026-01-01"),
+        is_active: true,
+      },
+    ])
+
+    vi.spyOn(attendanceManager, "getSessions").mockImplementation(async () => [])
+
+    const result = await exportAllGroupsReportToIndividualCSVs(
+      mockGroups,
+      "2026-10-08",
+      "2026-10-08",
+    )
+    expect(result.success).toBe(true)
+    expect(clickSpy).toHaveBeenCalledTimes(2) // 1 per group
 
     appendSpy.mockRestore()
     removeSpy.mockRestore()

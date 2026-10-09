@@ -17,13 +17,28 @@ export class GroupManager {
     this.apiEndpoints = apiEndpoints
   }
 
-  async createGroup(name: string, settings?: AttendanceSettings | null): Promise<AttendanceGroup> {
+  async createGroup(
+    name: string,
+    settings?: Partial<AttendanceGroup["settings"]> | AttendanceSettings | null,
+  ): Promise<AttendanceGroup> {
     try {
       const groupData = {
         name,
         settings: {
-          late_threshold_minutes: settings?.late_threshold_minutes ?? 15,
-          late_threshold_enabled: false,
+          late_threshold_minutes:
+            settings && "late_threshold_minutes" in settings ?
+              (settings.late_threshold_minutes ?? 15)
+            : 15,
+          late_threshold_enabled:
+            settings && "late_threshold_enabled" in settings ?
+              Boolean(settings.late_threshold_enabled)
+            : false,
+          class_start_time:
+            settings && "class_start_time" in settings ?
+              (settings.class_start_time ?? "08:00")
+            : "08:00",
+          track_checkout:
+            settings && "track_checkout" in settings ? Boolean(settings.track_checkout) : false,
         },
       }
 

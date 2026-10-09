@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { screen } from "@testing-library/react"
+import { screen, fireEvent, act } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { Reports } from "@/components/group/sections/Reports"
 import { useGroupStore } from "@/components/group/stores"
@@ -11,6 +11,8 @@ const mockUseReportViews = vi.fn()
 const mockUseReportTransform = vi.fn()
 const mockExportReportToCSV = vi.fn()
 const mockExportAllGroupsReportToCSV = vi.fn()
+const mockExportAllGroupsReportToExcel = vi.fn()
+const mockExportAllGroupsReportToIndividualCSVs = vi.fn()
 
 vi.mock("framer-motion", () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => children,
@@ -36,6 +38,9 @@ vi.mock("@/components/group/sections/reports/hooks/useReportTransform", () => ({
 vi.mock("@/components/group/sections/reports/utils/exportUtils", () => ({
   exportReportToCSV: (...args: unknown[]) => mockExportReportToCSV(...args),
   exportAllGroupsReportToCSV: (...args: unknown[]) => mockExportAllGroupsReportToCSV(...args),
+  exportAllGroupsReportToExcel: (...args: unknown[]) => mockExportAllGroupsReportToExcel(...args),
+  exportAllGroupsReportToIndividualCSVs: (...args: unknown[]) =>
+    mockExportAllGroupsReportToIndividualCSVs(...args),
 }))
 
 vi.mock("@/components/group/sections/reports/components/ReportToolbar", () => ({
@@ -203,8 +208,14 @@ describe("Reports", () => {
     handlers.exportCSV()
     expect(mockExportReportToCSV).toHaveBeenCalled()
 
-    handlers.exportAllGroupsCSV()
-    expect(mockExportAllGroupsReportToCSV).toHaveBeenCalled()
+    act(() => {
+      handlers.exportAllGroupsCSV()
+    })
+    const exportNowBtn = screen.getByRole("button", { name: /Export Now/i })
+    act(() => {
+      fireEvent.click(exportNowBtn)
+    })
+    expect(mockExportAllGroupsReportToExcel).toHaveBeenCalled()
   })
 
   it("shows report errors above the content", () => {

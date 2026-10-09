@@ -12,7 +12,10 @@ import { ReportTable } from "@/components/group/sections/reports/components/Repo
 import {
   exportReportToCSV,
   exportAllGroupsReportToCSV,
+  exportAllGroupsReportToExcel,
+  exportAllGroupsReportToIndividualCSVs,
 } from "@/components/group/sections/reports/utils/exportUtils"
+import { ExportAllGroupsModal, type ExportAllGroupsFormat } from "@/components/group/modals"
 import { EmptyState } from "@/components/group/shared/EmptyState"
 import { EditSessionModal } from "@/components/group/sections/reports/components/EditSessionModal"
 import { attendanceManager } from "@/services/AttendanceManager"
@@ -107,6 +110,8 @@ export function Reports({
     }
   }, [daysTracked, loading, onDaysTrackedChange])
 
+  const [showExportAllModal, setShowExportAllModal] = useState(false)
+
   const handleExportCSV = useCallback(() => {
     exportReportToCSV(
       groupedRows,
@@ -118,19 +123,32 @@ export function Reports({
     )
   }, [groupedRows, visibleColumns, allColumns, group.name, reportStartDate, reportEndDate])
 
-  const handleExportAllGroupsCSV = useCallback(async () => {
-    const allGroups = useGroupStore.getState().groups
-    await exportAllGroupsReportToCSV(allGroups, reportStartDate, reportEndDate)
-  }, [reportStartDate, reportEndDate])
+  const handleOpenExportAllModal = useCallback(() => {
+    setShowExportAllModal(true)
+  }, [])
+
+  const handleExecuteExportAll = useCallback(
+    async (format: ExportAllGroupsFormat) => {
+      const allGroups = useGroupStore.getState().groups
+      if (format === "excel") {
+        await exportAllGroupsReportToExcel(allGroups, reportStartDate, reportEndDate)
+      } else if (format === "individual") {
+        await exportAllGroupsReportToIndividualCSVs(allGroups, reportStartDate, reportEndDate)
+      } else {
+        await exportAllGroupsReportToCSV(allGroups, reportStartDate, reportEndDate)
+      }
+    },
+    [reportStartDate, reportEndDate],
+  )
 
   useEffect(() => {
     if (onExportHandlersReady && members.length > 0 && !loading) {
       onExportHandlersReady({
         exportCSV: handleExportCSV,
-        exportAllGroupsCSV: handleExportAllGroupsCSV,
+        exportAllGroupsCSV: handleOpenExportAllModal,
       })
     }
-  }, [onExportHandlersReady, handleExportCSV, handleExportAllGroupsCSV, members.length, loading])
+  }, [onExportHandlersReady, handleExportCSV, handleOpenExportAllModal, members.length, loading])
 
   return (
     <section className="flex h-full w-full flex-col overflow-hidden bg-transparent">
@@ -231,6 +249,18 @@ export function Reports({
           setUndoToast({ message, originalRow })
           undoTimerRef.current = setTimeout(() => setUndoToast(null), 5000)
         }}
+      />
+
+      <ExportAllGroupsModal
+        isOpen={showExportAllModal}
+        onClose={() => setShowExportAllModal(false)}
+        onExport={handleExecuteExportAll}
+        groupCount={useGroupStore.getState().groups.filter((g) => g.id !== "all").length}
+        dateRangeLabel={
+          reportStartDate === reportEndDate ? reportStartDate : (
+            `${reportStartDate} to ${reportEndDate}`
+          )
+        }
       />
 
       {/* ── Discord-style undo toast ─────────────────────────────────── */}

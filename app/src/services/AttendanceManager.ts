@@ -63,11 +63,11 @@ export class AttendanceManager {
     }
   }
 
-  async createGroup(name: string): Promise<AttendanceGroup> {
-    if (!this.settings) {
-      await this.loadSettings()
-    }
-    return this.groupManager.createGroup(name, this.settings)
+  async createGroup(
+    name: string,
+    settings?: Partial<AttendanceGroup["settings"]>,
+  ): Promise<AttendanceGroup> {
+    return this.groupManager.createGroup(name, settings)
   }
 
   async getGroups(): Promise<AttendanceGroup[]> {
