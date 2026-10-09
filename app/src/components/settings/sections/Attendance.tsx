@@ -289,7 +289,9 @@ export function Attendance({
                       <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 hover:border-cyan-500/40 hover:bg-white/8">
                         <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-cyan-400" />
                         <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
-                          <span>{formatTimeDisplay(attendanceSettings.classEndTime || "17:00").time}</span>
+                          <span>
+                            {formatTimeDisplay(attendanceSettings.classEndTime || "17:00").time}
+                          </span>
                           <span className="text-[10px] font-medium text-white/55">
                             {formatTimeDisplay(attendanceSettings.classEndTime || "17:00").period}
                           </span>

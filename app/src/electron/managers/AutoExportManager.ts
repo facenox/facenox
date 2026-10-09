@@ -114,7 +114,7 @@ export class AutoExportManager {
   }
 
   public getDefaultExportDirectory(): string {
-    return path.join(app.getPath("documents"), "FaceNox_Reports")
+    return path.join(app.getPath("documents"), "Facenox_Reports")
   }
 
   public start(): void {
