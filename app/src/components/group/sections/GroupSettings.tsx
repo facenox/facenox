@@ -206,6 +206,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                           </div>
                           <input
                             type="time"
+                            title=""
                             aria-label="Scheduled start time"
                             value={classStartTime || "08:00"}
                             onChange={(e) => handleStartTimeChange(e.target.value)}
@@ -320,6 +321,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                           </div>
                           <input
                             type="time"
+                            title=""
                             aria-label="Scheduled end time"
                             value={classEndTime || "17:00"}
                             onChange={(e) => handleEndTimeChange(e.target.value)}

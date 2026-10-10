@@ -242,19 +242,16 @@ export function ReportToolbar({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
                 transition={{ duration: 0.1, ease: "easeOut" }}
-                className="absolute right-0 z-50 mt-2 flex w-56 flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0d1117]/95 shadow-xl"
-                style={{ maxHeight: "360px" }}>
-                <div className="px-3 pt-3 pb-2">
-                  <span className="text-[11px] font-bold tracking-wider text-white/65">
+                className="absolute right-0 z-50 mt-2 flex w-[200px] flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0d1117]/95 shadow-xl backdrop-blur-md">
+                <div className="px-2.5 pt-2.5 pb-1.5">
+                  <span className="px-1 text-[10px] font-extrabold tracking-wider text-white/50 uppercase">
                     Columns
                   </span>
-                  <div
-                    className="custom-scroll mt-1.5 overflow-y-auto"
-                    style={{ maxHeight: "140px" }}>
+                  <div className="custom-scroll mt-1 max-h-[150px] overflow-y-auto pr-1">
                     {allColumns.map((c) => (
                       <label
                         key={c.key}
-                        className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-white/5">
+                        className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1.5 transition-colors hover:bg-white/5">
                         <div className="relative flex shrink-0 items-center">
                           <input
                             type="checkbox"
@@ -281,7 +278,7 @@ export function ReportToolbar({
 
                 <div className="h-px bg-white/5" />
 
-                <div className="flex items-center justify-between gap-3 px-3 py-3">
+                <div className="flex items-center justify-between gap-2 px-2.5 py-2.5">
                   <span className="shrink-0 text-[11px] font-bold tracking-wider text-white/65">
                     Group by
                   </span>
@@ -295,7 +292,7 @@ export function ReportToolbar({
                     showPlaceholderOption={false}
                     allowClear={false}
                     className="flex-1"
-                    buttonClassName="!rounded-lg !border-white/5 !bg-white/5 !py-1.5 !pl-3 !pr-2 !text-[11px] !font-bold !tracking-wider hover:!bg-white/10 transition-all duration-300"
+                    buttonClassName="!rounded-lg !border-white/5 !bg-white/5 !py-1 !pl-2.5 !pr-2 !text-[11px] !font-bold !tracking-wider hover:!bg-white/10 transition-all duration-300"
                     iconClassName="!text-[9px]"
                   />
                 </div>

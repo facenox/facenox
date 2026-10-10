@@ -227,6 +227,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                                   </div>
                                   <input
                                     type="time"
+                                    title=""
                                     aria-label="Scheduled start time"
                                     value={classStartTime}
                                     onChange={(e) => setClassStartTime(e.target.value)}
@@ -322,6 +323,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                                   </div>
                                   <input
                                     type="time"
+                                    title=""
                                     aria-label="Scheduled end time"
                                     value={classEndTime}
                                     onChange={(e) => setClassEndTime(e.target.value)}

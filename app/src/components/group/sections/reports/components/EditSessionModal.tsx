@@ -322,6 +322,7 @@ export function EditSessionModal({
                   </label>
                   <input
                     type="time"
+                    title=""
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     className="h-9 w-full rounded-lg border border-white/8 bg-white/[0.04] px-3 text-[12px] font-medium text-white transition-colors outline-none focus:border-white/20 focus:bg-white/[0.06]"

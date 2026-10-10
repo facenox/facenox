@@ -505,6 +505,7 @@ export function DataStorage({
                         </div>
                         <input
                           type="time"
+                          title=""
                           value={autoExportConfig.time}
                           onChange={(e) => handleUpdateAutoExport({ time: e.target.value })}
                           onClick={(e) => e.currentTarget.showPicker?.()}

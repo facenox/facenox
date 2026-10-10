@@ -147,6 +147,7 @@ export function StartTimeChip({ startTime, onTimeChange, disabled = false }: Sta
           <div className="group relative overflow-hidden rounded-lg border border-white/6 bg-[rgba(22,28,36,0.62)] transition-colors hover:bg-[rgba(28,35,44,0.82)]">
             <input
               type="time"
+              title=""
               value={safeTime}
               onChange={(e) => onTimeChange(e.target.value)}
               onClick={(e) => e.currentTarget.showPicker()}

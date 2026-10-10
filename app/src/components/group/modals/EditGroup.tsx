@@ -165,6 +165,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                           </div>
                           <input
                             type="time"
+                            title=""
                             aria-label="Scheduled start time"
                             value={classStartTime}
                             onChange={(e) => setClassStartTime(e.target.value)}
@@ -254,6 +255,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                           </div>
                           <input
                             type="time"
+                            title=""
                             aria-label="Scheduled end time"
                             value={classEndTime}
                             onChange={(e) => setClassEndTime(e.target.value)}
