@@ -5,7 +5,7 @@ import type { AttendanceGroup } from "@/types/recognition"
 import { useDatabaseManagement } from "@/components/settings/sections/hooks/useDatabaseManagement"
 import { DatabaseStats } from "@/components/settings/sections/components/DatabaseStats"
 import { GroupEntry } from "@/components/settings/sections/components/GroupEntry"
-import { useDialog, Switch } from "@/components/shared"
+import { useDialog, Switch, InfoPopover } from "@/components/shared"
 import { Modal } from "@/components/common/Modal"
 import { useUIStore } from "@/components/main/stores"
 import { EmptyState } from "@/components/group/shared"
@@ -332,8 +332,18 @@ export function DataStorage({
 
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2">
               <h4 className="text-[15px] font-semibold text-white/90">System Clock</h4>
+              <InfoPopover
+                title="System Clock Verification"
+                description="Compares your device time with network time to ensure accurate attendance timestamps."
+                details={[
+                  "Prevents attendance tampering caused by manually changing the computer's clock.",
+                  "Alerts you when the device clock is out of sync or drifting from real time.",
+                  "Ensures attendance logs stay in correct chronological order even when offline.",
+                ]}
+                side="right"
+              />
               {timeHealthState.loading ?
                 <span className="inline-flex items-center gap-1.5 text-[12px] text-white/40">
                   <i className="fa-solid fa-circle-notch fa-spin text-[10px]" />
