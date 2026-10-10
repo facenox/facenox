@@ -2,8 +2,9 @@ import { memo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { RefObject } from "react"
 import { Spinner } from "@/components/common"
+import { Tooltip } from "@/components/shared"
 import { ActiveHeadTurnGuide } from "./ActiveHeadTurnGuide"
-import { useDetectionStore } from "@/components/main/stores"
+import { useDetectionStore, useUIStore } from "@/components/main/stores"
 import type { QuickSettings } from "@/components/settings"
 import type { AttendanceGroup } from "@/types/recognition"
 
@@ -49,6 +50,7 @@ export const VideoCanvas = memo(function VideoCanvas({
 }: VideoCanvasProps) {
   const [showSettings, setShowSettings] = useState(false)
   const currentDetections = useDetectionStore((s) => s.currentDetections)
+  const requestOpenSettings = useUIStore((s) => s.requestOpenSettings)
 
   const isHeadTurnPromptActive = Boolean(
     isStreaming &&
@@ -198,32 +200,36 @@ export const VideoCanvas = memo(function VideoCanvas({
       <ActiveHeadTurnGuide active={isHeadTurnPromptActive} />
 
       {isStreaming && lateTrackingEnabled && (
-        <div
-          className={`animate-in fade-in zoom-in-95 pointer-events-none absolute right-4 bottom-4 z-50 flex items-center gap-3.5 rounded-lg border bg-[rgba(10,13,18,0.72)] px-3.5 py-1.5 shadow-2xl shadow-black/40 transition-colors duration-500 ${outdated ? "border-amber-500/30" : "border-white/10"}`}>
-          <div className="flex flex-col items-start">
-            <span className="text-[9px] font-bold tracking-wider text-white/45 uppercase">
-              Start Time
-            </span>
-            <span
-              className={`font-mono text-xs font-bold ${outdated ? "text-amber-400/90" : "text-cyan-400/90"}`}>
-              {classStartTime ?
-                (() => {
-                  const [hours, minutes] = classStartTime.split(":").map(Number)
-                  const period = hours >= 12 ? "PM" : "AM"
-                  const displayHours = hours % 12 || 12
-                  return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`
-                })()
-              : "08:00 AM"}
-            </span>
-          </div>
-          {outdated && (
-            <div className="flex items-center border-l border-white/10 pl-3">
-              <span className="animate-pulse text-[9px] font-bold text-amber-500/80 uppercase">
-                Outdated
+        <Tooltip content="Adjust scheduled start time" position="top">
+          <button
+            type="button"
+            onClick={() => requestOpenSettings("group", "settings")}
+            className="animate-in fade-in zoom-in-95 group absolute right-4 bottom-4 z-50 flex cursor-pointer items-center gap-3.5 rounded-lg border border-white/10 bg-[rgba(10,13,18,0.72)] px-3.5 py-1.5 shadow-2xl shadow-black/40 backdrop-blur-md transition-all hover:border-white/20 hover:bg-[rgba(15,19,26,0.9)] active:scale-95">
+            <div className="flex flex-col items-start text-left">
+              <span className="text-[9px] font-bold tracking-wider text-white/45 uppercase transition-colors group-hover:text-white/65">
+                Start Time
+              </span>
+              <span
+                className={`font-mono text-xs font-bold ${outdated ? "text-amber-400/90 group-hover:text-amber-300" : "text-cyan-400/90 group-hover:text-cyan-300"}`}>
+                {classStartTime ?
+                  (() => {
+                    const [hours, minutes] = classStartTime.split(":").map(Number)
+                    const period = hours >= 12 ? "PM" : "AM"
+                    const displayHours = hours % 12 || 12
+                    return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`
+                  })()
+                : "08:00 AM"}
               </span>
             </div>
-          )}
-        </div>
+            {outdated && (
+              <div className="flex items-center">
+                <span className="rounded bg-amber-500/15 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-amber-400 uppercase transition-colors group-hover:bg-amber-500/25">
+                  Outdated
+                </span>
+              </div>
+            )}
+          </button>
+        </Tooltip>
       )}
 
       <AnimatePresence>
