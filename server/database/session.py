@@ -22,6 +22,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute("PRAGMA synchronous=NORMAL")
     cursor.execute("PRAGMA busy_timeout=30000")
+    cursor.execute("PRAGMA wal_autocheckpoint=1000")  # Checkpoint every ~4MB of writes
     cursor.execute("PRAGMA cache_size=-64000")  # 64MB Page Cache
     cursor.execute("PRAGMA temp_store=MEMORY")
     cursor.close()

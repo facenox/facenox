@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends, Header
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from api.schemas import (
     SuccessResponse,
@@ -23,10 +23,16 @@ async def cleanup_old_data(
     cleanup_data: CleanupRequest,
     repo: AttendanceRepository = Depends(get_repository),
 ):
-    """Clean up old attendance data"""
+    """Clean up old attendance data and truncate WAL file"""
     try:
         days = cleanup_data.days_to_keep or 30
         results = await repo.cleanup_old_data(days)
+
+        # Truncate SQLite WAL file to reclaim disk space after large cleanup
+        try:
+            await repo.session.execute(text("PRAGMA wal_checkpoint(TRUNCATE)"))
+        except Exception as wal_err:
+            logger.debug("WAL checkpoint non-fatal notice: %s", wal_err)
 
         await repo.add_audit_log(
             action="DATA_CLEANUP_RUN",
