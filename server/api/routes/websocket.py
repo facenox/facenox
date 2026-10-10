@@ -162,6 +162,16 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                         live_stream_service.apply_config_message(
                             live_session_config, message
                         )
+                        # Pre-warm group roster cache during config handshake before video frames begin
+                        try:
+                            await live_stream_service.ensure_group_context(
+                                live_session_config
+                            )
+                        except Exception as warmup_err:
+                            logger.debug(
+                                "[WebSocket] Group context pre-warm skipped: %s",
+                                warmup_err,
+                            )
 
                         await websocket.send_text(
                             json.dumps(

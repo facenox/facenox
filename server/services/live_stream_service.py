@@ -36,7 +36,7 @@ class LiveSessionConfig:
     client_id: Optional[str] = None
     group_context: LiveGroupContext = field(default_factory=LiveGroupContext)
     attendance_cooldowns: Dict[str, float] = field(default_factory=dict)
-    is_refreshing: bool = False
+    is_dirty: bool = False
 
     def reset_group(self, group_id: Optional[str]) -> None:
         self.active_group_id = group_id
@@ -45,7 +45,10 @@ class LiveSessionConfig:
             max_recognition_faces_per_frame=self.max_recognition_faces_per_frame,
         )
         self.attendance_cooldowns.clear()
-        self.is_refreshing = False
+        self.is_dirty = True
+
+    def invalidate(self) -> None:
+        self.is_dirty = True
 
 
 class LiveStreamService:
@@ -230,39 +233,55 @@ class LiveStreamService:
                 else 6
             )
 
+            from sqlalchemy import select
+            from database.models import AttendanceMember
+
             if active_group_id and active_group_id.lower() == "all":
-                members = await repo.get_members()
+                stmt = select(
+                    AttendanceMember.person_id,
+                    AttendanceMember.name,
+                    AttendanceMember.role,
+                ).where(
+                    AttendanceMember.is_deleted.is_(False),
+                    AttendanceMember.is_active.is_(True),
+                )
+                stmt = repo._apply_org_scope(stmt, AttendanceMember)
+                res = await repo.session.execute(stmt)
+                rows = res.all()
+
                 group_context.group_exists = True
-
-                group_context.allowed_person_ids = {
-                    m.person_id for m in members if m.is_active
-                }
-
+                group_context.allowed_person_ids = {r[0] for r in rows}
                 group_context.members_by_person_id = {
-                    member.person_id: {
-                        "name": member.name,
-                        "role": member.role,
+                    r[0]: {
+                        "name": r[1],
+                        "role": r[2],
                     }
-                    for member in members
-                    if member.is_active
+                    for r in rows
                 }
             else:
                 group = await repo.get_group(active_group_id)
                 if group:
-                    members = await repo.get_group_members(active_group_id)
+                    stmt = select(
+                        AttendanceMember.person_id,
+                        AttendanceMember.name,
+                        AttendanceMember.role,
+                    ).where(
+                        AttendanceMember.group_id == active_group_id,
+                        AttendanceMember.is_deleted.is_(False),
+                        AttendanceMember.is_active.is_(True),
+                    )
+                    stmt = repo._apply_org_scope(stmt, AttendanceMember)
+                    res = await repo.session.execute(stmt)
+                    rows = res.all()
+
                     group_context.group_exists = True
-
-                    group_context.allowed_person_ids = {
-                        m.person_id for m in members if m.is_active
-                    }
-
+                    group_context.allowed_person_ids = {r[0] for r in rows}
                     group_context.members_by_person_id = {
-                        member.person_id: {
-                            "name": member.name,
-                            "role": member.role,
+                        r[0]: {
+                            "name": r[1],
+                            "role": r[2],
                         }
-                        for member in members
-                        if member.is_active
+                        for r in rows
                     }
 
             if group_context.group_exists:
@@ -290,49 +309,19 @@ class LiveStreamService:
 
         return group_context
 
-    async def _bg_refresh_group_context(self, config: LiveSessionConfig) -> None:
-        """Asynchronously refresh the group context in the background to avoid stalling the active stream."""
-        try:
-            new_context = await self._fetch_group_context(
-                config.active_group_id, config.max_recognition_faces_per_frame
-            )
-            # Prevent swapping settings if the active group was modified concurrently.
-            if config.active_group_id == new_context.group_id:
-                config.group_context = new_context
-        except Exception as e:
-            logger.warning(
-                "[LiveStreamService] Background group context refresh failed: %s", e
-            )
-        finally:
-            config.is_refreshing = False
-
     async def ensure_group_context(self, config: LiveSessionConfig) -> LiveGroupContext:
-        """Ensure group settings are populated, lazy-loading changes asynchronously to keep real-time video smooth."""
+        """Ensure group settings are populated, loading changes only when switched or marked dirty."""
         if not config.active_group_id:
             return config.group_context
 
         is_group_switch = config.group_context.group_id != config.active_group_id
 
-        if is_group_switch:
-            # We must load the initial context synchronously because the active group has changed
-            # and no fallback matrix exists.
+        if is_group_switch or config.is_dirty:
             config.group_context = await self._fetch_group_context(
                 config.active_group_id, config.max_recognition_faces_per_frame
             )
-            config.is_refreshing = False
+            config.is_dirty = False
             return config.group_context
-
-        # Trigger non-blocking re-validation only if the TTL window has elapsed.
-        should_refresh = (
-            time.time() - config.group_context.loaded_at > LIVE_CONTEXT_TTL_SECONDS
-        )
-        if should_refresh and not config.is_refreshing:
-            import asyncio
-
-            config.is_refreshing = True
-            task = asyncio.create_task(self._bg_refresh_group_context(config))
-            self._background_tasks.add(task)
-            task.add_done_callback(self._background_tasks.discard)
 
         return config.group_context
 
@@ -403,6 +392,27 @@ class LiveStreamService:
             for face, result in zip(recognition_candidates, recognition_results):
                 original_person_id = result.get("person_id")
                 member_info = group_context.members_by_person_id.get(original_person_id)
+
+                # Single-point fallback on cache miss (e.g. freshly enrolled identity)
+                if original_person_id and not member_info:
+                    try:
+                        fallback_member = await repo.get_member(original_person_id)
+                        if fallback_member:
+                            member_info = {
+                                "name": fallback_member.name,
+                                "role": fallback_member.role,
+                            }
+                            group_context.members_by_person_id[original_person_id] = (
+                                member_info
+                            )
+                            group_context.allowed_person_ids.add(original_person_id)
+                    except Exception as fallback_err:
+                        logger.debug(
+                            "[LiveStreamService] Fallback lookup error for %s: %s",
+                            original_person_id,
+                            fallback_err,
+                        )
+
                 serialized_result = self._serialize_recognition_result(
                     result, member_info
                 )

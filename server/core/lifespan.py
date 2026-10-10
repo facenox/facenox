@@ -87,9 +87,39 @@ async def lifespan(app: FastAPI):
 
         # async-only step: DB migration + cache warm-up (must run after __init__)
         await face_recognizer.initialize()
+
+        # Warm-up ONNX execution graphs to eliminate first-frame inference stutter
+        def _warmup_models():
+            try:
+                import numpy as np
+
+                dummy_img = np.zeros((480, 640, 3), dtype=np.uint8)
+                if face_detector:
+                    face_detector.detect_faces(dummy_img)
+                if liveness_detector and getattr(
+                    liveness_detector, "ort_session", None
+                ):
+                    from core.models.liveness_detector.postprocess import (
+                        run_batch_inference,
+                    )
+
+                    run_batch_inference(
+                        [dummy_img[0:256, 0:256]], liveness_detector.ort_session, 256
+                    )
+                if face_recognizer and getattr(face_recognizer, "session", None):
+                    input_name_rec = face_recognizer.session.get_inputs()[0].name
+                    dummy_crop_112 = np.zeros((1, 3, 112, 112), dtype=np.float32)
+                    face_recognizer.session.run(None, {input_name_rec: dummy_crop_112})
+            except Exception as warmup_err:
+                logger.warning(
+                    "AI model inference graph warm-up skipped: %s", warmup_err
+                )
+
+        await loop.run_in_executor(None, _warmup_models)
+
         emit_startup_progress(6, "Recognition data ready")
         logger.info(
-            "AI models initialized successfully (FaceDetector, LivenessDetector, FaceRecognizer)"
+            "AI models initialized and warmed up successfully (FaceDetector, LivenessDetector, FaceRecognizer)"
         )
 
         set_model_references(liveness_detector, None, face_recognizer, face_detector)
