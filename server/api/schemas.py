@@ -432,7 +432,7 @@ class ImportedMember(BaseModel):
 class ImportMetadataRequest(BaseModel):
     groups: List[ImportedGroup]
     members: List[ImportedMember]
-    prune_missing: bool = False
+    prune_missing: bool = True
 
 
 class ImportMetadataResponse(BaseModel):
