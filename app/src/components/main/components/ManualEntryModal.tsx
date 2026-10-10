@@ -179,7 +179,7 @@ export const ManualEntryModal = ({
               <i className="fa-regular fa-clipboard absolute top-1/2 left-3.5 -translate-y-1/2 text-[11px] text-white/25 transition-colors group-focus-within/note:text-white/45"></i>
               <input
                 type="text"
-                placeholder="Add a reason / note for manual entry (Optional)..."
+                placeholder="Optional note"
                 value={manualNote}
                 onChange={(e) => setManualNote(e.target.value)}
                 className="h-9 w-full rounded-lg border border-white/5 bg-white/5 pr-4 pl-9 text-[11px] font-bold tracking-wider text-white transition-all duration-300 outline-none placeholder:text-white/35 focus:border-white/30 focus:bg-white/[0.08] focus:outline-none"

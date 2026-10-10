@@ -120,7 +120,7 @@ export function ManualCorrectionModal({
                 setError(null)
               }
             }}
-            placeholder="Example: Wrong member selected"
+            placeholder="Reason for correction"
             rows={4}
             disabled={isSubmitting}
             className="custom-scroll min-h-24 w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2.5 text-xs leading-relaxed text-white transition-all outline-none placeholder:text-white/35 focus:border-amber-400/80 focus:bg-[rgba(28,35,44,0.82)]"

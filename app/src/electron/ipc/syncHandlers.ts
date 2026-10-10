@@ -509,6 +509,9 @@ export function registerSyncHandlers() {
           if (payload?.error === "authorization_pending") {
             return { status: "pending" }
           }
+          if (payload?.error === "slow_down") {
+            return { status: "pending", slowDown: true }
+          }
           if (payload?.error === "expired_token") {
             return { status: "expired", error: "Pairing code expired." }
           }

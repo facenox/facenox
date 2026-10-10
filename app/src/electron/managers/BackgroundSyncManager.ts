@@ -574,114 +574,150 @@ export class BackgroundSyncManager {
     }
 
     try {
-      console.log("[Sync] Triggering automatic metadata pull sync...")
-      const pullResponse = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/pull`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${deviceToken}`,
-          "User-Agent": "Facenox-Desktop-Pull",
-        },
-        signal: AbortSignal.timeout(30000),
-      })
+      console.log("[Sync] Triggering automatic metadata pull sync with cursor pagination...")
+      let currentCursor: string | null = null
+      let hasMorePages = true
+      let pageCount = 0
+      const MAX_PAGES = 100 // Up to 25,000 members safely bounded
 
-      if (!pullResponse.ok) {
-        console.warn("[Sync] Automatic remote metadata pull failed: HTTP", pullResponse.status)
-        return {
-          success: false,
-          message: ` Remote metadata pull failed (HTTP ${pullResponse.status}).`,
-        }
-      }
+      let accumulatedGroupsCount = 0
+      let accumulatedMembersCount = 0
+      let accumulatedEmbeddingsCount = 0
+      let totalDecryptFailures = 0
 
-      const pullPayload = (await pullResponse.json()) as {
-        groups: Array<Record<string, unknown>>
-        members: Array<Record<string, unknown>>
-        face_embeddings?: Array<FaceEmbedding>
-        policy?: Record<string, unknown>
-      }
-
-      if (pullPayload.policy) {
-        await this.applyRemotePolicy(pullPayload.policy)
-      }
-
-      const importResponse = await fetch(`${backendService.getUrl()}/attendance/import-metadata`, {
-        method: "POST",
-        headers: authHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({
-          groups: pullPayload.groups,
-          members: pullPayload.members,
-        }),
-        signal: AbortSignal.timeout(30000),
-      })
-
-      if (!importResponse.ok) {
-        console.warn("[Sync] Automatic local metadata import failed.")
-        return { success: false, message: " Metadata pull succeeded but local import failed." }
-      }
-
-      const importResult = (await importResponse.json()) as {
-        success?: boolean
-        groups_count: number
-        members_count: number
-      }
-      let pullMsg = ` Pulled ${importResult.groups_count} groups, ${importResult.members_count} members.`
-      console.log(`[Sync] Automatic metadata pull completed.${pullMsg}`)
-      state.mainWindow?.webContents.send("sync:data-changed")
-
-      // Import face embeddings from cloud using batch endpoint
-      if (encryptionKey && pullPayload.face_embeddings?.length) {
-        const batchEmbeddings: Array<{
-          person_id: string
-          embedding_bytes: string
-          embedding_dimension: number
-        }> = []
-        let decryptFailures = 0
-
-        for (const fe of pullPayload.face_embeddings) {
-          try {
-            const rawBytes = decryptEmbedding(fe.embedding_encrypted, encryptionKey)
-            const b64 = Buffer.from(rawBytes).toString("base64")
-            batchEmbeddings.push({
-              person_id: fe.person_id,
-              embedding_bytes: b64,
-              embedding_dimension: fe.embedding_dimension,
-            })
-          } catch (err) {
-            decryptFailures++
-            console.warn(`[Sync] Failed to decrypt embedding for ${fe.person_id}:`, err)
-            // Non-fatal: continue processing the rest of the members so corrupt or old keys don't brick sync
-          }
+      while (hasMorePages && pageCount < MAX_PAGES) {
+        pageCount++
+        let pullUrl = `${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/pull?limit=250`
+        if (currentCursor) {
+          pullUrl += `&cursor=${encodeURIComponent(currentCursor)}`
         }
 
-        if (decryptFailures > 0) {
+        const pullResponse = await fetch(pullUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${deviceToken}`,
+            "User-Agent": "Facenox-Desktop-Pull",
+          },
+          signal: AbortSignal.timeout(30000),
+        })
+
+        if (!pullResponse.ok) {
           console.warn(
-            `[Sync] Skipped ${decryptFailures} embeddings due to decryption failure (possible key mismatch or legacy template).`,
+            `[Sync] Automatic remote metadata pull failed on page ${pageCount}: HTTP`,
+            pullResponse.status,
           )
-          pullMsg += ` (${decryptFailures} embeddings skipped due to key mismatch)`
-        }
-
-        if (batchEmbeddings.length > 0) {
-          try {
-            const embBatchResponse = await fetch(
-              `${backendService.getUrl()}/attendance/import-embeddings-batch`,
-              {
-                method: "POST",
-                headers: authHeaders({ "Content-Type": "application/json" }),
-                body: JSON.stringify({ embeddings: batchEmbeddings }),
-                signal: AbortSignal.timeout(30000),
-              },
-            )
-            const embBatchResult = (await embBatchResponse.json()) as { imported_count?: number }
-            if (embBatchResponse.ok && (embBatchResult.imported_count ?? 0) > 0) {
-              pullMsg += ` Imported ${embBatchResult.imported_count} face embeddings.`
-              console.log(`[Sync] ${pullMsg}`)
-            } else if (!embBatchResponse.ok) {
-              console.warn("[Sync] import-embeddings-batch failed:", embBatchResult)
-            }
-          } catch (batchErr) {
-            console.warn("[Sync] Failed to post batch embeddings:", batchErr)
+          return {
+            success: false,
+            message: ` Remote metadata pull failed on page ${pageCount} (HTTP ${pullResponse.status}).`,
           }
         }
+
+        const pullPayload = (await pullResponse.json()) as {
+          groups: Array<Record<string, unknown>>
+          members: Array<Record<string, unknown>>
+          face_embeddings?: Array<FaceEmbedding>
+          policy?: Record<string, unknown>
+          has_more?: boolean
+          next_cursor?: string | null
+        }
+
+        if (pullPayload.policy && pageCount === 1) {
+          await this.applyRemotePolicy(pullPayload.policy)
+        }
+
+        const importResponse = await fetch(
+          `${backendService.getUrl()}/attendance/import-metadata`,
+          {
+            method: "POST",
+            headers: authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify({
+              groups: pullPayload.groups || [],
+              members: pullPayload.members || [],
+            }),
+            signal: AbortSignal.timeout(30000),
+          },
+        )
+
+        if (!importResponse.ok) {
+          console.warn(`[Sync] Automatic local metadata import failed on page ${pageCount}.`)
+          return {
+            success: false,
+            message: ` Metadata pull succeeded on page ${pageCount} but local import failed.`,
+          }
+        }
+
+        const importResult = (await importResponse.json()) as {
+          success?: boolean
+          groups_count: number
+          members_count: number
+        }
+        accumulatedGroupsCount += importResult.groups_count || 0
+        accumulatedMembersCount += importResult.members_count || 0
+
+        // Import face embeddings from cloud using batch endpoint for this page
+        if (encryptionKey && pullPayload.face_embeddings?.length) {
+          const batchEmbeddings: Array<{
+            person_id: string
+            embedding_bytes: string
+            embedding_dimension: number
+          }> = []
+
+          for (const fe of pullPayload.face_embeddings) {
+            try {
+              const rawBytes = decryptEmbedding(fe.embedding_encrypted, encryptionKey)
+              const b64 = Buffer.from(rawBytes).toString("base64")
+              batchEmbeddings.push({
+                person_id: fe.person_id,
+                embedding_bytes: b64,
+                embedding_dimension: fe.embedding_dimension,
+              })
+            } catch (err) {
+              totalDecryptFailures++
+              console.warn(`[Sync] Failed to decrypt embedding for ${fe.person_id}:`, err)
+            }
+          }
+
+          if (batchEmbeddings.length > 0) {
+            try {
+              const embBatchResponse = await fetch(
+                `${backendService.getUrl()}/attendance/import-embeddings-batch`,
+                {
+                  method: "POST",
+                  headers: authHeaders({ "Content-Type": "application/json" }),
+                  body: JSON.stringify({ embeddings: batchEmbeddings }),
+                  signal: AbortSignal.timeout(30000),
+                },
+              )
+              const embBatchResult = (await embBatchResponse.json()) as { imported_count?: number }
+              if (embBatchResponse.ok) {
+                accumulatedEmbeddingsCount += embBatchResult.imported_count || 0
+              }
+            } catch (batchErr) {
+              console.warn("[Sync] Failed to post batch embeddings:", batchErr)
+            }
+          }
+        }
+
+        if (pullPayload.has_more && pullPayload.next_cursor) {
+          currentCursor = pullPayload.next_cursor
+          hasMorePages = true
+        } else {
+          hasMorePages = false
+        }
       }
+
+      let pullMsg = ` Pulled ${accumulatedGroupsCount} groups, ${accumulatedMembersCount} members.`
+      if (accumulatedEmbeddingsCount > 0) {
+        pullMsg += ` Imported ${accumulatedEmbeddingsCount} face embeddings.`
+      }
+      if (totalDecryptFailures > 0) {
+        pullMsg += ` (${totalDecryptFailures} embeddings skipped due to key mismatch)`
+      }
+
+      console.log(
+        `[Sync] Automatic metadata pull completed (${pageCount} page${pageCount > 1 ? "s" : ""}).${pullMsg}`,
+      )
+      state.mainWindow?.webContents.send("sync:data-changed")
 
       return { success: true, message: pullMsg }
     } catch (pullError) {
@@ -788,8 +824,7 @@ export class BackgroundSyncManager {
         }
       }
 
-      // Step 3: Multi-Resource Chunked Push (Records, Members, Embeddings, Sessions)
-      // Caps per-chunk payloads to < 500 KB to safely satisfy Vercel 4.5MB & PG 65,535 parameter limits
+      // Chunk push payloads to stay well within serverless and query limits
       const RECORD_CHUNK_SIZE = 250
       const MEMBER_CHUNK_SIZE = 500
       const EMBEDDING_CHUNK_SIZE = 100

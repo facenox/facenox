@@ -14,6 +14,7 @@ from .preprocess import (
 from .postprocess import (
     normalize_embeddings_batch,
     find_best_match,
+    find_best_matches_batch,
 )
 
 logger = logging.getLogger(__name__)
@@ -264,22 +265,24 @@ class FaceRecognizer:
             if len(embeddings) != len(faces):
                 raise ValueError("Failed to extract embeddings for all faces")
 
-            results: List[Dict] = []
-            for embedding in embeddings:
-                person_id, similarity = await self._find_best_match(
-                    embedding,
-                    allowed_person_ids,
-                    organization_id,
-                    prebuilt_matrix=prebuilt_matrix,
-                    person_index_map=person_index_map,
-                )
-                results.append(
-                    {
-                        "person_id": person_id,
-                        "similarity": similarity,
-                        "success": person_id is not None,
-                    }
-                )
+            database = await self._get_database(organization_id)
+            matches = find_best_matches_batch(
+                query_embeddings=embeddings,
+                database=database,
+                similarity_threshold=self.similarity_threshold,
+                allowed_person_ids=allowed_person_ids,
+                prebuilt_matrix=prebuilt_matrix,
+                person_index_map=person_index_map,
+            )
+
+            results: List[Dict] = [
+                {
+                    "person_id": person_id,
+                    "similarity": similarity,
+                    "success": person_id is not None,
+                }
+                for person_id, similarity in matches
+            ]
             return results
         except Exception as e:
             logger.error(f"Face batch recognition error: {e}")
