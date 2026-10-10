@@ -48,6 +48,22 @@ const getRelativeTime = (value: Date | string): string => {
   return formatDate(date)
 }
 
+const getLateScheduleDisplay = (startTimeStr?: string | null, thresholdMinutes = 0): string => {
+  const [hStr, mStr] = (startTimeStr || "08:00").split(":")
+  const rawH = parseInt(hStr, 10) || 0
+  const rawM = parseInt(mStr, 10) || 0
+
+  const period = rawH >= 12 ? "PM" : "AM"
+  const displayH = rawH % 12 === 0 ? 12 : rawH % 12
+  const displayM = rawM.toString().padStart(2, "0")
+  const formattedTime = `${displayH}:${displayM} ${period}`
+
+  if (!thresholdMinutes || thresholdMinutes === 0) {
+    return `Start: ${formattedTime} (Exact)`
+  }
+  return `Start: ${formattedTime} (+${thresholdMinutes}m)`
+}
+
 type DateFilter = "today" | "yesterday" | "week"
 
 const DATE_FILTER_LABELS: Record<DateFilter, string> = {
@@ -240,10 +256,9 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
             />
             {(group.settings?.late_threshold_enabled ?? false) && (
               <p className="mt-1.5 text-[11px] text-white/50">
-                {group.settings?.class_start_time || "08:00"} (+
-                {group.settings?.late_threshold_minutes ?? 15}m grace)
-                {group.settings?.track_checkout && group.settings?.class_end_time && (
-                  <span> &bull; Out: {group.settings.class_end_time}</span>
+                {getLateScheduleDisplay(
+                  group.settings?.class_start_time,
+                  group.settings?.late_threshold_minutes,
                 )}
               </p>
             )}
