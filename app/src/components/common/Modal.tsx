@@ -113,7 +113,7 @@ export function Modal({
                   {title && (
                     <div className="flex min-w-0 flex-1 items-center gap-2 pr-2">
                       {icon}
-                      <div className="min-w-0 flex-1 text-base leading-none font-semibold tracking-tight text-white">
+                      <div className="min-w-0 flex-1 truncate text-base leading-none font-semibold tracking-tight text-white">
                         {title}
                       </div>
                     </div>

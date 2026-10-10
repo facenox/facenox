@@ -9,6 +9,7 @@ import type {
 import { MemberEntry } from "@/components/settings/sections/components/MemberEntry"
 import { Modal } from "@/components/common/Modal"
 import { EditGroup } from "@/components/group/modals"
+import { Tooltip } from "@/components/shared"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
 interface GroupEntryProps {
@@ -107,7 +108,7 @@ export function GroupEntry({
             <i className="fa-solid fa-layer-group text-[12px]"></i>
           </div>
 
-          <div className="flex min-w-0 flex-col">
+          <div className="flex min-w-0 flex-1 flex-col">
             {/* Group Name */}
             {editingGroup?.groupId === group.id && editingGroup.field === "name" ?
               <input
@@ -121,17 +122,19 @@ export function GroupEntry({
                 disabled={savingGroup === group.id}
                 className="h-6 rounded-md border-0 bg-white/10 px-2 py-0.5 text-[13px] font-semibold text-white transition-all outline-none focus:ring-1 focus:ring-white/20"
               />
-            : <div
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onStartEditingGroup(group, "name")
-                }}
-                className="flex cursor-pointer items-center gap-2 truncate text-[13px] font-semibold text-white/90 transition-colors hover:text-white">
-                {group.displayName || group.name}
-                {savingGroup === group.id && (
-                  <i className="fa-solid fa-spinner fa-spin text-[10px] text-white/55"></i>
-                )}
-              </div>
+            : <Tooltip content={group.displayName || group.name} position="top">
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onStartEditingGroup(group, "name")
+                  }}
+                  className="flex cursor-pointer items-center gap-2 truncate text-[13px] font-semibold text-white/90 transition-colors hover:text-white">
+                  <span className="truncate">{group.displayName || group.name}</span>
+                  {savingGroup === group.id && (
+                    <i className="fa-solid fa-spinner fa-spin text-[10px] text-white/55"></i>
+                  )}
+                </div>
+              </Tooltip>
             }
             <div className="mt-0.5 hidden truncate font-mono text-[11px] tracking-tight text-white/55 sm:block">
               ID: {group.id}
@@ -144,20 +147,18 @@ export function GroupEntry({
             {memberCount} {memberCount === 1 ? "member" : "members"}
           </span>
           {enrolledCount > 0 && (
-            <>
-              <span className="text-[11px] font-medium text-white/20">•</span>
-              <span className="text-[11px] font-medium text-cyan-400/80">
-                {enrolledCount} Enrolled
-              </span>
-            </>
+            <span className="text-[11px] font-medium text-cyan-400/80">
+              {enrolledCount} Enrolled
+            </span>
           )}
 
-          <button
-            onClick={() => onToggle(group.id)}
-            title="Edit Group"
-            className="ml-1 flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent text-white/55 shadow-none transition-all duration-300 outline-none hover:bg-white/5 hover:text-white focus:outline-none active:scale-95 lg:opacity-0 lg:group-hover/row:opacity-100">
-            <i className="fa-solid fa-pen text-[11px] opacity-70" />
-          </button>
+          <Tooltip content="Edit Group" position="top">
+            <button
+              onClick={() => onToggle(group.id)}
+              className="ml-1 flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent text-white/55 shadow-none transition-all duration-300 outline-none hover:bg-white/5 hover:text-white focus:outline-none active:scale-95 lg:opacity-0 lg:group-hover/row:opacity-100">
+              <i className="fa-solid fa-pen text-[11px] opacity-70" />
+            </button>
+          </Tooltip>
         </div>
       </div>
 
@@ -165,7 +166,18 @@ export function GroupEntry({
       <Modal
         isOpen={isExpanded}
         onClose={() => onToggle(group.id)}
-        title={`${group.displayName || group.name} Members`}
+        title={
+          <div className="min-w-0 pr-2">
+            <Tooltip content={group.displayName || group.name} position="top">
+              <h3 className="truncate text-xl font-semibold text-white">
+                {group.displayName || group.name}
+              </h3>
+            </Tooltip>
+            <p className="mt-1 text-xs font-normal text-white/65">
+              Manage members and directory profiles in this group
+            </p>
+          </div>
+        }
         headerActions={
           <div className="flex items-center gap-2">
             <button
@@ -175,7 +187,7 @@ export function GroupEntry({
               }}
               className="flex h-7 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-white/[0.02] px-2.5 text-[10px] font-bold tracking-wider text-white/70 uppercase shadow-none transition-all hover:border-white/25 hover:bg-white/5 active:scale-95">
               <i className="fa-solid fa-pen text-[10px]"></i>
-              <span>Edit Group</span>
+              <span>Edit</span>
             </button>
             <button
               onClick={(e) => {
@@ -187,7 +199,7 @@ export function GroupEntry({
               className="flex h-7 items-center justify-center gap-1.5 rounded-md border-0 bg-red-500/10 px-2.5 text-[10px] font-bold tracking-wider text-red-400 uppercase shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-50">
               <i
                 className={`fa-solid ${deletingGroup === group.id ? "fa-spinner fa-spin" : "fa-trash-can"} text-[10px]`}></i>
-              <span>Delete Group</span>
+              <span>Delete</span>
             </button>
           </div>
         }
