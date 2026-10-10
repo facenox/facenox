@@ -107,6 +107,8 @@ async def detect_faces(
             suggested_skip=suggested_skip,
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Detection error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

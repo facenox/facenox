@@ -130,6 +130,8 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
         while True:
             try:
                 message_data = await websocket.receive()
+                if message_data.get("type") == "websocket.disconnect":
+                    break
 
                 if "text" in message_data:
                     message = json.loads(message_data["text"])
@@ -208,7 +210,7 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
 
             except WebSocketDisconnect:
                 logger.info(
-                    "[WebSocket] Client %s disconnected (inner loop - WebSocketDisconnect exception)",
+                    "[WebSocket] Client %s disconnected (WebSocketDisconnect)",
                     client_id,
                 )
                 break
@@ -216,7 +218,7 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                 error_str = str(e).lower()
                 if "disconnect" in error_str or "close" in error_str:
                     logger.info(
-                        "[WebSocket] Client %s disconnected due to connection error: %s",
+                        "[WebSocket] Client %s disconnected: %s",
                         client_id,
                         e,
                     )
@@ -237,13 +239,8 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                             }
                         )
                     )
-                except (WebSocketDisconnect, RuntimeError) as send_error:
-                    logger.info(
-                        "[WebSocket] Client %s disconnected during error handling: %s",
-                        client_id,
-                        send_error,
-                    )
-                break
+                except (WebSocketDisconnect, RuntimeError):
+                    break
 
     except WebSocketDisconnect:
         logger.info(
@@ -301,6 +298,8 @@ async def handle_websocket_notifications(websocket: WebSocket, client_id: str):
     try:
         while True:
             message_data = await websocket.receive()
+            if message_data.get("type") == "websocket.disconnect":
+                break
 
             if "text" in message_data:
                 message = json.loads(message_data["text"])
