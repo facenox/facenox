@@ -209,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {appVersion && (
-        <div className="shrink-0 px-4 pt-1 pb-4">
+        <div className="shrink-0 px-4 py-3">
           <div className="flex items-center justify-center gap-1.5 opacity-30 transition-opacity hover:opacity-70">
             <img
               src="./icons/logo-transparent.png"

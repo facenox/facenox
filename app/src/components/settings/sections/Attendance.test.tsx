@@ -24,12 +24,9 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
           dataRetentionDays: 14,
           cloudRetentionDays: 30,
         }}
-        onLateThresholdChange={vi.fn()}
-        onLateThresholdToggle={vi.fn()}
         onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
-        onTrackCheckoutToggle={vi.fn()}
         onDataRetentionChange={onDataRetentionChange}
         isPaired={true}
       />,
@@ -65,12 +62,9 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
           dataRetentionDays: 0,
           cloudRetentionDays: 30,
         }}
-        onLateThresholdChange={vi.fn()}
-        onLateThresholdToggle={vi.fn()}
         onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
-        onTrackCheckoutToggle={vi.fn()}
         onDataRetentionChange={onDataRetentionChange}
         isPaired={true}
       />,
@@ -94,12 +88,9 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
           dataRetentionDays: 0,
           cloudRetentionDays: -1,
         }}
-        onLateThresholdChange={vi.fn()}
-        onLateThresholdToggle={vi.fn()}
         onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
-        onTrackCheckoutToggle={vi.fn()}
         onDataRetentionChange={onDataRetentionChange}
         isPaired={true}
       />,
@@ -123,12 +114,9 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
           ...baseSettings,
           dataRetentionDays: 0,
         }}
-        onLateThresholdChange={vi.fn()}
-        onLateThresholdToggle={vi.fn()}
         onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
-        onTrackCheckoutToggle={vi.fn()}
         onDataRetentionChange={onDataRetentionChange}
         isPaired={false}
       />,
@@ -243,7 +231,7 @@ describe("Global General Preferences Controls", () => {
 
     expect(screen.getByText("Administrator PIN Lock")).toBeInTheDocument()
     expect(
-      screen.getByText("PIN lock is disabled. Anyone can access kiosk settings."),
+      screen.getByText("PIN lock is disabled. Anyone can access settings."),
     ).toBeInTheDocument()
   })
 })

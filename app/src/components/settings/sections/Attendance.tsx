@@ -374,10 +374,10 @@ export function Attendance({
           </div>
         </div>
 
-        {/* Kiosk Security / Admin PIN Lock */}
+        {/* Security / Admin PIN Lock */}
         <div className="pt-6 pb-2">
           <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            Kiosk Security
+            Security
           </h3>
         </div>
 
@@ -389,9 +389,9 @@ export function Attendance({
                   <div className="text-sm font-medium text-white/90">Administrator PIN Lock</div>
                   <InfoPopover
                     title="Administrator PIN Lock"
-                    description="Restricts access to kiosk preferences and member rosters behind a 4-digit security PIN."
+                    description="Restricts access to settings and member rosters behind a 4-digit security PIN."
                     details={[
-                      "Recommended for unattended kiosks placed in open lobbies, hallways, or classrooms.",
+                      "Recommended when the app is placed in open lobbies, hallways, or classrooms.",
                       "Prompts for your PIN when clicking Settings or pressing the Ctrl+, shortcut.",
                       "Default PIN is 1234. Update it in the sub-panel below.",
                     ]}
@@ -408,8 +408,8 @@ export function Attendance({
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                       className="text-xs font-normal text-white/65">
                       {adminPinEnabled ?
-                        "Protect settings and kiosk controls with a 4-digit PIN."
-                      : "PIN lock is disabled. Anyone can access kiosk settings."}
+                        "Protect settings and controls with a 4-digit PIN."
+                      : "PIN lock is disabled. Anyone can access settings."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
