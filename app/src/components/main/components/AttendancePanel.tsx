@@ -600,9 +600,10 @@ export const AttendancePanel = memo(function AttendancePanel({
                     const recordCheckInStatus = buildRecordCheckInStatusMap(processedRecords)
 
                     return visibleRecords.map((record, idx) => {
-                      const displayName = displayNameMap.get(record.person_id) || "Unknown"
-                      const hasCheckedInEarlier = recordCheckInStatus.get(record.id) ?? false
                       const member = memberMap.get(record.person_id)
+                      const displayName =
+                        displayNameMap.get(record.person_id) || member?.name || "Member"
+                      const hasCheckedInEarlier = recordCheckInStatus.get(record.id) ?? false
 
                       const memberGroup =
                         member?.group_id ?

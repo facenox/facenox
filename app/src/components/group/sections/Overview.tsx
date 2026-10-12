@@ -159,7 +159,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
     if (activitySearch.trim()) {
       const query = activitySearch.toLowerCase()
       result = result.filter((record) => {
-        const name = (displayNameMap.get(record.person_id) || "Unknown").toLowerCase()
+        const name = (displayNameMap.get(record.person_id) || "Member").toLowerCase()
         return name.includes(query) || record.person_id.toLowerCase().includes(query)
       })
     }
@@ -426,7 +426,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                       className="space-y-1">
                       {filteredRecords.slice(0, 50).map((record, idx) => {
-                        const displayName = displayNameMap.get(record.person_id) || "Unknown"
+                        const displayName = displayNameMap.get(record.person_id) || "Member"
 
                         return (
                           <div
