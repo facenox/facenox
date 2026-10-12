@@ -711,18 +711,62 @@ export function AddMember({
                             </span>
                             <span className="text-[10px] text-white/35">can be added later</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsFaceSectionOpen(false)
-                              stopCamera()
-                            }}
-                            className="text-[10px] font-medium text-white/40 transition-colors hover:text-white/70">
-                            Hide
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {/* Segmented Mode Selector */}
+                            <div className="flex items-center rounded-lg border border-white/10 bg-white/[0.04] p-0.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (faceInputMode !== "camera") {
+                                    setFaceInputMode("camera")
+                                    setFaceError(null)
+                                    if (!isStreaming) {
+                                      startCamera().catch(console.error)
+                                    }
+                                  }
+                                }}
+                                className={`flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-medium transition-all ${
+                                  faceInputMode === "camera" ?
+                                    "bg-white/15 text-white shadow-sm"
+                                  : "text-white/45 hover:text-white/75"
+                                }`}>
+                                <i className="fa-solid fa-camera text-[9px] text-cyan-400" />
+                                <span>Camera</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (faceInputMode !== "upload") {
+                                    setFaceInputMode("upload")
+                                    setFaceError(null)
+                                    stopCamera()
+                                  }
+                                }}
+                                className={`flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-medium transition-all ${
+                                  faceInputMode === "upload" ?
+                                    "bg-white/15 text-white shadow-sm"
+                                  : "text-white/45 hover:text-white/75"
+                                }`}>
+                                <i className="fa-solid fa-file-image text-[9px] text-white/60" />
+                                <span>Upload</span>
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsFaceSectionOpen(false)
+                                setFaceError(null)
+                                stopCamera()
+                              }}
+                              className="flex h-5 w-5 items-center justify-center rounded-md text-white/40 transition-all hover:bg-white/10 hover:text-white/80"
+                              aria-label="Dismiss face enrollment">
+                              <i className="fa-solid fa-xmark text-[11px]" />
+                            </button>
+                          </div>
                         </div>
 
-                        <div>
+                        <div className="space-y-2">
                           <AnimatePresence mode="wait">
                             {faceInputMode === "camera" ?
                               <motion.div
@@ -731,7 +775,7 @@ export function AddMember({
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.98 }}
                                 transition={{ duration: 0.18, ease: "easeOut" }}
-                                className="relative flex h-60 w-full flex-col items-center justify-between overflow-hidden rounded-xl border border-white/10 bg-black/60 p-2.5">
+                                className="relative flex h-52 w-full flex-col items-center justify-between overflow-hidden rounded-xl border border-white/10 bg-black/60 p-2.5">
                                 <video
                                   ref={videoRef}
                                   className={`absolute inset-0 h-full w-full scale-x-[-1] object-cover transition-opacity duration-300 ${
@@ -771,18 +815,19 @@ export function AddMember({
                                   )}
                                 </AnimatePresence>
 
-                                {/* Bottom Control Bar — Matching Normal Enrollment UI */}
+                                {/* Bottom Control Bar */}
                                 <div className="relative z-10 flex w-full items-center justify-between px-1">
-                                  {/* Left: Upload Button */}
+                                  {/* Left: Quick Upload Button */}
                                   <div className="w-20">
                                     <button
                                       type="button"
                                       onClick={() => {
                                         setFaceInputMode("upload")
+                                        setFaceError(null)
                                         stopCamera()
                                       }}
                                       className="group flex items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-[10px] font-medium text-white/70 backdrop-blur-md transition-all hover:border-white/25 hover:bg-black/70 hover:text-white"
-                                      title="Upload Photo Instead">
+                                      aria-label="Upload Photo Instead">
                                       <i className="fa-solid fa-file-image text-[10px] text-white/50 group-hover:text-white/80" />
                                       <span>Upload</span>
                                     </button>
@@ -796,8 +841,7 @@ export function AddMember({
                                         onClick={handleSnapPhoto}
                                         disabled={isProcessingFace}
                                         className="group flex h-11 w-11 items-center justify-center rounded-full bg-white/10 p-1 backdrop-blur-md transition-all hover:bg-white/20 active:scale-90 disabled:cursor-not-allowed disabled:opacity-40"
-                                        aria-label="Capture Face"
-                                        title="Capture Face">
+                                        aria-label="Capture Face">
                                         {isProcessingFace ?
                                           <div className="flex h-full w-full items-center justify-center rounded-full bg-white/10">
                                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
@@ -819,15 +863,25 @@ export function AddMember({
                                 exit={{ opacity: 0, scale: 0.98 }}
                                 transition={{ duration: 0.18, ease: "easeOut" }}
                                 className="space-y-2">
-                                <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/[0.02] p-4 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/[0.02]">
-                                  <i className="fa-solid fa-image mb-1 text-lg text-white/30" />
-                                  <span className="text-[11px] font-medium text-white/70">
-                                    {isProcessingFace ?
-                                      "Analyzing face..."
-                                    : "Click or drop portrait photo"}
-                                  </span>
-                                  <span className="mt-0.5 text-[10px] text-white/40">
-                                    JPG, PNG up to 10MB
+                                <label className="group flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3.5 py-2.5 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/[0.02]">
+                                  <div className="flex min-w-0 items-center gap-2.5">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 transition-colors group-hover:bg-cyan-500/10">
+                                      <i className="fa-solid fa-file-arrow-up text-xs text-white/40 transition-colors group-hover:text-cyan-400" />
+                                    </div>
+                                    <div className="flex min-w-0 flex-col">
+                                      <span className="truncate text-[11px] font-medium text-white/80">
+                                        {isProcessingFace ?
+                                          "Analyzing face..."
+                                        : "Click or drop portrait photo"}
+                                      </span>
+                                      <span className="text-[10px] text-white/40">
+                                        JPG, PNG up to 10MB
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <span className="shrink-0 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-medium text-white/60 transition-colors group-hover:border-white/20 group-hover:bg-white/10 group-hover:text-white">
+                                    Browse
                                   </span>
                                   <input
                                     type="file"
@@ -840,30 +894,23 @@ export function AddMember({
                                     }}
                                   />
                                 </label>
-                                <div className="flex justify-start">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setFaceInputMode("camera")
-                                      if (!isStreaming) {
-                                        startCamera().catch(console.error)
-                                      }
-                                    }}
-                                    className="group flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-medium text-white/70 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white">
-                                    <i className="fa-solid fa-camera text-[10px] text-cyan-400" />
-                                    <span>Use Camera</span>
-                                  </button>
-                                </div>
                               </motion.div>
                             }
                           </AnimatePresence>
 
-                          {faceError && (
-                            <div className="flex items-center gap-1.5 pl-1 text-[11px] text-red-400/90">
-                              <i className="fa-solid fa-circle-exclamation text-[10px]" />
-                              {faceError}
-                            </div>
-                          )}
+                          <AnimatePresence>
+                            {faceError && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -4 }}
+                                transition={{ duration: 0.15 }}
+                                className="flex items-center gap-2 rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-[11px] font-medium text-red-300">
+                                <i className="fa-solid fa-circle-exclamation shrink-0 text-xs text-red-400" />
+                                <span className="flex-1">{faceError}</span>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </motion.div>
                     }
