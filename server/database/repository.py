@@ -962,44 +962,69 @@ class AttendanceRepository:
         }
 
     async def cleanup_old_data(self, days: int) -> Dict[str, int]:
-        """Delete records and sessions older than X days"""
+        """Delete records and sessions older than X days."""
         cutoff_date = to_storage_local(local_now() - timedelta(days=days))
         cutoff_date_str = cutoff_date.strftime("%Y-%m-%d")
 
-        # Delete records
-        record_query = select(AttendanceRecord).where(
-            AttendanceRecord.timestamp < cutoff_date
+        # Count before deleting so we can report accurate numbers
+        records_count_result = await self.session.execute(
+            self._apply_org_scope(
+                select(func.count())
+                .select_from(AttendanceRecord)
+                .where(AttendanceRecord.timestamp < cutoff_date),
+                AttendanceRecord,
+            )
         )
-        record_query = self._apply_org_scope(record_query, AttendanceRecord)
-        records_result = await self.session.execute(record_query)
-        records_to_delete = records_result.scalars().all()
-        for r in records_to_delete:
-            await self.session.delete(r)
+        records_deleted = records_count_result.scalar() or 0
 
-        # Delete sessions
-        session_query = select(AttendanceSession).where(
-            AttendanceSession.date < cutoff_date_str
+        sessions_count_result = await self.session.execute(
+            self._apply_org_scope(
+                select(func.count())
+                .select_from(AttendanceSession)
+                .where(AttendanceSession.date < cutoff_date_str),
+                AttendanceSession,
+            )
         )
-        session_query = self._apply_org_scope(session_query, AttendanceSession)
-        sessions_result = await self.session.execute(session_query)
-        sessions_to_delete = sessions_result.scalars().all()
-        for s in sessions_to_delete:
-            await self.session.delete(s)
+        sessions_deleted = sessions_count_result.scalar() or 0
+
+        # Bulk DELETE — single SQL statement, no per-row autoflush.
+        # synchronize_session="evaluate" evicts matched objects from the session
+        # identity map in Python, keeping session state consistent at zero extra
+        # DB round-trips (evaluate is free when the session is freshly created).
+        records_stmt = self._apply_org_scope(
+            delete(AttendanceRecord)
+            .where(AttendanceRecord.timestamp < cutoff_date)
+            .execution_options(synchronize_session="evaluate"),
+            AttendanceRecord,
+        )
+        await self.session.execute(records_stmt)
+
+        sessions_stmt = self._apply_org_scope(
+            delete(AttendanceSession)
+            .where(AttendanceSession.date < cutoff_date_str)
+            .execution_options(synchronize_session="evaluate"),
+            AttendanceSession,
+        )
+        await self.session.execute(sessions_stmt)
 
         await self.session.commit()
 
         return {
-            "records_deleted": len(records_to_delete),
-            "sessions_deleted": len(sessions_to_delete),
+            "records_deleted": records_deleted,
+            "sessions_deleted": sessions_deleted,
         }
 
     async def clear_all_attendance_data(self) -> Dict[str, int]:
         """Wipe all operational data: records, sessions, events, and soft-delete all members/groups."""
-        records_stmt = self._apply_org_scope(delete(AttendanceRecord), AttendanceRecord)
+        records_stmt = self._apply_org_scope(
+            delete(AttendanceRecord).execution_options(synchronize_session="evaluate"),
+            AttendanceRecord,
+        )
         records_result = await self.session.execute(records_stmt)
 
         sessions_stmt = self._apply_org_scope(
-            delete(AttendanceSession), AttendanceSession
+            delete(AttendanceSession).execution_options(synchronize_session="evaluate"),
+            AttendanceSession,
         )
         sessions_result = await self.session.execute(sessions_stmt)
 
@@ -1033,11 +1058,15 @@ class AttendanceRepository:
 
     async def clear_attendance_history(self) -> Dict[str, int]:
         """Wipe all operational transaction data: records and daily sessions without deleting members or groups."""
-        records_stmt = self._apply_org_scope(delete(AttendanceRecord), AttendanceRecord)
+        records_stmt = self._apply_org_scope(
+            delete(AttendanceRecord).execution_options(synchronize_session="evaluate"),
+            AttendanceRecord,
+        )
         records_result = await self.session.execute(records_stmt)
 
         sessions_stmt = self._apply_org_scope(
-            delete(AttendanceSession), AttendanceSession
+            delete(AttendanceSession).execution_options(synchronize_session="evaluate"),
+            AttendanceSession,
         )
         sessions_result = await self.session.execute(sessions_stmt)
 
