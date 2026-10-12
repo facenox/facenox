@@ -257,23 +257,16 @@ class AttendanceRepository:
         group.is_deleted = True
         group.last_modified_at = to_storage_local(local_now())
 
-        # Soft delete members and hard delete their faces
-        members_query = select(AttendanceMember).where(
-            AttendanceMember.group_id == group_id
+        # Soft delete members and hard delete their faces via bulk helper
+        members_query = select(AttendanceMember.person_id).where(
+            AttendanceMember.group_id == group_id,
+            AttendanceMember.is_deleted.is_(False),
         )
+        members_query = self._apply_org_scope(members_query, AttendanceMember)
         members_result = await self.session.execute(members_query)
-        members = members_result.scalars().all()
-        for member in members:
-            member.is_active = False
-            member.is_deleted = True
-            member.last_modified_at = to_storage_local(local_now())
-
-            face_query = select(Face).where(Face.person_id == member.person_id)
-            face_query = self._apply_org_scope(face_query, Face)
-            face_result = await self.session.execute(face_query)
-            face = face_result.scalars().first()
-            if face:
-                await self.session.delete(face)
+        member_ids = list(members_result.scalars().all())
+        if member_ids:
+            await self.remove_members_bulk(member_ids)
 
         return True
 
@@ -449,31 +442,8 @@ class AttendanceRepository:
         return member
 
     async def remove_member(self, person_id: str) -> bool:
-        member = await self.get_member(person_id)
-        if not member:
-            return False
-        member.is_active = False
-        member.is_deleted = True
-        member.last_modified_at = to_storage_local(local_now())
-
-        face_query = select(Face).where(Face.person_id == person_id)
-        face_query = self._apply_org_scope(face_query, Face)
-        face_result = await self.session.execute(face_query)
-        face = face_result.scalars().first()
-        if face:
-            await self.session.delete(face)
-
-        from core.lifespan import face_recognizer
-
-        if face_recognizer:
-            try:
-                await face_recognizer.refresh_cache(self.organization_id)
-            except Exception as err:
-                logger.error(
-                    f"Failed to refresh face_recognizer cache after removing member {person_id}: {err}"
-                )
-
-        return True
+        results = await self.remove_members_bulk([person_id])
+        return bool(results and results[0].get("success", False))
 
     async def remove_members_bulk(self, person_ids: List[str]) -> List[dict]:
         results = []
@@ -492,6 +462,7 @@ class AttendanceRepository:
         found_pids = list(existing_map.keys())
 
         if found_pids:
+            now_ts = to_storage_local(local_now())
             for i in range(0, len(found_pids), chunk_size):
                 chunk = found_pids[i : i + chunk_size]
                 delete_faces_query = delete(Face).where(Face.person_id.in_(chunk))
@@ -501,6 +472,7 @@ class AttendanceRepository:
             for m in existing_members:
                 m.is_active = False
                 m.is_deleted = True
+                m.last_modified_at = now_ts
 
         for pid in person_ids:
             if pid in existing_map:
@@ -508,16 +480,6 @@ class AttendanceRepository:
             else:
                 results.append(
                     {"success": False, "person_id": pid, "error": "Member not found"}
-                )
-
-        from core.lifespan import face_recognizer
-
-        if face_recognizer:
-            try:
-                await face_recognizer.refresh_cache(self.organization_id)
-            except Exception as err:
-                logger.error(
-                    f"Failed to refresh face_recognizer cache after bulk member removal: {err}"
                 )
 
         return results

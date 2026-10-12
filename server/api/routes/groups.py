@@ -173,6 +173,10 @@ async def update_group(
         await repo.session.commit()
         await repo.session.refresh(updated_group)
 
+        from services.live_stream_service import LiveStreamService
+
+        LiveStreamService.invalidate_all(repo.organization_id)
+
         return updated_group
 
     except HTTPException:
@@ -192,12 +196,6 @@ async def delete_group(
         if not success:
             raise HTTPException(status_code=404, detail="Group not found")
 
-        # Synchronize face recognizer in-memory cache immediately to prevent ghost recognitions
-        from core.lifespan import face_recognizer
-
-        if face_recognizer:
-            await face_recognizer.refresh_cache(repo.organization_id)
-
         await repo.add_audit_log(
             action="GROUP_DELETED",
             target_type="group",
@@ -206,6 +204,12 @@ async def delete_group(
         )
 
         await repo.session.commit()
+
+        # Synchronize face recognizer in-memory cache strictly after commit so the new session sees the deletion
+        from core.lifespan import face_recognizer
+
+        if face_recognizer:
+            await face_recognizer.refresh_cache(repo.organization_id)
 
         return SuccessResponse(message=f"Group {group_id} deleted successfully")
 

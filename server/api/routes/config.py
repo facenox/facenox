@@ -74,6 +74,10 @@ async def update_settings(
         await repo.session.commit()
         await repo.session.refresh(updated_settings)
 
+        from services.live_stream_service import LiveStreamService
+
+        LiveStreamService.invalidate_all(repo.organization_id)
+
         return updated_settings
 
     except HTTPException:

@@ -298,12 +298,6 @@ async def remove_member(
         if not success:
             raise HTTPException(status_code=404, detail="Member not found")
 
-        # Synchronize face recognizer in-memory cache immediately to prevent ghost recognitions
-        from core.lifespan import face_recognizer
-
-        if face_recognizer:
-            await face_recognizer.refresh_cache(repo.organization_id)
-
         await repo.add_audit_log(
             action="MEMBER_DELETED",
             target_type="member",
@@ -311,6 +305,12 @@ async def remove_member(
         )
 
         await repo.session.commit()
+
+        # Synchronize face recognizer in-memory cache strictly after commit so the new session sees the deletion
+        from core.lifespan import face_recognizer
+
+        if face_recognizer:
+            await face_recognizer.refresh_cache(repo.organization_id)
 
         return SuccessResponse(message=f"Member {person_id} removed successfully")
 
@@ -352,12 +352,13 @@ async def remove_members_bulk(
                     }
                 )
 
-        from core.lifespan import face_recognizer
-
-        if face_recognizer:
-            await face_recognizer.refresh_cache(repo.organization_id)
-
         await repo.session.commit()
+
+        if success_count > 0:
+            from core.lifespan import face_recognizer
+
+            if face_recognizer:
+                await face_recognizer.refresh_cache(repo.organization_id)
 
         return BulkMemberResponse(
             success_count=success_count,
