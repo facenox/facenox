@@ -58,8 +58,8 @@ function GroupPanelComponent({
   }, [fetchGroupDetails, isEmbedded, notifyParentDataChanged])
 
   const handleGroupSuccess = useCallback(
-    (newGroup?: AttendanceGroup) => {
-      fetchGroups()
+    async (newGroup?: AttendanceGroup) => {
+      await fetchGroups()
       if (newGroup) {
         setSelectedGroup(newGroup)
       }

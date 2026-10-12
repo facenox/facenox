@@ -54,8 +54,11 @@ export function GroupModals({
         isOpen={showCreateGroupModal}
         existingGroups={groups}
         onClose={closeCreateGroup}
-        onSuccess={(newGroup) => {
-          fetchGroups()
+        onSuccess={async (newGroup) => {
+          if (newGroup) {
+            setSelectedGroup(newGroup)
+          }
+          await fetchGroups()
           if (newGroup) {
             setSelectedGroup(newGroup)
           }

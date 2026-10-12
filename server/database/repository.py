@@ -995,68 +995,61 @@ class AttendanceRepository:
 
     async def clear_all_attendance_data(self) -> Dict[str, int]:
         """Wipe all operational data: records, sessions, events, and soft-delete all members/groups."""
+        records_stmt = self._apply_org_scope(delete(AttendanceRecord), AttendanceRecord)
+        records_result = await self.session.execute(records_stmt)
 
-        # 1. Delete all AttendanceRecord
-        records_query = select(AttendanceRecord)
-        records_query = self._apply_org_scope(records_query, AttendanceRecord)
-        records_result = await self.session.execute(records_query)
-        records_to_delete = records_result.scalars().all()
-        for r in records_to_delete:
-            await self.session.delete(r)
+        sessions_stmt = self._apply_org_scope(
+            delete(AttendanceSession), AttendanceSession
+        )
+        sessions_result = await self.session.execute(sessions_stmt)
 
-        # 2. Delete all AttendanceSession
-        sessions_query = select(AttendanceSession)
-        sessions_query = self._apply_org_scope(sessions_query, AttendanceSession)
-        sessions_result = await self.session.execute(sessions_query)
-        sessions_to_delete = sessions_result.scalars().all()
-        for s in sessions_to_delete:
-            await self.session.delete(s)
+        now = to_storage_local(local_now())
+        members_stmt = self._apply_org_scope(
+            update(AttendanceMember).values(
+                is_active=False, is_deleted=True, last_modified_at=now
+            ),
+            AttendanceMember,
+        )
+        await self.session.execute(members_stmt)
 
-        # 3. Mark all members and groups as deleted
-        members_query = select(AttendanceMember)
-        members_query = self._apply_org_scope(members_query, AttendanceMember)
-        members_result = await self.session.execute(members_query)
-        for m in members_result.scalars().all():
-            m.is_active = False
-            m.is_deleted = True
-
-        groups_query = select(AttendanceGroup)
-        groups_query = self._apply_org_scope(groups_query, AttendanceGroup)
-        groups_result = await self.session.execute(groups_query)
-        for g in groups_result.scalars().all():
-            g.is_active = False
-            g.is_deleted = True
+        groups_stmt = self._apply_org_scope(
+            update(AttendanceGroup).values(
+                is_active=False, is_deleted=True, last_modified_at=now
+            ),
+            AttendanceGroup,
+        )
+        await self.session.execute(groups_stmt)
 
         await self.session.commit()
 
         return {
-            "records_deleted": len(records_to_delete),
-            "sessions_deleted": len(sessions_to_delete),
+            "records_deleted": records_result.rowcount
+            if records_result.rowcount is not None and records_result.rowcount >= 0
+            else 0,
+            "sessions_deleted": sessions_result.rowcount
+            if sessions_result.rowcount is not None and sessions_result.rowcount >= 0
+            else 0,
         }
 
     async def clear_attendance_history(self) -> Dict[str, int]:
         """Wipe all operational transaction data: records and daily sessions without deleting members or groups."""
-        # 1. Delete all AttendanceRecord
-        records_query = select(AttendanceRecord)
-        records_query = self._apply_org_scope(records_query, AttendanceRecord)
-        records_result = await self.session.execute(records_query)
-        records_to_delete = records_result.scalars().all()
-        for r in records_to_delete:
-            await self.session.delete(r)
+        records_stmt = self._apply_org_scope(delete(AttendanceRecord), AttendanceRecord)
+        records_result = await self.session.execute(records_stmt)
 
-        # 2. Delete all AttendanceSession
-        sessions_query = select(AttendanceSession)
-        sessions_query = self._apply_org_scope(sessions_query, AttendanceSession)
-        sessions_result = await self.session.execute(sessions_query)
-        sessions_to_delete = sessions_result.scalars().all()
-        for s in sessions_to_delete:
-            await self.session.delete(s)
+        sessions_stmt = self._apply_org_scope(
+            delete(AttendanceSession), AttendanceSession
+        )
+        sessions_result = await self.session.execute(sessions_stmt)
 
         await self.session.commit()
 
         return {
-            "records_deleted": len(records_to_delete),
-            "sessions_deleted": len(sessions_to_delete),
+            "records_deleted": records_result.rowcount
+            if records_result.rowcount is not None and records_result.rowcount >= 0
+            else 0,
+            "sessions_deleted": sessions_result.rowcount
+            if sessions_result.rowcount is not None and sessions_result.rowcount >= 0
+            else 0,
         }
 
     async def assign_organization_id(self, org_id: str) -> Dict[str, int]:

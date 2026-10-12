@@ -38,6 +38,7 @@ function GroupContentComponent({
   const hasSelectedGroup = useMemo(() => {
     if (!selectedGroup || !selectedGroupId) return false
     const currentGroups = useGroupStore.getState().groups
+    if (currentGroups.length === 0) return true
     return currentGroups.some((g) => g.id === selectedGroupId)
   }, [selectedGroup, selectedGroupId])
   const hasGroups = groupsLength > 0
