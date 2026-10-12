@@ -118,14 +118,17 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
         }
 
         if (response.success && response.person_id) {
-          let memberName = response.name || "Unknown"
-
           const memberResult = await getMemberFromCache(
             response.person_id,
             currentGroupValue,
             memberCacheRef,
           )
-          memberName = memberResult?.memberName || memberName
+          const memberName =
+            memberResult?.memberName ||
+            response.name ||
+            response.memberName ||
+            response.person_id ||
+            "Member"
 
           upsertTrackedFace(`track_${trackId}`, face, response.person_id ?? undefined, true)
           nextRecognitionResults.set(trackId, {

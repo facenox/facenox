@@ -55,7 +55,7 @@ export function processAttendanceRecords({
   const normalizedQuery = searchQuery.trim().toLowerCase()
   if (normalizedQuery) {
     filtered = filtered.filter((record) => {
-      const displayName = (displayNameMap.get(record.person_id) || "Unknown").toLowerCase()
+      const displayName = (displayNameMap.get(record.person_id) || "Member").toLowerCase()
       return displayName.includes(normalizedQuery)
     })
   }
@@ -71,13 +71,13 @@ export function processAttendanceRecords({
     filtered.sort((a, b) => {
       let nameA = nameCache.get(a.person_id)
       if (!nameA) {
-        nameA = (displayNameMap.get(a.person_id) || "Unknown").toLowerCase()
+        nameA = (displayNameMap.get(a.person_id) || "Member").toLowerCase()
         nameCache.set(a.person_id, nameA)
       }
 
       let nameB = nameCache.get(b.person_id)
       if (!nameB) {
-        nameB = (displayNameMap.get(b.person_id) || "Unknown").toLowerCase()
+        nameB = (displayNameMap.get(b.person_id) || "Member").toLowerCase()
         nameCache.set(b.person_id, nameB)
       }
 

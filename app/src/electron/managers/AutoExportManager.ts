@@ -289,7 +289,7 @@ export class AutoExportManager {
           const notesStr = session?.notes || ""
 
           rows.push([
-            member.name || "Unknown",
+            member.name || "Member",
             formatLocalDate(new Date(`${dateStr}T00:00:00`)),
             status,
             timeIn,

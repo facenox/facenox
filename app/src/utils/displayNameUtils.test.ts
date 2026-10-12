@@ -31,8 +31,8 @@ describe("displayNameUtils", () => {
     ])
   })
 
-  it('getDisplayName returns "Unknown" for missing people', () => {
-    expect(getDisplayName("missing", people)).toBe("Unknown")
+  it('getDisplayName returns "Member" for missing people', () => {
+    expect(getDisplayName("missing", people)).toBe("Member")
   })
 
   it("createDisplayNameMap resolves duplicate display names correctly", () => {

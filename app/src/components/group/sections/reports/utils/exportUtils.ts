@@ -273,7 +273,7 @@ async function fetchAllGroupsProcessedData(
         const notesStr = finalSession?.notes || ""
 
         rows.push([
-          displayNameMap.get(member.person_id) || member.name || "Unknown",
+          displayNameMap.get(member.person_id) || member.name || "Member",
           formatDateOnly(parseLocalDate(date)),
           status,
           timeIn,

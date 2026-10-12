@@ -54,7 +54,7 @@ export function getDisplayName<T extends HasPersonIdAndName>(
 ): string {
   const withDisplayNames = generateDisplayNames(persons)
   const person = withDisplayNames.find((p) => p.person_id === personId)
-  return person?.displayName || "Unknown"
+  return person?.displayName || "Member"
 }
 
 export function createDisplayNameMap<T extends HasPersonIdAndName>(

@@ -83,7 +83,7 @@ export function useReportTransform(
 
         rows.push({
           person_id: member.person_id,
-          name: displayNameMap.get(member.person_id) || member.name || "Unknown",
+          name: displayNameMap.get(member.person_id) || member.name || "Member",
           date: date,
           check_in_time: finalSession?.check_in_time,
           check_out_time: finalSession?.check_out_time,
