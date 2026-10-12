@@ -608,6 +608,9 @@ class AttendanceService:
         )
 
         if result["success"]:
+            from services.live_stream_service import LiveStreamService
+
+            LiveStreamService.invalidate_all(self.repo.organization_id)
             logger.info(
                 f"Face enrolled successfully for {person_id}. Total persons: {result.get('total_persons', 0)}"
             )
@@ -645,6 +648,9 @@ class AttendanceService:
         )
 
         if result["success"]:
+            from services.live_stream_service import LiveStreamService
+
+            LiveStreamService.invalidate_all(self.repo.organization_id)
             return {
                 "success": True,
                 "message": f"Face data removed for {person_id} in group {group.name}",
@@ -858,6 +864,11 @@ class AttendanceService:
             finally:
                 if file:
                     await file.close()
+
+        if success_count > 0:
+            from services.live_stream_service import LiveStreamService
+
+            LiveStreamService.invalidate_all(self.repo.organization_id)
 
         return {
             "success": True,

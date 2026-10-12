@@ -117,6 +117,8 @@ export function useCameraControl({
           isStartingRef.current = false
           return
         }
+      } else {
+        webSocketServiceRef.current?.refreshActiveStream()
       }
 
       await getCameraDevices()

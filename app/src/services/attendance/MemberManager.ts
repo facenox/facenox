@@ -2,6 +2,7 @@ import type { AttendanceMember } from "../../types/recognition"
 import type { HttpClient } from "./HttpClient"
 import { dataUrlToBlob } from "@/utils/dataUrl"
 import { notifyDataChanged } from "@/utils/syncNotifier"
+import { webSocketService } from "@/services/WebSocketService"
 
 export class MemberManager {
   private httpClient: HttpClient
@@ -191,6 +192,7 @@ export class MemberManager {
       }>(url, formData)
 
       notifyDataChanged()
+      webSocketService.refreshActiveStream()
       return { success: true, message: result.message }
     } catch (error) {
       console.error("Error enrolling face for group person:", error)
@@ -211,6 +213,7 @@ export class MemberManager {
         message: string
       }>(`${this.apiEndpoints.groups}/${groupId}/persons/${personId}/face-data`)
       notifyDataChanged()
+      webSocketService.refreshActiveStream()
       return { success: true, message: result.message }
     } catch (error) {
       console.error("Error removing face data for group person:", error)

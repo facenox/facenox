@@ -198,6 +198,13 @@ class FaceRecognizer:
             self._persons_cache.pop(cache_key, None)
             self._cache_timestamp.pop(cache_key, None)
 
+        try:
+            from services.live_stream_service import LiveStreamService
+
+            LiveStreamService.invalidate_all(organization_id)
+        except Exception as inv_err:
+            logger.debug("Failed to invalidate live stream service cache: %s", inv_err)
+
     async def export_embeddings(
         self, organization_id: Optional[str] = None
     ) -> Dict[str, np.ndarray]:

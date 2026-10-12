@@ -332,6 +332,12 @@ export class WebSocketService {
   setLivenessDetection(enabled: boolean): void {
     this.updateLiveConfig({ enableLivenessDetection: enabled })
   }
+
+  refreshActiveStream(): void {
+    if (this.isWebSocketReady() && this.pendingLiveConfig) {
+      this.emitLiveConfig(this.pendingLiveConfig)
+    }
+  }
 }
 
 export const webSocketService = new WebSocketService()

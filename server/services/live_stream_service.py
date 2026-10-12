@@ -28,15 +28,17 @@ class LiveGroupContext:
     loaded_at: float = 0.0
 
 
-@dataclass
+@dataclass(eq=False)
 class LiveSessionConfig:
     enable_liveness_detection: bool = False
     active_group_id: Optional[str] = None
     max_recognition_faces_per_frame: int = 6
     client_id: Optional[str] = None
+    organization_id: Optional[str] = None
     group_context: LiveGroupContext = field(default_factory=LiveGroupContext)
     attendance_cooldowns: Dict[str, float] = field(default_factory=dict)
     is_dirty: bool = False
+    loaded_version: int = 0
 
     def reset_group(self, group_id: Optional[str]) -> None:
         self.active_group_id = group_id
@@ -52,9 +54,39 @@ class LiveSessionConfig:
 
 
 class LiveStreamService:
+    _active_configs: set[LiveSessionConfig] = set()
+    _db_versions: Dict[Optional[str], int] = {}
+
     def __init__(self, organization_id: Optional[str]):
         self.organization_id = organization_id
         self._background_tasks: set = set()
+
+    @classmethod
+    def register_config(cls, config: LiveSessionConfig) -> None:
+        cls._active_configs.add(config)
+
+    @classmethod
+    def unregister_config(cls, config: Optional[LiveSessionConfig]) -> None:
+        if config is not None:
+            cls._active_configs.discard(config)
+
+    @classmethod
+    def get_db_version(cls, organization_id: Optional[str] = None) -> int:
+        return cls._db_versions.get(organization_id, 0)
+
+    @classmethod
+    def invalidate_all(cls, organization_id: Optional[str] = None) -> None:
+        """Mark active streaming sessions dirty and bump version so they immediately reload group context."""
+        current = cls._db_versions.get(organization_id, 0)
+        cls._db_versions[organization_id] = current + 1
+        for config in list(cls._active_configs):
+            if organization_id is None or config.organization_id == organization_id:
+                config.is_dirty = True
+        logger.info(
+            "[LiveStreamService] Invalidated active live stream contexts for organization: %s (v%d)",
+            organization_id,
+            cls._db_versions[organization_id],
+        )
 
     @staticmethod
     def _extract_face_area(face: Dict[str, Any]) -> float:
@@ -148,6 +180,10 @@ class LiveStreamService:
         from database.session import AsyncSessionLocal
 
         config = LiveSessionConfig()
+        config.organization_id = self.organization_id
+        config.loaded_version = self.get_db_version(self.organization_id)
+        self.register_config(config)
+
         try:
             async with AsyncSessionLocal() as session:
                 repo = AttendanceRepository(
@@ -188,6 +224,9 @@ class LiveStreamService:
                 else None
             )
             config.reset_group(normalized_group_id)
+
+        if message.get("force_refresh", False):
+            config.is_dirty = True
 
         if "max_recognition_faces_per_frame" in message:
             configured_cap = message.get("max_recognition_faces_per_frame", 6)
@@ -314,13 +353,25 @@ class LiveStreamService:
         if not config.active_group_id:
             return config.group_context
 
+        current_ver = self.get_db_version(self.organization_id)
         is_group_switch = config.group_context.group_id != config.active_group_id
+        is_version_stale = config.loaded_version != current_ver
+        time_since_load = time.time() - config.group_context.loaded_at
+        is_cold_matrix_retry = (
+            config.group_context.group_matrix is None and time_since_load > 3.0
+        )
 
-        if is_group_switch or config.is_dirty:
+        if (
+            is_group_switch
+            or config.is_dirty
+            or is_version_stale
+            or is_cold_matrix_retry
+        ):
             config.group_context = await self._fetch_group_context(
                 config.active_group_id, config.max_recognition_faces_per_frame
             )
             config.is_dirty = False
+            config.loaded_version = current_ver
             return config.group_context
 
         return config.group_context

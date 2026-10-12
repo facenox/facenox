@@ -116,6 +116,10 @@ async def add_member(
         await repo.session.commit()
         await repo.session.refresh(added_member)
 
+        from services.live_stream_service import LiveStreamService
+
+        LiveStreamService.invalidate_all(repo.organization_id)
+
         return added_member
 
     except HTTPException:
@@ -169,6 +173,11 @@ async def add_members_bulk(
                 )
 
         await repo.session.commit()
+
+        if success_count > 0:
+            from services.live_stream_service import LiveStreamService
+
+            LiveStreamService.invalidate_all(repo.organization_id)
 
         # Refresh successful members
         for member in successful_members:
@@ -265,6 +274,10 @@ async def update_member(
 
         await repo.session.commit()
         await repo.session.refresh(updated_member)
+
+        from services.live_stream_service import LiveStreamService
+
+        LiveStreamService.invalidate_all(repo.organization_id)
 
         return updated_member
 

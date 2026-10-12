@@ -272,6 +272,7 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
                 e,
             )
     finally:
+        LiveStreamService.unregister_config(live_session_config)
         if lifespan.liveness_detector:
             lifespan.liveness_detector.clear_namespace(client_id)
         if manager.active_connections.get(client_id) is websocket:
