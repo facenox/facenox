@@ -255,7 +255,10 @@ export function DetectionPanel({
               const isRecognized = recognitionEnabled && !!recognitionResult?.person_id
               const displayName =
                 recognitionResult?.person_id ?
-                  displayNameMap.get(recognitionResult.person_id) || "Unknown"
+                  displayNameMap.get(recognitionResult.person_id) ||
+                  recognitionResult.name ||
+                  recognitionResult.memberName ||
+                  "Member"
                 : ""
 
               const trackedFace = trackedFacesArray.find(

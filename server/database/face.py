@@ -103,8 +103,15 @@ class FaceDatabaseManager:
 
                 result = {}
                 for f in faces:
-                    decrypted_blob = decrypt_local_data(f.embedding)
-                    result[f.person_id] = self._blob_to_embedding(decrypted_blob)
+                    try:
+                        decrypted_blob = decrypt_local_data(f.embedding)
+                        result[f.person_id] = self._blob_to_embedding(decrypted_blob)
+                    except Exception as dec_err:
+                        logger.warning(
+                            "Failed to decrypt face embedding for person %s: %s",
+                            f.person_id,
+                            dec_err,
+                        )
                 return result
         except Exception as e:
             logger.error(f"Failed to get all persons: {e}")
