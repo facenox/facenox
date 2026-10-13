@@ -455,10 +455,10 @@ export function Attendance({
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
                   className="overflow-hidden">
-                  <div className="relative flex flex-col gap-3 pt-3 pb-2 pl-4">
-                    <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
-
-                    <div className="relative min-h-[18px]">
+                  <div className="flex flex-col pb-1">
+                    {/* Status/hint row — indented with full-height vertical spine */}
+                    <div className="relative min-h-[18px] pb-2.5 pl-4">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 border-l border-white/10" />
                       <AnimatePresence mode="wait">
                         {isSaved ?
                           <motion.div
@@ -506,7 +506,10 @@ export function Attendance({
                       </AnimatePresence>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                    {/* New PIN — ├─ connector (vertical continues past this row) */}
+                    <div className="relative flex flex-wrap items-center justify-between gap-3 py-1.5 pl-4">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 border-l border-white/10" />
+                      <div className="pointer-events-none absolute top-1/2 left-0 w-3 border-b border-white/10" />
                       <div className="text-xs font-medium text-white/80">New PIN:</div>
                       <div className="flex items-center gap-1.5">
                         <button
@@ -533,7 +536,9 @@ export function Attendance({
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                    {/* Confirm PIN — └─ connector (last item, vertical ends here) */}
+                    <div className="relative flex flex-wrap items-center justify-between gap-3 py-1.5 pl-4">
+                      <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
                       <div className="text-xs font-medium text-white/80">Confirm PIN:</div>
                       <div className="flex items-center gap-1.5">
                         <div className="h-8 w-8" />
@@ -559,7 +564,7 @@ export function Attendance({
                       </div>
                     </div>
 
-                    <div className="flex justify-end pt-1">
+                    <div className="flex justify-end pt-2">
                       <button
                         type="button"
                         onClick={handleSavePin}
