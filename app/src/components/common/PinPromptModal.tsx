@@ -13,7 +13,7 @@ export function PinPromptModal() {
   const pinLockoutUntil = useUIStore((state) => state.pinLockoutUntil)
   const pinFailedAttempts = useUIStore((state) => state.pinFailedAttempts)
 
-  const { isPaired, organizationName } = useCloudSyncStatus()
+  const { isPaired } = useCloudSyncStatus()
 
   const [pin, setPin] = useState("")
   const [error, setError] = useState(false)
@@ -211,51 +211,25 @@ export function PinPromptModal() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96, y: 8 }}
                 transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
-                className="relative z-10 flex w-full max-w-[360px] flex-col rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] p-5 shadow-2xl backdrop-blur-2xl">
+                className="relative z-10 flex w-full max-w-[340px] flex-col rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] p-5 shadow-2xl backdrop-blur-2xl">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <i
-                      className={`fa-solid ${
-                        isPaired ? "fa-cloud text-cyan-400" : "fa-key text-amber-400"
-                      } text-sm`}
-                    />
-                    <div>
-                      <h3 className="text-base font-semibold tracking-tight text-white">
-                        Emergency Recovery
-                      </h3>
-                      <p className="mt-0.5 text-xs text-white/50">
-                        {isPaired && organizationName ?
-                          `Managed by ${organizationName}`
-                        : "Restore default PIN (1234)"}
-                      </p>
-                    </div>
+                  <div>
+                    <h3 className="text-base font-semibold tracking-tight text-white">
+                      Emergency Recovery
+                    </h3>
+                    <p className="mt-1 text-xs text-white/50">Restore administrator access</p>
                   </div>
                   <ModalCloseButton onClick={() => setShowEmergencyReset(false)} />
                 </div>
 
-                {isPaired && (
-                  <div className="mt-3.5 rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-2.5 text-left text-[11px] leading-relaxed text-cyan-200/80">
-                    <div className="flex items-center gap-1.5 font-semibold text-cyan-300">
-                      <i className="fa-solid fa-circle-info text-[10px]" />
-                      <span>Cloud Managed Device</span>
-                    </div>
-                    <p className="mt-1 text-white/60">
-                      Org administrators can also reset this device remotely from the Facenox Cloud
-                      dashboard.
-                    </p>
-                  </div>
-                )}
-
-                <p className="mt-3 text-xs leading-relaxed text-white/60">
-                  Enter your 8-character{" "}
-                  <span className="font-semibold text-amber-400">Master Recovery Key</span>{" "}
-                  configured in Settings to reset the PIN.
+                <p className="mt-4 text-xs leading-relaxed text-white/65">
+                  Enter the recovery key from Settings to reset the PIN to default (1234).
                 </p>
 
                 <input
                   type="text"
                   value={resetConfirmInput}
-                  onChange={(e) => setResetConfirmInput(e.target.value)}
+                  onChange={(e) => setResetConfirmInput(e.target.value.toUpperCase())}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleEmergencyResetSubmit()
                     if (e.key === "Escape") setShowEmergencyReset(false)
@@ -263,37 +237,58 @@ export function PinPromptModal() {
                   placeholder="XXXX-XXXX"
                   autoFocus
                   maxLength={16}
-                  className="mt-3 w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2.5 text-center font-mono text-sm font-bold tracking-widest text-amber-300 transition-all outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-white/20 focus:border-amber-400/60 focus:bg-[rgba(28,35,44,0.82)]"
+                  className="mt-3.5 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-center font-mono text-xs font-semibold tracking-widest text-white uppercase transition-all outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-white/20 focus:border-cyan-500/60 focus:bg-[rgba(28,35,44,0.82)]"
                 />
 
-                <div className="flex min-h-5 items-center justify-center">
+                <div className="mt-2.5 flex min-h-5 items-center justify-center text-center">
                   <AnimatePresence mode="wait">
-                    {resetError && (
+                    {resetError ?
                       <motion.span
                         key="reset-error"
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.14 }}
-                        className="mt-1 text-center text-[11px] font-medium text-rose-400">
-                        Invalid Master Recovery Key.
+                        className="text-center text-[11px] font-medium text-rose-400">
+                        Invalid Recovery Key.
                       </motion.span>
-                    )}
+                    : isPaired ?
+                      <motion.span
+                        key="paired-hint"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.14 }}
+                        className="inline-flex items-center justify-center gap-1.5 text-center text-[11px] leading-snug text-white/40">
+                        <i className="fa-solid fa-cloud text-[9px] text-emerald-400" />
+                        <span>No key? Device can be reset remotely via Cloud.</span>
+                      </motion.span>
+                    : <motion.span
+                        key="unpaired-hint"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.14 }}
+                        className="inline-flex items-center justify-center gap-1.5 text-center text-[11px] leading-snug text-white/40">
+                        <i className="fa-solid fa-shield-halved text-[9px] text-white/30" />
+                        <span>Standalone device. PIN can only be reset with this key.</span>
+                      </motion.span>
+                    }
                   </AnimatePresence>
                 </div>
 
-                <div className="mt-5 flex w-full gap-2.5">
+                <div className="mt-4 flex items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => setShowEmergencyReset(false)}
-                    className="flex-1 rounded-lg border border-white/10 bg-white/5 py-2 text-[11px] font-medium text-white/70 transition-all duration-200 hover:bg-white/10 hover:text-white active:scale-[0.97]">
+                    className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleEmergencyResetSubmit}
                     disabled={resetConfirmInput.trim().length < 4}
-                    className="flex-1 rounded-lg bg-amber-500 py-2 text-[11px] font-bold text-slate-950 transition-all duration-200 hover:bg-amber-400 active:scale-[0.97] disabled:opacity-30">
+                    className="rounded-lg bg-cyan-500 px-5 py-2 text-[11px] font-bold tracking-wider text-slate-950 transition-all duration-200 hover:bg-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
                     Verify & Reset
                   </button>
                 </div>
@@ -315,18 +310,15 @@ export function PinPromptModal() {
                 className="relative z-10 flex w-full max-w-[340px] flex-col rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] p-5 shadow-2xl backdrop-blur-2xl">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div
-                      className="flex cursor-pointer items-center gap-2 select-none"
+                    <h3
+                      className="cursor-pointer text-base font-semibold tracking-tight text-white select-none"
                       onClick={handleLockIconClick}
                       onTouchStart={handleLockTouchStart}
                       onTouchEnd={handleLockTouchEnd}
                       onMouseDown={handleLockTouchStart}
                       onMouseUp={handleLockTouchEnd}>
-                      <i className="fa-solid fa-lock text-sm text-cyan-400" />
-                      <h3 className="text-base font-semibold tracking-tight text-white">
-                        Administrator Lock
-                      </h3>
-                    </div>
+                      Administrator Lock
+                    </h3>
                     <p className="mt-1 text-xs text-white/50">Enter PIN to access settings</p>
                   </div>
                   <ModalCloseButton onClick={closePinPrompt} />
@@ -429,6 +421,19 @@ export function PinPromptModal() {
                     className="flex h-12 items-center justify-center rounded-xl border border-transparent text-white/50 transition-all duration-150 hover:bg-white/5 hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-20"
                     aria-label="Backspace">
                     <i className="fa-solid fa-delete-left text-sm" />
+                  </button>
+                </div>
+
+                <div className="mt-3 flex items-center justify-center pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetConfirmInput("")
+                      setResetError(false)
+                      setShowEmergencyReset(true)
+                    }}
+                    className="text-xs font-medium text-white/45 transition-colors hover:text-cyan-400">
+                    Forgot PIN?
                   </button>
                 </div>
               </motion.div>

@@ -16,22 +16,6 @@ interface AttendanceProps {
 const SETTINGS_STATUS_SWAP_DURATION = 0.14
 const SETTINGS_PANEL_ANIMATION_DURATION = 0.18
 
-const WEAK_PINS = new Set([
-  "1234",
-  "0000",
-  "1111",
-  "2222",
-  "3333",
-  "4444",
-  "5555",
-  "6666",
-  "7777",
-  "8888",
-  "9999",
-  "1230",
-  "0123",
-])
-
 export function Attendance({
   attendanceSettings,
   onAttendanceCooldownChange,
@@ -54,8 +38,6 @@ export function Attendance({
   const [isShaking, setIsShaking] = useState(false)
   const [copiedKey, setCopiedKey] = useState(false)
   const [confirmRegenerate, setConfirmRegenerate] = useState(false)
-
-  const isWeakPin = pinStep === "enter" && pinInput.length === 4 && WEAK_PINS.has(pinInput)
 
   // Auto-reset confirmation state after 4 seconds
   useEffect(() => {
@@ -370,11 +352,11 @@ export function Attendance({
                 <div className="text-sm font-medium text-white/90">Retention Policy</div>
                 {isPaired &&
                   (cloudCeiling ?
-                    <span className="inline-flex items-center gap-1 rounded border border-cyan-500/25 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300">
+                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
                       <i className="fa-solid fa-cloud text-[9px]" /> Cloud plan: {cloudCeiling}d max
                     </span>
                   : isCloudUnlimited ?
-                    <span className="inline-flex items-center gap-1 rounded border border-cyan-500/25 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-300">
+                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
                       <i className="fa-solid fa-cloud text-[9px]" /> Cloud plan: Unlimited
                     </span>
                   : null)}
@@ -551,7 +533,7 @@ export function Attendance({
                               exit={{ opacity: 0, x: -4 }}
                               transition={{ duration: 0.15 }}
                               className="flex items-center text-[11px] font-medium text-cyan-400">
-                              <i className="fa-solid fa-circle-check mr-1 text-[10px]" />
+                              <i className="fa-solid fa-check mr-1.5 text-[11px]" />
                               PIN updated
                             </motion.div>
                           : pinMismatch ?
@@ -562,7 +544,7 @@ export function Attendance({
                               exit={{ opacity: 0, x: -4 }}
                               transition={{ duration: 0.15 }}
                               className="flex items-center text-[11px] font-medium text-rose-400">
-                              <i className="fa-solid fa-circle-exclamation mr-1 text-[10px]" />
+                              <i className="fa-solid fa-xmark mr-1.5 text-[11px]" />
                               PINs do not match
                             </motion.div>
                           : pinStep === "confirm" ?
@@ -575,17 +557,6 @@ export function Attendance({
                               className="flex items-center text-[11px] font-medium text-cyan-300">
                               <i className="fa-solid fa-arrow-rotate-right mr-1 text-[10px]" />
                               Re-enter to confirm
-                            </motion.div>
-                          : isWeakPin ?
-                            <motion.div
-                              key="weak"
-                              initial={{ opacity: 0, x: 4 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: -4 }}
-                              transition={{ duration: 0.15 }}
-                              className="flex items-center text-[11px] font-medium text-amber-400">
-                              <i className="fa-solid fa-triangle-exclamation mr-1 text-[10px]" />
-                              Weak PIN
                             </motion.div>
                           : null}
                         </AnimatePresence>
@@ -651,7 +622,7 @@ export function Attendance({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold tracking-wider text-amber-300/90 select-all">
+                        <span className="font-mono text-xs font-semibold tracking-wider text-white/80 select-all">
                           {recoveryKey || "—"}
                         </span>
 
