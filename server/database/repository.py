@@ -1220,7 +1220,10 @@ class FaceRepository:
         result = await self.session.execute(query)
         faces = result.scalars().all()
         for f in faces:
-            await self.session.delete(f)
+            f.embedding = b""
+            f.hash = None
+            f.is_deleted = True
+            f.sync_dirty = True
         return True
 
     async def get_stats(self) -> Dict[str, Any]:

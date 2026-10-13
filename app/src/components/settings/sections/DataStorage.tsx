@@ -443,10 +443,9 @@ export function DataStorage({
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                 Restore database from a backup file using its original encryption password.
                 {isPaired && (
-                  <span className="mt-1 block font-bold text-amber-500/80">
-                    <i className="fa-solid fa-triangle-exclamation mr-1" />
-                    Restoring this backup will overwrite the active connected directories on the
-                    next sync pull.
+                  <span className="mt-1 block font-medium text-amber-500/80">
+                    <i className="fa-solid fa-circle-info mr-1" />
+                    Restored groups and members will sync to the cloud.
                   </span>
                 )}
               </p>
@@ -839,13 +838,17 @@ export function DataStorage({
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                       Permanently delete all groups, member profiles, and enrolled biometric face
                       data. Members must be re-created and enrolled for recognition to work.
+                      {isPaired && (
+                        <span className="mt-1 block font-medium text-amber-400/80">
+                          <i className="fa-solid fa-cloud-arrow-up mr-1" />
+                          Note: This will also delete groups from your cloud directory.
+                        </span>
+                      )}
                     </p>
                   </div>
                   <button
                     onClick={() => handleClearAllGroups(false)}
-                    disabled={
-                      isLoading || deletingGroup === "all" || groups.length === 0 || isPaired
-                    }
+                    disabled={isLoading || deletingGroup === "all" || groups.length === 0}
                     className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-auto">
                     {deletingGroup === "all" && <i className="fa-solid fa-spinner fa-spin" />}
                     Clear Groups
@@ -860,17 +863,16 @@ export function DataStorage({
                       Wipe all face recognition signatures. Enrolled members will need to re-enroll
                       their face profiles.
                       {isPaired && (
-                        <span className="mt-1 block font-bold text-red-400/90">
-                          <i className="fa-solid fa-lock mr-1" />
-                          Disabled: Cannot reset face templates locally while connected to dashboard
-                          directory.
+                        <span className="mt-1 block font-medium text-amber-400/80">
+                          <i className="fa-solid fa-cloud-arrow-up mr-1" />
+                          Note: Face data will also be cleared from the cloud.
                         </span>
                       )}
                     </p>
                   </div>
                   <button
                     onClick={() => onClearDatabase(false)}
-                    disabled={isLoading || isPaired}
+                    disabled={isLoading}
                     className="flex shrink-0 items-center justify-center self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-auto">
                     Reset Face Data
                   </button>
@@ -884,20 +886,19 @@ export function DataStorage({
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                       Permanently wipe all daily attendance check-ins, checkout timestamps, and
-                      history records. Groups, member profiles, and enrolled face profiles are
-                      preserved.
+                      history records on this kiosk. Groups, member profiles, and enrolled face
+                      profiles are preserved.
                       {isPaired && (
-                        <span className="mt-1 block font-bold text-red-400/90">
-                          <i className="fa-solid fa-lock mr-1" />
-                          Disabled: Purging records locally is blocked while connected to prevent
-                          synchronization gap.
+                        <span className="mt-1 block font-medium text-white/50">
+                          <i className="fa-solid fa-cloud mr-1" />
+                          Note: Clears history on this kiosk only. Cloud records remain safe.
                         </span>
                       )}
                     </p>
                   </div>
                   <button
                     onClick={() => handlePurgeHistory(false)}
-                    disabled={isLoading || isPurgingHistory || isPaired}
+                    disabled={isLoading || isPurgingHistory}
                     className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-auto">
                     {isPurgingHistory && <i className="fa-solid fa-spinner fa-spin" />}
                     Wipe History

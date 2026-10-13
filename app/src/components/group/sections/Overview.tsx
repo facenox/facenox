@@ -10,7 +10,6 @@ interface OverviewProps {
   group: AttendanceGroup
   members: AttendanceMember[]
   onAddMember?: () => void
-  isPaired?: boolean
 }
 
 const toDate = (value: Date | string): Date => (value instanceof Date ? value : new Date(value))

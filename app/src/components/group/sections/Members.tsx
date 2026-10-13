@@ -21,7 +21,6 @@ interface MembersProps {
   onAdd?: () => void
   deselectMemberTrigger?: number
   onHasSelectedMemberChange?: (hasSelectedMember: boolean) => void
-  isPaired?: boolean
 }
 
 export function Members({

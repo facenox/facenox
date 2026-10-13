@@ -31,7 +31,6 @@ interface ReportsProps {
     exportAllGroupsCSV?: () => void
   }) => void
   onAddMember?: () => void
-  isPaired?: boolean
 }
 
 const DEFAULT_COLUMNS = ["name", "date", "status", "check_in_time"] as unknown as ColumnKey[]
