@@ -108,7 +108,7 @@ export function ImagePreviewWithBbox({ frame }: { frame: CapturedFrame }) {
       {frame.status === "error" && (
         <div className="absolute inset-0 flex items-center justify-center bg-red-500/20 p-3 text-center">
           <div className="space-y-1">
-            <div className="text-xl">⚠️</div>
+            <i className="fa-solid fa-triangle-exclamation text-xl text-amber-400" />
             <div className="text-xs text-red-200">{frame.error || "Failed"}</div>
           </div>
         </div>

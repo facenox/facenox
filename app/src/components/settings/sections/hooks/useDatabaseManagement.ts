@@ -445,7 +445,7 @@ export function useDatabaseManagement(
             message: "Successfully purged all attendance records and sessions.",
           })
         } else {
-          alert("✓ Successfully purged all history records")
+          alert("Successfully purged all history records.")
         }
       } catch (error) {
         console.error("Error purging history:", error)

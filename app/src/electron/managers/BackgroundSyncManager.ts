@@ -289,6 +289,9 @@ export class BackgroundSyncManager {
         policy.allowKioskDirectoryManagement,
       )
     }
+
+    // Broadcast the updated policy immediately so the UI reflects locks without delay
+    state.mainWindow?.webContents.send("sync:data-changed")
   }
 
   private initRealtimeListener() {
