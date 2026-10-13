@@ -78,6 +78,8 @@ function getRemoteSyncStatus() {
     lastSyncedAt,
     lastSyncStatus,
     lastSyncMessage,
+    allowKioskDirectoryManagement:
+      persistentStore.get("sync.policy.allowKioskDirectoryManagement") !== false,
     connected: Boolean(remoteBaseUrl && organizationId && siteId && deviceId && deviceToken),
   }
 }
@@ -98,6 +100,7 @@ function clearRemoteConnection() {
   persistentStore.delete("sync.policy.lateThresholdMinutes")
   persistentStore.delete("sync.policy.attendanceCooldownSeconds")
   persistentStore.delete("sync.policy.dataRetentionDays")
+  persistentStore.delete("sync.policy.allowKioskDirectoryManagement")
 }
 
 // One local directory belongs to one Cloud location. Keep that origin across

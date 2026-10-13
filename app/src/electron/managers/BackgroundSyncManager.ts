@@ -283,6 +283,12 @@ export class BackgroundSyncManager {
     if (typeof policy.dataRetentionDays === "number") {
       persistentStore.set("sync.policy.dataRetentionDays", policy.dataRetentionDays)
     }
+    if (typeof policy.allowKioskDirectoryManagement === "boolean") {
+      persistentStore.set(
+        "sync.policy.allowKioskDirectoryManagement",
+        policy.allowKioskDirectoryManagement,
+      )
+    }
   }
 
   private initRealtimeListener() {

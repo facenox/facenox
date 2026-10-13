@@ -6,6 +6,7 @@ export interface CloudSyncStatus {
   organizationId: string
   organizationName: string
   siteName: string
+  allowKioskDirectoryManagement: boolean
 }
 
 export function useCloudSyncStatus(): CloudSyncStatus {
@@ -15,6 +16,7 @@ export function useCloudSyncStatus(): CloudSyncStatus {
     organizationId: "",
     organizationName: "",
     siteName: "",
+    allowKioskDirectoryManagement: true,
   })
 
   useEffect(() => {
@@ -30,6 +32,9 @@ export function useCloudSyncStatus(): CloudSyncStatus {
             organizationId: config.organizationId || "",
             organizationName: config.organizationName || "",
             siteName: config.siteName || "",
+            allowKioskDirectoryManagement:
+              (config as { allowKioskDirectoryManagement?: boolean })
+                .allowKioskDirectoryManagement !== false,
           })
         })
         .catch(() => {})

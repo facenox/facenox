@@ -60,6 +60,7 @@ export function DataStorage({
   } = useDatabaseManagement(groups, onGroupsChanged, dialog)
 
   const [isPaired, setIsPaired] = useState(false)
+  const [allowKioskDirectoryManagement, setAllowKioskDirectoryManagement] = useState(true)
 
   useEffect(() => {
     if (!window.electronAPI?.sync) return
@@ -67,7 +68,13 @@ export function DataStorage({
     const fetchConfig = () => {
       window.electronAPI.sync
         .getConfig()
-        .then((c) => setIsPaired(c.connected))
+        .then((c) => {
+          setIsPaired(c.connected)
+          setAllowKioskDirectoryManagement(
+            (c as { allowKioskDirectoryManagement?: boolean }).allowKioskDirectoryManagement !==
+              false,
+          )
+        })
         .catch(console.error)
     }
 
@@ -838,17 +845,27 @@ export function DataStorage({
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                       Permanently delete all groups, member profiles, and enrolled biometric face
                       data. Members must be re-created and enrolled for recognition to work.
-                      {isPaired && (
-                        <span className="mt-1 block font-medium text-amber-400/80">
-                          <i className="fa-solid fa-cloud-arrow-up mr-1" />
-                          Note: This will also delete groups from your cloud directory.
-                        </span>
-                      )}
+                      {isPaired &&
+                        (!allowKioskDirectoryManagement ?
+                          <span className="mt-1 block font-medium text-amber-400/80">
+                            <i className="fa-solid fa-lock mr-1" />
+                            Locked by Cloud Policy: Group directory wipe is disabled on kiosks.
+                            Manage directory in Cloud Dashboard.
+                          </span>
+                        : <span className="mt-1 block font-medium text-amber-400/80">
+                            <i className="fa-solid fa-cloud-arrow-up mr-1" />
+                            Note: This will also delete groups from your cloud directory.
+                          </span>)}
                     </p>
                   </div>
                   <button
                     onClick={() => handleClearAllGroups(false)}
-                    disabled={isLoading || deletingGroup === "all" || groups.length === 0}
+                    disabled={
+                      isLoading ||
+                      deletingGroup === "all" ||
+                      groups.length === 0 ||
+                      (isPaired && !allowKioskDirectoryManagement)
+                    }
                     className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-auto">
                     {deletingGroup === "all" && <i className="fa-solid fa-spinner fa-spin" />}
                     Clear Groups
@@ -862,17 +879,22 @@ export function DataStorage({
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                       Wipe all face recognition signatures. Enrolled members will need to re-enroll
                       their face profiles.
-                      {isPaired && (
-                        <span className="mt-1 block font-medium text-amber-400/80">
-                          <i className="fa-solid fa-cloud-arrow-up mr-1" />
-                          Note: Face data will also be cleared from the cloud.
-                        </span>
-                      )}
+                      {isPaired &&
+                        (!allowKioskDirectoryManagement ?
+                          <span className="mt-1 block font-medium text-amber-400/80">
+                            <i className="fa-solid fa-lock mr-1" />
+                            Locked by Cloud Policy: Face data reset is disabled on kiosks. Manage
+                            biometrics in Cloud Dashboard.
+                          </span>
+                        : <span className="mt-1 block font-medium text-amber-400/80">
+                            <i className="fa-solid fa-cloud-arrow-up mr-1" />
+                            Note: Face data will also be cleared from the cloud.
+                          </span>)}
                     </p>
                   </div>
                   <button
                     onClick={() => onClearDatabase(false)}
-                    disabled={isLoading}
+                    disabled={isLoading || (isPaired && !allowKioskDirectoryManagement)}
                     className="flex shrink-0 items-center justify-center self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-auto">
                     Reset Face Data
                   </button>
