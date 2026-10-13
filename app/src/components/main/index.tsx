@@ -108,12 +108,14 @@ export default function Main() {
     warning,
     setWarning,
     showSettings,
+    setShowSettings,
     requestOpenSettings,
     quickSettings,
     audioSettings,
     setSidebarCollapsed,
     pendingCloudSetup,
     setPendingCloudSetup,
+    adminPinEnabled,
   } = useUIStore()
   const showAddMemberModal = useGroupUIStore((state) => state.showAddMemberModal)
   const showEditMemberModal = useGroupUIStore((state) => state.showEditMemberModal)
@@ -129,6 +131,35 @@ export default function Main() {
       setPendingCloudSetup(false)
     }
   }, [pendingCloudSetup, requestOpenSettings, setPendingCloudSetup])
+
+  // Auto-close Settings after 60s of inactivity when Admin PIN Lock is enabled.
+  // Prevents settings from being left open when an admin walks away from the kiosk.
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null)
+  useEffect(() => {
+    if (!showSettings || !adminPinEnabled) {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current)
+      return
+    }
+    const IDLE_MS = 60_000
+    const resetTimer = () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current)
+      inactivityTimerRef.current = setTimeout(() => {
+        setShowSettings(false)
+      }, IDLE_MS)
+    }
+    resetTimer()
+    window.addEventListener("mousemove", resetTimer)
+    window.addEventListener("mousedown", resetTimer)
+    window.addEventListener("keydown", resetTimer)
+    window.addEventListener("touchstart", resetTimer)
+    return () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current)
+      window.removeEventListener("mousemove", resetTimer)
+      window.removeEventListener("mousedown", resetTimer)
+      window.removeEventListener("keydown", resetTimer)
+      window.removeEventListener("touchstart", resetTimer)
+    }
+  }, [showSettings, adminPinEnabled, setShowSettings])
 
   // Preload sound to minimize delay on first recognition
   useEffect(() => {

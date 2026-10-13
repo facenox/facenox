@@ -16,6 +16,22 @@ interface AttendanceProps {
 const SETTINGS_STATUS_SWAP_DURATION = 0.14
 const SETTINGS_PANEL_ANIMATION_DURATION = 0.18
 
+const WEAK_PINS = new Set([
+  "1234",
+  "0000",
+  "1111",
+  "2222",
+  "3333",
+  "4444",
+  "5555",
+  "6666",
+  "7777",
+  "8888",
+  "9999",
+  "1230",
+  "0123",
+])
+
 export function Attendance({
   attendanceSettings,
   onAttendanceCooldownChange,
@@ -25,27 +41,36 @@ export function Attendance({
   isPaired = false,
 }: AttendanceProps) {
   const adminPinEnabled = useUIStore((state) => state.adminPinEnabled)
-  const adminPin = useUIStore((state) => state.adminPin)
   const setAdminPinSettings = useUIStore((state) => state.setAdminPinSettings)
 
-  const [pinValue, setPinValue] = useState(adminPin || "1234")
+  const [pinValue, setPinValue] = useState("")
+  const [confirmPinValue, setConfirmPinValue] = useState("")
   const [showPin, setShowPin] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
+  const [pinMismatch, setPinMismatch] = useState(false)
 
+  const isWeakPin = pinValue.length === 4 && WEAK_PINS.has(pinValue)
+
+  // Keep pin inputs clear — don't pre-fill from store (avoids showing current PIN)
+  // Only sync on mount if pin panel is freshly opened
   useEffect(() => {
-    if (adminPin) {
-      setPinValue(adminPin)
-    }
-  }, [adminPin])
+    setPinValue("")
+    setConfirmPinValue("")
+    setPinMismatch(false)
+  }, [adminPinEnabled])
 
-  const handlePinChange = (val: string) => {
-    const cleaned = val.replace(/\D/g, "").slice(0, 4)
-    setPinValue(cleaned)
-    if (cleaned.length === 4) {
-      setAdminPinSettings({ adminPin: cleaned })
-      setIsSaved(true)
-      setTimeout(() => setIsSaved(false), 2000)
+  const handleSavePin = () => {
+    if (pinValue.length !== 4 || confirmPinValue.length !== 4) return
+    if (pinValue !== confirmPinValue) {
+      setPinMismatch(true)
+      setTimeout(() => setPinMismatch(false), 2000)
+      return
     }
+    setAdminPinSettings({ adminPin: pinValue })
+    setIsSaved(true)
+    setPinValue("")
+    setConfirmPinValue("")
+    setTimeout(() => setIsSaved(false), 2500)
   }
 
   const allowedChoices = [1, 2, 5, 10, 15, 20] as const
@@ -430,32 +455,59 @@ export function Attendance({
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
                   className="overflow-hidden">
-                  <div className="relative flex flex-col gap-2 pt-3 pb-2 pl-4">
+                  <div className="relative flex flex-col gap-3 pt-3 pb-2 pl-4">
                     <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
 
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs font-medium text-white/80">
-                          Set 4-digit administrator PIN:
-                        </div>
-                        <div className="mt-0.5 text-[11px]">
-                          {isSaved ?
-                            <span className="font-medium text-cyan-400">
-                              <i className="fa-solid fa-circle-check mr-1 text-[10px]" />
-                              PIN updated successfully
-                            </span>
-                          : pinValue.length === 4 ?
-                            <span className="text-white/65">
-                              4-digit PIN is active. Default is 1234.
-                            </span>
-                          : <span className="font-medium text-amber-400">
-                              <i className="fa-solid fa-circle-info mr-1 text-[10px]" />
-                              Enter 4 numeric digits to save
-                            </span>
-                          }
-                        </div>
-                      </div>
+                    <div className="relative min-h-[18px]">
+                      <AnimatePresence mode="wait">
+                        {isSaved ?
+                          <motion.div
+                            key="saved"
+                            initial={{ opacity: 0, y: -2 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 2 }}
+                            transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
+                            className="flex items-center text-[11px] font-medium text-cyan-400">
+                            <i className="fa-solid fa-circle-check mr-1 text-[10px]" />
+                            PIN updated successfully
+                          </motion.div>
+                        : pinMismatch ?
+                          <motion.div
+                            key="mismatch"
+                            initial={{ opacity: 0, y: -2 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 2 }}
+                            transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
+                            className="flex items-center text-[11px] font-medium text-rose-400">
+                            <i className="fa-solid fa-circle-exclamation mr-1 text-[10px]" />
+                            PINs do not match. Try again.
+                          </motion.div>
+                        : isWeakPin ?
+                          <motion.div
+                            key="weak"
+                            initial={{ opacity: 0, y: -2 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 2 }}
+                            transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
+                            className="flex items-center text-[11px] font-medium text-amber-400">
+                            <i className="fa-solid fa-triangle-exclamation mr-1 text-[10px]" />
+                            Weak PIN. Consider using a less common code.
+                          </motion.div>
+                        : <motion.div
+                            key="default"
+                            initial={{ opacity: 0, y: -2 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 2 }}
+                            transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
+                            className="text-[11px] text-white/50">
+                            Set a new 4-digit PIN. Current PIN is not shown.
+                          </motion.div>
+                        }
+                      </AnimatePresence>
+                    </div>
 
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="text-xs font-medium text-white/80">New PIN:</div>
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
@@ -466,18 +518,55 @@ export function Attendance({
                             className={`fa-solid ${showPin ? "fa-eye-slash" : "fa-eye"} text-xs`}
                           />
                         </button>
-
                         <input
                           type={showPin ? "text" : "password"}
                           inputMode="numeric"
                           maxLength={4}
                           value={pinValue}
-                          onChange={(e) => handlePinChange(e.target.value)}
-                          placeholder="1234"
-                          aria-label="4-digit Administrator PIN"
+                          onChange={(e) =>
+                            setPinValue(e.target.value.replace(/\D/g, "").slice(0, 4))
+                          }
+                          placeholder="••••"
+                          aria-label="New 4-digit Administrator PIN"
                           className="w-20 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2.5 py-1.5 text-center text-xs font-bold tracking-widest text-white transition-all outline-none focus:border-cyan-500/60 focus:bg-cyan-500/[0.03]"
                         />
                       </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="text-xs font-medium text-white/80">Confirm PIN:</div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-8 w-8" />
+                        <input
+                          type={showPin ? "text" : "password"}
+                          inputMode="numeric"
+                          maxLength={4}
+                          value={confirmPinValue}
+                          onChange={(e) =>
+                            setConfirmPinValue(e.target.value.replace(/\D/g, "").slice(0, 4))
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSavePin()
+                          }}
+                          placeholder="••••"
+                          aria-label="Confirm 4-digit Administrator PIN"
+                          className={`w-20 rounded-lg border bg-[rgba(22,28,36,0.68)] px-2.5 py-1.5 text-center text-xs font-bold tracking-widest text-white transition-all outline-none ${
+                            pinMismatch ?
+                              "border-rose-500/60 focus:border-rose-500/80"
+                            : "border-white/10 focus:border-cyan-500/60 focus:bg-cyan-500/[0.03]"
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={handleSavePin}
+                        disabled={pinValue.length !== 4 || confirmPinValue.length !== 4}
+                        className="rounded-lg bg-cyan-600 px-4 py-1.5 text-[11px] font-bold text-white transition-all duration-150 hover:bg-cyan-500 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
+                        Save PIN
+                      </button>
                     </div>
                   </div>
                 </motion.div>
