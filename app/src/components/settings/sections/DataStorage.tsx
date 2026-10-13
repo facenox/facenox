@@ -796,6 +796,7 @@ export function DataStorage({
                     onDeleteGroup={handleDeleteGroup}
                     onDeleteMember={handleDeleteMember}
                     onGroupsChanged={onGroupsChanged}
+                    isDeleteDisabled={isPaired && !allowKioskDirectoryManagement}
                   />
                 ))}
               </motion.div>

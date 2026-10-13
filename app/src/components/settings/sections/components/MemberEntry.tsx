@@ -14,6 +14,7 @@ interface MemberEntryProps {
   onSaveEdit: (personId: string, field: MemberField, value: string) => void
   onCancelEditing: () => void
   onDeleteMember: (personId: string, name: string) => void
+  isDeleteDisabled?: boolean
 }
 
 export const MemberEntry = React.memo(
@@ -28,6 +29,7 @@ export const MemberEntry = React.memo(
     onSaveEdit,
     onCancelEditing,
     onDeleteMember,
+    isDeleteDisabled = false,
   }: MemberEntryProps) {
     const isEditing = (field: MemberField) =>
       editingMember?.personId === member.person_id && editingMember.field === field
@@ -129,13 +131,23 @@ export const MemberEntry = React.memo(
               </div>
             }
 
-            <Tooltip content="Delete member" position="top">
+            <Tooltip
+              content={
+                isDeleteDisabled ?
+                  "Locked by Cloud Policy: Member deletion is disabled on kiosks."
+                : "Delete member"
+              }
+              position="top">
               <button
-                onClick={() => onDeleteMember(member.person_id, member.name)}
-                disabled={deletingMember === member.person_id}
-                className="flex h-7 w-7 items-center justify-center rounded-md border-0 bg-transparent text-white/55 shadow-none transition-all duration-300 outline-none hover:bg-red-500/10 hover:text-red-400 focus:outline-none disabled:opacity-50">
+                onClick={() => !isDeleteDisabled && onDeleteMember(member.person_id, member.name)}
+                disabled={deletingMember === member.person_id || isDeleteDisabled}
+                className="flex h-7 w-7 items-center justify-center rounded-md border-0 bg-transparent text-white/55 shadow-none transition-all duration-300 outline-none hover:bg-red-500/10 hover:text-red-400 focus:outline-none disabled:opacity-25">
                 <i
-                  className={`fa-solid ${deletingMember === member.person_id ? "fa-spinner fa-spin" : "fa-trash-can opacity-40 group-hover/member:opacity-75 group-hover/member:hover:opacity-100"} text-[11px] transition-all`}></i>
+                  className={`fa-solid ${
+                    deletingMember === member.person_id ? "fa-spinner fa-spin"
+                    : isDeleteDisabled ? "fa-lock text-amber-400/60"
+                    : "fa-trash-can opacity-40 group-hover/member:opacity-75 group-hover/member:hover:opacity-100"
+                  } text-[11px] transition-all`}></i>
               </button>
             </Tooltip>
           </div>
@@ -147,6 +159,10 @@ export const MemberEntry = React.memo(
     )
   },
   (prevProps, nextProps) => {
+    if (prevProps.isDeleteDisabled !== nextProps.isDeleteDisabled) {
+      return false
+    }
+
     const wasEditing = prevProps.editingMember?.personId === prevProps.member.person_id
     const isEditing = nextProps.editingMember?.personId === nextProps.member.person_id
     const wasSaving = prevProps.savingMember === prevProps.member.person_id
