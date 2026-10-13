@@ -35,6 +35,16 @@ def utc_now() -> datetime:
         return datetime.now(timezone.utc)
 
 
+def os_now_utc() -> datetime:
+    """Return raw operating system wall-clock UTC time (unaffected by monotonic authority)."""
+    return datetime.now(timezone.utc)
+
+
+def os_now_local() -> datetime:
+    """Return raw operating system wall-clock local time (unaffected by monotonic authority)."""
+    return datetime.now(get_local_timezone())
+
+
 def ensure_local_aware(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=get_local_timezone())

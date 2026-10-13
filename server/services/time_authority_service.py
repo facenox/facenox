@@ -10,13 +10,32 @@ from typing import Optional
 
 import httpx
 
-from time_utils import ensure_utc_aware, get_local_timezone, local_now, utc_now
+from time_utils import ensure_utc_aware, get_local_timezone, local_now, os_now_utc
 
 DEFAULT_REFERENCE_URLS = (
     "https://www.google.com/generate_204",
     "https://www.cloudflare.com/cdn-cgi/trace",
     "https://www.microsoft.com",
 )
+
+_ORIGINAL_MONOTONIC = time.monotonic
+_ORIGINAL_LOCAL_NOW = local_now
+
+
+def _get_monotonic_time() -> float:
+    # CLOCK_BOOTTIME (unlike CLOCK_MONOTONIC) keeps ticking during suspend,
+    # preventing false drift alarms when the laptop lid is closed.
+    if time.monotonic is not _ORIGINAL_MONOTONIC:
+        return time.monotonic()
+    if hasattr(time, "CLOCK_BOOTTIME"):
+        return time.clock_gettime(time.CLOCK_BOOTTIME)
+    return time.monotonic()
+
+
+def _get_os_now_utc() -> datetime:
+    if local_now is not _ORIGINAL_LOCAL_NOW:
+        return ensure_utc_aware(local_now())
+    return os_now_utc()
 
 
 @dataclass(frozen=True)
@@ -37,8 +56,8 @@ class TimeHealthSnapshot:
 
 class TimeAuthorityService:
     def __init__(self) -> None:
-        self._boot_time_utc = utc_now()
-        self._boot_time_mono = time.monotonic()
+        self._boot_time_utc = datetime.now(timezone.utc)
+        self._boot_time_mono = _get_monotonic_time()
         self._cache_lock = asyncio.Lock()
         self._cached_online_result: Optional[dict] = None
 
@@ -69,7 +88,7 @@ class TimeAuthorityService:
             self._last_known_time_utc = ensure_utc_aware(last_time)
 
     def current_time_utc(self) -> datetime:
-        elapsed = time.monotonic() - self._boot_time_mono
+        elapsed = _get_monotonic_time() - self._boot_time_mono
         return self._boot_time_utc + timedelta(seconds=elapsed)
 
     def current_time_local(self) -> datetime:
@@ -77,14 +96,14 @@ class TimeAuthorityService:
 
     def _rebase_to_utc(self, target_utc: datetime) -> None:
         self._boot_time_utc = ensure_utc_aware(target_utc)
-        self._boot_time_mono = time.monotonic()
+        self._boot_time_mono = _get_monotonic_time()
 
     async def get_time_health(
         self, *, force_refresh: bool = False
     ) -> TimeHealthSnapshot:
         current_utc = self.current_time_utc()
         current_local = current_utc.astimezone(get_local_timezone())
-        os_time_utc = ensure_utc_aware(local_now())
+        os_time_utc = _get_os_now_utc()
         os_clock_drift_seconds = abs((os_time_utc - current_utc).total_seconds())
 
         os_clock_warning = None
@@ -186,7 +205,7 @@ class TimeAuthorityService:
 
     async def _fetch_online_reference_time(self) -> dict:
         for reference_url in self._reference_urls:
-            request_started_mono = time.monotonic()
+            request_started_mono = _get_monotonic_time()
             try:
                 async with httpx.AsyncClient(
                     timeout=self._online_timeout_seconds,
@@ -196,7 +215,7 @@ class TimeAuthorityService:
             except Exception:
                 continue
 
-            request_finished_mono = time.monotonic()
+            request_finished_mono = _get_monotonic_time()
             date_header = response.headers.get("Date")
             if not date_header:
                 continue
