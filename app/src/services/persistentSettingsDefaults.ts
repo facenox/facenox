@@ -80,6 +80,7 @@ export const defaultSettings: PersistentSettingsSchema = {
     cameraMirrored: true,
     showTrackingBoxes: true,
     cameraFitCover: false,
+    showDetectionPanel: true,
   },
   audio: {
     recognitionSoundEnabled: true,

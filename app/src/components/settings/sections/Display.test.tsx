@@ -24,7 +24,7 @@ describe("Display & Audio Settings Section", () => {
     } as unknown as typeof window.electronAPI
   })
 
-  it("renders all 4 camera settings and handles toggling", () => {
+  it("renders all 5 camera and display settings and handles toggling", () => {
     const toggleQuickSetting = vi.fn()
     render(
       <Display
@@ -33,6 +33,7 @@ describe("Display & Audio Settings Section", () => {
           showRecognitionNames: true,
           showTrackingBoxes: true,
           cameraFitCover: false,
+          showDetectionPanel: true,
         }}
         toggleQuickSetting={toggleQuickSetting}
       />,
@@ -42,9 +43,10 @@ describe("Display & Audio Settings Section", () => {
     expect(screen.getByText("Show Names")).toBeInTheDocument()
     expect(screen.getByText("Show Tracking Boxes")).toBeInTheDocument()
     expect(screen.getByText("Fill Viewport")).toBeInTheDocument()
+    expect(screen.getByText("Real-Time Results")).toBeInTheDocument()
 
     const switches = screen.getAllByRole("switch")
-    expect(switches.length).toBe(4)
+    expect(switches.length).toBe(5)
 
     fireEvent.click(switches[0])
     expect(toggleQuickSetting).toHaveBeenCalledWith("cameraMirrored")
@@ -57,6 +59,9 @@ describe("Display & Audio Settings Section", () => {
 
     fireEvent.click(switches[3])
     expect(toggleQuickSetting).toHaveBeenCalledWith("cameraFitCover")
+
+    fireEvent.click(switches[4])
+    expect(toggleQuickSetting).toHaveBeenCalledWith("showDetectionPanel")
   })
 
   it("renders Audio Feedback toggle and handles audio settings", () => {

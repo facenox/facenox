@@ -106,7 +106,11 @@ export const useSettings = ({
   const setEnrollmentState = useGroupUIStore((state) => state.setEnrollmentState)
 
   const toggleQuickSetting = (key: keyof QuickSettings) => {
-    const newSettings = { ...quickSettings, [key]: !quickSettings[key] }
+    const currentVal =
+      key === "showTrackingBoxes" || key === "showDetectionPanel" ?
+        quickSettings[key] !== false
+      : Boolean(quickSettings[key])
+    const newSettings = { ...quickSettings, [key]: !currentVal }
     onQuickSettingsChange(newSettings)
   }
 

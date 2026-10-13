@@ -7,6 +7,7 @@ export interface QuickSettings {
   cameraMirrored: boolean
   showTrackingBoxes?: boolean
   cameraFitCover?: boolean
+  showDetectionPanel?: boolean
 }
 
 export interface AudioSettings {

@@ -137,6 +137,7 @@ export function Display({
 
   const isSettingActive = (key: keyof QuickSettings) => {
     if (key === "showTrackingBoxes") return quickSettings.showTrackingBoxes !== false
+    if (key === "showDetectionPanel") return quickSettings.showDetectionPanel !== false
     if (key === "cameraFitCover") return Boolean(quickSettings.cameraFitCover)
     return Boolean(quickSettings[key])
   }
@@ -172,6 +173,14 @@ export function Display({
       descriptions: {
         on: "Expand camera feed to fill screen edge-to-edge.",
         off: "Fit entire camera frame with standard letterbox.",
+      },
+    },
+    {
+      key: "showDetectionPanel" as keyof QuickSettings,
+      label: "Real-Time Results",
+      descriptions: {
+        on: "Show real-time scanning results at the bottom of the sidebar.",
+        off: "Hide live results to give attendance records full height.",
       },
     },
   ]

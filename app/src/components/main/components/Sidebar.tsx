@@ -92,6 +92,7 @@ export const Sidebar = memo(function Sidebar({
     sidebarWidth,
     setSidebarWidth,
     isHydrated,
+    quickSettings,
   } = useUIStore()
 
   const [isResizing, setIsResizing] = useState(false)
@@ -319,19 +320,21 @@ export const Sidebar = memo(function Sidebar({
             />
           </div>
 
-          <div className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto border-t border-white/10 bg-[rgba(10,13,18,0.96)]">
-            <DetectionPanel
-              currentDetections={currentDetections}
-              currentRecognitionResults={currentRecognitionResults}
-              recognitionEnabled={recognitionEnabled}
-              trackedFaces={trackedFaces}
-              groupMembers={groupMembers}
-              isStreaming={isStreaming}
-              isVideoLoading={isVideoLoading}
-              persistentCooldowns={persistentCooldowns}
-              currentGroupId={currentGroup?.id}
-            />
-          </div>
+          {quickSettings?.showDetectionPanel !== false && (
+            <div className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto border-t border-white/10 bg-[rgba(10,13,18,0.96)]">
+              <DetectionPanel
+                currentDetections={currentDetections}
+                currentRecognitionResults={currentRecognitionResults}
+                recognitionEnabled={recognitionEnabled}
+                trackedFaces={trackedFaces}
+                groupMembers={groupMembers}
+                isStreaming={isStreaming}
+                isVideoLoading={isVideoLoading}
+                persistentCooldowns={persistentCooldowns}
+                currentGroupId={currentGroup?.id}
+              />
+            </div>
+          )}
         </div>
 
         {isCollapsed && (

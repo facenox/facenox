@@ -131,6 +131,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     showRecognitionNames: true,
     showTrackingBoxes: true,
     cameraFitCover: false,
+    showDetectionPanel: true,
   },
 
   audioSettings: {
