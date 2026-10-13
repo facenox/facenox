@@ -87,7 +87,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
         </div>
       }
       maxWidth="md">
-      <div className="mt-2">
+      <div>
         {error && <ErrorMessage message={error} className="mb-4" />}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">

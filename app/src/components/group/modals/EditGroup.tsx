@@ -103,7 +103,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
         </div>
       }
       maxWidth="md">
-      <div className="mt-2">
+      <div>
         {error && <ErrorMessage message={error} className="mb-4" />}
 
         <div className="space-y-4">

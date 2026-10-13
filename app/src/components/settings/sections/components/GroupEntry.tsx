@@ -216,39 +216,37 @@ export function GroupEntry({
           </div>
         }
         maxWidth="max-w-3xl">
-        <div className="p-1">
-          {group.members.length === 0 ?
-            <div className="px-4 py-8 text-center text-[12px] text-white/55">
-              No members in this group
+        {group.members.length === 0 ?
+          <div className="px-4 py-8 text-center text-[12px] text-white/55">
+            No members in this group
+          </div>
+        : <div
+            onScroll={handleScroll}
+            className="custom-scroll max-h-[60vh] divide-y divide-white/5 overflow-y-auto pr-1">
+            <div
+              style={{
+                paddingTop: `${paddingTop}px`,
+                paddingBottom: `${paddingBottom}px`,
+              }}>
+              {visibleMembers.map((member, idx) => (
+                <MemberEntry
+                  key={member.person_id || `member-${idx}`}
+                  member={member}
+                  editingMember={editingMember}
+                  editValue={editValue}
+                  savingMember={savingMember}
+                  deletingMember={deletingMember}
+                  onStartEditing={onStartEditingMember}
+                  onEditValueChange={onEditValueChange}
+                  onSaveEdit={onSaveMemberEdit}
+                  onCancelEditing={onCancelEditing}
+                  onDeleteMember={onDeleteMember}
+                  isDeleteDisabled={isDeleteDisabled}
+                />
+              ))}
             </div>
-          : <div
-              onScroll={handleScroll}
-              className="custom-scroll max-h-[60vh] divide-y divide-white/5 overflow-y-auto pr-1">
-              <div
-                style={{
-                  paddingTop: `${paddingTop}px`,
-                  paddingBottom: `${paddingBottom}px`,
-                }}>
-                {visibleMembers.map((member, idx) => (
-                  <MemberEntry
-                    key={member.person_id || `member-${idx}`}
-                    member={member}
-                    editingMember={editingMember}
-                    editValue={editValue}
-                    savingMember={savingMember}
-                    deletingMember={deletingMember}
-                    onStartEditing={onStartEditingMember}
-                    onEditValueChange={onEditValueChange}
-                    onSaveEdit={onSaveMemberEdit}
-                    onCancelEditing={onCancelEditing}
-                    onDeleteMember={onDeleteMember}
-                    isDeleteDisabled={isDeleteDisabled}
-                  />
-                ))}
-              </div>
-            </div>
-          }
-        </div>
+          </div>
+        }
       </Modal>
 
       <EditGroup

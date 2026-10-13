@@ -77,7 +77,7 @@ export function ExportAllGroupsModal({
         </div>
       }
       maxWidth="md">
-      <div className="mt-2 space-y-4">
+      <div className="space-y-4">
         <div className="space-y-2.5">
           {options.map((opt) => {
             const isSelected = selectedFormat === opt.id

@@ -221,7 +221,7 @@ export function PinPromptModal() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96, y: 8 }}
                 transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
-                className="relative z-10 flex w-full max-w-[340px] flex-col rounded-2xl border border-white/10 bg-[rgba(15,19,25,0.98)] p-6 shadow-2xl backdrop-blur-2xl">
+                className="relative z-10 flex w-full max-w-[340px] flex-col rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] p-5 shadow-2xl backdrop-blur-2xl">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     <i className="fa-solid fa-triangle-exclamation text-sm text-amber-400" />
@@ -299,7 +299,7 @@ export function PinPromptModal() {
                   duration: isShaking ? 0.4 : 0.14,
                   ease: [0.16, 1, 0.3, 1],
                 }}
-                className="relative z-10 flex w-full max-w-[340px] flex-col rounded-2xl border border-white/10 bg-[rgba(15,19,25,0.98)] p-6 shadow-2xl backdrop-blur-2xl">
+                className="relative z-10 flex w-full max-w-[340px] flex-col rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] p-5 shadow-2xl backdrop-blur-2xl">
                 <div className="flex items-start justify-between">
                   <div>
                     <div

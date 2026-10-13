@@ -112,7 +112,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
         </div>
       }
       maxWidth="md">
-      <div className="mt-2">
+      <div>
         {error && <ErrorMessage message={error} className="mb-4" />}
 
         <div className="space-y-4">

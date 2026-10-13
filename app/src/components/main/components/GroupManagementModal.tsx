@@ -49,7 +49,7 @@ export function GroupManagementModal({
       onClose={() => setShowGroupManagement(false)}
       title="Create Group"
       maxWidth="sm">
-      <div className="mt-2 space-y-3">
+      <div className="space-y-3">
         <div className="grid gap-4">
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="pl-1 text-[11px] font-medium text-white/65">Group Name</span>
