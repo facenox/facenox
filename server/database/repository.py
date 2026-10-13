@@ -115,8 +115,8 @@ class AttendanceRepository:
             class_end_time=class_end_time,
             track_checkout=track_checkout,
             organization_id=self.organization_id,
-            is_active=True,
-            is_deleted=False,
+            is_active=group_data.get("is_active", True),
+            is_deleted=not group_data.get("is_active", True),
             remote_id=group_data.get("remote_id"),
         )
         self.session.add(group)
@@ -465,9 +465,13 @@ class AttendanceRepository:
             now_ts = to_storage_local(local_now())
             for i in range(0, len(found_pids), chunk_size):
                 chunk = found_pids[i : i + chunk_size]
-                delete_faces_query = delete(Face).where(Face.person_id.in_(chunk))
-                delete_faces_query = self._apply_org_scope(delete_faces_query, Face)
-                await self.session.execute(delete_faces_query)
+                face_query = self._apply_org_scope(
+                    select(Face).where(Face.person_id.in_(chunk)), Face
+                )
+                for face in (await self.session.execute(face_query)).scalars():
+                    face.embedding = b""
+                    face.hash = None
+                    face.is_deleted = True
 
             for m in existing_members:
                 m.is_active = False
@@ -1183,7 +1187,9 @@ class FaceRepository:
         face = await self.get_face(person_id)
         if not face:
             return False
-        await self.session.delete(face)
+        face.embedding = b""
+        face.hash = None
+        face.is_deleted = True
         return True
 
     async def update_person_id(self, old_id: str, new_id: str) -> bool:

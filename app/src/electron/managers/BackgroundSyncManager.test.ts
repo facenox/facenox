@@ -131,6 +131,7 @@ describe("BackgroundSyncManager", () => {
     const validCiphertext = encryptEmbedding(validVector, TEST_KEY)
 
     const pullPayload = {
+      schema_version: 2,
       groups: [
         {
           id: "g1",
@@ -271,7 +272,7 @@ describe("BackgroundSyncManager", () => {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ groups: [], members: [] }),
+          json: async () => ({ schema_version: 2, groups: [], members: [] }),
         } as Response
       }
       if (url.includes("/attendance/import-metadata")) {
@@ -326,7 +327,7 @@ describe("BackgroundSyncManager", () => {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ groups: [], members: [] }),
+          json: async () => ({ schema_version: 2, groups: [], members: [] }),
         } as Response
       }
       if (url.includes("/attendance/import-metadata")) {
@@ -459,6 +460,7 @@ describe("BackgroundSyncManager", () => {
           ok: true,
           status: 200,
           json: async () => ({
+            schema_version: 2,
             organization_id: "org-1",
             site_id: "site-test-123",
             synced_at: new Date().toISOString(),

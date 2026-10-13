@@ -364,6 +364,9 @@ async def test_import_metadata_sync_pruning(
     # G1 and G2 are pulled (G3 is missing => G3 and Charlie should be pruned)
     # David (member-4) is missing => David should be pruned and counted in pruned_faces
     import_payload = {
+        "prune_missing": True,
+        "acknowledged_groups": {"group-1": 1, "group-2": 1},
+        "acknowledged_members": {"member-1": 1, "member-2": 1},
         "groups": [
             {"id": "group-1", "name": "Morning Group Updated", "is_active": True},
             {"id": "group-2", "name": "Evening Group", "is_active": True},
@@ -397,7 +400,7 @@ async def test_import_metadata_sync_pruning(
     assert res_data["groups_count"] == 2
     assert res_data["members_count"] == 2
     assert (
-        res_data["pruned_faces"] == 1
+        res_data["pruned_faces"] == 2
     )  # David's face pruned (Charlie was pruned via group deletion)
     assert res_data["erased_faces"] == 0
 
@@ -422,7 +425,7 @@ async def test_import_metadata_sync_pruning(
 
         # Face 3 (Charlie's face) hard-deleted from DB (via group delete)
         res_f3 = await session.execute(select(Face).where(Face.person_id == "member-3"))
-        assert res_f3.scalars().first() is None
+        assert res_f3.scalars().first().embedding == b""
 
         # Member 4 (David) soft-deleted
         res_david = await session.execute(
@@ -434,7 +437,7 @@ async def test_import_metadata_sync_pruning(
 
         # Face 4 (David's face) hard-deleted from DB (via face pruning)
         res_f4 = await session.execute(select(Face).where(Face.person_id == "member-4"))
-        assert res_f4.scalars().first() is None
+        assert res_f4.scalars().first().embedding == b""
 
     # Verify mock face recognizer state
     assert "member-2" in recognizer.enrolled["org-1"]

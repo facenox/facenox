@@ -11,6 +11,9 @@ export const groupSettingsSchema = z.object({
 })
 
 export const attendanceGroupSchema = z.object({
+  sync_revision: z.number().int().nonnegative().default(0),
+  version: z.number().int().positive().default(1),
+  sync_dirty: z.boolean().default(true),
   id: z.string().min(1),
   name: z.string().min(1),
   created_at: z.string().datetime(),
@@ -20,6 +23,9 @@ export const attendanceGroupSchema = z.object({
 })
 
 export const attendanceMemberSchema = z.object({
+  sync_revision: z.number().int().nonnegative().default(0),
+  version: z.number().int().positive().default(1),
+  sync_dirty: z.boolean().default(true),
   id: z.string().min(1),
   person_id: z.string().min(1),
   group_id: z.string().min(1),
@@ -64,8 +70,12 @@ export const attendanceSessionSchema = z.object({
 })
 
 export const faceEmbeddingSchema = z.object({
+  sync_revision: z.number().int().nonnegative().default(0),
+  version: z.number().int().positive().default(1),
+  sync_dirty: z.boolean().default(true),
   person_id: z.string().min(1),
-  embedding_encrypted: z.string().min(1),
+  embedding_encrypted: z.string(),
+  is_deleted: z.boolean().default(false),
   embedding_dimension: z.number().default(512),
 })
 export type FaceEmbedding = z.infer<typeof faceEmbeddingSchema>
@@ -92,7 +102,7 @@ export const attendanceExportSchema = z.object({
 })
 
 export const syncPushSchema = z.object({
-  schema_version: z.literal(1),
+  schema_version: z.literal(2),
   snapshot_id: z.string().min(1),
   device_id: z.string().min(1),
   site_id: z.string().min(1),

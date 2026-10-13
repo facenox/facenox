@@ -80,6 +80,9 @@ class AttendanceGroupUpdate(BaseModel):
 
 
 class AttendanceGroupResponse(BaseModel):
+    sync_revision: int = 0
+    sync_dirty: bool = True
+    version: int = 1
     id: str
     name: str
     created_at: datetime
@@ -136,6 +139,9 @@ class AttendanceMemberUpdate(BaseModel):
 
 
 class AttendanceMemberResponse(BaseModel):
+    sync_revision: int = 0
+    sync_dirty: bool = True
+    version: int = 1
     id: str
     person_id: str
     group_id: str
@@ -409,6 +415,7 @@ class CleanupRequest(BaseModel):
 
 
 class ImportedGroup(BaseModel):
+    sync_revision: int = 0
     id: str
     name: str
     is_active: bool = True
@@ -418,6 +425,7 @@ class ImportedGroup(BaseModel):
 
 
 class ImportedMember(BaseModel):
+    sync_revision: int = 0
     id: Optional[str] = None
     person_id: str
     group_id: str
@@ -432,7 +440,13 @@ class ImportedMember(BaseModel):
 class ImportMetadataRequest(BaseModel):
     groups: List[ImportedGroup]
     members: List[ImportedMember]
-    prune_missing: bool = True
+    prune_missing: bool = False
+    accepted_groups: Dict[str, int] = Field(default_factory=dict)
+    accepted_members: Dict[str, int] = Field(default_factory=dict)
+    acknowledged_groups: Dict[str, int] = Field(default_factory=dict)
+    acknowledged_members: Dict[str, int] = Field(default_factory=dict)
+    removed_group_ids: List[str] = Field(default_factory=list)
+    removed_member_ids: List[str] = Field(default_factory=list)
 
 
 class ImportMetadataResponse(BaseModel):

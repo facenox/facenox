@@ -90,6 +90,7 @@ function clearRemoteConnection() {
   persistentStore.set("sync.siteName", "")
   persistentStore.set("sync.deviceId", "")
   persistentStore.set("sync.deviceToken", "")
+  persistentStore.set("sync.encryptionKey", "")
   persistentStore.set("sync.lastSyncedAt", null)
   persistentStore.delete("sync.policy.forceLiveness")
   persistentStore.delete("sync.policy.trackCheckout")
@@ -97,6 +98,56 @@ function clearRemoteConnection() {
   persistentStore.delete("sync.policy.lateThresholdMinutes")
   persistentStore.delete("sync.policy.attendanceCooldownSeconds")
   persistentStore.delete("sync.policy.dataRetentionDays")
+}
+
+// One local directory belongs to one Cloud location. Keep that origin across
+// disconnects so reconnecting cannot silently copy it into another organization.
+async function validatePairingDestination(
+  remoteBaseUrl: string,
+  payload: {
+    organizationId?: unknown
+    siteId?: unknown
+    deviceToken?: unknown
+    deviceId?: unknown
+  },
+) {
+  if (getRemoteSyncStatus().connected)
+    throw new Error("Disconnect the current device before pairing again.")
+  const origin = persistentStore.get("sync.dataOrigin") as
+    { organizationId: string; siteId: string; remoteBaseUrl: string } | undefined
+  if (
+    origin &&
+    (origin.organizationId !== payload.organizationId ||
+      origin.siteId !== payload.siteId ||
+      origin.remoteBaseUrl !== remoteBaseUrl)
+  ) {
+    const response = await fetch(`${backendService.getUrl()}/attendance/export`, {
+      method: "POST",
+      headers: authHeaders(),
+      signal: AbortSignal.timeout(30000),
+    })
+    if (!response.ok) throw new Error("Could not verify the local directory before pairing.")
+    const data = (await response.json()) as Record<string, unknown[]>
+    if (["groups", "members", "records", "sessions"].some((key) => data[key]?.length)) {
+      await fetch(`${remoteBaseUrl}/api/device/unpair`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${payload.deviceToken}`,
+        },
+        body: JSON.stringify({ device_id: payload.deviceId }),
+        signal: AbortSignal.timeout(10000),
+      }).catch(() => undefined)
+      throw new Error(
+        "This local directory belongs to another Cloud location. Reconnect to its original location or use a separate local data profile.",
+      )
+    }
+  }
+  persistentStore.set("sync.dataOrigin", {
+    organizationId: payload.organizationId,
+    siteId: payload.siteId,
+    remoteBaseUrl,
+  })
 }
 
 // Cryptographic Constants
@@ -316,6 +367,8 @@ export function registerSyncHandlers() {
           }
         }
 
+        if (!payload) throw new Error("Invalid pairing response.")
+        await validatePairingDestination(remoteBaseUrl, payload)
         persistentStore.set("sync.remoteBaseUrl", remoteBaseUrl)
         persistentStore.set("sync.organizationId", String(payload?.organizationId ?? ""))
         persistentStore.set("sync.organizationName", String(payload?.organizationName ?? ""))
@@ -345,13 +398,11 @@ export function registerSyncHandlers() {
               assignCounts,
             )
           } else {
-            console.warn(
-              "[Sync] Failed to assign organization ID to offline records:",
-              assignResponse.status,
-            )
+            throw new Error(`Could not assign the local directory (HTTP ${assignResponse.status}).`)
           }
         } catch (assignError) {
-          console.warn("[Sync] Error calling assign-org-id backend route:", assignError)
+          persistentStore.set("sync.enabled", false)
+          throw assignError
         }
 
         syncManager.start({ skipCatchUp: true })
@@ -529,6 +580,7 @@ export function registerSyncHandlers() {
         }
 
         if (payload?.status === "approved" && payload.deviceToken) {
+          await validatePairingDestination(remoteBaseUrl, payload)
           persistentStore.set("sync.remoteBaseUrl", remoteBaseUrl)
           persistentStore.set("sync.organizationId", String(payload.organizationId ?? ""))
           persistentStore.set("sync.organizationName", String(payload.organizationName ?? ""))
@@ -545,13 +597,16 @@ export function registerSyncHandlers() {
 
           try {
             const assignUrl = `${backendService.getUrl()}/attendance/groups/assign-org-id`
-            await fetch(assignUrl, {
+            const assigned = await fetch(assignUrl, {
               method: "POST",
               headers: authHeaders({ "Content-Type": "application/json" }),
               signal: AbortSignal.timeout(10000),
             })
+            if (!assigned.ok)
+              throw new Error(`Could not assign the local directory (HTTP ${assigned.status}).`)
           } catch (assignError) {
-            console.warn("[Sync] Error calling assign-org-id:", assignError)
+            persistentStore.set("sync.enabled", false)
+            throw assignError
           }
 
           syncManager.start({ skipCatchUp: true })
@@ -583,7 +638,27 @@ export function registerSyncHandlers() {
   ipcMain.handle("sync:disconnect-device", async () => {
     const status = getRemoteSyncStatus()
     let warning: string | null = null
-
+    await syncManager.suspend()
+    try {
+      const local = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
+        method: "POST",
+        headers: authHeaders(),
+        signal: AbortSignal.timeout(10000),
+      })
+      if (!local.ok)
+        throw new Error(
+          `Could not disconnect the local database (HTTP ${local.status}). Your connection has been retained.`,
+        )
+    } catch (error) {
+      syncManager.start({ skipCatchUp: true })
+      throw error
+    }
+    if (status.connected)
+      persistentStore.set("sync.dataOrigin", {
+        organizationId: status.organizationId,
+        siteId: status.siteId,
+        remoteBaseUrl: status.remoteBaseUrl,
+      })
     if (status.connected) {
       try {
         const response = await fetch(`${status.remoteBaseUrl}/api/device/unpair`, {
@@ -607,20 +682,6 @@ export function registerSyncHandlers() {
       } catch (error) {
         warning = error instanceof Error ? error.message : "Remote disconnect failed."
       }
-    }
-
-    // Reset local database scope to global/offline mode
-    try {
-      const localUnpairRes = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
-        method: "POST",
-        headers: authHeaders({ "Content-Type": "application/json" }),
-        signal: AbortSignal.timeout(10000),
-      })
-      if (!localUnpairRes.ok) {
-        console.warn("[Sync] Failed to unpair local backend settings:", localUnpairRes.status)
-      }
-    } catch (localUnpairErr) {
-      console.warn("[Sync] Error calling local unpair endpoint:", localUnpairErr)
     }
 
     clearRemoteConnection()

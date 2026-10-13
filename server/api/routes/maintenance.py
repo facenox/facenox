@@ -159,222 +159,219 @@ async def purge_attendance_history(
         raise HTTPException(status_code=500, detail=f"Purge failed: {str(e)}")
 
 
+async def _accept_remote(
+    repo,
+    row,
+    revision: int,
+    acknowledged: Optional[int],
+    active: bool,
+    accepted: Optional[int] = None,
+) -> bool:
+    if revision < row.sync_revision:
+        return False
+    if row.sync_dirty and active:
+        if row.version != acknowledged:
+            # An earlier local version was accepted; retain the newer edit but
+            # advance its base only when this is exactly that acknowledged row.
+            if accepted == revision:
+                row.sync_revision = revision
+            return False
+        if acknowledged is not None and accepted != revision:
+            import json
+
+            fields = ("name", "group_id", "role", "email", "is_active", "settings")
+            await repo.add_audit_log(
+                action="SYNC_CONFLICT_RESOLVED",
+                target_type="directory",
+                target_id=getattr(row, "person_id", row.id),
+                details=json.dumps(
+                    {
+                        "resolution": "Cloud revision retained",
+                        "local": {
+                            key: getattr(row, key)
+                            for key in fields
+                            if hasattr(row, key)
+                        },
+                    }
+                ),
+            )
+    return True
+
+
 @router.post("/import-metadata", response_model=ImportMetadataResponse)
 async def import_metadata(
-    request: ImportMetadataRequest,
-    repo: AttendanceRepository = Depends(get_repository),
+    request: ImportMetadataRequest, repo: AttendanceRepository = Depends(get_repository)
 ):
-    """
-    Import metadata (groups and members) pulled from the cloud dashboard.
-    """
+    """Apply explicit Cloud revisions. A page is never a complete directory snapshot."""
+    repo.session.info["sync_import"] = True
     try:
-        groups_count = 0
+        groups_count = members_count = pruned_faces = 0
         for group in request.groups:
-            # Query without is_deleted filter to find soft-deleted groups too.
-            # Using repo.get_group() would miss deleted rows, causing a
-            # UNIQUE constraint violation on re-insert.
-            stmt = select(AttendanceGroup).where(
-                AttendanceGroup.id == group.id,
-                AttendanceGroup.organization_id == repo.organization_id,
+            query = repo._apply_org_scope(
+                select(AttendanceGroup).where(AttendanceGroup.id == group.id),
+                AttendanceGroup,
             )
-            result = await repo.session.execute(stmt)
-            existing_group = result.scalars().first()
-
-            remote_id = group.remote_id or group.id
-            group_settings = group.settings or {}
-            group_payload = {
-                "id": group.id,
+            existing = (await repo.session.execute(query)).scalar_one_or_none()
+            if existing and not await _accept_remote(
+                repo,
+                existing,
+                group.sync_revision,
+                request.acknowledged_groups.get(group.id),
+                group.is_active,
+                request.accepted_groups.get(group.id),
+            ):
+                continue
+            payload = {
                 "name": group.name,
+                "settings": group.settings or {},
                 "is_active": group.is_active,
-                "settings": group_settings,
-                "remote_id": remote_id,
             }
-            if group.created_at:
-                group_payload["created_at"] = group.created_at
-            if existing_group:
-                was_deleted = existing_group.is_deleted
-                is_active_val = group.is_active if group.is_active is not None else True
-                existing_group.name = group.name
-                existing_group.is_active = is_active_val
-                existing_group.is_deleted = not is_active_val
-                existing_group.remote_id = remote_id
-                existing_group.organization_id = repo.organization_id
-                settings = group.settings or {}
-                if "late_threshold_minutes" in settings:
-                    existing_group.late_threshold_minutes = settings[
-                        "late_threshold_minutes"
-                    ]
-                if "late_threshold_enabled" in settings:
-                    existing_group.late_threshold_enabled = settings[
-                        "late_threshold_enabled"
-                    ]
-                if "class_start_time" in settings:
-                    existing_group.class_start_time = settings["class_start_time"]
-                if "track_checkout" in settings:
-                    existing_group.track_checkout = settings["track_checkout"]
-
-                # Re-assert group rule when reviving to prevent stale
-                # attendance config (thresholds, class start time, etc.)
-                if was_deleted and is_active_val:
-                    await repo.add_group_rule(
-                        repo._group_rule_payload(
-                            existing_group.id,
-                            {
-                                "late_threshold_minutes": existing_group.late_threshold_minutes,
-                                "late_threshold_enabled": existing_group.late_threshold_enabled,
-                                "class_start_time": existing_group.class_start_time,
-                                "track_checkout": existing_group.track_checkout,
-                            },
-                        )
-                    )
+            if existing:
+                # The normal update path records effective-dated schedule changes,
+                # including class_end_time. Temporarily revive for its scoped lookup.
+                existing.is_deleted = False
+                await repo.update_group(group.id, payload)
             else:
-                await repo.create_group(group_payload)
+                existing = await repo.create_group(
+                    {**payload, "id": group.id, "created_at": group.created_at}
+                )
+            existing.is_deleted = not group.is_active
+            existing.is_active = group.is_active
+            existing.remote_id = group.remote_id or group.id
+            existing.sync_revision = group.sync_revision
+            existing.sync_dirty = False
             groups_count += 1
 
-        members_count = 0
         for member in request.members:
-            stmt = select(AttendanceMember).where(
-                AttendanceMember.person_id == member.person_id,
-                AttendanceMember.organization_id == repo.organization_id,
+            query = repo._apply_org_scope(
+                select(AttendanceMember).where(
+                    AttendanceMember.person_id == member.person_id
+                ),
+                AttendanceMember,
             )
-            result = await repo.session.execute(stmt)
-            existing_member = result.scalars().first()
-            remote_id = member.remote_id or member.person_id
-            is_active_val = member.is_active if member.is_active is not None else True
-
-            if is_active_val is False:
-                # Soft delete member locally and purge local biometric face data
-                if existing_member:
-                    await repo.remove_member(member.person_id)
+            existing = (await repo.session.execute(query)).scalar_one_or_none()
+            if existing and not await _accept_remote(
+                repo,
+                existing,
+                member.sync_revision,
+                request.acknowledged_members.get(member.person_id),
+                member.is_active,
+                request.accepted_members.get(member.person_id),
+            ):
                 continue
-
-            member_payload = {
+            if not member.is_active:
+                if existing:
+                    await repo.remove_member(member.person_id)
+                    existing.sync_revision = member.sync_revision
+                    existing.sync_dirty = False
+                continue
+            group_query = repo._apply_org_scope(
+                select(AttendanceGroup).where(AttendanceGroup.id == member.group_id),
+                AttendanceGroup,
+            )
+            group = (await repo.session.execute(group_query)).scalar_one_or_none()
+            if not group or not group.is_active or group.is_deleted:
+                continue  # Never revive a deleted group to satisfy an active member.
+            payload = {
                 "person_id": member.person_id,
                 "group_id": member.group_id,
                 "name": member.name,
                 "role": member.role,
                 "email": member.email,
-                "is_active": True,
-                "remote_id": remote_id,
+                "remote_id": member.remote_id or member.person_id,
             }
-            if member.id:
-                member_payload["id"] = member.id
-            if member.joined_at:
-                member_payload["joined_at"] = member.joined_at
-            if existing_member:
-                existing_member.is_deleted = False
-                existing_member.is_active = True
-                await repo.update_member(member.person_id, member_payload)
+            if existing:
+                existing.is_deleted = False
+                existing.is_active = True
+                await repo.update_member(member.person_id, payload)
             else:
-                # Ensure local group exists for SQLite FK constraints
-                # Query without is_deleted filter to catch soft-deleted rows
-                grp_stmt = select(AttendanceGroup).where(
-                    AttendanceGroup.id == member.group_id,
-                    AttendanceGroup.organization_id == repo.organization_id,
+                existing = await repo.add_member(
+                    {**payload, "joined_at": member.joined_at}
                 )
-                grp_result = await repo.session.execute(grp_stmt)
-                group_exists = grp_result.scalars().first()
-                if not group_exists:
-                    logger.warning(
-                        f"Group {member.group_id} not found locally for member {member.name}. Auto-creating Group."
-                    )
-                    await repo.create_group(
-                        {
-                            "id": member.group_id,
-                            "name": f"Group {member.group_id[:8]}",
-                            "is_active": True,
-                            "settings": {},
-                        }
-                    )
-                elif group_exists.is_deleted:
-                    group_exists.is_deleted = False
-                    group_exists.is_active = True
-                await repo.add_member(member_payload)
+            existing.sync_revision = member.sync_revision
+            existing.sync_dirty = False
             members_count += 1
 
-        pruned_faces = 0
-        erased_faces = 0
-
-        # Prune remote groups/members that were deleted from the cloud dashboard only if explicit prune_missing is requested.
-        # This prevents paginated page pulls from accidentally pruning other pages' members.
+        # Explicit removals cover transfers away from this site. Absence on a page
+        # carries no meaning. Legacy full-snapshot pruning must be opt-in.
+        group_ids = set(request.removed_group_ids)
+        member_ids = set(request.removed_member_ids)
         if request.prune_missing:
-            pulled_group_ids = {g.id for g in request.groups} | {
-                g.remote_id for g in request.groups if g.remote_id
-            }
-            if pulled_group_ids:
-                group_query = select(AttendanceGroup).where(
-                    AttendanceGroup.is_deleted.is_(False),
-                    AttendanceGroup.remote_id.isnot(None),
+            groups_query = repo._apply_org_scope(
+                select(AttendanceGroup).where(AttendanceGroup.remote_id.isnot(None)),
+                AttendanceGroup,
+            )
+            members_query = repo._apply_org_scope(
+                select(AttendanceMember).where(AttendanceMember.remote_id.isnot(None)),
+                AttendanceMember,
+            )
+            if request.groups:
+                group_ids.update(
+                    g.id
+                    for g in (await repo.session.execute(groups_query)).scalars()
+                    if g.id not in {x.id for x in request.groups}
                 )
-                group_query = repo._apply_org_scope(group_query, AttendanceGroup)
-                result = await repo.session.execute(group_query)
-                for g in result.scalars().all():
-                    if (
-                        g.id not in pulled_group_ids
-                        and g.remote_id not in pulled_group_ids
-                    ):
-                        await repo.delete_group(g.id)
-
-            pulled_member_ids = {m.person_id for m in request.members} | {
-                m.remote_id for m in request.members if m.remote_id
-            }
-            if pulled_member_ids:
-                member_query = select(AttendanceMember).where(
-                    AttendanceMember.is_deleted.is_(False),
-                    AttendanceMember.remote_id.isnot(None),
+            if request.members:
+                member_ids.update(
+                    m.person_id
+                    for m in (await repo.session.execute(members_query)).scalars()
+                    if m.person_id not in {x.person_id for x in request.members}
                 )
-                member_query = repo._apply_org_scope(member_query, AttendanceMember)
-                result = await repo.session.execute(member_query)
-                person_ids_to_prune = set()
-                for m in result.scalars().all():
-                    if (
-                        m.person_id not in pulled_member_ids
-                        and m.remote_id not in pulled_member_ids
-                    ):
-                        m.is_active = False
-                        m.is_deleted = True
-                        person_ids_to_prune.add(m.person_id)
-
-                if person_ids_to_prune:
-                    pids_list = list(person_ids_to_prune)
-                    chunk_size = 500
-                    for i in range(0, len(pids_list), chunk_size):
-                        chunk = pids_list[i : i + chunk_size]
-                        faces_to_prune = select(Face).where(
-                            Face.person_id.in_(chunk),
-                            Face.organization_id == repo.organization_id,
-                        )
-                        face_result = await repo.session.execute(faces_to_prune)
-                        for face in face_result.scalars().all():
-                            await repo.session.delete(face)
-                            pruned_faces += 1
-
+        for gid in group_ids:
+            group = await repo.get_group(gid)
+            if group and group.remote_id:
+                members = await repo.get_group_members(gid)
+                member_ids.update(m.person_id for m in members)
+                await repo.delete_group(gid)
+                group.sync_dirty = False
+        # Group tombstones also suppress pending member mutations/enrollments.
+        deleted_groups = {g.id for g in request.groups if not g.is_active} | group_ids
+        if deleted_groups:
+            q = repo._apply_org_scope(
+                select(AttendanceMember).where(
+                    AttendanceMember.group_id.in_(deleted_groups)
+                ),
+                AttendanceMember,
+            )
+            member_ids.update(
+                m.person_id for m in (await repo.session.execute(q)).scalars()
+            )
+        for pid in member_ids:
+            q = repo._apply_org_scope(
+                select(AttendanceMember).where(AttendanceMember.person_id == pid),
+                AttendanceMember,
+            )
+            member = (await repo.session.execute(q)).scalar_one_or_none()
+            if member and member.remote_id:
+                await repo.remove_member(pid)
+                member.sync_dirty = False
+        # Member removal has erased local bytes. Do not echo downloaded deletions.
+        deleted_members = {
+            m.person_id for m in request.members if not m.is_active
+        } | member_ids
+        if deleted_members:
+            q = repo._apply_org_scope(
+                select(Face).where(Face.person_id.in_(deleted_members)), Face
+            )
+            for face in (await repo.session.execute(q)).scalars():
+                face.embedding = b""
+                face.hash = None
+                face.is_deleted = True
+                face.sync_dirty = False
+                pruned_faces += 1
         await repo.session.commit()
-
-        # Update in-memory face recognizer cache just in case any active member list shifted
         from core.lifespan import face_recognizer
 
         if face_recognizer:
             await face_recognizer.refresh_cache(repo.organization_id)
-
-        await repo.add_audit_log(
-            action="METADATA_PULL_IMPORTED",
-            target_type="system",
-            target_id="cloud_sync",
-            details=f"Imported {groups_count} groups and {members_count} members from cloud dashboard metadata pull.",
-        )
-
         return ImportMetadataResponse(
             success=True,
             groups_count=groups_count,
             members_count=members_count,
             pruned_faces=pruned_faces,
-            erased_faces=erased_faces,
         )
-
-    except Exception as e:
-        logger.error(f"Error importing cloud metadata: {e}")
+    except Exception:
         await repo.session.rollback()
-        raise HTTPException(
-            status_code=500, detail=f"Import cloud metadata failed: {str(e)}"
-        )
+        raise
+    finally:
+        repo.session.info.pop("sync_import", None)

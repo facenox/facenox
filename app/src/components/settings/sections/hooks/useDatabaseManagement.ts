@@ -25,27 +25,6 @@ export function useDatabaseManagement(
   const { setGroupToDelete, setShowDeleteConfirmation, showDeleteConfirmation, groupToDelete } =
     useAttendanceStore()
 
-  const [isPaired, setIsPaired] = useState(false)
-
-  useEffect(() => {
-    if (!window.electronAPI?.sync) return
-
-    const fetchConfig = () => {
-      window.electronAPI.sync
-        .getConfig()
-        .then((c) => setIsPaired(c.connected))
-        .catch(console.error)
-    }
-
-    fetchConfig()
-
-    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
-      fetchConfig()
-    })
-
-    return unsubscribe
-  }, [])
-
   // Initialize with groups if available to prevent "No results found" flash
   const [groupsWithMembers, setGroupsWithMembers] = useState<GroupWithMembers[]>(() =>
     groups.map((g) => ({ ...g, members: [], isLoading: true })),
@@ -290,17 +269,6 @@ export function useDatabaseManagement(
 
   const handleDeleteGroup = useCallback(
     async (groupId: string) => {
-      if (isPaired) {
-        if (dialog) {
-          await dialog.alert({
-            title: "Cannot delete group",
-            message: "Member list is managed in Facenox Cloud. Disconnect to manage locally.",
-            variant: "default",
-          })
-        }
-        return
-      }
-
       const targetGroup = groups.find((group) => group.id === groupId)
       if (!targetGroup) {
         if (dialog) {
@@ -319,22 +287,11 @@ export function useDatabaseManagement(
       setShowDeleteConfirmation(true)
       setDeletingGroup(groupId)
     },
-    [groups, setGroupToDelete, setShowDeleteConfirmation, dialog, isPaired],
+    [groups, setGroupToDelete, setShowDeleteConfirmation, dialog],
   )
 
   const handleDeleteMember = useCallback(
     async (personId: string, memberName: string) => {
-      if (isPaired) {
-        if (dialog) {
-          await dialog.alert({
-            title: "Cannot delete member",
-            message: "Member list is managed in Facenox Cloud. Disconnect to manage locally.",
-            variant: "default",
-          })
-        }
-        return
-      }
-
       const confirmMessage = `Delete member "${memberName}"?\n\nThis cannot be undone.`
 
       if (dialog) {
@@ -386,22 +343,11 @@ export function useDatabaseManagement(
         setDeletingMember(null)
       }
     },
-    [dialog, isPaired],
+    [dialog],
   )
 
   const handleClearAllGroups = useCallback(
     async (skipConfirmation = false) => {
-      if (isPaired) {
-        if (dialog) {
-          await dialog.alert({
-            title: "Cannot delete groups",
-            message: "Member list is managed in Facenox Cloud. Disconnect to manage locally.",
-            variant: "default",
-          })
-        }
-        return
-      }
-
       const groupCount = groups.length
       const confirmMessage = `Delete ALL ${groupCount} groups and member profiles? This will permanently wipe out the entire local directory structure and soft-delete member accounts. This cannot be undone.`
 
@@ -428,7 +374,9 @@ export function useDatabaseManagement(
       setDeletingGroup("all")
       try {
         const deletePromises = groups.map((group) => attendanceManager.deleteGroup(group.id))
-        await Promise.all(deletePromises)
+        const results = await Promise.all(deletePromises)
+        if (results.some((success) => !success))
+          throw new Error("Some groups could not be deleted.")
 
         // Securely invalidate face recognition RAM cache to prevent biometric memory leaks
         await backendService.clearCache().catch(() => null)
@@ -456,7 +404,7 @@ export function useDatabaseManagement(
         setDeletingGroup(null)
       }
     },
-    [groups, onGroupsChanged, dialog, isPaired],
+    [groups, onGroupsChanged, dialog],
   )
 
   const [isPurgingHistory, setIsPurgingHistory] = useState(false)

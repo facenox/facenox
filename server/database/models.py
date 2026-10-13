@@ -12,8 +12,10 @@ from sqlalchemy import (
     Index,
     LargeBinary,
     text,
+    event,
+    inspect,
 )
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, Session
 from sqlalchemy.ext.asyncio import AsyncAttrs
 
 from config.models import FACE_DETECTOR_CONFIG
@@ -43,7 +45,13 @@ class SyncMixin(AsyncAttrs):
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
-class AttendanceGroup(Base, SyncMixin):
+class DirectorySyncState:
+    # Cloud revision last observed, independent of the local edit counter (version).
+    sync_revision: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    sync_dirty: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+
+
+class AttendanceGroup(Base, SyncMixin, DirectorySyncState):
     __tablename__ = "attendance_groups"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
@@ -81,7 +89,7 @@ class AttendanceGroup(Base, SyncMixin):
         }
 
 
-class AttendanceMember(Base, SyncMixin):
+class AttendanceMember(Base, SyncMixin, DirectorySyncState):
     __tablename__ = "attendance_members"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
@@ -252,7 +260,7 @@ class AttendanceSettings(Base, SyncMixin):
     )
 
 
-class Face(Base, SyncMixin):
+class Face(Base, SyncMixin, DirectorySyncState):
     __tablename__ = "faces"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
@@ -303,3 +311,32 @@ class AuditLog(Base):
         Index("ix_audit_timestamp", "timestamp"),
         Index("ix_audit_action", "action"),
     )
+
+
+# Track all ORM write paths, including enrollment and backup restore. Remote imports
+# suppress this listener within their transaction and set the acknowledged revision.
+_SYNC_FIELDS = {
+    AttendanceGroup: (
+        "name",
+        "is_active",
+        "is_deleted",
+        "late_threshold_minutes",
+        "late_threshold_enabled",
+        "class_start_time",
+        "class_end_time",
+        "track_checkout",
+    ),
+    AttendanceMember: ("name", "group_id", "role", "email", "is_active", "is_deleted"),
+    Face: ("embedding", "is_deleted"),
+}
+
+
+@event.listens_for(Session, "before_flush")
+def track_directory_edits(session, _flush_context, _instances):
+    if session.info.get("sync_import"):
+        return
+    for obj in session.dirty:
+        fields = _SYNC_FIELDS.get(type(obj))
+        if fields and any(inspect(obj).attrs[f].history.has_changes() for f in fields):
+            obj.sync_dirty = True
+            obj.version = (obj.version or 0) + 1

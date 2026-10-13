@@ -78,13 +78,14 @@ This path does not require internet access.
 1. An admin generates a pairing code in Facenox Cloud.
 2. The desktop app stores the cloud URL and redeems the pairing code.
 3. The desktop receives an organization ID, site ID, device ID, and device token.
-4. The desktop exports a local attendance snapshot.
+4. The desktop exports a local directory and attendance snapshot.
 5. The Electron sync manager wraps that export in a sync envelope and sends it to `POST /api/sync/push`.
-6. After a successful push, the sync manager automatically pulls metadata (groups and members) from `GET /api/sync/pull` and imports them locally via `POST /attendance/import-metadata`.
+6. Push synchronizes dirty local groups, members, attendance, and biometric deletion markers with Cloud under revision control.
+7. Next, the sync manager pulls Cloud updates from `GET /api/sync/pull` and imports them locally via `POST /attendance/import-metadata`. Even if push fails (e.g. quota limits), pulls continue so Cloud updates remain accessible.
 
 The desktop remains the system of record for biometrics and local attendance capture.
 
-When paired with Facenox Cloud, member and group directory authority shifts to the cloud control plane. Desktop member/group mutations are blocked by the backend (HTTP 403). Groups and members flow one way: Cloud → Desktop via pull. Attendance records and sessions are pushed Desktop → Cloud.
+Local directory management (creating, editing, and deleting groups/members) is fully supported while paired. Edits are revisioned: local changes are marked dirty and pushed to Cloud along with acknowledged revisions. Cloud updates advance revisions and are applied locally without overwriting in-flight local modifications.
 
 When multiple devices are paired to the same site, encrypted face templates can sync between them. Templates are encrypted before leaving the device and decrypted on destination devices in the same organization. Facenox Cloud stores these encrypted blobs in the database to sync them.
 
@@ -107,20 +108,20 @@ The cloud boundary is intentionally narrow.
 
 ### Data that is sent for reporting and directory sync
 
-- group and member metadata (needed for member/group management)
+- group and member metadata (revision-tracked, pushed when modified locally)
 - attendance records and sessions (needed for reporting)
-
-Groups and members are not sent to Cloud via push. They are pulled from Cloud to Desktop via `import-metadata` after each push.
+- face enrollment tombstones (explicit deletion markers to ensure biometrics erasure across devices)
 
 ## Sync Model
 
 The sync design is event-driven and resilient.
 
-- push-then-pull: desktop pushes attendance snapshots, then pulls groups and members metadata from cloud
-- snapshot-based push with real-time event stream: attendance data is pushed as snapshots; the desktop also maintains an SSE connection (`/api/sync/events`) for real-time sync triggers (`POLICY_UPDATE`, `MEMBERS_UPDATE`, `SYNC_REQUEST`)
-- member/group flow is one-way: Cloud → Desktop. After each push, `import-metadata` upserts incoming groups/members and prunes any local group or member with a `remote_id` that no longer exists in the pull response
-- when paired, Desktop member/group mutations are blocked by the local backend (HTTP 403). The Desktop Kiosk UI hides member/group mutation buttons when paired.
-- auto-sync available in the desktop app
+- push-and-pull sync: desktop pushes dirty directory changes and attendance snapshots, then pulls Cloud revisions and updates
+- decoupled download: pull operations proceed even if a push fails (such as on member quota limits), ensuring device rosters stay synchronized
+- real-time triggers: the desktop receives sync notifications; remote notifications trigger a pull-only cycle to avoid cross-device ping-pong feedback loops
+- revisioned directory sync: groups and members track monotonic revisions (`sync_revision`) and dirty markers (`sync_dirty`). Absence on a page never prunes records; deletions and transfers are conveyed via explicit tombstones
+- local-first control: member and group mutations are executed locally in SQLite first, and propagated during sync with conflict detection
+- auto-sync available in the desktop app (defaulting to 15-minute intervals, plus debounced triggers on local edits)
 - manual `Sync Now` available as an override
 - initial sync runs immediately after pairing
 - catch-up sync runs on startup when the device is overdue
@@ -132,7 +133,6 @@ If Cloud Sync fails, local attendance continues uninterrupted.
 This repository does not implement:
 
 - Remote-side face matching
-- two-way sync for members or attendance edits (member/group sync is intentionally one-way: Cloud → Desktop)
 - payroll or HRIS integrations
 - mobile clients
 
