@@ -344,22 +344,32 @@ export function DataStorage({
                 ]}
                 side="right"
               />
-              {timeHealthState.loading ?
-                <span className="inline-flex items-center gap-1.5 text-[12px] text-white/40">
-                  <i className="fa-solid fa-circle-notch fa-spin text-[10px]" />
-                  Checking time...
+              {timeHealthStatus === "drift_detected" && (
+                <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-amber-400/90">
+                  <i className="fa-solid fa-triangle-exclamation text-[11px]" />
+                  Drift warning
                 </span>
-              : timeHealthStatus === "verified" ?
-                <span className="text-[12px] font-medium text-emerald-400">Synced</span>
-              : timeHealthStatus === "drift_detected" ?
-                <span className="text-[12px] text-amber-400/80">Drift warning</span>
-              : timeHealthStatus === "offline" ?
-                <span className="text-[12px] text-white/40">Cannot verify</span>
-              : <span className="text-[12px] text-white/40">Status unavailable</span>}
+              )}
             </div>
             <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">{timeHealthDetails}</p>
             <div className="mt-4 flex items-center gap-2 font-mono text-[11px] tracking-tight text-white/55">
-              <i className="fa-solid fa-microchip opacity-50" />
+              {timeHealthState.loading ?
+                <i className="fa-solid fa-circle-notch fa-spin text-[11px] text-white/40" />
+              : timeHealthStatus === "verified" ?
+                <i
+                  title="System clock verified"
+                  className="fa-solid fa-check -translate-y-0.5 text-[11px] text-emerald-400"
+                />
+              : timeHealthStatus === "drift_detected" ?
+                <i
+                  title="Device clock out of sync"
+                  className="fa-solid fa-triangle-exclamation text-[12px] text-amber-400"
+                />
+              : <i
+                  title="Status unavailable"
+                  className="fa-solid fa-circle-question text-[12px] text-white/40"
+                />
+              }
               <span>
                 {timeHealthState.loading ?
                   "Checking..."
