@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { backendService, attendanceManager, persistentSettings } from "@/services"
+import { notifyDataChanged } from "@/utils/syncNotifier"
 import { useDialog } from "@/components/shared"
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { useUIStore, useAttendanceStore } from "@/components/main/stores"
@@ -226,6 +227,7 @@ export const useSettings = ({
     setIsLoading(true)
     try {
       await backendService.clearDatabase()
+      notifyDataChanged()
       await loadSystemData()
       await dialog.alert({
         title: "Database cleared",

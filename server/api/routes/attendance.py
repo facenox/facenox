@@ -122,6 +122,13 @@ async def export_attendance_data(
         )
         sessions_orm = sessions_result.scalars().all()
 
+        serialized_groups = []
+        for g in groups_orm:
+            group_resp = AttendanceGroupResponse.model_validate(g, from_attributes=True)
+            if g.is_deleted:
+                group_resp.is_active = False
+            serialized_groups.append(group_resp)
+
         serialized_members = []
         for m in members_orm:
             member_resp = AttendanceMemberResponse.model_validate(
@@ -132,10 +139,7 @@ async def export_attendance_data(
             serialized_members.append(member_resp)
 
         return ExportDataResponse(
-            groups=[
-                AttendanceGroupResponse.model_validate(g, from_attributes=True)
-                for g in groups_orm
-            ],
+            groups=serialized_groups,
             group_rules=[
                 AttendanceGroupRuleResponse.model_validate(r, from_attributes=True)
                 for r in group_rules_orm

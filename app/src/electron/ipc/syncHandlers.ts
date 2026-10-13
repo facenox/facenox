@@ -819,6 +819,7 @@ export function registerSyncHandlers() {
         }
 
         const result = (await importRes.json()) as { message?: string }
+        syncManager.triggerDebouncedSync(1000)
         return { success: true, message: result.message }
       } catch (error) {
         console.error("[Backup] Import failed:", error)
