@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { AttendanceSettings } from "@/components/settings/types"
-import { InfoPopover, Switch } from "@/components/shared"
+import { InfoPopover, Switch, Tooltip } from "@/components/shared"
 import { useUIStore } from "@/components/main/stores"
 
 interface AttendanceProps {
@@ -42,35 +42,101 @@ export function Attendance({
 }: AttendanceProps) {
   const adminPinEnabled = useUIStore((state) => state.adminPinEnabled)
   const setAdminPinSettings = useUIStore((state) => state.setAdminPinSettings)
+  const recoveryKey = useUIStore((state) => state.recoveryKey)
+  const regenerateRecoveryKey = useUIStore((state) => state.regenerateRecoveryKey)
 
-  const [pinValue, setPinValue] = useState("")
-  const [confirmPinValue, setConfirmPinValue] = useState("")
+  const [pinInput, setPinInput] = useState("")
+  const [firstPin, setFirstPin] = useState("")
+  const [pinStep, setPinStep] = useState<"enter" | "confirm">("enter")
   const [showPin, setShowPin] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const [pinMismatch, setPinMismatch] = useState(false)
+  const [isShaking, setIsShaking] = useState(false)
+  const [copiedKey, setCopiedKey] = useState(false)
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false)
 
-  const isWeakPin = pinValue.length === 4 && WEAK_PINS.has(pinValue)
+  const isWeakPin = pinStep === "enter" && pinInput.length === 4 && WEAK_PINS.has(pinInput)
 
-  // Keep pin inputs clear — don't pre-fill from store (avoids showing current PIN)
-  // Only sync on mount if pin panel is freshly opened
+  // Auto-reset confirmation state after 4 seconds
   useEffect(() => {
-    setPinValue("")
-    setConfirmPinValue("")
-    setPinMismatch(false)
-  }, [adminPinEnabled])
+    if (!confirmRegenerate) return
+    const timer = setTimeout(() => setConfirmRegenerate(false), 4000)
+    return () => clearTimeout(timer)
+  }, [confirmRegenerate])
 
-  const handleSavePin = () => {
-    if (pinValue.length !== 4 || confirmPinValue.length !== 4) return
-    if (pinValue !== confirmPinValue) {
-      setPinMismatch(true)
-      setTimeout(() => setPinMismatch(false), 2000)
+  const handleCopyRecoveryKey = async () => {
+    if (!recoveryKey) return
+    try {
+      await navigator.clipboard.writeText(recoveryKey)
+      setCopiedKey(true)
+      setTimeout(() => setCopiedKey(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy recovery key:", err)
+    }
+  }
+
+  const handleRegenerateKey = () => {
+    if (!confirmRegenerate) {
+      setConfirmRegenerate(true)
       return
     }
-    setAdminPinSettings({ adminPin: pinValue })
-    setIsSaved(true)
-    setPinValue("")
-    setConfirmPinValue("")
-    setTimeout(() => setIsSaved(false), 2500)
+    regenerateRecoveryKey()
+    setConfirmRegenerate(false)
+  }
+
+  // Clear pin inputs when panel toggles
+  useEffect(() => {
+    setPinInput("")
+    setFirstPin("")
+    setPinStep("enter")
+    setPinMismatch(false)
+    setIsShaking(false)
+  }, [adminPinEnabled])
+
+  const handlePinInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").slice(0, 4)
+    setPinInput(value)
+
+    if (pinStep === "enter") {
+      if (value.length === 4) {
+        setTimeout(() => {
+          setFirstPin(value)
+          setPinStep("confirm")
+          setPinInput("")
+        }, 160)
+      }
+    } else if (pinStep === "confirm") {
+      if (value.length === 4) {
+        setTimeout(() => {
+          if (value === firstPin) {
+            // Success: Match! Auto-save
+            setAdminPinSettings({ adminPin: value })
+            setIsSaved(true)
+            setPinStep("enter")
+            setFirstPin("")
+            setPinInput("")
+            setTimeout(() => setIsSaved(false), 2500)
+          } else {
+            // Mismatch: Shake & revert to enter step
+            setIsShaking(true)
+            setPinMismatch(true)
+            setTimeout(() => {
+              setIsShaking(false)
+              setPinStep("enter")
+              setFirstPin("")
+              setPinInput("")
+            }, 600)
+            setTimeout(() => setPinMismatch(false), 2500)
+          }
+        }, 150)
+      }
+    }
+  }
+
+  const handleCancelConfirm = () => {
+    setPinStep("enter")
+    setFirstPin("")
+    setPinInput("")
   }
 
   const allowedChoices = [1, 2, 5, 10, 15, 20] as const
@@ -456,122 +522,172 @@ export function Attendance({
                   transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
                   className="overflow-hidden">
                   <div className="flex flex-col pb-1">
-                    {/* Status/hint row — indented with full-height vertical spine */}
-                    <div className="relative min-h-[18px] pb-2.5 pl-4">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 border-l border-white/10" />
-                      <AnimatePresence mode="wait">
-                        {isSaved ?
-                          <motion.div
-                            key="saved"
-                            initial={{ opacity: 0, y: -2 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 2 }}
-                            transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                            className="flex items-center text-[11px] font-medium text-cyan-400">
-                            <i className="fa-solid fa-circle-check mr-1 text-[10px]" />
-                            PIN updated successfully
-                          </motion.div>
-                        : pinMismatch ?
-                          <motion.div
-                            key="mismatch"
-                            initial={{ opacity: 0, y: -2 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 2 }}
-                            transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                            className="flex items-center text-[11px] font-medium text-rose-400">
-                            <i className="fa-solid fa-circle-exclamation mr-1 text-[10px]" />
-                            PINs do not match. Try again.
-                          </motion.div>
-                        : isWeakPin ?
-                          <motion.div
-                            key="weak"
-                            initial={{ opacity: 0, y: -2 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 2 }}
-                            transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                            className="flex items-center text-[11px] font-medium text-amber-400">
-                            <i className="fa-solid fa-triangle-exclamation mr-1 text-[10px]" />
-                            Weak PIN. Consider using a less common code.
-                          </motion.div>
-                        : <motion.div
-                            key="default"
-                            initial={{ opacity: 0, y: -2 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 2 }}
-                            transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                            className="text-[11px] text-white/50">
-                            Set a new 4-digit PIN. Current PIN is not shown.
-                          </motion.div>
-                        }
-                      </AnimatePresence>
-                    </div>
-
-                    {/* New PIN — ├─ connector (vertical continues past this row) */}
-                    <div className="relative flex flex-wrap items-center justify-between gap-3 py-1.5 pl-4">
+                    {/* Single 2-Step PIN Row — ├─ connector */}
+                    <div className="relative flex flex-wrap items-center justify-between gap-3 py-2 pl-4">
                       <div className="pointer-events-none absolute inset-y-0 left-0 border-l border-white/10" />
                       <div className="pointer-events-none absolute top-1/2 left-0 w-3 border-b border-white/10" />
-                      <div className="text-xs font-medium text-white/80">New PIN:</div>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setShowPin(!showPin)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/5 hover:text-white"
-                          aria-label={showPin ? "Hide PIN" : "Show PIN"}>
-                          <i
-                            className={`fa-solid ${showPin ? "fa-eye-slash" : "fa-eye"} text-xs`}
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs font-medium text-white/80">
+                          {pinStep === "confirm" ? "Confirm PIN:" : "New PIN:"}
+                        </div>
+                        {pinStep === "confirm" && (
+                          <button
+                            type="button"
+                            onClick={handleCancelConfirm}
+                            className="text-[10px] text-white/40 underline transition-colors hover:text-white/70"
+                            title="Cancel and enter a different PIN">
+                            Change
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {/* Inline status & micro-feedback right beside the input */}
+                        <AnimatePresence mode="wait">
+                          {isSaved ?
+                            <motion.div
+                              key="saved"
+                              initial={{ opacity: 0, x: 4 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className="flex items-center text-[11px] font-medium text-cyan-400">
+                              <i className="fa-solid fa-circle-check mr-1 text-[10px]" />
+                              PIN updated
+                            </motion.div>
+                          : pinMismatch ?
+                            <motion.div
+                              key="mismatch"
+                              initial={{ opacity: 0, x: 4 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className="flex items-center text-[11px] font-medium text-rose-400">
+                              <i className="fa-solid fa-circle-exclamation mr-1 text-[10px]" />
+                              PINs do not match
+                            </motion.div>
+                          : pinStep === "confirm" ?
+                            <motion.div
+                              key="confirm"
+                              initial={{ opacity: 0, x: 4 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className="flex items-center text-[11px] font-medium text-cyan-300">
+                              <i className="fa-solid fa-arrow-rotate-right mr-1 text-[10px]" />
+                              Re-enter to confirm
+                            </motion.div>
+                          : isWeakPin ?
+                            <motion.div
+                              key="weak"
+                              initial={{ opacity: 0, x: 4 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className="flex items-center text-[11px] font-medium text-amber-400">
+                              <i className="fa-solid fa-triangle-exclamation mr-1 text-[10px]" />
+                              Weak PIN
+                            </motion.div>
+                          : null}
+                        </AnimatePresence>
+
+                        <Tooltip content={showPin ? "Hide PIN" : "Show PIN"} position="top">
+                          <button
+                            type="button"
+                            onClick={() => setShowPin(!showPin)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/5 hover:text-white"
+                            aria-label={showPin ? "Hide PIN" : "Show PIN"}>
+                            <i
+                              className={`fa-solid ${showPin ? "fa-eye-slash" : "fa-eye"} text-xs`}
+                            />
+                          </button>
+                        </Tooltip>
+                        <motion.div
+                          animate={isShaking ? { x: [-6, 6, -4, 4, -2, 2, 0] } : {}}
+                          transition={{ duration: 0.35 }}>
+                          <input
+                            type={showPin ? "text" : "password"}
+                            inputMode="numeric"
+                            maxLength={4}
+                            value={pinInput}
+                            onChange={handlePinInputChange}
+                            placeholder="••••"
+                            aria-label={
+                              pinStep === "confirm" ? "Confirm 4-digit PIN" : (
+                                "New 4-digit Administrator PIN"
+                              )
+                            }
+                            className={`w-20 rounded-lg border bg-[rgba(22,28,36,0.68)] px-2.5 py-1.5 text-center text-xs font-bold tracking-widest text-white transition-all outline-none ${
+                              pinMismatch ? "border-rose-500/60 focus:border-rose-500/80"
+                              : pinStep === "confirm" ?
+                                "border-cyan-500/60 focus:border-cyan-400 focus:bg-cyan-500/[0.04]"
+                              : "border-white/10 focus:border-cyan-500/60 focus:bg-cyan-500/[0.03]"
+                            }`}
                           />
-                        </button>
-                        <input
-                          type={showPin ? "text" : "password"}
-                          inputMode="numeric"
-                          maxLength={4}
-                          value={pinValue}
-                          onChange={(e) =>
-                            setPinValue(e.target.value.replace(/\D/g, "").slice(0, 4))
-                          }
-                          placeholder="••••"
-                          aria-label="New 4-digit Administrator PIN"
-                          className="w-20 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2.5 py-1.5 text-center text-xs font-bold tracking-widest text-white transition-all outline-none focus:border-cyan-500/60 focus:bg-cyan-500/[0.03]"
-                        />
+                        </motion.div>
                       </div>
                     </div>
 
-                    {/* Confirm PIN — └─ connector (last item, vertical ends here) */}
-                    <div className="relative flex flex-wrap items-center justify-between gap-3 py-1.5 pl-4">
+                    {/* Recovery Key — └─ connector (last item, spine ends here) */}
+                    <div className="relative flex flex-wrap items-center justify-between gap-3 py-2 pl-4">
                       <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
-                      <div className="text-xs font-medium text-white/80">Confirm PIN:</div>
                       <div className="flex items-center gap-1.5">
-                        <div className="h-8 w-8" />
-                        <input
-                          type={showPin ? "text" : "password"}
-                          inputMode="numeric"
-                          maxLength={4}
-                          value={confirmPinValue}
-                          onChange={(e) =>
-                            setConfirmPinValue(e.target.value.replace(/\D/g, "").slice(0, 4))
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSavePin()
-                          }}
-                          placeholder="••••"
-                          aria-label="Confirm 4-digit Administrator PIN"
-                          className={`w-20 rounded-lg border bg-[rgba(22,28,36,0.68)] px-2.5 py-1.5 text-center text-xs font-bold tracking-widest text-white transition-all outline-none ${
-                            pinMismatch ?
-                              "border-rose-500/60 focus:border-rose-500/80"
-                            : "border-white/10 focus:border-cyan-500/60 focus:bg-cyan-500/[0.03]"
-                          }`}
+                        <div className="text-xs font-medium text-white/80">Recovery Key:</div>
+                        <InfoPopover
+                          title="Recovery Key"
+                          description="Restores administrator access and resets the PIN if forgotten."
+                          details={[
+                            "Used to unlock settings or reset credentials during emergency recovery.",
+                            "Keep this key secure. Anyone with this key can bypass the administrator lock.",
+                            ...(isPaired ?
+                              [
+                                "Remote reset is also available from your Facenox Cloud dashboard when paired.",
+                              ]
+                            : [
+                                "Keep an offline backup of this key as remote reset is unavailable when disconnected.",
+                              ]),
+                          ]}
+                          side="right"
                         />
                       </div>
-                    </div>
 
-                    <div className="flex justify-end pt-2">
-                      <button
-                        type="button"
-                        onClick={handleSavePin}
-                        disabled={pinValue.length !== 4 || confirmPinValue.length !== 4}
-                        className="rounded-lg bg-cyan-600 px-4 py-1.5 text-[11px] font-bold text-white transition-all duration-150 hover:bg-cyan-500 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
-                        Save PIN
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold tracking-wider text-amber-300/90 select-all">
+                          {recoveryKey || "—"}
+                        </span>
+
+                        <Tooltip content={copiedKey ? "Copied!" : "Copy key"} position="top">
+                          <button
+                            type="button"
+                            onClick={handleCopyRecoveryKey}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/5 hover:text-white"
+                            aria-label="Copy Recovery Key">
+                            <i
+                              className={`fa-solid ${copiedKey ? "fa-check text-cyan-400" : "fa-copy"} text-xs`}
+                            />
+                          </button>
+                        </Tooltip>
+
+                        <Tooltip
+                          content={
+                            confirmRegenerate ? "Click to confirm regenerate" : "Regenerate key"
+                          }
+                          position="top">
+                          <button
+                            type="button"
+                            onClick={handleRegenerateKey}
+                            className={`flex h-7 items-center justify-center rounded-lg transition-colors ${
+                              confirmRegenerate ?
+                                "bg-amber-500/15 px-2 text-[11px] font-semibold text-amber-300 hover:bg-amber-500/25"
+                              : "w-7 text-white/45 hover:bg-white/5 hover:text-white"
+                            }`}
+                            aria-label="Regenerate Recovery Key">
+                            <i
+                              className={`fa-solid fa-arrows-rotate text-xs ${confirmRegenerate ? "mr-1 animate-spin text-amber-300" : ""}`}
+                            />
+                            {confirmRegenerate && "Confirm?"}
+                          </button>
+                        </Tooltip>
+                      </div>
                     </div>
                   </div>
                 </motion.div>

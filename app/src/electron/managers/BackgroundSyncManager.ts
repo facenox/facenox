@@ -552,6 +552,28 @@ export class BackgroundSyncManager {
           break
         }
 
+        case "RESET_PIN": {
+          console.warn(
+            "[RemoteMgmt] REMOTE PIN RESET RECEIVED. Resetting admin PIN and unlocking kiosk.",
+          )
+          const security = (persistentStore.get("security") as Record<string, unknown>) || {}
+          persistentStore.set("security", {
+            ...security,
+            adminPin: "1234",
+            adminPinEnabled: false,
+            lockoutUntil: 0,
+            failedAttempts: 0,
+          })
+          state.mainWindow?.webContents.send("security:pin-reset", {
+            adminPin: "1234",
+            adminPinEnabled: false,
+          })
+          result = {
+            message: "PIN reset to default (1234) and lock disabled successfully.",
+          }
+          break
+        }
+
         default:
           console.warn(`[RemoteMgmt] Unknown command: ${cmd.command}`)
           status = "failed"

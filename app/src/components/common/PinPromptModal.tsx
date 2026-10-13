@@ -3,25 +3,17 @@ import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { useUIStore } from "@/components/main/stores"
 import { ModalCloseButton } from "@/components/common/ModalCloseButton"
-
-const LOCKOUT_SCHEDULE: [number, number][] = [
-  [3, 30],
-  [5, 120],
-]
-
-function getLockoutSeconds(attempts: number): number {
-  let seconds = 0
-  for (const [threshold, secs] of LOCKOUT_SCHEDULE) {
-    if (attempts >= threshold) seconds = secs
-  }
-  return seconds
-}
+import { useCloudSyncStatus } from "@/components/common/useCloudSyncStatus"
 
 export function PinPromptModal() {
   const isPinPromptOpen = useUIStore((state) => state.isPinPromptOpen)
   const closePinPrompt = useUIStore((state) => state.closePinPrompt)
   const verifyPin = useUIStore((state) => state.verifyPin)
-  const setAdminPinSettings = useUIStore((state) => state.setAdminPinSettings)
+  const verifyRecoveryKey = useUIStore((state) => state.verifyRecoveryKey)
+  const pinLockoutUntil = useUIStore((state) => state.pinLockoutUntil)
+  const pinFailedAttempts = useUIStore((state) => state.pinFailedAttempts)
+
+  const { isPaired, organizationName } = useCloudSyncStatus()
 
   const [pin, setPin] = useState("")
   const [error, setError] = useState(false)
@@ -30,7 +22,10 @@ export function PinPromptModal() {
   const [resetConfirmInput, setResetConfirmInput] = useState("")
   const [resetError, setResetError] = useState(false)
 
-  const [failedAttempts, setFailedAttempts] = useState(0)
+  const calculateRemaining = useCallback(() => {
+    return Math.max(0, Math.ceil((pinLockoutUntil - Date.now()) / 1000))
+  }, [pinLockoutUntil])
+
   const [lockoutSeconds, setLockoutSeconds] = useState(0)
   const lockoutTimerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -46,29 +41,26 @@ export function PinPromptModal() {
       setShowEmergencyReset(false)
       setResetConfirmInput("")
       setResetError(false)
+      setLockoutSeconds(calculateRemaining())
     } else {
       if (lockoutTimerRef.current) clearInterval(lockoutTimerRef.current)
-      setLockoutSeconds(0)
-      setFailedAttempts(0)
     }
-  }, [isPinPromptOpen])
+  }, [isPinPromptOpen, calculateRemaining])
 
   useEffect(() => {
     if (lockoutSeconds <= 0) return
     if (lockoutTimerRef.current) clearInterval(lockoutTimerRef.current)
     lockoutTimerRef.current = setInterval(() => {
-      setLockoutSeconds((prev) => {
-        if (prev <= 1) {
-          if (lockoutTimerRef.current) clearInterval(lockoutTimerRef.current)
-          return 0
-        }
-        return prev - 1
-      })
+      const remaining = calculateRemaining()
+      setLockoutSeconds(remaining)
+      if (remaining <= 0) {
+        if (lockoutTimerRef.current) clearInterval(lockoutTimerRef.current)
+      }
     }, 1000)
     return () => {
       if (lockoutTimerRef.current) clearInterval(lockoutTimerRef.current)
     }
-  }, [lockoutSeconds])
+  }, [lockoutSeconds, calculateRemaining])
 
   const handleWrongPin = useCallback(() => {
     setError(true)
@@ -77,13 +69,11 @@ export function PinPromptModal() {
       setIsShaking(false)
       setPin("")
     }, 600)
-    setFailedAttempts((prev) => {
-      const next = prev + 1
-      const secs = getLockoutSeconds(next)
-      if (secs > 0) setLockoutSeconds(secs)
-      return next
-    })
-  }, [])
+    const remaining = calculateRemaining()
+    if (remaining > 0) {
+      setLockoutSeconds(remaining)
+    }
+  }, [calculateRemaining])
 
   const handleDigit = useCallback(
     (digit: string) => {
@@ -185,13 +175,13 @@ export function PinPromptModal() {
   }
 
   const handleEmergencyResetSubmit = () => {
-    if (resetConfirmInput.trim().toUpperCase() === "RESET") {
-      setAdminPinSettings({ adminPin: "1234", adminPinEnabled: false })
-      setFailedAttempts(0)
-      setLockoutSeconds(0)
-      if (lockoutTimerRef.current) clearInterval(lockoutTimerRef.current)
-      verifyPin("1234")
+    const success = verifyRecoveryKey(resetConfirmInput)
+    if (success) {
       setShowEmergencyReset(false)
+      setResetConfirmInput("")
+      setResetError(false)
+      if (lockoutTimerRef.current) clearInterval(lockoutTimerRef.current)
+      setLockoutSeconds(0)
     } else {
       setResetError(true)
       setTimeout(() => setResetError(false), 2000)
@@ -221,23 +211,45 @@ export function PinPromptModal() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96, y: 8 }}
                 transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
-                className="relative z-10 flex w-full max-w-[340px] flex-col rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] p-5 shadow-2xl backdrop-blur-2xl">
+                className="relative z-10 flex w-full max-w-[360px] flex-col rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] p-5 shadow-2xl backdrop-blur-2xl">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    <i className="fa-solid fa-triangle-exclamation text-sm text-amber-400" />
+                    <i
+                      className={`fa-solid ${
+                        isPaired ? "fa-cloud text-cyan-400" : "fa-key text-amber-400"
+                      } text-sm`}
+                    />
                     <div>
                       <h3 className="text-base font-semibold tracking-tight text-white">
-                        Emergency PIN Reset
+                        Emergency Recovery
                       </h3>
-                      <p className="mt-0.5 text-xs text-white/50">Restore default PIN (1234)</p>
+                      <p className="mt-0.5 text-xs text-white/50">
+                        {isPaired && organizationName ?
+                          `Managed by ${organizationName}`
+                        : "Restore default PIN (1234)"}
+                      </p>
                     </div>
                   </div>
                   <ModalCloseButton onClick={() => setShowEmergencyReset(false)} />
                 </div>
 
-                <p className="mt-4 text-xs leading-relaxed text-white/60">
-                  Type <span className="font-bold text-amber-400">RESET</span> below to disable
-                  Admin Lock and restore the default PIN (1234).
+                {isPaired && (
+                  <div className="mt-3.5 rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-2.5 text-left text-[11px] leading-relaxed text-cyan-200/80">
+                    <div className="flex items-center gap-1.5 font-semibold text-cyan-300">
+                      <i className="fa-solid fa-circle-info text-[10px]" />
+                      <span>Cloud Managed Device</span>
+                    </div>
+                    <p className="mt-1 text-white/60">
+                      Org administrators can also reset this device remotely from the Facenox Cloud
+                      dashboard.
+                    </p>
+                  </div>
+                )}
+
+                <p className="mt-3 text-xs leading-relaxed text-white/60">
+                  Enter your 8-character{" "}
+                  <span className="font-semibold text-amber-400">Master Recovery Key</span>{" "}
+                  configured in Settings to reset the PIN.
                 </p>
 
                 <input
@@ -248,9 +260,10 @@ export function PinPromptModal() {
                     if (e.key === "Enter") handleEmergencyResetSubmit()
                     if (e.key === "Escape") setShowEmergencyReset(false)
                   }}
-                  placeholder="RESET"
+                  placeholder="XXXX-XXXX"
                   autoFocus
-                  className="mt-3 w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2.5 text-center text-xs font-bold tracking-widest text-white transition-all outline-none placeholder:text-white/20 focus:border-amber-400/60 focus:bg-[rgba(28,35,44,0.82)]"
+                  maxLength={16}
+                  className="mt-3 w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-2.5 text-center font-mono text-sm font-bold tracking-widest text-amber-300 transition-all outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-white/20 focus:border-amber-400/60 focus:bg-[rgba(28,35,44,0.82)]"
                 />
 
                 <div className="flex min-h-5 items-center justify-center">
@@ -263,7 +276,7 @@ export function PinPromptModal() {
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.14 }}
                         className="mt-1 text-center text-[11px] font-medium text-rose-400">
-                        Type RESET to confirm.
+                        Invalid Master Recovery Key.
                       </motion.span>
                     )}
                   </AnimatePresence>
@@ -279,9 +292,9 @@ export function PinPromptModal() {
                   <button
                     type="button"
                     onClick={handleEmergencyResetSubmit}
-                    disabled={resetConfirmInput.trim().toUpperCase() !== "RESET"}
+                    disabled={resetConfirmInput.trim().length < 4}
                     className="flex-1 rounded-lg bg-amber-500 py-2 text-[11px] font-bold text-slate-950 transition-all duration-200 hover:bg-amber-400 active:scale-[0.97] disabled:opacity-30">
-                    Reset PIN
+                    Verify & Reset
                   </button>
                 </div>
               </motion.div>
@@ -375,7 +388,7 @@ export function PinPromptModal() {
                         exit={{ opacity: 0, y: -4 }}
                         className="flex items-center gap-1.5 text-[11px] font-medium text-rose-400">
                         <i className="fa-solid fa-circle-exclamation text-[10px]" /> Incorrect PIN.
-                        {failedAttempts >= 2 && failedAttempts < 3 ?
+                        {pinFailedAttempts >= 2 && pinFailedAttempts < 3 ?
                           " 1 attempt before lockout."
                         : " Try again."}
                       </motion.span>

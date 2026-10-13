@@ -357,6 +357,13 @@ declare global {
     assets: AssetsAPI
     sync: SyncAPI
     autoExport: AutoExportAPI
+    security?: SecurityAPI
+  }
+
+  interface SecurityAPI {
+    onPinReset: (
+      callback: (data?: { adminPin?: string; adminPinEnabled?: boolean }) => void,
+    ) => () => void
   }
 
   interface Window {

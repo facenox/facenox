@@ -176,6 +176,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
       return ipcRenderer.invoke("auto-export:open-directory")
     },
   },
+
+  security: {
+    onPinReset: (callback: (data?: { adminPin?: string; adminPinEnabled?: boolean }) => void) => {
+      const listener = (_: unknown, data?: { adminPin?: string; adminPinEnabled?: boolean }) =>
+        callback(data)
+      ipcRenderer.on("security:pin-reset", listener)
+      return () => ipcRenderer.removeListener("security:pin-reset", listener)
+    },
+  },
 })
 
 contextBridge.exposeInMainWorld("facenoxElectron", {

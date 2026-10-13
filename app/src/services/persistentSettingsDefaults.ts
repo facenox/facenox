@@ -64,6 +64,9 @@ export interface PersistentSettingsSchema {
   security: {
     adminPinEnabled: boolean
     adminPin: string
+    recoveryKey?: string
+    lockoutUntil?: number
+    failedAttempts?: number
   }
   autoExport: {
     enabled: boolean
@@ -132,6 +135,9 @@ export const defaultSettings: PersistentSettingsSchema = {
   security: {
     adminPinEnabled: false,
     adminPin: "1234",
+    recoveryKey: "FNX2-9843",
+    lockoutUntil: 0,
+    failedAttempts: 0,
   },
   autoExport: {
     enabled: false,

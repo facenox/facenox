@@ -2,6 +2,7 @@ import { create } from "zustand"
 import type { AudioSettings, QuickSettings } from "@/components/settings"
 import type { GroupSection } from "@/components/group"
 import { persistentSettings } from "@/services/PersistentSettingsService"
+import { compareRecoveryKeys, generateRecoveryKey } from "@/utils/recoveryKey"
 
 interface UIState {
   // Error state
@@ -16,6 +17,9 @@ interface UIState {
   // Security / Admin Lock
   adminPinEnabled: boolean
   adminPin: string
+  recoveryKey: string
+  pinLockoutUntil: number
+  pinFailedAttempts: number
   isPinPromptOpen: boolean
   pendingSettingsSection: string | undefined
   pendingGroupSection: GroupSection | undefined
@@ -53,7 +57,15 @@ interface UIState {
   openPinPrompt: (onSuccess: () => void) => void
   closePinPrompt: () => void
   verifyPin: (enteredPin: string) => boolean
-  setAdminPinSettings: (settings: { adminPinEnabled?: boolean; adminPin?: string }) => void
+  recordFailedPinAttempt: () => { attempts: number; lockoutSeconds: number; lockoutUntil: number }
+  resetPinLockout: () => void
+  verifyRecoveryKey: (enteredKey: string) => boolean
+  regenerateRecoveryKey: () => string
+  setAdminPinSettings: (settings: {
+    adminPinEnabled?: boolean
+    adminPin?: string
+    recoveryKey?: string
+  }) => void
   setGroupInitialSection: (section: GroupSection | undefined) => void
   setSettingsInitialSection: (section: string | undefined) => void
   setLastSettingsSection: (section: string) => void
@@ -85,6 +97,9 @@ const loadInitialSettings = async () => {
     audioSettings,
     adminPinEnabled: security.adminPinEnabled ?? false,
     adminPin: security.adminPin ?? "1234",
+    recoveryKey: security.recoveryKey || generateRecoveryKey(),
+    pinLockoutUntil: security.lockoutUntil ?? 0,
+    pinFailedAttempts: security.failedAttempts ?? 0,
     hasSeenIntro: uiState.hasSeenIntro,
     pendingCloudSetup: uiState.pendingCloudSetup,
     antiSpoofDetectionInfoDismissed: uiState.antiSpoofDetectionInfoDismissed,
@@ -106,6 +121,9 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   adminPinEnabled: false,
   adminPin: "1234",
+  recoveryKey: "",
+  pinLockoutUntil: 0,
+  pinFailedAttempts: 0,
   isPinPromptOpen: false,
   pendingSettingsSection: undefined,
   pendingGroupSection: undefined,
@@ -205,8 +223,24 @@ export const useUIStore = create<UIState>((set, get) => ({
   },
 
   verifyPin: (enteredPin: string) => {
-    const { adminPin, pendingSettingsSection, pendingGroupSection, pendingPinCallback } = get()
+    const {
+      adminPin,
+      pinLockoutUntil,
+      pendingSettingsSection,
+      pendingGroupSection,
+      pendingPinCallback,
+    } = get()
+
+    // Enforce persistent lockout timer
+    if (pinLockoutUntil && Date.now() < pinLockoutUntil) {
+      return false
+    }
+
     if (enteredPin === adminPin) {
+      set({
+        pinLockoutUntil: 0,
+        pinFailedAttempts: 0,
+      })
       if (pendingPinCallback) {
         pendingPinCallback()
       } else {
@@ -225,13 +259,64 @@ export const useUIStore = create<UIState>((set, get) => ({
       })
       return true
     }
+
+    get().recordFailedPinAttempt()
     return false
+  },
+
+  recordFailedPinAttempt: () => {
+    const nextAttempts = get().pinFailedAttempts + 1
+    let lockoutSecs = 0
+    if (nextAttempts >= 10) {
+      lockoutSecs = 900 // 15 mins for heavy attack
+    } else if (nextAttempts >= 5) {
+      lockoutSecs = 120 // 2 mins
+    } else if (nextAttempts >= 3) {
+      lockoutSecs = 30 // 30 secs
+    }
+
+    const lockoutUntil = lockoutSecs > 0 ? Date.now() + lockoutSecs * 1000 : 0
+    set({
+      pinFailedAttempts: nextAttempts,
+      pinLockoutUntil: lockoutUntil,
+    })
+    return { attempts: nextAttempts, lockoutSeconds: lockoutSecs, lockoutUntil }
+  },
+
+  resetPinLockout: () => {
+    set({
+      pinLockoutUntil: 0,
+      pinFailedAttempts: 0,
+    })
+  },
+
+  verifyRecoveryKey: (enteredKey: string) => {
+    const { recoveryKey } = get()
+    if (compareRecoveryKeys(enteredKey, recoveryKey)) {
+      set({
+        adminPin: "1234",
+        adminPinEnabled: false,
+        pinLockoutUntil: 0,
+        pinFailedAttempts: 0,
+        isPinPromptOpen: false,
+        showSettings: true,
+      })
+      return true
+    }
+    return false
+  },
+
+  regenerateRecoveryKey: () => {
+    const newKey = generateRecoveryKey()
+    set({ recoveryKey: newKey })
+    return newKey
   },
 
   setAdminPinSettings: (settings) => {
     set((state) => ({
       adminPinEnabled: settings.adminPinEnabled ?? state.adminPinEnabled,
       adminPin: settings.adminPin ?? state.adminPin,
+      recoveryKey: settings.recoveryKey ?? state.recoveryKey,
     }))
   },
 
@@ -314,12 +399,18 @@ useUIStore.subscribe((state, prevState) => {
 
   if (
     state.adminPinEnabled !== prevState.adminPinEnabled ||
-    state.adminPin !== prevState.adminPin
+    state.adminPin !== prevState.adminPin ||
+    state.recoveryKey !== prevState.recoveryKey ||
+    state.pinLockoutUntil !== prevState.pinLockoutUntil ||
+    state.pinFailedAttempts !== prevState.pinFailedAttempts
   ) {
     persistentSettings
       .setSecuritySettings({
         adminPinEnabled: state.adminPinEnabled,
         adminPin: state.adminPin,
+        recoveryKey: state.recoveryKey,
+        lockoutUntil: state.pinLockoutUntil,
+        failedAttempts: state.pinFailedAttempts,
       })
       .catch(console.error)
   }
@@ -334,6 +425,9 @@ if (typeof window !== "undefined") {
         audioSettings,
         adminPinEnabled,
         adminPin,
+        recoveryKey,
+        pinLockoutUntil,
+        pinFailedAttempts,
         hasSeenIntro,
         pendingCloudSetup,
         antiSpoofDetectionInfoDismissed,
@@ -346,6 +440,9 @@ if (typeof window !== "undefined") {
           audioSettings,
           adminPinEnabled: adminPinEnabled ?? false,
           adminPin: adminPin ?? "1234",
+          recoveryKey: recoveryKey || generateRecoveryKey(),
+          pinLockoutUntil: pinLockoutUntil ?? 0,
+          pinFailedAttempts: pinFailedAttempts ?? 0,
           hasSeenIntro,
           pendingCloudSetup,
           antiSpoofDetectionInfoDismissed,
@@ -359,4 +456,20 @@ if (typeof window !== "undefined") {
     .catch(() => {
       useUIStore.setState({ isHydrated: true })
     })
+
+  if (window.electronAPI?.security?.onPinReset) {
+    window.electronAPI.security.onPinReset((data) => {
+      useUIStore.setState({
+        adminPin: data?.adminPin ?? "1234",
+        adminPinEnabled: data?.adminPinEnabled ?? false,
+        pinLockoutUntil: 0,
+        pinFailedAttempts: 0,
+        isPinPromptOpen: false,
+        pendingSettingsSection: undefined,
+        pendingGroupSection: undefined,
+        pendingPinCallback: null,
+        success: "Admin PIN was reset remotely from Cloud.",
+      })
+    })
+  }
 }
