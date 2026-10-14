@@ -193,10 +193,6 @@ async def export_backup(
                 "filename": f"facenox_backup_{attendance_data.exported_at.strftime('%Y%m%d_%H%M')}.facenox",
             }
 
-        # If no password, redact biometrics for security
-        for bio in response_obj.biometrics:
-            bio.embedding_b64 = "[REDACTED_FOR_SECURITY_USE_PASSWORD_TO_EXPORT]"
-
         return response_obj
 
     except Exception as e:
