@@ -21,7 +21,7 @@ export function generateRecoveryKey(): string {
 /**
  * Normalizes a recovery key by removing whitespace, hyphens, and converting to uppercase.
  */
-export function normalizeRecoveryKey(key: string): string {
+function normalizeRecoveryKey(key: string): string {
   return key
     .trim()
     .toUpperCase()

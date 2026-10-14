@@ -163,7 +163,7 @@ interface TooltipChildWrapperProps {
   onClick: (e: React.MouseEvent) => void
 }
 
-export function TooltipChildWrapper({
+function TooltipChildWrapper({
   child,
   onMouseEnter,
   onMouseLeave,

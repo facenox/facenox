@@ -3,7 +3,7 @@ import { attendanceManager, backendService } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import type { DialogAPI } from "@/components/shared"
 import type { CapturedFrame } from "@/components/group/sections/enrollment/types"
-import { makeId } from "@/components/group/sections/enrollment/hooks/useImageProcessing"
+import { makeId } from "@/utils/imageHelpers"
 import { dataUrlToBlob } from "@/utils/dataUrl"
 import { validateAndGetBestFace } from "@/utils/faceValidation"
 

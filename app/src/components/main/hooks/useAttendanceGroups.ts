@@ -18,7 +18,7 @@ export const ALL_GROUPS_ID = "all"
 export const createAllGroupsVirtualGroup = (totalGroupsCount: number): AttendanceGroup => ({
   id: ALL_GROUPS_ID,
   name: `All Groups (${totalGroupsCount})`,
-  created_at: new Date().toISOString(),
+  created_at: new Date(),
   is_active: true,
   settings: {
     late_threshold_minutes: 15,
@@ -83,7 +83,7 @@ export async function bootstrapShellData(): Promise<void> {
   useAttendanceStore.getState().setCurrentGroup(resolvedGroup)
 }
 
-export async function loadSelectedGroupData(
+async function loadSelectedGroupData(
   groupId: string,
   options: {
     preserveExisting?: boolean

@@ -13,7 +13,7 @@ export function extractSemverLikeVersion(input: string): string | null {
   return match[0].replace(/^v/, "")
 }
 
-export function getVersionParts(version: string): {
+function getVersionParts(version: string): {
   numeric: number[]
   pre: string | null
 } {

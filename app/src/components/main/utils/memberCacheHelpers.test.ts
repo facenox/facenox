@@ -15,20 +15,23 @@ describe("getMemberFromCache", () => {
   const mockGroup: AttendanceGroup = {
     id: "group-1",
     name: "Group 1",
-    created_at: new Date().toISOString(),
+    created_at: new Date(),
     is_active: true,
+    settings: {},
   }
   const otherGroup: AttendanceGroup = {
     id: "group-2",
     name: "Group 2",
-    created_at: new Date().toISOString(),
+    created_at: new Date(),
     is_active: true,
+    settings: {},
   }
   const allGroupsVirtual: AttendanceGroup = {
     id: ALL_GROUPS_ID,
     name: "All Groups",
-    created_at: new Date().toISOString(),
+    created_at: new Date(),
     is_active: true,
+    settings: {},
   }
   const mockMember: AttendanceMember = {
     id: "mem-1",
@@ -38,8 +41,7 @@ describe("getMemberFromCache", () => {
     role: "student",
     has_face_data: true,
     is_active: true,
-    is_deleted: false,
-    created_at: new Date().toISOString(),
+    joined_at: new Date(),
   }
 
   beforeEach(() => {

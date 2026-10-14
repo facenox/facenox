@@ -59,7 +59,7 @@ const getRecognitionResult = (
   return currentRecognitionResults.get(trackId) ?? face.recognition ?? null
 }
 
-export const isRecognizedLiveFace = (
+const isRecognizedLiveFace = (
   face: Face,
   recognitionEnabled: boolean,
   recognitionResult: ExtendedFaceRecognitionResponse | null,
