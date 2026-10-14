@@ -28,6 +28,8 @@ export function Attendance({
   const setAdminPinSettings = useUIStore((state) => state.setAdminPinSettings)
   const recoveryKey = useUIStore((state) => state.recoveryKey)
   const regenerateRecoveryKey = useUIStore((state) => state.regenerateRecoveryKey)
+  const autoStartScan = useUIStore((state) => state.quickSettings.autoStartScan ?? false)
+  const setQuickSettings = useUIStore((state) => state.setQuickSettings)
 
   const [pinInput, setPinInput] = useState("")
   const [firstPin, setFirstPin] = useState("")
@@ -210,6 +212,50 @@ export function Attendance({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="h-px w-full bg-white/8" />
+
+          {/* Auto-start Scanning on Launch */}
+          <div className="flex items-center gap-4 py-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <div className="text-sm font-medium text-white/90">Auto-start Scanning</div>
+                <InfoPopover
+                  title="Auto-start Scanning"
+                  description="Automatically activates the camera and face recognition scanner when Facenox launches."
+                  details={[
+                    "Designed for dedicated attendance kiosks and unattended gate checkpoints.",
+                    "Starts face detection immediately on startup without requiring manual intervention.",
+                    "Requires a functioning camera to be connected.",
+                  ]}
+                  side="right"
+                />
+              </div>
+              <div className="relative min-h-4">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={autoStartScan ? "auto-on" : "auto-off"}
+                    initial={{ opacity: 0, y: -2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 2 }}
+                    transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
+                    className="text-xs font-normal text-white/65">
+                    {autoStartScan ?
+                      "Scanner will automatically start when the application launches."
+                    : "Scanner remains idle on startup until manually started."}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+
+            <Switch
+              checked={autoStartScan}
+              onChange={(checked) =>
+                setQuickSettings((prev) => ({ ...prev, autoStartScan: checked }))
+              }
+              ariaLabel="Auto-start Scanning on Launch"
+            />
           </div>
 
           <div className="h-px w-full bg-white/8" />
@@ -590,8 +636,8 @@ export function Attendance({
                             className={`w-20 rounded-lg border bg-[rgba(22,28,36,0.68)] px-2.5 py-1.5 text-center text-xs font-bold tracking-widest text-white transition-all outline-none ${
                               pinMismatch ? "border-rose-500/60 focus:border-rose-500/80"
                               : pinStep === "confirm" ?
-                                "border-cyan-500/60 focus:border-cyan-400 focus:bg-cyan-500/[0.04]"
-                              : "border-white/10 focus:border-cyan-500/60 focus:bg-cyan-500/[0.03]"
+                                "border-white/30 focus:border-white/50 focus:bg-[rgba(28,35,44,0.82)]"
+                              : "border-white/10 focus:border-white/30 focus:bg-[rgba(28,35,44,0.82)]"
                             }`}
                           />
                         </motion.div>

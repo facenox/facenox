@@ -116,6 +116,7 @@ export default function Main() {
     pendingCloudSetup,
     setPendingCloudSetup,
     adminPinEnabled,
+    isHydrated,
   } = useUIStore()
   const showAddMemberModal = useGroupUIStore((state) => state.showAddMemberModal)
   const showEditMemberModal = useGroupUIStore((state) => state.showEditMemberModal)
@@ -611,6 +612,26 @@ export default function Main() {
       if (cleanupRestore) cleanupRestore()
     }
   }, [stopCamera, startCameraGuarded])
+
+  // Auto-start scanning on launch when enabled in settings
+  const hasAutoStartedOnLaunchRef = useRef(false)
+  useEffect(() => {
+    if (
+      !isShellReady ||
+      !isHydrated ||
+      hasAutoStartedOnLaunchRef.current ||
+      !quickSettings.autoStartScan
+    ) {
+      return
+    }
+
+    if (!currentGroup) return
+
+    if (!isStreamingRef.current) {
+      hasAutoStartedOnLaunchRef.current = true
+      startCameraGuarded()
+    }
+  }, [isShellReady, isHydrated, currentGroup, quickSettings.autoStartScan, startCameraGuarded])
 
   const hasBlockingGroupModalOpen =
     showAddMemberModal || showEditMemberModal || showCreateGroupModal || showEditGroupModal

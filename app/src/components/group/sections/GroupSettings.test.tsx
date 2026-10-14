@@ -17,6 +17,9 @@ vi.mock("framer-motion", () => ({
 vi.mock("@/services", () => ({
   attendanceManager: {
     updateGroup: vi.fn().mockResolvedValue({}),
+    deleteGroup: vi.fn().mockResolvedValue(true),
+    getGroups: vi.fn().mockResolvedValue([]),
+    getGroupMembers: vi.fn().mockResolvedValue([]),
   },
 }))
 
@@ -97,5 +100,46 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
         track_checkout: true,
       }),
     })
+  })
+
+  it("renders Danger Zone and allows group deletion with confirmation", async () => {
+    const onGroupsChanged = vi.fn()
+    const group = createAttendanceGroup({
+      id: "group-delete-test",
+      name: "Graduating Batch",
+      settings: {},
+    })
+
+    render(<GroupSettings group={group} onGroupsChanged={onGroupsChanged} />)
+
+    const dangerZoneBtn = screen.getByRole("button", { name: /danger zone/i })
+    expect(dangerZoneBtn).toBeInTheDocument()
+    fireEvent.click(dangerZoneBtn)
+
+    expect(screen.getByText("Delete this group")).toBeInTheDocument()
+    const openDeleteBtn = screen.getByRole("button", { name: /delete group/i })
+    expect(openDeleteBtn).toBeInTheDocument()
+
+    // Open confirmation modal
+    fireEvent.click(openDeleteBtn)
+
+    expect(screen.getByText(/All member profiles and attendance records/i)).toBeInTheDocument()
+    const deleteButtons = screen.getAllByRole("button", { name: "Delete Group" })
+    const deleteModalBtn = deleteButtons[1]
+    expect(deleteModalBtn).toBeDisabled()
+
+    // Type incorrect name
+    const input = screen.getByRole("textbox", { name: /confirm deletion/i })
+    fireEvent.change(input, { target: { value: "Wrong Name" } })
+    expect(deleteModalBtn).toBeDisabled()
+
+    // Type exact matching name
+    fireEvent.change(input, { target: { value: "Graduating Batch" } })
+    expect(deleteModalBtn).toBeEnabled()
+
+    // Click confirm delete
+    fireEvent.click(deleteModalBtn)
+
+    expect(attendanceManager.deleteGroup).toHaveBeenCalledWith("group-delete-test")
   })
 })

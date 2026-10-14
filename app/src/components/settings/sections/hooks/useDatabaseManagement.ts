@@ -360,8 +360,7 @@ export function useDatabaseManagement(
             cancelText: "Cancel",
             confirmVariant: "danger",
             requireTypedConfirmation: {
-              label: 'Type "DELETE DIRECTORY" to continue',
-              placeholder: "DELETE DIRECTORY",
+              label: "To confirm, type DELETE DIRECTORY",
               value: "DELETE DIRECTORY",
             },
           })
@@ -422,8 +421,7 @@ export function useDatabaseManagement(
             cancelText: "Cancel",
             confirmVariant: "danger",
             requireTypedConfirmation: {
-              label: 'Type "PURGE HISTORY" to continue',
-              placeholder: "PURGE HISTORY",
+              label: "To confirm, type PURGE HISTORY",
               value: "PURGE HISTORY",
             },
           })

@@ -125,13 +125,13 @@ export function DialogProvider({ children }: { children: ReactNode }) {
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-white/55">
                 {active.options.requireTypedConfirmation.label ||
-                  `Type "${active.options.requireTypedConfirmation.value}" to continue`}
+                  `To confirm, type ${active.options.requireTypedConfirmation.value}`}
               </label>
               <input
                 type="text"
+                autoFocus
                 value={typedConfirmation}
                 onChange={(event) => setTypedConfirmation(event.target.value)}
-                placeholder={active.options.requireTypedConfirmation.placeholder || ""}
                 className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-xs text-white transition-all duration-300 outline-none focus:border-white/30 focus:bg-[rgba(28,35,44,0.82)] focus:outline-none"
               />
             </div>

@@ -84,6 +84,7 @@ export const defaultSettings: PersistentSettingsSchema = {
     showTrackingBoxes: true,
     cameraFitCover: false,
     showDetectionPanel: true,
+    autoStartScan: false,
   },
   audio: {
     recognitionSoundEnabled: true,

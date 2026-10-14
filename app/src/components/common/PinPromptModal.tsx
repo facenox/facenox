@@ -237,7 +237,7 @@ export function PinPromptModal() {
                   placeholder="XXXX-XXXX"
                   autoFocus
                   maxLength={16}
-                  className="mt-3.5 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-center font-mono text-xs font-semibold tracking-widest text-white uppercase transition-all outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-white/20 focus:border-cyan-500/60 focus:bg-[rgba(28,35,44,0.82)]"
+                  className="mt-3.5 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-center font-mono text-xs font-semibold tracking-widest text-white uppercase transition-all outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-white/20 focus:border-white/30 focus:bg-[rgba(28,35,44,0.82)]"
                 />
 
                 <div className="mt-2.5 flex min-h-5 items-center justify-center text-center">
@@ -335,8 +335,8 @@ export function PinPromptModal() {
                           error ?
                             "border-rose-500/70 bg-rose-500/10 shadow-[0_0_16px_rgba(244,63,94,0.3)]"
                           : isFilled ?
-                            "border-cyan-500/60 bg-cyan-500/15 shadow-[0_0_16px_rgba(6,182,212,0.25)]"
-                          : isActive ? "border-cyan-500/30 bg-white/[0.04]"
+                            "border-white/40 bg-white/[0.06] shadow-[0_0_12px_rgba(255,255,255,0.08)]"
+                          : isActive ? "border-white/30 bg-white/[0.04]"
                           : "border-white/10 bg-white/[0.02]"
                         }`}>
                         <AnimatePresence>
@@ -350,7 +350,7 @@ export function PinPromptModal() {
                               className={`h-3 w-3 rounded-full ${
                                 error ?
                                   "bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.8)]"
-                                : "bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]"
+                                : "bg-white shadow-[0_0_8px_rgba(255,255,255,0.6)]"
                               }`}
                             />
                           )}
@@ -396,7 +396,7 @@ export function PinPromptModal() {
                       type="button"
                       onClick={() => handleDigit(num)}
                       disabled={lockoutSeconds > 0}
-                      className="flex h-12 items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-base font-semibold text-white/90 shadow-sm transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-95 active:border-cyan-500/50 active:bg-cyan-500/20 active:text-cyan-300 disabled:pointer-events-none">
+                      className="flex h-12 items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-base font-semibold text-white/90 shadow-sm transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-95 active:border-white/30 active:bg-white/10 active:text-white disabled:pointer-events-none">
                       {num}
                     </button>
                   ))}
@@ -411,7 +411,7 @@ export function PinPromptModal() {
                     type="button"
                     onClick={() => handleDigit("0")}
                     disabled={lockoutSeconds > 0}
-                    className="flex h-12 items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-base font-semibold text-white/90 shadow-sm transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-95 active:border-cyan-500/50 active:bg-cyan-500/20 active:text-cyan-300 disabled:pointer-events-none">
+                    className="flex h-12 items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-base font-semibold text-white/90 shadow-sm transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-95 active:border-white/30 active:bg-white/10 active:text-white disabled:pointer-events-none">
                     0
                   </button>
                   <button
@@ -432,7 +432,7 @@ export function PinPromptModal() {
                       setResetError(false)
                       setShowEmergencyReset(true)
                     }}
-                    className="text-xs font-medium text-white/45 transition-colors hover:text-cyan-400">
+                    className="text-xs font-medium text-white/45 transition-colors hover:text-white/80">
                     Forgot PIN?
                   </button>
                 </div>

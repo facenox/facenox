@@ -230,8 +230,7 @@ export const useSettings = ({
         cancelText: "Cancel",
         confirmVariant: "danger",
         requireTypedConfirmation: {
-          label: 'Type "CLEAR FACE DATA" to continue',
-          placeholder: "CLEAR FACE DATA",
+          label: "To confirm, type CLEAR FACE DATA",
           value: "CLEAR FACE DATA",
         },
       })

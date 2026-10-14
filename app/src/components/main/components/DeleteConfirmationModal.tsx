@@ -5,7 +5,7 @@ import { Modal } from "@/components/common"
 interface DeleteConfirmationModalProps {
   showDeleteConfirmation: boolean
   groupToDelete: AttendanceGroup | null
-  currentGroup: AttendanceGroup | null
+  currentGroup?: AttendanceGroup | null
   cancelDeleteGroup: () => void
   confirmDeleteGroup: () => void
 }
@@ -13,7 +13,6 @@ interface DeleteConfirmationModalProps {
 export function DeleteConfirmationModal({
   showDeleteConfirmation,
   groupToDelete,
-  currentGroup,
   cancelDeleteGroup,
   confirmDeleteGroup,
 }: DeleteConfirmationModalProps) {
@@ -29,41 +28,32 @@ export function DeleteConfirmationModal({
   return (
     <Modal
       isOpen={showDeleteConfirmation}
-      onClose={cancelDeleteGroup}
-      title="Delete group"
-      icon={<i className="fa-solid fa-triangle-exclamation text-red-300"></i>}
-      maxWidth="md">
+      onClose={() => {
+        setConfirmationInput("")
+        cancelDeleteGroup()
+      }}
+      title={groupSnapshot ? `Delete ${groupSnapshot.name}` : "Delete group"}
+      icon={<i className="fa-solid fa-triangle-exclamation text-red-400" />}
+      maxWidth="sm">
       {!groupSnapshot ? null : (
         <>
-          <div className="mb-6">
-            <p className="mb-4 text-sm text-white/80">
-              Confirm deletion of the group{" "}
-              <strong className="text-white">&quot;{groupSnapshot.name}&quot;</strong>?
+          <div className="space-y-4">
+            <p className="text-xs leading-relaxed text-white/60">
+              All member profiles and attendance records will be permanently deleted.
             </p>
-            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-900/20 p-3">
-              <p className="text-xs text-red-300">
-                <strong>Warning:</strong> This action cannot be undone. All group data, members, and
-                attendance records will be permanently removed.
-              </p>
-            </div>
-            {currentGroup?.id === groupSnapshot.id && (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-900/20 p-3">
-                <p className="text-xs text-amber-300">
-                  <strong>Note:</strong> This is the currently active group. Deleting it will clear
-                  the current selection.
-                </p>
-              </div>
-            )}
-            <div className="mt-4 space-y-1.5">
-              <label className="text-xs font-medium text-white/65">
-                Type <span className="font-mono text-white/70">{groupSnapshot.name}</span> to
-                continue
+
+            <div className="space-y-1.5 pt-1">
+              <label htmlFor="confirm-group-name" className="text-xs font-medium text-white/60">
+                To confirm, type{" "}
+                <span className="font-mono font-semibold text-white/90">{groupSnapshot.name}</span>
               </label>
               <input
+                id="confirm-group-name"
                 type="text"
+                autoFocus
                 value={confirmationInput}
                 onChange={(e) => setConfirmationInput(e.target.value)}
-                placeholder={groupSnapshot.name}
+                aria-label={`Confirm deletion of ${groupSnapshot.name}`}
                 className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-xs text-white transition-all duration-300 outline-none focus:border-white/30 focus:bg-[rgba(28,35,44,0.82)] focus:outline-none"
               />
             </div>
@@ -71,6 +61,7 @@ export function DeleteConfirmationModal({
 
           <div className="mt-8 flex justify-end gap-3">
             <button
+              type="button"
               onClick={() => {
                 setConfirmationInput("")
                 cancelDeleteGroup()
@@ -79,6 +70,7 @@ export function DeleteConfirmationModal({
               Cancel
             </button>
             <button
+              type="button"
               onClick={() => {
                 setConfirmationInput("")
                 confirmDeleteGroup()

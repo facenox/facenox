@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { InfoPopover, Switch } from "@/components/shared"
 import { attendanceManager } from "@/services"
 import { useGroupStore } from "@/components/group/stores"
+import { useCloudSyncStatus } from "@/components/common"
+import { DeleteConfirmationModal } from "@/components/main/components/DeleteConfirmationModal"
 import type { AttendanceGroup } from "@/types/recognition"
 
 interface GroupSettingsProps {
@@ -30,6 +32,13 @@ const formatTimeDisplay = (time?: string | null) => {
 
 export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
   const setSelectedGroup = useGroupStore((state) => state.setSelectedGroup)
+  const deleteGroup = useGroupStore((state) => state.deleteGroup)
+  const { isPaired, allowKioskDirectoryManagement } = useCloudSyncStatus()
+  const isDeleteDisabled = isPaired && !allowKioskDirectoryManagement
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isDangerZoneOpen, setIsDangerZoneOpen] = useState(false)
 
   const [lateThresholdEnabled, setLateThresholdEnabled] = useState(
     Boolean(group.settings?.late_threshold_enabled),
@@ -40,6 +49,20 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
     group.settings?.late_threshold_minutes ?? 15,
   )
   const [trackCheckout, setTrackCheckout] = useState(Boolean(group.settings?.track_checkout))
+
+  const handleDeleteGroup = async () => {
+    if (isDeleteDisabled || isDeleting) return
+    setIsDeleting(true)
+    try {
+      await deleteGroup(group.id)
+      setIsDeleteModalOpen(false)
+      onGroupsChanged?.()
+    } catch (err) {
+      console.error("Failed to delete group:", err)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   useEffect(() => {
     setLateThresholdEnabled(Boolean(group.settings?.late_threshold_enabled))
@@ -337,7 +360,79 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
             </div>
           </div>
         </div>
+
+        <span className="sr-only">Danger Zone Toggle</span>
+        {/* Danger Zone */}
+        <section className="relative flex w-full flex-col items-center overflow-hidden pt-8 pb-2">
+          {/* Sleek fading gradient divider to match the centered design */}
+          <div className="absolute top-0 right-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/20 to-transparent" />
+          {/* Sleek centered trigger */}
+          <button
+            type="button"
+            onClick={() => setIsDangerZoneOpen(!isDangerZoneOpen)}
+            className="group flex items-center gap-2.5 rounded-md border-0 bg-transparent px-5 py-2 text-[11px] font-extrabold tracking-[0.2em] text-red-500/40 uppercase shadow-none transition-all duration-300 outline-none hover:bg-red-500/[0.04] hover:text-red-400 focus:outline-none active:scale-95">
+            <i className="fa-solid fa-triangle-exclamation text-[10px] opacity-60 transition-transform group-hover:scale-110" />
+            <span>Danger Zone</span>
+            <i
+              className={`fa-solid fa-chevron-down inline-block text-[9px] opacity-50 transition-transform duration-200 ${
+                isDangerZoneOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          <AnimatePresence>
+            {isDangerZoneOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
+                className="w-full overflow-hidden">
+                <div className="w-full divide-y divide-red-500/5 pt-4 pb-8">
+                  <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
+                    <div className="min-w-0 flex-1 text-left">
+                      <h4 className="text-[15px] font-semibold text-red-400/80">
+                        Delete this group
+                      </h4>
+                      <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
+                        Permanently delete this group, all member profiles, and enrolled biometric
+                        face data.
+                        <span className="mt-1 block text-[12px] font-medium text-red-400/85">
+                          This action cannot be undone.
+                        </span>
+                        {isDeleteDisabled && (
+                          <span className="mt-1 block font-medium text-amber-400/80">
+                            <i className="fa-solid fa-lock mr-1" />
+                            Locked by Cloud Policy: Group deletion is disabled on kiosks.
+                          </span>
+                        )}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsDeleteModalOpen(true)}
+                      disabled={isDeleteDisabled || isDeleting}
+                      title={isDeleteDisabled ? "Locked by Cloud Policy" : undefined}
+                      className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
+                      {isDeleting && <i className="fa-solid fa-spinner fa-spin" />}
+                      <span>Delete Group</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
       </div>
+
+      <DeleteConfirmationModal
+        showDeleteConfirmation={isDeleteModalOpen}
+        groupToDelete={group}
+        currentGroup={group}
+        cancelDeleteGroup={() => setIsDeleteModalOpen(false)}
+        confirmDeleteGroup={handleDeleteGroup}
+      />
     </div>
   )
 }

@@ -234,4 +234,21 @@ describe("Global General Preferences Controls", () => {
       screen.getByText("PIN lock is disabled. Anyone can access settings."),
     ).toBeInTheDocument()
   })
+
+  it("renders Auto-start Scanning toggle and toggles setting", () => {
+    render(
+      <Attendance
+        attendanceSettings={baseSettings}
+        onAttendanceCooldownChange={vi.fn()}
+        onSpoofDetectionToggle={vi.fn()}
+        onMaxRecognitionFacesChange={vi.fn()}
+        onDataRetentionChange={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText("Auto-start Scanning")).toBeInTheDocument()
+    const switchBtn = screen.getByRole("switch", { name: "Auto-start Scanning on Launch" })
+    expect(switchBtn).toBeInTheDocument()
+    fireEvent.click(switchBtn)
+  })
 })

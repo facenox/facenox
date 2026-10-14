@@ -824,9 +824,6 @@ export function DataStorage({
             className="fa-solid fa-chevron-down text-[9px] opacity-50"
           />
         </button>
-        <p className="mt-1 text-center text-[11px] font-medium tracking-wide text-white/40 select-none">
-          Destructive actions and local data clearing
-        </p>
 
         <AnimatePresence>
           {isDangerZoneOpen && (
@@ -834,11 +831,11 @@ export function DataStorage({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
               className="w-full overflow-hidden">
               <div className="w-full divide-y divide-red-500/5 pt-4 pb-8">
                 {/* Action 1: Clear Groups */}
-                <div className="flex flex-col gap-6 py-6 md:flex-row md:items-start md:justify-between">
+                <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
                   <div className="min-w-0 flex-1 text-left">
                     <h4 className="text-[15px] font-semibold text-red-400/80">
                       Clear Group Directory
@@ -867,14 +864,14 @@ export function DataStorage({
                       groups.length === 0 ||
                       (isPaired && !allowKioskDirectoryManagement)
                     }
-                    className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-auto">
+                    className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     {deletingGroup === "all" && <i className="fa-solid fa-spinner fa-spin" />}
                     Clear Groups
                   </button>
                 </div>
 
                 {/* Action 2: Reset Face Data */}
-                <div className="flex flex-col gap-6 py-6 md:flex-row md:items-start md:justify-between">
+                <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
                   <div className="min-w-0 flex-1 text-left">
                     <h4 className="text-[15px] font-semibold text-red-400/80">Reset Face Data</h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
@@ -896,13 +893,13 @@ export function DataStorage({
                   <button
                     onClick={() => onClearDatabase(false)}
                     disabled={isLoading || (isPaired && !allowKioskDirectoryManagement)}
-                    className="flex shrink-0 items-center justify-center self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-auto">
+                    className="flex shrink-0 items-center justify-center self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     Reset Face Data
                   </button>
                 </div>
 
                 {/* Action 3: Purge Attendance History */}
-                <div className="flex flex-col gap-6 py-6 md:flex-row md:items-start md:justify-between">
+                <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
                   <div className="min-w-0 flex-1 text-left">
                     <h4 className="text-[15px] font-semibold text-red-400/80">
                       Purge Attendance History
@@ -922,7 +919,7 @@ export function DataStorage({
                   <button
                     onClick={() => handlePurgeHistory(false)}
                     disabled={isLoading || isPurgingHistory}
-                    className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-auto">
+                    className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     {isPurgingHistory && <i className="fa-solid fa-spinner fa-spin" />}
                     Wipe History
                   </button>

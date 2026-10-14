@@ -8,6 +8,7 @@ export interface QuickSettings {
   showTrackingBoxes?: boolean
   cameraFitCover?: boolean
   showDetectionPanel?: boolean
+  autoStartScan?: boolean
 }
 
 export interface AudioSettings {

@@ -116,7 +116,7 @@ export function Modal({
                       <div
                         className={
                           typeof title === "string" ?
-                            "min-w-0 flex-1 truncate text-base leading-none font-semibold tracking-tight text-white"
+                            "min-w-0 flex-1 truncate py-0.5 text-base leading-normal font-semibold tracking-tight text-white"
                           : "min-w-0 flex-1 text-white"
                         }>
                         {title}
