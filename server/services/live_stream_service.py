@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 MIN_RECOGNITION_FACE_SIZE = 48
 LIVE_CONTEXT_TTL_SECONDS = 5.0
+LIVE_RECOGNITION_SAMPLE_INTERVAL = 5
 PROTECTED_IDENTITY = "PROTECTED_IDENTITY"
 
 
@@ -37,6 +38,11 @@ class LiveSessionConfig:
     organization_id: Optional[str] = None
     group_context: LiveGroupContext = field(default_factory=LiveGroupContext)
     attendance_cooldowns: Dict[str, float] = field(default_factory=dict)
+    track_recognition_cache: Dict[
+        int, tuple[Dict[str, Any], Optional[Dict[str, Any]]]
+    ] = field(default_factory=dict)
+    track_last_sampled_frame: Dict[int, int] = field(default_factory=dict)
+    frame_counter: int = 0
     is_dirty: bool = False
     loaded_version: int = 0
 
@@ -47,9 +53,13 @@ class LiveSessionConfig:
             max_recognition_faces_per_frame=self.max_recognition_faces_per_frame,
         )
         self.attendance_cooldowns.clear()
+        self.track_recognition_cache.clear()
+        self.track_last_sampled_frame.clear()
         self.is_dirty = True
 
     def invalidate(self) -> None:
+        self.track_recognition_cache.clear()
+        self.track_last_sampled_frame.clear()
         self.is_dirty = True
 
 
@@ -81,7 +91,7 @@ class LiveStreamService:
         cls._db_versions[organization_id] = current + 1
         for config in list(cls._active_configs):
             if organization_id is None or config.organization_id == organization_id:
-                config.is_dirty = True
+                config.invalidate()
         logger.info(
             "[LiveStreamService] Invalidated active live stream contexts for organization: %s (v%d)",
             organization_id,
@@ -370,6 +380,8 @@ class LiveStreamService:
             config.group_context = await self._fetch_group_context(
                 config.active_group_id, config.max_recognition_faces_per_frame
             )
+            config.track_recognition_cache.clear()
+            config.track_last_sampled_frame.clear()
             config.is_dirty = False
             config.loaded_version = current_ver
             return config.group_context
@@ -385,6 +397,24 @@ class LiveStreamService:
     ) -> list[Dict[str, Any]]:
         if not faces:
             return []
+
+        config.frame_counter += 1
+
+        # Periodic cleanup of stale tracks from recognition cache
+        if len(config.track_recognition_cache) > 20:
+            active_tids = {
+                f.get("track_id")
+                for f in faces
+                if f.get("track_id") is not None and f.get("track_id") >= 0
+            }
+            stale_tids = [
+                tid
+                for tid, last_f in config.track_last_sampled_frame.items()
+                if tid not in active_tids and (config.frame_counter - last_f > 60)
+            ]
+            for tid in stale_tids:
+                config.track_recognition_cache.pop(tid, None)
+                config.track_last_sampled_frame.pop(tid, None)
 
         group_context = await self.ensure_group_context(config)
         if not config.active_group_id or not group_context.group_exists:
@@ -419,14 +449,32 @@ class LiveStreamService:
         if not recognition_candidates:
             return []
 
-        recognition_results = await face_recognizer.recognize_faces(
-            image,
-            recognition_candidates,
-            allowed_person_ids=list(group_context.allowed_person_ids),
-            organization_id=self.organization_id,
-            prebuilt_matrix=group_context.group_matrix,
-            person_index_map=group_context.person_index_map,
-        )
+        # Partition candidates: infer immediately on first appearance or when sample interval is due
+        faces_to_infer: list[Dict[str, Any]] = []
+        for face in recognition_candidates:
+            tid = face.get("track_id")
+            is_untracked = tid is None or tid < 0
+            is_new_track = tid not in config.track_recognition_cache
+            is_sample_due = (
+                config.frame_counter - config.track_last_sampled_frame.get(tid, -999)
+                >= LIVE_RECOGNITION_SAMPLE_INTERVAL
+            )
+
+            if is_untracked or is_new_track or is_sample_due:
+                faces_to_infer.append(face)
+
+        new_results_map: Dict[int, Dict[str, Any]] = {}
+        if faces_to_infer:
+            inferred_results = await face_recognizer.recognize_faces(
+                image,
+                faces_to_infer,
+                allowed_person_ids=list(group_context.allowed_person_ids),
+                organization_id=self.organization_id,
+                prebuilt_matrix=group_context.group_matrix,
+                person_index_map=group_context.person_index_map,
+            )
+            for face, res in zip(faces_to_infer, inferred_results):
+                new_results_map[id(face)] = res
 
         from core.lifespan import liveness_detector
 
@@ -440,9 +488,24 @@ class LiveStreamService:
                 ws_manager=None,
             )
 
-            for face, result in zip(recognition_candidates, recognition_results):
+            for face in recognition_candidates:
+                tid = face.get("track_id")
+                is_fresh = id(face) in new_results_map
+
+                if is_fresh:
+                    result = new_results_map[id(face)]
+                    member_info = None
+                elif tid in config.track_recognition_cache:
+                    result, member_info = config.track_recognition_cache[tid]
+                else:
+                    result = {"person_id": None, "similarity": 0.0, "success": False}
+                    member_info = None
+
                 original_person_id = result.get("person_id")
-                member_info = group_context.members_by_person_id.get(original_person_id)
+                if member_info is None and original_person_id:
+                    member_info = group_context.members_by_person_id.get(
+                        original_person_id
+                    )
 
                 # Single-point fallback on cache miss (e.g. freshly enrolled identity)
                 if original_person_id and not member_info:
@@ -463,6 +526,11 @@ class LiveStreamService:
                             original_person_id,
                             fallback_err,
                         )
+
+                # Cache fresh inference result for tracked faces
+                if is_fresh and tid is not None and tid >= 0:
+                    config.track_recognition_cache[tid] = (result, member_info)
+                    config.track_last_sampled_frame[tid] = config.frame_counter
 
                 serialized_result = self._serialize_recognition_result(
                     result, member_info
