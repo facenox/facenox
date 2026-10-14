@@ -162,6 +162,15 @@ export const useSettings = ({
   }>({})
 
   const loadPolicy = useCallback(async () => {
+    const syncConfig = await window.electronAPI?.sync?.getConfig().catch(() => null)
+    const isPaired = Boolean(syncConfig?.connected)
+
+    if (!isPaired) {
+      setForceLiveness(false)
+      setPolicyOverrides({})
+      return
+    }
+
     const [
       forceLivenessVal,
       trackCheckout,

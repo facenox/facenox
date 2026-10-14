@@ -194,7 +194,7 @@ export function Attendance({
                   key={secs}
                   type="button"
                   onClick={() => onAttendanceCooldownChange(secs)}
-                  className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                  className={`relative min-w-[28px] cursor-pointer px-1.5 py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
                     attendanceSettings.attendanceCooldownSeconds === secs ?
                       "text-cyan-400"
                     : "text-white/40 hover:text-white/70"
@@ -250,7 +250,7 @@ export function Attendance({
 
               <Switch
                 checked={attendanceSettings.maxRecognitionFacesPerFrame > 0}
-                onChange={(checked) => onMaxRecognitionFacesChange(checked ? 6 : 0)}
+                onChange={(checked) => onMaxRecognitionFacesChange(checked ? 5 : 0)}
                 ariaLabel="Multi-Face Recognition"
               />
             </div>
@@ -276,7 +276,7 @@ export function Attendance({
                           key={faces}
                           type="button"
                           onClick={() => onMaxRecognitionFacesChange(faces)}
-                          className={`relative min-w-[24px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                          className={`relative min-w-[28px] cursor-pointer px-1.5 py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
                             activeLimit === faces ? "text-cyan-400" : (
                               "text-white/40 hover:text-white/70"
                             )
