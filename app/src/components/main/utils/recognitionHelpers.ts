@@ -1,9 +1,10 @@
 import type { FaceRecognitionResponse } from "@/types/recognition"
-import { TRACKING_HISTORY_LIMIT } from "@/components/main/constants"
 
 export interface ExtendedFaceRecognitionResponse extends FaceRecognitionResponse {
   memberName?: string
 }
+
+const TRACKING_HISTORY_LIMIT = 20
 
 export const trimTrackingHistory = <T>(history: T[]): T[] => {
   if (history.length <= TRACKING_HISTORY_LIMIT) {
