@@ -1,2 +1,1 @@
-
 export const TRACKING_HISTORY_LIMIT = 20

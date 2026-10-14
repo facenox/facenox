@@ -13,7 +13,6 @@ export type { ExtendedFaceRecognitionResponse } from "@/components/main/utils/re
 export {
   trimTrackingHistory,
   areRecognitionMapsEqual,
-  isRecognitionResponseEqual,
 } from "@/components/main/utils/recognitionHelpers"
 
 export { getMemberFromCache } from "@/components/main/utils/memberCacheHelpers"

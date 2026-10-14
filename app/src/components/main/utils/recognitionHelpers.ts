@@ -12,7 +12,7 @@ export const trimTrackingHistory = <T>(history: T[]): T[] => {
   return history.slice(history.length - TRACKING_HISTORY_LIMIT)
 }
 
-export const isRecognitionResponseEqual = (
+const isRecognitionResponseEqual = (
   a: ExtendedFaceRecognitionResponse | undefined,
   b: ExtendedFaceRecognitionResponse | undefined,
 ): boolean => {

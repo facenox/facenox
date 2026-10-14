@@ -10,9 +10,6 @@ importers:
 
   app:
     dependencies:
-      '@types/qrcode':
-        specifier: ^1.5.6
-        version: 1.5.6
       ably:
         specifier: ^2.29.0
         version: 2.29.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -59,6 +56,9 @@ importers:
       '@types/node':
         specifier: ^26.6.2
         version: 26.6.3
+      '@types/qrcode':
+        specifier: ^1.5.6
+        version: 1.5.6
       '@types/react':
         specifier: ^19.3.0
         version: 19.3.0

@@ -5,17 +5,18 @@ export const DEFAULT_REMOTE_BASE_URL = OFFICIAL_REMOTE_BASE_URL
 
 export function isOfficialCloudUrl(url?: string | null): boolean {
   if (!url) return true
-  const clean = url
-    .trim()
-    .replace(/^(https?:\/\/)\/+/, "$1")
-    .replace(/\/+$/, "")
-    .toLowerCase()
-  return (
-    clean === OFFICIAL_REMOTE_BASE_URL ||
-    clean === "https://www.facenox.com" ||
-    clean === "http://facenox.com" ||
-    clean === "http://www.facenox.com" ||
-    clean === "facenox.com" ||
-    clean === "www.facenox.com"
-  )
+  try {
+    const officialHost = new URL(OFFICIAL_REMOTE_BASE_URL).hostname
+      .replace(/^www\./, "")
+      .toLowerCase()
+    const trimmed = url.trim().toLowerCase()
+    const withProto =
+      trimmed.startsWith("http://") || trimmed.startsWith("https://") ?
+        trimmed
+      : `https://${trimmed}`
+    const targetHost = new URL(withProto).hostname.replace(/^www\./, "").toLowerCase()
+    return targetHost === officialHost
+  } catch {
+    return false
+  }
 }

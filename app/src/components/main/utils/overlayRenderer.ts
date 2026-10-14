@@ -9,7 +9,7 @@ export const clearOverlayRendererCache = () => {
   subLabelOpacityCache.clear()
 }
 
-export const getFaceColor = (
+const getFaceColor = (
   recognitionResult: ExtendedFaceRecognitionResponse | null,
   recognitionEnabled: boolean,
   enableSpoofDetection: boolean,
@@ -48,7 +48,7 @@ const drawRoundedRect = (
   ctx.closePath()
 }
 
-export const drawBoundingBox = (
+const drawBoundingBox = (
   ctx: CanvasRenderingContext2D,
   x1: number,
   y1: number,
@@ -67,7 +67,7 @@ export const drawBoundingBox = (
   ctx.stroke()
 }
 
-export const setupCanvasContext = (ctx: CanvasRenderingContext2D, color: string) => {
+const setupCanvasContext = (ctx: CanvasRenderingContext2D, color: string) => {
   ctx.strokeStyle = color
   ctx.fillStyle = color
   ctx.lineWidth = 2
