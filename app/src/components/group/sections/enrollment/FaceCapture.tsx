@@ -11,17 +11,16 @@ import { UploadArea } from "@/components/group/sections/enrollment/components/Up
 import { ResultView } from "@/components/group/sections/enrollment/components/ResultView"
 import { useUIStore } from "@/components/main/stores"
 import { EnrollmentInfoModal } from "@/components/group/sections/enrollment/components/EnrollmentInfoModal"
+import type { CaptureSource } from "./types"
 
 interface FaceCaptureProps {
   group: AttendanceGroup
   members: AttendanceMember[]
   onRefresh: () => void
-  initialSource?: "live" | "upload"
+  initialSource?: CaptureSource
   deselectMemberTrigger?: number
   onHasSelectedMemberChange?: (hasSelectedMember: boolean) => void
 }
-
-type CaptureSource = "live" | "upload"
 
 export function FaceCapture({
   group,

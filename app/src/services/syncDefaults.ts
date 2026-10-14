@@ -16,7 +16,6 @@ export function isOfficialCloudUrl(url?: string | null): boolean {
     clean === "http://facenox.com" ||
     clean === "http://www.facenox.com" ||
     clean === "facenox.com" ||
-    clean === "www.facenox.com" ||
-    clean === DEFAULT_REMOTE_BASE_URL
+    clean === "www.facenox.com"
   )
 }
