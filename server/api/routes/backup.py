@@ -74,8 +74,8 @@ async def export_backup(
 ):
     """
     Export complete system state: attendance data + face embeddings.
-    If a password is provided, returns an encrypted .facenox blob.
-    If not, returns plain JSON (WARNING: biometrics will be masked).
+    If a password is provided, returns an encrypted .facenox blob payload.
+    If not, returns the complete unencrypted JSON payload (typically encrypted by Electron before saving).
     """
     try:
         # Gather attendance data
