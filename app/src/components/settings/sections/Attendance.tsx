@@ -452,7 +452,7 @@ export function Attendance({
                     title="Administrator PIN Lock"
                     description="Restricts access to settings and member rosters behind a 4-digit security PIN."
                     details={[
-                      "Recommended when the app is placed in open lobbies, hallways, or classrooms.",
+                      "Recommended when placed in public or unattended areas.",
                       "Prompts for your PIN when clicking Settings or pressing the Ctrl+, shortcut.",
                       "Default PIN is 1234. Update it in the sub-panel below.",
                     ]}
