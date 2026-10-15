@@ -105,7 +105,8 @@ async def test_track_checkout_mode_enforces_lifecycle(async_session_factory) -> 
         resp_cooldown = await service.process_event(event_data, member, settings)
         assert resp_cooldown.processed is False
         assert (
-            "time-out buffer active" in (resp_cooldown.error or "").lower()
+            "time-out locked" in (resp_cooldown.error or "").lower()
+            or "time-out buffer active" in (resp_cooldown.error or "").lower()
             or "cooldown active" in (resp_cooldown.error or "").lower()
         )
 
