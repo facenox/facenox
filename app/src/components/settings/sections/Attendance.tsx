@@ -6,7 +6,6 @@ import { useUIStore } from "@/components/main/stores"
 
 interface AttendanceProps {
   attendanceSettings: AttendanceSettings
-  onAttendanceCooldownChange: (seconds: number) => void
   onSpoofDetectionToggle: (enabled: boolean) => void
   onMaxRecognitionFacesChange: (count: number) => void
   onDataRetentionChange: (days: number) => void
@@ -18,7 +17,6 @@ const SETTINGS_PANEL_ANIMATION_DURATION = 0.18
 
 export function Attendance({
   attendanceSettings,
-  onAttendanceCooldownChange,
   onSpoofDetectionToggle,
   onMaxRecognitionFacesChange,
   onDataRetentionChange,
@@ -160,62 +158,6 @@ export function Attendance({
         </div>
 
         <div className="py-2">
-          <div className="flex items-center gap-4 py-4">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <div className="text-sm font-medium text-white/90">Duplicate Prevention</div>
-                <InfoPopover
-                  title="Duplicate Prevention"
-                  description="Filters repeated scans from the same person within the selected cooldown window."
-                  details={[
-                    "Prevents duplicate check-in entries to keep attendance records clean.",
-                    "Use 5s–1m in high-traffic doors or when tracking continuous movement.",
-                    "Use 5m–30m for standard daily check-in kiosks.",
-                  ]}
-                  side="right"
-                />
-              </div>
-              <div className="relative min-h-4">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key="cooldown-active"
-                    initial={{ opacity: 0, y: -2 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 2 }}
-                    transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                    className="text-xs font-normal text-white/65">
-                    Filter repeated scans from the same person within the cooldown window.
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </div>
-
-            <div className="ml-auto flex shrink-0 items-center gap-4">
-              {([5, 30, 60, 300, 600, 1800] as const).map((secs) => (
-                <button
-                  key={secs}
-                  type="button"
-                  onClick={() => onAttendanceCooldownChange(secs)}
-                  className={`relative min-w-[28px] cursor-pointer px-1.5 py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
-                    attendanceSettings.attendanceCooldownSeconds === secs ?
-                      "text-cyan-400"
-                    : "text-white/40 hover:text-white/70"
-                  }`}>
-                  {secs < 60 ? `${secs}s` : `${secs / 60}m`}
-                  {attendanceSettings.attendanceCooldownSeconds === secs && (
-                    <motion.div
-                      layoutId="cooldownUnderline"
-                      className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="h-px w-full bg-white/8" />
-
           {/* Auto-start Scanning on Launch */}
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">

@@ -136,6 +136,7 @@ export interface AttendanceGroup {
     class_start_time?: string
     class_end_time?: string | null
     track_checkout?: boolean
+    min_checkout_delay_minutes?: number
   }
   remote_id?: string | null
 }

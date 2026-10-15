@@ -49,6 +49,9 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
     group.settings?.late_threshold_minutes ?? 15,
   )
   const [trackCheckout, setTrackCheckout] = useState(Boolean(group.settings?.track_checkout))
+  const [minCheckoutDelayMinutes, setMinCheckoutDelayMinutes] = useState(
+    group.settings?.min_checkout_delay_minutes ?? 15,
+  )
 
   const handleDeleteGroup = async () => {
     if (isDeleteDisabled || isDeleting) return
@@ -70,6 +73,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
     setClassEndTime(group.settings?.class_end_time || "17:00")
     setLateThresholdMinutes(group.settings?.late_threshold_minutes ?? 15)
     setTrackCheckout(Boolean(group.settings?.track_checkout))
+    setMinCheckoutDelayMinutes(group.settings?.min_checkout_delay_minutes ?? 15)
   }, [group])
 
   const saveSettings = useCallback(
@@ -100,6 +104,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       class_end_time: trackCheckout ? classEndTime : null,
       late_threshold_minutes: lateThresholdMinutes,
       track_checkout: trackCheckout,
+      min_checkout_delay_minutes: minCheckoutDelayMinutes,
     })
   }
 
@@ -112,6 +117,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       class_end_time: trackCheckout ? classEndTime : null,
       late_threshold_minutes: lateThresholdMinutes,
       track_checkout: trackCheckout,
+      min_checkout_delay_minutes: minCheckoutDelayMinutes,
     })
   }
 
@@ -124,6 +130,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       class_end_time: trackCheckout ? classEndTime : null,
       late_threshold_minutes: mins,
       track_checkout: trackCheckout,
+      min_checkout_delay_minutes: minCheckoutDelayMinutes,
     })
   }
 
@@ -136,6 +143,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       class_end_time: enabled ? classEndTime : null,
       late_threshold_minutes: lateThresholdMinutes,
       track_checkout: enabled,
+      min_checkout_delay_minutes: minCheckoutDelayMinutes,
     })
   }
 
@@ -148,6 +156,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       class_end_time: trackCheckout ? time : null,
       late_threshold_minutes: lateThresholdMinutes,
       track_checkout: trackCheckout,
+      min_checkout_delay_minutes: minCheckoutDelayMinutes,
     })
   }
 
@@ -289,6 +298,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       details={[
                         "The first scan of the day registers the arrival time.",
                         "Subsequent scans throughout the day update the departure time.",
+                        "Includes a 15-minute safety window after arrival to prevent accidental clock-outs.",
                         "Automatically calculates total active hours between check-in and departure.",
                       ]}
                       side="right"

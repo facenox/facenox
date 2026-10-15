@@ -87,6 +87,11 @@ class AttendanceRepository:
             or local_now().strftime("%H:%M"),
             "class_end_time": settings.get("class_end_time"),
             "track_checkout": settings.get("track_checkout") or False,
+            "min_checkout_delay_minutes": (
+                settings.get("min_checkout_delay_minutes")
+                if settings.get("min_checkout_delay_minutes") is not None
+                else 15
+            ),
             "organization_id": self.organization_id,
         }
 
@@ -103,6 +108,9 @@ class AttendanceRepository:
         track_checkout = settings.get("track_checkout")
         if track_checkout is None:
             track_checkout = False
+        min_checkout_delay_minutes = settings.get("min_checkout_delay_minutes")
+        if min_checkout_delay_minutes is None:
+            min_checkout_delay_minutes = 15
 
         group = AttendanceGroup(
             id=group_data["id"],
@@ -114,6 +122,7 @@ class AttendanceRepository:
             class_start_time=class_start_time,
             class_end_time=class_end_time,
             track_checkout=track_checkout,
+            min_checkout_delay_minutes=min_checkout_delay_minutes,
             organization_id=self.organization_id,
             is_active=group_data.get("is_active", True),
             is_deleted=not group_data.get("is_active", True),
@@ -131,6 +140,7 @@ class AttendanceRepository:
                     "class_start_time": group.class_start_time,
                     "class_end_time": group.class_end_time,
                     "track_checkout": group.track_checkout,
+                    "min_checkout_delay_minutes": group.min_checkout_delay_minutes,
                 },
                 effective_from=to_storage_local(local_now()),
             )
@@ -220,6 +230,7 @@ class AttendanceRepository:
             "class_start_time": group.class_start_time,
             "class_end_time": group.class_end_time,
             "track_checkout": group.track_checkout,
+            "min_checkout_delay_minutes": group.min_checkout_delay_minutes,
         }
 
         for key, value in updates.items():
@@ -234,6 +245,10 @@ class AttendanceRepository:
                     group.class_end_time = value["class_end_time"]
                 if "track_checkout" in value:
                     group.track_checkout = value["track_checkout"]
+                if "min_checkout_delay_minutes" in value:
+                    group.min_checkout_delay_minutes = value[
+                        "min_checkout_delay_minutes"
+                    ]
             elif hasattr(group, key):
                 setattr(group, key, value)
 
@@ -243,6 +258,7 @@ class AttendanceRepository:
             "class_start_time": group.class_start_time,
             "class_end_time": group.class_end_time,
             "track_checkout": group.track_checkout,
+            "min_checkout_delay_minutes": group.min_checkout_delay_minutes,
         }
         group.last_modified_at = to_storage_local(local_now())
         if tracked_before != tracked_after:

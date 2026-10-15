@@ -24,7 +24,6 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
           dataRetentionDays: 14,
           cloudRetentionDays: 30,
         }}
-        onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
         onDataRetentionChange={onDataRetentionChange}
@@ -62,7 +61,6 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
           dataRetentionDays: 0,
           cloudRetentionDays: 30,
         }}
-        onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
         onDataRetentionChange={onDataRetentionChange}
@@ -88,7 +86,6 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
           dataRetentionDays: 0,
           cloudRetentionDays: -1,
         }}
-        onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
         onDataRetentionChange={onDataRetentionChange}
@@ -114,7 +111,6 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
           ...baseSettings,
           dataRetentionDays: 0,
         }}
-        onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
         onDataRetentionChange={onDataRetentionChange}
@@ -148,26 +144,19 @@ describe("Global General Preferences Controls", () => {
     dataRetentionDays: 0,
   }
 
-  it("renders Duplicate Prevention with active phrasing and cooldown buttons", () => {
-    const onCooldownChange = vi.fn()
+  it("renders Global Settings cleanly without redundant Scan Cooldown slider", () => {
     render(
       <Attendance
         attendanceSettings={baseSettings}
-        onAttendanceCooldownChange={onCooldownChange}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
         onDataRetentionChange={vi.fn()}
       />,
     )
 
-    expect(screen.getByText("Duplicate Prevention")).toBeInTheDocument()
-    expect(
-      screen.getByText("Filter repeated scans from the same person within the cooldown window."),
-    ).toBeInTheDocument()
-
-    const btn5m = screen.getByRole("button", { name: "5m" })
-    fireEvent.click(btn5m)
-    expect(onCooldownChange).toHaveBeenCalledWith(300)
+    expect(screen.queryByText("Scan Cooldown")).not.toBeInTheDocument()
+    expect(screen.getByText("Auto-start Scanning")).toBeInTheDocument()
+    expect(screen.getByText("Recognition Limit")).toBeInTheDocument()
   })
 
   it("renders Liveness Verification toggle and toggles spoof detection", () => {
@@ -175,7 +164,6 @@ describe("Global General Preferences Controls", () => {
     render(
       <Attendance
         attendanceSettings={baseSettings}
-        onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={onSpoofToggle}
         onMaxRecognitionFacesChange={vi.fn()}
         onDataRetentionChange={vi.fn()}
@@ -199,7 +187,6 @@ describe("Global General Preferences Controls", () => {
     render(
       <Attendance
         attendanceSettings={baseSettings}
-        onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={onMaxFacesChange}
         onDataRetentionChange={vi.fn()}
@@ -222,7 +209,6 @@ describe("Global General Preferences Controls", () => {
     render(
       <Attendance
         attendanceSettings={baseSettings}
-        onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
         onDataRetentionChange={vi.fn()}
@@ -239,7 +225,6 @@ describe("Global General Preferences Controls", () => {
     render(
       <Attendance
         attendanceSettings={baseSettings}
-        onAttendanceCooldownChange={vi.fn()}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
         onDataRetentionChange={vi.fn()}

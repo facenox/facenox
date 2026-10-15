@@ -70,6 +70,9 @@ class AttendanceGroup(Base, SyncMixin, DirectorySyncState):
     )
     class_end_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     track_checkout: Mapped[bool] = mapped_column(Boolean, default=False)
+    min_checkout_delay_minutes: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True, default=15
+    )
 
     members: Mapped[List["AttendanceMember"]] = relationship(back_populates="group")
     records: Mapped[List["AttendanceRecord"]] = relationship(back_populates="group")
@@ -86,6 +89,11 @@ class AttendanceGroup(Base, SyncMixin, DirectorySyncState):
             "class_start_time": self.class_start_time,
             "class_end_time": self.class_end_time,
             "track_checkout": self.track_checkout,
+            "min_checkout_delay_minutes": (
+                self.min_checkout_delay_minutes
+                if self.min_checkout_delay_minutes is not None
+                else 15
+            ),
         }
 
 
@@ -216,6 +224,9 @@ class AttendanceGroupRule(Base, SyncMixin):
     class_start_time: Mapped[str] = mapped_column(String, nullable=False)
     class_end_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     track_checkout: Mapped[bool] = mapped_column(Boolean, default=False)
+    min_checkout_delay_minutes: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True, default=15
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.current_timestamp()
     )

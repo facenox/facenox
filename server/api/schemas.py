@@ -66,6 +66,7 @@ class GroupSettings(BaseModel):
     class_start_time: Optional[str] = None  # HH:MM, defaults to creation time
     class_end_time: Optional[str] = None  # HH:MM, target departure/dismissal time
     track_checkout: bool = False
+    min_checkout_delay_minutes: Optional[int] = 15
 
 
 class AttendanceGroupCreate(BaseModel):
@@ -107,6 +108,7 @@ class AttendanceGroupRuleResponse(BaseModel):
     class_start_time: str
     class_end_time: Optional[str] = None
     track_checkout: bool
+    min_checkout_delay_minutes: Optional[int] = 15
 
     model_config = ConfigDict(from_attributes=True)
 

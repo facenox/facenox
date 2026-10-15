@@ -556,7 +556,8 @@ class LiveStreamService:
                 ):
                     continue
 
-                cooldown_seconds = group_context.attendance_cooldown_seconds or 300
+                # Camera throttle: debounce rapid frame re-evaluations for the same recognized face
+                cooldown_seconds = 5.0
                 cooldown_key = f"{original_person_id}:{group_context.group_id}"
                 now = time.time()
                 if (
@@ -591,6 +592,8 @@ class LiveStreamService:
                                 event_result, member_info or {}, face
                             )
                         )
+                    else:
+                        config.attendance_cooldowns[cooldown_key] = now
                 except Exception as exc:
                     logger.warning(
                         "[LiveStreamService] Live attendance processing failed for %s: %s",

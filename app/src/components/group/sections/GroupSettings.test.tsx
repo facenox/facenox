@@ -102,6 +102,26 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
     })
   })
 
+  it("renders clean Entry & Exit settings with Scheduled end time", async () => {
+    const group = createAttendanceGroup({
+      id: "group-3",
+      name: "Section C",
+      settings: {
+        late_threshold_enabled: false,
+        class_start_time: "08:00",
+        class_end_time: "17:00",
+        late_threshold_minutes: 15,
+        track_checkout: true,
+      },
+    })
+
+    render(<GroupSettings group={group} />)
+
+    expect(screen.getByText("Scheduled end time:")).toBeInTheDocument()
+    expect(screen.queryByText(/Lock Time Out/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/buffer/i)).not.toBeInTheDocument()
+  })
+
   it("renders Danger Zone and allows group deletion with confirmation", async () => {
     const onGroupsChanged = vi.fn()
     const group = createAttendanceGroup({

@@ -280,6 +280,9 @@ export class BackgroundSyncManager {
     if (typeof policy.attendanceCooldownSeconds === "number") {
       persistentStore.set("sync.policy.attendanceCooldownSeconds", policy.attendanceCooldownSeconds)
     }
+    if (typeof policy.minCheckoutDelayMinutes === "number") {
+      persistentStore.set("sync.policy.minCheckoutDelayMinutes", policy.minCheckoutDelayMinutes)
+    }
     if (typeof policy.dataRetentionDays === "number") {
       persistentStore.set("sync.policy.dataRetentionDays", policy.dataRetentionDays)
     }

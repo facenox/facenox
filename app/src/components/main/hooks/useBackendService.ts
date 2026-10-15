@@ -71,8 +71,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
     setWebsocketStatus,
   } = useCameraStore()
   const { setCurrentDetections } = useDetectionStore()
-  const { enableSpoofDetection, attendanceCooldownSeconds, setPersistentCooldowns } =
-    useAttendanceStore()
+  const { enableSpoofDetection, setPersistentCooldowns } = useAttendanceStore()
   const { setError } = useUIStore()
   const lastSoundAtRef = useRef<Map<string, number>>(new Map())
   const initializationRef = useRef<{
@@ -217,7 +216,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
                     height: payload.bbox.height,
                   }
                 : undefined,
-              cooldownDurationSeconds: attendanceCooldownSeconds,
+              cooldownDurationSeconds: 5,
             })
             return next
           })
@@ -407,7 +406,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
     setWebsocketStatus,
     setError,
     setPersistentCooldowns,
-    attendanceCooldownSeconds,
     loadAttendanceDataRef,
   ])
 

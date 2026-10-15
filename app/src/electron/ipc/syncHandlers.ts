@@ -99,6 +99,7 @@ function clearRemoteConnection() {
   persistentStore.delete("sync.policy.lateThresholdEnabled")
   persistentStore.delete("sync.policy.lateThresholdMinutes")
   persistentStore.delete("sync.policy.attendanceCooldownSeconds")
+  persistentStore.delete("sync.policy.minCheckoutDelayMinutes")
   persistentStore.delete("sync.policy.dataRetentionDays")
   persistentStore.delete("sync.policy.allowKioskDirectoryManagement")
 }

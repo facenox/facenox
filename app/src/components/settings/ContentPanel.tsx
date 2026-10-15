@@ -4,7 +4,7 @@ import { Display } from "@/components/settings/sections/Display"
 import { DataStorage } from "@/components/settings/sections/DataStorage"
 import { Attendance } from "@/components/settings/sections/Attendance"
 import { About } from "@/components/settings/sections/About"
-import { Sync } from "@/components/settings/sections/Sync"
+import { Sync, type RemoteSyncConfig } from "@/components/settings/sections/Sync"
 import { AntiSpoofDetectionModal } from "@/components/settings/AntiSpoofDetectionModal"
 import { AuditLogExportModal } from "@/components/settings/AuditLogExportModal"
 import { GroupPanel, type GroupSection } from "@/components/group"
@@ -171,13 +171,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   const [dontShowAntiSpoofInfoAgain, setDontShowAntiSpoofInfoAgain] = useState(false)
   const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false)
   const [isPaired, setIsPaired] = useState(false)
-  const [syncConfig, setSyncConfig] = useState<{
-    connected: boolean
-    organizationName: string
-    siteName: string
-    remoteBaseUrl?: string
-    lastSyncStatus?: "idle" | "success" | "error"
-  } | null>(null)
+  const [syncConfig, setSyncConfig] = useState<RemoteSyncConfig | null>(null)
 
   useEffect(() => {
     if (!window.electronAPI?.sync) return
@@ -201,13 +195,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   useEffect(() => {
     if (activeSection === "remote-sync") {
       window.electronAPI.sync.getConfig().then((cfg) => {
-        const data = cfg as {
-          connected: boolean
-          organizationName: string
-          siteName: string
-          remoteBaseUrl?: string
-        }
-        setSyncConfig(data)
+        setSyncConfig(cfg as RemoteSyncConfig)
       })
     }
   }, [activeSection])
@@ -652,30 +640,13 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
                 <Attendance
                   attendanceSettings={attendanceSettings}
-                  onLateThresholdChange={(minutes) =>
-                    updateAttendanceSetting({ lateThresholdMinutes: minutes })
-                  }
-                  onLateThresholdToggle={(enabled) =>
-                    updateAttendanceSetting({ lateThresholdEnabled: enabled })
-                  }
-                  onClassStartTimeChange={(time) =>
-                    updateAttendanceSetting({ classStartTime: time })
-                  }
-                  onClassEndTimeChange={(time) => updateAttendanceSetting({ classEndTime: time })}
-                  onAttendanceCooldownChange={(seconds) =>
-                    updateAttendanceSetting({ attendanceCooldownSeconds: seconds })
-                  }
                   onSpoofDetectionToggle={handleSpoofDetectionToggle}
                   onMaxRecognitionFacesChange={(count) =>
                     updateAttendanceSetting({ maxRecognitionFacesPerFrame: count })
                   }
-                  onTrackCheckoutToggle={(enabled) =>
-                    updateAttendanceSetting({ trackCheckout: enabled })
-                  }
                   onDataRetentionChange={(days) =>
                     updateAttendanceSetting({ dataRetentionDays: days })
                   }
-                  hasSelectedGroup={!!validInitialGroup}
                   isPaired={isPaired}
                 />
               </motion.div>

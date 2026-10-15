@@ -67,6 +67,7 @@ class AttendanceService:
         class_end_time: Optional[str] = None,
         late_threshold_enabled: bool,
         track_checkout: bool,
+        min_checkout_delay_minutes: Optional[int] = 15,
     ) -> Dict[str, Any]:
         if rule is None:
             return {
@@ -76,6 +77,11 @@ class AttendanceService:
                 "class_end_time": class_end_time,
                 "late_threshold_enabled": late_threshold_enabled,
                 "track_checkout": track_checkout,
+                "min_checkout_delay_minutes": (
+                    min_checkout_delay_minutes
+                    if min_checkout_delay_minutes is not None
+                    else 15
+                ),
             }
 
         return {
@@ -93,6 +99,15 @@ class AttendanceService:
                 rule, "late_threshold_enabled", late_threshold_enabled
             ),
             "track_checkout": getattr(rule, "track_checkout", track_checkout),
+            "min_checkout_delay_minutes": (
+                getattr(rule, "min_checkout_delay_minutes", None)
+                if getattr(rule, "min_checkout_delay_minutes", None) is not None
+                else (
+                    min_checkout_delay_minutes
+                    if min_checkout_delay_minutes is not None
+                    else 15
+                )
+            ),
         }
 
     @staticmethod
@@ -425,13 +440,103 @@ class AttendanceService:
         # Get group settings for late threshold and check-out tracking
         group = await self.repo.get_group(member.group_id)
 
+        # Always fetch the effective rule at the current event time to support settings changes midway through the day
+        session_rule = await self.repo.get_effective_group_rule(
+            member.group_id, current_time
+        )
+
+        normalized_rule = self._normalize_rule(
+            session_rule,
+            late_threshold_minutes=(
+                group.late_threshold_minutes
+                if group and group.late_threshold_minutes is not None
+                else 15
+            ),
+            class_start_time=(
+                group.class_start_time
+                if group and group.class_start_time
+                else time_health.current_time_local.strftime("%H:%M")
+            ),
+            late_threshold_enabled=(
+                group.late_threshold_enabled
+                if group and group.late_threshold_enabled is not None
+                else False
+            ),
+            track_checkout=getattr(group, "track_checkout", False) if group else False,
+            min_checkout_delay_minutes=(
+                getattr(group, "min_checkout_delay_minutes", 15) if group else 15
+            ),
+        )
+
+        track_checkout = normalized_rule["track_checkout"]
         existing_session = await self.repo.get_session(event_data.person_id, today_str)
 
-        # Ensure single source of truth for cooldown based on UI settings
+        if not track_checkout and existing_session and existing_session.check_in_time:
+            return AttendanceEventResponse(
+                id=None,
+                person_id=event_data.person_id,
+                group_id=member.group_id,
+                timestamp=current_time,
+                confidence=event_data.confidence,
+                location=event_data.location,
+                processed=False,
+                error="Member is already checked in for today.",
+                time_health=time_health_payload,
+            )
+
+        if (
+            track_checkout
+            and existing_session
+            and existing_session.check_in_time
+            and existing_session.check_out_time
+        ):
+            return AttendanceEventResponse(
+                id=None,
+                person_id=event_data.person_id,
+                group_id=member.group_id,
+                timestamp=current_time,
+                confidence=event_data.confidence,
+                location=event_data.location,
+                processed=False,
+                error="Member has already checked out for today.",
+                time_health=time_health_payload,
+            )
+
+        if (
+            track_checkout
+            and existing_session
+            and existing_session.check_in_time
+            and not existing_session.check_out_time
+        ):
+            time_since_check_in = abs(
+                (current_time - existing_session.check_in_time).total_seconds()
+            )
+            min_delay_val = normalized_rule.get("min_checkout_delay_minutes")
+            min_delay_minutes = 15 if min_delay_val is None else min_delay_val
+            if min_delay_minutes > 0:
+                time_since_check_in = abs(
+                    (current_time - existing_session.check_in_time).total_seconds()
+                )
+                min_delay_seconds = min_delay_minutes * 60
+                if time_since_check_in < min_delay_seconds:
+                    remaining_seconds = int(min_delay_seconds - time_since_check_in)
+                    remaining_mins = max(1, (remaining_seconds + 59) // 60)
+                    return AttendanceEventResponse(
+                        id=None,
+                        person_id=event_data.person_id,
+                        group_id=member.group_id,
+                        timestamp=current_time,
+                        confidence=event_data.confidence,
+                        location=event_data.location,
+                        processed=False,
+                        error=f"Time-Out locked. Must wait {remaining_mins}m after Time-In before clocking out.",
+                        time_health=time_health_payload,
+                    )
+
         if recent_records:
             for record in recent_records:
                 record_time = record.timestamp
-                time_diff = (current_time - record_time).total_seconds()
+                time_diff = abs((current_time - record_time).total_seconds())
 
                 if time_diff < cooldown_seconds:
                     return AttendanceEventResponse(
@@ -463,31 +568,6 @@ class AttendanceService:
 
         await self.repo.add_record(record_data)
 
-        # Always fetch the effective rule at the current event time to support settings changes midway through the day
-        session_rule = await self.repo.get_effective_group_rule(
-            member.group_id, current_time
-        )
-
-        normalized_rule = self._normalize_rule(
-            session_rule,
-            late_threshold_minutes=(
-                group.late_threshold_minutes
-                if group and group.late_threshold_minutes is not None
-                else 15
-            ),
-            class_start_time=(
-                group.class_start_time
-                if group and group.class_start_time
-                else time_health.current_time_local.strftime("%H:%M")
-            ),
-            late_threshold_enabled=(
-                group.late_threshold_enabled
-                if group and group.late_threshold_enabled is not None
-                else False
-            ),
-            track_checkout=getattr(group, "track_checkout", False) if group else False,
-        )
-
         # Determine event type and session data
         event_type = "check_in"
         check_in_time = timestamp
@@ -496,7 +576,7 @@ class AttendanceService:
 
         if existing_session and existing_session.check_in_time:
             check_in_time = existing_session.check_in_time
-            if normalized_rule["track_checkout"]:
+            if track_checkout:
                 event_type = "check_out"
                 check_out_time = timestamp
                 duration = check_out_time - check_in_time

@@ -737,7 +737,6 @@ export default function Main() {
               onStartTimeChange={handleStartTimeChange}
               currentGroup={currentGroup}
               enableSpoofDetection={enableSpoofDetection}
-              attendanceCooldownSeconds={attendanceCooldownSeconds}
               maxRecognitionFacesPerFrame={maxRecognitionFacesPerFrame}
             />
 

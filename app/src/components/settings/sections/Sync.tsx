@@ -12,7 +12,7 @@ import {
 } from "../../../services/syncDefaults"
 import { formatErrorMessage, parseSyncError } from "./syncErrorUtils.js"
 
-type RemoteSyncConfig = {
+export type RemoteSyncConfig = {
   enabled: boolean
   remoteBaseUrl: string
   organizationId: string

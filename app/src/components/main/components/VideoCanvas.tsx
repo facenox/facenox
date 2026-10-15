@@ -25,7 +25,6 @@ interface VideoCanvasProps {
   onStartTimeChange?: (newTime: string) => void
   currentGroup?: AttendanceGroup | null
   enableSpoofDetection?: boolean
-  attendanceCooldownSeconds?: number
   maxRecognitionFacesPerFrame?: number
 }
 
@@ -45,7 +44,6 @@ export const VideoCanvas = memo(function VideoCanvas({
   classStartTime = null,
   currentGroup = null,
   enableSpoofDetection = false,
-  attendanceCooldownSeconds = 30,
   maxRecognitionFacesPerFrame = 5,
 }: VideoCanvasProps) {
   const [showSettings, setShowSettings] = useState(false)
@@ -63,11 +61,6 @@ export const VideoCanvas = memo(function VideoCanvas({
             f.liveness?.message?.toLowerCase().includes("turn"))),
     ),
   )
-
-  const formatCooldown = (secs: number) => {
-    if (secs < 60) return `${secs}s`
-    return `${secs / 60}m`
-  }
 
   const isTimeOutdated = (): boolean => {
     try {
@@ -133,9 +126,7 @@ export const VideoCanvas = memo(function VideoCanvas({
         {/* 3. Duplicate Filter */}
         <div className="flex items-center justify-between gap-4">
           <span>Duplicate Filter</span>
-          <span className="text-right font-medium text-white/85">
-            {formatCooldown(attendanceCooldownSeconds)} cooldown
-          </span>
+          <span className="text-right font-medium text-white/85">5s auto</span>
         </div>
 
         {/* 4. Recognition Limit */}

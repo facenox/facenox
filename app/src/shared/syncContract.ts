@@ -8,6 +8,7 @@ export const groupSettingsSchema = z.object({
   class_start_time: z.string().nullable().optional(),
   class_end_time: z.string().nullable().optional(),
   track_checkout: z.boolean().default(false),
+  min_checkout_delay_minutes: z.number().nullable().optional(),
 })
 
 export const attendanceGroupSchema = z.object({
