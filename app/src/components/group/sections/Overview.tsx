@@ -245,6 +245,12 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
               value={stats.late_today}
               label="Late Arrivals"
               disabled={!(group.settings?.late_threshold_enabled ?? false)}
+              tooltipText={
+                <span>
+                  Members who checked in past the scheduled start time and grace period today.{" "}
+                  <span className="text-white/65">Resets at midnight.</span>
+                </span>
+              }
               disabledTooltipText={
                 <span>
                   Late tracking is disabled for this group. Enable it in{" "}
