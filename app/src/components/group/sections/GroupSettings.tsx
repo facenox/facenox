@@ -296,10 +296,10 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       title="Entry & Exit Tracking"
                       description="Tracks both initial check-in and final departure timestamps for each member per day."
                       details={[
-                        "The first scan of the day registers the arrival time.",
-                        "Subsequent scans throughout the day update the departure time.",
-                        "Includes a 15-minute safety window after arrival to prevent accidental clock-outs.",
-                        "Automatically calculates total active hours between check-in and departure.",
+                        "Registers arrival on the first scan of the day.",
+                        "Updates departure time on subsequent scans throughout the day.",
+                        "Applies a 15-minute safety window after arrival to prevent accidental clock-outs.",
+                        "Calculates total active hours automatically between check-in and departure.",
                       ]}
                       side="right"
                     />
@@ -315,7 +315,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         className="text-xs font-normal text-white/65">
                         {trackCheckout ?
                           "Record both arrival (Time In) and departure (Time Out) events."
-                        : "Only recording arrival times."}
+                        : "Record arrival times only."}
                       </motion.div>
                     </AnimatePresence>
                   </div>
