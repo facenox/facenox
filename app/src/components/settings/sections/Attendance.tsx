@@ -184,8 +184,8 @@ export function Attendance({
                     transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                     className="text-xs font-normal text-white/65">
                     {autoStartScan ?
-                      "Scanner will automatically start when the application launches."
-                    : "Scanner remains idle on startup until manually started."}
+                      "Start scanning automatically when the application launches."
+                    : "Keep scanner idle on startup until manually started."}
                   </motion.div>
                 </AnimatePresence>
               </div>
