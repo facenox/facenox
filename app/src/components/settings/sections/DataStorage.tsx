@@ -834,11 +834,11 @@ export function DataStorage({
               transition={{ duration: 0.18, ease: "easeOut" }}
               className="w-full overflow-hidden">
               <div className="w-full divide-y divide-red-500/5 pt-4 pb-8">
-                {/* Action 1: Clear Groups */}
+                {/* Action 1: Delete Group Directory */}
                 <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
                   <div className="min-w-0 flex-1 text-left">
                     <h4 className="text-[15px] font-semibold text-red-400/80">
-                      Clear Group Directory
+                      Delete Group Directory
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                       Permanently delete all groups, member profiles, and enrolled biometric face
@@ -866,16 +866,16 @@ export function DataStorage({
                     }
                     className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     {deletingGroup === "all" && <i className="fa-solid fa-spinner fa-spin" />}
-                    Clear Groups
+                    Delete Directory
                   </button>
                 </div>
 
-                {/* Action 2: Reset Face Data */}
+                {/* Action 2: Clear Face Data */}
                 <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
                   <div className="min-w-0 flex-1 text-left">
-                    <h4 className="text-[15px] font-semibold text-red-400/80">Reset Face Data</h4>
+                    <h4 className="text-[15px] font-semibold text-red-400/80">Clear Face Data</h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Wipe all face recognition signatures. Enrolled members will need to re-enroll
+                      Wipe all enrolled biometric face data. Enrolled members will need to re-enroll
                       their face profiles.
                       {isPaired &&
                         (!allowKioskDirectoryManagement ?
@@ -894,7 +894,7 @@ export function DataStorage({
                     onClick={() => onClearDatabase(false)}
                     disabled={isLoading || (isPaired && !allowKioskDirectoryManagement)}
                     className="flex shrink-0 items-center justify-center self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
-                    Reset Face Data
+                    Clear Face Data
                   </button>
                 </div>
 
@@ -921,7 +921,7 @@ export function DataStorage({
                     disabled={isLoading || isPurgingHistory}
                     className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     {isPurgingHistory && <i className="fa-solid fa-spinner fa-spin" />}
-                    Wipe History
+                    Purge History
                   </button>
                 </div>
               </div>

@@ -80,6 +80,7 @@ export function useCameraControl({
 }: CameraControlProps) {
   const startCamera = useCallback(async () => {
     let deviceIdToUse: string | undefined = undefined
+    let availableDevices: MediaDeviceInfo[] = cameraDevices
     const hadExplicitSelection = Boolean(selectedCamera && selectedCamera.trim())
     try {
       const now = Date.now()
@@ -121,21 +122,24 @@ export function useCameraControl({
         webSocketServiceRef.current?.refreshActiveStream()
       }
 
-      await getCameraDevices()
+      const freshDevices = await getCameraDevices()
+      if (freshDevices && freshDevices.length > 0) {
+        availableDevices = freshDevices
+      }
 
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop())
       }
 
       deviceIdToUse = undefined
-      if (selectedCamera && cameraDevices.length > 0) {
-        const deviceExists = cameraDevices.some(
+      if (selectedCamera && availableDevices.length > 0) {
+        const deviceExists = availableDevices.some(
           (device) => device.deviceId && device.deviceId === selectedCamera,
         )
         if (deviceExists) {
           deviceIdToUse = selectedCamera
         } else {
-          const validDevice = cameraDevices.find(
+          const validDevice = availableDevices.find(
             (device) => device.deviceId && device.deviceId.trim() !== "",
           )
           if (validDevice) {
@@ -143,8 +147,8 @@ export function useCameraControl({
             setSelectedCamera(validDevice.deviceId)
           }
         }
-      } else if (cameraDevices.length > 0 && !selectedCamera) {
-        const validDevice = cameraDevices.find(
+      } else if (availableDevices.length > 0 && !selectedCamera) {
+        const validDevice = availableDevices.find(
           (device) => device.deviceId && device.deviceId.trim() !== "",
         )
         if (validDevice) {
@@ -153,7 +157,7 @@ export function useCameraControl({
         }
       }
 
-      if (cameraDevices.length === 0) {
+      if (availableDevices.length === 0) {
         throw new Error("No camera detected. Ensure a camera is connected and try again.")
       }
 
@@ -224,11 +228,15 @@ export function useCameraControl({
             instructions = "Ensure camera permissions are granted in system settings."
           }
           errorMessage = `Camera access was denied. ${instructions}`
-        } else if (errorName === "NotFoundError" || errorName === "DevicesNotFoundError") {
-          errorMessage =
-            "No camera found. Check if the camera is properly connected to the computer."
+        } else if (
+          errorName === "NotFoundError" ||
+          errorName === "DevicesNotFoundError" ||
+          err.message?.includes("No camera detected")
+        ) {
+          errorMessage = "No camera detected. Ensure a camera is connected and try again."
         } else if (errorName === "NotReadableError" || errorName === "TrackStartError") {
-          const otherCameras = cameraDevices.filter(
+          const currentDevices = availableDevices.length > 0 ? availableDevices : cameraDevices
+          const otherCameras = currentDevices.filter(
             (d) => d.deviceId !== deviceIdToUse && d.deviceId !== "",
           )
           if (otherCameras.length > 0) {
@@ -272,6 +280,7 @@ export function useCameraControl({
           }
         } else {
           errorMessage =
+            err.message ||
             "An unexpected error occurred while starting the camera. Check connection or try another camera device."
         }
       }

@@ -223,10 +223,10 @@ export const useSettings = ({
   const handleClearDatabase = async (skipConfirmation = false) => {
     if (!skipConfirmation) {
       const ok = await dialog.confirm({
-        title: "Clear all face data",
+        title: "Clear Face Data",
         message:
           "Clear ALL face recognition data? This will delete all enrolled faces and embeddings. This cannot be undone.",
-        confirmText: "Clear data",
+        confirmText: "Clear Face Data",
         cancelText: "Cancel",
         confirmVariant: "danger",
         requireTypedConfirmation: {
