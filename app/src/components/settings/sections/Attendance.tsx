@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { AttendanceSettings } from "@/components/settings/types"
 import { InfoPopover, Switch, Tooltip } from "@/components/shared"
@@ -38,6 +38,13 @@ export function Attendance({
   const [isShaking, setIsShaking] = useState(false)
   const [copiedKey, setCopiedKey] = useState(false)
   const [confirmRegenerate, setConfirmRegenerate] = useState(false)
+  const [retentionInput, setRetentionInput] = useState<string | null>(null)
+  const [isRetentionCapped, setIsRetentionCapped] = useState(false)
+
+  const triggerCappedNudge = useCallback(() => {
+    setIsRetentionCapped(true)
+    setTimeout(() => setIsRetentionCapped(false), 300)
+  }, [])
 
   // Auto-reset confirmation state after 4 seconds
   useEffect(() => {
@@ -371,66 +378,119 @@ export function Attendance({
                   side="right"
                 />
               </div>
-              <div className="mt-0.5 text-xs text-white/65">
-                {(() => {
-                  if (cloudCeiling) {
-                    if (effectiveDays === cloudCeiling) {
-                      return `Attendance check-in logs older than ${cloudCeiling} days are pruned (matches cloud plan limit). Member profiles and face data are never deleted.`
-                    }
-                    return `Attendance check-in logs older than ${effectiveDays} days are pruned locally (Cloud keeps up to ${cloudCeiling} days). Member profiles and face data are never deleted.`
-                  }
-                  if (isCloudUnlimited) {
-                    return effectiveDays <= 0 ?
-                        "Cloud plan allows unlimited history. Attendance logs are kept forever."
-                      : `Cloud plan allows unlimited history. Attendance logs older than ${effectiveDays} days are pruned automatically. Member profiles and face data are never deleted.`
-                  }
-                  if (effectiveDays <= 0)
-                    return "Keep all attendance logs forever. Member profiles and face data are never deleted."
+              <div className="relative mt-0.5 min-h-4">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`${cloudCeiling}-${isCloudUnlimited}-${effectiveDays}`}
+                    initial={{ opacity: 0, y: -2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 2 }}
+                    transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
+                    className="text-xs text-white/65">
+                    {(() => {
+                      if (cloudCeiling) {
+                        if (effectiveDays === cloudCeiling) {
+                          return `Attendance check-in logs older than ${cloudCeiling} days are pruned (matches cloud plan limit). Member profiles and face data are never deleted.`
+                        }
+                        return `Attendance check-in logs older than ${effectiveDays} days are pruned locally (Cloud keeps up to ${cloudCeiling} days). Member profiles and face data are never deleted.`
+                      }
+                      if (isCloudUnlimited) {
+                        return effectiveDays <= 0 ?
+                            "Cloud plan allows unlimited history. Attendance logs are kept forever."
+                          : `Cloud plan allows unlimited history. Attendance logs older than ${effectiveDays} days are pruned automatically. Member profiles and face data are never deleted.`
+                      }
+                      if (effectiveDays <= 0)
+                        return "Keep all attendance logs forever. Member profiles and face data are never deleted."
 
-                  const years = Math.floor(effectiveDays / 365)
-                  const remainingDays = effectiveDays % 365
-                  const months = Math.floor(remainingDays / 30)
+                      const years = Math.floor(effectiveDays / 365)
+                      const remainingDays = effectiveDays % 365
+                      const months = Math.floor(remainingDays / 30)
 
-                  let timeStr = ""
-                  if (years > 0) {
-                    timeStr += `${years} ${years === 1 ? "year" : "years"}`
-                    if (months > 0) {
-                      timeStr += ` and ${months} ${months === 1 ? "month" : "months"}`
-                    }
-                  } else if (months > 0) {
-                    timeStr = `${months} ${months === 1 ? "month" : "months"}`
-                  } else {
-                    timeStr = `${effectiveDays} ${effectiveDays === 1 ? "day" : "days"}`
-                  }
+                      let timeStr = ""
+                      if (years > 0) {
+                        timeStr += `${years} ${years === 1 ? "year" : "years"}`
+                        if (months > 0) {
+                          timeStr += ` and ${months} ${months === 1 ? "month" : "months"}`
+                        }
+                      } else if (months > 0) {
+                        timeStr = `${months} ${months === 1 ? "month" : "months"}`
+                      } else {
+                        timeStr = `${effectiveDays} ${effectiveDays === 1 ? "day" : "days"}`
+                      }
 
-                  return `Delete attendance logs older than ${timeStr} automatically. Member profiles and face data are never deleted.`
-                })()}
+                      return `Delete attendance logs older than ${timeStr} automatically. Member profiles and face data are never deleted.`
+                    })()}
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </div>
-            <div className="ml-auto flex shrink-0 items-center gap-2">
-              <span className="text-[11px] font-medium text-white/65">
-                {effectiveDays <= 0 ? "forever" : "days"}
-              </span>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={effectiveDays}
-                onChange={(e) => {
-                  const raw = e.target.value.replace(/\D/g, "")
-                  const num = raw === "" ? 0 : parseInt(raw, 10)
-                  if (cloudCeiling) {
-                    onDataRetentionChange(Math.min(cloudCeiling, num))
-                  } else {
-                    onDataRetentionChange(Math.min(3650, num))
-                  }
-                }}
-                onBlur={() => {
-                  if (cloudCeiling && (attendanceSettings.dataRetentionDays ?? 0) <= 0) {
-                    onDataRetentionChange(cloudCeiling)
-                  }
-                }}
-                className="w-14 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none focus:border-white/20"
-              />
+            <div className="ml-auto flex shrink-0 flex-col items-end">
+              <div className="flex items-center gap-2">
+                <div className="relative flex h-4 min-w-[36px] items-center justify-end overflow-hidden">
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={effectiveDays <= 0 ? "forever" : "days"}
+                      initial={{ opacity: 0, y: -2 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 2 }}
+                      transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
+                      className="text-[11px] font-medium text-white/65">
+                      {effectiveDays <= 0 ? "forever" : "days"}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+                <motion.div
+                  animate={isRetentionCapped ? { x: [-3, 3, -2, 2, 0] } : {}}
+                  transition={{ duration: 0.25 }}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={retentionInput !== null ? retentionInput : String(effectiveDays)}
+                    onFocus={() => {
+                      setRetentionInput(String(effectiveDays))
+                    }}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "")
+                      setRetentionInput(raw)
+                      if (raw !== "") {
+                        const num = parseInt(raw, 10)
+                        const maxLimit = cloudCeiling || 3650
+                        const clamped = Math.min(maxLimit, num)
+                        if (num > maxLimit) {
+                          triggerCappedNudge()
+                        }
+                        onDataRetentionChange(clamped)
+                      }
+                    }}
+                    onBlur={() => {
+                      const raw = retentionInput
+                      setRetentionInput(null)
+                      if (raw !== null) {
+                        const num = raw === "" ? 0 : parseInt(raw, 10)
+                        if (cloudCeiling) {
+                          if (num <= 0) {
+                            triggerCappedNudge()
+                            onDataRetentionChange(cloudCeiling)
+                          } else {
+                            if (num > cloudCeiling) triggerCappedNudge()
+                            onDataRetentionChange(Math.min(cloudCeiling, num))
+                          }
+                        } else {
+                          onDataRetentionChange(Math.min(3650, num))
+                        }
+                      } else if (cloudCeiling && (attendanceSettings.dataRetentionDays ?? 0) <= 0) {
+                        triggerCappedNudge()
+                        onDataRetentionChange(cloudCeiling)
+                      }
+                    }}
+                    className={`w-14 rounded-lg border bg-[rgba(22,28,36,0.68)] px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none ${
+                      isRetentionCapped ?
+                        "border-amber-400/60 shadow-[0_0_12px_rgba(251,191,36,0.25)]"
+                      : "border-white/10 focus:border-white/20"
+                    }`}
+                  />
+                </motion.div>
+              </div>
             </div>
           </div>
         </div>

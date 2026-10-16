@@ -324,10 +324,13 @@ export function PinPromptModal() {
                   <ModalCloseButton onClick={closePinPrompt} />
                 </div>
 
-                <div className="my-5 flex items-center justify-center gap-3">
+                <div
+                  className={`my-5 flex items-center justify-center gap-3 transition-opacity duration-300 ${
+                    lockoutSeconds > 0 ? "opacity-40" : ""
+                  }`}>
                   {[0, 1, 2, 3].map((index) => {
                     const isFilled = pin.length > index
-                    const isActive = pin.length === index
+                    const isActive = lockoutSeconds === 0 && pin.length === index
                     return (
                       <div
                         key={index}
