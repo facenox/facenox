@@ -690,11 +690,11 @@ export function AddMember({
                             details={[
                               "Processes biometric vectors on-device without persisting or uploading raw photos.",
                               "Enroll live with camera or upload a clear front-facing photo.",
-                              "Connect to Facenox Cloud to sync enrolled profiles across devices.",
+                              "Connect to Facenox Cloud to sync enrolled face data across devices.",
                             ]}
                             side="right"
                           />
-                          <span className="text-[10px] text-white/35">can be added later</span>
+                          <span className="text-[10px] text-white/35">(optional)</span>
                         </div>
                         <button
                           type="button"
@@ -725,11 +725,11 @@ export function AddMember({
                               details={[
                                 "Processes biometric vectors on-device without persisting or uploading raw photos.",
                                 "Enroll live with camera or upload a clear front-facing photo.",
-                                "Connect to Facenox Cloud to sync enrolled profiles across devices.",
+                                "Connect to Facenox Cloud to sync enrolled face data across devices.",
                               ]}
                               side="right"
                             />
-                            <span className="text-[10px] text-white/35">can be added later</span>
+                            <span className="text-[10px] text-white/35">(optional)</span>
                           </div>
                           <div className="flex items-center gap-2">
                             {/* Segmented Mode Selector */}
@@ -827,7 +827,7 @@ export function AddMember({
                                       : <div className="flex flex-col items-center gap-2.5">
                                           <Spinner size="md" color="cyan" />
                                           <span className="text-xs font-medium text-white/60">
-                                            Connecting camera...
+                                            Connecting camera…
                                           </span>
                                         </div>
                                       }
@@ -847,7 +847,7 @@ export function AddMember({
                                         stopCamera()
                                       }}
                                       className="group flex items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-[10px] font-medium text-white/70 backdrop-blur-md transition-all hover:border-white/25 hover:bg-black/70 hover:text-white"
-                                      aria-label="Upload Photo Instead">
+                                      aria-label="Upload photo">
                                       <i className="fa-solid fa-file-image text-[10px] text-white/50 group-hover:text-white/80" />
                                       <span>Upload</span>
                                     </button>
@@ -861,7 +861,7 @@ export function AddMember({
                                         onClick={handleSnapPhoto}
                                         disabled={isProcessingFace}
                                         className="group flex h-11 w-11 items-center justify-center rounded-full bg-white/10 p-1 backdrop-blur-md transition-all hover:bg-white/20 active:scale-90 disabled:cursor-not-allowed disabled:opacity-40"
-                                        aria-label="Capture Face">
+                                        aria-label="Capture photo">
                                         {isProcessingFace ?
                                           <div className="flex h-full w-full items-center justify-center rounded-full bg-white/10">
                                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
@@ -962,7 +962,7 @@ export function AddMember({
                     </div>
                     <label className="group flex cursor-pointer items-center gap-1.5 text-xs font-medium text-cyan-400/80 transition-colors hover:text-cyan-400">
                       <i className="fa-solid fa-file-arrow-up transition-transform group-hover:-translate-y-0.5"></i>
-                      Import .CSV or .TXT
+                      Import CSV or TXT
                       <input
                         type="file"
                         accept=".txt,.csv"

@@ -449,7 +449,7 @@ export default function WindowBar() {
           <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
             <i className="fa-solid fa-circle-exclamation text-4xl text-red-400" />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-white">Update Check Failed</p>
+              <p className="text-sm font-semibold text-white">Update check failed</p>
               <p className="text-xs text-white/50">
                 {updateCheckState === "offline" ?
                   "No internet connection detected."

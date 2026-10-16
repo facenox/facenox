@@ -150,7 +150,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                   className="flex items-center justify-between py-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-medium text-white/80">Schedule Rules</span>
-                    <span className="text-[10px] text-white/35">can be configured later</span>
+                    <span className="text-[10px] text-white/35">(optional)</span>
                   </div>
                   <button
                     type="button"
@@ -169,7 +169,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                   <div className="flex items-center justify-between px-0.5">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px] font-medium text-white/80">Schedule Rules</span>
-                      <span className="text-[10px] text-white/35">can be configured later</span>
+                      <span className="text-[10px] text-white/35">(optional)</span>
                     </div>
                     {!hasConfiguredSchedule && (
                       <button

@@ -189,7 +189,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
           className="flex flex-col items-center text-white/40">
           <Spinner size="lg" className="mb-4" />
           <div className="text-xs font-semibold tracking-wider text-white/55 uppercase">
-            Loading Overview...
+            Loading Overview…
           </div>
         </motion.div>
       </div>
@@ -418,7 +418,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                     <EmptyState
                       key="no-results"
                       title="No results found"
-                      description={`No activity matched "${activitySearch}"`}
+                      description={`No activity matched "${activitySearch}".`}
                       iconClass="fa-solid fa-ghost text-2xl"
                     />
                   : <motion.div
