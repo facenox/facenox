@@ -74,7 +74,7 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     expect(screen.getByText("forever")).toBeInTheDocument()
     expect(
       screen.getByText(
-        /Local kiosk keeps all attendance logs forever\. Cloud dashboard stores up to 30 days/i,
+        "Keep all local attendance logs forever. Member profiles and face data are never deleted.",
       ),
     ).toBeInTheDocument()
 
@@ -132,7 +132,7 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     expect(screen.queryByText("Standalone")).not.toBeInTheDocument()
     expect(
       screen.getByText(
-        "Keep all attendance logs forever. Member profiles and face data are never deleted.",
+        "Keep all local attendance logs forever. Member profiles and face data are never deleted.",
       ),
     ).toBeInTheDocument()
     const input = screen.getByDisplayValue("0") as HTMLInputElement

@@ -384,19 +384,9 @@ export function Attendance({
                     transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                     className="text-xs text-white/65">
                     {(() => {
-                      if (cloudCeiling) {
-                        if (effectiveDays <= 0) {
-                          return `Local kiosk keeps all attendance logs forever. Cloud dashboard stores up to ${cloudCeiling} days on your current plan.`
-                        }
-                        return `Local attendance logs older than ${effectiveDays} days are pruned automatically. Cloud dashboard stores up to ${cloudCeiling} days on your current plan.`
+                      if (effectiveDays <= 0) {
+                        return "Keep all local attendance logs forever. Member profiles and face data are never deleted."
                       }
-                      if (isCloudUnlimited) {
-                        return effectiveDays <= 0 ?
-                            "Cloud plan allows unlimited history. Attendance logs are kept forever."
-                          : `Cloud plan allows unlimited history. Attendance logs older than ${effectiveDays} days are pruned automatically. Member profiles and face data are never deleted.`
-                      }
-                      if (effectiveDays <= 0)
-                        return "Keep all attendance logs forever. Member profiles and face data are never deleted."
 
                       const years = Math.floor(effectiveDays / 365)
                       const remainingDays = effectiveDays % 365
@@ -414,7 +404,7 @@ export function Attendance({
                         timeStr = `${effectiveDays} ${effectiveDays === 1 ? "day" : "days"}`
                       }
 
-                      return `Delete attendance logs older than ${timeStr} automatically. Member profiles and face data are never deleted.`
+                      return `Delete local attendance logs older than ${timeStr} automatically. Member profiles and face data are never deleted.`
                     })()}
                   </motion.div>
                 </AnimatePresence>
