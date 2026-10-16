@@ -191,7 +191,7 @@ export function createElectronAPIMock(): MockElectronAPI {
       updateConfig: vi.fn().mockResolvedValue(defaultSyncConfig),
       pairDevice: vi.fn().mockResolvedValue({
         success: true,
-        message: "Device paired successfully.",
+        message: "Device connected.",
         initialSyncSucceeded: true,
         config: createSyncConfig({ connected: true }),
       }),

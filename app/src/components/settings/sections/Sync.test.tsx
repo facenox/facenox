@@ -86,7 +86,7 @@ describe("Sync", () => {
     const electronAPI = getElectronAPIMock()
     electronAPI.sync.pairDevice.mockResolvedValue({
       success: true,
-      message: "Paired successfully.",
+      message: "Device connected.",
       initialSyncSucceeded: true,
       config: createSyncConfig({
         connected: true,
@@ -107,7 +107,7 @@ describe("Sync", () => {
     await user.click(screen.getByRole("button", { name: /Connect/i }))
 
     await waitFor(() => {
-      expect(screen.getByText("Paired successfully.")).toBeInTheDocument()
+      expect(screen.getByText("Device connected.")).toBeInTheDocument()
     })
     expect(screen.queryByPlaceholderText("ABCD2345")).not.toBeInTheDocument()
   })

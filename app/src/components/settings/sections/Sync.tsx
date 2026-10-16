@@ -319,7 +319,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       syncFromConfig(result.config)
       setPairingCode("")
       if (result.initialSyncSucceeded === false) {
-        setError(result.message || "Device connected.")
+        setError(result.message || "Device connected, but initial sync failed.")
       } else {
         setSuccess(result.message || "Device connected.")
       }
