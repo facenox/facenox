@@ -7,7 +7,7 @@ import { ErrorMessage, FormInput, Modal, Spinner } from "@/components/common"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
 import { useAttendanceStore } from "@/components/main/stores"
 import { useCamera } from "@/components/group/sections/enrollment/hooks/useCamera"
-import { Tooltip } from "@/components/shared"
+import { Tooltip, InfoPopover } from "@/components/shared"
 import { validateAndGetBestFace } from "@/utils/faceValidation"
 import { dataUrlToBlob } from "@/utils/dataUrl"
 
@@ -684,6 +684,16 @@ export function AddMember({
                           <span className="text-[11px] font-medium text-white/80">
                             Face Enrollment
                           </span>
+                          <InfoPopover
+                            title="Face Enrollment"
+                            description="Enrolls facial features locally on this computer for instant camera recognition."
+                            details={[
+                              "Processes biometric vectors on-device without persisting or uploading raw photos.",
+                              "Enroll live with camera or upload a clear front-facing portrait photo.",
+                              "Connect to Facenox Cloud to automatically sync enrolled profiles across your other devices.",
+                            ]}
+                            side="right"
+                          />
                           <span className="text-[10px] text-white/35">can be added later</span>
                         </div>
                         <button
@@ -709,6 +719,16 @@ export function AddMember({
                             <span className="text-[11px] font-medium text-white/80">
                               Face Enrollment
                             </span>
+                            <InfoPopover
+                              title="Face Enrollment"
+                              description="Enrolls facial features locally on this computer for instant camera recognition."
+                              details={[
+                                "Processes biometric vectors on-device without persisting or uploading raw photos.",
+                                "Enroll live with camera or upload a clear front-facing portrait photo.",
+                                "Connect to Facenox Cloud to automatically sync enrolled profiles across your other devices.",
+                              ]}
+                              side="right"
+                            />
                             <span className="text-[10px] text-white/35">can be added later</span>
                           </div>
                           <div className="flex items-center gap-2">

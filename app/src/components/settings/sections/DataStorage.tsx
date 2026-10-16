@@ -20,6 +20,7 @@ interface DataStorageProps {
   isLoading: boolean
   onClearDatabase: (skipConfirmation?: boolean) => void
   onGroupsChanged?: () => void
+  onNavigateToSync?: () => void
 }
 
 export function DataStorage({
@@ -30,6 +31,7 @@ export function DataStorage({
   isLoading,
   onClearDatabase,
   onGroupsChanged,
+  onNavigateToSync,
 }: DataStorageProps) {
   const dialog = useDialog()
   const {
@@ -467,6 +469,23 @@ export function DataStorage({
               <span>Restore</span>
             </button>
           </div>
+
+          {/* Subtle contextual bridge when operating standalone */}
+          {!isPaired && onNavigateToSync && (
+            <div className="flex items-center justify-between rounded-lg border border-white/6 bg-white/[0.02] px-4 py-3">
+              <div className="flex items-center gap-2.5 text-xs text-white/65">
+                <i className="fa-solid fa-cloud text-[11px] text-emerald-400" />
+                <span>Need cloud backup or multi-device sync?</span>
+              </div>
+              <button
+                type="button"
+                onClick={onNavigateToSync}
+                className="group flex items-center gap-1.5 text-xs font-semibold text-cyan-400 transition-colors hover:text-cyan-300">
+                <span>Set up Cloud Sync</span>
+                <i className="fa-solid fa-arrow-right text-[10px] transition-transform group-hover:translate-x-0.5" />
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

@@ -664,6 +664,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   groups={groups}
                   isLoading={isLoading}
                   onClearDatabase={handleClearDatabase}
+                  onNavigateToSync={() => setActiveSection("remote-sync")}
                   onGroupsChanged={() => {
                     loadSystemData()
                     if (onGroupsChanged) onGroupsChanged()
