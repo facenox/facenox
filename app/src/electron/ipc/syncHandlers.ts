@@ -187,12 +187,12 @@ function decryptBackup(blob: Buffer, password: string): Buffer {
   const minLen = magicLen + SALT_SIZE + IV_SIZE + TAG_SIZE + 1
 
   if (blob.length < minLen) {
-    throw new Error("File is too short to be a valid .facenox backup.")
+    throw new Error("Invalid or incomplete .facenox backup file.")
   }
 
   const magic = blob.subarray(0, magicLen)
   if (!crypto.timingSafeEqual(magic, FACENOX_MAGIC)) {
-    throw new Error("Invalid file format. This file is not a Facenox backup (.facenox).")
+    throw new Error("Invalid backup file. Select a valid .facenox backup.")
   }
 
   let offset = magicLen

@@ -686,11 +686,11 @@ export function AddMember({
                           </span>
                           <InfoPopover
                             title="Face Enrollment"
-                            description="Enrolls facial features locally on this computer for instant camera recognition."
+                            description="Enrolls facial features locally for instant camera recognition."
                             details={[
                               "Processes biometric vectors on-device without persisting or uploading raw photos.",
-                              "Enroll live with camera or upload a clear front-facing portrait photo.",
-                              "Connect to Facenox Cloud to automatically sync enrolled profiles across your other devices.",
+                              "Enroll live with camera or upload a clear front-facing photo.",
+                              "Connect to Facenox Cloud to sync enrolled profiles across devices.",
                             ]}
                             side="right"
                           />
@@ -721,11 +721,11 @@ export function AddMember({
                             </span>
                             <InfoPopover
                               title="Face Enrollment"
-                              description="Enrolls facial features locally on this computer for instant camera recognition."
+                              description="Enrolls facial features locally for instant camera recognition."
                               details={[
                                 "Processes biometric vectors on-device without persisting or uploading raw photos.",
-                                "Enroll live with camera or upload a clear front-facing portrait photo.",
-                                "Connect to Facenox Cloud to automatically sync enrolled profiles across your other devices.",
+                                "Enroll live with camera or upload a clear front-facing photo.",
+                                "Connect to Facenox Cloud to sync enrolled profiles across devices.",
                               ]}
                               side="right"
                             />

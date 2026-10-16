@@ -160,8 +160,8 @@ export const VideoCanvas = memo(function VideoCanvas({
       !hasMembers ? "Add and enroll at least one member to start scanning."
       : !hasEnrolledFaces ? "Enroll at least one member to start scanning."
       : null
-    : hasGroups ? "Select a group to begin."
-    : "Create a group to begin."
+    : hasGroups ? "Select a group to start scanning."
+    : "Create a group to start scanning."
 
   return (
     <div

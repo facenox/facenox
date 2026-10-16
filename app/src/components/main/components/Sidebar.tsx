@@ -261,7 +261,7 @@ export const Sidebar = memo(function Sidebar({
             </Tooltip>
 
             <Tooltip
-              content={updateInfo?.hasUpdate ? "Update available!" : "Settings"}
+              content={updateInfo?.hasUpdate ? "Update available" : "Settings"}
               position="left"
               offset={0}
               disabled={isCollapsed}>
@@ -349,7 +349,7 @@ export const Sidebar = memo(function Sidebar({
             </Tooltip>
 
             <Tooltip
-              content={updateInfo?.hasUpdate ? "Update available!" : "Settings"}
+              content={updateInfo?.hasUpdate ? "Update available" : "Settings"}
               position="left">
               <motion.button
                 onClick={() => {

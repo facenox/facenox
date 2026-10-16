@@ -212,7 +212,7 @@ function EmptyTableState({
       description={
         search ? `No records matched "${search}"`
         : statusFilter && statusFilter !== "all" ?
-          `None of the records currently match the "${statusFilter}" filter.`
+          `No records match the "${statusFilter}" filter.`
         : "There are no attendance records for this period."
       }
       iconClass={

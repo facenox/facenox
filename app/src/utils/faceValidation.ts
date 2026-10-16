@@ -25,13 +25,11 @@ export function validateAndGetBestFace(detection: FaceDetectionResult): Validate
   )
 
   if (!bestFace.bbox || bestFace.bbox.length < 4) {
-    throw new Error("Face detected but bounding box missing.")
+    throw new Error("Unable to locate face frame. Reposition face and try again.")
   }
 
   if (!bestFace.landmarks_5 || bestFace.landmarks_5.length !== 5) {
-    throw new Error(
-      "Biometric signature detected, but facial features are missing. Ensure the subject is clearly visible and try again.",
-    )
+    throw new Error("Facial features unclear. Ensure face is clearly visible and try again.")
   }
 
   return {

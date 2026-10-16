@@ -175,9 +175,7 @@ export function GroupEntry({
                 {group.displayName || group.name}
               </h3>
             </Tooltip>
-            <p className="mt-1 text-xs font-normal text-white/65">
-              Manage members and directory profiles in this group
-            </p>
+            <p className="mt-1 text-xs font-normal text-white/65">Manage members in this group</p>
           </div>
         }
         headerActions={

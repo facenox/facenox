@@ -156,7 +156,7 @@ export function Notifications({ audioSettings, onAudioSettingsChange }: Notifica
                 <div className="absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10" />
 
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-normal text-white/65">Tone:</div>
+                  <div className="text-xs font-normal text-white/65">Tone</div>
                 </div>
 
                 <div className="ml-auto flex shrink-0 items-center gap-2">

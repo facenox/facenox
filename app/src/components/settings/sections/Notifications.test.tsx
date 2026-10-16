@@ -58,7 +58,7 @@ describe("Notifications Settings", () => {
       />,
     )
 
-    expect(screen.getByText("Tone:")).toBeInTheDocument()
+    expect(screen.getByText("Tone")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /test recognition sound/i })).toBeInTheDocument()
 
     // Clicking test sound triggers soundEffects.play
@@ -79,7 +79,7 @@ describe("Notifications Settings", () => {
     )
 
     expect(screen.getByText("Mute all recognition sounds.")).toBeInTheDocument()
-    expect(screen.queryByText("Tone:")).not.toBeInTheDocument()
+    expect(screen.queryByText("Tone")).not.toBeInTheDocument()
   })
 
   it("loads sounds from electronAPI on mount", async () => {
