@@ -148,12 +148,7 @@ export function Attendance({
     attendanceSettings.cloudRetentionDays <= 0
 
   const rawLocalDays = attendanceSettings.dataRetentionDays ?? 0
-  const effectiveDays =
-    cloudCeiling ?
-      rawLocalDays > 0 && rawLocalDays <= cloudCeiling ?
-        rawLocalDays
-      : cloudCeiling
-    : Math.max(0, rawLocalDays)
+  const effectiveDays = Math.max(0, rawLocalDays)
 
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
@@ -348,7 +343,8 @@ export function Attendance({
                 {isPaired &&
                   (cloudCeiling ?
                     <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                      <i className="fa-solid fa-cloud text-[9px]" /> Cloud plan: {cloudCeiling}d max
+                      <i className="fa-solid fa-cloud text-[9px]" /> Cloud plan: {cloudCeiling}d
+                      window
                     </span>
                   : isCloudUnlimited ?
                     <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
@@ -363,7 +359,7 @@ export function Attendance({
                     "Member profiles, groups, and enrolled face data are never deleted.",
                     "Shorter retention periods keep the database fast and comply with privacy regulations.",
                     isPaired && cloudCeiling ?
-                      `Local retention cannot exceed your cloud subscription window of ${cloudCeiling} days.`
+                      `Setting this to 0 keeps local attendance history indefinitely. Your cloud plan stores up to ${cloudCeiling} days online.`
                     : "Setting this to 0 keeps local attendance history indefinitely.",
                   ]}
                   detailsNode={[
@@ -389,10 +385,10 @@ export function Attendance({
                     className="text-xs text-white/65">
                     {(() => {
                       if (cloudCeiling) {
-                        if (effectiveDays === cloudCeiling) {
-                          return `Attendance check-in logs older than ${cloudCeiling} days are pruned (matches cloud plan limit). Member profiles and face data are never deleted.`
+                        if (effectiveDays <= 0) {
+                          return `Local kiosk keeps all attendance logs forever. Cloud dashboard stores up to ${cloudCeiling} days on your current plan.`
                         }
-                        return `Attendance check-in logs older than ${effectiveDays} days are pruned locally (Cloud keeps up to ${cloudCeiling} days). Member profiles and face data are never deleted.`
+                        return `Local attendance logs older than ${effectiveDays} days are pruned automatically. Cloud dashboard stores up to ${cloudCeiling} days on your current plan.`
                       }
                       if (isCloudUnlimited) {
                         return effectiveDays <= 0 ?
@@ -454,7 +450,7 @@ export function Attendance({
                       setRetentionInput(raw)
                       if (raw !== "") {
                         const num = parseInt(raw, 10)
-                        const maxLimit = cloudCeiling || 3650
+                        const maxLimit = 3650
                         const clamped = Math.min(maxLimit, num)
                         if (num > maxLimit) {
                           triggerCappedNudge()
@@ -467,20 +463,7 @@ export function Attendance({
                       setRetentionInput(null)
                       if (raw !== null) {
                         const num = raw === "" ? 0 : parseInt(raw, 10)
-                        if (cloudCeiling) {
-                          if (num <= 0) {
-                            triggerCappedNudge()
-                            onDataRetentionChange(cloudCeiling)
-                          } else {
-                            if (num > cloudCeiling) triggerCappedNudge()
-                            onDataRetentionChange(Math.min(cloudCeiling, num))
-                          }
-                        } else {
-                          onDataRetentionChange(Math.min(3650, num))
-                        }
-                      } else if (cloudCeiling && (attendanceSettings.dataRetentionDays ?? 0) <= 0) {
-                        triggerCappedNudge()
-                        onDataRetentionChange(cloudCeiling)
+                        onDataRetentionChange(Math.min(3650, num))
                       }
                     }}
                     className={`w-14 rounded-lg border bg-[rgba(22,28,36,0.68)] px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none ${

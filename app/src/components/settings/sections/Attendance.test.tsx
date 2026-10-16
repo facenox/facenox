@@ -15,7 +15,7 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     dataRetentionDays: 0,
   }
 
-  it("renders inline cloud plan ceiling badge and allows capped local retention edits when paired", () => {
+  it("renders inline cloud plan window badge and allows independent local retention edits when paired", () => {
     const onDataRetentionChange = vi.fn()
     render(
       <Attendance
@@ -36,23 +36,23 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     // No redundant ghost row
     expect(screen.queryByText("Cloud Data Retention")).not.toBeInTheDocument()
 
-    // Cloud plan ceiling badge is displayed inline with Days label
-    expect(screen.getByText(/Cloud plan: 30d max/i)).toBeInTheDocument()
+    // Cloud plan ceiling badge is displayed inline
+    expect(screen.getByText(/Cloud plan: 30d window/i)).toBeInTheDocument()
 
     // Local input is NOT disabled
     const input = screen.getByDisplayValue("14") as HTMLInputElement
     expect(input).not.toBeDisabled()
 
-    // Changing to a valid value within ceiling
+    // Changing to a valid value
     fireEvent.change(input, { target: { value: "7" } })
     expect(onDataRetentionChange).toHaveBeenCalledWith(7)
 
-    // Attempting to exceed ceiling (e.g. 60 days) clamps to cloud ceiling (30)
+    // Changing beyond cloud window does NOT clamp local retention
     fireEvent.change(input, { target: { value: "60" } })
-    expect(onDataRetentionChange).toHaveBeenCalledWith(30)
+    expect(onDataRetentionChange).toHaveBeenCalledWith(60)
   })
 
-  it("defaults to cloudCeiling on blur if left at 0 under a capped cloud plan", () => {
+  it("preserves 0 (forever) locally even when paired under a capped cloud plan", () => {
     const onDataRetentionChange = vi.fn()
     render(
       <Attendance
@@ -68,13 +68,21 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
       />,
     )
 
-    // Because dataRetentionDays was 0 (forever) under a 30-day cap, effectiveDays displays 30
-    const input = screen.getByDisplayValue("30") as HTMLInputElement
+    // Local dataRetentionDays remains 0 (forever) regardless of cloud plan
+    const input = screen.getByDisplayValue("0") as HTMLInputElement
     expect(input).not.toBeDisabled()
+    expect(screen.getByText("forever")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Local kiosk keeps all attendance logs forever\. Cloud dashboard stores up to 30 days/i,
+      ),
+    ).toBeInTheDocument()
 
-    // If blurred with 0 in settings, it enforces cloud ceiling
+    // Clearing input and blurring resets to 0 (forever)
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: "" } })
     fireEvent.blur(input)
-    expect(onDataRetentionChange).toHaveBeenCalledWith(30)
+    expect(onDataRetentionChange).toHaveBeenCalledWith(0)
   })
 
   it("allows setting 0 (forever) when paired with unlimited cloud plan", () => {
