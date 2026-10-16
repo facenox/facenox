@@ -36,6 +36,7 @@ export interface MockElectronAPI extends BackendServiceAPI {
     getAllPersons: Mock
     setThreshold: Mock
     clearDatabase: Mock
+    postMultipart: Mock
   }
   saveFaceDatabase: Mock
   loadFaceDatabase: Mock
@@ -72,6 +73,13 @@ export interface MockElectronAPI extends BackendServiceAPI {
     triggerDebouncedSync: Mock
     onDataChanged: Mock
   }
+  autoExport: {
+    getConfig: Mock
+    updateConfig: Mock
+    triggerNow: Mock
+    selectDirectory: Mock
+    openDirectory: Mock
+  }
 }
 
 export interface MockFacenoxElectronAPI extends FacenoxElectronAPI {
@@ -84,12 +92,14 @@ export interface MockFacenoxElectronAPI extends FacenoxElectronAPI {
   onSplashProgress: Mock
   onMaximize: Mock
   onUnmaximize: Mock
-  onMinimize: Mock
   onRestore: Mock
   onSystemResume: Mock
   getSystemStats: Mock
   exportHealth: Mock
   getVersion: Mock
+  openDataDir: Mock
+  openInstallDir: Mock
+  openLogFile: Mock
   onAppReady: Mock
 }
 
@@ -157,6 +167,7 @@ export function createElectronAPIMock(): MockElectronAPI {
         message: "Cleared",
         total_persons: 0,
       }),
+      postMultipart: vi.fn().mockResolvedValue({ success: true }),
     },
     saveFaceDatabase: vi.fn().mockResolvedValue({ success: true, message: "Saved" }),
     loadFaceDatabase: vi.fn().mockResolvedValue({ success: true, message: "Loaded" }),
@@ -222,6 +233,25 @@ export function createElectronAPIMock(): MockElectronAPI {
       triggerDebouncedSync: vi.fn().mockResolvedValue(undefined),
       onDataChanged: vi.fn().mockReturnValue(() => undefined),
     },
+    autoExport: {
+      getConfig: vi.fn().mockResolvedValue({
+        enabled: false,
+        time: "17:00",
+        directory: "",
+        format: "excel_workbook",
+        lastExportedDate: null,
+      }),
+      updateConfig: vi.fn().mockResolvedValue({
+        enabled: false,
+        time: "17:00",
+        directory: "",
+        format: "excel_workbook",
+        lastExportedDate: null,
+      }),
+      triggerNow: vi.fn().mockResolvedValue(true),
+      selectDirectory: vi.fn().mockResolvedValue({ canceled: true, path: null }),
+      openDirectory: vi.fn().mockResolvedValue({ success: true, path: "" }),
+    },
   }
 }
 
@@ -244,7 +274,6 @@ export function createFacenoxElectronMock(): MockFacenoxElectronAPI {
     onSplashProgress: vi.fn().mockReturnValue(() => undefined),
     onMaximize: vi.fn().mockReturnValue(() => undefined),
     onUnmaximize: vi.fn().mockReturnValue(() => undefined),
-    onMinimize: vi.fn().mockReturnValue(() => undefined),
     onRestore: vi.fn().mockReturnValue(() => undefined),
     onSystemResume: vi.fn().mockReturnValue(() => undefined),
     getSystemStats: vi.fn().mockResolvedValue({
@@ -253,6 +282,9 @@ export function createFacenoxElectronMock(): MockFacenoxElectronAPI {
     }),
     exportHealth: vi.fn().mockResolvedValue({ success: true, path: "/mock/health.zip" }),
     getVersion: vi.fn().mockResolvedValue("1.0.0-beta.1"),
+    openDataDir: vi.fn().mockResolvedValue({ success: true, path: "/mock/data" }),
+    openInstallDir: vi.fn().mockResolvedValue({ success: true, path: "/mock/install" }),
+    openLogFile: vi.fn().mockResolvedValue({ success: true, path: "/mock/log.txt" }),
     onAppReady: vi.fn(),
   }
 }
@@ -264,5 +296,5 @@ export function createFacenoxElectronMock(): MockFacenoxElectronAPI {
  * during test validation phases.
  */
 export function getElectronAPIMock(): MockElectronAPI {
-  return window.electronAPI as MockElectronAPI
+  return window.electronAPI as unknown as MockElectronAPI
 }
