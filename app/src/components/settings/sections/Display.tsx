@@ -187,126 +187,150 @@ export function Display({
 
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
-      {/* Top: Centered, Sleek 16:9 Borderless Preview Box */}
+      {/* Viewport Preview */}
       <div className="flex justify-center pb-2">
-        <div className="relative aspect-video w-full max-w-[380px] overflow-hidden rounded-xl bg-black">
-          {/* Live Video (when camera is streaming) */}
-          {hasActiveStream ?
-            <video
-              ref={previewVideoRef}
-              playsInline
-              muted
-              autoPlay
-              aria-label="Viewport preview"
-              className={`h-full w-full transition-all duration-300 ${
-                quickSettings.cameraFitCover ? "object-cover" : "object-contain"
-              } ${quickSettings.cameraMirrored ? "scale-x-[-1]" : ""}`}
-            />
-          : /* Seamless Minimalist Sample Viewport (when idle) */
-            <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
-              {/* 
-                Camera Feed Area:
-                - OFF (Fit/Contain): 74% width with clear solid black letterbox pillar bars on left & right
-                - ON (Fill/Cover): 100% full bleed width edge-to-edge
-              */}
-              <div
-                className={`relative flex items-center justify-center bg-[#0d131f] transition-all duration-300 ${
-                  quickSettings.cameraFitCover ? "h-full w-full scale-105" : (
-                    "h-full w-[74%] scale-100"
-                  )
-                }`}>
-                {/* Camera Scene Content (Flips on Mirror View) */}
+        <div className="relative flex aspect-video w-full max-w-[400px] overflow-hidden rounded-xl border border-white/10 bg-black">
+          {/* Camera feed */}
+          <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden">
+            {hasActiveStream ?
+              <video
+                ref={previewVideoRef}
+                playsInline
+                muted
+                autoPlay
+                aria-label="Viewport preview"
+                className={`h-full w-full transition-all duration-300 ${
+                  quickSettings.cameraFitCover ? "object-cover" : "object-contain"
+                } ${quickSettings.cameraMirrored ? "scale-x-[-1]" : ""}`}
+              />
+            : <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
                 <div
-                  className={`relative flex h-full w-full items-center justify-center pt-2 transition-transform duration-300 ${
-                    quickSettings.cameraMirrored ? "scale-x-[-1]" : ""
+                  className={`relative flex items-center justify-center bg-[#0d131f] transition-all duration-300 ${
+                    quickSettings.cameraFitCover ? "h-full w-full scale-105" : (
+                      "h-full w-[78%] scale-100"
+                    )
                   }`}>
-                  {/* Natural Minimalist Vector Avatar */}
-                  <svg
-                    viewBox="0 0 100 100"
-                    className="h-32 w-32 text-white/20 select-none"
-                    fill="currentColor">
-                    {/* Head Face Area */}
-                    <circle cx="50" cy="38" r="16" fill="rgba(255,255,255,0.06)" />
-                    {/* Natural Hair Swoop */}
-                    <path
-                      d="M 34 36 C 35 23, 50 20, 66 28 C 60 22, 43 21, 34 36 Z"
-                      fill="rgba(255,255,255,0.22)"
+                  <div
+                    className={`relative flex h-full w-full items-center justify-center pt-2 transition-transform duration-300 ${
+                      quickSettings.cameraMirrored ? "scale-x-[-1]" : ""
+                    }`}>
+                    <svg
+                      viewBox="0 0 100 100"
+                      className="h-28 w-28 text-white/20 select-none"
+                      fill="currentColor">
+                      <circle cx="50" cy="38" r="16" fill="rgba(255,255,255,0.06)" />
+                      <path
+                        d="M 34 36 C 35 23, 50 20, 66 28 C 60 22, 43 21, 34 36 Z"
+                        fill="rgba(255,255,255,0.22)"
+                      />
+                      <circle
+                        cx="50"
+                        cy="38"
+                        r="16"
+                        stroke="rgba(255,255,255,0.18)"
+                        strokeWidth="1.5"
+                        fill="none"
+                      />
+                      <path
+                        d="M 18 86 C 18 64, 34 58, 44 58 L 56 58 C 66 58, 82 64, 82 86 Z"
+                        fill="rgba(255,255,255,0.06)"
+                        stroke="rgba(255,255,255,0.18)"
+                        strokeWidth="1.5"
+                      />
+                      <path
+                        d="M 44 58 L 50 68 L 56 58"
+                        stroke="rgba(255,255,255,0.25)"
+                        strokeWidth="1.5"
+                        fill="none"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            }
+
+            {/* Overlays */}
+            <div
+              className={`pointer-events-none absolute inset-0 flex items-center justify-center ${
+                quickSettings.cameraMirrored ? "scale-x-[-1]" : ""
+              }`}>
+              <div
+                className={`relative flex -translate-y-3.5 items-center justify-center transition-all duration-300 ${
+                  quickSettings.cameraFitCover ? "h-15 w-13" : "h-14 w-12"
+                }`}>
+                <AnimatePresence>
+                  {quickSettings.showTrackingBoxes !== false && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute inset-0 rounded-lg border-2 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.35)]"
                     />
-                    {/* Head contour */}
-                    <circle
-                      cx="50"
-                      cy="38"
-                      r="16"
-                      stroke="rgba(255,255,255,0.18)"
-                      strokeWidth="1.5"
-                      fill="none"
-                    />
-                    {/* Neck & Shoulders sitting below the face bounding box */}
-                    <path
-                      d="M 18 86 C 18 64, 34 58, 44 58 L 56 58 C 66 58, 82 64, 82 86 Z"
-                      fill="rgba(255,255,255,0.06)"
-                      stroke="rgba(255,255,255,0.18)"
-                      strokeWidth="1.5"
-                    />
-                    {/* Collar line */}
-                    <path
-                      d="M 44 58 L 50 68 L 56 58"
-                      stroke="rgba(255,255,255,0.25)"
-                      strokeWidth="1.5"
-                      fill="none"
-                    />
-                  </svg>
+                  )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                  {quickSettings.showRecognitionNames !== false && (
+                    <motion.span
+                      initial={{ opacity: 0, y: 2 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 2 }}
+                      transition={{ duration: 0.12 }}
+                      className={`pointer-events-none absolute -top-5.5 text-[11px] font-bold whitespace-nowrap text-cyan-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] select-none ${
+                        quickSettings.cameraMirrored ? "scale-x-[-1]" : ""
+                      }`}>
+                      John Doe
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar preview */}
+          <div className="flex h-full w-[100px] shrink-0 flex-col border-l border-white/10 bg-[rgba(15,19,25,0.92)] select-none">
+            {/* Attendance list */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 transition-all duration-200">
+              <div className="mb-2.5 flex h-4.5 items-center justify-between rounded border border-white/[0.08] bg-white/[0.02] px-1.5">
+                <div className="h-1 w-11 rounded-full bg-white/40" />
+                <span className="text-[6px] text-white/30">▼</span>
+              </div>
+
+              <div className="flex flex-col gap-1.5 overflow-hidden">
+                <div className="flex items-center justify-between rounded px-1.5 py-1 hover:bg-white/[0.04]">
+                  <div className="h-1.5 w-10 rounded-full bg-white/70" />
+                  <div className="h-2 w-6 rounded bg-white/10" />
+                </div>
+                <div className="flex items-center justify-between rounded px-1.5 py-1 hover:bg-white/[0.04]">
+                  <div className="h-1.5 w-8 rounded-full bg-white/40" />
+                  <div className="h-2 w-6 rounded bg-white/10" />
                 </div>
               </div>
             </div>
-          }
 
-          {/* Live Face-Only Bounding Box and Name Overlays (Independent) */}
-          <div
-            className={`pointer-events-none absolute inset-0 flex items-center justify-center ${
-              quickSettings.cameraMirrored ? "scale-x-[-1]" : ""
-            }`}>
-            {/* Fixed Face Target Anchor (Prevents layout shift when toggling bounding box) */}
-            <div
-              className={`relative flex -translate-y-3.5 items-center justify-center transition-all duration-300 ${
-                quickSettings.cameraFitCover ? "h-16 w-14" : "h-15 w-13"
-              }`}>
-              {/* Bounding Box (Absolute overlay inside fixed anchor) */}
-              <AnimatePresence>
-                {quickSettings.showTrackingBoxes !== false && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute inset-0 rounded-lg border-2 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.35)]"
-                  />
-                )}
-              </AnimatePresence>
-
-              {/* Floating Name Text (Permanently locked above the head, zero layout shift) */}
-              <AnimatePresence>
-                {quickSettings.showRecognitionNames !== false && (
-                  <motion.span
-                    initial={{ opacity: 0, y: 2 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 2 }}
-                    transition={{ duration: 0.12 }}
-                    className={`pointer-events-none absolute -top-5.5 text-xs font-bold whitespace-nowrap text-cyan-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] select-none ${
-                      quickSettings.cameraMirrored ? "scale-x-[-1]" : ""
-                    }`}>
-                    John Doe
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </div>
+            {/* Real-time detection result (50/50 vertical split when active) */}
+            <AnimatePresence initial={false}>
+              {quickSettings.showDetectionPanel !== false && (
+                <motion.div
+                  initial={{ opacity: 0, flex: "0 0 0px" }}
+                  animate={{ opacity: 1, flex: "1 1 0%" }}
+                  exit={{ opacity: 0, flex: "0 0 0px" }}
+                  transition={{ duration: 0.22, ease: "easeInOut" }}
+                  className="flex min-h-0 flex-col overflow-hidden border-t border-white/10 bg-[rgba(10,13,18,0.96)] p-2">
+                  <div className="flex items-center justify-between rounded-lg bg-cyan-500/10 px-2 py-1.5">
+                    <div className="h-1.5 w-11 rounded-full bg-white/70" />
+                    <i className="fa-solid fa-check text-[8px] text-cyan-400" />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
 
-      {/* Bottom: Clean List of Settings Controls */}
       <div className="space-y-4">
-        {/* Camera & Viewport Settings */}
+        {/* Camera settings */}
         {cameraSettingItems.map(({ key, label, descriptions }) => {
           const active = isSettingActive(key)
           return (
@@ -333,7 +357,7 @@ export function Display({
           )
         })}
 
-        {/* Audio Feedback Section */}
+        {/* Audio feedback */}
         {audioSettings && onAudioSettingsChange && (
           <div className="flex flex-col border-b border-white/5 pb-2">
             <div className="flex items-center gap-4 py-3">
@@ -367,7 +391,7 @@ export function Display({
               />
             </div>
 
-            {/* Tone Selector & Preview */}
+            {/* Tone selector */}
             <AnimatePresence>
               {audioSettings.recognitionSoundEnabled && (
                 <motion.div
