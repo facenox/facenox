@@ -445,11 +445,13 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                       animate={{ opacity: 1, scale: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.96, x: -4 }}
                       transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="flex min-w-0 items-center gap-1.5">
+                      className="flex max-w-full min-w-0 items-center gap-1.5">
                       <input
                         ref={groupNameInputRef}
                         type="text"
                         maxLength={100}
+                        size={Math.max(8, groupNameInput.length + 1)}
+                        style={{ fieldSizing: "content" } as React.CSSProperties}
                         value={groupNameInput}
                         onChange={(e) => setGroupNameInput(e.target.value)}
                         onKeyDown={(e) => {
@@ -464,7 +466,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                           }
                         }}
                         disabled={isSavingGroupName}
-                        className="w-44 max-w-[200px] shrink rounded-md border border-white/10 bg-[rgba(22,28,36,0.68)] px-2.5 py-0.5 text-xs font-medium text-white transition-all duration-200 outline-none placeholder:text-white/35 focus:border-white/25 focus:bg-[rgba(28,35,44,0.85)]"
+                        className="w-auto max-w-full min-w-[120px] shrink rounded-md border border-white/10 bg-[rgba(22,28,36,0.68)] px-2.5 py-0.5 text-[13px] font-semibold tracking-wide text-white transition-all duration-200 outline-none placeholder:text-white/35 focus:border-white/25 focus:bg-[rgba(28,35,44,0.85)]"
                       />
                       <Tooltip content="Save (Enter)" position="bottom" offset={6}>
                         <button

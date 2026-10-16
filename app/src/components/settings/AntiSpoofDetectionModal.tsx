@@ -42,8 +42,7 @@ export function AntiSpoofDetectionModal({
       description:
         "Ensure faces can move naturally. The system checks for 3D depth and motion to prevent spoofing.",
       imageSrc: "./assets/anti-spoof/check-head-turn.png",
-      imageAlt:
-        "Admin setup slide showing natural face movement and depth for anti-spoof setup.",
+      imageAlt: "Admin setup slide showing natural face movement and depth for anti-spoof setup.",
     },
   ] as const
   const [step, setStep] = useState(0)
