@@ -93,7 +93,7 @@ export function IntroModal() {
               target="_blank"
               rel="noopener noreferrer"
               className="rounded px-0.5 text-[11px] text-white/55 underline decoration-white/10 underline-offset-2 transition-colors hover:text-white/65 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
-              View Full Privacy Manual
+              View full privacy manual
             </a>
           </div>
 
@@ -195,7 +195,7 @@ export function IntroModal() {
                             : "text-white/60"
                           }`}
                         />
-                        <span className="text-[14px] font-semibold text-white">Use Offline</span>
+                        <span className="text-[14px] font-semibold text-white">Use offline</span>
                         <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-medium text-white/60">
                           Default
                         </span>
@@ -231,7 +231,7 @@ export function IntroModal() {
                           }`}
                         />
                         <span className="text-[14px] font-semibold text-white">
-                          Connect to Cloud
+                          Connect to cloud
                         </span>
                       </div>
                       <ul className="mt-1.5 space-y-1 text-[11px] leading-relaxed text-white/50">
