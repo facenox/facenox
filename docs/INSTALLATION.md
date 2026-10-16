@@ -8,12 +8,12 @@ This guide covers local development and desktop builds for the open source Facen
 - Node.js 18 or newer
 - Python 3.10 or newer
 - `pnpm` (install with `npm install -g pnpm` or `corepack enable && corepack prepare pnpm@latest --activate`)
-- a webcam for live recognition testing
+- A webcam for live recognition testing
 
 Recommended for development:
 
 - 8 GB RAM or more
-- a recent x86-64 CPU with AVX2 support
+- A recent x86-64 CPU with AVX2 support
 
 ## Repository Layout
 

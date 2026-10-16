@@ -59,7 +59,7 @@ graph TD
 
 - Groups and members
 - Attendance records and sessions
-- Encrypted biometric templates
+- Encrypted enrolled face data
 - Audit and settings data
 
 ## Data Flow
@@ -133,7 +133,7 @@ If Cloud Sync fails, local attendance continues uninterrupted.
 This repository does not implement:
 
 - Remote-side face matching
-- payroll or HRIS integrations
-- mobile clients
+- Payroll or HRIS integrations
+- Mobile clients
 
 Those concerns belong to the separate Facenox Cloud architecture and should be documented there directly.

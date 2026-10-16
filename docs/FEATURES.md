@@ -29,7 +29,7 @@ This page covers the shipped desktop feature set and the scope of the current Fa
 ### Local storage and portability
  
 - The local database stores groups, members, attendance, settings, and audit data.
-- Biometric templates are encrypted at rest in the local store using AES-256.
+- Enrolled face data is encrypted at rest in the local store using AES-256.
 - Backup exports create password-protected `.facenox` files for full portability.
 
 ### Operational features
@@ -67,18 +67,18 @@ Facenox Cloud connects offline Facenox desktop kiosks to a unified cloud control
 
 ### What gets synced (encrypted)
 
-- **biometric templates**: AES-256-GCM encrypted before transmission and stored in encrypted form in the database for sync. Decryption happens on your paired devices.
+- **Enrolled face data**: AES-256-GCM encrypted before transmission and stored in encrypted form in the database for sync. Decryption happens on your paired devices.
 
 ## Not in Scope
 
 These items are outside the current desktop repository scope:
 
-- remote-side face matching
-- two-way sync for members and attendance edits
-- payroll or HRIS integrations
-- self-serve billing
+- Remote-side face matching
+- Two-way sync for members and attendance edits
+- Payroll or HRIS integrations
+- Self-serve billing
 - SSO or SCIM
-- public developer API
-- mobile app
+- Public developer API
+- Mobile app
 
 If any of these ship later, they should be documented as separate capabilities instead of being implied here.

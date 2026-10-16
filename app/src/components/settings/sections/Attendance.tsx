@@ -650,9 +650,7 @@ export function Attendance({
                         </Tooltip>
 
                         <Tooltip
-                          content={
-                            confirmRegenerate ? "Click to confirm regenerate" : "Regenerate key"
-                          }
+                          content={confirmRegenerate ? "Click to confirm" : "Regenerate key"}
                           position="top">
                           <button
                             type="button"
@@ -662,11 +660,11 @@ export function Attendance({
                                 "bg-amber-500/15 px-2 text-[11px] font-semibold text-amber-300 hover:bg-amber-500/25"
                               : "w-7 text-white/45 hover:bg-white/5 hover:text-white"
                             }`}
-                            aria-label="Regenerate Recovery Key">
+                            aria-label="Regenerate recovery key">
                             <i
                               className={`fa-solid fa-arrows-rotate text-xs ${confirmRegenerate ? "mr-1 animate-spin text-amber-300" : ""}`}
                             />
-                            {confirmRegenerate && "Confirm?"}
+                            {confirmRegenerate && "Confirm"}
                           </button>
                         </Tooltip>
                       </div>

@@ -199,7 +199,7 @@ Download the latest prebuilt binaries for your platform:
 
 For all available releases and architecture packages, visit the [GitHub Releases](https://github.com/facenox/facenox/releases/latest) page.
 
-If you want to build from source, please follow the [Installation Guide](docs/INSTALLATION.md).
+To build from source, follow the [Installation Guide](docs/INSTALLATION.md).
 
 ## Installation Notes
 
