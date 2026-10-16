@@ -147,7 +147,7 @@ export const ManualEntryModal = ({
       title={
         <div>
           <h3 className="text-xl font-semibold tracking-tight">
-            {confirmingMember ? "Confirm Manual Attendance" : "Members"}
+            {confirmingMember ? "Confirm manual attendance" : "Members"}
           </h3>
         </div>
       }
@@ -201,7 +201,7 @@ export const ManualEntryModal = ({
                 disabled={isSubmitting}
                 className="rounded-lg bg-cyan-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 transition-all duration-200 hover:bg-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
                 onClick={submitManualEntry}>
-                {isSubmitting ? "Marking Present…" : "Mark Present"}
+                {isSubmitting ? "Marking present…" : "Mark present"}
               </button>
             </div>
           </div>
@@ -256,12 +256,12 @@ export const ManualEntryModal = ({
                   <span className="text-white/10 select-none">•</span>
                   <div className="flex items-center gap-1">
                     <span className="text-white/55">
-                      <strong className="font-semibold text-white/70">{noFaceCount}</strong> Not
-                      Enrolled
+                      <strong className="font-semibold text-white/70">{noFaceCount}</strong> not
+                      enrolled
                     </span>
                     <InfoPopover
-                      title="Not Enrolled"
-                      description="Members marked 'Not Enrolled' do not have enrolled face data. They must complete face enrollment in group settings to be recognized by the camera."
+                      title="Not enrolled"
+                      description="Members marked 'not enrolled' do not have enrolled face data. They must complete face enrollment in group settings to be recognized by the camera."
                       side="top"
                     />
                   </div>
@@ -330,11 +330,11 @@ export const ManualEntryModal = ({
                               : <>
                                   <div className="hidden items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-cyan-400 transition-all group-hover/item:flex hover:bg-cyan-500/20 active:scale-95">
                                     <i className="fa-solid fa-plus text-[8px]"></i>
-                                    Mark Present
+                                    Mark present
                                   </div>
                                   {!isPresent && hasFace === false && (
                                     <div className="block px-2 py-1 text-[11px] font-bold tracking-tight text-white/30 transition-opacity group-hover/item:hidden">
-                                      Not Enrolled
+                                      Not enrolled
                                     </div>
                                   )}
                                 </>

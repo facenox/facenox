@@ -271,7 +271,7 @@ export const Sidebar = memo(function Sidebar({
                 }}
                 className="group relative flex h-8 w-8 items-center justify-center rounded-lg border-none bg-transparent transition-all duration-200 hover:bg-white/[0.06] active:scale-95"
                 disabled={isCollapsed}
-                aria-label="Open Settings"
+                aria-label="Open settings"
                 initial="initial"
                 whileHover="hover">
                 <motion.div
@@ -356,7 +356,7 @@ export const Sidebar = memo(function Sidebar({
                   requestOpenSettings(updateInfo?.hasUpdate ? "about" : undefined)
                 }}
                 className="group relative flex h-8 w-8 items-center justify-center rounded-lg border-none bg-transparent transition-all duration-200 hover:bg-white/[0.06] active:scale-95"
-                aria-label="Open Settings"
+                aria-label="Open settings"
                 initial="initial"
                 whileHover="hover">
                 <motion.div

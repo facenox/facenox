@@ -20,7 +20,7 @@ export function parseSyncError(err: string | null): ParsedSyncError {
   if (!err) {
     return {
       isPlanQuota: false,
-      title: "Sync Paused",
+      title: "Sync paused",
       description: "Unable to complete sync.",
     }
   }
@@ -38,7 +38,7 @@ export function parseSyncError(err: string | null): ParsedSyncError {
 
     return {
       isPlanQuota: true,
-      title: "Plan Member Limit Reached",
+      title: "Plan member limit reached",
       description:
         currentPeople && peopleLimit ?
           `Your local database has ${currentPeople.toLocaleString()} active members, which exceeds your cloud plan limit of ${peopleLimit.toLocaleString()}. Cloud sync is paused until upgraded.`
@@ -46,7 +46,7 @@ export function parseSyncError(err: string | null): ParsedSyncError {
       currentPeople,
       peopleLimit,
       actionUrl: "/pricing",
-      actionLabel: "Upgrade Plan",
+      actionLabel: "Upgrade plan",
     }
   }
 
@@ -54,7 +54,7 @@ export function parseSyncError(err: string | null): ParsedSyncError {
   if (err.includes("<!DOCTYPE") || err.includes("<html") || err.includes("<head")) {
     return {
       isPlanQuota: false,
-      title: "Server Unavailable",
+      title: "Server unavailable",
       description:
         "Cloud server returned an unexpected HTML response. Verify cloud server availability.",
     }
@@ -69,7 +69,7 @@ export function parseSyncError(err: string | null): ParsedSyncError {
 
   return {
     isPlanQuota: false,
-    title: "Sync Issue",
+    title: "Sync issue",
     description: cleaned || "An unexpected error occurred during sync.",
   }
 }

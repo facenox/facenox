@@ -334,16 +334,16 @@ export function DataStorage({
       <section className="space-y-6">
         <div className="pt-2 pb-2">
           <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            System Time
+            System time
           </h3>
         </div>
 
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h4 className="text-[15px] font-semibold text-white/90">System Clock</h4>
+              <h4 className="text-[15px] font-semibold text-white/90">System clock</h4>
               <InfoPopover
-                title="System Clock Verification"
+                title="System clock verification"
                 description="Compares your device time with network time to ensure accurate attendance timestamps."
                 details={[
                   "Prevents attendance tampering caused by manually changing the computer's clock.",
@@ -396,7 +396,7 @@ export function DataStorage({
               {timeHealthState.loading ?
                 <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
               : <i className="fa-solid fa-rotate-right text-[11px] text-white/50" />}
-              <span>{timeHealthState.loading ? "Checking…" : "Check Now"}</span>
+              <span>{timeHealthState.loading ? "Checking…" : "Check now"}</span>
             </button>
 
             {!timeHealthState.loading &&
@@ -416,7 +416,7 @@ export function DataStorage({
       <section className="space-y-8">
         <div className="pt-2 pb-2">
           <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            Backup & Export
+            Backup & export
           </h3>
         </div>
 
@@ -424,7 +424,7 @@ export function DataStorage({
           {/* Export */}
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <h4 className="text-[15px] font-semibold text-white/90">Create Backup</h4>
+              <h4 className="text-[15px] font-semibold text-white/90">Create backup</h4>
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                 Save an encrypted{" "}
                 <code className="rounded-sm bg-white/5 px-1.5 py-0.5 font-mono text-[11px] text-cyan-400/60">
@@ -447,7 +447,7 @@ export function DataStorage({
           {/* Import */}
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <h4 className="text-[15px] font-semibold text-white/90">Restore Backup</h4>
+              <h4 className="text-[15px] font-semibold text-white/90">Restore backup</h4>
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                 Restore database from a backup file using its original encryption password.
                 {isPaired && (
@@ -480,7 +480,7 @@ export function DataStorage({
                 type="button"
                 onClick={onNavigateToSync}
                 className="group flex items-center gap-1.5 text-xs font-semibold text-cyan-400 transition-colors hover:text-cyan-300">
-                <span>Set up Cloud Sync</span>
+                <span>Set up cloud sync</span>
                 <i className="fa-solid fa-arrow-right text-[10px] transition-transform group-hover:translate-x-0.5" />
               </button>
             </div>
@@ -492,7 +492,7 @@ export function DataStorage({
       <section className="space-y-8">
         <div className="pt-2 pb-2">
           <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            Scheduled Reports
+            Scheduled reports
           </h3>
         </div>
 
@@ -500,7 +500,7 @@ export function DataStorage({
           <div className="flex flex-col">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="min-w-0 flex-1">
-                <h4 className="text-[15px] font-semibold text-white/90">Daily Auto-Export</h4>
+                <h4 className="text-[15px] font-semibold text-white/90">Daily auto-export</h4>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                   Export attendance reports to a local or network folder on a set daily schedule.
                 </p>
@@ -508,7 +508,7 @@ export function DataStorage({
               <Switch
                 checked={autoExportConfig.enabled}
                 onChange={(enabled) => handleUpdateAutoExport({ enabled })}
-                ariaLabel="Enable Daily Auto-Export"
+                ariaLabel="Enable daily auto-export"
               />
             </div>
 
@@ -561,7 +561,7 @@ export function DataStorage({
                       <div className="flex shrink-0 items-center gap-3">
                         {[
                           { id: "excel_workbook", label: "Excel (.xls)" },
-                          { id: "individual_csvs", label: "Per-Group CSV" },
+                          { id: "individual_csvs", label: "Per-group CSV" },
                           { id: "combined_csv", label: "Combined CSV" },
                         ].map((fmt) => (
                           <button
@@ -616,7 +616,7 @@ export function DataStorage({
                           onClick={handleOpenExportDirectory}
                           className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
                           <i className="fa-regular fa-folder-open text-[10px] text-white/50" />
-                          <span>Open Folder</span>
+                          <span>Open folder</span>
                         </button>
                       </div>
                     </div>
@@ -644,7 +644,7 @@ export function DataStorage({
                         {isTriggeringAutoExport ?
                           <i className="fa-solid fa-circle-notch fa-spin text-[10px]" />
                         : <i className="fa-solid fa-file-export text-[10px]" />}
-                        <span>{isTriggeringAutoExport ? "Exporting…" : "Export Now"}</span>
+                        <span>{isTriggeringAutoExport ? "Exporting…" : "Export now"}</span>
                       </button>
                     </div>
                   </div>
@@ -659,7 +659,7 @@ export function DataStorage({
       <section className="space-y-8">
         <div className="pt-2 pb-2">
           <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            Local Storage
+            Local storage
           </h3>
         </div>
 
@@ -667,7 +667,7 @@ export function DataStorage({
           {/* Data Folder */}
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <h4 className="text-[15px] font-semibold text-white/90">Open Database Folder</h4>
+              <h4 className="text-[15px] font-semibold text-white/90">Open database folder</h4>
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                 Access local database files, logs, and enrolled face data on this device.
               </p>
@@ -679,7 +679,7 @@ export function DataStorage({
                 }}
                 className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
                 <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
-                <span>Open Folder</span>
+                <span>Open folder</span>
               </button>
               <button
                 onClick={async () => {
@@ -687,7 +687,7 @@ export function DataStorage({
                 }}
                 className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
                 <i className="fa-regular fa-file-lines text-[11px] text-white/50" />
-                <span>Open Log</span>
+                <span>Open log</span>
               </button>
             </div>
           </div>
@@ -696,7 +696,7 @@ export function DataStorage({
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
               <h4 className="text-[15px] font-semibold text-white/90">
-                Open Installation Directory
+                Open installation directory
               </h4>
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                 View the core application resources and executable binary files.
@@ -712,7 +712,7 @@ export function DataStorage({
               }}
               className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
               <i className="fa-regular fa-folder text-[11px] text-white/50" />
-              <span>Open Folder</span>
+              <span>Open folder</span>
             </button>
           </div>
         </div>
@@ -723,7 +723,7 @@ export function DataStorage({
         <div className="flex items-center justify-between">
           <div className="pt-2 pb-2">
             <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-              All Groups
+              All groups
             </h3>
           </div>
           <div className="group/search relative h-9 min-w-[280px]">
@@ -823,7 +823,7 @@ export function DataStorage({
         </div>
       </section>
 
-      <span className="sr-only">Danger Zone Toggle</span>
+      <span className="sr-only">Danger zone toggle</span>
       {/* Danger Zone */}
       <motion.section
         layout="position"
@@ -835,7 +835,7 @@ export function DataStorage({
           onClick={() => setIsDangerZoneOpen(!isDangerZoneOpen)}
           className="group flex items-center gap-2.5 rounded-md border-0 bg-transparent px-5 py-2 text-[11px] font-extrabold tracking-[0.2em] text-red-500/40 uppercase shadow-none transition-all duration-300 outline-none hover:bg-red-500/[0.04] hover:text-red-400 focus:outline-none active:scale-95">
           <i className="fa-solid fa-triangle-exclamation text-[10px] opacity-60 transition-transform group-hover:scale-110" />
-          <span>Danger Zone</span>
+          <span>Danger zone</span>
           <motion.i
             animate={{ rotate: isDangerZoneOpen ? 180 : 0 }}
             transition={{ duration: 0.2 }}
@@ -856,7 +856,7 @@ export function DataStorage({
                 <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
                   <div className="min-w-0 flex-1 text-left">
                     <h4 className="text-[15px] font-semibold text-red-400/80">
-                      Delete Group Directory
+                      Delete group directory
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                       Permanently delete all groups, member profiles, and enrolled face data.
@@ -884,14 +884,14 @@ export function DataStorage({
                     }
                     className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     {deletingGroup === "all" && <i className="fa-solid fa-spinner fa-spin" />}
-                    Delete Directory
+                    Delete directory
                   </button>
                 </div>
 
                 {/* Action 2: Clear Face Data */}
                 <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
                   <div className="min-w-0 flex-1 text-left">
-                    <h4 className="text-[15px] font-semibold text-red-400/80">Clear Face Data</h4>
+                    <h4 className="text-[15px] font-semibold text-red-400/80">Clear face data</h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                       Wipe all enrolled biometric face data. Enrolled members will need to be
                       re-enrolled.
@@ -912,7 +912,7 @@ export function DataStorage({
                     onClick={() => onClearDatabase(false)}
                     disabled={isLoading || (isPaired && !allowKioskDirectoryManagement)}
                     className="flex shrink-0 items-center justify-center self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
-                    Clear Face Data
+                    Clear face data
                   </button>
                 </div>
 
@@ -920,7 +920,7 @@ export function DataStorage({
                 <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
                   <div className="min-w-0 flex-1 text-left">
                     <h4 className="text-[15px] font-semibold text-red-400/80">
-                      Purge Attendance History
+                      Purge attendance history
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                       Permanently wipe all daily attendance check-ins, checkout timestamps, and
@@ -939,7 +939,7 @@ export function DataStorage({
                     disabled={isLoading || isPurgingHistory}
                     className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     {isPurgingHistory && <i className="fa-solid fa-spinner fa-spin" />}
-                    Purge History
+                    Purge history
                   </button>
                 </div>
               </div>
@@ -956,7 +956,7 @@ export function DataStorage({
           setPasswordInput("")
           setShowPassword(false)
         }}
-        title={passwordModal.action === "export" ? "Set Backup Password" : "Restore Backup"}
+        title={passwordModal.action === "export" ? "Set backup password" : "Restore backup"}
         icon={
           <i
             className={`fa-solid ${
@@ -974,7 +974,7 @@ export function DataStorage({
             }
           </p>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-white/55">Backup Password</label>
+            <label className="text-xs font-medium text-white/55">Backup password</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}

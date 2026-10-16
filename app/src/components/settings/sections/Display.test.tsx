@@ -39,11 +39,11 @@ describe("Display & Audio Settings Section", () => {
       />,
     )
 
-    expect(screen.getByText("Mirror View")).toBeInTheDocument()
-    expect(screen.getByText("Show Names")).toBeInTheDocument()
-    expect(screen.getByText("Show Tracking Boxes")).toBeInTheDocument()
-    expect(screen.getByText("Fill Viewport")).toBeInTheDocument()
-    expect(screen.getByText("Real-Time Results")).toBeInTheDocument()
+    expect(screen.getByText("Mirror view")).toBeInTheDocument()
+    expect(screen.getByText("Show names")).toBeInTheDocument()
+    expect(screen.getByText("Show tracking boxes")).toBeInTheDocument()
+    expect(screen.getByText("Fill viewport")).toBeInTheDocument()
+    expect(screen.getByText("Real-time results")).toBeInTheDocument()
 
     const switches = screen.getAllByRole("switch")
     expect(switches.length).toBe(5)
@@ -83,7 +83,7 @@ describe("Display & Audio Settings Section", () => {
       />,
     )
 
-    expect(screen.getByText("Audio Feedback")).toBeInTheDocument()
+    expect(screen.getByText("Audio feedback")).toBeInTheDocument()
     expect(screen.getByText("Play sound chime on successful face recognition.")).toBeInTheDocument()
 
     expect(screen.getByText("Tone:")).toBeInTheDocument()

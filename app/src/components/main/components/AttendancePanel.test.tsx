@@ -184,11 +184,11 @@ describe("AttendancePanel", () => {
       { withDialogProvider: false },
     )
 
-    expect(screen.getByRole("button", { name: /Load More \(5 remaining\)/ })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Load more \(5 remaining\)/ })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: /Load More \(5 remaining\)/ }))
+    fireEvent.click(screen.getByRole("button", { name: /Load more \(5 remaining\)/ }))
 
-    expect(screen.queryByRole("button", { name: /Load More/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Load more/ })).not.toBeInTheDocument()
   })
 
   it("routes the no-members empty state to settings enrollment", async () => {
@@ -210,7 +210,7 @@ describe("AttendancePanel", () => {
 
     expect(screen.getByText("This group has no members")).toBeInTheDocument()
 
-    await user.click(screen.getByRole("button", { name: "Add Member" }))
+    await user.click(screen.getByRole("button", { name: "Add member" }))
 
     expect(useUIStore.getState().showSettings).toBe(true)
     expect(useUIStore.getState().groupInitialSection).toBe("members")
@@ -235,7 +235,7 @@ describe("AttendancePanel", () => {
 
     expect(screen.getByText("No enrolled members")).toBeInTheDocument()
 
-    await user.click(screen.getByRole("button", { name: "Enroll Member" }))
+    await user.click(screen.getByRole("button", { name: "Enroll member" }))
 
     expect(useUIStore.getState().showSettings).toBe(true)
     expect(useUIStore.getState().groupInitialSection).toBe("members")

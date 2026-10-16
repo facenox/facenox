@@ -163,7 +163,7 @@ export function Reports({
               className="flex flex-1 items-center justify-center">
               <div className="flex flex-col items-center gap-4">
                 <Spinner size="lg" className="mb-1" />
-                <span className="text-sm font-medium text-white/65">Generating Report</span>
+                <span className="text-sm font-medium text-white/65">Generating report</span>
               </div>
             </motion.div>
           : !loading && members.length === 0 && !error ?
@@ -180,7 +180,7 @@ export function Reports({
                 action={
                   onAddMember ?
                     {
-                      label: "Add Member",
+                      label: "Add member",
                       onClick: onAddMember,
                       iconClass: "fa-solid fa-user-plus text-[10px]",
                     }

@@ -169,9 +169,9 @@ const ALL_COLUMNS = [
   { key: "name", label: "Name", align: "left" },
   { key: "date", label: "Date", align: "left" },
   { key: "status", label: "Status", align: "center" },
-  { key: "check_in_time", label: "Time In", align: "center" },
-  { key: "check_out_time", label: "Time Out", align: "center" },
-  { key: "total_hours", label: "Total Hours", align: "center" },
-  { key: "late_minutes", label: "Late (Mins)", align: "center" },
+  { key: "check_in_time", label: "Time in", align: "center" },
+  { key: "check_out_time", label: "Time out", align: "center" },
+  { key: "total_hours", label: "Total hours", align: "center" },
+  { key: "late_minutes", label: "Late (mins)", align: "center" },
   { key: "notes", label: "Notes", align: "left" },
 ] as const

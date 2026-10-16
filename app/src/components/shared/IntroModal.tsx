@@ -38,7 +38,7 @@ export function IntroModal() {
       ),
     },
     {
-      title: "No Photos Stored",
+      title: "No photos stored",
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
@@ -53,7 +53,7 @@ export function IntroModal() {
       ),
     },
     {
-      title: "On-Device Processing",
+      title: "On-device processing",
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
@@ -68,7 +68,7 @@ export function IntroModal() {
       ),
     },
     {
-      title: "Privacy & Security",
+      title: "Privacy & security",
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
@@ -110,7 +110,7 @@ export function IntroModal() {
         <div className="space-y-3">
           <p className="text-[12.5px] leading-relaxed text-white/55">
             Choose how this device operates. You can always change this later in{" "}
-            <span className="font-medium text-white/70">Settings → Cloud Sync</span>.
+            <span className="font-medium text-white/70">Settings → Cloud sync</span>.
           </p>
         </div>
       ),

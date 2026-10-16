@@ -212,7 +212,7 @@ export function BulkEnrollment({
                 </span>
               </>
             : <span>
-                Enroll {readyCount} {readyCount === 1 ? "Member" : "Members"}
+                Enroll {readyCount} {readyCount === 1 ? "member" : "members"}
               </span>
             }
           </button>

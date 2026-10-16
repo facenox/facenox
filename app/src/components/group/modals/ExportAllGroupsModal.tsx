@@ -42,7 +42,7 @@ export function ExportAllGroupsModal({
   }> = [
     {
       id: "excel",
-      title: "Multi-Sheet Excel Workbook",
+      title: "Multi-sheet Excel workbook",
       badge: "Recommended",
       description:
         "Creates a single Excel file with a worksheet for each group. Cleanest for department reporting.",
@@ -50,14 +50,14 @@ export function ExportAllGroupsModal({
     },
     {
       id: "individual",
-      title: "Individual CSV Files per Group",
+      title: "Individual CSV files per group",
       description:
         "Downloads separate CSV files for each group. Ideal for distributing files to specific department heads.",
       icon: "fa-solid fa-folder-tree text-cyan-400",
     },
     {
       id: "combined",
-      title: "Single Combined CSV",
+      title: "Single combined CSV",
       description:
         "Exports all groups into a single CSV file with a Group column. Best for database imports and raw data analysis.",
       icon: "fa-solid fa-file-csv text-amber-400",
@@ -70,7 +70,7 @@ export function ExportAllGroupsModal({
       onClose={isExporting ? undefined : onClose}
       title={
         <div>
-          <h3 className="text-xl font-semibold">Export All Groups</h3>
+          <h3 className="text-xl font-semibold">Export all groups</h3>
           <p className="mt-1 text-xs font-normal text-white/65">
             Exporting {groupCount} groups for {dateRangeLabel}
           </p>
@@ -143,7 +143,7 @@ export function ExportAllGroupsModal({
               </>
             : <>
                 <i className="fa-solid fa-download text-[10px]" />
-                <span>Export Now</span>
+                <span>Export now</span>
               </>
             }
           </button>

@@ -203,10 +203,10 @@ async function fetchAllGroupsProcessedData(
       "Name",
       "Date",
       "Status",
-      "Time In",
-      "Time Out",
-      "Total Hours",
-      "Late (Mins)",
+      "Time in",
+      "Time out",
+      "Total hours",
+      "Late (mins)",
       "Notes",
     ]
     const rows: string[][] = []
@@ -440,10 +440,10 @@ export async function exportAllGroupsReportToCSV(
       "Name",
       "Date",
       "Status",
-      "Time In",
-      "Time Out",
-      "Total Hours",
-      "Late (Mins)",
+      "Time in",
+      "Time out",
+      "Total hours",
+      "Late (mins)",
       "Notes",
     ]
 

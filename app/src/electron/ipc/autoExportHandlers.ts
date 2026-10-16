@@ -21,7 +21,7 @@ export function registerAutoExportHandlers() {
     const defaultPath = currentConfig.directory || autoExportManager.getDefaultExportDirectory()
 
     const result = await dialog.showOpenDialog(window ?? undefined, {
-      title: "Select Directory for Scheduled Reports",
+      title: "Select directory for scheduled reports",
       defaultPath,
       properties: ["openDirectory", "createDirectory"],
     })

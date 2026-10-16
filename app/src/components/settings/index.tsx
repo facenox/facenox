@@ -85,9 +85,9 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
 
   const sections = [
     { id: "attendance", label: "General", icon: "fa-solid fa-sliders" },
-    { id: "display", label: "Display & Audio", icon: "fa-solid fa-desktop" },
-    { id: "database", label: "Data & Storage", icon: "fa-solid fa-database" },
-    { id: "remote-sync", label: "Cloud Sync", icon: "fa-solid fa-cloud" },
+    { id: "display", label: "Display & audio", icon: "fa-solid fa-desktop" },
+    { id: "database", label: "Data & storage", icon: "fa-solid fa-database" },
+    { id: "remote-sync", label: "Cloud sync", icon: "fa-solid fa-cloud" },
     { id: "about", label: "About", icon: "fa-solid fa-circle-info" },
   ]
 
@@ -184,7 +184,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
           <button
             onClick={props.onBack}
             className="absolute top-[14px] right-[14px] z-50 rounded-lg border-none bg-transparent p-1 text-white/35 shadow-none transition-all duration-200 hover:bg-white/[0.06] hover:text-white active:scale-95"
-            aria-label="Close Settings">
+            aria-label="Close settings">
             <i className="fa-solid fa-xmark text-base"></i>
           </button>
           {mainContent}

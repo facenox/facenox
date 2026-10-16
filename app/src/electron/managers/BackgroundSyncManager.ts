@@ -521,7 +521,7 @@ export class BackgroundSyncManager {
           const parentWindow = state.mainWindow ?? undefined
           const options: Electron.MessageBoxOptions = {
             type: "info",
-            title: "Data Wiped",
+            title: "Data wiped",
             message: "A remote wipe has been executed on this device.",
             detail:
               "All local database tables and biometric keys have been erased by the organization administrator.",

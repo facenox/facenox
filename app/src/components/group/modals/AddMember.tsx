@@ -499,7 +499,7 @@ export function AddMember({
       }}
       title={
         <div className="min-w-0">
-          <h3 className="mb-1 truncate text-xl font-semibold tracking-tight">Add Members</h3>
+          <h3 className="mb-1 truncate text-xl font-semibold tracking-tight">Add members</h3>
           <p className="flex items-center gap-1.5 text-xs font-normal text-white/65">
             <span className="shrink-0">{modalSubtitle}</span>
             <Tooltip content={group.name} position="bottom">
@@ -682,10 +682,10 @@ export function AddMember({
                         className="flex items-center justify-between py-0.5">
                         <div className="flex items-center gap-1.5">
                           <span className="text-[11px] font-medium text-white/80">
-                            Face Enrollment
+                            Face enrollment
                           </span>
                           <InfoPopover
-                            title="Face Enrollment"
+                            title="Face enrollment"
                             description="Enrolls facial features locally for instant camera recognition."
                             details={[
                               "Processes biometric vectors on-device without persisting or uploading raw photos.",
@@ -717,10 +717,10 @@ export function AddMember({
                         <div className="flex items-center justify-between px-0.5">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[11px] font-medium text-white/80">
-                              Face Enrollment
+                              Face enrollment
                             </span>
                             <InfoPopover
-                              title="Face Enrollment"
+                              title="Face enrollment"
                               description="Enrolls facial features locally for instant camera recognition."
                               details={[
                                 "Processes biometric vectors on-device without persisting or uploading raw photos.",
@@ -1065,10 +1065,10 @@ export function AddMember({
                       `Processing (${bulkProgress.current}/${bulkProgress.total})`
                     : "Processing…"
                   : confirmDuplicate && !isBulkMode ?
-                    "Add Anyway"
+                    "Add anyway"
                   : isBulkMode ?
-                    "Add Members"
-                  : "Add Member"}
+                    "Add members"
+                  : "Add member"}
                 </button>
               </>
             }

@@ -49,9 +49,9 @@ describe("exportUtils", () => {
       { key: "name" as const, label: "Name" },
       { key: "date" as const, label: "Date" },
       { key: "status" as const, label: "Status" },
-      { key: "check_in_time" as const, label: "Time In" },
-      { key: "check_out_time" as const, label: "Time Out" },
-      { key: "total_hours" as const, label: "Total Hours" },
+      { key: "check_in_time" as const, label: "Time in" },
+      { key: "check_out_time" as const, label: "Time out" },
+      { key: "total_hours" as const, label: "Total hours" },
       { key: "notes" as const, label: "Notes" },
     ]
 

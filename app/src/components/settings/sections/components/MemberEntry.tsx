@@ -127,7 +127,7 @@ export const MemberEntry = React.memo(
                 Enrolled
               </div>
             : <div className="flex items-center gap-1.5 rounded-md border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-amber-400">
-                Not Enrolled
+                Not enrolled
               </div>
             }
 

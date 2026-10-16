@@ -219,14 +219,14 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
 
     const generalTitles: Record<string, string> = {
       attendance: "General",
-      display: "Display & Audio",
-      notifications: "Display & Audio",
-      database: "Data & Storage",
-      "remote-sync": "Cloud Sync",
+      display: "Display & audio",
+      notifications: "Display & audio",
+      database: "Data & storage",
+      "remote-sync": "Cloud sync",
       about: "About",
     }
     if (isGroupSection) {
-      const groupName = validInitialGroup?.name || "Group Management"
+      const groupName = validInitialGroup?.name || "Group management"
 
       const sectionLabel =
         groupInitialSection ?
@@ -248,7 +248,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               disabled={!addMemberHandler}
               className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-50">
               <i className="fa-solid fa-user-plus text-[10px]"></i>
-              Add Member
+              Add member
             </button>
           </div>
         )
@@ -258,7 +258,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             onClick={resetEnrollment}
             className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
             <i className="fa-solid fa-arrow-left text-[10px]"></i>
-            Back to Members
+            Back to members
           </button>
         )
       } else if (groupInitialSection === "reports") {
@@ -268,12 +268,12 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               options={[
                 {
                   value: "current",
-                  label: "Export Current Group",
+                  label: "Export current group",
                   icon: "fa-solid fa-file-csv",
                 },
                 {
                   value: "all",
-                  label: "Export All Groups",
+                  label: "Export all groups",
                   icon: "fa-solid fa-layer-group",
                 },
               ]}
@@ -336,7 +336,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             onClick={() => setIsAuditLogModalOpen(true)}
             className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
             <i className="fa-solid fa-download text-[10px]" />
-            AUDIT LOG
+            Audit log
           </button>
         : activeSection === "remote-sync" && syncConfig ?
           (() => {
@@ -353,7 +353,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                     content={`Custom sync destination: ${syncConfig.remoteBaseUrl}`}
                     position="bottom">
                     <span className="text-[9px] font-extrabold tracking-widest text-white/45 uppercase select-none">
-                      Custom Server
+                      Custom server
                     </span>
                   </Tooltip>
                 )}
@@ -376,8 +376,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                     {syncConfig.connected ?
                       syncConfig.lastSyncStatus === "error" ?
                         isQuota ?
-                          "Plan Limit"
-                        : "Sync Warning"
+                          "Plan limit"
+                        : "Sync warning"
                       : "Synced"
                     : "Local"}
                   </div>
@@ -497,7 +497,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                       transition={{ duration: 0.15, ease: "easeOut" }}
                       className="group/group-title flex min-w-0 items-center gap-1.5 overflow-hidden">
                       <Tooltip
-                        content={validInitialGroup?.name || "Group Management"}
+                        content={validInitialGroup?.name || "Group management"}
                         position="bottom"
                         offset={6}>
                         <SectionHeader.Breadcrumb
@@ -508,7 +508,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                               undefined
                             : () => setGroupInitialSection("overview")
                           }>
-                          {validInitialGroup?.name || "Group Management"}
+                          {validInitialGroup?.name || "Group management"}
                         </SectionHeader.Breadcrumb>
                       </Tooltip>
                       {validInitialGroup &&

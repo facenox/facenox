@@ -459,7 +459,7 @@ export function CameraQueue({
                 className="relative aspect-video min-h-0 w-full max-w-4xl shrink overflow-hidden rounded-xl">
                 {showCompletion ?
                   <div className="animate-in fade-in absolute inset-0 z-30 flex flex-col items-center justify-center p-8 duration-300">
-                    <h3 className="mb-1 text-xl font-bold text-white">Queue Completed</h3>
+                    <h3 className="mb-1 text-xl font-bold text-white">Queue completed</h3>
                     <p className="mb-6 max-w-xs text-center text-[11px] text-white/55">
                       All selected members have been processed.
                     </p>

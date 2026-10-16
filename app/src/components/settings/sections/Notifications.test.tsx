@@ -36,7 +36,7 @@ describe("Notifications Settings", () => {
       />,
     )
 
-    expect(screen.getByText("Audio Feedback")).toBeInTheDocument()
+    expect(screen.getByText("Audio feedback")).toBeInTheDocument()
     expect(screen.getByText("Play a sound on successful recognition.")).toBeInTheDocument()
 
     const switchBtn = screen.getByRole("switch")

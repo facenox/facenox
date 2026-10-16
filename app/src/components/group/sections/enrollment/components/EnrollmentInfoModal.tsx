@@ -19,12 +19,12 @@ export function EnrollmentInfoModal({
 }: EnrollmentInfoModalProps) {
   const slides = [
     {
-      title: "Live or Upload Enrollment",
+      title: "Live or upload enrollment",
       description:
         "Enroll members live via camera or by uploading photos. Live scans match local room lighting and camera optics for optimal accuracy, while photo uploads work well for remote enrollment.",
     },
     {
-      title: "Proper Framing & Pose",
+      title: "Proper framing & pose",
       description:
         "Face the camera directly with open eyes and a neutral expression. Avoid dim lighting, heavy shadows, and accessories like hats or sunglasses that obstruct the face.",
     },
@@ -85,7 +85,7 @@ export function EnrollmentInfoModal({
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="max-w-[480px]"
-      title="Enrollment Guidelines">
+      title="Enrollment guidelines">
       <div className="space-y-6 py-2">
         <div className="relative min-h-[110px] overflow-hidden">
           <AnimatePresence initial={false} mode="wait" custom={direction}>

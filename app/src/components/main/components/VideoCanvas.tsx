@@ -99,12 +99,12 @@ export const VideoCanvas = memo(function VideoCanvas({
     currentGroup ?
       <div className="flex min-w-56 flex-col gap-1.5 p-1 text-[11px] text-white/60 select-none">
         <div className="mb-0.5 text-[10px] font-bold tracking-wider text-white/30 uppercase">
-          Active Settings
+          Active settings
         </div>
 
         {/* 1. Late Tracking */}
         <div className="flex items-center justify-between gap-4">
-          <span>Late Tracking</span>
+          <span>Late tracking</span>
           <span className="text-right font-mono font-medium text-white/85">
             {isAllGroups ?
               <span className="font-sans text-white/70">Per-group</span>
@@ -118,7 +118,7 @@ export const VideoCanvas = memo(function VideoCanvas({
 
         {/* 2. Entry & Exit */}
         <div className="flex items-center justify-between gap-4">
-          <span>Entry & Exit</span>
+          <span>Entry & exit</span>
           <span className="text-right font-mono font-medium text-white/85">
             {isAllGroups ?
               <span className="font-sans text-white/70">Per-group</span>
@@ -132,13 +132,13 @@ export const VideoCanvas = memo(function VideoCanvas({
 
         {/* 3. Duplicate Filter */}
         <div className="flex items-center justify-between gap-4">
-          <span>Duplicate Filter</span>
+          <span>Duplicate filter</span>
           <span className="text-right font-medium text-white/85">5s auto</span>
         </div>
 
         {/* 4. Recognition Limit */}
         <div className="flex items-center justify-between gap-4">
-          <span>Face Limit</span>
+          <span>Face limit</span>
           <span className="text-right font-medium text-white/85">
             {maxRecognitionFacesPerFrame > 0 ? `${maxRecognitionFacesPerFrame} faces` : "Unlimited"}
           </span>
@@ -146,7 +146,7 @@ export const VideoCanvas = memo(function VideoCanvas({
 
         {/* 5. Anti-Spoofing */}
         <div className="flex items-center justify-between gap-4">
-          <span>Anti-Spoofing</span>
+          <span>Anti-spoofing</span>
           <span className="text-right font-medium text-white/85">
             {enableSpoofDetection ? "Enabled" : <span className="text-white/40">Disabled</span>}
           </span>
@@ -205,7 +205,7 @@ export const VideoCanvas = memo(function VideoCanvas({
             className="animate-in fade-in zoom-in-95 group absolute right-4 bottom-4 z-50 flex cursor-pointer items-center gap-3.5 rounded-lg border border-white/10 bg-[rgba(10,13,18,0.72)] px-3.5 py-1.5 shadow-2xl shadow-black/40 backdrop-blur-md transition-all hover:border-white/20 hover:bg-[rgba(15,19,26,0.9)] active:scale-95">
             <div className="flex flex-col items-start text-left">
               <span className="text-[9px] font-bold tracking-wider text-white/45 uppercase transition-colors group-hover:text-white/65">
-                Start Time
+                Start time
               </span>
               <span
                 className={`font-mono text-xs font-bold ${outdated ? "text-amber-400/90 group-hover:text-amber-300" : "text-cyan-400/90 group-hover:text-cyan-300"}`}>

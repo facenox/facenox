@@ -460,11 +460,11 @@ export const AttendancePanel = memo(function AttendancePanel({
                 showPlaceholderOption={false}
               />
             </div>
-            <Tooltip content="Create Group" position="top">
+            <Tooltip content="Create group" position="top">
               <button
                 onClick={() => setShowGroupManagement(true)}
                 className={`${sidebarActionButtonClassName} rounded-none border-r-0`}
-                aria-label="Create Group">
+                aria-label="Create group">
                 <i className={`fa-solid fa-plus ${sidebarActionIconClassName}`}></i>
               </button>
             </Tooltip>
@@ -505,7 +505,7 @@ export const AttendancePanel = memo(function AttendancePanel({
               onClick={() => setShowGroupManagement(true)}
               className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
               <i className="fa-solid fa-plus text-xs"></i>
-              Create Group
+              Create group
             </button>
           </div>
         </div>
@@ -541,7 +541,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                 content={`Show: ${
                   recordScope === "today" ? "Today"
                   : recordScope === "yesterday" ? "Yesterday"
-                  : recordScope === "week" ? "This Week"
+                  : recordScope === "week" ? "This week"
                   : "All records"
                 }`}
                 position="top">
@@ -550,7 +550,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                   options={[
                     { value: "today", label: "Today" },
                     { value: "yesterday", label: "Yesterday" },
-                    { value: "week", label: "This Week" },
+                    { value: "week", label: "This week" },
                     { value: "all", label: "All" },
                   ]}
                   value={recordScope}
@@ -650,7 +650,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                       <button
                         onClick={handleLoadMore}
                         className="w-full rounded-lg border border-white/5 bg-white/5 py-2 text-xs font-semibold text-white/80 transition-all hover:border-white/10 hover:bg-white/[0.08] active:scale-[0.99]">
-                        Load More ({processedRecords.length - displayLimit} remaining)
+                        Load more ({processedRecords.length - displayLimit} remaining)
                       </button>
                     </div>
                   )}
@@ -698,7 +698,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                           onClick={handleOpenSettingsForEnrollment}
                           className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
                           <i className="fa-solid fa-user-plus text-xs"></i>
-                          Add Member
+                          Add member
                         </button>
                       </div>
                     </ScrollCenteredEmptyState>
@@ -710,7 +710,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                           onClick={handleOpenSettingsForEnrollment}
                           className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
                           <i className="fa-solid fa-user-plus text-xs"></i>
-                          Enroll Member
+                          Enroll member
                         </button>
                       </div>
                     </ScrollCenteredEmptyState>

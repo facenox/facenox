@@ -123,7 +123,7 @@ app.whenReady().then(async () => {
     const { dialog } = await import("electron")
     const { response } = await dialog.showMessageBox({
       type: "error",
-      title: "Facenox Startup Error",
+      title: "Facenox startup error",
       message: "Failed to start background services.",
       detail: e instanceof Error ? e.message : "An unknown error occurred during backend startup.",
       buttons: ["Retry", "Quit"],

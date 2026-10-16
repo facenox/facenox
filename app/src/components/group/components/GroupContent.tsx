@@ -63,7 +63,7 @@ function GroupContentComponent({
           action={
             !hasGroups ?
               {
-                label: "Create Group",
+                label: "Create group",
                 onClick: openCreateGroup,
                 iconClass: "fa-solid fa-plus text-[10px]",
               }

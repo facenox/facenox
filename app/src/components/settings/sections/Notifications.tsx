@@ -113,7 +113,7 @@ export function Notifications({ audioSettings, onAudioSettingsChange }: Notifica
         {/* Audio feedback toggle */}
         <div className="flex items-center gap-4 py-3">
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-white/90">Audio Feedback</div>
+            <div className="text-sm font-medium text-white/90">Audio feedback</div>
             <div className="relative min-h-4">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -138,7 +138,7 @@ export function Notifications({ audioSettings, onAudioSettingsChange }: Notifica
                 recognitionSoundEnabled: checked,
               })
             }
-            ariaLabel="Audio Feedback"
+            ariaLabel="Audio feedback"
           />
         </div>
 

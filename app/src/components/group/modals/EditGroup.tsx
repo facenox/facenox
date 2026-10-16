@@ -96,7 +96,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
       onClose={handleClose}
       title={
         <div>
-          <h3 className="text-xl font-semibold">Edit Group</h3>
+          <h3 className="text-xl font-semibold">Edit group</h3>
           <p className="mt-1 text-xs font-normal text-white/65">
             Update name and attendance schedule for this group
           </p>
@@ -111,8 +111,8 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
             <FormInput
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Group Name"
-              aria-label="Group Name"
+              placeholder="Group name"
+              aria-label="Group name"
               maxLength={100}
               focusColor="border-white/20"
             />
@@ -124,7 +124,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
             <div className="py-2">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-xs font-semibold text-white/90">Late Tracking</div>
+                  <div className="text-xs font-semibold text-white/90">Late tracking</div>
                   <div className="text-[11px] text-white/55">
                     {lateThresholdEnabled ?
                       "Flag members as late when arriving after the scheduled start time."
@@ -134,7 +134,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                 <Switch
                   checked={lateThresholdEnabled}
                   onChange={setLateThresholdEnabled}
-                  ariaLabel="Late Tracking"
+                  ariaLabel="Late tracking"
                 />
               </div>
 
@@ -219,14 +219,14 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                   <div className="text-xs font-semibold text-white/90">Entry & Exit Tracking</div>
                   <div className="text-[11px] text-white/55">
                     {trackCheckout ?
-                      "Record arrival (Time In) and departure (Time Out)."
+                      "Record arrival (time in) and departure (time out)."
                     : "Record arrival times only."}
                   </div>
                 </div>
                 <Switch
                   checked={trackCheckout}
                   onChange={setTrackCheckout}
-                  ariaLabel="Entry & Exit Tracking"
+                  ariaLabel="Entry & exit tracking"
                 />
               </div>
 
@@ -282,7 +282,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
             onClick={handleSave}
             disabled={!name.trim() || loading}
             className="min-w-[120px] rounded-lg bg-cyan-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 transition-all duration-200 hover:bg-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-30">
-            {loading ? "Saving…" : "Update Group"}
+            {loading ? "Saving…" : "Update group"}
           </button>
         </div>
       </div>

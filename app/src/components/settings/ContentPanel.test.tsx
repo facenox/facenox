@@ -129,9 +129,9 @@ describe("ContentPanel anti-spoof prompt", () => {
 
     render(<ContentPanel {...baseProps} updateAttendanceSetting={updateAttendanceSetting} />)
 
-    fireEvent.click(screen.getByLabelText("Liveness Verification (Anti-Spoof)"))
+    fireEvent.click(screen.getByLabelText("Liveness verification (anti-spoof)"))
 
-    expect(screen.getByText("Before Enabling Liveness")).toBeInTheDocument()
+    expect(screen.getByText("Before enabling liveness")).toBeInTheDocument()
     expect(screen.getByText("Use balanced lighting")).toBeInTheDocument()
     expect(updateAttendanceSetting).not.toHaveBeenCalled()
 
@@ -148,7 +148,7 @@ describe("ContentPanel anti-spoof prompt", () => {
 
     render(<ContentPanel {...baseProps} updateAttendanceSetting={updateAttendanceSetting} />)
 
-    fireEvent.click(screen.getByLabelText("Liveness Verification (Anti-Spoof)"))
+    fireEvent.click(screen.getByLabelText("Liveness verification (anti-spoof)"))
 
     expect(screen.getByText("Use balanced lighting")).toBeInTheDocument()
 
@@ -189,7 +189,7 @@ describe("ContentPanel anti-spoof prompt", () => {
 
     render(<ContentPanel {...baseProps} updateAttendanceSetting={updateAttendanceSetting} />)
 
-    fireEvent.click(screen.getByLabelText("Liveness Verification (Anti-Spoof)"))
+    fireEvent.click(screen.getByLabelText("Liveness verification (anti-spoof)"))
     fireEvent.click(screen.getByLabelText("Don't show this again"))
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
@@ -207,9 +207,9 @@ describe("ContentPanel anti-spoof prompt", () => {
 
     render(<ContentPanel {...baseProps} updateAttendanceSetting={updateAttendanceSetting} />)
 
-    fireEvent.click(screen.getByLabelText("Liveness Verification (Anti-Spoof)"))
+    fireEvent.click(screen.getByLabelText("Liveness verification (anti-spoof)"))
 
-    expect(screen.queryByText("Before Enabling Liveness")).not.toBeInTheDocument()
+    expect(screen.queryByText("Before enabling liveness")).not.toBeInTheDocument()
     expect(updateAttendanceSetting).toHaveBeenCalledWith({ enableSpoofDetection: true })
   })
 })

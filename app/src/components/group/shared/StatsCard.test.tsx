@@ -38,9 +38,9 @@ describe("StatsCard", () => {
   })
 
   it("renders value and label correctly", () => {
-    render(<StatsCard type="late" value={3} label="Late Arrivals" />)
+    render(<StatsCard type="late" value={3} label="Late arrivals" />)
 
-    expect(screen.getByText("Late Arrivals")).toBeInTheDocument()
+    expect(screen.getByText("Late arrivals")).toBeInTheDocument()
     expect(screen.getByText("3")).toBeInTheDocument()
   })
 
@@ -49,12 +49,12 @@ describe("StatsCard", () => {
       <StatsCard
         type="late"
         value={0}
-        label="Late Arrivals"
+        label="Late arrivals"
         tooltipText={<span>Late arrivals today. Resets at midnight.</span>}
       />,
     )
 
-    const card = screen.getByText("Late Arrivals").closest("div")
+    const card = screen.getByText("Late arrivals").closest("div")
     expect(card).toBeInTheDocument()
     if (card) {
       fireEvent.mouseEnter(card)
@@ -70,7 +70,7 @@ describe("StatsCard", () => {
       <StatsCard
         type="late"
         value={0}
-        label="Late Arrivals"
+        label="Late arrivals"
         disabled
         disabledTooltipText={<span>Late tracking is disabled.</span>}
         tooltipText={<span>Late arrivals today.</span>}
@@ -80,7 +80,7 @@ describe("StatsCard", () => {
     expect(screen.getByText("Disabled")).toBeInTheDocument()
     expect(screen.getByText("-")).toBeInTheDocument()
 
-    const card = screen.getByText("Late Arrivals").closest("div")
+    const card = screen.getByText("Late arrivals").closest("div")
     if (card) {
       fireEvent.mouseEnter(card)
     }

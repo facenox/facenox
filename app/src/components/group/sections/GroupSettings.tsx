@@ -166,7 +166,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
         <div className="overflow-hidden">
           <div className="pt-6 pb-2">
             <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-              Schedule & Attendance Rules
+              Schedule & attendance rules
             </h3>
           </div>
 
@@ -175,9 +175,9 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
               <div className="flex items-center gap-4 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <div className="text-sm font-medium text-white/90">Late Tracking</div>
+                    <div className="text-sm font-medium text-white/90">Late tracking</div>
                     <InfoPopover
-                      title="Late Tracking"
+                      title="Late tracking"
                       description="Flags members who arrive past the scheduled start time plus your grace period."
                       details={[
                         "Sets the official target arrival time for members in this group.",
@@ -207,7 +207,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                 <Switch
                   checked={lateThresholdEnabled}
                   onChange={handleLateToggle}
-                  ariaLabel="Late Tracking"
+                  ariaLabel="Late tracking"
                 />
               </div>
 
@@ -291,9 +291,9 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
               <div className="flex items-center gap-4 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <div className="text-sm font-medium text-white/90">Entry & Exit Tracking</div>
+                    <div className="text-sm font-medium text-white/90">Entry & exit tracking</div>
                     <InfoPopover
-                      title="Entry & Exit Tracking"
+                      title="Entry & exit tracking"
                       description="Tracks both initial check-in and final departure timestamps for each member per day."
                       details={[
                         "Registers arrival on the first scan of the day.",
@@ -314,7 +314,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                         className="text-xs font-normal text-white/65">
                         {trackCheckout ?
-                          "Record arrival (Time In) and departure (Time Out)."
+                          "Record arrival (time in) and departure (time out)."
                         : "Record arrival times only."}
                       </motion.div>
                     </AnimatePresence>
@@ -324,7 +324,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                 <Switch
                   checked={trackCheckout}
                   onChange={handleCheckoutToggle}
-                  ariaLabel="Entry & Exit Tracking"
+                  ariaLabel="Entry & exit tracking"
                 />
               </div>
 
@@ -371,7 +371,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
           </div>
         </div>
 
-        <span className="sr-only">Danger Zone Toggle</span>
+        <span className="sr-only">Danger zone toggle</span>
         {/* Danger Zone */}
         <section className="relative flex w-full flex-col items-center overflow-hidden pt-8 pb-2">
           {/* Sleek fading gradient divider to match the centered design */}
@@ -382,7 +382,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
             onClick={() => setIsDangerZoneOpen(!isDangerZoneOpen)}
             className="group flex items-center gap-2.5 rounded-md border-0 bg-transparent px-5 py-2 text-[11px] font-extrabold tracking-[0.2em] text-red-500/40 uppercase shadow-none transition-all duration-300 outline-none hover:bg-red-500/[0.04] hover:text-red-400 focus:outline-none active:scale-95">
             <i className="fa-solid fa-triangle-exclamation text-[10px] opacity-60 transition-transform group-hover:scale-110" />
-            <span>Danger Zone</span>
+            <span>Danger zone</span>
             <i
               className={`fa-solid fa-chevron-down inline-block text-[9px] opacity-50 transition-transform duration-200 ${
                 isDangerZoneOpen ? "rotate-180" : ""
@@ -426,7 +426,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       title={isDeleteDisabled ? "Locked by Cloud Policy" : undefined}
                       className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                       {isDeleting && <i className="fa-solid fa-spinner fa-spin" />}
-                      <span>Delete Group</span>
+                      <span>Delete group</span>
                     </button>
                   </div>
                 </div>

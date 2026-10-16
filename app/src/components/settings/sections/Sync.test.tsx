@@ -145,8 +145,8 @@ describe("Sync", () => {
       </>,
     )
 
-    fireEvent.click(await screen.findByRole("button", { name: /Advanced Settings/i }))
-    fireEvent.click(screen.getByRole("button", { name: /Save Configuration/i }))
+    fireEvent.click(await screen.findByRole("button", { name: /Advanced settings/i }))
+    fireEvent.click(screen.getByRole("button", { name: /Save configuration/i }))
 
     expect(await screen.findByText("Cloud sync settings saved.")).toBeInTheDocument()
   })
@@ -172,7 +172,7 @@ describe("Sync", () => {
       </>,
     )
 
-    await user.click(await screen.findByRole("button", { name: /Sync Now/i }))
+    await user.click(await screen.findByRole("button", { name: /Sync now/i }))
 
     await waitFor(() => {
       expect(electronAPI.sync.triggerNow).toHaveBeenCalled()
@@ -215,14 +215,14 @@ describe("Sync", () => {
   it("keeps advanced form state when toggled closed and reopened", async () => {
     const { user } = renderWithProviders(<Sync />)
 
-    await user.click(await screen.findByRole("button", { name: /Advanced Settings/i }))
+    await user.click(await screen.findByRole("button", { name: /Advanced settings/i }))
 
     fireEvent.change(screen.getByPlaceholderText("Facenox Desktop"), {
       target: { value: "Reception Desk" },
     })
 
-    await user.click(screen.getByRole("button", { name: /Hide Advanced/i }))
-    await user.click(screen.getByRole("button", { name: /Advanced Settings/i }))
+    await user.click(screen.getByRole("button", { name: /Hide advanced/i }))
+    await user.click(screen.getByRole("button", { name: /Advanced settings/i }))
 
     expect(screen.getByPlaceholderText("Facenox Desktop")).toHaveValue("Reception Desk")
   })
@@ -230,7 +230,7 @@ describe("Sync", () => {
   it("keeps the custom cloud URL hidden by default in advanced settings", async () => {
     const { user } = renderWithProviders(<Sync />)
 
-    await user.click(await screen.findByRole("button", { name: /Advanced Settings/i }))
+    await user.click(await screen.findByRole("button", { name: /Advanced settings/i }))
 
     expect(screen.queryByPlaceholderText("Leave empty for Facenox Cloud")).not.toBeInTheDocument()
     expect(screen.getByPlaceholderText("Facenox Desktop")).toBeInTheDocument()

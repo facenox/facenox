@@ -93,7 +93,7 @@ export function ManualCorrectionModal({
       }}
       title={
         <div>
-          <h3 className="text-base font-semibold text-white">Remove Attendance</h3>
+          <h3 className="text-base font-semibold text-white">Remove attendance</h3>
           <p className="mt-0.5 text-xs text-white/40">
             Removing entry for <span className="font-medium text-white/60">{displayName}</span>
           </p>
@@ -104,10 +104,10 @@ export function ManualCorrectionModal({
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
             <label className="text-[10px] font-bold tracking-wide text-white/55 uppercase">
-              Reason Required
+              Reason required
             </label>
             <InfoPopover
-              title="Reason Required"
+              title="Reason required"
               description="Add a short note explaining why this attendance entry should be removed."
               side="top"
             />
@@ -142,7 +142,7 @@ export function ManualCorrectionModal({
             onClick={() => void handleSubmit()}
             disabled={isSubmitting || !trimmedReason}
             className="rounded-lg bg-amber-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 transition-all duration-200 hover:bg-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
-            {isSubmitting ? "Removing…" : "Remove Entry"}
+            {isSubmitting ? "Removing…" : "Remove entry"}
           </button>
         </div>
       </div>

@@ -189,7 +189,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
           className="flex flex-col items-center text-white/40">
           <Spinner size="lg" className="mb-4" />
           <div className="text-xs font-semibold tracking-wider text-white/55 uppercase">
-            Loading Overview…
+            Loading overview…
           </div>
         </motion.div>
       </div>
@@ -204,7 +204,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
         action={
           onAddMember ?
             {
-              label: "Add Member",
+              label: "Add member",
               onClick: onAddMember,
               iconClass: "fa-solid fa-user-plus text-[10px]",
             }
@@ -224,7 +224,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
               type="present"
               value={stats.present_today}
               total={stats.total_members}
-              label="Present Today"
+              label="Present today"
               tooltipText={
                 <span>
                   Members who have checked in at least once today.{" "}
@@ -243,7 +243,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
             <StatsCard
               type="late"
               value={stats.late_today}
-              label="Late Arrivals"
+              label="Late arrivals"
               disabled={!(group.settings?.late_threshold_enabled ?? false)}
               tooltipText={
                 <span>
@@ -254,7 +254,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
               disabledTooltipText={
                 <span>
                   Late tracking is disabled for this group. Enable it in{" "}
-                  <span className="font-medium text-cyan-400">Edit Group</span> to automatically
+                  <span className="font-medium text-cyan-400">Edit group</span> to automatically
                   flag and count late arrivals.
                 </span>
               }
@@ -289,7 +289,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
       <section className="mt-8 flex min-h-0 flex-1 flex-col">
         <div className="mb-6 flex shrink-0 items-center justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-[14px] font-bold tracking-tight text-white">Activity Log</h2>
+            <h2 className="text-[14px] font-bold tracking-tight text-white">Activity log</h2>
             <p className="mt-0.5 text-[12px] font-medium text-white/65">
               {DATE_FILTER_LABELS[dateFilter]}&apos;s records
             </p>

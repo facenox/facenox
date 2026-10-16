@@ -145,7 +145,7 @@ export function Display({
   const cameraSettingItems = [
     {
       key: "cameraMirrored" as keyof QuickSettings,
-      label: "Mirror View",
+      label: "Mirror view",
       descriptions: {
         on: "Flip camera feed horizontally.",
         off: "Show standard camera orientation.",
@@ -153,7 +153,7 @@ export function Display({
     },
     {
       key: "showRecognitionNames" as keyof QuickSettings,
-      label: "Show Names",
+      label: "Show names",
       descriptions: {
         on: "Display recognized member names on camera overlay.",
         off: "Hide names to show tracking boxes only.",
@@ -161,7 +161,7 @@ export function Display({
     },
     {
       key: "showTrackingBoxes" as keyof QuickSettings,
-      label: "Show Tracking Boxes",
+      label: "Show tracking boxes",
       descriptions: {
         on: "Display tracking reticles around detected faces.",
         off: "Hide tracking boxes from the camera feed.",
@@ -169,7 +169,7 @@ export function Display({
     },
     {
       key: "cameraFitCover" as keyof QuickSettings,
-      label: "Fill Viewport",
+      label: "Fill viewport",
       descriptions: {
         on: "Expand camera feed to fill screen edge-to-edge.",
         off: "Letterbox feed to display the full frame without cropping.",
@@ -177,7 +177,7 @@ export function Display({
     },
     {
       key: "showDetectionPanel" as keyof QuickSettings,
-      label: "Real-Time Results",
+      label: "Real-time results",
       descriptions: {
         on: "Show live detection results in the sidebar.",
         off: "Hide live results to give attendance records full height.",
@@ -362,7 +362,7 @@ export function Display({
           <div className="flex flex-col border-b border-white/5 pb-2">
             <div className="flex items-center gap-4 py-3">
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-white/90">Audio Feedback</div>
+                <div className="text-sm font-medium text-white/90">Audio feedback</div>
                 <div className="relative min-h-4">
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -387,7 +387,7 @@ export function Display({
                     recognitionSoundEnabled: checked,
                   })
                 }
-                ariaLabel="Audio Feedback"
+                ariaLabel="Audio feedback"
               />
             </div>
 

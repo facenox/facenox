@@ -186,7 +186,7 @@ export default function WindowBar() {
                 isMenuOpen ? "border-white/10 bg-white/5 text-white/80" : ""
               }`}
               style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-              title="App Menu">
+              title="App menu">
               <i className="fa-solid fa-ellipsis-vertical text-[10px]" />
             </button>
             <AnimatePresence>
@@ -211,7 +211,7 @@ export default function WindowBar() {
                       }}
                       className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white">
                       <i className="fa-solid fa-cloud-arrow-up w-4 text-[11px]" />
-                      Check for Updates
+                      Check for updates
                     </button>
                     <button
                       onClick={() => {
@@ -220,7 +220,7 @@ export default function WindowBar() {
                       }}
                       className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white">
                       <i className="fa-solid fa-rotate w-4 text-[11px]" />
-                      Reload Application
+                      Reload application
                     </button>
                   </motion.div>
                 </>
@@ -241,7 +241,7 @@ export default function WindowBar() {
                   style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
                   className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-white/45 transition-all duration-150 select-none hover:bg-white/5 hover:text-white/80 active:scale-95">
                   <i className="fa-solid fa-cloud text-[9px] opacity-60" />
-                  <span>Connect Cloud</span>
+                  <span>Connect cloud</span>
                 </button>
               </Tooltip>
             )
@@ -257,8 +257,8 @@ export default function WindowBar() {
           let statusText = "Synced"
           let tooltipContent =
             pendingCount > 0 ?
-              `Last synced: ${relativeTime}. ${pendingCount} new record${pendingCount === 1 ? "" : "s"} queued for upload. Click to open Cloud Sync.`
-            : `Last synced: ${relativeTime}. All records up to date. Click to open Cloud Sync.`
+              `Last synced: ${relativeTime}. ${pendingCount} new record${pendingCount === 1 ? "" : "s"} queued for upload. Click to open cloud sync.`
+            : `Last synced: ${relativeTime}. All records up to date. Click to open cloud sync.`
 
           if (syncConfig.lastSyncStatus === "error") {
             badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
@@ -269,7 +269,7 @@ export default function WindowBar() {
               syncConfig.lastSyncMessage?.includes("Plan member limit exceeded") ||
               syncConfig.lastSyncMessage?.includes("Total active members reached")
 
-            statusText = isQuota ? "Plan Limit Reached" : "Sync Warning"
+            statusText = isQuota ? "Plan limit reached" : "Sync warning"
 
             const cleanMsg = (syncConfig.lastSyncMessage || "Network connection error.")
               .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
@@ -278,8 +278,8 @@ export default function WindowBar() {
 
             tooltipContent =
               isQuota ?
-                "Plan limit reached: Active members exceed cloud subscription. Click to open Cloud Sync."
-              : `Sync issue: ${cleanMsg} Click to open Cloud Sync.`
+                "Plan limit reached: Active members exceed cloud subscription. Click to open cloud sync."
+              : `Sync issue: ${cleanMsg} Click to open cloud sync.`
           }
 
           return (
@@ -318,7 +318,7 @@ export default function WindowBar() {
                 onClick={handleOpenRelease}
                 style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
                 className="relative flex cursor-pointer items-center gap-1.5 rounded-md border border-cyan-800/40 bg-cyan-950/50 px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-cyan-400 uppercase shadow-[0_0_12px_rgba(6,182,212,0.15)] transition-all duration-200 select-none [webkit-app-region:no-drag] hover:border-cyan-700/50 hover:bg-cyan-900/60 hover:text-cyan-300">
-                Update Available
+                Update available
               </button>
             </Tooltip>
           </motion.div>
@@ -385,7 +385,7 @@ export default function WindowBar() {
       <Modal
         isOpen={isUpdateModalOpen}
         onClose={updateCheckState !== "checking" ? () => setIsUpdateModalOpen(false) : undefined}
-        title="App Update"
+        title="App update"
         maxWidth="sm"
         hideCloseButton={updateCheckState === "checking"}>
         {updateCheckState === "checking" && (
@@ -439,7 +439,7 @@ export default function WindowBar() {
                   )
                 }}
                 className="rounded-lg bg-cyan-500 px-5 py-2 text-xs font-bold text-slate-950 transition-all hover:bg-cyan-400 active:scale-95">
-                Download Update
+                Download update
               </button>
             </div>
           </div>
@@ -465,7 +465,7 @@ export default function WindowBar() {
               <button
                 onClick={handleCheckUpdates}
                 className="rounded-lg bg-cyan-500 px-5 py-2 text-xs font-bold text-slate-950 transition-all hover:bg-cyan-400 active:scale-95">
-                Try Again
+                Try again
               </button>
             </div>
           </div>

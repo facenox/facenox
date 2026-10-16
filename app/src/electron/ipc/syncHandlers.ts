@@ -710,10 +710,10 @@ export function registerSyncHandlers() {
   ipcMain.handle("sync:pick-import-file", async () => {
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
-        title: "Open Facenox Backup",
+        title: "Open Facenox backup",
         filters: [{ name: "Facenox Backup", extensions: ["facenox"] }],
         properties: ["openFile"],
-        buttonLabel: "Open Backup",
+        buttonLabel: "Open backup",
       })
 
       if (canceled || filePaths.length === 0) {
@@ -751,10 +751,10 @@ export function registerSyncHandlers() {
       const backupPayload = await exportRes.json()
 
       const { canceled, filePath } = await dialog.showSaveDialog({
-        title: "Save Facenox Backup",
+        title: "Save Facenox backup",
         defaultPath: `facenox-backup-${new Date().toISOString().slice(0, 10)}.facenox`,
         filters: [{ name: "Facenox Backup", extensions: ["facenox"] }],
-        buttonLabel: "Save Backup",
+        buttonLabel: "Save backup",
       })
 
       if (canceled || !filePath) return { success: false, canceled: true }

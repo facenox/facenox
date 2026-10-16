@@ -155,7 +155,7 @@ export function Attendance({
       <div className="overflow-hidden">
         <div className="pt-6 pb-2">
           <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            Global Settings
+            Global settings
           </h3>
         </div>
 
@@ -164,9 +164,9 @@ export function Attendance({
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <div className="text-sm font-medium text-white/90">Auto-start Scanning</div>
+                <div className="text-sm font-medium text-white/90">Auto-start scanning</div>
                 <InfoPopover
-                  title="Auto-start Scanning"
+                  title="Auto-start scanning"
                   description="Automatically activates the camera and face recognition scanner when Facenox launches."
                   details={[
                     "Designed for dedicated attendance kiosks and unattended gate checkpoints.",
@@ -198,7 +198,7 @@ export function Attendance({
               onChange={(checked) =>
                 setQuickSettings((prev) => ({ ...prev, autoStartScan: checked }))
               }
-              ariaLabel="Auto-start Scanning on Launch"
+              ariaLabel="Auto-start scanning on launch"
             />
           </div>
 
@@ -208,9 +208,9 @@ export function Attendance({
             <div className="flex items-center gap-4 py-4">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <div className="text-sm font-medium text-white/90">Recognition Limit</div>
+                  <div className="text-sm font-medium text-white/90">Recognition limit</div>
                   <InfoPopover
-                    title="Recognition Limit"
+                    title="Recognition limit"
                     description="Sets the maximum number of faces recognized simultaneously per camera frame."
                     details={[
                       "Limits of 1–5 maximize frame rate and eliminate lag on standard PCs.",
@@ -240,7 +240,7 @@ export function Attendance({
               <Switch
                 checked={attendanceSettings.maxRecognitionFacesPerFrame > 0}
                 onChange={(checked) => onMaxRecognitionFacesChange(checked ? 5 : 0)}
-                ariaLabel="Multi-Face Recognition"
+                ariaLabel="Multi-face recognition"
               />
             </div>
 
@@ -292,9 +292,9 @@ export function Attendance({
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <div className="text-sm font-medium text-white/90">Liveness Verification</div>
+                <div className="text-sm font-medium text-white/90">Liveness verification</div>
                 <InfoPopover
-                  title="Liveness Verification"
+                  title="Liveness verification"
                   description="Verifies physical presence to block printed photos, screen replays, and spoofing attempts."
                   details={[
                     "Analyzes face texture, micro-motion, and depth cues in real time.",
@@ -328,7 +328,7 @@ export function Attendance({
               checked={attendanceSettings.enableSpoofDetection || attendanceSettings.forceLiveness}
               onChange={onSpoofDetectionToggle}
               disabled={attendanceSettings.forceLiveness}
-              ariaLabel="Liveness Verification (Anti-Spoof)"
+              ariaLabel="Liveness verification (anti-spoof)"
             />
           </div>
 
@@ -338,7 +338,7 @@ export function Attendance({
           <div className="flex items-center gap-4 py-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <div className="text-sm font-medium text-white/90">Retention Policy</div>
+                <div className="text-sm font-medium text-white/90">Retention policy</div>
                 {isPaired &&
                   (cloudCeiling ?
                     <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
@@ -351,7 +351,7 @@ export function Attendance({
                     </span>
                   : null)}
                 <InfoPopover
-                  title="Retention Policy"
+                  title="Retention policy"
                   description="Controls how long past attendance check-in logs are stored before automatic cleanup."
                   details={[
                     "Runs automatic cleanup in the background every 24 hours to free disk space.",
@@ -470,9 +470,9 @@ export function Attendance({
             <div className="flex items-center gap-4 py-4">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <div className="text-sm font-medium text-white/90">Administrator PIN Lock</div>
+                  <div className="text-sm font-medium text-white/90">Administrator PIN lock</div>
                   <InfoPopover
-                    title="Administrator PIN Lock"
+                    title="Administrator PIN lock"
                     description="Restricts access to settings and member rosters behind a 4-digit security PIN."
                     details={[
                       "Recommended when placed in public or unattended areas.",
@@ -502,7 +502,7 @@ export function Attendance({
               <Switch
                 checked={adminPinEnabled}
                 onChange={(checked) => setAdminPinSettings({ adminPinEnabled: checked })}
-                ariaLabel="Administrator PIN Lock"
+                ariaLabel="Administrator PIN lock"
               />
             </div>
 
@@ -613,9 +613,9 @@ export function Attendance({
                     <div className="relative flex flex-wrap items-center justify-between gap-3 py-2 pl-4">
                       <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
                       <div className="flex items-center gap-1.5">
-                        <div className="text-xs font-medium text-white/80">Recovery Key:</div>
+                        <div className="text-xs font-medium text-white/80">Recovery key:</div>
                         <InfoPopover
-                          title="Recovery Key"
+                          title="Recovery key"
                           description="Restores administrator access and resets the PIN if forgotten."
                           details={[
                             "Used to unlock settings or reset credentials during emergency recovery.",

@@ -14,7 +14,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="max-w-[520px]"
-      title="Privacy & Data Handling">
+      title="Privacy & data handling">
       <div className="space-y-5 pt-2">
         <p className="text-[12px] leading-relaxed text-white/65">
           Facenox is built with a privacy-first architecture, ensuring full compliance and local
@@ -346,16 +346,16 @@ export const About: React.FC = () => {
               <button
                 onClick={openLink("https://github.com/facenox/facenox")}
                 className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/55 transition-all hover:border-white/10 hover:bg-[rgba(22,28,36,0.62)] hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
-                View Repository
+                View repository
               </button>
             </div>
 
             <div className="flex items-center justify-between border-b border-white/5 py-3">
-              <span className="text-[11px] font-medium text-white/55">Privacy & Data</span>
+              <span className="text-[11px] font-medium text-white/55">Privacy & data</span>
               <button
                 onClick={() => setShowPrivacyModal(true)}
                 className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/65 transition-all hover:border-cyan-500/10 hover:bg-cyan-500/10 hover:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
-                Read Policy
+                Read policy
               </button>
             </div>
 
@@ -373,7 +373,7 @@ export const About: React.FC = () => {
                     <Spinner size="xs" color="white" className="opacity-60" />
                     <span>Exporting…</span>
                   </>
-                : <span>Export Health Data</span>}
+                : <span>Export health data</span>}
               </button>
             </div>
           </div>

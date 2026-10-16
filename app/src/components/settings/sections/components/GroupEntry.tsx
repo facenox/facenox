@@ -150,11 +150,11 @@ export function GroupEntry({
           </span>
           {enrolledCount > 0 && (
             <span className="text-[11px] font-medium text-cyan-400/80">
-              {enrolledCount} Enrolled
+              {enrolledCount} enrolled
             </span>
           )}
 
-          <Tooltip content="Edit Group" position="top">
+          <Tooltip content="Edit group" position="top">
             <button
               onClick={() => onToggle(group.id)}
               className="ml-1 flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent text-white/55 shadow-none transition-all duration-300 outline-none hover:bg-white/5 hover:text-white focus:outline-none active:scale-95 lg:opacity-0 lg:group-hover/row:opacity-100">

@@ -44,8 +44,8 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
     render(<GroupSettings group={group} />)
 
     expect(screen.getByText(/Schedule & Attendance Rules/i)).toBeInTheDocument()
-    expect(screen.getByText("Late Tracking")).toBeInTheDocument()
-    expect(screen.getByText("Entry & Exit Tracking")).toBeInTheDocument()
+    expect(screen.getByText("Late tracking")).toBeInTheDocument()
+    expect(screen.getByText("Entry & exit tracking")).toBeInTheDocument()
     expect(screen.getByText("Exact")).toBeInTheDocument()
     expect(screen.getByText("10m")).toBeInTheDocument()
   })
@@ -91,7 +91,7 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
     render(<GroupSettings group={group} />)
 
     const switchBtn = screen.getByRole("switch", {
-      name: "Entry & Exit Tracking",
+      name: "Entry & exit tracking",
     })
     fireEvent.click(switchBtn)
 
@@ -144,7 +144,7 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
     fireEvent.click(openDeleteBtn)
 
     expect(screen.getByText(/All member profiles and attendance records/i)).toBeInTheDocument()
-    const deleteButtons = screen.getAllByRole("button", { name: "Delete Group" })
+    const deleteButtons = screen.getAllByRole("button", { name: "Delete group" })
     const deleteModalBtn = deleteButtons[1]
     expect(deleteModalBtn).toBeDisabled()
 

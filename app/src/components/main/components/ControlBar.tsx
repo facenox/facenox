@@ -59,7 +59,7 @@ export function ControlBar({
 
     if (!hasGroups) {
       return {
-        label: "Start Scan",
+        label: "Start scan",
         className:
           "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/70",
         tooltip: "Create a group to start scanning",
@@ -69,7 +69,7 @@ export function ControlBar({
 
     if (!hasSelectedGroup) {
       return {
-        label: "Start Scan",
+        label: "Start scan",
         className:
           "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/70",
         tooltip: "Select a group to start scanning",
@@ -79,7 +79,7 @@ export function ControlBar({
 
     if (!hasEnrolledFaces) {
       return {
-        label: "Start Scan",
+        label: "Start scan",
         className:
           "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/40 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/40",
         tooltip: "Enroll at least one member to start scanning",
@@ -89,7 +89,7 @@ export function ControlBar({
 
     if (!hasCameraDevices) {
       return {
-        label: "Start Scan",
+        label: "Start scan",
         className:
           "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/40 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/40",
         tooltip: "No camera detected",
@@ -101,7 +101,7 @@ export function ControlBar({
       "bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25 hover:text-cyan-200 hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.35)] tracking-wider"
 
     return {
-      label: "Start Scan",
+      label: "Start scan",
       className: cyanStyle,
       tooltip: undefined,
       enabled: true,

@@ -100,7 +100,7 @@ export function AntiSpoofDetectionModal({
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="max-w-[640px]"
-      title="Before Enabling Liveness">
+      title="Before enabling liveness">
       <div className="space-y-6 py-2">
         {/* Content Area */}
         <div className="relative min-h-[220px] overflow-hidden">

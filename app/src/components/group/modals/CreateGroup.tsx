@@ -105,7 +105,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
       onClose={handleClose}
       title={
         <div>
-          <h3 className="text-xl font-semibold">Create Group</h3>
+          <h3 className="text-xl font-semibold">Create group</h3>
           <p className="mt-1 text-xs font-normal text-white/65">
             Configure name and attendance schedule for this group
           </p>
@@ -123,8 +123,8 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
               onKeyDown={(e) => {
                 if (e.key === "Enter") void handleCreate()
               }}
-              placeholder="Group Name"
-              aria-label="Group Name"
+              placeholder="Group name"
+              aria-label="Group name"
               maxLength={100}
               focusColor={isDuplicate && !confirmDuplicate ? "border-amber-400" : "border-white/20"}
               className={isDuplicate && !confirmDuplicate ? "border-amber-500/50" : ""}
@@ -149,7 +149,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                   transition={{ duration: 0.18, ease: "easeOut" }}
                   className="flex items-center justify-between py-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-medium text-white/80">Schedule Rules</span>
+                    <span className="text-[11px] font-medium text-white/80">Schedule rules</span>
                     <span className="text-[10px] text-white/35">(optional)</span>
                   </div>
                   <button
@@ -168,7 +168,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                   className="space-y-3">
                   <div className="flex items-center justify-between px-0.5">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-medium text-white/80">Schedule Rules</span>
+                      <span className="text-[11px] font-medium text-white/80">Schedule rules</span>
                       <span className="text-[10px] text-white/35">(optional)</span>
                     </div>
                     {!hasConfiguredSchedule && (
@@ -186,7 +186,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                     <div className="py-2">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-xs font-semibold text-white/90">Late Tracking</div>
+                          <div className="text-xs font-semibold text-white/90">Late tracking</div>
                           <div className="text-[11px] text-white/55">
                             {lateThresholdEnabled ?
                               "Flag members as late when arriving after the scheduled start time."
@@ -196,7 +196,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                         <Switch
                           checked={lateThresholdEnabled}
                           onChange={setLateThresholdEnabled}
-                          ariaLabel="Late Tracking"
+                          ariaLabel="Late tracking"
                         />
                       </div>
 
@@ -283,18 +283,18 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <div className="text-xs font-semibold text-white/90">
-                            Entry & Exit Tracking
+                            Entry & exit tracking
                           </div>
                           <div className="text-[11px] text-white/55">
                             {trackCheckout ?
-                              "Record arrival (Time In) and departure (Time Out)."
+                              "Record arrival (time in) and departure (time out)."
                             : "Record arrival times only."}
                           </div>
                         </div>
                         <Switch
                           checked={trackCheckout}
                           onChange={setTrackCheckout}
-                          ariaLabel="Entry & Exit Tracking"
+                          ariaLabel="Entry & exit tracking"
                         />
                       </div>
 
@@ -361,8 +361,8 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
             {loading ?
               "Creating…"
             : confirmDuplicate && isDuplicate ?
-              "Create Anyway"
-            : "Create Group"}
+              "Create anyway"
+            : "Create group"}
           </button>
         </div>
       </div>

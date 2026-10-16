@@ -33,7 +33,7 @@ export function MemberTooltip({
         <span className="font-medium text-white/70">{memberRole}</span>
         {showEnrollment && (
           <span className={`font-semibold ${isEnrolled ? "text-cyan-400" : "text-white/45"}`}>
-            {isEnrolled ? "Enrolled" : "Not Enrolled"}
+            {isEnrolled ? "Enrolled" : "Not enrolled"}
           </span>
         )}
       </div>

@@ -271,7 +271,7 @@ export function Members({
       try {
         const targetName = member.displayName || member.name
         const confirmed = await dialog.confirm({
-          title: "Remove Enrollment",
+          title: "Remove enrollment",
           message: `Remove face enrollment for ${targetName}? They will need to re-enroll to be recognized.`,
           confirmText: "Remove",
           confirmVariant: "danger",
@@ -319,7 +319,7 @@ export function Members({
             action={
               onAdd ?
                 {
-                  label: "Add Member",
+                  label: "Add member",
                   onClick: onAdd,
                   iconClass: "fa-solid fa-user-plus text-[10px]",
                 }
@@ -363,7 +363,7 @@ export function Members({
                     options={[
                       { value: "all", label: "All" },
                       { value: "enrolled", label: "Enrolled" },
-                      { value: "non-enrolled", label: "Not Enrolled" },
+                      { value: "non-enrolled", label: "Not enrolled" },
                     ]}
                     value={enrollmentFilter}
                     onChange={(val) => {
@@ -431,7 +431,7 @@ export function Members({
                                 "border border-white/10 bg-transparent text-white/65 hover:bg-white/5 hover:text-white"
                               : "bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 hover:text-cyan-200"
                             }`}>
-                            {selectedStats.enrolled > 0 ? "RE-ENROLL (1)" : "ENROLL (1)"}
+                            {selectedStats.enrolled > 0 ? "Re-enroll (1)" : "Enroll (1)"}
                           </motion.button>
                         </Tooltip>
                       </motion.div>
@@ -467,7 +467,7 @@ export function Members({
                                   label: (
                                     <div className="flex items-center gap-2">
                                       <i className="fa-solid fa-folder-open w-3 text-center text-xs text-white/55" />
-                                      <span>File Upload</span>
+                                      <span>File upload</span>
                                     </div>
                                   ),
                                 },
@@ -487,8 +487,8 @@ export function Members({
                                     : "bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 hover:text-cyan-200"
                                   }`}>
                                   {selectedStats.enrolled > 0 && selectedStats.ready === 0 ?
-                                    "RE-ENROLL"
-                                  : "ENROLL"}{" "}
+                                    "Re-enroll"
+                                  : "Enroll"}{" "}
                                   ({selectedStats.eligible})
                                   <i className="fa-solid fa-chevron-down ml-0.5 text-[9px] opacity-60"></i>
                                 </button>
@@ -511,7 +511,7 @@ export function Members({
                         transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
                         onClick={async () => {
                           const confirmed = await dialog.confirm({
-                            title: "Remove Members",
+                            title: "Remove members",
                             message: `Remove ${selectedIds.size} member${selectedIds.size > 1 ? "s" : ""}? This will delete their profiles from this group.`,
                             confirmText: `Remove (${selectedIds.size})`,
                             confirmVariant: "danger",
@@ -550,7 +550,7 @@ export function Members({
                           }
                         }}
                         className="flex items-center gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-red-400 transition-all hover:bg-red-500/20">
-                        REMOVE ({selectedIds.size})
+                        Remove ({selectedIds.size})
                       </motion.button>
                     )}
 
@@ -577,7 +577,7 @@ export function Members({
                         "cursor-default text-white/20"
                       : "text-cyan-400/80 hover:text-cyan-400"
                     }`}>
-                    Select All
+                    Select all
                   </button>
                 </div>
               </div>

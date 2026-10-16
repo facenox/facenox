@@ -32,7 +32,7 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     )
 
     // Single cohesive Retention Policy setting exists
-    expect(screen.getByText("Retention Policy")).toBeInTheDocument()
+    expect(screen.getByText("Retention policy")).toBeInTheDocument()
     // No redundant ghost row
     expect(screen.queryByText("Cloud Data Retention")).not.toBeInTheDocument()
 
@@ -126,7 +126,7 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
       />,
     )
 
-    expect(screen.getByText("Retention Policy")).toBeInTheDocument()
+    expect(screen.getByText("Retention policy")).toBeInTheDocument()
     expect(screen.queryByText(/Cloud plan/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Cloud Data Retention/i)).not.toBeInTheDocument()
     expect(screen.queryByText("Standalone")).not.toBeInTheDocument()
@@ -163,8 +163,8 @@ describe("Global General Preferences Controls", () => {
     )
 
     expect(screen.queryByText("Scan Cooldown")).not.toBeInTheDocument()
-    expect(screen.getByText("Auto-start Scanning")).toBeInTheDocument()
-    expect(screen.getByText("Recognition Limit")).toBeInTheDocument()
+    expect(screen.getByText("Auto-start scanning")).toBeInTheDocument()
+    expect(screen.getByText("Recognition limit")).toBeInTheDocument()
   })
 
   it("renders Liveness Verification toggle and toggles spoof detection", () => {
@@ -178,11 +178,11 @@ describe("Global General Preferences Controls", () => {
       />,
     )
 
-    expect(screen.getByText("Liveness Verification")).toBeInTheDocument()
+    expect(screen.getByText("Liveness verification")).toBeInTheDocument()
     expect(screen.getByText("Standard face recognition only.")).toBeInTheDocument()
 
     const livenessSwitch = screen.getByRole("switch", {
-      name: "Liveness Verification (Anti-Spoof)",
+      name: "Liveness verification (anti-spoof)",
     })
     fireEvent.click(livenessSwitch)
     expect(onSpoofToggle).toHaveBeenCalledWith(true)
@@ -199,7 +199,7 @@ describe("Global General Preferences Controls", () => {
       />,
     )
 
-    expect(screen.getByText("Recognition Limit")).toBeInTheDocument()
+    expect(screen.getByText("Recognition limit")).toBeInTheDocument()
     expect(
       screen.getByText("Limit faces recognized per frame to optimize performance."),
     ).toBeInTheDocument()
@@ -219,7 +219,7 @@ describe("Global General Preferences Controls", () => {
       />,
     )
 
-    expect(screen.getByText("Administrator PIN Lock")).toBeInTheDocument()
+    expect(screen.getByText("Administrator PIN lock")).toBeInTheDocument()
     expect(
       screen.getByText("PIN lock is disabled. Anyone can access settings."),
     ).toBeInTheDocument()
@@ -235,8 +235,8 @@ describe("Global General Preferences Controls", () => {
       />,
     )
 
-    expect(screen.getByText("Auto-start Scanning")).toBeInTheDocument()
-    const switchBtn = screen.getByRole("switch", { name: "Auto-start Scanning on Launch" })
+    expect(screen.getByText("Auto-start scanning")).toBeInTheDocument()
+    const switchBtn = screen.getByRole("switch", { name: "Auto-start scanning on launch" })
     expect(switchBtn).toBeInTheDocument()
     fireEvent.click(switchBtn)
   })

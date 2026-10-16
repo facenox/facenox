@@ -106,7 +106,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               alignToSelector=".settings-sidebar"
             />
           </div>
-          <Tooltip content="Create Group" position="bottom">
+          <Tooltip content="Create group" position="bottom">
             <button
               onClick={() => {
                 setActiveSection("group")

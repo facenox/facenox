@@ -164,7 +164,7 @@ describe("useSettings", () => {
 
     expect(mockConfirm).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Clear Face Data",
+        title: "Clear face data",
         confirmVariant: "danger",
       }),
     )

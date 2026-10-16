@@ -7,14 +7,14 @@ import type { AttendanceGroup } from "@/types/recognition"
 import { parseLocalDate } from "@/utils"
 
 const REASON_PRESETS = [
-  "Forgot to Scan",
-  "System Error",
-  "Sick Leave",
-  "Emergency Leave",
-  "Excused Absence",
-  "Approved Remote",
-  "Traffic / Delays",
-  "Admin Correction",
+  "Forgot to scan",
+  "System error",
+  "Sick leave",
+  "Emergency leave",
+  "Excused absence",
+  "Approved remote",
+  "Traffic / delays",
+  "Admin correction",
   "Other",
 ] as const
 
@@ -64,14 +64,15 @@ export function EditSessionModal({
 
     if (row.notes && row.notes !== "Manual correction by admin") {
       const match = REASON_PRESETS.find((preset) => {
-        if (row.notes === preset) return true
-        if (row.notes?.startsWith(`${preset} — `)) return true
+        if (row.notes?.toLowerCase() === preset.toLowerCase()) return true
+        if (row.notes?.toLowerCase().startsWith(`${preset.toLowerCase()} — `)) return true
         return false
       })
 
       if (match) {
         parsedReason = match
-        parsedNote = row.notes === match ? "" : row.notes.slice(match.length + 3) // Remove the "Preset — " prefix
+        const prefixIdx = row.notes.indexOf(" — ")
+        parsedNote = prefixIdx !== -1 ? row.notes.slice(prefixIdx + 3) : ""
       } else {
         parsedNote = row.notes
       }
@@ -134,11 +135,11 @@ export function EditSessionModal({
   const handleSave = async () => {
     if (!row) return
     if (status === "present" && !checkInTime) {
-      setError("Time In is required when marking as present.")
+      setError("Time in is required when marking as present.")
       return
     }
     if (trackCheckout && status === "present" && !checkOutTime) {
-      setError("Time Out is required — the group has checkout tracking enabled.")
+      setError("Time out is required — the group has checkout tracking enabled.")
       return
     }
 
@@ -215,7 +216,7 @@ export function EditSessionModal({
       onClose={onClose}
       title={
         <div>
-          <h3 className="text-base font-semibold text-white">Correct Attendance</h3>
+          <h3 className="text-base font-semibold text-white">Correct attendance</h3>
           <p className="mt-0.5 text-xs text-white/40">{rowSnapshot.name}</p>
         </div>
       }
@@ -244,13 +245,13 @@ export function EditSessionModal({
                 </p>
               </div>
               <div>
-                <p className="mb-0.5 text-[10px] text-white/30">Time In</p>
+                <p className="mb-0.5 text-[10px] text-white/30">Time in</p>
                 <p className="text-sm font-semibold text-white/70">
                   {fmt(rowSnapshot.check_in_time)}
                 </p>
               </div>
               <div>
-                <p className="mb-0.5 text-[10px] text-white/30">Time Out</p>
+                <p className="mb-0.5 text-[10px] text-white/30">Time out</p>
                 <p className="text-sm font-semibold text-white/70">
                   {fmt(rowSnapshot.check_out_time)}
                 </p>
@@ -263,7 +264,7 @@ export function EditSessionModal({
           {/* ── Status — compact radio cards, no heavy borders ─────────────── */}
           <div className="space-y-2">
             <p className="text-[10px] font-semibold tracking-widest text-white/30 uppercase">
-              New Status
+              New status
             </p>
             <div className="flex gap-2">
               {(["present", "absent"] as const).map((s) => {
@@ -302,13 +303,13 @@ export function EditSessionModal({
             <div className="animate-in fade-in flex gap-4 duration-200">
               {[
                 {
-                  label: "Time In",
+                  label: "Time in",
                   value: checkInTime,
                   onChange: setCheckInTime,
                   required: true,
                 },
                 {
-                  label: "Time Out",
+                  label: "Time out",
                   value: checkOutTime,
                   onChange: setCheckOutTime,
                   required: trackCheckout,
@@ -329,7 +330,7 @@ export function EditSessionModal({
                   />
                   {hint && (
                     <p
-                      className={`text-[10px] ${trackCheckout && label === "Time Out" ? "text-amber-400/60" : "text-white/20"}`}>
+                      className={`text-[10px] ${trackCheckout && label === "Time out" ? "text-amber-400/60" : "text-white/20"}`}>
                       {hint}
                     </p>
                   )}
@@ -386,7 +387,7 @@ export function EditSessionModal({
               className="inline-flex min-w-[108px] items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-5 py-2 text-[11px] font-bold tracking-wide text-slate-950 transition-all duration-200 hover:bg-cyan-400 active:scale-[0.97] disabled:opacity-30">
               {isSubmitting ?
                 <i className="fa-solid fa-spinner fa-spin text-[10px]" />
-              : "Save Changes"}
+              : "Save changes"}
             </button>
           </div>
         </div>

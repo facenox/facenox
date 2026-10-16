@@ -11,10 +11,10 @@ interface AuditLogExportModalProps {
 type PresetId = "all" | "today" | "7days" | "30days" | "custom"
 
 const PRESETS: { id: PresetId; label: string }[] = [
-  { id: "all", label: "All Time" },
+  { id: "all", label: "All time" },
   { id: "today", label: "Today" },
-  { id: "7days", label: "7 Days" },
-  { id: "30days", label: "30 Days" },
+  { id: "7days", label: "7 days" },
+  { id: "30days", label: "30 days" },
   { id: "custom", label: "Custom" },
 ]
 
@@ -70,7 +70,7 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-[420px]" title="Export Audit Log">
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-[420px]" title="Export audit log">
       <div className="space-y-6">
         <p className="text-[12px] leading-relaxed text-white/55">
           Filter and export system audit events within a specified date range to CSV.
@@ -113,7 +113,7 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
               <div className="flex items-center gap-4 pt-3 pb-1">
                 <div className="flex-1 space-y-1.5">
                   <span className="text-[9px] font-bold tracking-widest text-white/30 uppercase">
-                    Start Date
+                    Start date
                   </span>
                   <input
                     type="date"
@@ -127,7 +127,7 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
                 </div>
                 <div className="flex-1 space-y-1.5">
                   <span className="text-[9px] font-bold tracking-widest text-white/30 uppercase">
-                    End Date
+                    End date
                   </span>
                   <input
                     type="date"

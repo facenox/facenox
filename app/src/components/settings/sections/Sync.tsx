@@ -162,7 +162,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
         overrideBaseUrl !== undefined ? overrideBaseUrl : remoteBaseUrl,
       )
       const isTargetCustom = !isOfficialCloudUrl(targetUrl)
-      const targetDisplayName = isTargetCustom ? "Custom Server" : "Facenox Cloud"
+      const targetDisplayName = isTargetCustom ? "Custom server" : "Facenox Cloud"
 
       try {
         const res = await window.electronAPI.sync.initiateReversePairing({
@@ -376,7 +376,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
 
   const effectiveUrl = getEffectiveRemoteUrl(remoteBaseUrl || config.remoteBaseUrl)
   const isCustomServer = !isOfficialCloudUrl(effectiveUrl)
-  const serverDisplayName = isCustomServer ? "Custom Server" : "Facenox Cloud"
+  const serverDisplayName = isCustomServer ? "Custom server" : "Facenox Cloud"
   const isLocalhost = Boolean(
     remoteBaseUrl &&
     /^(https?:\/\/)?(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0)(:\d+)?/i.test(remoteBaseUrl.trim()),
@@ -425,7 +425,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
             <button
               onClick={() => setShowAdvanced((value) => !value)}
               className="group flex items-center gap-1.5 text-xs font-semibold text-white/45 transition hover:text-white/70">
-              <span>{showAdvanced ? "Hide Advanced" : "Advanced Settings"}</span>
+              <span>{showAdvanced ? "Hide advanced" : "Advanced settings"}</span>
               <i
                 className={`fa-solid ${showAdvanced ? "fa-chevron-up" : "fa-chevron-down"} text-[9px]`}
               />
@@ -489,7 +489,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         }}
                         className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
                         <i className="fa-solid fa-arrows-rotate text-[10px]" />
-                        Retry Connection
+                        Retry connection
                       </button>
                     </motion.div>
                   : reversePairing ?
@@ -722,7 +722,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     {busyAction === "syncing" ?
                       <Spinner size="xs" color="white" />
                     : <i className="fa-solid fa-arrows-rotate text-[10px]" />}
-                    Sync Now
+                    Sync now
                   </button>
                   <button
                     onClick={handleDisconnect}
@@ -789,7 +789,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         className="space-y-1.5 overflow-hidden">
                         <div className="flex items-center justify-between">
                           <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
-                            Custom Endpoint
+                            Custom endpoint
                           </label>
                           {remoteBaseUrl &&
                             !isOfficialCloudUrl(remoteBaseUrl) &&
@@ -823,7 +823,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                   </AnimatePresence>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
-                      Device Name Override
+                      Device name override
                     </label>
                     <input
                       type="text"
@@ -842,7 +842,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     disabled={busyAction !== null}
                     className="flex items-center gap-2 rounded border border-white/10 bg-[rgba(22,28,36,0.62)] px-4 py-1.5 text-xs font-semibold text-white/70 transition-all hover:bg-[rgba(22,28,36,0.85)] hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40">
                     {busyAction === "saving" && <Spinner size="xs" color="white" />}
-                    Save Configuration
+                    Save configuration
                   </button>
                 </div>
               </motion.div>
@@ -872,7 +872,7 @@ function DataBoundariesModal({ isOpen, onClose, onNavigateToDB }: DataBoundaries
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="max-w-[520px]"
-      title="Data Boundaries & Privacy">
+      title="Data boundaries & privacy">
       <div className="space-y-5 pt-2">
         <p className="text-[12px] leading-relaxed text-white/65">
           Facenox separates data synced with Facenox Cloud from data stored strictly on this device:
@@ -890,7 +890,7 @@ function DataBoundariesModal({ isOpen, onClose, onNavigateToDB }: DataBoundaries
 
           {/* Local Processing Section */}
           <div className="space-y-2">
-            <div className="text-[13px] font-semibold text-white/90">Stored Locally Only</div>
+            <div className="text-[13px] font-semibold text-white/90">Stored locally only</div>
             <p className="text-[11px] leading-relaxed text-white/50">
               Raw camera frames are processed locally and are{" "}
               <strong>never persisted to disk or uploaded</strong>.
@@ -911,7 +911,7 @@ function DataBoundariesModal({ isOpen, onClose, onNavigateToDB }: DataBoundaries
                   onNavigateToDB()
                 }}
                 className="text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 hover:underline">
-                Manage Data & Storage →
+                Manage data & storage →
               </button>
             )}
           </div>

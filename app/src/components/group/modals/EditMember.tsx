@@ -75,7 +75,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
       onClose={handleClose}
       title={
         <div className="min-w-0">
-          <h3 className="mb-1 truncate text-xl font-semibold tracking-tight">Edit Member</h3>
+          <h3 className="mb-1 truncate text-xl font-semibold tracking-tight">Edit member</h3>
           <p className="flex items-center gap-1.5 text-xs font-normal text-white/65">
             <span className="shrink-0">Update details for</span>
             <Tooltip content={member.name} position="bottom">
@@ -131,7 +131,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
             {loading ?
               <i className="fa-solid fa-circle-notch fa-spin mr-2" />
             : null}
-            {loading ? "Saving…" : "Update Member"}
+            {loading ? "Saving…" : "Update member"}
           </button>
         </div>
       </div>

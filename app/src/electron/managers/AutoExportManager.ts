@@ -180,7 +180,7 @@ export class AutoExportManager {
 
       if (Notification.isSupported()) {
         new Notification({
-          title: "Facenox Daily Report Exported",
+          title: "Facenox daily report exported",
           body: `Attendance for ${dateToExport} saved to ${path.basename(targetDir)}.`,
           silent: false,
         }).show()
@@ -242,10 +242,10 @@ export class AutoExportManager {
           "Name",
           "Date",
           "Status",
-          "Time In",
-          "Time Out",
-          "Total Hours",
-          "Late (Mins)",
+          "Time in",
+          "Time out",
+          "Total hours",
+          "Late (mins)",
           "Notes",
         ]
 
@@ -336,10 +336,10 @@ export class AutoExportManager {
         "Name",
         "Date",
         "Status",
-        "Time In",
-        "Time Out",
-        "Total Hours",
-        "Late (Mins)",
+        "Time in",
+        "Time out",
+        "Total hours",
+        "Late (mins)",
         "Notes",
       ]
       const combinedRows: string[][] = []

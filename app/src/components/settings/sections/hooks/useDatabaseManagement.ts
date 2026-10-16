@@ -354,9 +354,9 @@ export function useDatabaseManagement(
       if (!skipConfirmation) {
         if (dialog) {
           const ok = await dialog.confirm({
-            title: "Delete Group Directory",
+            title: "Delete group directory",
             message: confirmMessage,
-            confirmText: "Delete Directory",
+            confirmText: "Delete directory",
             cancelText: "Cancel",
             confirmVariant: "danger",
             requireTypedConfirmation: {
@@ -415,9 +415,9 @@ export function useDatabaseManagement(
       if (!skipConfirmation) {
         if (dialog) {
           const ok = await dialog.confirm({
-            title: "Purge Attendance History",
+            title: "Purge attendance history",
             message: confirmMessage,
-            confirmText: "Purge History",
+            confirmText: "Purge history",
             cancelText: "Cancel",
             confirmVariant: "danger",
             requireTypedConfirmation: {

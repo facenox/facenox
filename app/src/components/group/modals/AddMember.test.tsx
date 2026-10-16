@@ -57,12 +57,12 @@ describe("AddMember Modal", () => {
       />,
     )
 
-    expect(screen.getByText("Add Members")).toBeInTheDocument()
+    expect(screen.getByText("Add members")).toBeInTheDocument()
     expect(screen.getByPlaceholderText("Name")).toBeInTheDocument()
     expect(screen.getByPlaceholderText("Role (optional)")).toBeInTheDocument()
-    expect(screen.getByText("Face Enrollment")).toBeInTheDocument()
+    expect(screen.getByText("Face enrollment")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Add Member/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Add member/i })).toBeInTheDocument()
   })
 
   it("adds member successfully and closes modal", async () => {

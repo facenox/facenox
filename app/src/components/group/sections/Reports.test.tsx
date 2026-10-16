@@ -138,14 +138,14 @@ describe("Reports", () => {
     })
 
     renderWithProviders(<Reports group={createAttendanceGroup()} />)
-    expect(screen.getByText("Generating Report")).toBeInTheDocument()
+    expect(screen.getByText("Generating report")).toBeInTheDocument()
   })
 
   it("shows the empty members state", () => {
     renderWithProviders(<Reports group={createAttendanceGroup()} onAddMember={vi.fn()} />)
 
     expect(screen.getByText("This group has no members")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Add Member" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Add member" })).toBeInTheDocument()
   })
 
   it("renders the table when members exist", () => {
@@ -211,7 +211,7 @@ describe("Reports", () => {
     act(() => {
       handlers.exportAllGroupsCSV()
     })
-    const exportNowBtn = screen.getByRole("button", { name: /Export Now/i })
+    const exportNowBtn = screen.getByRole("button", { name: /Export now/i })
     act(() => {
       fireEvent.click(exportNowBtn)
     })
