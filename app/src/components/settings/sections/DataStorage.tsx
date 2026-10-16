@@ -475,7 +475,7 @@ export function DataStorage({
             <div className="flex items-center justify-between rounded-lg border border-white/6 bg-white/[0.02] px-4 py-3">
               <div className="flex items-center gap-2.5 text-xs text-white/65">
                 <i className="fa-solid fa-cloud text-[11px] text-emerald-400" />
-                <span>Need cloud backup or multi-device sync?</span>
+                <span>Need automated cloud backup or multi-device sync?</span>
               </div>
               <button
                 type="button"
