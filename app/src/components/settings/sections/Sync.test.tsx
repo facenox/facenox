@@ -232,7 +232,18 @@ describe("Sync", () => {
 
     await user.click(await screen.findByRole("button", { name: /Advanced Settings/i }))
 
-    const serverUrlInput = screen.getByPlaceholderText("Leave empty for official sync")
+    const serverUrlInput = screen.getByPlaceholderText("Leave empty for Facenox Cloud")
     expect(serverUrlInput).toHaveValue("")
+  })
+
+  it("shows a warning when user types localhost or loopback IP into custom cloud URL", async () => {
+    const { user } = renderWithProviders(<Sync />)
+
+    await user.click(await screen.findByRole("button", { name: /Advanced Settings/i }))
+
+    const serverUrlInput = screen.getByPlaceholderText("Leave empty for Facenox Cloud")
+    fireEvent.change(serverUrlInput, { target: { value: "127.0.0.1:7500" } })
+
+    expect(screen.getByText(/Localhost cannot sync across devices/i)).toBeInTheDocument()
   })
 })

@@ -339,6 +339,10 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   const effectiveUrl = getEffectiveRemoteUrl(remoteBaseUrl || config.remoteBaseUrl)
   const isCustomServer = !isOfficialCloudUrl(effectiveUrl)
   const serverDisplayName = isCustomServer ? "Custom Server" : "Facenox Cloud"
+  const isLocalhost = Boolean(
+    remoteBaseUrl &&
+    /^(https?:\/\/)?(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0)(:\d+)?/i.test(remoteBaseUrl.trim()),
+  )
 
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
@@ -738,7 +742,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
-                        Custom Server URL
+                        Custom Cloud URL
                       </label>
                       {remoteBaseUrl && !isOfficialCloudUrl(remoteBaseUrl) && !config.connected && (
                         <button
@@ -751,12 +755,20 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     </div>
                     <input
                       type="url"
-                      placeholder="Leave empty for official sync"
+                      placeholder="Leave empty for Facenox Cloud"
                       value={remoteBaseUrl}
                       disabled={config.connected}
                       onChange={(e) => setRemoteBaseUrl(e.target.value)}
-                      className="h-8.5 w-full rounded border border-white/10 bg-transparent px-3 text-[12px] text-white transition-all duration-200 outline-none focus:border-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                      className={`h-8.5 w-full rounded border bg-transparent px-3 text-[12px] text-white transition-all duration-200 outline-none focus:border-white/20 disabled:cursor-not-allowed disabled:opacity-40 ${
+                        isLocalhost ? "border-amber-400/50" : "border-white/10"
+                      }`}
                     />
+                    {isLocalhost && (
+                      <p className="flex items-center gap-1.5 text-[10px] font-medium text-amber-400/90">
+                        <i className="fa-solid fa-triangle-exclamation text-[9px]" />
+                        Localhost cannot sync across devices. Leave empty for Facenox Cloud.
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
