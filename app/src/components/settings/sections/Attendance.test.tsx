@@ -179,9 +179,7 @@ describe("Global General Preferences Controls", () => {
     )
 
     expect(screen.getByText("Liveness Verification")).toBeInTheDocument()
-    expect(
-      screen.getByText("Anti-spoofing is disabled. Run passive face recognition only."),
-    ).toBeInTheDocument()
+    expect(screen.getByText("Standard face recognition only.")).toBeInTheDocument()
 
     const livenessSwitch = screen.getByRole("switch", {
       name: "Liveness Verification (Anti-Spoof)",
@@ -203,9 +201,7 @@ describe("Global General Preferences Controls", () => {
 
     expect(screen.getByText("Recognition Limit")).toBeInTheDocument()
     expect(
-      screen.getByText(
-        "Limit the maximum number of faces recognized per frame to optimize performance.",
-      ),
+      screen.getByText("Limit faces recognized per frame to optimize performance."),
     ).toBeInTheDocument()
 
     const faceBtn10 = screen.getByRole("button", { name: "10" })
