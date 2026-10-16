@@ -45,7 +45,7 @@ export function ExportAllGroupsModal({
       title: "Multi-Sheet Excel Workbook",
       badge: "Recommended",
       description:
-        "Creates a single Excel file with a separate tab/worksheet for each group. Cleanest for department reporting.",
+        "Creates a single Excel file with a worksheet for each group. Cleanest for department reporting.",
       icon: "fa-solid fa-file-excel text-emerald-400",
     },
     {
@@ -57,9 +57,9 @@ export function ExportAllGroupsModal({
     },
     {
       id: "combined",
-      title: "Single Combined Flat CSV",
+      title: "Single Combined CSV",
       description:
-        "Exports all groups into one unified CSV file with a Group column. Best for database imports and raw data analysis.",
+        "Exports all groups into a single CSV file with a Group column. Best for database imports and raw data analysis.",
       icon: "fa-solid fa-file-csv text-amber-400",
     },
   ]

@@ -355,8 +355,8 @@ export function EditSessionModal({
             <textarea
               placeholder={
                 selectedReason === OTHER_PRESET || !selectedReason ?
-                  "Describe the specific circumstance..."
-                : "Add any additional details (optional)..."
+                  "Describe the circumstance..."
+                : "Additional details (optional)..."
               }
               value={customNote}
               onChange={(e) => setCustomNote(e.target.value)}

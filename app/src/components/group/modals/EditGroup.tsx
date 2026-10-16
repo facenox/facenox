@@ -219,8 +219,8 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                   <div className="text-xs font-semibold text-white/90">Entry & Exit Tracking</div>
                   <div className="text-[11px] text-white/55">
                     {trackCheckout ?
-                      "Record both arrival (Time In) and departure (Time Out) events."
-                    : "Only recording arrival times."}
+                      "Record arrival (Time In) and departure (Time Out)."
+                    : "Record arrival times only."}
                   </div>
                 </div>
                 <Switch

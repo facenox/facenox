@@ -39,16 +39,13 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
             </div>
             <p className="text-[11px] leading-relaxed text-white/50">
               The application runs without ads, telemetry scripts, or usage tracking. No diagnostic
-              or performance data is transmitted externally, keeping your network interface
-              completely private.
+              or performance data is transmitted externally, keeping your network traffic private.
             </p>
           </div>
 
           {/* Section 3 */}
           <div className="space-y-1">
-            <div className="text-[13px] font-semibold text-white/90">
-              Offline operational capability
-            </div>
+            <div className="text-[13px] font-semibold text-white/90">Offline capability</div>
             <p className="text-[11px] leading-relaxed text-white/50">
               Face matching and liveness verification run without active network connectivity. This
               allows secure, offline deployments and ensures system availability during internet

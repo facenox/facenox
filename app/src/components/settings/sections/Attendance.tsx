@@ -231,8 +231,7 @@ export function Attendance({
                       className="text-xs font-normal text-white/65">
                       {attendanceSettings.maxRecognitionFacesPerFrame === 0 ?
                         "Process all detected faces without limits."
-                      : "Limit the maximum number of faces recognized per frame to optimize performance."
-                      }
+                      : "Limit faces recognized per frame to optimize performance."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -318,8 +317,8 @@ export function Attendance({
                     {attendanceSettings.forceLiveness ?
                       "Enforced and managed by your organization policy."
                     : attendanceSettings.enableSpoofDetection ?
-                      "Verify real physical presence and block photo or screen spoofing."
-                    : "Anti-spoofing is disabled. Run passive face recognition only."}
+                      "Verify physical presence to block photo and screen spoofing."
+                    : "Standard face recognition only."}
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -361,15 +360,6 @@ export function Attendance({
                     isPaired && cloudCeiling ?
                       `Setting this to 0 keeps local attendance history indefinitely. Your cloud plan stores up to ${cloudCeiling} days online.`
                     : "Setting this to 0 keeps local attendance history indefinitely.",
-                  ]}
-                  detailsNode={[
-                    <div
-                      key="retention-tip"
-                      data-hide-chevron
-                      className="rounded-md bg-white/5 p-2 text-[11px] text-white/65">
-                      <span className="font-medium text-white/65">Tip:</span> Shorter retention
-                      periods keep the app faster and comply better with modern privacy laws.
-                    </div>,
                   ]}
                   side="right"
                 />

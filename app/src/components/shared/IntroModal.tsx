@@ -76,7 +76,7 @@ export function IntroModal() {
             protected.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
-            Our codebase is fully{" "}
+            Our codebase is{" "}
             <a
               href="https://github.com/facenox/facenox"
               target="_blank"
@@ -84,7 +84,7 @@ export function IntroModal() {
               className="rounded px-0.5 text-cyan-400/80 underline decoration-cyan-400/30 underline-offset-4 transition-colors hover:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500/30 focus-visible:outline-none">
               open-source
             </a>
-            , offering complete transparency into how we manage and secure local assets.
+            , offering full transparency into how data is processed and secured.
           </p>
 
           <div className="border-t border-white/5 pt-2 text-center">

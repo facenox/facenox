@@ -21,12 +21,12 @@ export function EnrollmentInfoModal({
     {
       title: "Live or Upload Enrollment",
       description:
-        "Enroll a member live using the camera or by uploading a photo file. Live scans provide the most consistent and accurate recognition by matching the local environment and camera sensor, while photo uploads are ideal for remote enrollment.",
+        "Enroll members live via camera or by uploading photos. Live scans match local room lighting and camera optics for optimal accuracy, while photo uploads work well for remote enrollment.",
     },
     {
       title: "Proper Framing & Pose",
       description:
-        "Have the member face the camera directly with open eyes and a neutral expression. Avoid dim spaces, harsh shadows, or accessories (like hats or sunglasses) that obstruct the face for a clean scan.",
+        "Face the camera directly with open eyes and a neutral expression. Avoid dim lighting, heavy shadows, and accessories like hats or sunglasses that obstruct the face.",
     },
   ] as const
 

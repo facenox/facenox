@@ -164,7 +164,7 @@ export function Display({
       label: "Show Tracking Boxes",
       descriptions: {
         on: "Display tracking reticles around detected faces.",
-        off: "Hide tracking boxes for a clean camera display.",
+        off: "Hide tracking boxes from the camera feed.",
       },
     },
     {
@@ -172,14 +172,14 @@ export function Display({
       label: "Fill Viewport",
       descriptions: {
         on: "Expand camera feed to fill screen edge-to-edge.",
-        off: "Fit entire camera frame with standard letterbox.",
+        off: "Letterbox feed to display the full frame without cropping.",
       },
     },
     {
       key: "showDetectionPanel" as keyof QuickSettings,
       label: "Real-Time Results",
       descriptions: {
-        on: "Show real-time scanning results at the bottom of the sidebar.",
+        on: "Show live detection results in the sidebar.",
         off: "Hide live results to give attendance records full height.",
       },
     },

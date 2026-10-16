@@ -62,7 +62,7 @@ export function ControlBar({
         label: "Start Scan",
         className:
           "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/70",
-        tooltip: "Create a group to begin attendance scanning",
+        tooltip: "Create a group to start scanning",
         enabled: false,
       }
     }
@@ -72,7 +72,7 @@ export function ControlBar({
         label: "Start Scan",
         className:
           "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/70",
-        tooltip: "Select a group to begin attendance scanning",
+        tooltip: "Select a group to start scanning",
         enabled: false,
       }
     }
@@ -82,7 +82,7 @@ export function ControlBar({
         label: "Start Scan",
         className:
           "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/40 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/40",
-        tooltip: "Enroll at least one member to begin scanning",
+        tooltip: "Enroll at least one member to start scanning",
         enabled: false,
       }
     }

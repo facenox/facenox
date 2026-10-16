@@ -421,8 +421,8 @@ export function Members({
                         <Tooltip
                           content={
                             selectedStats.enrolled > 0 ?
-                              "This member is already enrolled. Proceed to re-enroll."
-                            : "Proceed to enroll member"
+                              "Already enrolled. Re-enroll member."
+                            : "Enroll member"
                           }>
                           <motion.button
                             onClick={() => jumpToEnrollment(selectedMembersList[0].person_id)}
@@ -448,7 +448,7 @@ export function Members({
                           content={
                             selectedStats.enrolled > 0 ?
                               `Includes ${selectedStats.enrolled} already enrolled member${selectedStats.enrolled > 1 ? "s" : ""}`
-                            : "Proceed to enroll members"
+                            : "Enroll members"
                           }>
                           <div>
                             <Dropdown

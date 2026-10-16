@@ -310,8 +310,7 @@ export function DataStorage({
     : null
   const timeHealthDetails =
     timeHealthState.loading ? "Verifying clock accuracy..."
-    : timeHealthStatus === "verified" ?
-      "Verifies system clock is correct to prevent attendance tampering."
+    : timeHealthStatus === "verified" ? "System clock is verified and accurate."
     : timeHealthStatus === "drift_detected" ?
       "Device clock is out of sync. Adjust date and time settings to prevent logging errors."
     : timeHealthStatus === "offline" ? "Cannot verify time online."
@@ -349,7 +348,7 @@ export function DataStorage({
                 details={[
                   "Prevents attendance tampering caused by manually changing the computer's clock.",
                   "Alerts you when the device clock is out of sync or drifting from real time.",
-                  "Ensures attendance logs stay in correct chronological order even when offline.",
+                  "Ensures attendance logs stay in chronological order even offline.",
                 ]}
                 side="right"
               />

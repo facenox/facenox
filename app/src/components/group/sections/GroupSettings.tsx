@@ -314,7 +314,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                         className="text-xs font-normal text-white/65">
                         {trackCheckout ?
-                          "Record both arrival (Time In) and departure (Time Out) events."
+                          "Record arrival (Time In) and departure (Time Out)."
                         : "Record arrival times only."}
                       </motion.div>
                     </AnimatePresence>

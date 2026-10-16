@@ -287,8 +287,8 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                           </div>
                           <div className="text-[11px] text-white/55">
                             {trackCheckout ?
-                              "Record both arrival (Time In) and departure (Time Out) events."
-                            : "Only recording arrival times."}
+                              "Record arrival (Time In) and departure (Time Out)."
+                            : "Record arrival times only."}
                           </div>
                         </div>
                         <Switch
