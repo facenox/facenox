@@ -39,7 +39,7 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
                     setSelectedGroup(null)
                   }
                 }}
-                placeholder={groups.length === 0 ? "No groups yet" : "Select group..."}
+                placeholder={groups.length === 0 ? "No groups yet" : "Select group…"}
                 disabled={groups.length === 0}
                 emptyMessage="No groups available"
                 maxHeight={256}
@@ -49,11 +49,11 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
                 align="left"
               />
             </div>
-            <Tooltip content="New Group" position="top">
+            <Tooltip content="New group" position="top">
               <button
                 onClick={openCreateGroup}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-[rgba(24,30,38,0.85)]"
-                aria-label="New Group">
+                aria-label="New group">
                 <span className="text-lg">+</span>
               </button>
             </Tooltip>

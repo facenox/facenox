@@ -38,7 +38,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
       options,
       value,
       onChange,
-      placeholder = "Select...",
+      placeholder = "Select…",
       emptyMessage = "No options available",
       className = "",
       buttonClassName = "",

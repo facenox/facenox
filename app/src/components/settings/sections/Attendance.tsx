@@ -637,12 +637,12 @@ export function Attendance({
                           {recoveryKey || "—"}
                         </span>
 
-                        <Tooltip content={copiedKey ? "Copied!" : "Copy key"} position="top">
+                        <Tooltip content={copiedKey ? "Copied" : "Copy key"} position="top">
                           <button
                             type="button"
                             onClick={handleCopyRecoveryKey}
                             className="flex h-7 w-7 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/5 hover:text-white"
-                            aria-label="Copy Recovery Key">
+                            aria-label="Copy recovery key">
                             <i
                               className={`fa-solid ${copiedKey ? "fa-check text-cyan-400" : "fa-copy"} text-xs`}
                             />

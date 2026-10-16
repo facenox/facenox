@@ -223,7 +223,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
         if (res.status === "approved" && res.config) {
           syncFromConfig(res.config)
           setReversePairing(null)
-          setSuccess(res.message || "Device connected successfully!")
+          setSuccess(res.message || "Device connected.")
         } else if (res.status === "expired") {
           void startReversePairing()
         } else if (res.status === "denied") {
@@ -360,7 +360,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       const result = await window.electronAPI.sync.triggerNow()
       await loadConfig()
       if (result.success) {
-        setSuccess("Sync completed successfully.")
+        setSuccess("Sync completed.")
       } else {
         const parsed = parseSyncError(result.message)
         setError(parsed.description || "Manual sync failed.")

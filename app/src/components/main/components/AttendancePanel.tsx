@@ -451,7 +451,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                     if (group) handleSelectGroup(group)
                   }
                 }}
-                placeholder="Select group..."
+                placeholder="Select group…"
                 emptyMessage="No groups available"
                 maxHeight={256}
                 buttonClassName="text-xs h-9 !bg-white/[0.02] hover:!bg-white/[0.05] !border-white/[0.08] border-r-0 rounded-r-none focus:ring-0! focus:border-white/20!"
@@ -529,7 +529,7 @@ export const AttendancePanel = memo(function AttendancePanel({
               </svg>
               <input
                 type="text"
-                placeholder="Search name..."
+                placeholder="Search name…"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/bar:border-white/20 placeholder:text-white/35 focus:bg-white/[0.08]"

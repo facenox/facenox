@@ -94,7 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   )
                 }
               }}
-              placeholder={dropdownGroups.length === 0 ? "No groups yet" : "Select group..."}
+              placeholder={dropdownGroups.length === 0 ? "No groups yet" : "Select group…"}
               disabled={dropdownGroups.length === 0}
               emptyMessage="No groups available"
               maxHeight={256}

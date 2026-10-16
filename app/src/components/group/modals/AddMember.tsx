@@ -891,8 +891,8 @@ export function AddMember({
                                     <div className="flex min-w-0 flex-col">
                                       <span className="truncate text-[11px] font-medium text-white/80">
                                         {isProcessingFace ?
-                                          "Analyzing face..."
-                                        : "Click or drop portrait photo"}
+                                          "Analyzing face…"
+                                        : "Click or drop photo"}
                                       </span>
                                       <span className="text-[10px] text-white/40">
                                         JPG, PNG up to 10MB
@@ -1063,7 +1063,7 @@ export function AddMember({
                   {loading || isProcessingBulk ?
                     bulkProgress ?
                       `Processing (${bulkProgress.current}/${bulkProgress.total})`
-                    : "Processing..."
+                    : "Processing…"
                   : confirmDuplicate && !isBulkMode ?
                     "Add Anyway"
                   : isBulkMode ?

@@ -137,9 +137,7 @@ export function useFaceCapture(
         const memberName = member?.name || "Member"
 
         setSuccessMessage(
-          isAlreadyEnrolled ?
-            `${memberName} Re-enrolled successfully!`
-          : `${memberName} Enrolled successfully!`,
+          isAlreadyEnrolled ? `${memberName} re-enrolled.` : `${memberName} enrolled.`,
         )
 
         await loadMemberStatus()

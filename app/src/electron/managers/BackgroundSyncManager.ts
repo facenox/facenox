@@ -572,7 +572,7 @@ export class BackgroundSyncManager {
             adminPinEnabled: false,
           })
           result = {
-            message: "PIN reset to default (1234) and lock disabled successfully.",
+            message: "PIN reset to default (1234) and lock disabled.",
           }
           break
         }

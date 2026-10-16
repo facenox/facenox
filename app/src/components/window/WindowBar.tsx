@@ -392,8 +392,8 @@ export default function WindowBar() {
           <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
             <Spinner size="md" color="cyan" />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-white">Checking for updates...</p>
-              <p className="text-xs text-white/50">Connecting to the update server...</p>
+              <p className="text-sm font-semibold text-white">Checking for updates…</p>
+              <p className="text-xs text-white/50">Connecting to update server…</p>
             </div>
           </div>
         )}

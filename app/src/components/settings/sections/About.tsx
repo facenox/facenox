@@ -57,7 +57,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
           <div className="space-y-1">
             <div className="text-[13px] font-semibold text-white/90">Cloud sync data boundary</div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Connecting to Facenox Cloud synchronizes employee metadata, attendance logs, and
+              Connecting to Facenox Cloud synchronizes member metadata, attendance logs, and
               encrypted biometric vectors (embeddings) to enable multi-device sync and automatic
               backup. Raw camera frames are processed locally and are never persisted to disk or
               uploaded.
@@ -195,7 +195,7 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
           {isChecking ?
             <div className="flex items-center gap-2">
               <Spinner size="xs" color="white" className="opacity-60" />
-              <span>Checking...</span>
+              <span>Checking…</span>
             </div>
           : "Check for updates"}
         </button>
@@ -371,7 +371,7 @@ export const About: React.FC = () => {
                 {isExporting ?
                   <>
                     <Spinner size="xs" color="white" className="opacity-60" />
-                    <span>Exporting...</span>
+                    <span>Exporting…</span>
                   </>
                 : <span>Export Health Data</span>}
               </button>

@@ -155,7 +155,7 @@ export const VideoCanvas = memo(function VideoCanvas({
     : null
 
   const emptyStateText =
-    !isShellReady ? "Loading groups and settings..."
+    !isShellReady ? "Loading groups and settings…"
     : hasSelectedGroup ?
       !hasMembers ? "Add and enroll at least one member to start scanning."
       : !hasEnrolledFaces ? "Enroll at least one member to start scanning."

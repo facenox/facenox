@@ -387,7 +387,7 @@ export function useDatabaseManagement(
         if (dialog) {
           await dialog.alert({
             title: "Directory deleted",
-            message: `Successfully deleted all ${groupCount} groups and invalidated biometric index caches.`,
+            message: `Deleted all ${groupCount} groups and cleared biometric cache.`,
           })
         }
       } catch (error) {
@@ -410,7 +410,7 @@ export function useDatabaseManagement(
 
   const handlePurgeHistory = useCallback(
     async (skipConfirmation = false) => {
-      const confirmMessage = `Purge ALL attendance history?\n\nThis will delete all historical records and daily sessions. Configured groups, member profiles, and biometric face profiles will remain safe. This cannot be undone.`
+      const confirmMessage = `Purge all attendance history?\n\nThis will delete all historical records and daily sessions. Configured groups, member profiles, and enrolled face data will remain. This cannot be undone.`
 
       if (!skipConfirmation) {
         if (dialog) {
@@ -440,10 +440,10 @@ export function useDatabaseManagement(
         if (dialog) {
           await dialog.alert({
             title: "History purged",
-            message: "Successfully purged all attendance records and sessions.",
+            message: "Purged all attendance records and sessions.",
           })
         } else {
-          alert("Successfully purged all history records.")
+          alert("Purged all attendance records.")
         }
       } catch (error) {
         console.error("Error purging history:", error)

@@ -171,7 +171,7 @@ describe("useSettings", () => {
     expect(mockBackendService.clearDatabase).toHaveBeenCalledTimes(1)
     expect(mockAlert).toHaveBeenCalledWith({
       title: "Database cleared",
-      message: "Face recognition data cleared successfully.",
+      message: "Face recognition data cleared.",
     })
     expect(mockBackendService.getDatabaseStats).toHaveBeenCalledTimes(1)
     expect(mockAttendanceManager.getAttendanceStats).toHaveBeenCalledTimes(1)

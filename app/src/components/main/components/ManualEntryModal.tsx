@@ -201,7 +201,7 @@ export const ManualEntryModal = ({
                 disabled={isSubmitting}
                 className="rounded-lg bg-cyan-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 transition-all duration-200 hover:bg-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
                 onClick={submitManualEntry}>
-                {isSubmitting ? "Marking Present..." : "Mark Present"}
+                {isSubmitting ? "Marking Present…" : "Mark Present"}
               </button>
             </div>
           </div>
@@ -223,7 +223,7 @@ export const ManualEntryModal = ({
                 </svg>
                 <input
                   type="text"
-                  placeholder="Search members..."
+                  placeholder="Search members…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={`h-9 w-full ${onAddMember ? "rounded-r-none border-r-0" : "rounded-r-lg"} rounded-l-lg border border-white/5 bg-white/5 py-2 pr-4 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none placeholder:text-white/35 focus:border-white/20 focus:bg-white/[0.08] focus-visible:outline-none`}
@@ -261,7 +261,7 @@ export const ManualEntryModal = ({
                     </span>
                     <InfoPopover
                       title="Not Enrolled"
-                      description="Members marked 'Not Enrolled' do not have registered face templates (e.g., they were newly created or imported without biometric data). They must complete face enrollment to be recognized by the camera."
+                      description="Members marked 'Not Enrolled' do not have enrolled face data. They must complete face enrollment in group settings to be recognized by the camera."
                       side="top"
                     />
                   </div>

@@ -422,14 +422,14 @@ export function Display({
                               handlePlayTest(newUrl)
                             }
                           }}
-                          placeholder="Select tone..."
+                          placeholder="Select tone…"
                           emptyMessage="No sounds available"
                           showPlaceholderOption={false}
                           allowClear={false}
                         />
                       </div>
 
-                      <Tooltip content={isPlaying ? "Playing..." : "Test sound"}>
+                      <Tooltip content={isPlaying ? "Playing…" : "Test sound"}>
                         <button
                           type="button"
                           onClick={() => handlePlayTest()}

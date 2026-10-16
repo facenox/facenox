@@ -243,7 +243,7 @@ export const useSettings = ({
       await loadSystemData()
       await dialog.alert({
         title: "Database cleared",
-        message: "Face recognition data cleared successfully.",
+        message: "Face recognition data cleared.",
       })
     } catch (error) {
       console.error("Failed to clear database:", error)

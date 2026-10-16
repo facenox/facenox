@@ -347,7 +347,7 @@ export function EditSessionModal({
               options={reasonOptions}
               value={selectedReason || null}
               onChange={(val) => setSelectedReason((val as ReasonPreset | null) || "")}
-              placeholder="Select a reason..."
+              placeholder="Select a reason…"
               className="w-full"
               buttonClassName="h-9 border border-white/8 bg-white/[0.04] text-[12px] font-medium text-white hover:bg-white/[0.06] focus:border-white/20"
             />
@@ -355,8 +355,8 @@ export function EditSessionModal({
             <textarea
               placeholder={
                 selectedReason === OTHER_PRESET || !selectedReason ?
-                  "Describe the circumstance..."
-                : "Additional details (optional)..."
+                  "Describe the circumstance…"
+                : "Additional details (optional)…"
               }
               value={customNote}
               onChange={(e) => setCustomNote(e.target.value)}

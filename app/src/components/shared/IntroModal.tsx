@@ -42,7 +42,7 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox <strong>never saves actual photos</strong> of people. Instead, it creates a
+            Facenox <strong>never saves actual photos</strong> of members. Instead, it creates a
             secure face template.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
@@ -53,7 +53,7 @@ export function IntroModal() {
       ),
     },
     {
-      title: "It stays on this computer",
+      title: "On-Device Processing",
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
@@ -62,7 +62,7 @@ export function IntroModal() {
           </p>
           <p className="text-xs leading-relaxed text-white/65">
             Your biometric face template never leaves this machine unencrypted. Basic profile info
-            (like names) and attendance logs are also shared if you choose to sync with the cloud.
+            (like names) and attendance logs are shared only if you choose to sync with the cloud.
           </p>
         </div>
       ),
@@ -241,7 +241,7 @@ export function IntroModal() {
                         </li>
                         <li className="flex items-start gap-1.5">
                           <i className="fa-solid fa-check mt-[3px] text-[8px] text-cyan-400/60" />
-                          <span>Sync data across multiple PCs</span>
+                          <span>Sync data across multiple devices</span>
                         </li>
                         <li className="flex items-start gap-1.5">
                           <i className="fa-solid fa-check mt-[3px] text-[8px] text-cyan-400/60" />

@@ -385,7 +385,7 @@ export function registerSyncHandlers() {
         persistentStore.set("sync.enabled", true)
         persistentStore.set("sync.lastSyncedAt", null)
         persistentStore.set("sync.lastSyncStatus", "idle")
-        persistentStore.set("sync.lastSyncMessage", "Device connected. Starting initial sync...")
+        persistentStore.set("sync.lastSyncMessage", "Device connected. Starting initial sync…")
 
         // Assign organization_id to existing offline records
         try {
@@ -597,7 +597,7 @@ export function registerSyncHandlers() {
           persistentStore.set("sync.enabled", true)
           persistentStore.set("sync.lastSyncedAt", null)
           persistentStore.set("sync.lastSyncStatus", "idle")
-          persistentStore.set("sync.lastSyncMessage", "Device connected. Starting initial sync...")
+          persistentStore.set("sync.lastSyncMessage", "Device connected. Starting initial sync…")
 
           try {
             const assignUrl = `${backendService.getUrl()}/attendance/groups/assign-org-id`

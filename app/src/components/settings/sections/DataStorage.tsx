@@ -175,7 +175,7 @@ export function DataStorage({
     try {
       const success = await window.electronAPI.autoExport.triggerNow()
       if (success) {
-        setSuccess("Daily attendance report exported successfully!")
+        setSuccess("Daily attendance report exported.")
         const updated = await window.electronAPI.autoExport.getConfig()
         setAutoExportConfig(updated)
       } else {
@@ -309,7 +309,7 @@ export function DataStorage({
       })
     : null
   const timeHealthDetails =
-    timeHealthState.loading ? "Verifying clock accuracy..."
+    timeHealthState.loading ? "Verifying clock accuracy…"
     : timeHealthStatus === "verified" ? "System clock is verified and accurate."
     : timeHealthStatus === "drift_detected" ?
       "Device clock is out of sync. Adjust date and time settings to prevent logging errors."
@@ -380,7 +380,7 @@ export function DataStorage({
               }
               <span>
                 {timeHealthState.loading ?
-                  "Checking..."
+                  "Checking…"
                 : timeHealth ?
                   `${formattedLocalTime ?? "Unavailable"} / ${getFriendlyTimeZoneLabel()}`
                 : "Clock health unavailable."}
@@ -396,7 +396,7 @@ export function DataStorage({
               {timeHealthState.loading ?
                 <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
               : <i className="fa-solid fa-rotate-right text-[11px] text-white/50" />}
-              <span>{timeHealthState.loading ? "Checking..." : "Check Now"}</span>
+              <span>{timeHealthState.loading ? "Checking…" : "Check Now"}</span>
             </button>
 
             {!timeHealthState.loading &&
@@ -430,7 +430,7 @@ export function DataStorage({
                 <code className="rounded-sm bg-white/5 px-1.5 py-0.5 font-mono text-[11px] text-cyan-400/60">
                   .facenox
                 </code>{" "}
-                file containing all members, history, and face profiles.
+                file containing all members, attendance records, and enrolled face data.
               </p>
             </div>
             <button
@@ -644,7 +644,7 @@ export function DataStorage({
                         {isTriggeringAutoExport ?
                           <i className="fa-solid fa-circle-notch fa-spin text-[10px]" />
                         : <i className="fa-solid fa-file-export text-[10px]" />}
-                        <span>{isTriggeringAutoExport ? "Exporting..." : "Export Now"}</span>
+                        <span>{isTriggeringAutoExport ? "Exporting…" : "Export Now"}</span>
                       </button>
                     </div>
                   </div>
@@ -669,7 +669,7 @@ export function DataStorage({
             <div className="min-w-0 flex-1">
               <h4 className="text-[15px] font-semibold text-white/90">Open Database Folder</h4>
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                Access local database files, logs, and biometric signatures on this device.
+                Access local database files, logs, and enrolled face data on this device.
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2 self-start md:self-auto">
@@ -743,7 +743,7 @@ export function DataStorage({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search group name or ID..."
+              placeholder="Search group name or ID…"
               className="h-full w-full rounded-lg border border-white/5 bg-white/5 py-2 pr-7 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/search:border-white/20 placeholder:text-white/35 focus:bg-white/[0.08]"
             />
             {searchQuery && (
@@ -768,7 +768,7 @@ export function DataStorage({
                 transition={{ duration: 0.15 }}
                 className="flex flex-col items-center justify-center py-12 text-white/20">
                 <i className="fa-solid fa-circle-notch fa-spin mb-3 text-2xl opacity-30" />
-                <div className="text-[12px] font-medium tracking-wide">Syncing directory...</div>
+                <div className="text-[12px] font-medium tracking-wide">Syncing directory…</div>
               </motion.div>
             : filteredData.length === 0 ?
               <EmptyState
@@ -777,7 +777,7 @@ export function DataStorage({
                 title={searchQuery.trim() ? "No results found" : "No groups found"}
                 description={
                   searchQuery.trim() ?
-                    `No groups matched "${searchQuery}"`
+                    `No groups matched "${searchQuery}".`
                   : "Create a group to begin managing members."
                 }
                 iconClass={
@@ -859,8 +859,8 @@ export function DataStorage({
                       Delete Group Directory
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Permanently delete all groups, member profiles, and enrolled biometric face
-                      data. Members must be re-created and enrolled for recognition to work.
+                      Permanently delete all groups, member profiles, and enrolled face data.
+                      Members must be re-created and enrolled for recognition to work.
                       {isPaired &&
                         (!allowKioskDirectoryManagement ?
                           <span className="mt-1 block font-medium text-amber-400/80">
@@ -870,7 +870,7 @@ export function DataStorage({
                           </span>
                         : <span className="mt-1 block font-medium text-amber-400/80">
                             <i className="fa-solid fa-cloud-arrow-up mr-1" />
-                            Note: This will also delete groups from your cloud directory.
+                            This will also delete groups from your cloud directory.
                           </span>)}
                     </p>
                   </div>
@@ -893,8 +893,8 @@ export function DataStorage({
                   <div className="min-w-0 flex-1 text-left">
                     <h4 className="text-[15px] font-semibold text-red-400/80">Clear Face Data</h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Wipe all enrolled biometric face data. Enrolled members will need to re-enroll
-                      their face profiles.
+                      Wipe all enrolled biometric face data. Enrolled members will need to be
+                      re-enrolled.
                       {isPaired &&
                         (!allowKioskDirectoryManagement ?
                           <span className="mt-1 block font-medium text-amber-400/80">
@@ -904,7 +904,7 @@ export function DataStorage({
                           </span>
                         : <span className="mt-1 block font-medium text-amber-400/80">
                             <i className="fa-solid fa-cloud-arrow-up mr-1" />
-                            Note: Face data will also be cleared from the cloud.
+                            Face data will also be cleared from the cloud.
                           </span>)}
                     </p>
                   </div>
@@ -924,12 +924,12 @@ export function DataStorage({
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                       Permanently wipe all daily attendance check-ins, checkout timestamps, and
-                      history records on this kiosk. Groups, member profiles, and enrolled face
-                      profiles are preserved.
+                      history records on this kiosk. Groups, member profiles, and enrolled face data
+                      are preserved.
                       {isPaired && (
                         <span className="mt-1 block font-medium text-white/50">
                           <i className="fa-solid fa-cloud mr-1" />
-                          Note: Clears history on this kiosk only. Cloud records remain safe.
+                          Clears history on this kiosk only. Cloud records remain safe.
                         </span>
                       )}
                     </p>
@@ -994,7 +994,7 @@ export function DataStorage({
                     }
                   }
                 }}
-                placeholder="Enter password..."
+                placeholder="Enter password…"
                 className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 pr-10 pl-3 text-xs text-white transition-all duration-300 outline-none focus:border-white/20 focus:bg-[rgba(28,35,44,0.82)]"
               />
               <button

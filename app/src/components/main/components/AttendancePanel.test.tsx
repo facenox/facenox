@@ -16,7 +16,7 @@ vi.mock("@/components/shared", () => ({
     options,
     value,
     onChange,
-    placeholder = "Select...",
+    placeholder = "Select…",
   }: {
     options: { value: string | number; label: string }[]
     value: string | number | null | undefined
@@ -144,7 +144,7 @@ describe("AttendancePanel", () => {
       { withDialogProvider: false },
     )
 
-    fireEvent.change(screen.getByPlaceholderText("Search name..."), {
+    fireEvent.change(screen.getByPlaceholderText("Search name…"), {
       target: { value: "Bob" },
     })
 

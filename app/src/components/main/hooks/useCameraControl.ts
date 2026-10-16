@@ -253,8 +253,7 @@ export function useCameraControl({
             errorMessage =
               "The selected camera could not be started. Select another camera or reconnect the device."
           } else {
-            errorMessage =
-              "Camera does not support requested settings. Trying to start with default settings..."
+            errorMessage = "Camera does not support requested settings. Trying default settings…"
             try {
               const fallbackConstraints = buildCameraConstraints()
               const fallbackStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints)

@@ -49,7 +49,7 @@ export function ControlBar({
 
     if (!isShellReady) {
       return {
-        label: "Preparing...",
+        label: "Preparing…",
         className:
           "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/65 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/65",
         tooltip: "Loading groups and settings",
@@ -129,7 +129,7 @@ export function ControlBar({
                   onChange={(deviceId) => {
                     if (deviceId) setSelectedCamera(String(deviceId))
                   }}
-                  placeholder="Select camera..."
+                  placeholder="Select camera…"
                   emptyMessage="No cameras available"
                   disabled={isStreaming}
                   maxHeight={256}

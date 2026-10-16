@@ -134,7 +134,7 @@ export function ReportToolbar({
             </svg>
             <input
               type="search"
-              placeholder="Search name, status, notes..."
+              placeholder="Search name, status, notes…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onFocus={handleSearchFocus}
