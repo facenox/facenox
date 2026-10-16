@@ -5,6 +5,7 @@ import { Spinner } from "@/components/common"
 import { Tooltip } from "@/components/shared"
 import { ActiveHeadTurnGuide } from "./ActiveHeadTurnGuide"
 import { useDetectionStore, useUIStore } from "@/components/main/stores"
+import { ALL_GROUPS_ID } from "@/components/main/hooks/useAttendanceGroups"
 import type { QuickSettings } from "@/components/settings"
 import type { AttendanceGroup } from "@/types/recognition"
 
@@ -92,6 +93,8 @@ export const VideoCanvas = memo(function VideoCanvas({
     }
   }
 
+  const isAllGroups = currentGroup?.id === ALL_GROUPS_ID || currentGroup?.id === "all"
+
   const tooltipContent =
     currentGroup ?
       <div className="flex min-w-56 flex-col gap-1.5 p-1 text-[11px] text-white/60 select-none">
@@ -103,7 +106,9 @@ export const VideoCanvas = memo(function VideoCanvas({
         <div className="flex items-center justify-between gap-4">
           <span>Late Tracking</span>
           <span className="text-right font-mono font-medium text-white/85">
-            {currentGroup.settings?.late_threshold_enabled ?
+            {isAllGroups ?
+              <span className="font-sans text-white/70">Per-group</span>
+            : currentGroup.settings?.late_threshold_enabled ?
               (currentGroup.settings?.late_threshold_minutes ?? 0) > 0 ?
                 `${format12hTime(currentGroup.settings?.class_start_time)} (+${currentGroup.settings?.late_threshold_minutes}m)`
               : `${format12hTime(currentGroup.settings?.class_start_time)} (Exact)`
@@ -115,7 +120,9 @@ export const VideoCanvas = memo(function VideoCanvas({
         <div className="flex items-center justify-between gap-4">
           <span>Entry & Exit</span>
           <span className="text-right font-mono font-medium text-white/85">
-            {currentGroup.settings?.track_checkout ?
+            {isAllGroups ?
+              <span className="font-sans text-white/70">Per-group</span>
+            : currentGroup.settings?.track_checkout ?
               currentGroup.settings?.class_end_time ?
                 `Enabled (${format12hTime(currentGroup.settings.class_end_time)})`
               : "Enabled"
