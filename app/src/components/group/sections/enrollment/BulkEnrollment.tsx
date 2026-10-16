@@ -208,11 +208,11 @@ export function BulkEnrollment({
               <>
                 <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/15 border-t-cyan-400/60" />
                 <span>
-                  Enrolling {readyCount} {readyCount === 1 ? "person" : "people"}…
+                  Enrolling {readyCount} {readyCount === 1 ? "member" : "members"}…
                 </span>
               </>
             : <span>
-                Enroll {readyCount} {readyCount === 1 ? "Person" : "People"}
+                Enroll {readyCount} {readyCount === 1 ? "Member" : "Members"}
               </span>
             }
           </button>

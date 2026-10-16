@@ -402,9 +402,9 @@ export default function WindowBar() {
           <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
             <i className="fa-solid fa-circle-check text-4xl text-cyan-400" />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-white">You&apos;re up to date!</p>
+              <p className="text-sm font-semibold text-white">You&apos;re up to date</p>
               <p className="text-xs text-white/50">
-                Facenox v{checkedUpdateInfo?.currentVersion} is the latest version available.
+                Facenox v{checkedUpdateInfo?.currentVersion} is the latest version.
               </p>
             </div>
           </div>
@@ -414,7 +414,7 @@ export default function WindowBar() {
           <div className="flex flex-col items-center justify-center gap-4 py-4 text-center">
             <i className="fa-solid fa-cloud-arrow-down text-4xl text-cyan-400" />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-white">New Version Available!</p>
+              <p className="text-sm font-semibold text-white">New version available</p>
               <p className="text-xs text-white/50">
                 v{checkedUpdateInfo?.currentVersion} ➜{" "}
                 <span className="font-bold text-cyan-400">v{checkedUpdateInfo?.latestVersion}</span>

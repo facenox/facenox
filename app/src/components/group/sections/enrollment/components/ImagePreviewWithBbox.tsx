@@ -101,7 +101,7 @@ export function ImagePreviewWithBbox({ frame }: { frame: CapturedFrame }) {
         <div className="absolute inset-0 flex items-center justify-center bg-black/80">
           <div className="flex flex-col items-center gap-2">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-cyan-400" />
-            <span className="text-xs text-white/65">Analyzing...</span>
+            <span className="text-xs text-white/65">Analyzing…</span>
           </div>
         </div>
       )}

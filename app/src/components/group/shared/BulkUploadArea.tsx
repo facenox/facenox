@@ -79,7 +79,7 @@ export function BulkUploadArea({
           <p className="max-w-sm text-[11px] leading-relaxed text-white/40">
             Filenames like{" "}
             <code className="rounded bg-white/5 px-1 py-0.5 text-cyan-300">Juan_Dela_Cruz.jpg</code>{" "}
-            will be automatically matched to existing members or created as new members.
+            will automatically match existing members or create new members.
           </p>
         </div>
 
@@ -102,7 +102,7 @@ export function BulkUploadArea({
 
           <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-white/80 transition-all hover:bg-white/10 hover:text-white active:scale-95">
             <i className="fa-solid fa-images text-[11px] text-white/60" />
-            Select Image Files
+            Choose Files
             <input
               type="file"
               accept="image/*"

@@ -49,7 +49,7 @@ export function ResultView({
                 {isEnrolling ?
                   <>
                     <div className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                    <span>Saving...</span>
+                    <span>Saving…</span>
                   </>
                 : "Enroll"}
               </button>

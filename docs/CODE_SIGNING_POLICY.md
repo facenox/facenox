@@ -21,9 +21,9 @@ Because preview/beta builds are unsigned and newly released binaries have not ye
 
 Once code signing is live, we will update this page with:
 
-- the signing provider or certificate details
-- which release artifacts are signed
-- how users can verify signatures
+- The signing provider or certificate details
+- Which release artifacts are signed
+- How users can verify signatures
 
 ## Official Repository
 
@@ -41,9 +41,9 @@ Official desktop releases should come from the same team responsible for the sou
 
 Current release ownership:
 
-- **Maintainer:** the Facenox project owner and repository maintainer
-- **Release approver:** the Facenox project owner and repository maintainer
-- **Contribution path:** external changes should go through pull request review before they are included in a release
+- **Maintainer:** The Facenox project owner and repository maintainer
+- **Release approver:** The Facenox project owner and repository maintainer
+- **Contribution path:** External changes should go through pull request review before they are included in a release
 
 As the project grows, this section can be replaced with explicit team or maintainer links.
 
@@ -51,10 +51,10 @@ As the project grows, this section can be replaced with explicit team or maintai
 
 An official Facenox release should:
 
-- be built from this repository
-- be published through the official Facenox GitHub repository
-- map to a tagged version or otherwise traceable source revision
-- include release notes describing what changed
+- Be built from this repository
+- Be published through the official Facenox GitHub repository
+- Map to a tagged version or otherwise traceable source revision
+- Include release notes describing what changed
 
 If a build comes from a mirror, a fork, a re-packaged installer, or any other unofficial channel, do not treat it as an official Facenox release unless we explicitly point to it ourselves.
 
@@ -74,15 +74,15 @@ In short:
 
 Official release artifacts should:
 
-- use the Facenox product name consistently
-- be traceable to the tagged source tree and release notes
-- be built from the repository's source code and release configuration
+- Use the Facenox product name consistently
+- Be traceable to the tagged source tree and release notes
+- Be built from the repository's source code and release configuration
 
 When code signing is enabled, this page will also document:
 
-- which artifacts are signed
-- any exceptions
-- how signature verification works
+- Which artifacts are signed
+- Any exceptions
+- How signature verification works
 
 ## Going Forward
 

@@ -31,8 +31,8 @@ export function DeleteMemberModal({ isOpen, member, onClose, onConfirm }: Delete
       maxWidth="sm">
       <div className="space-y-4">
         <p className="text-xs leading-relaxed text-white/60">
-          This will permanently remove their attendance history and enrolled biometric face profile
-          for this group.
+          This will permanently remove their attendance history and enrolled face data from this
+          group.
         </p>
       </div>
 

@@ -381,7 +381,7 @@ export function FaceCapture({
                     <button
                       onClick={() => setSource(source === "live" ? "upload" : "live")}
                       className="group flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium text-white/65 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white"
-                      title={source === "live" ? "Upload Photo Instead" : "Use Camera Instead"}>
+                      title={source === "live" ? "Switch to file upload" : "Switch to camera"}>
                       <i
                         className={`fa-solid ${source === "live" ? "fa-file-image" : "fa-camera"} text-sm`}></i>
                       <span>{source === "live" ? "Upload" : "Camera"}</span>
@@ -394,7 +394,7 @@ export function FaceCapture({
                         onClick={handleCaptureFromCamera}
                         disabled={!isVideoReady || !!cameraError || isProcessing}
                         className="group flex h-16 w-16 items-center justify-center rounded-full bg-white/10 p-1 transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
-                        title="Capture Face">
+                        title="Capture photo">
                         {isProcessing ?
                           <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
                         : <div className="h-full w-full rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-transform group-active:scale-90" />

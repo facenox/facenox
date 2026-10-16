@@ -56,7 +56,7 @@ export function parseSyncError(err: string | null): ParsedSyncError {
       isPlanQuota: false,
       title: "Server Unavailable",
       description:
-        "Cloud server returned an unexpected HTML response. Please verify cloud server availability.",
+        "Cloud server returned an unexpected HTML response. Verify cloud server availability.",
     }
   }
 

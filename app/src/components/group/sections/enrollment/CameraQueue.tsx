@@ -647,7 +647,7 @@ export function CameraQueue({
                       onClick={() => void capturePhoto()}
                       disabled={!isVideoReady || isProcessing || !currentMember || !!cameraError}
                       className="group flex h-16 w-16 items-center justify-center rounded-full bg-white/10 p-1 transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
-                      title="Capture Face">
+                      title="Capture photo">
                       {isProcessing ?
                         <div className="flex h-full w-full items-center justify-center rounded-full bg-white/10">
                           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />

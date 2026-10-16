@@ -21,7 +21,7 @@ This page covers the shipped desktop feature set and the scope of the current Fa
 
 ### Privacy-first biometric architecture
  
-- Instant, frictionless biometric enrollment via live camera capture or batch photo import.
+- Biometric enrollment via live camera capture or batch photo import.
 - Raw camera frames are processed in-memory and never written to disk or transmitted to external servers.
 - Embeddings are encrypted at rest locally and purged when a member is deleted.
 - Integrated privacy notices and terms in Settings support Data Controller compliance requirements.
@@ -44,26 +44,26 @@ Facenox Cloud connects offline Facenox desktop kiosks to a unified cloud control
 
 ### What the desktop app supports
 
-- store a custom cloud URL
-- redeem a short-lived pairing code
-- connect a desktop instance to an organization and branch/site
-- show pairing state, last sync state, and sync messages
-- run background auto-sync
-- run manual sync on demand
+- Store a custom cloud URL
+- Redeem a short-lived pairing code
+- Connect a desktop instance to an organization and branch/site
+- Show pairing state, last sync state, and sync messages
+- Run background auto-sync
+- Run manual sync on demand
 
 ### What gets synced
 
-- group metadata
-- member directory data needed for reports
-- attendance records
-- attendance sessions
-- device and sync metadata
+- Group metadata
+- Member directory data needed for reports
+- Attendance records
+- Attendance sessions
+- Device and sync metadata
 
 ### What does not get synced
 
-- raw face photos
-- face matching decisions
-- remote-side recognition state
+- Raw face photos
+- Face matching decisions
+- Remote-side recognition state
 
 ### What gets synced (encrypted)
 

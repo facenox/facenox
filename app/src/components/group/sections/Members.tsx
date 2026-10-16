@@ -272,7 +272,7 @@ export function Members({
         const targetName = member.displayName || member.name
         const confirmed = await dialog.confirm({
           title: "Remove Enrollment",
-          message: `Are you sure you want to remove the enrollment for ${targetName}? They will need to re-enroll to be recognized.`,
+          message: `Remove face enrollment for ${targetName}? They will need to re-enroll to be recognized.`,
           confirmText: "Remove",
           confirmVariant: "danger",
         })
@@ -458,7 +458,7 @@ export function Members({
                                   label: (
                                     <div className="flex items-center gap-2">
                                       <i className="fa-solid fa-video w-3 text-center text-xs text-white/55" />
-                                      <span>via Webcam</span>
+                                      <span>Webcam</span>
                                     </div>
                                   ),
                                 },
@@ -467,7 +467,7 @@ export function Members({
                                   label: (
                                     <div className="flex items-center gap-2">
                                       <i className="fa-solid fa-folder-open w-3 text-center text-xs text-white/55" />
-                                      <span>via File Upload</span>
+                                      <span>File Upload</span>
                                     </div>
                                   ),
                                 },
@@ -512,7 +512,7 @@ export function Members({
                         onClick={async () => {
                           const confirmed = await dialog.confirm({
                             title: "Remove Members",
-                            message: `Are you sure you want to remove ${selectedIds.size} member${selectedIds.size > 1 ? "s" : ""}?`,
+                            message: `Remove ${selectedIds.size} member${selectedIds.size > 1 ? "s" : ""}? This will delete their profiles from this group.`,
                             confirmText: `Remove (${selectedIds.size})`,
                             confirmVariant: "danger",
                           })
@@ -550,7 +550,7 @@ export function Members({
                           }
                         }}
                         className="flex items-center gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-red-400 transition-all hover:bg-red-500/20">
-                        DELETE ({selectedIds.size})
+                        REMOVE ({selectedIds.size})
                       </motion.button>
                     )}
 
@@ -607,12 +607,12 @@ export function Members({
                     : "No members found"
                   }
                   description={
-                    memberSearch.trim() ? `No members matched "${memberSearch}"`
+                    memberSearch.trim() ? `No members matched "${memberSearch}".`
                     : enrollmentFilter === "enrolled" ?
-                      "There are no enrolled members in this group."
+                      "No enrolled members in this group."
                     : enrollmentFilter === "non-enrolled" ?
-                      "All members in this group have been enrolled."
-                    : "There are no members added to this group yet."
+                      "All members in this group are enrolled."
+                    : "No members have been added to this group yet."
                   }
                   iconClass={
                     memberSearch.trim() ?

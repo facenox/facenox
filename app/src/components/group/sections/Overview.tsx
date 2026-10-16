@@ -274,9 +274,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
               value={enrolledCount}
               total={members.length}
               label="Enrolled"
-              tooltipText={
-                <span>Members in this group with registered biometric face profiles.</span>
-              }
+              tooltipText={<span>Members in this group with registered face data.</span>}
             />
             {pendingEnrollment > 0 ?
               <p className="mt-1.5 text-[11px] text-white/50">{pendingEnrollment} pending</p>

@@ -109,7 +109,7 @@ class TimeAuthorityService:
         os_clock_warning = None
         if os_clock_drift_seconds > self._os_warning_threshold_seconds:
             os_clock_warning = (
-                "Device clock drift detected. FACENOX is protecting attendance with "
+                "Device clock drift detected. Facenox is protecting attendance with "
                 "backend monotonic time, but the system clock should be corrected."
             )
 

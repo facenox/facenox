@@ -524,7 +524,7 @@ export class BackgroundSyncManager {
             title: "Data Wiped",
             message: "A remote wipe has been executed on this device.",
             detail:
-              "All local database tables and biometric keys have been successfully erased by the organization administrator.",
+              "All local database tables and biometric keys have been erased by the organization administrator.",
             buttons: ["OK"],
           }
           if (parentWindow) {

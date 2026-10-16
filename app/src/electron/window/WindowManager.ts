@@ -286,11 +286,10 @@ export class WindowManager {
       void dialog
         .showMessageBox(mainWindow, {
           type: "info",
-          title: "Facenox is running in the background",
-          message: "Facenox will keep running in the system tray.",
-          detail:
-            "You can fully close the app by right-clicking the tray icon and selecting 'Quit'.",
-          buttons: ["Keep running", "Quit"],
+          title: "Running in the Background",
+          message: "Facenox will continue running in the system tray.",
+          detail: "Right-click the tray icon and select 'Quit' to exit completely.",
+          buttons: ["Keep Running", "Quit"],
           defaultId: 0,
           cancelId: 0,
           checkboxLabel: "Don't show this reminder again",

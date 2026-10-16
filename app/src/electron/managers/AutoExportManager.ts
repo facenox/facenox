@@ -180,7 +180,7 @@ export class AutoExportManager {
 
       if (Notification.isSupported()) {
         new Notification({
-          title: "FaceNox Daily Report Exported",
+          title: "Facenox Daily Report Exported",
           body: `Attendance for ${dateToExport} saved to ${path.basename(targetDir)}.`,
           silent: false,
         }).show()

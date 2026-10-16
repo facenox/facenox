@@ -35,32 +35,32 @@ graph TD
 
 ### React renderer
 
-- camera and attendance UI
-- member and group management
-- settings, reports, and backup flows
+- Camera and attendance UI
+- Member and group management
+- Settings, reports, and backup flows
 - Facenox Cloud configuration UI
 
 ### Electron main process
 
-- app lifecycle
-- backend startup and health monitoring
-- local settings persistence
-- update checks
+- App lifecycle
+- Backend startup and health monitoring
+- Local settings persistence
+- Update checks
 - Facenox Cloud pairing and sync orchestration
 
 ### Local FastAPI backend
 
-- face detection and recognition endpoints
-- anti-spoofing and attendance APIs
-- export and import endpoints for backups and cloud sync
-- local database access
+- Face detection and recognition endpoints
+- Anti-spoofing and attendance APIs
+- Export and import endpoints for backups and cloud sync
+- Local database access
 
 ### Local SQLite database
 
-- groups and members
-- attendance records and sessions
-- encrypted biometric templates
-- audit and settings data
+- Groups and members
+- Attendance records and sessions
+- Encrypted biometric templates
+- Audit and settings data
 
 ## Data Flow
 
@@ -95,36 +95,36 @@ The cloud boundary is intentionally narrow.
 
 ### Data that stays local
 
-- raw face images (never leave the device)
-- local face matching decisions
-- local enrollment workflow and capture pipeline artifacts
+- Raw face images (never leave the device)
+- Local face matching decisions
+- Local enrollment workflow and capture pipeline artifacts
 
 ### Data that may be sent encrypted to Facenox Cloud
 
-- **encrypted face templates** (AES-256-GCM encrypted, decrypted on paired devices)
-- organization, site, and device identifiers
-- attendance records and sessions
-- sync status and device health metadata
+- **Encrypted face templates** (AES-256-GCM encrypted, decrypted on paired devices)
+- Organization, site, and device identifiers
+- Attendance records and sessions
+- Sync status and device health metadata
 
 ### Data that is sent for reporting and directory sync
 
-- group and member metadata (revision-tracked, pushed when modified locally)
-- attendance records and sessions (needed for reporting)
-- face enrollment tombstones (explicit deletion markers to ensure biometrics erasure across devices)
+- Group and member metadata (revision-tracked, pushed when modified locally)
+- Attendance records and sessions (needed for reporting)
+- Face enrollment tombstones (explicit deletion markers to ensure biometrics erasure across devices)
 
 ## Sync Model
 
 The sync design is event-driven and resilient.
 
-- push-and-pull sync: desktop pushes dirty directory changes and attendance snapshots, then pulls Cloud revisions and updates
-- decoupled download: pull operations proceed even if a push fails (such as on member quota limits), ensuring device rosters stay synchronized
-- real-time triggers: the desktop receives sync notifications; remote notifications trigger a pull-only cycle to avoid cross-device ping-pong feedback loops
-- revisioned directory sync: groups and members track monotonic revisions (`sync_revision`) and dirty markers (`sync_dirty`). Absence on a page never prunes records; deletions and transfers are conveyed via explicit tombstones
-- local-first control: member and group mutations are executed locally in SQLite first, and propagated during sync with conflict detection
-- auto-sync available in the desktop app (defaulting to 15-minute intervals, plus debounced triggers on local edits)
-- manual `Sync Now` available as an override
-- initial sync runs immediately after pairing
-- catch-up sync runs on startup when the device is overdue
+- Push-and-pull sync: desktop pushes dirty directory changes and attendance snapshots, then pulls Cloud revisions and updates
+- Decoupled download: pull operations proceed even if a push fails (such as on member quota limits), ensuring device rosters stay synchronized
+- Real-time triggers: the desktop receives sync notifications; remote notifications trigger a pull-only cycle to avoid cross-device ping-pong feedback loops
+- Revisioned directory sync: groups and members track monotonic revisions (`sync_revision`) and dirty markers (`sync_dirty`). Absence on a page never prunes records; deletions and transfers are conveyed via explicit tombstones
+- Local-first control: member and group mutations are executed locally in SQLite first, and propagated during sync with conflict detection
+- Auto-sync available in the desktop app (defaulting to 15-minute intervals, plus debounced triggers on local edits)
+- Manual `Sync Now` available as an override
+- Initial sync runs immediately after pairing
+- Catch-up sync runs on startup when the device is overdue
 
 If Cloud Sync fails, local attendance continues uninterrupted.
 

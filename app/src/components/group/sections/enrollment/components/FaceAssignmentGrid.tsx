@@ -160,8 +160,8 @@ function MemberAssignCombobox({
                   onKeyDown={handleKeyDown}
                   placeholder={
                     availableMembers.length > 50 ?
-                      `Search ${availableMembers.length.toLocaleString()} members...`
-                    : "Search member..."
+                      `Search ${availableMembers.length.toLocaleString()} members…`
+                    : "Search members…"
                   }
                   className="w-full rounded-lg border border-white/10 bg-white/5 py-1.5 pr-3 pl-8 text-xs text-white placeholder-white/40 transition-colors focus:border-white/25 focus:bg-white/[0.08] focus:outline-none"
                 />
@@ -183,7 +183,7 @@ function MemberAssignCombobox({
                         <p className="text-[10px] leading-relaxed text-white/40">
                           {totalMembersCount > 0 ?
                             "All members in this group are already enrolled."
-                          : "No members in group."}
+                          : "No members in this group."}
                         </p>
                       </div>
                     : <p className="text-[11px] text-white/40">No members available</p>}
@@ -295,7 +295,7 @@ export function FaceAssignmentGrid({
         )}
         {availableMembers.length > 0 && (
           <span className="text-white/35">
-            {availableMembers.length} {availableMembers.length === 1 ? "member" : "members"} in
+            {availableMembers.length} {availableMembers.length === 1 ? "member" : "members"} in this
             group
           </span>
         )}

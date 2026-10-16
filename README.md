@@ -95,7 +95,7 @@ Most face recognition systems rely on cloud-based biometrics. Facenox doesn't. B
 
 ## Features
 
-- **On-Device AI Inference:** Real-time face detection with recognition, ByteTrack multi-subject tracking, and liveness verification running entirely on local machine.
+- **On-Device AI Inference:** Real-time face detection with recognition, ByteTrack multi-subject tracking, and liveness verification running entirely on the local machine.
 - **Cross-Platform:** Supports Windows, macOS, and Linux.
 - **Directory Management:** Full control over group and member directories.
 - **Attendance Tracking:** Automated session recording and CSV/JSON exports.
@@ -133,7 +133,7 @@ To run the exact same test locally:
 cd server
 python tests/stress_test_recognition.py
 ```
-*(The script will automatically download the test faces, run the simulation, and clean up afterwards.)*
+*(The script will automatically download the test faces, run the simulation, and clean up afterward.)*
 
 > [!NOTE]
 > **Scaling:** The benchmark above represents a worst-case scenario, searching all 500 profiles with no filtering. In actual use, Facenox supports both Universal **"All Groups"** multi-group scanning and single-group active filtering to match your organization's setup with minimal latency.
