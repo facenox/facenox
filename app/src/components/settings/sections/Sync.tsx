@@ -85,6 +85,44 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   const [busyAction, setBusyAction] = useState<
     "saving" | "pairing" | "disconnecting" | "syncing" | null
   >(null)
+  const [isDevMode, setIsDevMode] = useState(false)
+  const [devModeClicks, setDevModeClicks] = useState(0)
+
+  // Auto-reveal developer mode if a custom URL is already configured
+  useEffect(() => {
+    if (remoteBaseUrl && !isOfficialCloudUrl(remoteBaseUrl)) {
+      setIsDevMode(true)
+    }
+  }, [remoteBaseUrl])
+
+  // Keyboard shortcut: Ctrl+Shift+D or Cmd+Shift+D to toggle endpoint override
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "D" || e.key === "d")) {
+        e.preventDefault()
+        setIsDevMode((prev) => {
+          const next = !prev
+          if (next) setShowAdvanced(true)
+          setSuccess(next ? "Custom endpoint unlocked." : "Custom endpoint hidden.")
+          return next
+        })
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [setSuccess])
+
+  const handleTitleClick = () => {
+    const nextClicks = devModeClicks + 1
+    if (nextClicks >= 5) {
+      setDevModeClicks(0)
+      setIsDevMode(true)
+      setShowAdvanced(true)
+      setSuccess("Custom endpoint unlocked.")
+    } else {
+      setDevModeClicks(nextClicks)
+    }
+  }
 
   // Reverse pairing state
   const [reversePairing, setReversePairing] = useState<ReversePairingData | null>(null)
@@ -353,7 +391,9 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
         {/* Elevated Header Row with Connect/Connected Device Details and Actions */}
         <div className="flex items-start justify-between gap-8 border-b border-white/5 pt-6 pb-4">
           <div className="max-w-xl min-w-0 flex-1">
-            <h3 className="text-sm font-medium text-white/90">
+            <h3
+              onClick={handleTitleClick}
+              className="cursor-default text-sm font-medium text-white/90 select-none">
               {!config.connected ?
                 `Connect to ${serverDisplayName}`
               : `Connected to ${serverDisplayName}`}
@@ -738,38 +778,49 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     </div>
                   </div>
                 )}
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
-                        Custom Cloud URL
-                      </label>
-                      {remoteBaseUrl && !isOfficialCloudUrl(remoteBaseUrl) && !config.connected && (
-                        <button
-                          type="button"
-                          onClick={() => setRemoteBaseUrl("")}
-                          className="cursor-pointer text-[9px] font-bold tracking-wider text-cyan-400 transition-colors hover:text-cyan-300">
-                          Reset to Default
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      type="url"
-                      placeholder="Leave empty for Facenox Cloud"
-                      value={remoteBaseUrl}
-                      disabled={config.connected}
-                      onChange={(e) => setRemoteBaseUrl(e.target.value)}
-                      className={`h-8.5 w-full rounded border bg-transparent px-3 text-[12px] text-white transition-all duration-200 outline-none focus:border-white/20 disabled:cursor-not-allowed disabled:opacity-40 ${
-                        isLocalhost ? "border-amber-400/50" : "border-white/10"
-                      }`}
-                    />
-                    {isLocalhost && (
-                      <p className="flex items-center gap-1.5 text-[10px] font-medium text-amber-400/90">
-                        <i className="fa-solid fa-triangle-exclamation text-[9px]" />
-                        Localhost cannot sync across devices. Leave empty for Facenox Cloud.
-                      </p>
+                <div className="space-y-4">
+                  <AnimatePresence initial={false}>
+                    {isDevMode && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                        className="space-y-1.5 overflow-hidden">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
+                            Custom Endpoint
+                          </label>
+                          {remoteBaseUrl &&
+                            !isOfficialCloudUrl(remoteBaseUrl) &&
+                            !config.connected && (
+                              <button
+                                type="button"
+                                onClick={() => setRemoteBaseUrl("")}
+                                className="cursor-pointer text-[9px] font-bold tracking-wider text-cyan-400 transition-colors hover:text-cyan-300">
+                                Reset
+                              </button>
+                            )}
+                        </div>
+                        <input
+                          type="url"
+                          placeholder="Leave empty for Facenox Cloud"
+                          value={remoteBaseUrl}
+                          disabled={config.connected}
+                          onChange={(e) => setRemoteBaseUrl(e.target.value)}
+                          className={`h-8.5 w-full rounded border bg-transparent px-3 text-[12px] text-white transition-all duration-200 outline-none focus:border-white/20 disabled:cursor-not-allowed disabled:opacity-40 ${
+                            isLocalhost ? "border-amber-400/50" : "border-white/10"
+                          }`}
+                        />
+                        {isLocalhost && (
+                          <p className="flex items-center gap-1.5 text-[10px] font-medium text-amber-400/90">
+                            <i className="fa-solid fa-triangle-exclamation text-[9px]" />
+                            Localhost cannot sync across devices. Leave empty for Facenox Cloud.
+                          </p>
+                        )}
+                      </motion.div>
                     )}
-                  </div>
+                  </AnimatePresence>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
                       Device Name Override

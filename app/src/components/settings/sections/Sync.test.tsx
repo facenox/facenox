@@ -227,23 +227,34 @@ describe("Sync", () => {
     expect(screen.getByPlaceholderText("Facenox Desktop")).toHaveValue("Reception Desk")
   })
 
-  it("keeps the hosted server URL hidden unless a custom override is being used", async () => {
+  it("keeps the custom cloud URL hidden by default in advanced settings", async () => {
     const { user } = renderWithProviders(<Sync />)
 
     await user.click(await screen.findByRole("button", { name: /Advanced Settings/i }))
 
-    const serverUrlInput = screen.getByPlaceholderText("Leave empty for Facenox Cloud")
-    expect(serverUrlInput).toHaveValue("")
+    expect(screen.queryByPlaceholderText("Leave empty for Facenox Cloud")).not.toBeInTheDocument()
+    expect(screen.getByPlaceholderText("Facenox Desktop")).toBeInTheDocument()
   })
 
-  it("shows a warning when user types localhost or loopback IP into custom cloud URL", async () => {
-    const { user } = renderWithProviders(<Sync />)
+  it("unlocks custom cloud URL when developer mode is triggered via title clicks", async () => {
+    const { user } = renderWithProviders(
+      <>
+        <Sync />
+        <FeedbackDisplay />
+      </>,
+    )
 
-    await user.click(await screen.findByRole("button", { name: /Advanced Settings/i }))
+    const title = await screen.findByText(/Connect to Facenox Cloud/i)
+    for (let i = 0; i < 5; i++) {
+      await user.click(title)
+    }
+
+    expect(await screen.findByText(/Custom endpoint unlocked/i)).toBeInTheDocument()
 
     const serverUrlInput = screen.getByPlaceholderText("Leave empty for Facenox Cloud")
-    fireEvent.change(serverUrlInput, { target: { value: "127.0.0.1:7500" } })
+    expect(serverUrlInput).toBeInTheDocument()
 
+    fireEvent.change(serverUrlInput, { target: { value: "127.0.0.1:7500" } })
     expect(screen.getByText(/Localhost cannot sync across devices/i)).toBeInTheDocument()
   })
 })
