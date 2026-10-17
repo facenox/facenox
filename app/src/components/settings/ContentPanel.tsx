@@ -338,7 +338,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             <i className="fa-solid fa-download text-[10px]" />
             Audit log
           </button>
-        : activeSection === "remote-sync" && syncConfig ?
+        : activeSection === "remote-sync" && syncConfig?.connected ?
           (() => {
             const isQuota =
               syncConfig.lastSyncMessage?.includes("Plan limit exceeded") ||
@@ -358,28 +358,20 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   </Tooltip>
                 )}
                 <Tooltip
-                  content={
-                    syncConfig.connected ?
-                      `Linked to ${syncConfig.organizationName || "Facenox Cloud"} • Location: ${syncConfig.siteName || "Default Branch"}`
-                    : "Operating locally • Not connected to Facenox Cloud"
-                  }
+                  content={`Linked to ${syncConfig.organizationName || "Facenox Cloud"} • Location: ${syncConfig.siteName || "Default Branch"}`}
                   position="bottom">
                   <div
                     className={`cursor-help rounded border px-2 py-0.5 text-[9px] font-extrabold tracking-widest uppercase transition-all duration-200 ${
-                      syncConfig.connected ?
-                        syncConfig.lastSyncStatus === "error" ?
-                          isQuota ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
-                          : "border-red-500/20 bg-red-500/10 text-red-400"
-                        : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
-                      : "border-white/5 bg-white/5 text-white/50"
-                    }`}>
-                    {syncConfig.connected ?
                       syncConfig.lastSyncStatus === "error" ?
-                        isQuota ?
-                          "Plan limit"
-                        : "Sync warning"
-                      : "Synced"
-                    : "Local"}
+                        isQuota ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
+                        : "border-red-500/20 bg-red-500/10 text-red-400"
+                      : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                    }`}>
+                    {syncConfig.lastSyncStatus === "error" ?
+                      isQuota ?
+                        "Plan limit"
+                      : "Sync warning"
+                    : "Synced"}
                   </div>
                 </Tooltip>
               </div>
