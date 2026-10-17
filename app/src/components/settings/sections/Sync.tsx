@@ -750,34 +750,45 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                 layout
                 transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                 className="mt-4 grid gap-4 border-t border-white/5 pt-4">
-                {config.connected && config.deviceId && (
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
-                      Hardware ID
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value={config.deviceId}
-                        className="h-8.5 w-full rounded border border-white/10 bg-white/[0.02] px-3 font-mono text-[11px] text-white/60 outline-none select-all"
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
+                    Device ID
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={
+                        config.connected && config.deviceId ? config.deviceId : "Not paired yet"
+                      }
+                      className={`h-8.5 w-full rounded border border-white/10 bg-white/[0.02] px-3 font-mono text-[11px] outline-none select-all ${
+                        config.connected && config.deviceId ?
+                          "text-white/60"
+                        : "text-white/25 italic"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      disabled={!config.connected || !config.deviceId}
+                      onClick={() => {
+                        if (!config.deviceId) return
+                        void navigator.clipboard.writeText(config.deviceId)
+                        setCopiedId(true)
+                        setTimeout(() => setCopiedId(false), 2000)
+                      }}
+                      title={
+                        !config.connected || !config.deviceId ?
+                          "Device is not paired to Facenox Cloud"
+                        : "Copy Device ID"
+                      }
+                      className="flex h-8.5 shrink-0 items-center gap-1.5 rounded border border-white/10 bg-white/[0.04] px-3 text-[11px] font-medium text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 hover:disabled:bg-white/[0.04] hover:disabled:text-white/70">
+                      <i
+                        className={`fa-solid ${copiedId ? "fa-check text-emerald-400" : "fa-copy"}`}
                       />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void navigator.clipboard.writeText(config.deviceId)
-                          setCopiedId(true)
-                          setTimeout(() => setCopiedId(false), 2000)
-                        }}
-                        className="flex h-8.5 shrink-0 items-center gap-1.5 rounded border border-white/10 bg-white/[0.04] px-3 text-[11px] font-medium text-white/70 transition hover:bg-white/10 hover:text-white">
-                        <i
-                          className={`fa-solid ${copiedId ? "fa-check text-emerald-400" : "fa-copy"}`}
-                        />
-                        {copiedId ? "Copied" : "Copy"}
-                      </button>
-                    </div>
+                      {copiedId ? "Copied" : "Copy"}
+                    </button>
                   </div>
-                )}
+                </div>
                 <div className="space-y-4">
                   <AnimatePresence initial={false}>
                     {isDevMode && (
