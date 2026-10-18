@@ -674,20 +674,24 @@ export function DataStorage({
             </div>
             <div className="flex shrink-0 flex-wrap gap-2 self-start md:self-auto">
               <button
+                type="button"
+                aria-label="Open data folder"
                 onClick={async () => {
                   await window.facenoxElectron?.openDataDir()
                 }}
                 className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
                 <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
-                <span>Open data folder</span>
+                <span>Open folder</span>
               </button>
               <button
+                type="button"
+                aria-label="View system log"
                 onClick={async () => {
                   await window.facenoxElectron?.openLogFile()
                 }}
                 className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
                 <i className="fa-regular fa-file-lines text-[11px] text-white/50" />
-                <span>View system log</span>
+                <span>View log</span>
               </button>
             </div>
           </div>
@@ -705,12 +709,14 @@ export function DataStorage({
               </div>
             </div>
             <button
+              type="button"
+              aria-label="Open installation directory"
               onClick={async () => {
                 await window.facenoxElectron?.openInstallDir()
               }}
               className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
               <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
-              <span>Open install folder</span>
+              <span>Open folder</span>
             </button>
           </div>
         </div>
