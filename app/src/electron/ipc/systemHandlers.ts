@@ -41,10 +41,15 @@ export function registerSystemHandlers() {
   ipcMain.handle("system:open-log-file", async () => {
     const logDir = isDev() ? path.join(app.getAppPath(), "..", "data") : app.getPath("userData")
     const logFile = path.join(logDir, "backend.log")
-    if (fs.existsSync(logFile)) {
+    if (!fs.existsSync(logFile)) {
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true })
+      }
+      fs.writeFileSync(logFile, "")
+    }
+    const errorMsg = await shell.openPath(logFile)
+    if (errorMsg) {
       shell.showItemInFolder(logFile)
-    } else {
-      await shell.openPath(logDir)
     }
     return { success: true, path: logFile }
   })

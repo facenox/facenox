@@ -155,8 +155,8 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                         <div className="min-w-0 flex-1">
                           <div className="text-xs text-white/65">Scheduled start time:</div>
                         </div>
-                        <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 hover:border-cyan-500/40 hover:bg-white/8">
-                          <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-cyan-400" />
+                        <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
+                          <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-white/70" />
                           <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
                             <span>{formatTimeDisplay(classStartTime).time}</span>
                             <span className="text-[10px] font-medium text-white/55">
@@ -170,7 +170,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                             value={classStartTime}
                             onChange={(e) => setClassStartTime(e.target.value)}
                             onClick={(e) => e.currentTarget.showPicker?.()}
-                            className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                            className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
                           />
                         </div>
                       </div>
@@ -245,8 +245,8 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                         <div className="min-w-0 flex-1">
                           <div className="text-xs text-white/65">Scheduled end time:</div>
                         </div>
-                        <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 hover:border-cyan-500/40 hover:bg-white/8">
-                          <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-cyan-400" />
+                        <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
+                          <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-white/70" />
                           <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
                             <span>{formatTimeDisplay(classEndTime).time}</span>
                             <span className="text-[10px] font-medium text-white/55">
@@ -260,7 +260,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                             value={classEndTime}
                             onChange={(e) => setClassEndTime(e.target.value)}
                             onClick={(e) => e.currentTarget.showPicker?.()}
-                            className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                            className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
                           />
                         </div>
                       </div>

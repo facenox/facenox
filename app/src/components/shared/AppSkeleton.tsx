@@ -12,7 +12,7 @@ export function AppSkeleton() {
           <div className="mx-4 mb-4 flex min-h-16 items-center justify-between gap-4">
             <div className="h-10 w-48 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.7)]" />
 
-            <div className="h-10 w-40 rounded-lg border border-cyan-500/20 bg-cyan-500/10" />
+            <div className="h-10 w-40 rounded-lg border border-white/10 bg-white/5" />
           </div>
         </div>
 

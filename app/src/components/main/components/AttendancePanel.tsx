@@ -664,7 +664,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                   className="flex min-h-full flex-1 flex-col">
                   <ScrollCenteredEmptyState>
-                    <div className="text-center text-sm text-white/65">
+                    <div className="max-w-full px-4 text-center text-sm [overflow-wrap:anywhere] break-all text-white/65">
                       No results for &quot;{searchQuery}&quot;
                     </div>
                   </ScrollCenteredEmptyState>

@@ -48,6 +48,13 @@ export class BackendProcessManager {
   private crashTimestamps: number[] = []
   private readonly MAX_CRASHES_PER_WINDOW = 5
   private readonly CRASH_WINDOW_MS = 60_000
+  private logStream: fs.WriteStream | null = null
+  private logFilePath: string = ""
+  private logOldFilePath: string = ""
+  private currentLogSizeBytes = 0
+  private readonly MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
+  private isRotating = false
+  private logWriteQueue: string[] = []
 
   constructor(config: BackendConfig, status: BackendStatus) {
     this.config = config
@@ -74,13 +81,87 @@ export class BackendProcessManager {
     return line.trim().startsWith("FACENOX_STARTUP_PROGRESS:")
   }
 
-  private handleStdoutChunk(chunk: string, logStream: fs.WriteStream): void {
+  private writeToBackendLog(text: string): void {
+    if (this.isRotating || !this.logStream) {
+      this.logWriteQueue.push(text)
+      return
+    }
+
+    const textBytes = Buffer.byteLength(text, "utf8")
+    if (this.currentLogSizeBytes + textBytes > this.MAX_LOG_SIZE_BYTES) {
+      this.logWriteQueue.push(text)
+      this.rotateBackendLog()
+      return
+    }
+
+    this.logStream.write(text)
+    this.currentLogSizeBytes += textBytes
+  }
+
+  private rotateBackendLog(): void {
+    if (this.isRotating) return
+    this.isRotating = true
+
+    const streamToClose = this.logStream
+    this.logStream = null
+
+    const performRotation = () => {
+      try {
+        if (this.logOldFilePath && fs.existsSync(this.logOldFilePath)) {
+          fs.unlinkSync(this.logOldFilePath)
+        }
+        if (this.logFilePath && fs.existsSync(this.logFilePath)) {
+          fs.renameSync(this.logFilePath, this.logOldFilePath)
+        }
+      } catch (err) {
+        console.error("[BackendProcessManager] Failed to rotate log file:", err)
+      }
+
+      try {
+        if (this.logFilePath) {
+          const rotationNotice = `[${new Date().toISOString()}] Log rotated (5 MB limit reached)\n`
+          fs.writeFileSync(this.logFilePath, rotationNotice)
+          this.logStream = fs.createWriteStream(this.logFilePath, { flags: "a" })
+          this.currentLogSizeBytes = Buffer.byteLength(rotationNotice, "utf8")
+
+          while (this.logWriteQueue.length > 0) {
+            const item = this.logWriteQueue.shift()
+            if (item && this.logStream) {
+              this.logStream.write(item)
+              this.currentLogSizeBytes += Buffer.byteLength(item, "utf8")
+            }
+          }
+        }
+      } catch (err) {
+        console.error(
+          "[BackendProcessManager] Failed to re-initialize log stream after rotation:",
+          err,
+        )
+      } finally {
+        this.isRotating = false
+      }
+    }
+
+    if (streamToClose) {
+      streamToClose.end()
+      streamToClose.once("close", performRotation)
+      setTimeout(() => {
+        if (this.isRotating && !this.logStream) {
+          performRotation()
+        }
+      }, 500)
+    } else {
+      performRotation()
+    }
+  }
+
+  private handleStdoutChunk(chunk: string): void {
     this.stdoutBuffer += chunk
     const lines = this.stdoutBuffer.split(/\r?\n/)
     this.stdoutBuffer = lines.pop() ?? ""
 
     for (const line of lines) {
-      logStream.write(`[STDOUT] ${line}\n`)
+      this.writeToBackendLog(`[STDOUT] ${line}\n`)
       this.handleStdoutLine(line)
       if (isDev() && line.trim() && !this.isStartupProgressLine(line)) {
         console.log(`[Backend] ${line.trim()}`)
@@ -162,36 +243,45 @@ export class BackendProcessManager {
       })
 
       const logDir = isDev() ? path.join(process.cwd(), "..", "data") : app.getPath("userData")
-      const logFile = path.join(logDir, "backend.log")
-      const logFileOld = path.join(logDir, "backend.old.log")
+      this.logFilePath = path.join(logDir, "backend.log")
+      this.logOldFilePath = path.join(logDir, "backend.old.log")
       const logFileLegacy = path.join(logDir, "backend-startup.log")
-      const MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
       try {
         if (fs.existsSync(logFileLegacy)) {
-          if (!fs.existsSync(logFileOld)) {
-            fs.renameSync(logFileLegacy, logFileOld)
+          if (!fs.existsSync(this.logOldFilePath)) {
+            fs.renameSync(logFileLegacy, this.logOldFilePath)
           } else {
             fs.unlinkSync(logFileLegacy)
           }
         }
-        const stat = fs.statSync(logFile)
-        if (stat.size > MAX_LOG_SIZE_BYTES) {
-          if (fs.existsSync(logFileOld)) fs.unlinkSync(logFileOld)
-          fs.renameSync(logFile, logFileOld)
+        if (fs.existsSync(this.logFilePath)) {
+          const stat = fs.statSync(this.logFilePath)
+          if (stat.size > this.MAX_LOG_SIZE_BYTES) {
+            if (fs.existsSync(this.logOldFilePath)) fs.unlinkSync(this.logOldFilePath)
+            fs.renameSync(this.logFilePath, this.logOldFilePath)
+          }
         }
       } catch {
         // log file doesn't exist yet — fine
       }
-      fs.writeFileSync(logFile, `[${new Date().toISOString()}] Backend starting...\n`)
-      const logStream = fs.createWriteStream(logFile, { flags: "a" })
+
+      if (this.logStream) {
+        this.logStream.end()
+        this.logStream = null
+      }
+
+      const startupNotice = `[${new Date().toISOString()}] Backend starting...\n`
+      fs.writeFileSync(this.logFilePath, startupNotice)
+      this.logStream = fs.createWriteStream(this.logFilePath, { flags: "a" })
+      this.currentLogSizeBytes = Buffer.byteLength(startupNotice, "utf8")
 
       this.process.stdout?.on("data", (data) => {
-        this.handleStdoutChunk(data.toString(), logStream)
+        this.handleStdoutChunk(data.toString())
       })
 
       this.process.stderr?.on("data", (data) => {
         const msg = data.toString()
-        logStream.write(`[STDERR] ${msg}`)
+        this.writeToBackendLog(`[STDERR] ${msg}`)
         if (/(\bERROR\b|\bCRITICAL\b|Traceback|Exception)/.test(msg)) {
           console.error(`[Backend Error] ${msg.trim()}`)
         } else {
@@ -534,6 +624,12 @@ export class BackendProcessManager {
       this.healthCheckTimer = null
     }
     this.stdoutBuffer = ""
+    this.logWriteQueue = []
+    this.isRotating = false
+    if (this.logStream) {
+      this.logStream.end()
+      this.logStream = null
+    }
   }
 
   private getBackendExecutablePath(): string {

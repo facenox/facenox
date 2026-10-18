@@ -8,6 +8,25 @@ export interface ParsedSyncError {
   actionLabel?: string
 }
 
+export function isOfflineError(err: string | null): boolean {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return true
+  }
+  if (!err) return false
+  const lower = err.toLowerCase()
+  return (
+    lower.includes("fetch failed") ||
+    lower.includes("failed to fetch") ||
+    lower.includes("network error") ||
+    lower.includes("networkerror") ||
+    lower.includes("enotfound") ||
+    lower.includes("econnrefused") ||
+    lower.includes("ehostunreach") ||
+    lower.includes("etimedout") ||
+    lower.includes("no internet")
+  )
+}
+
 export function formatErrorMessage(err: string | null): string {
   if (!err) return ""
   if (err.includes("<!DOCTYPE") || err.includes("<html") || err.includes("<head")) {

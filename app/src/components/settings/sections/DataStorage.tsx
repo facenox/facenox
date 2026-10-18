@@ -529,8 +529,8 @@ export function DataStorage({
                       <div className="min-w-0 flex-1">
                         <div className="text-xs text-white/65">Scheduled time:</div>
                       </div>
-                      <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 hover:border-cyan-500/40 hover:bg-white/8">
-                        <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-cyan-400" />
+                      <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
+                        <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-white/70" />
                         <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
                           <span>{formatTimeDisplay(autoExportConfig.time).time}</span>
                           <span className="text-[10px] font-medium text-white/55">
@@ -544,7 +544,7 @@ export function DataStorage({
                           onChange={(e) => handleUpdateAutoExport({ time: e.target.value })}
                           onClick={(e) => e.currentTarget.showPicker?.()}
                           aria-label="Auto export time"
-                          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
                         />
                       </div>
                     </div>
@@ -615,7 +615,7 @@ export function DataStorage({
                           type="button"
                           onClick={handleOpenExportDirectory}
                           className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
-                          <i className="fa-regular fa-folder-open text-[10px] text-white/50" />
+                          <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
                           <span>Open folder</span>
                         </button>
                       </div>
@@ -667,9 +667,9 @@ export function DataStorage({
           {/* Data Folder */}
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <h4 className="text-[15px] font-semibold text-white/90">Open database folder</h4>
+              <h4 className="text-[15px] font-semibold text-white/90">Database and system logs</h4>
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                Access local database files, logs, and enrolled face data on this device.
+                Access local database files, diagnostic logs, and enrolled face data on this device.
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2 self-start md:self-auto">
@@ -679,7 +679,7 @@ export function DataStorage({
                 }}
                 className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
                 <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
-                <span>Open folder</span>
+                <span>Open data folder</span>
               </button>
               <button
                 onClick={async () => {
@@ -687,7 +687,7 @@ export function DataStorage({
                 }}
                 className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
                 <i className="fa-regular fa-file-lines text-[11px] text-white/50" />
-                <span>Open log</span>
+                <span>View system log</span>
               </button>
             </div>
           </div>
@@ -711,7 +711,7 @@ export function DataStorage({
                 await window.facenoxElectron?.openInstallDir()
               }}
               className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
-              <i className="fa-regular fa-folder text-[11px] text-white/50" />
+              <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
               <span>Open folder</span>
             </button>
           </div>

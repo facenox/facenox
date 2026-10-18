@@ -10,7 +10,7 @@ import {
   OFFICIAL_REMOTE_BASE_URL,
   isOfficialCloudUrl,
 } from "../../../services/syncDefaults"
-import { formatErrorMessage, parseSyncError } from "./syncErrorUtils.js"
+import { formatErrorMessage, isOfflineError, parseSyncError } from "./syncErrorUtils.js"
 
 export type RemoteSyncConfig = {
   enabled: boolean
@@ -187,6 +187,21 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     },
     [config.connected, remoteBaseUrl, deviceName],
   )
+
+  // Auto-reconnect when device comes back online
+  useEffect(() => {
+    if (config.connected) return
+
+    const handleOnline = () => {
+      if (isOfflineError(initiateError)) {
+        isInitiatingRef.current = false
+        void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
+      }
+    }
+
+    window.addEventListener("online", handleOnline)
+    return () => window.removeEventListener("online", handleOnline)
+  }, [config.connected, initiateError, startReversePairing, remoteBaseUrl])
 
   // Countdown timer for reverse pairing expiry
   useEffect(() => {
@@ -470,27 +485,52 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.25, ease: "easeOut" }}
                       className="flex min-h-[290px] flex-col items-center justify-center gap-3 py-6 text-center">
-                      <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-                        <i className="fa-solid fa-circle-exclamation text-sm" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-white/90">
-                          Could not initialize cloud pairing
-                        </p>
-                        <p className="max-w-md text-[11px] break-words text-white/50">
-                          {formatErrorMessage(initiateError)}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          isInitiatingRef.current = false
-                          void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
-                        }}
-                        className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
-                        <i className="fa-solid fa-arrows-rotate text-[10px]" />
-                        Retry connection
-                      </button>
+                      {isOfflineError(initiateError) ?
+                        <>
+                          <div className="flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/50">
+                            <i className="fa-solid fa-wifi text-sm text-white/40" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-semibold text-white/90">Device is offline</p>
+                            <p className="max-w-xs text-[11px] leading-relaxed text-white/50">
+                              Connect to the internet to link this device with Facenox Cloud.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              isInitiatingRef.current = false
+                              void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
+                            }}
+                            className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
+                            <i className="fa-solid fa-arrows-rotate text-[10px]" />
+                            Check connection
+                          </button>
+                        </>
+                      : <>
+                          <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                            <i className="fa-solid fa-circle-exclamation text-sm" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-white/90">
+                              Could not initialize cloud pairing
+                            </p>
+                            <p className="max-w-md text-[11px] break-words text-white/50">
+                              {formatErrorMessage(initiateError)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              isInitiatingRef.current = false
+                              void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
+                            }}
+                            className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
+                            <i className="fa-solid fa-arrows-rotate text-[10px]" />
+                            Retry connection
+                          </button>
+                        </>
+                      }
                     </motion.div>
                   : reversePairing ?
                     <motion.div

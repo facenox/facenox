@@ -35,6 +35,27 @@ function formatRelativeTime(dateString: string | null): string {
   }
 }
 
+function releaseActiveMediaStreams(): void {
+  try {
+    const videoElements = document.querySelectorAll("video")
+    videoElements.forEach((video) => {
+      const stream = video.srcObject as MediaStream | null
+      if (stream && typeof stream.getTracks === "function") {
+        stream.getTracks().forEach((track) => {
+          try {
+            track.stop()
+          } catch {
+            // ignore
+          }
+        })
+      }
+      video.srcObject = null
+    })
+  } catch {
+    // ignore
+  }
+}
+
 /**
  * Custom Title Bar Component
  * Renders window controls, database sync status dot, and "Update Available" notification action.
@@ -48,6 +69,12 @@ export default function WindowBar() {
     "idle" | "checking" | "up-to-date" | "available" | "error" | "offline"
   >("idle")
   const [checkedUpdateInfo, setCheckedUpdateInfo] = useState<UpdateInfo | null>(null)
+  const [isReloading, setIsReloading] = useState(false)
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", releaseActiveMediaStreams)
+    return () => window.removeEventListener("beforeunload", releaseActiveMediaStreams)
+  }, [])
 
   const handleCheckUpdates = useCallback(async () => {
     setIsUpdateModalOpen(true)
@@ -216,7 +243,11 @@ export default function WindowBar() {
                     <button
                       onClick={() => {
                         setIsMenuOpen(false)
-                        window.location.reload()
+                        setIsReloading(true)
+                        releaseActiveMediaStreams()
+                        setTimeout(() => {
+                          window.location.reload()
+                        }, 120)
                       }}
                       className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white">
                       <i className="fa-solid fa-rotate w-4 text-[11px]" />
@@ -471,6 +502,17 @@ export default function WindowBar() {
           </div>
         )}
       </Modal>
+
+      {isReloading && (
+        <div
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-3 bg-[#0c1015]/90 backdrop-blur-md">
+          <i className="fa-solid fa-rotate animate-spin text-2xl text-white/70" />
+          <span className="text-xs font-medium tracking-wide text-white/80">
+            Reloading application…
+          </span>
+        </div>
+      )}
     </div>
   )
 }
