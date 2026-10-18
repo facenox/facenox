@@ -33,9 +33,9 @@ export class DiagnosticsService {
     const totalMem = os.totalmem()
     const freeMem = os.freemem()
 
-    // Get last 100 lines of backend.log
+    // Get last 100 lines of facenox.log
     const logDir = isDev() ? path.join(process.cwd(), "..", "data") : app.getPath("userData")
-    const logPath = path.join(logDir, "backend.log")
+    const logPath = path.join(logDir, "facenox.log")
 
     let logs: string[]
     try {
@@ -43,7 +43,7 @@ export class DiagnosticsService {
         const content = fs.readFileSync(logPath, "utf8")
         logs = content.split(/\r?\n/).slice(-100)
       } else {
-        logs = [`No backend logs found at ${logPath}`]
+        logs = [`No system logs found at ${logPath}`]
       }
     } catch (error) {
       logs = [`Failed to read logs: ${error}`]

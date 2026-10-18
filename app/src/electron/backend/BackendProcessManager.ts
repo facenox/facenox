@@ -243,9 +243,10 @@ export class BackendProcessManager {
       })
 
       const logDir = isDev() ? path.join(process.cwd(), "..", "data") : app.getPath("userData")
-      this.logFilePath = path.join(logDir, "backend.log")
-      this.logOldFilePath = path.join(logDir, "backend.old.log")
+      this.logFilePath = path.join(logDir, "facenox.log")
+      this.logOldFilePath = path.join(logDir, "facenox.old.log")
       const logFileLegacy = path.join(logDir, "backend-startup.log")
+      const logFileOldBackend = path.join(logDir, "backend.log")
       try {
         if (fs.existsSync(logFileLegacy)) {
           if (!fs.existsSync(this.logOldFilePath)) {
@@ -253,6 +254,9 @@ export class BackendProcessManager {
           } else {
             fs.unlinkSync(logFileLegacy)
           }
+        }
+        if (fs.existsSync(logFileOldBackend) && !fs.existsSync(this.logFilePath)) {
+          fs.renameSync(logFileOldBackend, this.logFilePath)
         }
         if (fs.existsSync(this.logFilePath)) {
           const stat = fs.statSync(this.logFilePath)
@@ -270,7 +274,7 @@ export class BackendProcessManager {
         this.logStream = null
       }
 
-      const startupNotice = `[${new Date().toISOString()}] Backend starting...\n`
+      const startupNotice = `[${new Date().toISOString()}] Facenox starting...\n`
       fs.writeFileSync(this.logFilePath, startupNotice)
       this.logStream = fs.createWriteStream(this.logFilePath, { flags: "a" })
       this.currentLogSizeBytes = Buffer.byteLength(startupNotice, "utf8")

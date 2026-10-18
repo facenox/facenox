@@ -40,7 +40,7 @@ export function registerSystemHandlers() {
 
   ipcMain.handle("system:open-log-file", async () => {
     const logDir = isDev() ? path.join(app.getAppPath(), "..", "data") : app.getPath("userData")
-    const logFile = path.join(logDir, "backend.log")
+    const logFile = path.join(logDir, "facenox.log")
     if (!fs.existsSync(logFile)) {
       if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true })
