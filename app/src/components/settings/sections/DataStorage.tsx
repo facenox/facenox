@@ -695,9 +695,7 @@ export function DataStorage({
           {/* Install Folder */}
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <h4 className="text-[15px] font-semibold text-white/90">
-                Open installation directory
-              </h4>
+              <h4 className="text-[15px] font-semibold text-white/90">Installation directory</h4>
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                 View the core application resources and executable binary files.
               </p>
@@ -712,7 +710,7 @@ export function DataStorage({
               }}
               className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
               <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
-              <span>Open folder</span>
+              <span>Open install folder</span>
             </button>
           </div>
         </div>
