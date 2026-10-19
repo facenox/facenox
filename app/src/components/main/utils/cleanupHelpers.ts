@@ -10,6 +10,7 @@ export function cleanupStream(streamRef: React.RefObject<MediaStream | null>): v
   if (streamRef.current) {
     streamRef.current.getTracks().forEach((track) => {
       try {
+        track.onended = null
         track.stop()
       } catch {
         // Ignore cleanup errors

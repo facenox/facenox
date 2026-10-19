@@ -78,6 +78,83 @@ export function useCameraControl({
   initializeWebSocket,
   getCameraDevices,
 }: CameraControlProps) {
+  const stopCamera = useCallback(
+    (forceCleanup = false) => {
+      const now = Date.now()
+      const timeSinceLastStop = now - lastStopTimeRef.current
+
+      if (!forceCleanup) {
+        if (isStoppingRef.current || !isStreamingRef.current) {
+          return
+        }
+
+        if (timeSinceLastStop < 100) {
+          return
+        }
+      }
+
+      isStoppingRef.current = true
+      lastStopTimeRef.current = now
+      isScanningRef.current = false
+      detectionInFlightRef.current = false
+
+      if (videoRef.current) {
+        try {
+          videoRef.current.pause()
+        } catch {
+          // Ignore
+        }
+      }
+
+      cleanupStream(streamRef)
+      cleanupVideo(videoRef, !forceCleanup)
+
+      isStreamingRef.current = false
+      setIsStreaming(false)
+      setIsVideoLoading(false)
+      setCameraActive(false)
+
+      cleanupAnimationFrame(animationFrameRef)
+
+      lastDetectionFrameRef.current = null
+      resetLastDetectionRef(lastDetectionRef)
+      useDetectionStore.getState().resetDetectionState()
+
+      resetFrameCounters(frameCounterRef, skipFramesRef, lastFrameTimestampRef)
+      resetOverlayRefs()
+
+      const overlayCanvas = overlayCanvasRef.current
+      if (overlayCanvas) {
+        const ctx = overlayCanvas.getContext("2d")
+        if (ctx) {
+          ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height)
+        }
+      }
+
+      isStoppingRef.current = false
+    },
+    [
+      resetOverlayRefs,
+      setIsStreaming,
+      setIsVideoLoading,
+      setCameraActive,
+      streamRef,
+      videoRef,
+      animationFrameRef,
+      overlayCanvasRef,
+      lastDetectionFrameRef,
+      lastDetectionRef,
+      frameCounterRef,
+      skipFramesRef,
+      lastFrameTimestampRef,
+      isStreamingRef,
+      isScanningRef,
+      isStoppingRef,
+      lastStopTimeRef,
+      detectionInFlightRef,
+    ],
+  )
+
   const startCamera = useCallback(async () => {
     let deviceIdToUse: string | undefined = undefined
     let availableDevices: MediaDeviceInfo[] = cameraDevices
@@ -165,6 +242,14 @@ export function useCameraControl({
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints)
       streamRef.current = stream
+
+      stream.getVideoTracks().forEach((track) => {
+        track.onended = () => {
+          console.warn("[useCameraControl] Active video track ended unexpectedly.")
+          setError("Active camera disconnected. Check connection or select another device.")
+          stopCamera(true)
+        }
+      })
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream
@@ -258,6 +343,15 @@ export function useCameraControl({
               const fallbackConstraints = buildCameraConstraints()
               const fallbackStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints)
               streamRef.current = fallbackStream
+
+              fallbackStream.getVideoTracks().forEach((track) => {
+                track.onended = () => {
+                  console.warn("[useCameraControl] Fallback video track ended unexpectedly.")
+                  setError("Active camera disconnected. Check connection or select another device.")
+                  stopCamera(true)
+                }
+              })
+
               if (videoRef.current) {
                 videoRef.current.srcObject = fallbackStream
                 await videoRef.current.play()
@@ -318,84 +412,8 @@ export function useCameraControl({
     processCurrentFrameRef,
     trackingSessionRef,
     detectionInFlightRef,
+    stopCamera,
   ])
-
-  const stopCamera = useCallback(
-    (forceCleanup = false) => {
-      const now = Date.now()
-      const timeSinceLastStop = now - lastStopTimeRef.current
-
-      if (!forceCleanup) {
-        if (isStoppingRef.current || !isStreamingRef.current) {
-          return
-        }
-
-        if (timeSinceLastStop < 100) {
-          return
-        }
-      }
-
-      isStoppingRef.current = true
-      lastStopTimeRef.current = now
-      isScanningRef.current = false
-      detectionInFlightRef.current = false
-
-      if (videoRef.current) {
-        try {
-          videoRef.current.pause()
-        } catch {
-          // Ignore
-        }
-      }
-
-      cleanupStream(streamRef)
-      cleanupVideo(videoRef, !forceCleanup)
-
-      isStreamingRef.current = false
-      setIsStreaming(false)
-      setIsVideoLoading(false)
-      setCameraActive(false)
-
-      cleanupAnimationFrame(animationFrameRef)
-
-      lastDetectionFrameRef.current = null
-      resetLastDetectionRef(lastDetectionRef)
-      useDetectionStore.getState().resetDetectionState()
-
-      resetFrameCounters(frameCounterRef, skipFramesRef, lastFrameTimestampRef)
-      resetOverlayRefs()
-
-      const overlayCanvas = overlayCanvasRef.current
-      if (overlayCanvas) {
-        const ctx = overlayCanvas.getContext("2d")
-        if (ctx) {
-          ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height)
-        }
-      }
-
-      isStoppingRef.current = false
-    },
-    [
-      resetOverlayRefs,
-      setIsStreaming,
-      setIsVideoLoading,
-      setCameraActive,
-      streamRef,
-      videoRef,
-      animationFrameRef,
-      overlayCanvasRef,
-      lastDetectionFrameRef,
-      lastDetectionRef,
-      frameCounterRef,
-      skipFramesRef,
-      lastFrameTimestampRef,
-      isStreamingRef,
-      isScanningRef,
-      isStoppingRef,
-      lastStopTimeRef,
-      detectionInFlightRef,
-    ],
-  )
 
   return {
     startCamera,

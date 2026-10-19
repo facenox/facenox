@@ -45,7 +45,10 @@ export function useCamera() {
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current.getTracks().forEach((track) => {
+        track.onended = null
+        track.stop()
+      })
       streamRef.current = null
     }
     if (videoRef.current) {
@@ -112,6 +115,14 @@ export function useCamera() {
 
         const stream = await navigator.mediaDevices.getUserMedia(constraints)
         streamRef.current = stream
+
+        stream.getVideoTracks().forEach((track) => {
+          track.onended = () => {
+            console.warn("[useCamera] Enrollment camera video track ended unexpectedly.")
+            setCameraError("Active camera disconnected. Ensure camera is connected and try again.")
+            stopCamera()
+          }
+        })
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream
@@ -186,7 +197,7 @@ export function useCamera() {
         isStartingRef.current = false
       }
     },
-    [selectedCamera, getCameraDevices, setSelectedCamera],
+    [selectedCamera, getCameraDevices, setSelectedCamera, stopCamera],
   )
 
   useEffect(() => {
