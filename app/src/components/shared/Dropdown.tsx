@@ -252,7 +252,9 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
             offset={4}
             disabled={!shouldShowCustomTooltip(displayText)}
             className="!px-2.5 !py-1.5 text-center break-all">
-            <button
+            <motion.button
+              layout={fit ? "size" : undefined}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               type="button"
               ref={buttonRef as React.RefObject<HTMLButtonElement | null>}
               onMouseDown={(e) => e.preventDefault()}
@@ -269,9 +271,11 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                   "justify-center border-0 bg-transparent p-0 hover:bg-transparent focus:bg-transparent"
                 : `dropdown-trigger ${fit ? "w-fit" : "w-full"} rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-left text-sm text-white transition-colors hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08]`
               } ${buttonClassName} `}>
-              <span className={`min-w-0 ${fit ? "" : "flex-1"} truncate text-left`}>
+              <motion.span
+                layout={fit ? "position" : undefined}
+                className={`min-w-0 ${fit ? "" : "flex-1"} truncate text-left`}>
                 {displayText}
-              </span>
+              </motion.span>
               <span
                 className={`${fit ? "" : "ms-3"} flex h-4 w-[10px] shrink-0 items-center justify-center`}>
                 <i
@@ -279,7 +283,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                     isOpen ? "rotate-180" : ""
                   } ${iconClassName}`}></i>
               </span>
-            </button>
+            </motion.button>
           </Tooltip>
         }
 
