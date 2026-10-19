@@ -55,6 +55,7 @@ export class BackendProcessManager {
   private readonly MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
   private isRotating = false
   private logWriteQueue: string[] = []
+  private lastStartupActivityTime = 0
 
   constructor(config: BackendConfig, status: BackendStatus) {
     this.config = config
@@ -279,11 +280,15 @@ export class BackendProcessManager {
       this.logStream = fs.createWriteStream(this.logFilePath, { flags: "a" })
       this.currentLogSizeBytes = Buffer.byteLength(startupNotice, "utf8")
 
+      this.lastStartupActivityTime = Date.now()
+
       this.process.stdout?.on("data", (data) => {
+        this.lastStartupActivityTime = Date.now()
         this.handleStdoutChunk(data.toString())
       })
 
       this.process.stderr?.on("data", (data) => {
+        this.lastStartupActivityTime = Date.now()
         const msg = data.toString()
         this.writeToBackendLog(`[STDERR] ${msg}`)
         if (/(\bERROR\b|\bCRITICAL\b|Traceback|Exception)/.test(msg)) {
@@ -305,7 +310,12 @@ export class BackendProcessManager {
     } catch (error) {
       console.error(`[BackendProcessManager] Failed to start: ${error}`)
       this.status.error = error instanceof Error ? error.message : String(error)
+      const pidToKill = this.process?.pid
       this.cleanup()
+      if (pidToKill) {
+        await this.terminatePid(pidToKill).catch(() => {})
+      }
+      this.process = null
       throw error
     } finally {
       this.startupPromise = null
@@ -359,17 +369,29 @@ export class BackendProcessManager {
   private async waitForBackendReady(): Promise<void> {
     const startTime = Date.now()
     const safetyTimeout = this.config.timeout
+    const INACTIVITY_TIMEOUT_MS = 30000
+    const MAX_HARD_CEILING_MS = Math.max(safetyTimeout * 2, 120000)
 
-    while (Date.now() - startTime < safetyTimeout) {
+    while (true) {
+      const now = Date.now()
+      const totalElapsed = now - startTime
+      const inactiveElapsed = now - this.lastStartupActivityTime
+
       if (this.process?.exitCode !== null && this.process?.exitCode !== undefined) {
         throw new Error(`Backend process exited unexpectedly with code ${this.process.exitCode}`)
       }
 
       if (await this.healthCheck()) return
+
+      if (
+        (totalElapsed >= safetyTimeout && inactiveElapsed >= INACTIVITY_TIMEOUT_MS) ||
+        totalElapsed >= MAX_HARD_CEILING_MS
+      ) {
+        throw new Error(`Backend failed to start within safety timeout (${safetyTimeout}ms)`)
+      }
+
       await sleep(250)
     }
-
-    throw new Error(`Backend failed to start within safety timeout (${safetyTimeout}ms)`)
   }
 
   private async healthCheck(): Promise<boolean> {

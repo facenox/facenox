@@ -99,7 +99,7 @@ app.whenReady().then(async () => {
   try {
     await backendService.start()
 
-    const maxWaitTime = 30000
+    const maxWaitTime = 60000
     const startTime = Date.now()
 
     while (Date.now() - startTime < maxWaitTime) {

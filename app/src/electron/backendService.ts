@@ -18,7 +18,7 @@ export class BackendService {
     this.config = {
       port: 7400,
       host: "127.0.0.1",
-      timeout: 30000,
+      timeout: 60000,
       maxRetries: 3,
       healthCheckInterval: 10000,
       ...config,
