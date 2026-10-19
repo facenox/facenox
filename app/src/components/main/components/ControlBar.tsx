@@ -41,7 +41,7 @@ export function ControlBar({
       return {
         label: "Stop",
         className:
-          "border border-rose-500/30 bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 hover:text-rose-200 active:scale-95 transition-all tracking-wider",
+          "bg-rose-600 font-semibold text-white hover:bg-rose-500 active:scale-95 shadow-sm transition-all tracking-wider",
         tooltip: undefined,
         enabled: true,
       }
