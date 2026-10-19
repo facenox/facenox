@@ -151,7 +151,7 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
           </span>
           <button
             onClick={onDownload}
-            className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-400 transition-all hover:bg-cyan-500/20 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
+            className="rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-semibold text-black shadow-sm transition-all hover:bg-cyan-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
             Download
           </button>
         </div>

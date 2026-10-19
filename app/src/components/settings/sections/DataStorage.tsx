@@ -886,7 +886,7 @@ export function DataStorage({
                       groups.length === 0 ||
                       (isPaired && !allowKioskDirectoryManagement)
                     }
-                    className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
+                    className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     {deletingGroup === "all" && <i className="fa-solid fa-spinner fa-spin" />}
                     Delete directory
                   </button>
@@ -915,7 +915,7 @@ export function DataStorage({
                   <button
                     onClick={() => onClearDatabase(false)}
                     disabled={isLoading || (isPaired && !allowKioskDirectoryManagement)}
-                    className="flex shrink-0 items-center justify-center self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
+                    className="flex shrink-0 items-center justify-center self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     Clear face data
                   </button>
                 </div>
@@ -941,7 +941,7 @@ export function DataStorage({
                   <button
                     onClick={() => handlePurgeHistory(false)}
                     disabled={isLoading || isPurgingHistory}
-                    className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
+                    className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     {isPurgingHistory && <i className="fa-solid fa-spinner fa-spin" />}
                     Purge history
                   </button>

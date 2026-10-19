@@ -33,10 +33,10 @@ export function ResultView({
           <div className="flex items-center gap-1.5">
             <button
               onClick={onRetake}
-              className={`min-w-[100px] rounded-lg border px-2 py-2 text-xs font-medium transition-all ${
+              className={`min-w-[100px] rounded-lg px-2 py-2 text-xs transition-all active:scale-95 ${
                 hasError ?
-                  "border-red-500/30 bg-red-500/20 text-red-200 hover:bg-red-500/30"
-                : "border-white/10 bg-[#141518] text-white/70 hover:bg-[#1a1c20] hover:text-white"
+                  "bg-rose-600 font-semibold text-white shadow-sm hover:bg-rose-500"
+                : "border border-white/10 bg-[#141518] font-medium text-white/70 hover:bg-[#1a1c20] hover:text-white"
               }`}>
               Retake
             </button>

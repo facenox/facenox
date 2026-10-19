@@ -203,10 +203,10 @@ export function BulkEnrollment({
           <button
             onClick={handleBulkEnroll}
             disabled={isEnrolling}
-            className="flex w-full items-center justify-center gap-2.5 rounded-lg py-2.5 text-[13px] font-semibold text-cyan-400 transition-all hover:text-cyan-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none disabled:text-white/20">
+            className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-cyan-400 py-2.5 text-[13px] font-semibold text-black shadow-sm transition-all hover:bg-cyan-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none active:scale-95 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 disabled:shadow-none">
             {isEnrolling ?
               <>
-                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/15 border-t-cyan-400/60" />
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/30 border-t-black" />
                 <span>
                   Enrolling {readyCount} {readyCount === 1 ? "member" : "members"}…
                 </span>

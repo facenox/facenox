@@ -76,7 +76,7 @@ export function DeleteConfirmationModal({
                 confirmDeleteGroup()
               }}
               disabled={!isConfirmationMatch}
-              className="btn-error rounded-lg px-6 py-2 text-[11px] font-bold tracking-wider transition-all duration-200 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
+              className="rounded-lg bg-rose-600 px-6 py-2 text-[11px] font-bold tracking-wider text-white shadow-sm transition-all duration-200 hover:bg-rose-500 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
               Delete group
             </button>
           </div>

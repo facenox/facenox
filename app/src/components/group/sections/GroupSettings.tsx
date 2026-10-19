@@ -424,7 +424,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       onClick={() => setIsDeleteModalOpen(true)}
                       disabled={isDeleteDisabled || isDeleting}
                       title={isDeleteDisabled ? "Locked by Cloud Policy" : undefined}
-                      className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border-0 bg-red-500/10 px-5 py-2 text-[12px] font-bold text-red-400 shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-20 md:self-center">
+                      className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                       {isDeleting && <i className="fa-solid fa-spinner fa-spin" />}
                       <span>Delete group</span>
                     </button>
