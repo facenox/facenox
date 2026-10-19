@@ -43,9 +43,9 @@ export class MemberManager {
       person_id?: string
     } = {
       group_id: groupId,
-      name,
-      role: options?.role,
-      email: options?.email,
+      name: name.replace(/[\t\r\n]+/g, " ").trim(),
+      role: options?.role ? options.role.replace(/[\t\r\n]+/g, " ").trim() : undefined,
+      email: options?.email ? options.email.trim() : undefined,
     }
 
     if (options?.personId) {
@@ -80,9 +80,9 @@ export class MemberManager {
     const payload = {
       members: members.map((m) => ({
         group_id: groupId,
-        name: m.name,
-        role: m.role || undefined,
-        email: m.email || undefined,
+        name: m.name.replace(/[\t\r\n]+/g, " ").trim(),
+        role: m.role ? m.role.replace(/[\t\r\n]+/g, " ").trim() : undefined,
+        email: m.email ? m.email.trim() : undefined,
         person_id: m.personId || undefined,
       })),
     }

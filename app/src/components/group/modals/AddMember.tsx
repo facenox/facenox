@@ -412,19 +412,37 @@ export function AddMember({
       let failedPrecheck = 0
 
       for (const line of lines) {
-        const parts = line.split(",").map((p: string) => p.trim())
-        const name = parts[0]
-        const role = parts[1] || ""
+        const delimiter =
+          line.includes("\t") ? "\t"
+          : line.includes(";") ? ";"
+          : line.includes(",") ? ","
+          : null
 
-        if (!name) {
+        const parts = delimiter ? line.split(delimiter).map((p: string) => p.trim()) : [line.trim()]
+        const rawName = parts[0]?.replace(/[\t\r\n]+/g, " ").trim() || ""
+        const rawRole = parts[1]?.replace(/[\t\r\n]+/g, " ").trim() || ""
+
+        // Skip header row if present
+        if (
+          lines.length > 1 &&
+          membersToCreate.length === 0 &&
+          (rawName.toLowerCase() === "name" ||
+            rawName.toLowerCase() === "full name" ||
+            rawName.toLowerCase() === "student name" ||
+            rawName.toLowerCase() === "first name")
+        ) {
+          continue
+        }
+
+        if (!rawName) {
           failedPrecheck++
           errors.push(`Empty name in line: "${line}"`)
           continue
         }
 
         membersToCreate.push({
-          name,
-          role: role || undefined,
+          name: rawName,
+          role: rawRole || undefined,
         })
       }
 
