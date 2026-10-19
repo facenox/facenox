@@ -41,7 +41,7 @@ export function ControlBar({
       return {
         label: "Stop",
         className:
-          "bg-rose-600 font-semibold text-white hover:bg-rose-500 active:scale-95 shadow-sm transition-all tracking-wider",
+          "border border-rose-500/35 bg-[#2a1216] font-semibold text-rose-200 hover:border-rose-500/60 hover:bg-[#3d181f] hover:text-white active:scale-95 transition-all tracking-wider",
         tooltip: undefined,
         enabled: true,
       }
@@ -122,8 +122,11 @@ export function ControlBar({
             </div>
           : cameraDevices.length > 1 ?
             <div className="flex flex-col items-start space-y-1">
-              <div className="w-fit max-w-[260px] min-w-[140px]">
+              <div className="w-fit max-w-[260px]">
                 <Dropdown
+                  fit
+                  menuWidth={200}
+                  align="left"
                   options={formatCameraDevices(cameraDevices)}
                   value={selectedCamera}
                   onChange={(deviceId) => {
@@ -133,7 +136,7 @@ export function ControlBar({
                   emptyMessage="No cameras available"
                   disabled={isStreaming}
                   maxHeight={256}
-                  buttonClassName="text-md px-4"
+                  buttonClassName="px-4 font-medium"
                   showPlaceholderOption={false}
                   allowClear={false}
                 />

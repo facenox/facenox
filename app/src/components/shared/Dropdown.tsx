@@ -30,6 +30,7 @@ interface DropdownProps<T = string> extends Omit<React.HTMLAttributes<HTMLDivEle
   align?: "left" | "right" | "center"
   alignToSelector?: string
   onOpenChange?: (isOpen: boolean) => void
+  fit?: boolean
 }
 
 export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number>>(
@@ -53,6 +54,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
       align,
       alignToSelector,
       onOpenChange,
+      fit = false,
       ...props
     },
     ref,
@@ -224,19 +226,24 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
     /* eslint-enable @typescript-eslint/no-unused-vars */
 
     return (
-      <div className={`relative min-w-0 ${className}`} ref={internalRef} {...cleanProps}>
+      <div
+        className={`relative min-w-0 ${fit ? "w-fit" : ""} ${className}`}
+        ref={internalRef}
+        {...cleanProps}>
         {trigger ?
           <div
             ref={buttonRef as React.RefObject<HTMLDivElement | null>}
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleToggle}
-            className={`flex min-w-0 cursor-pointer items-center justify-between focus:outline-none ${
+            className={`flex min-w-0 cursor-pointer items-center ${
+              fit ? "w-fit justify-start gap-2.5" : "justify-between"
+            } focus:outline-none ${
               (
                 trigger &&
                 (buttonClassName.includes("bg-transparent") || buttonClassName.includes("border-0"))
               ) ?
                 "justify-center border-0 bg-transparent p-0 hover:bg-transparent focus:bg-transparent"
-              : "w-full rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-left text-sm text-white transition-all hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08]"
+              : `${fit ? "w-fit" : "w-full"} rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-left text-sm text-white transition-all hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08]`
             } ${buttonClassName} `}>
             {trigger}
           </div>
@@ -251,17 +258,22 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
               onMouseDown={(e) => e.preventDefault()}
               onClick={handleToggle}
               disabled={disabled}
-              className={`flex min-w-0 cursor-pointer items-center justify-between focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`flex min-w-0 cursor-pointer items-center ${
+                fit ? "w-fit justify-start gap-2.5" : "justify-between"
+              } focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                 (
                   trigger &&
                   (buttonClassName.includes("bg-transparent") ||
                     buttonClassName.includes("border-0"))
                 ) ?
                   "justify-center border-0 bg-transparent p-0 hover:bg-transparent focus:bg-transparent"
-                : "dropdown-trigger w-full rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-left text-sm text-white transition-colors hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08]"
+                : `dropdown-trigger ${fit ? "w-fit" : "w-full"} rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-left text-sm text-white transition-colors hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08]`
               } ${buttonClassName} `}>
-              <span className="min-w-0 flex-1 truncate text-left">{displayText}</span>
-              <span className="ms-3 flex h-4 w-[10px] shrink-0 items-center justify-center">
+              <span className={`min-w-0 ${fit ? "" : "flex-1"}truncate text-left`}>
+                {displayText}
+              </span>
+              <span
+                className={`${fit ? "" : "ms-3"}flex h-4 w-[10px] shrink-0 items-center justify-center`}>
                 <i
                   className={`fa-solid fa-chevron-down text-xs text-white/65 transition-transform duration-200 ${
                     isOpen ? "rotate-180" : ""
