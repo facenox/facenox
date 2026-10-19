@@ -105,7 +105,7 @@ export function AntiSpoofDetectionModal({
         {/* Content Area */}
         <div className="relative min-h-[220px] overflow-hidden">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch sm:gap-6">
-            <div className="relative h-[220px] w-[260px] shrink-0 overflow-hidden rounded-[18px] border border-white/8 bg-[#0d131b]">
+            <div className="relative h-[220px] w-[260px] shrink-0 overflow-hidden rounded-[18px] border border-white/8 bg-[#0f1011]">
               <AnimatePresence initial={false} mode="wait" custom={direction}>
                 <motion.img
                   key={currentSlide.imageSrc}

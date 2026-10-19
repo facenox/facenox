@@ -201,7 +201,7 @@ export function ReportToolbar({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
                 transition={{ duration: 0.1, ease: "easeOut" }}
-                className="absolute right-0 z-50 mt-2 w-36 overflow-hidden rounded-lg border border-white/10 bg-[#0d1117]/95 shadow-xl">
+                className="absolute right-0 z-50 mt-2 w-36 overflow-hidden rounded-lg border border-white/10 bg-[#0f1011]/95 shadow-xl">
                 {finalStatusOptions.map(({ value: st, label }) => (
                   <button
                     key={st}
@@ -242,7 +242,7 @@ export function ReportToolbar({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
                 transition={{ duration: 0.1, ease: "easeOut" }}
-                className="absolute right-0 z-50 mt-2 flex w-[200px] flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0d1117]/95 shadow-xl backdrop-blur-md">
+                className="absolute right-0 z-50 mt-2 flex w-[200px] flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0f1011]/95 shadow-xl backdrop-blur-md">
                 <div className="px-2.5 pt-2.5 pb-1.5">
                   <span className="px-1 text-[10px] font-extrabold tracking-wider text-white/50 uppercase">
                     Columns

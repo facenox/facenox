@@ -40,6 +40,7 @@ export function FloatingAlert({ message, variant, onDismiss }: FloatingAlertProp
   }
 
   const current = configs[variant]
+  const cleanMessage = message.replace(/^(error|warning|success):\s*/i, "").trim()
 
   return (
     <motion.div
@@ -53,7 +54,7 @@ export function FloatingAlert({ message, variant, onDismiss }: FloatingAlertProp
         <span className={`mr-1.5 font-semibold whitespace-nowrap ${current.labelColor}`}>
           {current.label}:
         </span>
-        {message}
+        {cleanMessage || message}
       </div>
       <button
         type="button"

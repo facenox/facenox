@@ -41,7 +41,7 @@ export function ControlBar({
       return {
         label: "Stop",
         className:
-          "bg-rose-500/5 border border-rose-500/10 text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20 hover:shadow-[0_0_15px_rgba(244,63,94,0.18)] tracking-wider",
+          "border border-rose-500/30 bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 hover:text-rose-200 active:scale-95 transition-all tracking-wider",
         tooltip: undefined,
         enabled: true,
       }
@@ -51,7 +51,7 @@ export function ControlBar({
       return {
         label: "Preparing…",
         className:
-          "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/65 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/65",
+          "bg-[#141518] border border-white/10 text-white/50 hover:bg-[#141518] hover:text-white/50",
         tooltip: "Loading groups and settings",
         enabled: false,
       }
@@ -61,7 +61,7 @@ export function ControlBar({
       return {
         label: "Start scan",
         className:
-          "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/70",
+          "bg-[#141518] border border-white/10 text-white/50 hover:bg-[#141518] hover:text-white/50",
         tooltip: "Create a group to start scanning",
         enabled: false,
       }
@@ -71,7 +71,7 @@ export function ControlBar({
       return {
         label: "Start scan",
         className:
-          "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/70 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/70",
+          "bg-[#141518] border border-white/10 text-white/50 hover:bg-[#141518] hover:text-white/50",
         tooltip: "Select a group to start scanning",
         enabled: false,
       }
@@ -81,7 +81,7 @@ export function ControlBar({
       return {
         label: "Start scan",
         className:
-          "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/40 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/40",
+          "bg-[#141518] border border-white/10 text-white/40 hover:bg-[#141518] hover:text-white/40",
         tooltip: "Enroll at least one member to start scanning",
         enabled: false,
       }
@@ -91,14 +91,14 @@ export function ControlBar({
       return {
         label: "Start scan",
         className:
-          "bg-[rgba(22,28,36,0.68)] border border-white/10 text-white/40 hover:bg-[rgba(22,28,36,0.68)] hover:text-white/40",
+          "bg-[#141518] border border-white/10 text-white/40 hover:bg-[#141518] hover:text-white/40",
         tooltip: "No camera detected",
         enabled: false,
       }
     }
 
     const cyanStyle =
-      "bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25 hover:text-cyan-200 hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.35)] tracking-wider"
+      "bg-cyan-400 font-semibold text-black hover:bg-cyan-300 active:scale-95 shadow-sm transition-all tracking-wider"
 
     return {
       label: "Start scan",

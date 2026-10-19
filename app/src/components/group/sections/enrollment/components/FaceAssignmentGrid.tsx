@@ -145,7 +145,7 @@ function MemberAssignCombobox({
                 left: menuPos ? `${menuPos.left}px` : "-9999px",
                 width: menuPos ? `${menuPos.width}px` : "220px",
               }}
-              className="fixed z-9999 flex max-h-[280px] flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0f1319] shadow-2xl backdrop-blur-md">
+              className="fixed z-9999 flex max-h-[280px] flex-col overflow-hidden rounded-xl border border-white/10 bg-[#141518] shadow-2xl backdrop-blur-md">
               {/* Search Bar */}
               <div className="relative shrink-0 border-b border-white/10 p-2">
                 <i className="fa-solid fa-magnifying-glass absolute top-1/2 left-4 -translate-y-1/2 text-[10px] text-white/40" />

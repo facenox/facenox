@@ -46,7 +46,7 @@ export function EmptyState({
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-4 flex items-center gap-2 rounded border border-white/10 bg-[rgba(22,28,36,0.62)] px-4 py-1.5 text-xs font-semibold text-white/70 transition-all hover:bg-[rgba(22,28,36,0.85)] hover:text-white active:scale-95">
+          className="mt-4 flex items-center gap-2 rounded border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-semibold text-white/70 transition-all hover:bg-white/[0.08] hover:text-white active:scale-95">
           <i className={action.iconClass || "fa-solid fa-plus text-[10px]"} />
           <span>{action.label}</span>
         </button>

@@ -295,7 +295,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 <button
                   type="button"
                   disabled={!reportsExportHandlers}
-                  className="flex items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/[0.03] px-3 py-1.5 text-[11px] font-bold tracking-wide text-cyan-400 transition-all duration-200 hover:border-cyan-500/40 hover:bg-cyan-500/10 hover:text-cyan-300 active:scale-[0.97] disabled:opacity-50">
+                  className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white/80 transition-all duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40">
                   <i className="fa-solid fa-file-csv text-[10px]" />
                   <span>Export</span>
                   <i className="fa-solid fa-chevron-down ml-0.5 text-[8px] opacity-70" />
@@ -306,7 +306,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               onClick={() => reportsExportHandlers?.exportCSV()}
               disabled={!reportsExportHandlers}
               title="Export CSV for this group"
-              className="flex items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/[0.03] px-3 py-1.5 text-[11px] font-bold tracking-wide text-cyan-400 transition-all duration-200 hover:border-cyan-500/40 hover:bg-cyan-500/10 hover:text-cyan-300 active:scale-[0.97] disabled:opacity-50">
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white/80 transition-all duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40">
               <i className="fa-solid fa-file-csv text-[10px]" />
               Export CSV
             </button>
@@ -458,7 +458,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                           }
                         }}
                         disabled={isSavingGroupName}
-                        className="w-auto max-w-full min-w-[120px] shrink rounded-md border border-white/10 bg-[rgba(22,28,36,0.68)] px-2.5 py-0.5 text-[13px] font-semibold tracking-wide text-white transition-all duration-200 outline-none placeholder:text-white/35 focus:border-white/25 focus:bg-[rgba(28,35,44,0.85)]"
+                        className="w-auto max-w-full min-w-[120px] shrink rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[13px] font-semibold tracking-wide text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-200 outline-none placeholder:text-white/35 focus:border-white/25 focus:bg-white/[0.08]"
                       />
                       <Tooltip content="Save (Enter)" position="bottom" offset={6}>
                         <button

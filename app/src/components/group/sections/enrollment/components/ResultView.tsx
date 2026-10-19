@@ -36,7 +36,7 @@ export function ResultView({
               className={`min-w-[100px] rounded-lg border px-2 py-2 text-xs font-medium transition-all ${
                 hasError ?
                   "border-red-500/30 bg-red-500/20 text-red-200 hover:bg-red-500/30"
-                : "border-white/10 bg-[rgba(10,13,18,0.78)] text-white/70 hover:bg-[rgba(15,19,25,0.9)] hover:text-white"
+                : "border-white/10 bg-[#141518] text-white/70 hover:bg-[#1a1c20] hover:text-white"
               }`}>
               Retake
             </button>
@@ -45,11 +45,11 @@ export function ResultView({
               <button
                 onClick={onEnroll}
                 disabled={!framesReady || isEnrolling}
-                className="flex min-w-[100px] items-center justify-center gap-2 rounded-lg border border-cyan-400/50 bg-cyan-500/40 px-2 py-2 text-xs font-medium text-cyan-100 transition-all hover:bg-cyan-500/50 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-[rgba(10,13,18,0.78)] disabled:text-white/55">
+                className="flex min-w-[100px] items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 py-2 text-xs font-semibold text-black shadow-sm transition-all hover:bg-cyan-300 active:scale-95 disabled:cursor-not-allowed disabled:border disabled:border-white/10 disabled:bg-[#141518] disabled:text-white/40 disabled:shadow-none">
                 {isEnrolling ?
                   <>
-                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                    <span>Saving…</span>
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-black/30 border-t-black" />
+                    <span className="font-semibold text-black">Saving…</span>
                   </>
                 : "Enroll"}
               </button>

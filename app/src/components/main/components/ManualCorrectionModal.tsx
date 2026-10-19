@@ -123,7 +123,7 @@ export function ManualCorrectionModal({
             placeholder="Reason for correction"
             rows={4}
             disabled={isSubmitting}
-            className="custom-scroll min-h-24 w-full rounded-xl border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2.5 text-xs leading-relaxed text-white transition-all outline-none placeholder:text-white/35 focus:border-amber-400/80 focus:bg-[rgba(28,35,44,0.82)]"
+            className="custom-scroll min-h-24 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs leading-relaxed text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all outline-none placeholder:text-white/35 focus:border-amber-400/80 focus:bg-white/[0.08]"
           />
         </div>
 

@@ -230,7 +230,7 @@ export default function WindowBar() {
                     exit={{ opacity: 0, scale: 0.95, y: -4 }}
                     transition={{ duration: 0.12, ease: "easeOut" }}
                     style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                    className="absolute top-[22px] left-0 z-90 w-[168px] rounded-lg border border-white/10 bg-[#161c24]/90 p-1 shadow-xl backdrop-blur-md">
+                    className="absolute top-[22px] left-0 z-90 w-[168px] rounded-lg border border-white/10 bg-[#141518]/95 p-1 shadow-xl backdrop-blur-md">
                     <button
                       onClick={() => {
                         setIsMenuOpen(false)
@@ -506,7 +506,7 @@ export default function WindowBar() {
       {isReloading && (
         <div
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-3 bg-[#0c1015]/90 backdrop-blur-md">
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-3 bg-[#08090a]/90 backdrop-blur-md">
           <i className="fa-solid fa-rotate animate-spin text-2xl text-white/70" />
           <span className="text-xs font-medium tracking-wide text-white/80">
             Reloading application…

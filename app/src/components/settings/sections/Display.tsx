@@ -205,7 +205,7 @@ export function Display({
               />
             : <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
                 <div
-                  className={`relative flex items-center justify-center bg-[#0d131f] transition-all duration-300 ${
+                  className={`relative flex items-center justify-center bg-[#0f1011] transition-all duration-300 ${
                     quickSettings.cameraFitCover ? "h-full w-full scale-105" : (
                       "h-full w-[78%] scale-100"
                     )
@@ -289,7 +289,7 @@ export function Display({
           </div>
 
           {/* Sidebar preview */}
-          <div className="flex h-full w-[100px] shrink-0 flex-col border-l border-white/10 bg-[rgba(15,19,25,0.92)] select-none">
+          <div className="flex h-full w-[100px] shrink-0 flex-col border-l border-white/10 bg-[#0f1011] select-none">
             {/* Attendance list */}
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 transition-all duration-200">
               <div className="mb-2.5 flex h-4.5 items-center justify-between rounded border border-white/[0.08] bg-white/[0.02] px-1.5">
@@ -317,7 +317,7 @@ export function Display({
                   animate={{ opacity: 1, flex: "1 1 0%" }}
                   exit={{ opacity: 0, flex: "0 0 0px" }}
                   transition={{ duration: 0.22, ease: "easeInOut" }}
-                  className="flex min-h-0 flex-col overflow-hidden border-t border-white/10 bg-[rgba(10,13,18,0.96)] p-2">
+                  className="flex min-h-0 flex-col overflow-hidden border-t border-white/10 bg-[#08090a] p-2">
                   <div className="flex items-center justify-between rounded-lg bg-cyan-500/10 px-2 py-1.5">
                     <div className="h-1.5 w-11 rounded-full bg-white/70" />
                     <i className="fa-solid fa-check text-[8px] text-cyan-400" />

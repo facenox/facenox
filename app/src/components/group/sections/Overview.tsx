@@ -351,7 +351,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -5 }}
                       transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="absolute top-full right-0 z-50 mt-1.5 min-w-[128px] overflow-hidden rounded-lg border border-white/5 bg-[#0d1117]/95 p-1 shadow-xl">
+                      className="absolute top-full right-0 z-50 mt-1.5 min-w-[128px] overflow-hidden rounded-lg border border-white/5 bg-[#0f1011]/95 p-1 shadow-xl">
                       {(["today", "yesterday", "week"] as DateFilter[]).map((filter) => (
                         <button
                           key={filter}

@@ -56,7 +56,7 @@ export function CameraFeed({
             emptyMessage="No cameras available"
             disabled={false}
             maxHeight={256}
-            buttonClassName="text-[11px] px-3 py-1.5 bg-[rgba(10,13,18,0.84)] border border-white/10 hover:bg-[rgba(15,19,25,0.92)] transition-all font-medium"
+            buttonClassName="text-[11px] px-3 py-1.5 bg-[#141518] border border-white/10 hover:bg-[#1a1c20] transition-all font-medium"
             showPlaceholderOption={false}
             allowClear={false}
           />

@@ -279,7 +279,7 @@ export function Reports({
             onMouseLeave={() => {
               undoTimerRef.current = setTimeout(() => setUndoToast(null), 3000)
             }}>
-            <div className="flex items-center gap-3 rounded-lg bg-[rgba(30,32,36,0.97)] px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/8">
+            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#141518]/98 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-xl">
               <p className="text-[12px] font-medium text-white/80">{undoToast.message}</p>
               <div className="mx-1 h-3.5 w-px bg-white/10" />
               <button

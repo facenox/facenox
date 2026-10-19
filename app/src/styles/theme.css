@@ -13,29 +13,29 @@
   line-height: 1.5;
   font-weight: 400;
 
-  --gradient-primary: linear-gradient(135deg, #06080c 0%, #0d121b 100%);
-  --gradient-secondary: linear-gradient(45deg, #0d1117 0%, #171d28 50%, #06080c 100%);
-  --gradient-accent: linear-gradient(90deg, #131922 0%, #1e2634 50%, #131922 100%);
-  --gradient-surface: linear-gradient(180deg, rgba(13, 17, 23, 0.96) 0%, rgba(6, 8, 12, 0.86) 100%);
+  --gradient-primary: linear-gradient(135deg, #08090a 0%, #0f1011 100%);
+  --gradient-secondary: linear-gradient(45deg, #0f1011 0%, #141518 50%, #08090a 100%);
+  --gradient-accent: linear-gradient(90deg, #141518 0%, #1a1c20 50%, #141518 100%);
+  --gradient-surface: linear-gradient(180deg, rgba(15, 16, 17, 0.96) 0%, rgba(8, 9, 10, 0.86) 100%);
 
-  --bg-primary: #06080c;
-  --bg-secondary: #0d1117;
-  --bg-tertiary: #131922;
-  --bg-hover: #19212d;
-  --bg-canvas: #030406;
-  --surface-primary: rgba(6, 8, 12, 0.96);
-  --surface-secondary: rgba(13, 17, 23, 0.88);
-  --surface-tertiary: rgba(19, 25, 34, 0.72);
-  --surface-glass: rgba(9, 12, 17, 0.58);
+  --bg-primary: #08090a;
+  --bg-secondary: #0f1011;
+  --bg-tertiary: #141518;
+  --bg-hover: #1a1c20;
+  --bg-canvas: #08090a;
+  --surface-primary: rgba(8, 9, 10, 0.96);
+  --surface-secondary: rgba(15, 16, 17, 0.88);
+  --surface-tertiary: rgba(20, 21, 24, 0.72);
+  --surface-glass: rgba(10, 11, 13, 0.58);
 
   --card-blur: 16px;
   --card-border-width: 1px;
   --card-bg: var(--bg-secondary);
-  --card-border: rgba(255, 255, 255, 0.09);
-  --card-hover-bg: #131922;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-hover-bg: #141518;
   --card-hover-border: rgba(255, 255, 255, 0.16);
 
-  --border-primary: rgba(255, 255, 255, 0.09);
+  --border-primary: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.16);
   --border-accent: rgba(255, 255, 255, 0.22);
 

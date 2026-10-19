@@ -119,7 +119,7 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-xs font-semibold text-white/80 transition-all duration-200 outline-none focus:border-white/25 focus:bg-[rgba(28,35,44,0.82)] focus:text-white"
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-200 outline-none focus:border-white/25 focus:bg-white/[0.08] focus:text-white"
                   />
                 </div>
                 <div className="flex shrink-0 items-center justify-center pt-4 text-white/20">
@@ -133,7 +133,7 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-xs font-semibold text-white/80 transition-all duration-200 outline-none focus:border-white/25 focus:bg-[rgba(28,35,44,0.82)] focus:text-white"
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-200 outline-none focus:border-white/25 focus:bg-white/[0.08] focus:text-white"
                   />
                 </div>
               </div>

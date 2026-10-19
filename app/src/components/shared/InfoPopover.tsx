@@ -154,7 +154,7 @@ export function InfoPopover({
                 left: pos?.left ?? -9999,
                 visibility: pos ? "visible" : "hidden",
               }}>
-              <div className="overflow-hidden rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)]">
+              <div className="overflow-hidden rounded-xl border border-white/10 bg-[#141518]">
                 {media && (
                   <div className="relative w-full overflow-hidden bg-black/40">
                     {media.type === "image" ?
@@ -172,7 +172,7 @@ export function InfoPopover({
                         className="h-32 w-full object-cover opacity-80"
                       />
                     }
-                    <div className="absolute inset-0 bg-linear-to-t from-[rgba(15,19,25,0.98)] to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-[#141518] to-transparent" />
                   </div>
                 )}
 

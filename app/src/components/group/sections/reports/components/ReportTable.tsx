@@ -192,7 +192,7 @@ function EmptyTableState({
             <button
               type="button"
               onClick={onResetDates}
-              className="mt-1 rounded-lg border border-white/6 bg-[rgba(22,28,36,0.64)] px-4 py-2 text-xs font-medium text-white/55 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white/80">
+              className="mt-1 rounded-lg border border-white/6 bg-white/[0.04] px-4 py-2 text-xs font-medium text-white/55 transition-all hover:bg-white/[0.08] hover:text-white/80">
               Reset to today
             </button>
           )}
@@ -225,7 +225,7 @@ function EmptyTableState({
         {statusFilter && statusFilter !== "all" && (
           <button
             onClick={onResetFilter}
-            className="rounded-lg border border-white/6 bg-[rgba(22,28,36,0.64)] px-4 py-2 text-xs font-medium text-white/55 transition-all hover:bg-[rgba(28,35,44,0.82)] hover:text-white/80">
+            className="rounded-lg border border-white/6 bg-white/[0.04] px-4 py-2 text-xs font-medium text-white/55 transition-all hover:bg-white/[0.08] hover:text-white/80">
             Reset filter
           </button>
         )}
@@ -233,10 +233,10 @@ function EmptyTableState({
           <div className="flex flex-col items-center gap-2">
             <span className="mb-2 text-[11px] font-semibold text-white/55">Suggestions</span>
             <div className="flex gap-2">
-              <span className="rounded-lg border border-white/6 bg-[rgba(22,28,36,0.64)] px-3 py-1.5 text-[11px] font-medium text-white/55">
+              <span className="rounded-lg border border-white/6 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-white/55">
                 Try previous week
               </span>
-              <span className="rounded-lg border border-white/6 bg-[rgba(22,28,36,0.64)] px-3 py-1.5 text-[11px] font-medium text-white/55">
+              <span className="rounded-lg border border-white/6 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-white/55">
                 Expand range
               </span>
             </div>
@@ -265,7 +265,7 @@ function TablePagination({
   if (totalItems <= pageSize) return null
 
   return (
-    <div className="flex shrink-0 items-center justify-between border-t border-white/6 bg-[rgba(16,21,28,0.98)] px-6 py-3">
+    <div className="flex shrink-0 items-center justify-between border-t border-white/6 bg-[#0f1011] px-6 py-3">
       <div className="flex items-center gap-2 text-[11px] text-white/55">
         <span className="flex h-7 items-center">{totalItems} records</span>
         <Dropdown
@@ -423,12 +423,12 @@ export function ReportTable({
                     {visibleColDefs.map((c) => (
                       <th
                         key={c.key}
-                        className={`sticky top-0 z-10 border-b border-white/6 bg-[rgba(16,21,28,0.98)] px-4 py-3 text-[11px] font-medium text-white/55 ${alignClass(c.align)} ${COL_WIDTHS[c.key] || ""}`}>
+                        className={`sticky top-0 z-10 border-b border-white/6 bg-[#0f1011] px-4 py-3 text-[11px] font-medium text-white/55 ${alignClass(c.align)} ${COL_WIDTHS[c.key] || ""}`}>
                         {c.label}
                       </th>
                     ))}
                     {onEditRow && (
-                      <th className="sticky top-0 z-10 w-14 border-b border-white/6 bg-[rgba(16,21,28,0.98)]" />
+                      <th className="sticky top-0 z-10 w-14 border-b border-white/6 bg-[#0f1011]" />
                     )}
                   </tr>
                 </thead>
@@ -439,12 +439,12 @@ export function ReportTable({
                         <tr key={item.label}>
                           <td
                             colSpan={colCount}
-                            className="border-b border-white/6 bg-[rgba(22,28,36,0.58)] px-4 py-3">
+                            className="border-b border-white/6 bg-white/[0.03] px-4 py-3">
                             <div className="flex items-center gap-3">
                               <span className="text-xs font-bold tracking-wide text-cyan-100/90">
                                 {item.label}
                               </span>
-                              <span className="inline-flex items-center rounded-lg border border-white/6 bg-[rgba(12,16,22,0.82)] px-1.5 py-0.5 text-[11px] font-medium text-white/55">
+                              <span className="inline-flex items-center rounded-lg border border-white/6 bg-white/[0.04] px-1.5 py-0.5 text-[11px] font-medium text-white/55">
                                 {item.count} {item.count === 1 ? "record" : "records"}
                               </span>
                             </div>

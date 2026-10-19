@@ -171,7 +171,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: SETTINGS_OVERLAY_ANIMATION_DURATION, ease: "easeOut" }}
-        className="fixed inset-0 z-60 flex items-center justify-center bg-[rgba(5,7,10,0.76)] [@media(max-height:760px)_and_(max-width:1100px)]:inset-x-0 [@media(max-height:760px)_and_(max-width:1100px)]:top-[32px] [@media(max-height:760px)_and_(max-width:1100px)]:bottom-0 [@media(max-height:760px)_and_(max-width:1100px)]:items-stretch">
+        className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-xs [@media(max-height:760px)_and_(max-width:1100px)]:inset-x-0 [@media(max-height:760px)_and_(max-width:1100px)]:top-[32px] [@media(max-height:760px)_and_(max-width:1100px)]:bottom-0 [@media(max-height:760px)_and_(max-width:1100px)]:items-stretch">
         <motion.div
           initial={{ opacity: 0, scale: 0.98, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}

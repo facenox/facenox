@@ -335,6 +335,13 @@ export function registerSyncHandlers() {
         }
       }
 
+      if (pairingCode.length < 6) {
+        return {
+          success: false,
+          error: "Pairing code must be at least 6 characters.",
+        }
+      }
+
       try {
         const response = await fetch(`${remoteBaseUrl}/api/device/pair`, {
           method: "POST",

@@ -392,7 +392,7 @@ export function DataStorage({
             <button
               onClick={onRefreshTimeHealth}
               disabled={timeHealthState.loading}
-              className="flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97] disabled:opacity-40">
+              className="flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40">
               {timeHealthState.loading ?
                 <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
               : <i className="fa-solid fa-rotate-right text-[11px] text-white/50" />}
@@ -436,7 +436,7 @@ export function DataStorage({
             <button
               onClick={() => setPasswordModal({ isOpen: true, action: "export" })}
               disabled={isBackingUp}
-              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97] disabled:opacity-40">
+              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40">
               {status.type === "loading" && status.action === "export" ?
                 <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
               : <i className="fa-solid fa-file-export text-[11px] text-white/50" />}
@@ -461,7 +461,7 @@ export function DataStorage({
             <button
               onClick={startImportFlow}
               disabled={isBackingUp}
-              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97] disabled:opacity-40">
+              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40">
               {status.type === "loading" && status.action === "import" ?
                 <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
               : <i className="fa-solid fa-file-import text-[11px] text-white/50" />}
@@ -607,14 +607,14 @@ export function DataStorage({
                         <button
                           type="button"
                           onClick={handleSelectExportDirectory}
-                          className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
+                          className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
                           <i className="fa-regular fa-folder text-[10px] text-white/50" />
                           <span>Change</span>
                         </button>
                         <button
                           type="button"
                           onClick={handleOpenExportDirectory}
-                          className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
+                          className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
                           <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
                           <span>Open folder</span>
                         </button>
@@ -640,7 +640,7 @@ export function DataStorage({
                         type="button"
                         onClick={handleTriggerAutoExportNow}
                         disabled={isTriggeringAutoExport}
-                        className="flex h-7 items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 text-[11px] font-medium text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-[0.97] disabled:opacity-40">
+                        className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-[11px] font-medium text-white/80 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40">
                         {isTriggeringAutoExport ?
                           <i className="fa-solid fa-circle-notch fa-spin text-[10px]" />
                         : <i className="fa-solid fa-file-export text-[10px]" />}
@@ -679,7 +679,7 @@ export function DataStorage({
                 onClick={async () => {
                   await window.facenoxElectron?.openDataDir()
                 }}
-                className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
+                className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
                 <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
                 <span>Open folder</span>
               </button>
@@ -689,7 +689,7 @@ export function DataStorage({
                 onClick={async () => {
                   await window.facenoxElectron?.openLogFile()
                 }}
-                className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
+                className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
                 <i className="fa-regular fa-file-lines text-[11px] text-white/50" />
                 <span>View log</span>
               </button>
@@ -714,7 +714,7 @@ export function DataStorage({
               onClick={async () => {
                 await window.facenoxElectron?.openInstallDir()
               }}
-              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-[rgba(22,28,36,0.65)] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-[rgba(28,35,45,0.9)] hover:text-white active:scale-[0.97]">
+              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
               <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
               <span>Open folder</span>
             </button>
@@ -999,7 +999,7 @@ export function DataStorage({
                   }
                 }}
                 placeholder="Enter password…"
-                className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] py-2 pr-10 pl-3 text-xs text-white transition-all duration-300 outline-none focus:border-white/20 focus:bg-[rgba(28,35,44,0.82)]"
+                className="w-full rounded-lg border border-white/10 bg-white/[0.04] py-2 pr-10 pl-3 text-xs text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none focus:border-white/25 focus:bg-white/[0.08]"
               />
               <button
                 type="button"

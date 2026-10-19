@@ -172,7 +172,7 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
           <button
             onClick={onCheck}
             disabled={isChecking}
-            className="rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-1.5 text-xs font-medium text-white/65 transition-colors hover:bg-[rgba(28,35,44,0.82)] hover:text-white focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none">
+            className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/65 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none">
             Retry
           </button>
         </div>
@@ -189,8 +189,8 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
           disabled={isChecking}
           className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none ${
             isChecking ?
-              "border-white/10 bg-[rgba(22,28,36,0.68)] text-white/55"
-            : "border-transparent bg-transparent text-white/65 hover:border-white/10 hover:bg-[rgba(22,28,36,0.62)] hover:text-white"
+              "border-white/10 bg-white/[0.04] text-white/55"
+            : "border-transparent bg-transparent text-white/65 hover:border-white/10 hover:bg-white/[0.06] hover:text-white"
           } disabled:opacity-50`}>
           {isChecking ?
             <div className="flex items-center gap-2">
@@ -336,7 +336,7 @@ export const About: React.FC = () => {
               <span className="text-[11px] font-medium text-white/55">License</span>
               <button
                 onClick={openLink("https://www.gnu.org/licenses/agpl-3.0.html")}
-                className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/55 transition-all hover:border-white/10 hover:bg-[rgba(22,28,36,0.62)] hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
+                className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/55 transition-all hover:border-white/10 hover:bg-white/[0.06] hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
                 View GNU AGPL v3
               </button>
             </div>
@@ -345,7 +345,7 @@ export const About: React.FC = () => {
               <span className="text-[11px] font-medium text-white/55">Source code</span>
               <button
                 onClick={openLink("https://github.com/facenox/facenox")}
-                className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/55 transition-all hover:border-white/10 hover:bg-[rgba(22,28,36,0.62)] hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
+                className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/55 transition-all hover:border-white/10 hover:bg-white/[0.06] hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
                 View repository
               </button>
             </div>

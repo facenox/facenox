@@ -7,7 +7,7 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ children }: SectionHeaderProps) {
   return (
-    <div className="sticky top-0 z-20 flex h-[57px] items-center border-b border-white/[0.04] bg-[#06080c] pr-16 pl-10">
+    <div className="sticky top-0 z-20 flex h-[57px] items-center border-b border-white/[0.04] bg-[#08090a] pr-16 pl-10">
       <div className="flex w-full min-w-0 items-center justify-between gap-4">{children}</div>
     </div>
   )

@@ -132,7 +132,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                 autoFocus
                 value={typedConfirmation}
                 onChange={(event) => setTypedConfirmation(event.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-xs text-white transition-all duration-300 outline-none focus:border-white/30 focus:bg-[rgba(28,35,44,0.82)] focus:outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none focus:border-white/30 focus:bg-white/[0.08] focus:outline-none"
               />
             </div>
           )}

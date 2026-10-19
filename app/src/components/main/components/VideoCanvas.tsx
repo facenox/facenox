@@ -202,7 +202,7 @@ export const VideoCanvas = memo(function VideoCanvas({
           <button
             type="button"
             onClick={() => requestOpenSettings("group", "settings")}
-            className="animate-in fade-in zoom-in-95 group absolute right-4 bottom-4 z-50 flex cursor-pointer items-center gap-3.5 rounded-lg border border-white/10 bg-[rgba(10,13,18,0.72)] px-3.5 py-1.5 shadow-2xl shadow-black/40 backdrop-blur-md transition-all hover:border-white/20 hover:bg-[rgba(15,19,26,0.9)] active:scale-95">
+            className="animate-in fade-in zoom-in-95 group absolute right-4 bottom-4 z-50 flex cursor-pointer items-center gap-3.5 rounded-lg border border-white/10 bg-[#0f1011]/85 px-3.5 py-1.5 shadow-2xl shadow-black/40 backdrop-blur-md transition-all hover:border-white/20 hover:bg-[#141518]/95 active:scale-95">
             <div className="flex flex-col items-start text-left">
               <span className="text-[9px] font-bold tracking-wider text-white/45 uppercase transition-colors group-hover:text-white/65">
                 Start time
@@ -306,7 +306,7 @@ export const VideoCanvas = memo(function VideoCanvas({
                   exit={{ opacity: 0, y: 4, scale: 0.96 }}
                   transition={{ duration: 0.1, ease: "easeOut" }}
                   className="absolute top-full right-0 z-50 pt-1.5">
-                  <div className="rounded-lg border border-white/10 bg-[rgba(15,19,25,0.98)] p-2.5 shadow-2xl backdrop-blur-md">
+                  <div className="rounded-lg border border-white/10 bg-[#141518] p-2.5 shadow-2xl backdrop-blur-md">
                     {tooltipContent}
                   </div>
                 </motion.div>

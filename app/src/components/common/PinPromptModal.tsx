@@ -199,7 +199,7 @@ export function PinPromptModal() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.14 }}
-            className="absolute inset-0 bg-[rgba(5,7,10,0.72)] backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-xs"
             onClick={closePinPrompt}
           />
 
@@ -211,7 +211,7 @@ export function PinPromptModal() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96, y: 8 }}
                 transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
-                className="relative z-10 flex w-full max-w-[340px] flex-col rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] p-5 shadow-2xl backdrop-blur-2xl">
+                className="relative z-10 flex w-full max-w-[340px] flex-col rounded-xl border border-white/10 bg-[#0f1011] p-5 shadow-2xl backdrop-blur-2xl">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-base font-semibold tracking-tight text-white">
@@ -237,7 +237,7 @@ export function PinPromptModal() {
                   placeholder="XXXX-XXXX"
                   autoFocus
                   maxLength={16}
-                  className="mt-3.5 w-full rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-3 py-2 text-center font-mono text-xs font-semibold tracking-widest text-white uppercase transition-all outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-white/20 focus:border-white/30 focus:bg-[rgba(28,35,44,0.82)]"
+                  className="mt-3.5 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-center font-mono text-xs font-semibold tracking-widest text-white uppercase transition-all outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-white/20 focus:border-white/30 focus:bg-white/[0.08]"
                 />
 
                 <div className="mt-2.5 flex min-h-5 items-center justify-center text-center">
@@ -307,7 +307,7 @@ export function PinPromptModal() {
                   duration: isShaking ? 0.4 : 0.14,
                   ease: [0.16, 1, 0.3, 1],
                 }}
-                className="relative z-10 flex w-full max-w-[340px] flex-col rounded-xl border border-white/10 bg-[rgba(15,19,25,0.98)] p-5 shadow-2xl backdrop-blur-2xl">
+                className="relative z-10 flex w-full max-w-[340px] flex-col rounded-xl border border-white/10 bg-[#0f1011] p-5 shadow-2xl backdrop-blur-2xl">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3

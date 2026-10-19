@@ -971,7 +971,7 @@ export function AddMember({
                         setBulkResults(null)
                       }
                     }}
-                    className="custom-scroll min-h-[132px] w-full resize-none rounded-lg border border-white/10 bg-[rgba(22,28,36,0.68)] px-4 py-3 font-mono text-sm transition-all duration-300 outline-none placeholder:font-sans placeholder:text-sm placeholder:font-normal placeholder:text-white/35 focus:border-white/20 focus:bg-[rgba(28,35,44,0.82)]"
+                    className="custom-scroll min-h-[132px] w-full resize-none rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 font-mono text-sm shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none placeholder:font-sans placeholder:text-sm placeholder:font-normal placeholder:text-white/35 focus:border-white/25 focus:bg-white/[0.06]"
                     placeholder="Enter one member per line"
                   />
                   <div className="mt-2 flex items-center justify-between">

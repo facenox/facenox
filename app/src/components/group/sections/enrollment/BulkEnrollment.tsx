@@ -72,7 +72,7 @@ export function BulkEnrollment({
           <div className="absolute inset-0 z-40 bg-black/60" />
 
           <div className="absolute top-1/2 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 px-4">
-            <div className="rounded-2xl bg-[#111318] px-6 py-5">
+            <div className="rounded-2xl border border-white/10 bg-[#0f1011] px-6 py-5">
               {/* Header */}
               <div className="mb-1 flex items-center gap-2">
                 <i className="fa-solid fa-triangle-exclamation text-[13px] text-amber-400" />

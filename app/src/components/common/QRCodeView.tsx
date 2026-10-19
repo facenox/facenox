@@ -21,7 +21,7 @@ export function QRCodeView({ value, size = 160, className = "" }: QRCodeViewProp
       margin: 1,
       errorCorrectionLevel: "M",
       color: {
-        dark: "#0a0a0c",
+        dark: "#08090a",
         light: "#ffffff",
       },
     })

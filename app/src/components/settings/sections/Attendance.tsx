@@ -446,7 +446,7 @@ export function Attendance({
                         onDataRetentionChange(Math.min(3650, num))
                       }
                     }}
-                    className={`w-14 rounded-lg border bg-[rgba(22,28,36,0.68)] px-2 py-1.5 text-center text-xs font-bold text-white transition-all duration-300 outline-none ${
+                    className={`w-14 rounded-lg border bg-white/[0.04] px-2 py-1.5 text-center text-xs font-bold text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none ${
                       isRetentionCapped ?
                         "border-amber-400/60 shadow-[0_0_12px_rgba(251,191,36,0.25)]"
                       : "border-white/10 focus:border-white/20"
@@ -598,11 +598,11 @@ export function Attendance({
                                 "New 4-digit Administrator PIN"
                               )
                             }
-                            className={`w-20 rounded-lg border bg-[rgba(22,28,36,0.68)] px-2.5 py-1.5 text-center text-xs font-bold tracking-widest text-white transition-all outline-none ${
+                            className={`w-20 rounded-lg border bg-white/[0.04] px-2.5 py-1.5 text-center text-xs font-bold tracking-widest text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all outline-none ${
                               pinMismatch ? "border-rose-500/60 focus:border-rose-500/80"
                               : pinStep === "confirm" ?
-                                "border-white/30 focus:border-white/50 focus:bg-[rgba(28,35,44,0.82)]"
-                              : "border-white/10 focus:border-white/30 focus:bg-[rgba(28,35,44,0.82)]"
+                                "border-white/30 focus:border-white/50 focus:bg-white/[0.08]"
+                              : "border-white/10 focus:border-white/30 focus:bg-white/[0.08]"
                             }`}
                           />
                         </motion.div>
