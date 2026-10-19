@@ -41,7 +41,7 @@ export function ControlBar({
       return {
         label: "Stop",
         className:
-          "border border-rose-500/35 bg-[#2a1216] font-semibold text-rose-200 hover:border-rose-500/60 hover:bg-[#3d181f] hover:text-white active:scale-95 transition-all tracking-wider",
+          "border border-rose-500/30 bg-[#2a1216] font-semibold text-rose-200 hover:border-rose-500/50 hover:bg-[#3d181f] hover:text-white active:scale-95 transition-all tracking-wider",
         tooltip: undefined,
         enabled: true,
       }
@@ -98,7 +98,7 @@ export function ControlBar({
     }
 
     const cyanStyle =
-      "bg-cyan-400 font-semibold text-black hover:bg-cyan-300 active:scale-95 shadow-sm transition-all tracking-wider"
+      "border border-cyan-500/30 bg-[#0e2429] font-semibold text-cyan-200 hover:border-cyan-500/50 hover:bg-[#14353d] hover:text-white active:scale-95 transition-all tracking-wider"
 
     return {
       label: "Start scan",
