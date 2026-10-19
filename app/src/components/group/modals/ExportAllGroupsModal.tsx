@@ -89,7 +89,7 @@ export function ExportAllGroupsModal({
                 disabled={isExporting}
                 className={`flex w-full items-start gap-3.5 rounded-xl border p-3.5 text-left transition-all ${
                   isSelected ?
-                    "border-cyan-500/50 bg-cyan-500/[0.08] shadow-[0_0_15px_rgba(6,182,212,0.1)]"
+                    "border-cyan-500/50 bg-cyan-500/[0.08]"
                   : "border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
                 }`}>
                 <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5">

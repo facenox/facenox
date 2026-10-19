@@ -348,7 +348,7 @@ export default function WindowBar() {
               <button
                 onClick={handleOpenRelease}
                 style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                className="relative flex cursor-pointer items-center gap-1.5 rounded-md border border-cyan-800/40 bg-cyan-950/50 px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-cyan-400 uppercase shadow-[0_0_12px_rgba(6,182,212,0.15)] transition-all duration-200 select-none [webkit-app-region:no-drag] hover:border-cyan-700/50 hover:bg-cyan-900/60 hover:text-cyan-300">
+                className="relative flex cursor-pointer items-center gap-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-cyan-400 uppercase transition-all duration-200 select-none [webkit-app-region:no-drag] hover:border-cyan-500/50 hover:bg-cyan-500/20 hover:text-cyan-300">
                 Update available
               </button>
             </Tooltip>
