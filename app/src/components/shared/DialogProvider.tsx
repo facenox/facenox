@@ -24,10 +24,10 @@ type ActiveDialogState =
 
 function getButtonClasses(variant: DialogVariant): string {
   if (variant === "danger") {
-    return "rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)]"
+    return "rounded-lg bg-gradient-to-b from-rose-500 to-rose-600 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_1px_2px_rgba(0,0,0,0.3)] hover:from-rose-400 hover:to-rose-500 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)]"
   }
 
-  return "rounded-lg bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)]"
+  return "rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] hover:from-cyan-300 hover:to-cyan-400 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)]"
 }
 
 export function DialogProvider({ children }: { children: ReactNode }) {

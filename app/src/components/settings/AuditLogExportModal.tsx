@@ -153,7 +153,7 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
             type="button"
             onClick={handleExportClick}
             disabled={isExporting}
-            className="flex items-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-[11px] font-bold tracking-wide text-slate-950 transition-all duration-200 hover:bg-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-40">
+            className="flex items-center gap-2 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-4 py-2 text-[11px] font-bold tracking-wide text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-40">
             {isExporting ?
               <>
                 <i className="fa-solid fa-circle-notch fa-spin" />

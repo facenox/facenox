@@ -168,7 +168,7 @@ export function AntiSpoofDetectionModal({
             <button
               type="button"
               onClick={isLastStep ? handleConfirm : () => navigateToStep(step + 1)}
-              className="flex h-9 w-24 items-center justify-center rounded-lg bg-cyan-500 text-[10px] font-semibold tracking-[0.16em] text-slate-950 uppercase transition-all duration-200 hover:bg-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
+              className="flex h-9 w-24 items-center justify-center rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 text-[10px] font-semibold tracking-[0.16em] text-slate-950 uppercase shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
               {isLastStep ? "Enable" : "Next"}
             </button>
           </div>

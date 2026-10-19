@@ -469,7 +469,7 @@ export default function WindowBar() {
                     checkedUpdateInfo?.releaseUrl || "https://facenox.com/download",
                   )
                 }}
-                className="rounded-lg bg-cyan-500 px-5 py-2 text-xs font-bold text-slate-950 transition-all hover:bg-cyan-400 active:scale-95">
+                className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2 text-xs font-bold text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97]">
                 Download update
               </button>
             </div>
@@ -495,7 +495,7 @@ export default function WindowBar() {
               </button>
               <button
                 onClick={handleCheckUpdates}
-                className="rounded-lg bg-cyan-500 px-5 py-2 text-xs font-bold text-slate-950 transition-all hover:bg-cyan-400 active:scale-95">
+                className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2 text-xs font-bold text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97]">
                 Try again
               </button>
             </div>
