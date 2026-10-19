@@ -215,21 +215,23 @@ const AttendanceRecordItem = memo(
         onMouseLeave={() => setIsHovered(false)}
         className="group relative flex items-center justify-between rounded-lg px-2.5 py-1.5 transition-colors hover:bg-white/[0.04]">
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-1.5 truncate">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
             <MemberTooltip
               member={member}
               displayName={displayName}
               position="top"
               showEnrollment={false}
               role={record.event_type === "check_out" ? "Exiting" : "Present"}>
-              <span className="cursor-help truncate text-[13px] font-medium text-white/90 hover:text-white">
+              <span className="min-w-0 flex-1 cursor-help truncate text-[13px] font-medium text-white/90 hover:text-white">
                 {displayName}
               </span>
             </MemberTooltip>
             {isAllGroupsMode && groupName && (
-              <span className="shrink-0 rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-medium tracking-tight text-white/45">
-                {groupName}
-              </span>
+              <Tooltip content={groupName} position="top" delay={250}>
+                <span className="max-w-[80px] shrink-0 cursor-help truncate rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-medium tracking-tight text-white/45 transition-colors hover:bg-white/10 hover:text-white/70">
+                  {groupName}
+                </span>
+              </Tooltip>
             )}
           </div>
 
