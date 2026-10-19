@@ -928,12 +928,12 @@ export function DataStorage({
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                       Permanently wipe all daily attendance check-ins, checkout timestamps, and
-                      history records on this kiosk. Groups, member profiles, and enrolled face data
+                      history records on this device. Groups, member profiles, and enrolled face data
                       are preserved.
                       {isPaired && (
                         <span className="mt-1 block font-medium text-white/50">
                           <i className="fa-solid fa-cloud mr-1" />
-                          Clears history on this kiosk only. Cloud records remain safe.
+                          Clears history on this device only. Cloud records remain safe.
                         </span>
                       )}
                     </p>
