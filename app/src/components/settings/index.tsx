@@ -1,8 +1,8 @@
 import React from "react"
 import { motion } from "framer-motion"
 import {
-  LayoutGrid,
-  BarChart2,
+  LayoutDashboard,
+  BarChart3,
   Users,
   Clock,
   SlidersHorizontal,
@@ -85,8 +85,8 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
   }, [isModal, onBack, settings.hasSelectedMember])
 
   const groupSections = [
-    { id: "overview" as const, label: "Overview", icon: LayoutGrid },
-    { id: "reports" as const, label: "Reports", icon: BarChart2 },
+    { id: "overview" as const, label: "Overview", icon: LayoutDashboard },
+    { id: "reports" as const, label: "Reports", icon: BarChart3 },
     { id: "members" as const, label: "Members", icon: Users },
     { id: "settings" as const, label: "Rules", icon: Clock },
   ]
