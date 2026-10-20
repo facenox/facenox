@@ -4,7 +4,7 @@ import {
   LayoutGrid,
   BarChart2,
   Users,
-  Settings as SettingsIcon,
+  Clock,
   SlidersHorizontal,
   Monitor,
   Database,
@@ -88,7 +88,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
     { id: "overview" as const, label: "Overview", icon: LayoutGrid },
     { id: "reports" as const, label: "Reports", icon: BarChart2 },
     { id: "members" as const, label: "Members", icon: Users },
-    { id: "settings" as const, label: "Settings", icon: SettingsIcon },
+    { id: "settings" as const, label: "Rules", icon: Clock },
   ]
 
   const sections = [
