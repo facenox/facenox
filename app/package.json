@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "ably": "^2.29.0",
-    "framer-motion": "^12.43.0",
+    "framer-motion": "^14.3.0",
     "lucide-react": "^1.59.0",
     "qrcode": "^1.5.4",
     "react": "^19.3.0",
