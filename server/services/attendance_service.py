@@ -1,6 +1,7 @@
 import logging
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from typing import List, Optional, Any, Dict
 import ulid
 import numpy as np
@@ -9,14 +10,13 @@ import cv2
 from api.schemas import AttendanceEventResponse, AttendanceTimeHealthResponse
 from database.repository import AttendanceRepository
 from services.time_authority_service import get_time_authority
+from attendance_time import event_time, instant_for_sort
 from time_utils import (
+    elapsed_seconds,
     ensure_local_aware,
-    from_storage_local,
     local_day_bounds,
-    local_date_string,
     local_now,
     to_api_utc,
-    to_storage_local,
 )
 
 logger = logging.getLogger(__name__)
@@ -121,7 +121,10 @@ class AttendanceService:
         selected_rule = None
         for rule in rule_history:
             rule_effective_from = getattr(rule, "effective_from", None)
-            if rule_effective_from is None or rule_effective_from <= effective_at:
+            if (
+                rule_effective_from is None
+                or rule_effective_from <= effective_at.replace(tzinfo=None)
+            ):
                 selected_rule = rule
             else:
                 break
@@ -135,7 +138,9 @@ class AttendanceService:
         if not rule.get("late_threshold_enabled"):
             return False, None
 
-        localized_check_in = ensure_local_aware(from_storage_local(check_in_time))
+        localized_check_in = (
+            check_in_time if check_in_time.tzinfo else ensure_local_aware(check_in_time)
+        )
 
         class_start_time = rule.get("class_start_time") or local_now().strftime("%H:%M")
         try:
@@ -211,8 +216,10 @@ class AttendanceService:
                         "group_id": existing_session.group_id,
                         "applied_rule_id": existing_session.applied_rule_id,
                         "date": target_date,
-                        "check_in_time": existing_session.check_in_time,
-                        "check_out_time": existing_session.check_out_time,
+                        "check_in_time": event_time(existing_session, "check_in_time"),
+                        "check_out_time": event_time(
+                            existing_session, "check_out_time"
+                        ),
                         "total_hours": existing_session.total_hours,
                         "status": existing_session.status,
                         "is_late": existing_session.is_late,
@@ -262,10 +269,10 @@ class AttendanceService:
                 )
                 continue
 
-            person_records.sort(key=lambda r: r.timestamp)
+            person_records.sort(key=lambda r: instant_for_sort(r, "timestamp"))
 
             first_record = person_records[0]
-            timestamp = first_record.timestamp  # earliest check-in for the day
+            timestamp = event_time(first_record, "timestamp")
             # Get the rule in effect at the end of the target day, so settings updates made during the day apply to the day's session
             rule_effective_time = timestamp.replace(
                 hour=23, minute=59, second=59, microsecond=999999
@@ -297,12 +304,14 @@ class AttendanceService:
                     "date": target_date,
                     "check_in_time": timestamp,
                     "check_out_time": (
-                        person_records[-1].timestamp
+                        event_time(person_records[-1], "timestamp")
                         if should_track_checkout and len(person_records) > 1
                         else None
                     ),
                     "total_hours": (
-                        (person_records[-1].timestamp - timestamp).total_seconds()
+                        elapsed_seconds(
+                            timestamp, event_time(person_records[-1], "timestamp")
+                        )
                         / 3600.0
                         if should_track_checkout and len(person_records) > 1
                         else None
@@ -425,24 +434,36 @@ class AttendanceService:
         time_health_payload = AttendanceTimeHealthResponse.model_validate(
             time_health.__dict__
         ).model_dump(mode="json")
-        current_time = to_storage_local(time_health.current_time_local)
+        current_time = time_health.current_time_local
+        attendance_zone = getattr(settings, "attendance_timezone", None)
+        if attendance_zone:
+            current_time = time_health.current_time_utc.astimezone(
+                ZoneInfo(attendance_zone)
+            )
+            time_health_payload["current_time_local"] = current_time.isoformat()
+            time_health_payload["time_zone_name"] = attendance_zone
+            if current_time.utcoffset() != time_health.current_time_local.utcoffset():
+                warning = "Kiosk clock timezone differs from the configured attendance location."
+                time_health_payload["warning_message"] = " ".join(
+                    filter(None, [time_health_payload.get("warning_message"), warning])
+                )
         window_seconds = cooldown_seconds
 
-        recent_records = await self.repo.get_records(
+        recent_records = await self.repo.get_recent_records_by_instant(
             person_id=event_data.person_id,
-            start_date=current_time - timedelta(seconds=window_seconds),
-            end_date=current_time,
-            limit=20,
+            start=current_time.astimezone(timezone.utc)
+            - timedelta(seconds=window_seconds),
+            end=current_time,
         )
 
-        today_str = local_date_string(time_health.current_time_local)
+        today_str = current_time.strftime("%Y-%m-%d")
 
         # Get group settings for late threshold and check-out tracking
         group = await self.repo.get_group(member.group_id)
 
         # Always fetch the effective rule at the current event time to support settings changes midway through the day
         session_rule = await self.repo.get_effective_group_rule(
-            member.group_id, current_time
+            member.group_id, current_time.replace(tzinfo=None)
         )
 
         normalized_rule = self._normalize_rule(
@@ -509,13 +530,17 @@ class AttendanceService:
             and not existing_session.check_out_time
         ):
             time_since_check_in = abs(
-                (current_time - existing_session.check_in_time).total_seconds()
+                elapsed_seconds(
+                    event_time(existing_session, "check_in_time"), current_time
+                )
             )
             min_delay_val = normalized_rule.get("min_checkout_delay_minutes")
             min_delay_minutes = 15 if min_delay_val is None else min_delay_val
             if min_delay_minutes > 0:
                 time_since_check_in = abs(
-                    (current_time - existing_session.check_in_time).total_seconds()
+                    elapsed_seconds(
+                        event_time(existing_session, "check_in_time"), current_time
+                    )
                 )
                 min_delay_seconds = min_delay_minutes * 60
                 if time_since_check_in < min_delay_seconds:
@@ -535,8 +560,8 @@ class AttendanceService:
 
         if recent_records:
             for record in recent_records:
-                record_time = record.timestamp
-                time_diff = abs((current_time - record_time).total_seconds())
+                record_time = event_time(record, "timestamp")
+                time_diff = abs(elapsed_seconds(record_time, current_time))
 
                 if time_diff < cooldown_seconds:
                     return AttendanceEventResponse(
@@ -575,15 +600,21 @@ class AttendanceService:
         total_hours = None
 
         if existing_session and existing_session.check_in_time:
-            check_in_time = existing_session.check_in_time
+            check_in_time = event_time(existing_session, "check_in_time")
             if track_checkout:
                 event_type = "check_out"
                 check_out_time = timestamp
-                duration = check_out_time - check_in_time
-                total_hours = max(0, duration.total_seconds() / 3600.0)
+                total_hours = max(
+                    0, elapsed_seconds(check_in_time, check_out_time) / 3600.0
+                )
             else:
                 # Preserve earliest check-in if not tracking check-out
-                check_in_time = min(existing_session.check_in_time, timestamp)
+                check_in_time = min(
+                    (check_in_time, timestamp),
+                    key=lambda value: ensure_local_aware(value).astimezone(
+                        timezone.utc
+                    ),
+                )
 
         is_late, late_minutes = self._calculate_late_status(
             check_in_time, normalized_rule
@@ -627,7 +658,9 @@ class AttendanceService:
                     ),
                     "total_hours": total_hours,
                     "time_health": (
-                        time_health_payload if time_health.warning_message else None
+                        time_health_payload
+                        if time_health_payload.get("warning_message")
+                        else None
                     ),
                     "member": {
                         "name": member.name,

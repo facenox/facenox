@@ -62,13 +62,20 @@ async def export_attendance_data(
         # Capture before reading any table so edits made during export are retried.
         export_boundary = get_time_authority().current_time_local()
         since_dt = None
+        since_utc = None
         if since:
             try:
-                from datetime import datetime
+                from datetime import datetime, timezone, timedelta
 
-                since_dt = to_storage_local(
-                    datetime.fromisoformat(since.replace("Z", "+00:00"))
-                )
+                cursor_time = datetime.fromisoformat(since.replace("Z", "+00:00"))
+                if cursor_time.tzinfo is None:
+                    raise ValueError("Sync cursor requires an explicit offset.")
+                since_dt = to_storage_local(cursor_time)
+                # SQLite CURRENT_TIMESTAMP has second precision. Overlap one
+                # second so writes later in the boundary second aren't skipped.
+                since_utc = cursor_time.astimezone(timezone.utc).replace(
+                    tzinfo=None
+                ) - timedelta(seconds=1)
             except ValueError:
                 pass
 
@@ -103,8 +110,16 @@ async def export_attendance_data(
         records_query = select(AttendanceRecord)
         records_query = repo._apply_org_scope(records_query, AttendanceRecord)
         if since_dt:
+            from sqlalchemy import or_, and_
+
             records_query = records_query.where(
-                AttendanceRecord.last_modified_at >= since_dt
+                or_(
+                    AttendanceRecord.modified_at_utc >= since_utc,
+                    and_(
+                        AttendanceRecord.modified_at_utc.is_(None),
+                        AttendanceRecord.last_modified_at >= since_dt,
+                    ),
+                )
             )
         records_result = await repo.session.execute(
             records_query.order_by(AttendanceRecord.timestamp.desc())
@@ -115,7 +130,13 @@ async def export_attendance_data(
         sessions_query = repo._apply_org_scope(sessions_query, AttendanceSession)
         if since_dt:
             sessions_query = sessions_query.where(
-                AttendanceSession.last_modified_at >= since_dt
+                or_(
+                    AttendanceSession.modified_at_utc >= since_utc,
+                    and_(
+                        AttendanceSession.modified_at_utc.is_(None),
+                        AttendanceSession.last_modified_at >= since_dt,
+                    ),
+                )
             )
         sessions_result = await repo.session.execute(
             sessions_query.order_by(AttendanceSession.date.desc())

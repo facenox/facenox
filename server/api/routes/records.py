@@ -16,7 +16,8 @@ from api.deps import get_repository, get_face_detector, get_face_recognizer
 from database.repository import AttendanceRepository
 from services.attendance_service import AttendanceService
 from services.time_authority_service import get_time_authority
-from time_utils import local_day_bounds, local_date_string, to_storage_local
+from time_utils import local_day_bounds
+from attendance_time import manual_event_time, event_time, normalize_session_times
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,10 @@ async def add_record(
         # Prepare record data
         service = AttendanceService(repo)
         record_id = service.generate_id()
-        timestamp = (
-            to_storage_local(record_data.timestamp)
-            if record_data.timestamp
-            else to_storage_local(get_time_authority().current_time_local())
+        settings = await repo.get_settings()
+        timestamp = manual_event_time(
+            record_data.timestamp or get_time_authority().current_time_local(),
+            settings.attendance_timezone,
         )
 
         db_record_data = {
@@ -60,7 +61,7 @@ async def add_record(
         }
 
         created_record = await repo.add_record(db_record_data)
-        session_date = local_date_string(record_data.timestamp or timestamp)
+        session_date = timestamp.strftime("%Y-%m-%d")
         await service.recompute_sessions_for_date(
             member.group_id, session_date, person_id=record_data.person_id
         )
@@ -84,6 +85,8 @@ async def add_record(
 
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Error adding record: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -106,16 +109,27 @@ async def get_records(
                 hour=23, minute=59, second=59, microsecond=999999
             )
 
+        settings = await repo.get_settings()
         records = await repo.get_records(
             group_id=group_id,
             person_id=person_id,
-            start_date=to_storage_local(start_date) if start_date else None,
-            end_date=to_storage_local(end_date) if end_date else None,
+            start_date=manual_event_time(
+                start_date, settings.attendance_timezone
+            ).replace(tzinfo=None)
+            if start_date
+            else None,
+            end_date=manual_event_time(end_date, settings.attendance_timezone).replace(
+                tzinfo=None
+            )
+            if end_date
+            else None,
             limit=limit,
             include_voided=include_voided,
         )
         return records
 
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Error getting records: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -146,7 +160,7 @@ async def void_record(
         service = AttendanceService(repo)
         await service.recompute_sessions_for_date(
             voided_record.group_id,
-            local_date_string(voided_record.timestamp),
+            voided_record.timestamp.strftime("%Y-%m-%d"),
             person_id=voided_record.person_id,
         )
         await repo.add_audit_log(
@@ -305,6 +319,16 @@ async def update_session(
     try:
         import ulid
 
+        settings = await repo.get_settings()
+        for field in ("check_in_time", "check_out_time"):
+            value = getattr(payload, field)
+            if value is not None:
+                setattr(
+                    payload,
+                    field,
+                    manual_event_time(value, settings.attendance_timezone),
+                )
+
         session_obj = await repo.get_session(person_id, date)
         if not session_obj:
             # If session doesn't exist (e.g. member was absent), create an override session!
@@ -332,10 +356,17 @@ async def update_session(
                 session_obj.status = payload.status
             if payload.notes is not None:
                 session_obj.notes = payload.notes
-            if payload.check_in_time is not None:
-                session_obj.check_in_time = payload.check_in_time
-            if payload.check_out_time is not None:
-                session_obj.check_out_time = payload.check_out_time
+            if payload.check_in_time is not None or payload.check_out_time is not None:
+                times = normalize_session_times(
+                    {
+                        "check_in_time": payload.check_in_time
+                        or event_time(session_obj, "check_in_time"),
+                        "check_out_time": payload.check_out_time
+                        or event_time(session_obj, "check_out_time"),
+                    }
+                )
+                for key, value in times.items():
+                    setattr(session_obj, key, value)
             if payload.is_late is not None:
                 session_obj.is_late = payload.is_late
             if payload.late_minutes is not None:
@@ -358,6 +389,10 @@ async def update_session(
 
         return session_obj
 
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Error overriding session: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

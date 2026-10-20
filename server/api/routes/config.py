@@ -49,9 +49,10 @@ async def update_settings(
 ):
     """Update attendance settings"""
     try:
+        settings = await repo.get_settings()
         update_data = {}
         for field, value in updates.model_dump(exclude_unset=True).items():
-            if value is not None:
+            if value is not None and getattr(settings, field, None) != value:
                 update_data[field] = value
 
         if not update_data:

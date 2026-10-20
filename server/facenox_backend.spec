@@ -37,7 +37,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=onnx_datas + [
+    datas=onnx_datas + collect_data_files("tzdata") + [
         ('core/models', 'core/models'),  # Models moved to core/models
         ('config', 'config'),  # Config package (includes settings.py)
         ('database', 'database'),  # Database managers (repository.py, face.py)
@@ -90,4 +90,3 @@ exe = EXE(
     entitlements_file=None,
     icon=None,
 )
-

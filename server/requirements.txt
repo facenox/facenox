@@ -24,3 +24,7 @@ cryptography==46.0.5
 
 # OS Keyring Access
 keyring==25.1.0
+
+# Historical local-time rules (including Windows packaged builds)
+tzlocal==5.4.4
+tzdata==2026.5

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from sqlalchemy import (
     String,
@@ -147,6 +147,20 @@ class AttendanceRecord(Base, SyncMixin):
         String, ForeignKey("attendance_groups.id"), nullable=False
     )
     timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    # Nullable companions: legacy rows are deliberately not guessed/backfilled.
+    timestamp_utc: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True, index=True
+    )
+    timestamp_timezone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    timestamp_offset_seconds: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    modified_at_utc: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        onupdate=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+    )
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
     location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -186,6 +200,28 @@ class AttendanceSession(Base, SyncMixin):
     date: Mapped[str] = mapped_column(String, nullable=False)  # YYYY-MM-DD
     check_in_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     check_out_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    check_in_time_utc: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
+    check_in_time_timezone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    check_in_time_offset_seconds: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    check_out_time_utc: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
+    check_out_time_timezone: Mapped[Optional[str]] = mapped_column(
+        String, nullable=True
+    )
+    check_out_time_offset_seconds: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    modified_at_utc: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        onupdate=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+    )
     total_hours: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=False, default="absent")
     is_late: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -247,6 +283,7 @@ class AttendanceGroupRule(Base, SyncMixin):
 class AttendanceSettings(Base, SyncMixin):
     __tablename__ = "attendance_settings"
 
+    attendance_timezone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     late_threshold_minutes: Mapped[int] = mapped_column(Integer, default=15)
     enable_location_tracking: Mapped[bool] = mapped_column(Boolean, default=False)

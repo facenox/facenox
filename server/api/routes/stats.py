@@ -10,7 +10,7 @@ from api.deps import get_repository
 from database.repository import AttendanceRepository
 from services.attendance_service import AttendanceService
 from services.time_authority_service import get_time_authority
-from time_utils import local_day_bounds, local_date_string
+from time_utils import local_day_bounds
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +38,12 @@ async def get_group_stats(
     to build precise and up-to-date attendance state before calculating group-wide statistics.
     """
     try:
-        target_date = date or local_date_string(
-            get_time_authority().current_time_local()
-        )
+        from attendance_time import manual_event_time
+
+        settings = await repo.get_settings()
+        target_date = date or manual_event_time(
+            get_time_authority().current_time_utc(), settings.attendance_timezone
+        ).strftime("%Y-%m-%d")
 
         if group_id.lower() == "all":
             members = await repo.get_members(is_active=True)

@@ -278,6 +278,16 @@ export class BackgroundSyncManager {
   private async applyRemotePolicy(policy?: Record<string, unknown> | null) {
     if (!policy || typeof policy !== "object") return
 
+    if (typeof policy.timezone === "string") {
+      // Apply the administrator-confirmed site clock to attendance, never to
+      // the OS clock. Persist in the backend for offline scans and restarts.
+      const response = await fetch(`${backendService.getUrl()}/attendance/settings`, {
+        method: "PUT",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ attendance_timezone: policy.timezone }),
+      })
+      if (!response.ok) throw new Error("Could not apply the location attendance timezone.")
+    }
     if (typeof policy.forceLiveness === "boolean") {
       persistentStore.set("sync.policy.forceLiveness", policy.forceLiveness)
     }

@@ -91,6 +91,36 @@ describe("BackgroundSyncManager", () => {
     vi.useRealTimers()
   })
 
+  it("persists the confirmed location timezone through the authenticated local backend", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const manager = new BackgroundSyncManager() as unknown as {
+      applyRemotePolicy(policy: { timezone?: string | null }): Promise<void>
+    }
+    mockStore["sync.organizationId"] = "org-timezone"
+    vi.mocked(fetch).mockResolvedValue(new Response("{}"))
+    await manager.applyRemotePolicy({ timezone: "Australia/Sydney" })
+    expect(fetch).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/attendance/settings",
+      expect.objectContaining({
+        method: "PUT",
+        headers: expect.objectContaining({
+          "X-Facenox-Token": "mock-backend-token",
+          "X-Facenox-Organization": "org-timezone",
+        }),
+        body: JSON.stringify({ attendance_timezone: "Australia/Sydney" }),
+      }),
+    )
+  })
+
+  it("does not claim successful timezone policy application when the backend rejects it", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const manager = new BackgroundSyncManager() as unknown as {
+      applyRemotePolicy(policy: { timezone?: string | null }): Promise<void>
+    }
+    vi.mocked(fetch).mockResolvedValue(new Response("{}", { status: 422 }))
+    await expect(manager.applyRemotePolicy({ timezone: "invalid" })).rejects.toThrow("timezone")
+  })
+
   it("resumes an interrupted upload with the same snapshot IDs without exporting again", async () => {
     const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
     const records = Array.from({ length: 300 }, (_, index) => ({

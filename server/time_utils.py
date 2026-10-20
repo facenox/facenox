@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime, time, timezone
+from tzlocal import get_localzone
 
 
 def get_local_timezone():
-    return datetime.now().astimezone().tzinfo or timezone.utc
+    # Keep historical DST rules, not a snapshot of today's UTC offset.
+    # tzdata supplies the IANA rules on Windows and frozen distributions.
+    return get_localzone()
 
 
 def authoritative_local_now() -> datetime:
@@ -85,8 +88,13 @@ def local_date_string(value: datetime) -> str:
     return ensure_local_aware(value).strftime("%Y-%m-%d")
 
 
+def elapsed_seconds(start: datetime, end: datetime) -> float:
+    """Measure elapsed instants instead of wall-clock hours across a DST change."""
+    return (ensure_utc_aware(end) - ensure_utc_aware(start)).total_seconds()
+
+
 def local_day_bounds(date_string: str) -> tuple[datetime, datetime]:
     target_date = datetime.strptime(date_string, "%Y-%m-%d").date()
     start = datetime.combine(target_date, time.min)
-    end = datetime.combine(target_date, time.max).replace(microsecond=0)
+    end = datetime.combine(target_date, time.max)
     return start, end

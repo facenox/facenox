@@ -34,6 +34,7 @@ from api.schemas import (
 from core.cipher import encrypt_local_data
 from services.time_authority_service import get_time_authority
 from time_utils import to_storage_local
+from attendance_time import restore_fields
 
 logger = logging.getLogger(__name__)
 
@@ -355,7 +356,7 @@ async def import_backup(
                     person_id=record.person_id,
                     member_id=member.id,
                     group_id=record.group_id,
-                    timestamp=to_storage_local(record.timestamp),
+                    **restore_fields(record, "timestamp"),
                     confidence=record.confidence,
                     location=record.location,
                     notes=record.notes,
@@ -388,16 +389,8 @@ async def import_backup(
                     group_id=session.group_id,
                     applied_rule_id=session.applied_rule_id,
                     date=session.date,
-                    check_in_time=(
-                        to_storage_local(session.check_in_time)
-                        if session.check_in_time
-                        else None
-                    ),
-                    check_out_time=(
-                        to_storage_local(session.check_out_time)
-                        if session.check_out_time
-                        else None
-                    ),
+                    **restore_fields(session, "check_in_time"),
+                    **restore_fields(session, "check_out_time"),
                     total_hours=session.total_hours,
                     status=session.status,
                     is_late=session.is_late,

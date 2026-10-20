@@ -1,7 +1,7 @@
 from typing import Optional, List, Any, Dict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
-from sqlalchemy import select, desc, func, update, delete
+from sqlalchemy import select, desc, func, update, delete, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 import ulid
 
@@ -15,7 +15,8 @@ from database.models import (
     AuditLog,
     Face,
 )
-from time_utils import local_now, to_storage_local
+from time_utils import local_now, to_storage_local, ensure_utc_aware
+from attendance_time import capture_fields, event_time, normalize_session_times
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,7 @@ class AttendanceRepository:
 
         return {
             "organization_id": self.organization_id,
+            "attendance_timezone": source.attendance_timezone,
             "late_threshold_minutes": source.late_threshold_minutes,
             "enable_location_tracking": source.enable_location_tracking,
             "confidence_threshold": source.confidence_threshold,
@@ -541,7 +543,7 @@ class AttendanceRepository:
             person_id=record_data["person_id"],
             member_id=member_id,
             group_id=record_data["group_id"],
-            timestamp=record_data["timestamp"],
+            **capture_fields("timestamp", event_time(record_data, "timestamp")),
             confidence=record_data["confidence"],
             location=record_data.get("location"),
             notes=record_data.get("notes"),
@@ -599,11 +601,51 @@ class AttendanceRepository:
 
     async def get_latest_record_timestamp(self) -> Optional[datetime]:
         """Get the timestamp of the absolute latest attendance record in the database."""
-        query = select(func.max(AttendanceRecord.timestamp))
+        query = select(func.max(AttendanceRecord.timestamp_utc))
         # Note: We don't apply org scope here because we want the absolute
         # machine-wide latest time to prevent any user from back-dating.
         result = await self.session.execute(query)
-        return result.scalar()
+        latest_utc = result.scalar()
+        legacy = (
+            await self.session.execute(
+                select(func.max(AttendanceRecord.timestamp)).where(
+                    AttendanceRecord.timestamp_utc.is_(None)
+                )
+            )
+        ).scalar()
+        candidates = []
+        if latest_utc is not None:
+            candidates.append(latest_utc.replace(tzinfo=timezone.utc))
+        if legacy is not None:
+            candidates.append(ensure_utc_aware(legacy))
+        return max(candidates) if candidates else None
+
+    async def get_recent_records_by_instant(
+        self, person_id: str, start: datetime, end: datetime
+    ) -> List[AttendanceRecord]:
+        """Exact-time cooldown window, including both occurrences of a DST hour."""
+        start_utc = start.astimezone(timezone.utc).replace(tzinfo=None)
+        end_utc = end.astimezone(timezone.utc).replace(tzinfo=None)
+        query = self._apply_org_scope(select(AttendanceRecord), AttendanceRecord).where(
+            AttendanceRecord.person_id == person_id,
+            AttendanceRecord.is_voided.is_(False),
+            or_(
+                and_(
+                    AttendanceRecord.timestamp_utc >= start_utc,
+                    AttendanceRecord.timestamp_utc <= end_utc,
+                ),
+                # Legacy timestamps have no exact-time authority. Keep the old
+                # local-time fallback, widening around folds before filtering.
+                and_(
+                    AttendanceRecord.timestamp_utc.is_(None),
+                    AttendanceRecord.timestamp
+                    >= to_storage_local(start) - timedelta(days=1),
+                    AttendanceRecord.timestamp
+                    <= to_storage_local(end) + timedelta(days=1),
+                ),
+            ),
+        )
+        return list((await self.session.execute(query)).scalars().all())
 
     async def void_record(
         self,
@@ -626,6 +668,7 @@ class AttendanceRepository:
 
     # Session Methods
     async def upsert_session(self, session_data: Dict[str, Any]) -> AttendanceSession:
+        session_data = normalize_session_times(session_data)
         member = await self.get_member(session_data["person_id"])
         member_id = member.id if member else None
 
@@ -666,6 +709,9 @@ class AttendanceRepository:
                 last_modified_at=to_storage_local(local_now()),
             )
             self.session.add(session_obj)
+        for field in ("check_in_time", "check_out_time"):
+            for suffix in ("_utc", "_timezone", "_offset_seconds"):
+                setattr(session_obj, field + suffix, session_data.get(field + suffix))
         return session_obj
 
     async def upsert_sessions(
@@ -679,6 +725,7 @@ class AttendanceRepository:
         """
         if not sessions_data:
             return []
+        sessions_data = [normalize_session_times(sd) for sd in sessions_data]
 
         person_ids = list({sd["person_id"] for sd in sessions_data})
         members_map = {}
@@ -749,6 +796,7 @@ class AttendanceRepository:
         from sqlalchemy import func
 
         dynamic_set["last_modified_at"] = func.current_timestamp()
+        dynamic_set["modified_at_utc"] = func.current_timestamp()
 
         upsert_stmt = stmt.on_conflict_do_update(
             index_elements=["member_id", "date"],

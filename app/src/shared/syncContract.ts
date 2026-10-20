@@ -2,6 +2,21 @@ import { z } from "zod"
 
 export const attendanceStatusSchema = z.enum(["present", "absent"])
 
+const captureTimezoneSchema = z
+  .string()
+  .max(100)
+  .refine((value) => {
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: value })
+      return true
+    } catch {
+      return false
+    }
+  }, "Invalid capture timezone")
+  .nullable()
+  .optional()
+const captureOffsetSchema = z.number().int().min(-86399).max(86399).nullable().optional()
+
 export const groupSettingsSchema = z.object({
   late_threshold_minutes: z.number().nullable().optional(),
   late_threshold_enabled: z.boolean().default(false),
@@ -44,6 +59,8 @@ export const attendanceRecordSchema = z.object({
   member_id: z.string().min(1),
   group_id: z.string().min(1),
   timestamp: z.string().datetime(),
+  timestamp_timezone: captureTimezoneSchema,
+  timestamp_offset_seconds: captureOffsetSchema,
   confidence: z.number(),
   location: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
@@ -63,6 +80,10 @@ export const attendanceSessionSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   check_in_time: z.string().datetime().nullable().optional(),
   check_out_time: z.string().datetime().nullable().optional(),
+  check_in_time_timezone: captureTimezoneSchema,
+  check_in_time_offset_seconds: captureOffsetSchema,
+  check_out_time_timezone: captureTimezoneSchema,
+  check_out_time_offset_seconds: captureOffsetSchema,
   total_hours: z.number().nullable().optional(),
   status: attendanceStatusSchema,
   is_late: z.boolean(),

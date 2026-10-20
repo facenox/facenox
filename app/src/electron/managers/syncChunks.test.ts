@@ -112,3 +112,41 @@ it("rejects a single oversized entry explicitly and still emits an empty heartbe
   ]
   expect(() => buildSyncChunks(input, 2200)).toThrow("entry exceeds")
 })
+
+it("retains capture context through validation and chunk packing", () => {
+  const input = payload()
+  input.attendance_export.records = [
+    {
+      id: "r",
+      person_id: "p",
+      member_id: "p",
+      group_id: "g",
+      timestamp: "2026-11-01T06:30:00Z",
+      timestamp_timezone: "America/New_York",
+      timestamp_offset_seconds: -18000,
+      confidence: 1,
+      is_manual: false,
+      is_voided: false,
+    },
+  ]
+  input.attendance_export.sessions = [
+    {
+      id: "s",
+      person_id: "p",
+      member_id: "p",
+      group_id: "g",
+      date: "2026-11-01",
+      check_in_time: "2026-11-01T05:30:00Z",
+      check_out_time: "2026-11-01T06:30:00Z",
+      check_in_time_timezone: "America/New_York",
+      check_in_time_offset_seconds: -14400,
+      check_out_time_timezone: "America/New_York",
+      check_out_time_offset_seconds: -18000,
+      status: "present",
+      is_late: false,
+    },
+  ]
+  const [chunk] = buildSyncChunks(input)
+  expect(chunk.attendance_export.records).toEqual(input.attendance_export.records)
+  expect(chunk.attendance_export.sessions).toEqual(input.attendance_export.sessions)
+})

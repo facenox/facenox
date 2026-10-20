@@ -2,10 +2,41 @@
 
 from datetime import datetime
 from typing import Dict, List, Optional
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 from enum import Enum
+from zoneinfo import ZoneInfo
 
 from time_utils import to_api_utc
+from attendance_time import event_time, read_value
+
+
+class CapturedAttendanceResponse(BaseModel):
+    """Prefer preserved instants while keeping legacy API datetime field names."""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _captured_instants(cls, value):
+        data = (
+            dict(value)
+            if isinstance(value, dict)
+            else {
+                name: getattr(value, name)
+                for name in cls.model_fields
+                if hasattr(value, name)
+            }
+        )
+        for field in ("timestamp", "check_in_time", "check_out_time"):
+            if field in cls.model_fields:
+                captured = event_time(value, field)
+                if captured is not None:
+                    data[field] = captured
+                # Only export provenance when its companions actually resolved
+                # this event, not stale metadata left by a legacy writer.
+                utc = read_value(value, f"{field}_utc")
+                if utc is not None and captured is not None and captured.tzinfo is None:
+                    data[f"{field}_timezone"] = None
+                    data[f"{field}_offset_seconds"] = None
+        return data
 
 
 def _normalize_api_datetime(value):
@@ -176,12 +207,14 @@ class AttendanceRecordCreate(BaseModel):
     created_by: Optional[str] = Field(None, max_length=100)
 
 
-class AttendanceRecordResponse(BaseModel):
+class AttendanceRecordResponse(CapturedAttendanceResponse):
     id: str
     person_id: str
     member_id: str
     group_id: str
     timestamp: datetime
+    timestamp_timezone: Optional[str] = None
+    timestamp_offset_seconds: Optional[int] = None
     confidence: float
     location: Optional[str]
     notes: Optional[str]
@@ -205,7 +238,7 @@ class AttendanceRecordVoidRequest(BaseModel):
 
 
 # Session Models
-class AttendanceSessionResponse(BaseModel):
+class AttendanceSessionResponse(CapturedAttendanceResponse):
     id: str
     person_id: str
     member_id: str
@@ -214,6 +247,10 @@ class AttendanceSessionResponse(BaseModel):
     date: str  # YYYY-MM-DD format
     check_in_time: Optional[datetime]
     check_out_time: Optional[datetime] = None
+    check_in_time_timezone: Optional[str] = None
+    check_in_time_offset_seconds: Optional[int] = None
+    check_out_time_timezone: Optional[str] = None
+    check_out_time_offset_seconds: Optional[int] = None
     total_hours: Optional[float] = None
     status: AttendanceStatus
     is_late: bool
@@ -297,6 +334,18 @@ class AttendanceEventResponse(BaseModel):
 
 # Settings Models
 class AttendanceSettingsUpdate(BaseModel):
+    attendance_timezone: Optional[str] = Field(None, max_length=100)
+
+    @field_validator("attendance_timezone")
+    @classmethod
+    def _valid_attendance_timezone(cls, value):
+        if value:
+            try:
+                ZoneInfo(value)
+            except (KeyError, ValueError) as error:
+                raise ValueError("Choose a valid IANA attendance timezone.") from error
+        return value
+
     late_threshold_minutes: Optional[int] = Field(None, ge=0, le=120)
     enable_location_tracking: Optional[bool] = None
     confidence_threshold: Optional[float] = Field(None, ge=0.0, le=1.0)
@@ -310,6 +359,7 @@ class AttendanceSettingsUpdate(BaseModel):
 
 
 class AttendanceSettingsResponse(BaseModel):
+    attendance_timezone: Optional[str] = None
     late_threshold_minutes: int
     enable_location_tracking: bool
     confidence_threshold: float
