@@ -53,18 +53,21 @@ export function ManualCorrectionModal({
       const store = useAttendanceStore.getState()
       store.setRecentAttendance(store.recentAttendance.filter((item) => item.id !== record.id))
 
-      if (store.currentGroup) {
-        const cooldownKey = `${record.person_id}-${store.currentGroup.id}`
+      const targetGroupId = record.group_id || store.currentGroup?.id
+      if (targetGroupId) {
         store.setPersistentCooldowns((prev) => {
           const next = new Map(prev)
-          next.delete(cooldownKey)
+          next.delete(`${record.person_id}-${targetGroupId}`)
+          if (store.currentGroup) {
+            next.delete(`${record.person_id}-${store.currentGroup.id}`)
+          }
           return next
         })
 
         // Dynamic Backend Cooldown Reset: Trigger config reload over the active socket to wipe the Python cache
         const activeSocket = getActiveWebSocketService()
-        if (activeSocket && activeSocket.isWebSocketReady()) {
-          activeSocket.updateLiveConfig({ groupId: store.currentGroup.id })
+        if (activeSocket && activeSocket.isWebSocketReady() && targetGroupId !== "all") {
+          activeSocket.updateLiveConfig({ groupId: targetGroupId })
         }
       }
 

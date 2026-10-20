@@ -10,6 +10,7 @@ import type {
   WebSocketFaceData,
 } from "@/components/main/types"
 import { cleanupStream, cleanupVideo, cleanupAnimationFrame } from "@/components/main/utils"
+import { ALL_GROUPS_ID } from "@/components/main/hooks/useAttendanceGroups"
 import {
   useCameraStore,
   useDetectionStore,
@@ -185,7 +186,8 @@ export function useBackendService(options: UseBackendServiceOptions) {
           )
         }
 
-        if (currentGroup && payload.group_id === currentGroup.id) {
+        const isAllGroups = currentGroup?.id === ALL_GROUPS_ID || currentGroup?.id === "all"
+        if (currentGroup && (payload.group_id === currentGroup.id || isAllGroups)) {
           const member =
             payload.member?.name ?
               { name: payload.member.name }
