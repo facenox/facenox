@@ -1,15 +1,12 @@
 import Ably from "ably"
-import {
-  syncPushSchema,
-  type SyncPushPayload,
-  type FaceEmbedding,
-} from "../../shared/syncContract.js"
+import { type SyncPushPayload, type FaceEmbedding } from "../../shared/syncContract.js"
 import { withLocalBackendHeaders } from "../localBackendScope.js"
 import { persistentStore } from "../persistentStore.js"
 import { backendService } from "../backendService.js"
 import { state } from "../State.js"
 import { getCurrentVersion, checkForUpdates, notifyRenderer } from "../updater.js"
 import { decryptEmbedding, encryptEmbedding } from "./EmbeddingCrypto.js"
+import { buildSyncChunks } from "./syncChunks.js"
 import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
@@ -182,6 +179,7 @@ export class BackgroundSyncManager {
   private ablyChannel: Ably.RealtimeChannel | null = null
   private isSyncing = false
   private isPollingCommands = false
+  private isWiping = false
   /** When true, a sync will be re-triggered once the current one finishes. */
   private pendingSyncRequested = false
   private pendingPullRequested = false
@@ -205,14 +203,28 @@ export class BackgroundSyncManager {
   }
 
   private getSyncConfig() {
+    let deviceToken: string
+    let encryptionKey = ""
+    try {
+      deviceToken = (persistentStore.get("sync.deviceToken") as string) || ""
+      encryptionKey = (persistentStore.get("sync.encryptionKey") as string) || ""
+    } catch (error) {
+      // Keyring failure pauses Cloud, not offline attendance or application startup.
+      this.setLastSyncState({
+        lastSyncStatus: "error",
+        lastSyncMessage:
+          error instanceof Error ? error.message : "Cloud credentials are unavailable.",
+      })
+      deviceToken = ""
+    }
     return {
       enabled: persistentStore.get("sync.enabled") as boolean,
       remoteBaseUrl:
         (persistentStore.get("sync.remoteBaseUrl") as string) || DEFAULT_REMOTE_BASE_URL,
       siteId: (persistentStore.get("sync.siteId") as string) || "",
       deviceId: (persistentStore.get("sync.deviceId") as string) || "",
-      deviceToken: (persistentStore.get("sync.deviceToken") as string) || "",
-      encryptionKey: (persistentStore.get("sync.encryptionKey") as string) || "",
+      deviceToken,
+      encryptionKey,
       intervalMinutes:
         (persistentStore.get("sync.intervalMinutes") as number) || DEFAULT_SYNC_INTERVAL_MINUTES,
       lastSyncedAt: (persistentStore.get("sync.lastSyncedAt") as string | null) || null,
@@ -498,6 +510,19 @@ export class BackgroundSyncManager {
 
   private async executeCommand(cmd: DeviceCommand) {
     console.log(`[RemoteMgmt] Executing command: ${cmd.command} (${cmd.id})`)
+    const receiptKey = `sync.commandReceipts.${cmd.id}`
+    const previous = persistentStore.get(receiptKey) as
+      { status: string; result: CommandResult } | undefined
+    if (previous) {
+      await this.acknowledgeCommand(cmd.id, previous.status, previous.result)
+      return
+    }
+    // Persist intent before any side effect. If the process dies mid-command,
+    // report an indeterminate outcome rather than repeating a destructive wipe.
+    persistentStore.set(receiptKey, {
+      status: "failed",
+      result: { error: "Command interrupted; outcome unknown. Operator review required." },
+    })
     let status = "completed"
     let result: CommandResult
 
@@ -505,16 +530,26 @@ export class BackgroundSyncManager {
       switch (cmd.command) {
         case "WIPE": {
           console.warn("[RemoteMgmt] REMOTE DATA WIPE RECEIVED. Executing programmatically.")
-
-          const wipeResponse = await fetch(`${backendService.getUrl()}/attendance/wipe`, {
-            method: "POST",
-            headers: authHeaders({ "Content-Type": "application/json" }),
-            signal: AbortSignal.timeout(60000),
-          })
-          if (!wipeResponse.ok) {
-            throw new Error(`Wipe failed on local backend: ${wipeResponse.status}`)
+          this.isWiping = true
+          try {
+            this.abortController?.abort()
+            await this.idlePromise
+            const wipeResponse = await fetch(`${backendService.getUrl()}/attendance/wipe`, {
+              method: "POST",
+              headers: authHeaders({ "Content-Type": "application/json" }),
+              signal: AbortSignal.timeout(60000),
+            })
+            if (!wipeResponse.ok) {
+              throw new Error(`Wipe failed on local backend: ${wipeResponse.status}`)
+            }
+            // A durable upload is local data too. Never replay it after a wipe.
+            persistentStore.set("sync.pendingUpload", null)
+            persistentStore.set("sync.pendingAcknowledgements", null)
+            persistentStore.set("sync.lastSyncedAt", null)
+            result = (await wipeResponse.json().catch(() => ({ success: true }))) as CommandResult
+          } finally {
+            this.isWiping = false
           }
-          result = (await wipeResponse.json()) as CommandResult
           console.warn("[RemoteMgmt] LOCAL DATA WIPE COMPLETED.")
 
           const { dialog } = await import("electron")
@@ -588,22 +623,30 @@ export class BackgroundSyncManager {
       result = { error: error instanceof Error ? error.message : String(error) }
     }
 
-    // Acknowledge command execution back to dashboard
+    persistentStore.set(receiptKey, { status, result })
+    await this.acknowledgeCommand(cmd.id, status, result)
+  }
+
+  private async acknowledgeCommand(commandId: string, status: string, result: CommandResult) {
     try {
       const { remoteBaseUrl, deviceToken } = this.getSyncConfig()
-      await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/devices/commands/ack`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${deviceToken}`,
+      const response = await fetch(
+        `${remoteBaseUrl.replace(/\/+$/, "")}/api/devices/commands/ack`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${deviceToken}`,
+          },
+          body: JSON.stringify({
+            commandId,
+            status,
+            result,
+          }),
+          signal: AbortSignal.timeout(10000),
         },
-        body: JSON.stringify({
-          commandId: cmd.id,
-          status,
-          result,
-        }),
-        signal: AbortSignal.timeout(10000),
-      })
+      )
+      if (!response.ok) throw new Error(`Command acknowledgement failed: HTTP ${response.status}`)
     } catch (error) {
       console.warn("[RemoteMgmt] Failed to acknowledge command:", error)
     }
@@ -712,7 +755,7 @@ export class BackgroundSyncManager {
         accumulatedMembersCount += importResult.members_count || 0
 
         // Import face embeddings from cloud using batch endpoint for this page
-        if (encryptionKey && pullPayload.face_embeddings?.length) {
+        if (pullPayload.face_embeddings?.length) {
           const batchEmbeddings: Array<{
             person_id: string
             embedding_bytes: string
@@ -725,6 +768,7 @@ export class BackgroundSyncManager {
 
           for (const fe of pullPayload.face_embeddings) {
             try {
+              if (!fe.is_deleted && !encryptionKey) throw new Error("Missing face encryption key.")
               const rawBytes =
                 fe.is_deleted ?
                   new Uint8Array()
@@ -756,12 +800,17 @@ export class BackgroundSyncManager {
                   signal: this.requestSignal(30000),
                 },
               )
-              const embBatchResult = (await embBatchResponse.json()) as { imported_count?: number }
-              if (embBatchResponse.ok) {
-                accumulatedEmbeddingsCount += embBatchResult.imported_count || 0
+              if (!embBatchResponse.ok)
+                throw new Error(`Face import failed: HTTP ${embBatchResponse.status}`)
+              const embBatchResult = (await embBatchResponse.json()) as {
+                imported_count?: number
+                failed_count?: number
               }
+              accumulatedEmbeddingsCount += embBatchResult.imported_count || 0
+              totalDecryptFailures += embBatchResult.failed_count || 0
             } catch (batchErr) {
               console.warn("[Sync] Failed to post batch embeddings:", batchErr)
+              totalDecryptFailures += batchEmbeddings.length
             }
           }
         }
@@ -780,7 +829,7 @@ export class BackgroundSyncManager {
         pullMsg += ` Imported ${accumulatedEmbeddingsCount} face embeddings.`
       }
       if (totalDecryptFailures > 0) {
-        pullMsg += ` (${totalDecryptFailures} embeddings skipped due to key mismatch)`
+        pullMsg += ` ${totalDecryptFailures} face profiles could not be imported; retry or review sync conflicts.`
       }
 
       console.log(
@@ -788,7 +837,7 @@ export class BackgroundSyncManager {
       )
       state.mainWindow?.webContents.send("sync:data-changed")
 
-      return { success: true, message: pullMsg }
+      return { success: totalDecryptFailures === 0, message: pullMsg }
     } catch (pullError) {
       const errMsg = pullError instanceof Error ? pullError.message : "unknown"
       console.warn("[Sync] Automatic metadata pull failed:", pullError)
@@ -797,14 +846,16 @@ export class BackgroundSyncManager {
   }
 
   async performSync(pullOnly = false) {
+    if (this.isWiping) return { success: false, message: "Sync is paused during a data wipe." }
     if (this.suspended) return { success: false, message: "Sync is paused for disconnect." }
     if (this.isSyncing) {
       if (pullOnly) this.pendingPullRequested = true
       else this.pendingSyncRequested = true
       return { success: false, message: "A sync is already running. Queued for re-sync." }
     }
-    const { remoteBaseUrl, siteId, deviceId, deviceToken, encryptionKey, lastSyncedAt } =
-      this.getSyncConfig()
+    const config = this.getSyncConfig()
+    const { remoteBaseUrl, siteId, deviceId, deviceToken, lastSyncedAt } = config
+    let encryptionKey = config.encryptionKey
     if (!remoteBaseUrl || !siteId || !deviceId || !deviceToken)
       return { success: false, message: "Device connection is incomplete." }
     this.isSyncing = true
@@ -812,88 +863,139 @@ export class BackgroundSyncManager {
     this.idlePromise = new Promise((resolve) => {
       this.finishSync = resolve
     })
-    const acknowledged = emptyAcknowledgements()
+    type PendingUpload = {
+      deviceId: string
+      siteId: string
+      remoteBaseUrl: string
+      exportedAt: string
+      chunks: SyncPushPayload[]
+      next: number
+      acknowledged: SyncAcknowledgements
+    }
+    let pending = persistentStore.get("sync.pendingUpload") as PendingUpload | undefined
+    if (
+      pending &&
+      (pending.deviceId !== deviceId ||
+        pending.siteId !== siteId ||
+        pending.remoteBaseUrl !== remoteBaseUrl)
+    ) {
+      // Never upload a previous organization's data to a new connection.
+      pending = undefined
+      persistentStore.set("sync.pendingUpload", null)
+    }
+    const acknowledged =
+      pending?.acknowledged ??
+      (persistentStore.get("sync.pendingAcknowledgements") as SyncAcknowledgements | undefined) ??
+      emptyAcknowledgements()
     let pushError: string | null = null
     let exportedAt: string | null = null
     let pushed = false
     let conflicts = 0
+    let keyError: string | null = null
     try {
+      if (!encryptionKey) {
+        try {
+          const keyResponse = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/device/key`, {
+            headers: { Authorization: `Bearer ${deviceToken}` },
+            signal: this.requestSignal(15000),
+          })
+          if (keyResponse.ok) {
+            const keyPayload = (await keyResponse.json()) as {
+              siteId?: string
+              encryptionKey?: string | null
+            }
+            if (keyPayload.encryptionKey) {
+              if (
+                keyPayload.siteId !== siteId ||
+                Buffer.from(keyPayload.encryptionKey, "base64").length !== 32
+              ) {
+                throw new Error("Cloud returned an invalid site key.")
+              }
+              persistentStore.set("sync.encryptionKey", keyPayload.encryptionKey)
+              encryptionKey = keyPayload.encryptionKey
+            }
+          } else if (keyResponse.status !== 404) {
+            throw new Error(`Could not retrieve the site key: HTTP ${keyResponse.status}`)
+          }
+        } catch (error) {
+          // A key-service failure must not hold non-biometric attendance hostage.
+          keyError = error instanceof Error ? error.message : "Face sync key unavailable."
+        }
+      }
       if (!pullOnly) {
         try {
-          const exportUrl = `${backendService.getUrl()}/attendance/export${lastSyncedAt ? `?since=${encodeURIComponent(lastSyncedAt)}` : ""}`
-          const response = await fetch(exportUrl, {
-            method: "POST",
-            headers: authHeaders({ "Content-Type": "application/json" }),
-            signal: this.requestSignal(60000),
-          })
-          if (!response.ok) throw new Error(`Local export failed: HTTP ${response.status}`)
-          const attendance = normalizeAttendanceExportForRemote(
-            (await response.json()) as Record<string, unknown>,
-          )
-          exportedAt = attendance.exported_at
-          let faces: NonNullable<SyncPushPayload["attendance_export"]["face_embeddings"]> = []
-          if (encryptionKey) {
-            const faceResponse = await fetch(
-              `${backendService.getUrl()}/attendance/export-embeddings`,
-              { method: "POST", headers: authHeaders(), signal: this.requestSignal(30000) },
+          if (!pending) {
+            const exportUrl = `${backendService.getUrl()}/attendance/export${lastSyncedAt ? `?since=${encodeURIComponent(lastSyncedAt)}` : ""}`
+            const response = await fetch(exportUrl, {
+              method: "POST",
+              headers: authHeaders({ "Content-Type": "application/json" }),
+              signal: this.requestSignal(60000),
+            })
+            if (!response.ok) throw new Error(`Local export failed: HTTP ${response.status}`)
+            const attendance = normalizeAttendanceExportForRemote(
+              (await response.json()) as Record<string, unknown>,
             )
-            if (!faceResponse.ok) throw new Error("Could not export local face changes.")
-            const data = (await faceResponse.json()) as {
-              embeddings?: Array<{
-                person_id: string
-                embedding_bytes: string
-                embedding_dimension: number
-                is_deleted: boolean
-                sync_revision: number
-                version: number
-              }>
+            exportedAt = attendance.exported_at
+            let faces: NonNullable<SyncPushPayload["attendance_export"]["face_embeddings"]> = []
+            if (encryptionKey) {
+              const faceResponse = await fetch(
+                `${backendService.getUrl()}/attendance/export-embeddings`,
+                { method: "POST", headers: authHeaders(), signal: this.requestSignal(30000) },
+              )
+              if (!faceResponse.ok) throw new Error("Could not export local face changes.")
+              const data = (await faceResponse.json()) as {
+                embeddings?: Array<{
+                  person_id: string
+                  embedding_bytes: string
+                  embedding_dimension: number
+                  is_deleted: boolean
+                  sync_revision: number
+                  version: number
+                }>
+              }
+              faces = (data.embeddings || []).map((face) => ({
+                person_id: face.person_id,
+                embedding_dimension: face.embedding_dimension,
+                embedding_encrypted:
+                  face.is_deleted ? "" : (
+                    encryptEmbedding(Buffer.from(face.embedding_bytes, "base64"), encryptionKey)
+                  ),
+                is_deleted: face.is_deleted,
+                sync_revision: face.sync_revision,
+                version: face.version,
+                sync_dirty: true,
+              }))
             }
-            faces = (data.embeddings || []).map((face) => ({
-              person_id: face.person_id,
-              embedding_dimension: face.embedding_dimension,
-              embedding_encrypted:
-                face.is_deleted ? "" : (
-                  encryptEmbedding(Buffer.from(face.embedding_bytes, "base64"), encryptionKey)
-                ),
-              is_deleted: face.is_deleted,
-              sync_revision: face.sync_revision,
-              version: face.version,
-              sync_dirty: true,
-            }))
-          }
-          const groups = attendance.groups.filter((g) => g.sync_dirty !== false)
-          const members = attendance.members.filter((m) => m.sync_dirty !== false)
-          const total = Math.max(
-            1,
-            Math.ceil(attendance.records.length / 250),
-            Math.ceil(attendance.sessions.length / 250),
-            Math.ceil(members.length / 500),
-            Math.ceil(faces.length / 100),
-          )
-          for (let i = 0; i < total; i++) {
-            const chunk = {
-              ...attendance,
-              groups: i === 0 ? groups : [],
-              members: members.slice(i * 500, (i + 1) * 500),
-              records: attendance.records.slice(i * 250, (i + 1) * 250),
-              sessions: attendance.sessions.slice(i * 250, (i + 1) * 250),
-              face_embeddings: faces.slice(i * 100, (i + 1) * 100),
-            }
-            const payload = syncPushSchema.parse({
+            const groups = attendance.groups.filter((g) => g.sync_dirty !== false)
+            const members = attendance.members.filter((m) => m.sync_dirty !== false)
+            const chunks = buildSyncChunks({
               schema_version: 2,
-              snapshot_id: `${deviceId}:${exportedAt}:part-${i + 1}-of-${total}`,
               device_id: deviceId,
               site_id: siteId,
               app_version: getCurrentVersion(),
-              exported_at: exportedAt,
-              attendance_export: chunk,
+              exported_at: exportedAt!,
+              attendance_export: { ...attendance, groups, members, face_embeddings: faces },
             })
+            pending = {
+              deviceId,
+              siteId,
+              remoteBaseUrl,
+              exportedAt: exportedAt!,
+              chunks,
+              next: 0,
+              acknowledged,
+            }
+            persistentStore.set("sync.pendingUpload", pending)
+          }
+          exportedAt = pending.exportedAt
+          for (let i = pending.next; i < pending.chunks.length; i++) {
+            const payload = pending.chunks[i]
             const remote = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/push`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${deviceToken}`,
-                "X-Sync-Chunk": total > 1 ? "true" : "false",
+                "X-Sync-Chunk": pending.chunks.length > 1 ? "true" : "false",
               },
               body: JSON.stringify(payload),
               signal: this.requestSignal(60000),
@@ -927,6 +1029,9 @@ export class BackgroundSyncManager {
                 Object.assign(acknowledged.accepted[kind], result.accepted[kind])
             conflicts += result.conflicts || 0
             await this.applyRemotePolicy(result.policy)
+            pending.next = i + 1
+            pending.acknowledged = acknowledged
+            persistentStore.set("sync.pendingUpload", pending)
           }
           pushed = true
         } catch (error) {
@@ -936,12 +1041,13 @@ export class BackgroundSyncManager {
       // Downloads must remain available during quota/validation/upload failures.
       if (this.suspended) return { success: false, message: "Sync cancelled for disconnect." }
       const pull = await this.pullMetadata(acknowledged)
-      const success = !pushError && pull.success
+      const success = !pushError && !keyError && pull.success
       const message = [
         pushError ? `Upload failed: ${pushError}.`
         : pullOnly ? "Cloud updates downloaded."
         : "Snapshot synced.",
         pull.message,
+        keyError ? `Face sync needs attention: ${keyError}` : "",
         conflicts ?
           `${conflicts} concurrent changes kept the Cloud revision. Local directory details are recorded in the audit log.`
         : "",
@@ -953,6 +1059,10 @@ export class BackgroundSyncManager {
         lastSyncStatus: success ? "success" : "error",
         lastSyncMessage: message,
       })
+      // A failed face import must not prevent newer attendance from uploading.
+      // Keep directory acknowledgements separately until a successful pull.
+      persistentStore.set("sync.pendingAcknowledgements", pull.success ? null : acknowledged)
+      if (pushed) persistentStore.set("sync.pendingUpload", null)
       return { success, message, syncedAt: pushed ? exportedAt || undefined : undefined }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sync failed."

@@ -5,7 +5,7 @@ import crypto from "node:crypto"
 import { backendService } from "../backendService.js"
 import { withLocalBackendHeaders } from "../localBackendScope.js"
 import { syncManager } from "../managers/BackgroundSyncManager.js"
-import { persistentStore } from "../persistentStore.js"
+import { persistentStore, requireSecretStorage } from "../persistentStore.js"
 import { getCurrentVersion } from "../updater.js"
 import { state } from "../State.js"
 import isDev from "../util.js"
@@ -56,7 +56,13 @@ function getRemoteSyncStatus() {
   const siteName = (persistentStore.get("sync.siteName") as string) || ""
   const deviceId = (persistentStore.get("sync.deviceId") as string) || ""
   const deviceName = (persistentStore.get("sync.deviceName") as string) || ""
-  const deviceToken = (persistentStore.get("sync.deviceToken") as string) || ""
+  let deviceToken = ""
+  let credentialError: string | null = null
+  try {
+    deviceToken = (persistentStore.get("sync.deviceToken") as string) || ""
+  } catch (error) {
+    credentialError = error instanceof Error ? error.message : "Cloud credentials are unavailable."
+  }
   const enabled = Boolean(persistentStore.get("sync.enabled"))
   const intervalMinutes =
     (persistentStore.get("sync.intervalMinutes") as number) || DEFAULT_SYNC_INTERVAL_MINUTES
@@ -76,8 +82,8 @@ function getRemoteSyncStatus() {
     deviceName,
     intervalMinutes,
     lastSyncedAt,
-    lastSyncStatus,
-    lastSyncMessage,
+    lastSyncStatus: credentialError ? ("error" as const) : lastSyncStatus,
+    lastSyncMessage: credentialError ?? lastSyncMessage,
     allowKioskDirectoryManagement:
       persistentStore.get("sync.policy.allowKioskDirectoryManagement") !== false,
     connected: Boolean(remoteBaseUrl && organizationId && siteId && deviceId && deviceToken),
@@ -94,6 +100,7 @@ function clearRemoteConnection() {
   persistentStore.set("sync.deviceToken", "")
   persistentStore.set("sync.encryptionKey", "")
   persistentStore.set("sync.lastSyncedAt", null)
+  persistentStore.set("sync.pendingAcknowledgements", null)
   persistentStore.delete("sync.policy.forceLiveness")
   persistentStore.delete("sync.policy.trackCheckout")
   persistentStore.delete("sync.policy.lateThresholdEnabled")
@@ -277,6 +284,13 @@ export function registerSyncHandlers() {
 
   ipcMain.handle("sync:update-config", async (_event, updates: Record<string, unknown> = {}) => {
     if (typeof updates.remoteBaseUrl === "string") {
+      const currentUrl = resolveRemoteBaseUrl(
+        (persistentStore.get("sync.remoteBaseUrl") as string) || "",
+      )
+      const requestedUrl = resolveRemoteBaseUrl(updates.remoteBaseUrl)
+      if (persistentStore.get("sync.deviceId") && requestedUrl !== currentUrl) {
+        throw new Error("Disconnect before changing the Cloud server.")
+      }
       const trimmed = updates.remoteBaseUrl.trim()
       if (
         !trimmed ||
@@ -343,6 +357,7 @@ export function registerSyncHandlers() {
       }
 
       try {
+        requireSecretStorage()
         const response = await fetch(`${remoteBaseUrl}/api/device/pair`, {
           method: "POST",
           headers: {
@@ -453,6 +468,7 @@ export function registerSyncHandlers() {
       const deviceName = (input.deviceName || "").trim() || "Facenox Desktop"
 
       try {
+        requireSecretStorage()
         const response = await fetch(`${remoteBaseUrl}/api/device/code`, {
           method: "POST",
           headers: {

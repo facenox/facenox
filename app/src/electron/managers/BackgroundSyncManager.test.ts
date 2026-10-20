@@ -91,6 +91,185 @@ describe("BackgroundSyncManager", () => {
     vi.useRealTimers()
   })
 
+  it("resumes an interrupted upload with the same snapshot IDs without exporting again", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const records = Array.from({ length: 300 }, (_, index) => ({
+      id: `resume-${index}`,
+      person_id: "person",
+      group_id: "group",
+      timestamp: "2026-10-01T00:00:00Z",
+      confidence: 0.9,
+      is_manual: false,
+    }))
+    const pushes: string[] = []
+    let exports = 0
+    let interrupt = true
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input)
+      if (url.includes("/attendance/export-embeddings")) {
+        return new Response(JSON.stringify({ embeddings: [] }))
+      }
+      if (url.includes("/attendance/export")) {
+        exports++
+        return new Response(
+          JSON.stringify({
+            groups: [],
+            members: [],
+            records,
+            sessions: [],
+            exported_at: "2026-10-02T00:00:00Z",
+          }),
+        )
+      }
+      if (url.includes("/api/sync/push")) {
+        const payload = JSON.parse(String(init?.body)) as SyncPushPayload
+        pushes.push(payload.snapshot_id)
+        if (pushes.length === 2 && interrupt) throw new Error("Connection lost")
+        return new Response(JSON.stringify({ ok: true, status: "accepted" }))
+      }
+      if (url.includes("/api/sync/pull")) {
+        return new Response(JSON.stringify({ schema_version: 2, groups: [], members: [] }))
+      }
+      return new Response(JSON.stringify({ groups_count: 0, members_count: 0 }))
+    })
+    expect((await new BackgroundSyncManager().performSync()).success).toBe(false)
+    expect(mockStore["sync.lastSyncedAt"]).toBeNull()
+    expect(mockStore["sync.pendingUpload"]).toMatchObject({ next: 1 })
+    interrupt = false
+    expect((await new BackgroundSyncManager().performSync()).success).toBe(true)
+    expect(exports).toBe(1)
+    expect(pushes).toHaveLength(3)
+    expect(pushes[2]).toBe(pushes[1])
+    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-10-02T00:00:00.000Z")
+    expect(mockStore["sync.pendingUpload"]).toBeNull()
+  })
+
+  it("imports face tombstones without an encryption key", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    mockStore["sync.encryptionKey"] = ""
+    let imported: unknown
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input)
+      if (url.includes("/api/sync/pull"))
+        return new Response(
+          JSON.stringify({
+            schema_version: 2,
+            groups: [],
+            members: [],
+            face_embeddings: [
+              {
+                person_id: "revoked",
+                is_deleted: true,
+                embedding_encrypted: "",
+                embedding_dimension: 512,
+                sync_revision: 4,
+              },
+            ],
+          }),
+        )
+      if (url.includes("/import-embeddings-batch")) {
+        imported = JSON.parse(String(init?.body))
+        return new Response(JSON.stringify({ imported_count: 1, failed_count: 0 }))
+      }
+      return new Response(JSON.stringify({ groups_count: 0, members_count: 0 }))
+    })
+    expect((await new BackgroundSyncManager().performSync(true)).success).toBe(true)
+    expect(imported).toMatchObject({
+      embeddings: [{ person_id: "revoked", is_deleted: true, embedding_bytes: "" }],
+    })
+  })
+
+  it("does not repeat a wipe when its acknowledgement fails", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    let wipes = 0
+    let acknowledgements = 0
+    mockStore["sync.pendingUpload"] = { sensitive: "old local upload" }
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith("/api/devices/commands"))
+        return new Response(
+          JSON.stringify({
+            commands: [{ id: "command-once", command: "WIPE" }],
+          }),
+        )
+      if (url.endsWith("/attendance/wipe")) {
+        wipes++
+        return new Response(JSON.stringify({ success: true }))
+      }
+      if (url.endsWith("/commands/ack")) {
+        acknowledgements++
+        return new Response("Unavailable", { status: 503 })
+      }
+      return new Response("{}")
+    })
+    // Exercise the polling entry point, including receipt loading on a new manager.
+    await (
+      new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
+    ).pollCommands()
+    await (
+      new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
+    ).pollCommands()
+    expect(wipes).toBe(1)
+    expect(acknowledgements).toBe(2)
+    expect(mockStore["sync.commandReceipts.command-once"]).toMatchObject({ status: "completed" })
+    expect(mockStore["sync.pendingUpload"]).toBeNull()
+  })
+
+  it("acquires a site key after upgrade without pairing again", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    mockStore["sync.encryptionKey"] = ""
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      if (String(input).endsWith("/api/device/key")) {
+        return new Response(JSON.stringify({ siteId: "site-test-123", encryptionKey: TEST_KEY }))
+      }
+      if (String(input).includes("/api/sync/pull")) {
+        return new Response(JSON.stringify({ schema_version: 2, groups: [], members: [] }))
+      }
+      return new Response(JSON.stringify({ groups_count: 0, members_count: 0 }))
+    })
+    expect((await new BackgroundSyncManager().performSync(true)).success).toBe(true)
+    expect(mockStore["sync.encryptionKey"]).toBe(TEST_KEY)
+  })
+
+  it("continues attendance uploads and reports partial failure when key delivery is unavailable", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    mockStore["sync.encryptionKey"] = ""
+    let pushes = 0
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith("/api/device/key")) return new Response("Unavailable", { status: 503 })
+      if (url.includes("/attendance/export"))
+        return new Response(
+          JSON.stringify({
+            groups: [],
+            members: [],
+            records: [],
+            sessions: [],
+            exported_at: "2026-10-02T00:00:00Z",
+          }),
+        )
+      if (url.includes("/api/sync/push")) {
+        pushes++
+        return new Response(JSON.stringify({ status: "accepted" }))
+      }
+      if (url.includes("/api/sync/pull"))
+        return new Response(
+          JSON.stringify({
+            schema_version: 2,
+            groups: [],
+            members: [],
+          }),
+        )
+      return new Response(JSON.stringify({ groups_count: 0, members_count: 0 }))
+    })
+    const result = await new BackgroundSyncManager().performSync()
+    expect(pushes).toBe(1)
+    expect(result.success).toBe(false)
+    expect(result.message).toContain("Face sync needs attention")
+    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-10-02T00:00:00.000Z")
+    expect(mockStore["sync.pendingUpload"]).toBeNull()
+  })
+
   it("starts the fallback commandTimer and polls commands every 15 minutes", async () => {
     const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
     const manager = new BackgroundSyncManager()
@@ -214,9 +393,10 @@ describe("BackgroundSyncManager", () => {
 
     const result = await manager.performSync()
 
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(false)
+    expect(result.message).toContain("3 face profiles could not be imported")
 
-    // Verify import-embeddings-batch was called with the 4th valid embedding!
+    // Valid profiles are imported, but partial failure must never report success.
     const importEmbeddingsCall = vi
       .mocked(fetch)
       .mock.calls.find(([url]) => String(url).includes("/attendance/import-embeddings-batch"))

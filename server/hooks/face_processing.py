@@ -34,13 +34,20 @@ async def process_face_detection(
     min_face_size: Optional[int] = None,
     enable_liveness: bool = False,
 ) -> List[Dict]:
+    global face_detector_lock
     if not face_detector:
         logger.warning("Face detector not available")
         return []
 
-    try:
-        lock = face_detector_lock or asyncio.Lock()
-        async with lock:
+    if face_detector_lock is None:
+        face_detector_lock = asyncio.Lock()
+    # Drop frames while native inference owns the detector. A timed-out executor
+    # call is still running; cancellation must not restore its settings or unlock it.
+    if face_detector_lock.locked():
+        return []
+
+    async def detect_locked():
+        async with face_detector_lock:
             original_confidence_threshold = getattr(
                 face_detector, "score_threshold", None
             )
@@ -60,10 +67,7 @@ async def process_face_detection(
                 return face_detector.detect_faces(image, enable_liveness)
 
             try:
-                return await asyncio.wait_for(
-                    loop.run_in_executor(None, detector_call),
-                    timeout=INFERENCE_TIMEOUT_SECONDS,
-                )
+                return await loop.run_in_executor(None, detector_call)
             finally:
                 if original_confidence_threshold is not None:
                     face_detector.set_confidence_threshold(
@@ -74,6 +78,13 @@ async def process_face_detection(
                 if original_min_face_size is not None:
                     face_detector.set_min_face_size(original_min_face_size)
 
+    task = asyncio.create_task(detect_locked())
+    # Consume a late failure after the caller has timed out/disconnected.
+    task.add_done_callback(lambda done: None if done.cancelled() else done.exception())
+    try:
+        return await asyncio.wait_for(
+            asyncio.shield(task), timeout=INFERENCE_TIMEOUT_SECONDS
+        )
     except asyncio.TimeoutError:
         logger.error("Face detection timed out after %.1fs", INFERENCE_TIMEOUT_SECONDS)
         return []

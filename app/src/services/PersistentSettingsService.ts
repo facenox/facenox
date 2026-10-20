@@ -222,7 +222,6 @@ class PersistentSettingsService {
     const settings = await this.get<PersistentSettingsSchema["sync"]>("sync")
 
     if (!settings) {
-      await this.set("sync", defaultSettings.sync)
       return defaultSettings.sync
     }
 
@@ -230,8 +229,13 @@ class PersistentSettingsService {
   }
 
   async setSyncSettings(settings: Partial<PersistentSettingsSchema["sync"]>): Promise<void> {
-    const current = await this.getSyncSettings()
-    await this.set("sync", { ...current, ...settings })
+    // Connection identity, credentials and policies are main-process-owned.
+    await window.electronAPI?.sync.updateConfig({
+      enabled: settings.enabled,
+      remoteBaseUrl: settings.remoteBaseUrl,
+      deviceName: settings.deviceName,
+      intervalMinutes: settings.intervalMinutes,
+    })
   }
 
   async getSecuritySettings(): Promise<PersistentSettingsSchema["security"]> {

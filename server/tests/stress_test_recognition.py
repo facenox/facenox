@@ -70,7 +70,9 @@ def draw_filled_rounded_rect(img, pt1, pt2, color, r):
     cv2.ellipse(img, (x1 + r, y2 - r), (r, r), 90, 0, 90, color, -1)
 
 
-def generate_dashboard(avg_latency, min_latency, max_latency, tpr, tnr, face_crops):
+def generate_dashboard(
+    avg_latency, min_latency, max_latency, tpr, tnr, face_crops, negative_tested=0
+):
     width, height = 1200, 800
     img = np.zeros((height, width, 3), dtype=np.uint8)
 
@@ -132,9 +134,9 @@ def generate_dashboard(avg_latency, min_latency, max_latency, tpr, tnr, face_cro
             "color": (50, 180, 255),
         },
         {
-            "title": "SECURITY FAR",
-            "value": "0.0%",
-            "desc": "False Acceptance Rate",
+            "title": "OBSERVED FALSE ACCEPTS",
+            "value": f"{100.0 - tnr:.1f}%" if negative_tested else "Not tested",
+            "desc": f"{negative_tested} negative samples; not certified",
             "color": (90, 90, 255),
         },
     ]
@@ -689,7 +691,13 @@ async def main():
 
     print("Generating programmatic dashboard image...")
     generate_dashboard(
-        avg_latency_ms, min_latency_ms, max_latency_ms, tpr, tnr, face_crops
+        avg_latency_ms,
+        min_latency_ms,
+        max_latency_ms,
+        tpr,
+        tnr,
+        face_crops,
+        negative_tested,
     )
 
     print("\nCleaning up temporary test files...")

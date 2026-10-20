@@ -255,29 +255,29 @@ export function useCameraControl({
         videoRef.current.srcObject = stream
 
         const waitForVideoReady = () => {
-          return new Promise<void>((resolve) => {
+          return new Promise<void>((resolve, reject) => {
             const video = videoRef.current
             if (!video) {
               resolve()
               return
             }
 
+            const deadline = performance.now() + 10_000
             const checkVideoReady = () => {
-              if (video.videoWidth > 0 && video.videoHeight > 0) {
+              if (streamRef.current !== stream || !stream.active || videoRef.current !== video) {
+                reject(new Error("Camera startup was cancelled or the camera disconnected."))
+              } else if (video.videoWidth > 0 && video.videoHeight > 0) {
                 resolve()
+              } else if (performance.now() >= deadline) {
+                reject(new Error("Camera did not deliver video within 10 seconds."))
               } else {
                 setTimeout(checkVideoReady, 16)
               }
             }
 
-            video
-              .play()
-              .then(() => {
-                checkVideoReady()
-              })
-              .catch(() => {
-                checkVideoReady()
-              })
+            // Readiness polling must start even if play() itself never settles.
+            void video.play().catch(() => undefined)
+            checkVideoReady()
           })
         }
 
