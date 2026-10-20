@@ -1,4 +1,4 @@
-import { ipcMain, dialog, shell } from "electron"
+import { ipcMain, dialog, shell, type OpenDialogOptions } from "electron"
 import { autoExportManager, type AutoExportConfig } from "../managers/AutoExportManager.js"
 import { state } from "../State.js"
 
@@ -20,11 +20,13 @@ export function registerAutoExportHandlers() {
     const currentConfig = autoExportManager.getConfig()
     const defaultPath = currentConfig.directory || autoExportManager.getDefaultExportDirectory()
 
-    const result = await dialog.showOpenDialog(window ?? undefined, {
+    const options: OpenDialogOptions = {
       title: "Select directory for scheduled reports",
       defaultPath,
       properties: ["openDirectory", "createDirectory"],
-    })
+    }
+    const result =
+      window ? await dialog.showOpenDialog(window, options) : await dialog.showOpenDialog(options)
 
     if (result.canceled || result.filePaths.length === 0) {
       return { canceled: true, path: null }

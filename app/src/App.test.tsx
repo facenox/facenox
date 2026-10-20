@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import App from "@/App"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
+import { createFacenoxElectronMock } from "@/test/mocks/electron"
 
 const { mockUseAttendanceBootstrap } = vi.hoisted(() => ({
   mockUseAttendanceBootstrap: vi.fn(),
@@ -79,7 +80,10 @@ function resetStores() {
 }
 
 describe("App", () => {
+  let bridge: ReturnType<typeof createFacenoxElectronMock>
   beforeEach(() => {
+    bridge = createFacenoxElectronMock()
+    window.facenoxElectron = bridge
     resetStores()
     mockUseAttendanceBootstrap.mockReset()
   })
@@ -90,7 +94,7 @@ describe("App", () => {
     expect(screen.getByText("Mock WindowBar")).toBeInTheDocument()
     expect(screen.queryByText("Mock Main")).not.toBeInTheDocument()
     expect(screen.queryByText("Mock App Skeleton")).not.toBeInTheDocument()
-    expect(window.facenoxElectron.onAppReady).not.toHaveBeenCalled()
+    expect(bridge.onAppReady).not.toHaveBeenCalled()
     expect(mockUseAttendanceBootstrap).toHaveBeenCalledTimes(1)
   })
 
@@ -104,11 +108,11 @@ describe("App", () => {
     expect(screen.getByText("Mock App Skeleton")).toBeInTheDocument()
     expect(screen.getByText("Mock Intro Modal")).toBeInTheDocument()
     expect(screen.queryByText("Mock Main")).not.toBeInTheDocument()
-    expect(window.facenoxElectron.onAppReady).toHaveBeenCalledTimes(1)
+    expect(bridge.onAppReady).toHaveBeenCalledTimes(1)
 
     rerender(<App />)
 
-    expect(window.facenoxElectron.onAppReady).toHaveBeenCalledTimes(1)
+    expect(bridge.onAppReady).toHaveBeenCalledTimes(1)
   })
 
   it("renders the main app once the intro has already been seen", () => {
@@ -120,7 +124,7 @@ describe("App", () => {
     expect(screen.getByText("Mock Main")).toBeInTheDocument()
     expect(screen.queryByText("Mock App Skeleton")).not.toBeInTheDocument()
     expect(screen.queryByText("Mock Intro Modal")).not.toBeInTheDocument()
-    expect(window.facenoxElectron.onAppReady).toHaveBeenCalledTimes(1)
+    expect(bridge.onAppReady).toHaveBeenCalledTimes(1)
   })
 
   it("reveals the main app when bootstrap failed but the shell should still open", () => {
@@ -135,6 +139,6 @@ describe("App", () => {
     expect(screen.getByText("Mock Main")).toBeInTheDocument()
     expect(screen.queryByText("Mock App Skeleton")).not.toBeInTheDocument()
     expect(screen.queryByText("Mock Intro Modal")).not.toBeInTheDocument()
-    expect(window.facenoxElectron.onAppReady).toHaveBeenCalledTimes(1)
+    expect(bridge.onAppReady).toHaveBeenCalledTimes(1)
   })
 })

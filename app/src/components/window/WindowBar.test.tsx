@@ -1,14 +1,13 @@
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import WindowBar from "@/components/window/WindowBar"
+import { createFacenoxElectronMock } from "@/test/mocks/electron"
 
 describe("WindowBar", () => {
+  let bridge: ReturnType<typeof createFacenoxElectronMock>
   beforeEach(() => {
-    window.facenoxElectron.onMaximize.mockReset()
-    window.facenoxElectron.onUnmaximize.mockReset()
-    window.facenoxElectron.minimize.mockClear()
-    window.facenoxElectron.maximize.mockClear()
-    window.facenoxElectron.close.mockClear()
+    bridge = createFacenoxElectronMock()
+    window.facenoxElectron = bridge
   })
 
   it("wires the window action buttons to the Electron bridge", () => {
@@ -18,9 +17,9 @@ describe("WindowBar", () => {
     fireEvent.click(screen.getByTitle("Maximize"))
     fireEvent.click(screen.getByTitle("Close"))
 
-    expect(window.facenoxElectron.minimize).toHaveBeenCalledTimes(1)
-    expect(window.facenoxElectron.maximize).toHaveBeenCalledTimes(1)
-    expect(window.facenoxElectron.close).toHaveBeenCalledTimes(1)
+    expect(bridge.minimize).toHaveBeenCalledTimes(1)
+    expect(bridge.maximize).toHaveBeenCalledTimes(1)
+    expect(bridge.close).toHaveBeenCalledTimes(1)
   })
 
   it("updates the maximize button label from bridge events and cleans up listeners", () => {
@@ -29,11 +28,11 @@ describe("WindowBar", () => {
     let handleMaximize: (() => void) | undefined
     let handleUnmaximize: (() => void) | undefined
 
-    window.facenoxElectron.onMaximize.mockImplementation((callback) => {
+    bridge.onMaximize.mockImplementation((callback: () => void) => {
       handleMaximize = callback
       return cleanupMaximize
     })
-    window.facenoxElectron.onUnmaximize.mockImplementation((callback) => {
+    bridge.onUnmaximize.mockImplementation((callback: () => void) => {
       handleUnmaximize = callback
       return cleanupUnmaximize
     })
@@ -53,7 +52,7 @@ describe("WindowBar", () => {
     expect(screen.getByTitle("Maximize")).toBeInTheDocument()
 
     fireEvent.click(screen.getByTitle("Maximize"))
-    expect(window.facenoxElectron.maximize).toHaveBeenCalledTimes(1)
+    expect(bridge.maximize).toHaveBeenCalledTimes(1)
 
     unmount()
 

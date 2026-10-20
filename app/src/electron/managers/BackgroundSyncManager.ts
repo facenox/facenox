@@ -7,6 +7,7 @@ import { state } from "../State.js"
 import { getCurrentVersion, checkForUpdates, notifyRenderer } from "../updater.js"
 import { decryptEmbedding, encryptEmbedding } from "./EmbeddingCrypto.js"
 import { buildSyncChunks } from "./syncChunks.js"
+import { parseAblyTokenRequest } from "./ablyTokenRequest.js"
 import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
@@ -337,7 +338,7 @@ export class BackgroundSyncManager {
               throw new Error(`Ably token request failed: HTTP ${res.status}`)
             }
 
-            const tokenRequest = await res.json()
+            const tokenRequest = parseAblyTokenRequest(await res.json())
             callback(null, tokenRequest)
           } catch (err) {
             const errorMsg = err instanceof Error ? err.message : String(err)

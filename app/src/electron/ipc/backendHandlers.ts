@@ -204,12 +204,20 @@ export function registerBackendHandlers() {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(
-            errorData.detail ||
-              errorData.error ||
-              `HTTP ${response.status}: ${response.statusText}`,
-          )
+          const errorData: unknown = await response.json().catch(() => null)
+          let message = `HTTP ${response.status}: ${response.statusText}`
+          if (errorData && typeof errorData === "object") {
+            if ("detail" in errorData && typeof errorData.detail === "string" && errorData.detail) {
+              message = errorData.detail
+            } else if (
+              "error" in errorData &&
+              typeof errorData.error === "string" &&
+              errorData.error
+            ) {
+              message = errorData.error
+            }
+          }
+          throw new Error(message)
         }
 
         return await response.json()

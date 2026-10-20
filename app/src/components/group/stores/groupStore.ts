@@ -210,5 +210,5 @@ export const useGroupStore = create<GroupState>((set, get) => ({
     }
   },
 
-  reset: () => set(initialState),
+  reset: () => set(getInitialState()),
 }))

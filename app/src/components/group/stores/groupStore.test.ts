@@ -40,6 +40,38 @@ describe("groupStore", () => {
     vi.clearAllMocks()
   })
 
+  it("reset uses current attendance state and clears transient group state", async () => {
+    const useGroupStore = await loadStore()
+    const { useAttendanceStore } = await import("@/components/main/stores/attendanceStore")
+    const group = createGroup("current-group", "Current")
+    useAttendanceStore.setState({
+      currentGroup: group,
+      attendanceGroups: [group],
+      groupMembers: [],
+    })
+    useGroupStore.setState({
+      selectedGroup: createGroup("stale-group", "Stale"),
+      loading: true,
+      error: "Previous error",
+      lastDeletedGroupId: "stale-group",
+      overviewRecords: { stale: { range: [] } },
+    })
+
+    expect(() => useGroupStore.getState().reset()).not.toThrow()
+    expect(useGroupStore.getState()).toMatchObject({
+      selectedGroup: group,
+      groups: [group],
+      members: [],
+      loading: false,
+      error: null,
+      lastDeletedGroupId: null,
+      overviewRecords: {},
+      overviewStats: {},
+    })
+    expect(typeof useGroupStore.getState().fetchGroups).toBe("function")
+    expect(mockPersistentSettings.setUIState).not.toHaveBeenCalled()
+  })
+
   it("setSelectedGroup persists the selected group and clears members when unset", async () => {
     const useGroupStore = await loadStore()
     const group = createGroup("group-1", "Morning Class")

@@ -54,6 +54,7 @@ export function createAttendanceRecord(
   return {
     id: "record-1",
     person_id: "person-1",
+    member_id: "person-1",
     group_id: "group-1",
     timestamp: new Date("2026-04-01T08:00:00.000Z"),
     confidence: 0.95,
@@ -68,6 +69,7 @@ export function createAttendanceSession(
   return {
     id: "session-1",
     person_id: "person-1",
+    member_id: "person-1",
     group_id: "group-1",
     date: "2026-04-01",
     check_in_time: new Date("2026-04-01T08:00:00.000Z"),
