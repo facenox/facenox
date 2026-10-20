@@ -1,5 +1,6 @@
 import { Component } from "react"
 import type { ErrorInfo, ReactNode } from "react"
+import { AlertTriangle } from "lucide-react"
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -30,8 +31,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         this.props.fallback ?? (
           <div className="flex h-screen items-center justify-center bg-[var(--bg-primary)]">
             <div className="text-center">
-              <div className="mb-4">
-                <i className="fa-solid fa-triangle-exclamation text-4xl text-[var(--error)]" />
+              <div className="mb-4 flex justify-center">
+                <AlertTriangle className="size-10 text-[var(--error)]" />
               </div>
               <h1 className="mb-2 text-lg font-semibold text-[var(--text-primary)]">
                 Something went wrong

@@ -1,5 +1,30 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import {
+  AlertTriangle,
+  Loader2,
+  Check,
+  HelpCircle,
+  RotateCw,
+  FileUp,
+  FileDown,
+  Info,
+  Cloud,
+  ArrowRight,
+  Clock,
+  Folder,
+  FolderOpen,
+  FileText,
+  X,
+  Ghost,
+  ChevronDown,
+  Lock,
+  Shield,
+  Eye,
+  EyeOff,
+  CloudUpload,
+  Search,
+} from "lucide-react"
 import type { SettingsOverview, TimeHealthOverview } from "@/components/settings/types"
 import type { AttendanceGroup } from "@/types/recognition"
 import { useDatabaseManagement } from "@/components/settings/sections/hooks/useDatabaseManagement"
@@ -354,7 +379,7 @@ export function DataStorage({
               />
               {timeHealthStatus === "drift_detected" && (
                 <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-amber-400/90">
-                  <i className="fa-solid fa-triangle-exclamation text-[11px]" />
+                  <AlertTriangle className="size-3 text-amber-400/90" />
                   Drift warning
                 </span>
               )}
@@ -362,22 +387,15 @@ export function DataStorage({
             <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">{timeHealthDetails}</p>
             <div className="mt-4 flex items-center gap-2 font-mono text-[11px] tracking-tight text-white/55">
               {timeHealthState.loading ?
-                <i className="fa-solid fa-circle-notch fa-spin text-[11px] text-white/40" />
+                <Loader2 className="size-3 animate-spin text-white/40" />
               : timeHealthStatus === "verified" ?
-                <i
+                <Check
                   title="System clock verified"
-                  className="fa-solid fa-check -translate-y-0.5 text-[11px] text-emerald-400"
+                  className="size-3 -translate-y-0.5 stroke-[2.5] text-emerald-400"
                 />
               : timeHealthStatus === "drift_detected" ?
-                <i
-                  title="Device clock out of sync"
-                  className="fa-solid fa-triangle-exclamation text-[12px] text-amber-400"
-                />
-              : <i
-                  title="Status unavailable"
-                  className="fa-solid fa-circle-question text-[12px] text-white/40"
-                />
-              }
+                <AlertTriangle title="Device clock out of sync" className="size-3 text-amber-400" />
+              : <HelpCircle title="Status unavailable" className="size-3 text-white/40" />}
               <span>
                 {timeHealthState.loading ?
                   "Checking…"
@@ -394,8 +412,8 @@ export function DataStorage({
               disabled={timeHealthState.loading}
               className="flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40">
               {timeHealthState.loading ?
-                <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
-              : <i className="fa-solid fa-rotate-right text-[11px] text-white/50" />}
+                <Loader2 className="size-3 animate-spin" />
+              : <RotateCw className="size-3 text-white/50" />}
               <span>{timeHealthState.loading ? "Checking…" : "Check now"}</span>
             </button>
 
@@ -404,7 +422,7 @@ export function DataStorage({
               timeHealthStatus === "drift_detected" &&
               typeof timeHealth.online_drift_seconds === "number" && (
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500/70">
-                  <i className="fa-solid fa-triangle-exclamation" />
+                  <AlertTriangle className="size-3" />
                   <span>{Math.abs(timeHealth.online_drift_seconds).toFixed(1)}s drift</span>
                 </div>
               )}
@@ -438,8 +456,8 @@ export function DataStorage({
               disabled={isBackingUp}
               className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40">
               {status.type === "loading" && status.action === "export" ?
-                <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
-              : <i className="fa-solid fa-file-export text-[11px] text-white/50" />}
+                <Loader2 className="size-3 animate-spin" />
+              : <FileUp className="size-3 text-white/50" />}
               <span>Create</span>
             </button>
           </div>
@@ -452,7 +470,7 @@ export function DataStorage({
                 Restore database from a backup file using its original encryption password.
                 {isPaired && (
                   <span className="mt-1 block font-medium text-amber-500/80">
-                    <i className="fa-solid fa-circle-info mr-1" />
+                    <Info className="mr-1 inline size-3" />
                     Restored groups and members will sync to the cloud.
                   </span>
                 )}
@@ -463,8 +481,8 @@ export function DataStorage({
               disabled={isBackingUp}
               className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40">
               {status.type === "loading" && status.action === "import" ?
-                <i className="fa-solid fa-circle-notch fa-spin text-[11px]" />
-              : <i className="fa-solid fa-file-import text-[11px] text-white/50" />}
+                <Loader2 className="size-3 animate-spin" />
+              : <FileDown className="size-3 text-white/50" />}
               <span>Restore</span>
             </button>
           </div>
@@ -473,7 +491,7 @@ export function DataStorage({
           {!isPaired && onNavigateToSync && (
             <div className="flex items-center justify-between rounded-lg border border-white/6 bg-white/[0.02] px-4 py-3">
               <div className="flex items-center gap-2.5 text-xs text-white/65">
-                <i className="fa-solid fa-cloud text-[11px] text-emerald-400" />
+                <Cloud className="size-3 text-emerald-400" />
                 <span>Need automated cloud backup or multi-device sync?</span>
               </div>
               <button
@@ -481,7 +499,7 @@ export function DataStorage({
                 onClick={onNavigateToSync}
                 className="group flex items-center gap-1.5 text-xs font-semibold text-cyan-400 transition-colors hover:text-cyan-300">
                 <span>Set up cloud sync</span>
-                <i className="fa-solid fa-arrow-right text-[10px] transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight className="size-2.5 transition-transform group-hover:translate-x-0.5" />
               </button>
             </div>
           )}
@@ -530,7 +548,7 @@ export function DataStorage({
                         <div className="text-xs text-white/65">Scheduled time:</div>
                       </div>
                       <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                        <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-white/70" />
+                        <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
                         <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
                           <span>{formatTimeDisplay(autoExportConfig.time).time}</span>
                           <span className="text-[10px] font-medium text-white/55">
@@ -608,14 +626,14 @@ export function DataStorage({
                           type="button"
                           onClick={handleSelectExportDirectory}
                           className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
-                          <i className="fa-regular fa-folder text-[10px] text-white/50" />
+                          <Folder className="size-3 text-white/50" />
                           <span>Change</span>
                         </button>
                         <button
                           type="button"
                           onClick={handleOpenExportDirectory}
                           className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
-                          <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
+                          <FolderOpen className="size-3 text-white/50" />
                           <span>Open folder</span>
                         </button>
                       </div>
@@ -642,8 +660,8 @@ export function DataStorage({
                         disabled={isTriggeringAutoExport}
                         className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-[11px] font-medium text-white/80 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40">
                         {isTriggeringAutoExport ?
-                          <i className="fa-solid fa-circle-notch fa-spin text-[10px]" />
-                        : <i className="fa-solid fa-file-export text-[10px]" />}
+                          <Loader2 className="size-3 animate-spin text-[10px]" />
+                        : <FileUp className="size-3" />}
                         <span>{isTriggeringAutoExport ? "Exporting…" : "Export now"}</span>
                       </button>
                     </div>
@@ -680,7 +698,7 @@ export function DataStorage({
                   await window.facenoxElectron?.openDataDir()
                 }}
                 className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
-                <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
+                <FolderOpen className="size-3 text-white/50" />
                 <span>Open folder</span>
               </button>
               <button
@@ -690,7 +708,7 @@ export function DataStorage({
                   await window.facenoxElectron?.openLogFile()
                 }}
                 className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
-                <i className="fa-regular fa-file-lines text-[11px] text-white/50" />
+                <FileText className="size-3 text-white/50" />
                 <span>View log</span>
               </button>
             </div>
@@ -704,7 +722,7 @@ export function DataStorage({
                 View the core application resources and executable binary files.
               </p>
               <div className="mt-1.5 flex items-center gap-1.5 text-[11px] leading-tight text-amber-500/80">
-                <i className="fa-solid fa-triangle-exclamation shrink-0" />
+                <AlertTriangle className="size-3 shrink-0" />
                 <span>Modifying these files is not recommended.</span>
               </div>
             </div>
@@ -715,7 +733,7 @@ export function DataStorage({
                 await window.facenoxElectron?.openInstallDir()
               }}
               className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
-              <i className="fa-regular fa-folder-open text-[11px] text-white/50" />
+              <FolderOpen className="size-3 text-white/50" />
               <span>Open folder</span>
             </button>
           </div>
@@ -731,18 +749,7 @@ export function DataStorage({
             </h3>
           </div>
           <div className="group/search relative h-9 min-w-[280px]">
-            <svg
-              className="absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/search:text-white/45"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            <Search className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/search:text-white/45" />
             <input
               type="text"
               value={searchQuery}
@@ -754,7 +761,7 @@ export function DataStorage({
               <button
                 onClick={() => setSearchQuery("")}
                 className="absolute top-1/2 right-2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-sm text-white/55 hover:text-white">
-                <i className="fa-solid fa-xmark text-[9px]" />
+                <X className="size-2.5" />
               </button>
             )}
           </div>
@@ -771,7 +778,7 @@ export function DataStorage({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
                 className="flex flex-col items-center justify-center py-12 text-white/20">
-                <i className="fa-solid fa-circle-notch fa-spin mb-3 text-2xl opacity-30" />
+                <Loader2 className="mb-3 size-6 animate-spin opacity-30" />
                 <div className="text-[12px] font-medium tracking-wide">Syncing directory…</div>
               </motion.div>
             : filteredData.length === 0 ?
@@ -784,10 +791,10 @@ export function DataStorage({
                     `No groups matched "${searchQuery}".`
                   : "Create a group to begin managing members."
                 }
-                iconClass={
+                icon={
                   searchQuery.trim() ?
-                    "fa-solid fa-ghost text-2xl"
-                  : "fa-solid fa-folder-open text-2xl"
+                    <Ghost className="size-8" />
+                  : <FolderOpen className="size-8" />
                 }
               />
             : <motion.div
@@ -838,13 +845,13 @@ export function DataStorage({
         <button
           onClick={() => setIsDangerZoneOpen(!isDangerZoneOpen)}
           className="group flex items-center gap-2.5 rounded-md border-0 bg-transparent px-5 py-2 text-[11px] font-extrabold tracking-[0.2em] text-red-500/40 uppercase shadow-none transition-all duration-300 outline-none hover:bg-red-500/[0.04] hover:text-red-400 focus:outline-none active:scale-95">
-          <i className="fa-solid fa-triangle-exclamation text-[10px] opacity-60 transition-transform group-hover:scale-110" />
+          <AlertTriangle className="size-2.5 opacity-60 transition-transform group-hover:scale-110" />
           <span>Danger zone</span>
-          <motion.i
+          <motion.span
             animate={{ rotate: isDangerZoneOpen ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
-            className="fa-solid fa-chevron-down text-[9px] opacity-50"
-          />
+            transition={{ duration: 0.2 }}>
+            <ChevronDown className="size-2.5 opacity-50" />
+          </motion.span>
         </button>
 
         <AnimatePresence>
@@ -868,12 +875,12 @@ export function DataStorage({
                       {isPaired &&
                         (!allowKioskDirectoryManagement ?
                           <span className="mt-1 block font-medium text-amber-400/80">
-                            <i className="fa-solid fa-lock mr-1" />
+                            <Lock className="mr-1 inline size-3" />
                             Locked by Cloud Policy: Group directory wipe is disabled on kiosks.
                             Manage directory in Cloud Dashboard.
                           </span>
                         : <span className="mt-1 block font-medium text-amber-400/80">
-                            <i className="fa-solid fa-cloud-arrow-up mr-1" />
+                            <CloudUpload className="mr-1 inline size-3" />
                             This will also delete groups from your cloud directory.
                           </span>)}
                     </p>
@@ -887,7 +894,7 @@ export function DataStorage({
                       (isPaired && !allowKioskDirectoryManagement)
                     }
                     className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
-                    {deletingGroup === "all" && <i className="fa-solid fa-spinner fa-spin" />}
+                    {deletingGroup === "all" && <Loader2 className="size-3 animate-spin" />}
                     Delete directory
                   </button>
                 </div>
@@ -902,12 +909,12 @@ export function DataStorage({
                       {isPaired &&
                         (!allowKioskDirectoryManagement ?
                           <span className="mt-1 block font-medium text-amber-400/80">
-                            <i className="fa-solid fa-lock mr-1" />
+                            <Lock className="mr-1 inline size-3" />
                             Locked by Cloud Policy: Face data reset is disabled on kiosks. Manage
                             biometrics in Cloud Dashboard.
                           </span>
                         : <span className="mt-1 block font-medium text-amber-400/80">
-                            <i className="fa-solid fa-cloud-arrow-up mr-1" />
+                            <CloudUpload className="mr-1 inline size-3" />
                             Face data will also be cleared from the cloud.
                           </span>)}
                     </p>
@@ -932,7 +939,7 @@ export function DataStorage({
                       data are preserved.
                       {isPaired && (
                         <span className="mt-1 block font-medium text-white/50">
-                          <i className="fa-solid fa-cloud mr-1" />
+                          <Cloud className="mr-1 inline size-3" />
                           Clears history on this device only. Cloud records remain safe.
                         </span>
                       )}
@@ -942,7 +949,7 @@ export function DataStorage({
                     onClick={() => handlePurgeHistory(false)}
                     disabled={isLoading || isPurgingHistory}
                     className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
-                    {isPurgingHistory && <i className="fa-solid fa-spinner fa-spin" />}
+                    {isPurgingHistory && <Loader2 className="size-3 animate-spin" />}
                     Purge history
                   </button>
                 </div>
@@ -962,11 +969,9 @@ export function DataStorage({
         }}
         title={passwordModal.action === "export" ? "Set backup password" : "Restore backup"}
         icon={
-          <i
-            className={`fa-solid ${
-              passwordModal.action === "export" ? "fa-shield-halved" : "fa-lock"
-            } text-cyan-400`}
-          />
+          passwordModal.action === "export" ?
+            <Shield className="size-4 text-cyan-400" />
+          : <Lock className="size-4 text-cyan-400" />
         }>
         <div className="space-y-4">
           <p className="text-xs leading-relaxed text-white/65">
@@ -1006,12 +1011,14 @@ export function DataStorage({
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute top-1/2 right-3 -translate-y-1/2 border-none bg-transparent p-0 text-white/55 shadow-none transition-colors hover:text-white/65 focus:outline-none"
                 tabIndex={-1}>
-                <i className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"} text-[12px]`} />
+                {showPassword ?
+                  <EyeOff className="size-3 text-white/55" />
+                : <Eye className="size-3 text-white/55" />}
               </button>
             </div>
             {passwordModal.action === "export" && (
               <div className="flex items-start gap-1.5 pt-1 text-[11px] leading-tight text-amber-500/80">
-                <i className="fa-solid fa-triangle-exclamation mt-0.5 shrink-0" />
+                <AlertTriangle className="mt-0.5 size-3 shrink-0" />
                 <span>
                   Save this password securely. It is required to restore data and cannot be reset if
                   forgotten.

@@ -1,5 +1,17 @@
 import React from "react"
 import { motion } from "framer-motion"
+import {
+  LayoutGrid,
+  BarChart2,
+  Users,
+  Settings as SettingsIcon,
+  SlidersHorizontal,
+  Monitor,
+  Database,
+  Cloud,
+  Info,
+  X,
+} from "lucide-react"
 import { useSettings } from "./hooks/useSettings"
 import { Sidebar } from "./Sidebar"
 import { ContentPanel } from "./ContentPanel"
@@ -72,23 +84,19 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [isModal, onBack, settings.hasSelectedMember])
 
-  const groupSections: {
-    id: GroupSection
-    label: string
-    icon: string
-  }[] = [
-    { id: "overview", label: "Overview", icon: "fa-solid fa-table-cells-large" },
-    { id: "reports", label: "Reports", icon: "fa-solid fa-chart-bar" },
-    { id: "members", label: "Members", icon: "fa-solid fa-users" },
-    { id: "settings", label: "Settings", icon: "fa-solid fa-gear" },
+  const groupSections = [
+    { id: "overview" as const, label: "Overview", icon: LayoutGrid },
+    { id: "reports" as const, label: "Reports", icon: BarChart2 },
+    { id: "members" as const, label: "Members", icon: Users },
+    { id: "settings" as const, label: "Settings", icon: SettingsIcon },
   ]
 
   const sections = [
-    { id: "attendance", label: "General", icon: "fa-solid fa-sliders" },
-    { id: "display", label: "Display & audio", icon: "fa-solid fa-desktop" },
-    { id: "database", label: "Data & storage", icon: "fa-solid fa-database" },
-    { id: "remote-sync", label: "Cloud sync", icon: "fa-solid fa-cloud" },
-    { id: "about", label: "About", icon: "fa-solid fa-circle-info" },
+    { id: "attendance", label: "General", icon: SlidersHorizontal },
+    { id: "display", label: "Display & audio", icon: Monitor },
+    { id: "database", label: "Data & storage", icon: Database },
+    { id: "remote-sync", label: "Cloud sync", icon: Cloud },
+    { id: "about", label: "About", icon: Info },
   ]
 
   const mainContent = (
@@ -185,7 +193,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
             onClick={props.onBack}
             className="absolute top-[14px] right-[14px] z-50 rounded-lg border-none bg-transparent p-1 text-white/35 shadow-none transition-all duration-200 hover:bg-white/[0.06] hover:text-white active:scale-95"
             aria-label="Close settings">
-            <i className="fa-solid fa-xmark text-base"></i>
+            <X className="size-4" />
           </button>
           {mainContent}
         </motion.div>

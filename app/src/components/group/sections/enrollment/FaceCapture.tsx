@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
+import { AlertCircle, Camera, Check, Image } from "lucide-react"
 import { useGroupUIStore } from "@/components/group/stores"
 import { Modal } from "@/components/common"
 import { motion, AnimatePresence } from "framer-motion"
@@ -263,7 +264,7 @@ export function FaceCapture({
         maxWidth="sm"
         hideCloseButton={true}>
         <div className="flex flex-col items-center gap-3 py-2">
-          <i className="fa-solid fa-check text-2xl text-cyan-400" />
+          <Check className="size-8 text-cyan-400" />
           <p className="text-center text-sm font-medium text-white/85">{successMessage}</p>
 
           <div className="mt-6 flex w-full items-center justify-between">
@@ -367,7 +368,7 @@ export function FaceCapture({
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.22, ease: "easeOut" }}
                       className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[85%] -translate-x-1/2 items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/85 px-4 py-2.5 text-center text-[11px] font-medium text-red-200">
-                      <i className="fa-solid fa-circle-exclamation shrink-0 text-sm text-red-400"></i>
+                      <AlertCircle className="size-4 shrink-0 text-red-400" />
                       <span>{globalError}</span>
                     </motion.div>
                   )}
@@ -382,8 +383,9 @@ export function FaceCapture({
                       onClick={() => setSource(source === "live" ? "upload" : "live")}
                       className="group flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium text-white/65 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white"
                       title={source === "live" ? "Switch to file upload" : "Switch to camera"}>
-                      <i
-                        className={`fa-solid ${source === "live" ? "fa-file-image" : "fa-camera"} text-sm`}></i>
+                      {source === "live" ?
+                        <Image className="size-4" />
+                      : <Camera className="size-4" />}
                       <span>{source === "live" ? "Upload" : "Camera"}</span>
                     </button>
                   </div>

@@ -13,7 +13,6 @@ interface GroupNavProps {
 interface SectionConfig {
   id: GroupSection
   label: string
-  icon: string
   shortcut: string
 }
 
@@ -21,25 +20,21 @@ const SECTIONS: SectionConfig[] = [
   {
     id: "overview",
     label: "Overview",
-    icon: "",
     shortcut: "1",
   },
   {
     id: "reports",
     label: "Reports",
-    icon: "",
     shortcut: "2",
   },
   {
     id: "members",
     label: "Members",
-    icon: "",
     shortcut: "3",
   },
   {
     id: "settings",
     label: "Settings",
-    icon: "",
     shortcut: "4",
   },
 ]

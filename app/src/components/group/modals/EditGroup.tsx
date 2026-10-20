@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Clock } from "lucide-react"
 import { attendanceManager } from "@/services"
 import type { AttendanceGroup } from "@/types/recognition"
 import { ErrorMessage, FormInput, Modal } from "@/components/common"
@@ -156,7 +157,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                           <div className="text-xs text-white/65">Scheduled start time:</div>
                         </div>
                         <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                          <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-white/70" />
+                          <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
                           <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
                             <span>{formatTimeDisplay(classStartTime).time}</span>
                             <span className="text-[10px] font-medium text-white/55">
@@ -246,7 +247,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                           <div className="text-xs text-white/65">Scheduled end time:</div>
                         </div>
                         <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                          <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-white/70" />
+                          <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
                           <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
                             <span>{formatTimeDisplay(classEndTime).time}</span>
                             <span className="text-[10px] font-medium text-white/55">

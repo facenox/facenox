@@ -89,66 +89,6 @@
   color: #34d399;
 }
 
-/* Legacy Support */
-
-.btn-primary {
-  background: rgba(34, 211, 238, 0.1);
-  border-color: rgba(34, 211, 238, 0.2);
-  color: #22d3ee;
-}
-
-.btn-primary:hover {
-  background: rgba(34, 211, 238, 0.15);
-  border-color: rgba(34, 211, 238, 0.4);
-}
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #fff;
-}
-
-.btn-error {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-}
-
-.btn-error:hover {
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.titlebar-btn {
-  border: none !important;
-  background: transparent !important;
-  padding: 0 !important;
-  border-radius: 4px !important;
-  font-size: inherit !important;
-  font-weight: inherit !important;
-  position: static !important;
-  overflow: visible !important;
-}
-
-.titlebar-btn:hover {
-  transform: none !important;
-  border: none !important;
-}
-
-.titlebar-btn:active {
-  transform: none !important;
-}
-
-.titlebar-btn:focus-visible {
-  box-shadow: none !important;
-}
-
 .sidebar-toggle-btn {
   border: none !important;
   background: transparent !important;

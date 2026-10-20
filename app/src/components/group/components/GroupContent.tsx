@@ -1,5 +1,6 @@
 import { useMemo, memo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Plus } from "lucide-react"
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { Members, Overview, Reports, GroupSettings } from "@/components/group/sections"
 import { EmptyState } from "@/components/group/shared"
@@ -65,7 +66,7 @@ function GroupContentComponent({
               {
                 label: "Create group",
                 onClick: openCreateGroup,
-                iconClass: "fa-solid fa-plus text-[10px]",
+                icon: <Plus className="size-3" />,
               }
             : undefined
           }

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import { flushSync } from "react-dom"
 import { AnimatePresence, motion } from "framer-motion"
+import { AlertCircle, AlertTriangle, Camera, CheckCircle2, Image, Upload, X } from "lucide-react"
 import { attendanceManager, backendService } from "@/services"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { ErrorMessage, FormInput, Modal, Spinner } from "@/components/common"
@@ -592,7 +593,7 @@ export function AddMember({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             className="mb-4 flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-[11px] font-medium text-cyan-300">
-            <i className="fa-solid fa-circle-check text-[10px]" />
+            <CheckCircle2 className="size-3 text-cyan-300" />
             {lastAddedSuccess}
           </motion.div>
         )}
@@ -627,8 +628,8 @@ export function AddMember({
                     />
                     {isDuplicate && !confirmDuplicate && (
                       <div className="mt-1 flex items-center gap-2 text-[11px] text-amber-400/80">
-                        <i className="fa-solid fa-triangle-exclamation text-[10px]"></i> A member
-                        with this name already exists.
+                        <AlertTriangle className="size-3 shrink-0" /> A member with this name
+                        already exists.
                       </div>
                     )}
                   </div>
@@ -768,7 +769,7 @@ export function AddMember({
                                     "bg-white/15 text-white shadow-sm"
                                   : "text-white/45 hover:text-white/75"
                                 }`}>
-                                <i className="fa-solid fa-camera text-[9px] text-cyan-400" />
+                                <Camera className="size-2.5 text-cyan-400" />
                                 <span>Camera</span>
                               </button>
                               <button
@@ -785,7 +786,7 @@ export function AddMember({
                                     "bg-white/15 text-white shadow-sm"
                                   : "text-white/45 hover:text-white/75"
                                 }`}>
-                                <i className="fa-solid fa-file-image text-[9px] text-white/60" />
+                                <Image className="size-2.5 text-white/60" />
                                 <span>Upload</span>
                               </button>
                             </div>
@@ -799,7 +800,7 @@ export function AddMember({
                               }}
                               className="flex h-5 w-5 items-center justify-center rounded-md text-white/40 transition-all hover:bg-white/10 hover:text-white/80"
                               aria-label="Dismiss face enrollment">
-                              <i className="fa-solid fa-xmark text-[11px]" />
+                              <X className="size-3.5" />
                             </button>
                           </div>
                         </div>
@@ -837,7 +838,7 @@ export function AddMember({
                                       className="z-10 flex flex-col items-center justify-center gap-2 p-4 text-center">
                                       {cameraError ?
                                         <div className="flex flex-col items-center gap-2">
-                                          <i className="fa-solid fa-circle-exclamation text-base text-red-400" />
+                                          <AlertCircle className="size-5 text-red-400" />
                                           <span className="max-w-[240px] text-[11px] font-medium text-red-200/80">
                                             {cameraError}
                                           </span>
@@ -866,7 +867,7 @@ export function AddMember({
                                       }}
                                       className="group flex items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-[10px] font-medium text-white/70 backdrop-blur-md transition-all hover:border-white/25 hover:bg-black/70 hover:text-white"
                                       aria-label="Upload photo">
-                                      <i className="fa-solid fa-file-image text-[10px] text-white/50 group-hover:text-white/80" />
+                                      <Image className="size-3 text-white/50 group-hover:text-white/80" />
                                       <span>Upload</span>
                                     </button>
                                   </div>
@@ -904,7 +905,7 @@ export function AddMember({
                                 <label className="group flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3.5 py-2.5 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/[0.02]">
                                   <div className="flex min-w-0 items-center gap-2.5">
                                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 transition-colors group-hover:bg-cyan-500/10">
-                                      <i className="fa-solid fa-file-arrow-up text-xs text-white/40 transition-colors group-hover:text-cyan-400" />
+                                      <Upload className="size-3.5 text-white/40 transition-colors group-hover:text-cyan-400" />
                                     </div>
                                     <div className="flex min-w-0 flex-col">
                                       <span className="truncate text-[11px] font-medium text-white/80">
@@ -944,7 +945,7 @@ export function AddMember({
                                 exit={{ opacity: 0, y: -4 }}
                                 transition={{ duration: 0.15 }}
                                 className="flex items-center gap-2 rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-[11px] font-medium text-red-300">
-                                <i className="fa-solid fa-circle-exclamation shrink-0 text-xs text-red-400" />
+                                <AlertCircle className="size-3.5 shrink-0 text-red-400" />
                                 <span className="flex-1">{faceError}</span>
                               </motion.div>
                             )}
@@ -979,7 +980,7 @@ export function AddMember({
                       Format: <span className="font-mono text-white/65">Name, Role</span>
                     </div>
                     <label className="group flex cursor-pointer items-center gap-1.5 text-xs font-medium text-cyan-400/80 transition-colors hover:text-cyan-400">
-                      <i className="fa-solid fa-file-arrow-up transition-transform group-hover:-translate-y-0.5"></i>
+                      <Upload className="size-3.5 transition-transform group-hover:-translate-y-0.5" />
                       Import CSV or TXT
                       <input
                         type="file"
@@ -1002,13 +1003,13 @@ export function AddMember({
                       <div className="flex items-center gap-2">
                         {bulkResults.failed === 0 ?
                           <>
-                            <i className="fa-solid fa-circle-check text-[13px] text-cyan-400" />
+                            <CheckCircle2 className="size-3.5 text-cyan-400" />
                             <span className="text-[13px] font-semibold text-cyan-400">
                               Import complete
                             </span>
                           </>
                         : <>
-                            <i className="fa-solid fa-triangle-exclamation text-[13px] text-amber-400" />
+                            <AlertTriangle className="size-3.5 text-amber-400" />
                             <span className="text-[13px] font-semibold text-amber-400">
                               Import complete with warnings
                             </span>

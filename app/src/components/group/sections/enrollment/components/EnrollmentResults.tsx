@@ -1,3 +1,4 @@
+import { AlertTriangle } from "lucide-react"
 import type { BulkEnrollmentResult } from "@/components/group/sections/enrollment/types"
 
 interface EnrollmentResultsProps {
@@ -57,7 +58,7 @@ export function EnrollmentResults({
                 )}
                 {result.qualityWarning && (
                   <div className="mt-0.5 flex items-center gap-1.5 text-[11px] leading-relaxed text-amber-400/60">
-                    <i className="fa-solid fa-triangle-exclamation text-[9px]" />
+                    <AlertTriangle className="size-2.5 shrink-0" />
                     {result.qualityWarning}
                   </div>
                 )}

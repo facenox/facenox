@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { FileSpreadsheet, FolderTree, FileText, Download } from "lucide-react"
 import { Modal, Spinner } from "@/components/common"
 
 export type ExportAllGroupsFormat = "excel" | "individual" | "combined"
@@ -38,7 +39,7 @@ export function ExportAllGroupsModal({
     title: string
     badge?: string
     description: string
-    icon: string
+    icon: React.ReactNode
   }> = [
     {
       id: "excel",
@@ -46,21 +47,21 @@ export function ExportAllGroupsModal({
       badge: "Recommended",
       description:
         "Creates a single Excel file with a worksheet for each group. Cleanest for department reporting.",
-      icon: "fa-solid fa-file-excel text-emerald-400",
+      icon: <FileSpreadsheet className="size-4 text-emerald-400" />,
     },
     {
       id: "individual",
       title: "Individual CSV files per group",
       description:
         "Downloads separate CSV files for each group. Ideal for distributing files to specific department heads.",
-      icon: "fa-solid fa-folder-tree text-cyan-400",
+      icon: <FolderTree className="size-4 text-cyan-400" />,
     },
     {
       id: "combined",
       title: "Single combined CSV",
       description:
         "Exports all groups into a single CSV file with a Group column. Best for database imports and raw data analysis.",
-      icon: "fa-solid fa-file-csv text-amber-400",
+      icon: <FileText className="size-4 text-amber-400" />,
     },
   ]
 
@@ -93,7 +94,7 @@ export function ExportAllGroupsModal({
                   : "border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
                 }`}>
                 <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5">
-                  <i className={`text-base ${opt.icon}`} />
+                  {opt.icon}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -142,7 +143,7 @@ export function ExportAllGroupsModal({
                 <span>Exporting…</span>
               </>
             : <>
-                <i className="fa-solid fa-download text-[10px]" />
+                <Download className="size-3" />
                 <span>Export now</span>
               </>
             }

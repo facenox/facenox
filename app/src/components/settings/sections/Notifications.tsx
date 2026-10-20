@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Music, Volume2, Play } from "lucide-react"
 import type { AudioSettings } from "@/components/settings/types"
 import { Switch, Dropdown, Tooltip } from "@/components/shared"
 import { soundEffects } from "@/services/SoundEffectsService"
@@ -92,7 +93,7 @@ export function Notifications({ audioSettings, onAudioSettingsChange }: Notifica
       .map((s) => ({
         value: s.url,
         label: formatSoundName(s.fileName),
-        icon: <i className="fa-solid fa-music text-white/50" />,
+        icon: <Music className="size-3 text-white/50" />,
       }))
       .filter((item) => {
         if (seen.has(item.label)) return false
@@ -187,9 +188,9 @@ export function Notifications({ audioSettings, onAudioSettingsChange }: Notifica
                       disabled={isPlaying || sounds.length === 0}
                       aria-label="Test recognition sound"
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white/55 transition-colors hover:bg-white/5 hover:text-white active:scale-90 disabled:cursor-not-allowed disabled:opacity-30">
-                      <i
-                        className={`fa-solid ${isPlaying ? "fa-volume-high text-cyan-400" : "fa-play text-xs"} transition-colors`}
-                      />
+                      {isPlaying ?
+                        <Volume2 className="size-3.5 text-cyan-400 transition-colors" />
+                      : <Play className="size-3 fill-current transition-colors" />}
                     </button>
                   </Tooltip>
                 </div>

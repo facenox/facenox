@@ -1,5 +1,6 @@
 import React from "react"
 import { motion } from "framer-motion"
+import { Plus } from "lucide-react"
 import { Dropdown, Tooltip } from "@/components/shared"
 import { generateGroupDisplayNames } from "@/utils"
 import type { AttendanceGroup } from "@/types/recognition"
@@ -19,8 +20,16 @@ interface SidebarProps {
     source: "upload" | "camera" | null,
     mode: "single" | "bulk" | "queue" | null,
   ) => void
-  sections: { id: string; label: string; icon: string }[]
-  groupSections: { id: GroupSection; label: string; icon: string }[]
+  sections: {
+    id: string
+    label: string
+    icon: React.ComponentType<{ className?: string }>
+  }[]
+  groupSections: {
+    id: GroupSection
+    label: string
+    icon: React.ComponentType<{ className?: string }>
+  }[]
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -117,7 +126,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setTriggerCreateGroup(Date.now())
               }}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/5 bg-white/5 text-white/65 transition-all hover:border-white/10 hover:bg-white/[0.08] hover:text-white active:scale-95">
-              <i className="fa-solid fa-plus text-[11px]"></i>
+              <Plus className="size-3" />
             </button>
           </Tooltip>
         </div>
@@ -157,8 +166,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
-                    <i
-                      className={`${subsection.icon} w-5 text-sm transition-colors ${isActive ? "text-cyan-400" : "text-white/55 group-hover/item:text-white/70"}`}></i>
+                    <subsection.icon
+                      className={`size-4 shrink-0 transition-colors ${isActive ? "text-cyan-400" : "text-white/55 group-hover/item:text-white/70"}`}
+                    />
                     {subsection.label}
                   </button>
                 )
@@ -193,8 +203,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
                   )}
-                  <i
-                    className={`${section.icon} w-5 text-sm transition-colors ${
+                  <section.icon
+                    className={`size-4 shrink-0 transition-colors ${
                       isActive ? "text-cyan-400"
                       : section.id === "remote-sync" && syncStatus?.connected ? "text-emerald-400"
                       : "text-white/55 group-hover/item:text-white/70"

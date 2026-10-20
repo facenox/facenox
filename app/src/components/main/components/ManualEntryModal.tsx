@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react"
 import { AnimatePresence, motion } from "framer-motion"
+import { AlertTriangle, Clipboard, Plus, Loader2, Search, UserX } from "lucide-react"
 import { attendanceManager } from "@/services/AttendanceManager"
 import { ErrorMessage, Modal } from "@/components/common"
 import { Tooltip, InfoPopover } from "@/components/shared"
@@ -151,11 +152,7 @@ export const ManualEntryModal = ({
           </h3>
         </div>
       }
-      icon={
-        confirmingMember ?
-          <i className="fa-solid fa-triangle-exclamation text-orange-300" />
-        : undefined
-      }
+      icon={confirmingMember ? <AlertTriangle className="size-5 text-orange-300" /> : undefined}
       maxWidth="sm">
       <div className="space-y-4">
         {confirmingMember ?
@@ -176,7 +173,7 @@ export const ManualEntryModal = ({
             </p>
 
             <div className="group/note relative">
-              <i className="fa-regular fa-clipboard absolute top-1/2 left-3.5 -translate-y-1/2 text-[11px] text-white/25 transition-colors group-focus-within/note:text-white/45"></i>
+              <Clipboard className="absolute top-1/2 left-3.5 size-3 -translate-y-1/2 text-white/25 transition-colors group-focus-within/note:text-white/45" />
               <input
                 type="text"
                 placeholder="Optional note"
@@ -209,18 +206,7 @@ export const ManualEntryModal = ({
             {/* Search & Add Header */}
             <div className="group/bar mt-2 flex items-center">
               <div className="relative flex-1">
-                <svg
-                  className="absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <Search className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45" />
                 <input
                   type="text"
                   placeholder="Search members…"
@@ -237,7 +223,7 @@ export const ManualEntryModal = ({
                       onAddMember()
                     }}
                     className="group/add flex h-9 w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-lg border border-l-0 border-white/5 bg-white/5 text-white/65 transition-all group-focus-within/bar:border-white/20 hover:border-white/10 hover:bg-white/[0.08] hover:text-white focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
-                    <i className="fa-solid fa-plus text-xs transition-transform group-hover/add:scale-110"></i>
+                    <Plus className="size-3.5 transition-transform group-hover/add:scale-110" />
                   </button>
                 </Tooltip>
               )}
@@ -325,11 +311,11 @@ export const ManualEntryModal = ({
                                 </div>
                               : isEntrySubmitting ?
                                 <div className="flex w-24 justify-end pr-2">
-                                  <i className="fa-solid fa-spinner fa-spin text-[10px] text-cyan-400"></i>
+                                  <Loader2 className="size-3 animate-spin text-cyan-400" />
                                 </div>
                               : <>
                                   <div className="hidden items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-cyan-400 transition-all group-hover/item:flex hover:bg-cyan-500/20 active:scale-95">
-                                    <i className="fa-solid fa-plus text-[8px]"></i>
+                                    <Plus className="size-2.5" />
                                     Mark present
                                   </div>
                                   {!isPresent && hasFace === false && (
@@ -353,7 +339,7 @@ export const ManualEntryModal = ({
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                   className="flex flex-col items-center justify-center py-12 text-center">
-                  <i className="fa-solid fa-user-slash mb-3 text-xl text-white/15"></i>
+                  <UserX className="mb-3 size-6 text-white/15" />
                   <p className="text-[11px] font-bold tracking-wider text-white/55">
                     No results found
                   </p>

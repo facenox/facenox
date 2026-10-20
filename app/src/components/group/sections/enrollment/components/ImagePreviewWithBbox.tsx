@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { AlertTriangle } from "lucide-react"
 import type { CapturedFrame } from "@/components/group/sections/enrollment/types"
 
 export function ImagePreviewWithBbox({ frame }: { frame: CapturedFrame }) {
@@ -108,7 +109,7 @@ export function ImagePreviewWithBbox({ frame }: { frame: CapturedFrame }) {
       {frame.status === "error" && (
         <div className="absolute inset-0 flex items-center justify-center bg-red-500/20 p-3 text-center">
           <div className="space-y-1">
-            <i className="fa-solid fa-triangle-exclamation text-xl text-amber-400" />
+            <AlertTriangle className="size-5 text-amber-400" />
             <div className="text-xs text-red-200">{frame.error || "Failed"}</div>
           </div>
         </div>

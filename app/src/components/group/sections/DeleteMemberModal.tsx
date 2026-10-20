@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { AlertTriangle } from "lucide-react"
 import type { AttendanceMember } from "@/types/recognition"
 import { Modal } from "@/components/common"
 
@@ -27,7 +28,7 @@ export function DeleteMemberModal({ isOpen, member, onClose, onConfirm }: Delete
       isOpen={isOpen}
       onClose={onClose}
       title={`Remove ${memberDisplayName}`}
-      icon={<i className="fa-solid fa-triangle-exclamation text-red-400" />}
+      icon={<AlertTriangle className="size-5 text-red-400" />}
       maxWidth="sm">
       <div className="space-y-4">
         <p className="text-xs leading-relaxed text-white/60">

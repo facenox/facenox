@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { AlertTriangle, ChevronDown, Clock, Loader2, Lock } from "lucide-react"
 import { InfoPopover, Switch } from "@/components/shared"
 import { attendanceManager } from "@/services"
 import { useGroupStore } from "@/components/group/stores"
@@ -229,7 +230,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                           <div className="text-xs text-white/65">Scheduled start time:</div>
                         </div>
                         <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                          <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-white/70" />
+                          <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
                           <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
                             <span>{formatTimeDisplay(classStartTime).time}</span>
                             <span className="text-[10px] font-medium text-white/55">
@@ -345,7 +346,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                           <div className="text-xs text-white/65">Scheduled end time:</div>
                         </div>
                         <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                          <i className="fa-regular fa-clock mr-2 text-[10px] text-white/40 transition-colors group-hover:text-white/70" />
+                          <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
                           <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
                             <span>{formatTimeDisplay(classEndTime || "17:00").time}</span>
                             <span className="text-[10px] font-medium text-white/55">
@@ -381,10 +382,10 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
             type="button"
             onClick={() => setIsDangerZoneOpen(!isDangerZoneOpen)}
             className="group flex items-center gap-2.5 rounded-md border-0 bg-transparent px-5 py-2 text-[11px] font-extrabold tracking-[0.2em] text-red-500/40 uppercase shadow-none transition-all duration-300 outline-none hover:bg-red-500/[0.04] hover:text-red-400 focus:outline-none active:scale-95">
-            <i className="fa-solid fa-triangle-exclamation text-[10px] opacity-60 transition-transform group-hover:scale-110" />
+            <AlertTriangle className="size-3 opacity-60 transition-transform group-hover:scale-110" />
             <span>Danger zone</span>
-            <i
-              className={`fa-solid fa-chevron-down inline-block text-[9px] opacity-50 transition-transform duration-200 ${
+            <ChevronDown
+              className={`inline-block size-3 opacity-50 transition-transform duration-200 ${
                 isDangerZoneOpen ? "rotate-180" : ""
               }`}
             />
@@ -412,7 +413,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         </span>
                         {isDeleteDisabled && (
                           <span className="mt-1 block font-medium text-amber-400/80">
-                            <i className="fa-solid fa-lock mr-1" />
+                            <Lock className="mr-1 inline size-3" />
                             Locked by Cloud Policy: Group deletion is disabled on kiosks.
                           </span>
                         )}
@@ -425,7 +426,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       disabled={isDeleteDisabled || isDeleting}
                       title={isDeleteDisabled ? "Locked by Cloud Policy" : undefined}
                       className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
-                      {isDeleting && <i className="fa-solid fa-spinner fa-spin" />}
+                      {isDeleting && <Loader2 className="size-3.5 animate-spin" />}
                       <span>Delete group</span>
                     </button>
                   </div>

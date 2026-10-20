@@ -1,3 +1,5 @@
+import { Camera } from "lucide-react"
+
 export function AppSkeleton() {
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[#08090a]">
@@ -5,7 +7,7 @@ export function AppSkeleton() {
         <div className="relative flex min-h-0 flex-1 flex-col">
           <div className="m-4 flex flex-1 items-center justify-center rounded-3xl border border-white/6 bg-[#0f1011]">
             <div className="flex flex-col items-center gap-4 text-white/20">
-              <i className="fa-solid fa-camera text-4xl" />
+              <Camera className="size-10 text-white/20" />
             </div>
           </div>
 

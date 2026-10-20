@@ -1,5 +1,13 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  FastForward,
+  Users,
+} from "lucide-react"
 import { attendanceManager, backendService } from "@/services"
 import { generateDisplayNames } from "@/utils"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
@@ -435,7 +443,7 @@ export function CameraQueue({
               exit={{ opacity: 0 }}
               className="flex h-full flex-col items-center justify-center p-6 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5">
-                <i className="fa-solid fa-users-slash text-2xl text-white/20"></i>
+                <Users className="size-8 text-white/20" />
               </div>
               <h3 className="mb-1 text-sm font-semibold text-white">No members selected</h3>
               <p className="max-w-[200px] text-[11px] leading-relaxed text-white/45">
@@ -541,7 +549,7 @@ export function CameraQueue({
                         }}
                         disabled={currentIndex === 0}
                         className="rounded-full border border-white/5 bg-white/5 p-2 text-white/65 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
-                        <i className="fa-solid fa-chevron-left text-sm"></i>
+                        <ChevronLeft className="size-4" />
                       </button>
                     </div>
                     <div className="absolute inset-y-0 right-2 z-10 flex items-center">
@@ -554,7 +562,7 @@ export function CameraQueue({
                         }}
                         disabled={currentIndex >= memberQueue.length - 1}
                         className="rounded-full border border-white/5 bg-white/5 p-2 text-white/65 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
-                        <i className="fa-solid fa-chevron-right text-sm"></i>
+                        <ChevronRight className="size-4" />
                       </button>
                     </div>
 
@@ -575,16 +583,16 @@ export function CameraQueue({
                               transition={{ duration: 0.2, ease: "easeOut" }}
                               className="flex flex-col items-center text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.85)] select-none">
                               <div
-                                className={`mb-3 text-5xl ${
+                                className={`mb-3 flex items-center justify-center ${
                                   currentMember.status === "completed" ?
                                     "text-cyan-400"
                                   : "text-white/75"
                                 }`}>
                                 {currentMember.status === "completed" && (
-                                  <i className="fa-solid fa-circle-check animate-pulse"></i>
+                                  <CheckCircle2 className="size-12 animate-pulse" />
                                 )}
                                 {currentMember.status === "skipped" && (
-                                  <i className="fa-solid fa-forward"></i>
+                                  <FastForward className="size-12" />
                                 )}
                               </div>
                               <div className="text-xs font-black tracking-[0.2em] text-white uppercase">
@@ -608,7 +616,7 @@ export function CameraQueue({
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           transition={{ duration: 0.22, ease: "easeOut" }}
                           className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[85%] -translate-x-1/2 items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/85 px-4 py-2.5 text-center text-[11px] font-medium text-red-200">
-                          <i className="fa-solid fa-circle-exclamation shrink-0 text-sm text-red-400"></i>
+                          <AlertCircle className="size-4 shrink-0 text-red-400" />
                           <span>{error}</span>
                         </motion.div>
                       )}

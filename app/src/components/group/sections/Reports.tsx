@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { UserPlus, X } from "lucide-react"
 import { useGroupStore } from "@/components/group/stores"
 import { getLocalDateString } from "@/utils"
 import type { AttendanceGroup } from "@/types/recognition"
@@ -182,7 +183,7 @@ export function Reports({
                     {
                       label: "Add member",
                       onClick: onAddMember,
-                      iconClass: "fa-solid fa-user-plus text-[10px]",
+                      icon: <UserPlus className="size-3" />,
                     }
                   : undefined
                 }
@@ -312,7 +313,7 @@ export function Reports({
                 type="button"
                 onClick={() => setUndoToast(null)}
                 className="text-white/25 transition-colors hover:text-white/50">
-                <i className="fa-solid fa-xmark text-[10px]" />
+                <X className="size-3" />
               </button>
             </div>
           </motion.div>

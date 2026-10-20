@@ -1,6 +1,7 @@
 import { memo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { RefObject } from "react"
+import { SlidersHorizontal, Video } from "lucide-react"
 import { Spinner } from "@/components/common"
 import { Tooltip } from "@/components/shared"
 import { ActiveHeadTurnGuide } from "./ActiveHeadTurnGuide"
@@ -257,18 +258,7 @@ export const VideoCanvas = memo(function VideoCanvas({
                   transition={{ duration: 0.15 }}
                   className="relative flex flex-col items-center justify-center">
                   <div className="flex h-16 w-16 items-center justify-center">
-                    <svg
-                      className="h-16 w-16 animate-pulse text-white/55"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
-                    </svg>
+                    <Video className="h-16 w-16 animate-pulse text-white/55" strokeWidth={1.5} />
                   </div>
                   {emptyStateText && (
                     <div className="absolute top-full left-1/2 mt-4 flex w-max max-w-xl -translate-x-1/2 flex-col items-center gap-3 px-6 text-center text-xs text-white/65">
@@ -295,7 +285,7 @@ export const VideoCanvas = memo(function VideoCanvas({
             onMouseLeave={() => setShowSettings(false)}>
             <div
               className={`flex h-full w-full cursor-help items-center justify-center transition-all select-none ${showSettings ? "text-white/65" : "text-white/25 hover:text-white/65"}`}>
-              <i className="fa-solid fa-sliders text-xs" />
+              <SlidersHorizontal className="size-3.5" />
             </div>
 
             <AnimatePresence>

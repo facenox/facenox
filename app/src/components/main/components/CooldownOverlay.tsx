@@ -1,6 +1,7 @@
 import type { CooldownInfo } from "@/components/main/types"
 import { AnimatePresence, motion } from "framer-motion"
 import { useState, useEffect } from "react"
+import { Check } from "lucide-react"
 
 interface CooldownOverlayProps {
   persistentCooldowns: Map<string, CooldownInfo>
@@ -61,7 +62,7 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
             }}
             className="group relative">
             <div className="relative flex items-center gap-2 rounded-full border border-white/[0.04] bg-black/60 px-3 py-1.5 pr-4 shadow-[0_8px_30px_rgba(0,0,0,0.5)]">
-              <i className="fa-solid fa-check shrink-0 text-xs text-cyan-400"></i>
+              <Check className="size-3.5 shrink-0 stroke-[2.5] text-cyan-400" />
               <h4 className="max-w-[140px] truncate text-xs font-medium text-white/95">
                 {info.memberName || "Authorized"}
               </h4>

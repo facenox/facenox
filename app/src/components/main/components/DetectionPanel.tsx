@@ -1,5 +1,6 @@
 import { useMemo, memo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Check } from "lucide-react"
 import { MemberTooltip } from "@/components/shared"
 import { createDisplayNameMap } from "@/utils"
 import type { DetectionResult, TrackedFace } from "@/components/main/types"
@@ -96,7 +97,7 @@ const DetectionCard = memo(
                   exit={{ scale: 0, opacity: 0 }}
                   transition={{ type: "spring", stiffness: 380, damping: 18 }}
                   className="flex items-center justify-center text-cyan-400">
-                  <i className="fa-solid fa-check text-xs"></i>
+                  <Check className="size-3.5 stroke-[2.5]" />
                 </motion.div>
               )}
             </AnimatePresence>

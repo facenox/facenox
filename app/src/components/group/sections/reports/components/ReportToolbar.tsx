@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Check, Filter, Search, SlidersHorizontal } from "lucide-react"
 import { Dropdown, Tooltip } from "@/components/shared"
 import type {
   ColumnKey,
@@ -120,18 +121,7 @@ export function ReportToolbar({
         <div
           className={`group/bar flex w-full items-center transition-all duration-300 ease-out ${searchBarMaxWidthClass}`}>
           <div className="relative flex-1">
-            <svg
-              className="absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            <Search className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45" />
             <input
               type="search"
               placeholder="Search name, status, notes…"
@@ -187,7 +177,7 @@ export function ReportToolbar({
                   "bg-cyan-500/[0.08] text-cyan-400"
                 : "text-white/55 hover:bg-white/5 hover:text-white"
               }`}>
-              <i className="fa-solid fa-filter text-[11px]" />
+              <Filter className="size-3.5" />
               {statusFilter !== "all" && (
                 <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-[1px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
               )}
@@ -231,7 +221,7 @@ export function ReportToolbar({
                   "bg-cyan-500/[0.08] text-cyan-400"
                 : "text-white/55 hover:bg-white/5 hover:text-white"
               }`}>
-              <i className="fa-solid fa-sliders text-[11px]" />
+              <SlidersHorizontal className="size-3.5" />
             </button>
           </Tooltip>
 
@@ -266,7 +256,7 @@ export function ReportToolbar({
                             }}
                             className="peer h-3.5 w-3.5 cursor-pointer appearance-none rounded border border-white/10 bg-white/5 transition-all checked:border-cyan-500 checked:bg-cyan-500"
                           />
-                          <i className="fa-solid fa-check pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[8px] text-black opacity-0 peer-checked:opacity-100" />
+                          <Check className="pointer-events-none absolute top-1/2 left-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 text-black opacity-0 peer-checked:opacity-100" />
                         </div>
                         <span className="text-[11px] font-bold tracking-wider text-white/65">
                           {c.label}

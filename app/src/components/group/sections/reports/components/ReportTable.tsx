@@ -1,5 +1,16 @@
 import { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import {
+  AlertTriangle,
+  CalendarX,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Ghost,
+  HelpCircle,
+  Pencil,
+} from "lucide-react"
 import type { RowData, ColumnKey } from "@/components/group/sections/reports/types"
 import { parseLocalDate, formatDuration } from "@/utils"
 import { Tooltip, Dropdown } from "@/components/shared"
@@ -181,7 +192,7 @@ function EmptyTableState({
       <EmptyState
         title={isInvalidRange ? "Invalid date range" : "Unable to generate report"}
         description={error}
-        iconClass="fa-solid fa-triangle-exclamation text-2xl text-red-400/80">
+        icon={<AlertTriangle className="size-8 text-red-400/80" />}>
         <div className="flex flex-col items-center gap-3">
           {!isInvalidRange && (
             <span className="text-[11px] font-semibold text-white/55">
@@ -215,11 +226,11 @@ function EmptyTableState({
           `No records match the "${statusFilter}" filter.`
         : "There are no attendance records for this period."
       }
-      iconClass={
-        search ? "fa-solid fa-ghost text-2xl"
+      icon={
+        search ? <Ghost className="size-8" />
         : statusFilter && statusFilter !== "all" ?
-          "fa-solid fa-calendar-xmark text-2xl"
-        : "fa-solid fa-clipboard-question text-2xl"
+          <CalendarX className="size-8" />
+        : <HelpCircle className="size-8" />
       }>
       <div className="flex items-center gap-3">
         {statusFilter && statusFilter !== "all" && (
@@ -288,7 +299,7 @@ function TablePagination({
               disabled={page === 0}
               aria-label="First page"
               className="flex h-7 w-7 items-center justify-center rounded border border-transparent text-white/50 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-25">
-              <i className="fa-solid fa-angles-left text-[10px]" />
+              <ChevronsLeft className="size-3" />
             </button>
           </Tooltip>
           <Tooltip content="Previous page" position="top" offset={6}>
@@ -298,7 +309,7 @@ function TablePagination({
               disabled={page === 0}
               aria-label="Previous page"
               className="flex h-7 w-7 items-center justify-center rounded border border-transparent text-white/50 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-25">
-              <i className="fa-solid fa-chevron-left text-[10px]" />
+              <ChevronLeft className="size-3" />
             </button>
           </Tooltip>
           <motion.span
@@ -317,7 +328,7 @@ function TablePagination({
               disabled={page >= totalPages - 1}
               aria-label="Next page"
               className="flex h-7 w-7 items-center justify-center rounded border border-transparent text-white/50 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-25">
-              <i className="fa-solid fa-chevron-right text-[10px]" />
+              <ChevronRight className="size-3" />
             </button>
           </Tooltip>
           <Tooltip content="Last page" position="top" offset={6}>
@@ -327,7 +338,7 @@ function TablePagination({
               disabled={page >= totalPages - 1}
               aria-label="Last page"
               className="flex h-7 w-7 items-center justify-center rounded border border-transparent text-white/50 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-25">
-              <i className="fa-solid fa-angles-right text-[10px]" />
+              <ChevronsRight className="size-3" />
             </button>
           </Tooltip>
         </div>
@@ -475,7 +486,7 @@ export function ReportTable({
                               type="button"
                               onClick={() => onEditRow(row)}
                               className="p-1.5 text-white/20 opacity-0 transition-all group-hover:opacity-100 hover:text-white">
-                              <i className="fa-solid fa-pen text-[12px]" />
+                              <Pencil className="size-3" />
                             </button>
                           </td>
                         )}

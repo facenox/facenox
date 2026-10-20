@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Calendar, ChevronDown, Clock, Ghost, Search, UserPlus, X } from "lucide-react"
 import { useGroupStore } from "@/components/group/stores"
 import { createDisplayNameMap, getLocalDateString } from "@/utils"
 import { StatsCard, EmptyState } from "@/components/group/shared"
@@ -206,7 +207,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
             {
               label: "Add member",
               onClick: onAddMember,
-              iconClass: "fa-solid fa-user-plus text-[10px]",
+              icon: <UserPlus className="size-3" />,
             }
           : undefined
         }
@@ -299,18 +300,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
             <div
               className={`group/bar flex w-full items-center transition-all duration-300 ease-out ${searchBarMaxWidthClass}`}>
               <div className="relative flex-1">
-                <svg
-                  className="absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <Search className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45" />
                 <input
                   type="text"
                   value={activitySearch}
@@ -324,7 +314,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                   <button
                     onClick={() => setActivitySearch("")}
                     className="absolute top-1/2 right-2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-sm text-white/55 hover:text-white">
-                    <i className="fa-solid fa-xmark text-[9px]" />
+                    <X className="size-2.5" />
                   </button>
                 )}
               </div>
@@ -336,11 +326,11 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                   onClick={() => setFilterDropdownOpen((o) => !o)}
                   className={`flex h-9 transform-gpu items-center justify-between gap-1.5 rounded-l-none rounded-r-lg border border-l-0 border-white/5 bg-white/5 px-2.5 text-[12px] font-semibold text-white/80 transition-colors duration-300 outline-none group-focus-within/bar:border-white/20 focus-within:bg-white/[0.08] hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08] ${dropdownWidthClass}`}>
                   <span className="flex min-w-0 items-center gap-1.5">
-                    <i className="fa-regular fa-calendar text-[10px]" />
+                    <Calendar className="size-3" />
                     <span className="truncate">{DATE_FILTER_LABELS[dateFilter]}</span>
                   </span>
-                  <i
-                    className={`fa-solid fa-chevron-down shrink-0 text-[9px] text-white/55 transition-transform duration-150 ${filterDropdownOpen ? "rotate-180" : ""}`}
+                  <ChevronDown
+                    className={`size-2.5 shrink-0 text-white/55 transition-transform duration-150 ${filterDropdownOpen ? "rotate-180" : ""}`}
                   />
                 </button>
 
@@ -412,14 +402,14 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                         : dateFilter === "yesterday" ? "yesterday"
                         : "this week"
                       }.`}
-                      iconClass="fa-solid fa-clock text-2xl"
+                      icon={<Clock className="size-8" />}
                     />
                   : filteredRecords.length === 0 ?
                     <EmptyState
                       key="no-results"
                       title="No results found"
                       description={`No activity matched "${activitySearch}".`}
-                      iconClass="fa-solid fa-ghost text-2xl"
+                      icon={<Ghost className="size-8" />}
                     />
                   : <motion.div
                       key="results"
@@ -441,7 +431,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                                   {displayName}
                                 </span>
                                 <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-white/65">
-                                  <i className="fa-regular fa-clock text-[10px] opacity-70"></i>
+                                  <Clock className="size-2.5 opacity-70" />
                                   <span>{formatTime(record.timestamp)}</span>
                                 </div>
                               </div>

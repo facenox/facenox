@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import { AlertTriangle, Frown } from "lucide-react"
 import { ErrorMessage, Spinner } from "@/components/common"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { useBulkEnrollment } from "@/components/group/sections/enrollment/hooks/useBulkEnrollment"
@@ -75,7 +76,7 @@ export function BulkEnrollment({
             <div className="rounded-2xl border border-white/10 bg-[#0f1011] px-6 py-5">
               {/* Header */}
               <div className="mb-1 flex items-center gap-2">
-                <i className="fa-solid fa-triangle-exclamation text-[13px] text-amber-400" />
+                <AlertTriangle className="size-3.5 text-amber-400" />
                 <span className="text-[13px] font-semibold text-white">Duplicate files</span>
               </div>
               <p className="mb-4 pl-5 text-[11px] leading-relaxed text-white/45">
@@ -180,7 +181,7 @@ export function BulkEnrollment({
           detectedFaces.length === 0 && (
             <div className="py-8">
               <EmptyState
-                iconClass="fa-solid fa-face-frown text-2xl"
+                icon={<Frown className="size-8" />}
                 title="No faces detected"
                 description="No clear faces detected in the uploaded images. Upload front-facing photos with balanced lighting."
               />

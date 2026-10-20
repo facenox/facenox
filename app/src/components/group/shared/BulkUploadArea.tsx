@@ -1,3 +1,4 @@
+import { CheckCircle2, Plus, FolderOpen, Folder, Images } from "lucide-react"
 import { Tooltip } from "@/components/shared"
 import { Spinner } from "@/components/common"
 
@@ -22,7 +23,7 @@ export function BulkUploadArea({
           <div className="flex h-5 w-5 shrink-0 items-center justify-center">
             {isDetecting ?
               <Spinner size="xs" color="cyan" />
-            : <i className="fa-solid fa-circle-check text-sm text-cyan-400" />}
+            : <CheckCircle2 className="size-4 text-cyan-400" />}
           </div>
           <span className="text-[13px] font-semibold text-white">
             {isDetecting ?
@@ -56,7 +57,7 @@ export function BulkUploadArea({
                 }
               }}
             />
-            <i className="fa-solid fa-plus text-[10px]" />
+            <Plus className="size-3" />
             Add more
           </label>
         </div>
@@ -69,7 +70,7 @@ export function BulkUploadArea({
       <div className="relative flex w-full max-w-lg flex-col items-center justify-center gap-5 rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-10 text-center transition-all hover:border-white/20 hover:bg-white/[0.02]">
         {/* Icon */}
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400">
-          <i className="fa-solid fa-folder-open text-xl" />
+          <FolderOpen className="size-6" />
         </div>
 
         <div>
@@ -86,7 +87,7 @@ export function BulkUploadArea({
         {/* Action Buttons */}
         <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
           <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97]">
-            <i className="fa-solid fa-folder text-[11px]" />
+            <Folder className="size-3.5" />
             Choose folder
             <input
               type="file"
@@ -101,7 +102,7 @@ export function BulkUploadArea({
           </label>
 
           <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-white/80 transition-all hover:bg-white/10 hover:text-white active:scale-95">
-            <i className="fa-solid fa-images text-[11px] text-white/60" />
+            <Images className="size-3.5 text-white/60" />
             Choose files
             <input
               type="file"

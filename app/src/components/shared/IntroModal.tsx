@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useUIStore } from "@/components/main/stores/uiStore"
 import { Modal } from "@/components/common"
 import { motion, AnimatePresence } from "framer-motion"
+import { Shield, Cloud, Check } from "lucide-react"
 
 /**
  * First-launch intro flow that educates users about privacy and then
@@ -188,8 +189,8 @@ export function IntroModal() {
                         : "border-white/6 bg-white/[0.01] opacity-70"
                       }`}>
                       <div className="mb-3 flex items-center gap-2">
-                        <i
-                          className={`fa-solid fa-shield-halved text-sm transition-colors ${
+                        <Shield
+                          className={`size-4 transition-colors ${
                             selectedPath === "offline" || hoveredCard === "offline" ?
                               "text-white"
                             : "text-white/60"
@@ -223,8 +224,8 @@ export function IntroModal() {
                         : "border-white/6 bg-white/[0.01] opacity-70"
                       }`}>
                       <div className="mb-3 flex items-center gap-2">
-                        <i
-                          className={`fa-solid fa-cloud text-sm transition-colors ${
+                        <Cloud
+                          className={`size-4 transition-colors ${
                             selectedPath === "cloud" || hoveredCard === "cloud" ?
                               "text-cyan-400"
                             : "text-white/60"
@@ -236,15 +237,15 @@ export function IntroModal() {
                       </div>
                       <ul className="mt-1.5 space-y-1 text-[11px] leading-relaxed text-white/50">
                         <li className="flex items-start gap-1.5">
-                          <i className="fa-solid fa-check mt-[3px] text-[8px] text-cyan-400/60" />
+                          <Check className="mt-[3px] size-2.5 text-cyan-400/60" />
                           <span>Access reports from any device</span>
                         </li>
                         <li className="flex items-start gap-1.5">
-                          <i className="fa-solid fa-check mt-[3px] text-[8px] text-cyan-400/60" />
+                          <Check className="mt-[3px] size-2.5 text-cyan-400/60" />
                           <span>Sync data across multiple devices</span>
                         </li>
                         <li className="flex items-start gap-1.5">
-                          <i className="fa-solid fa-check mt-[3px] text-[8px] text-cyan-400/60" />
+                          <Check className="mt-[3px] size-2.5 text-cyan-400/60" />
                           <span>Manage members remotely</span>
                         </li>
                       </ul>

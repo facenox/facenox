@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { Loader2 } from "lucide-react"
 import { ErrorMessage, Modal } from "@/components/common"
 import { Dropdown } from "@/components/shared"
 import { attendanceManager } from "@/services/AttendanceManager"
@@ -386,7 +387,7 @@ export function EditSessionModal({
               onClick={handleSave}
               className="inline-flex min-w-[108px] items-center justify-center gap-1.5 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2 text-[11px] font-bold tracking-wide text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97] disabled:opacity-30">
               {isSubmitting ?
-                <i className="fa-solid fa-spinner fa-spin text-[10px]" />
+                <Loader2 className="size-3 animate-spin" />
               : "Save changes"}
             </button>
           </div>

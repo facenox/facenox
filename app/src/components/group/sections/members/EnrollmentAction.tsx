@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion"
+import { RotateCw } from "lucide-react"
 import { useGroupUIStore } from "@/components/group/stores"
 import { Tooltip } from "@/components/shared"
 
@@ -32,7 +33,7 @@ export function EnrollmentAction({ memberId, isEnrolled }: EnrollmentActionProps
               <button
                 onClick={() => jumpToEnrollment(memberId)}
                 className="flex h-7 w-7 items-center justify-center rounded border-none bg-transparent text-white/55 transition-all hover:bg-white/10 hover:text-white">
-                <i className="fa-solid fa-rotate-right text-[11px]" />
+                <RotateCw className="size-3" />
               </button>
             </Tooltip>
           </motion.div>

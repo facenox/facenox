@@ -1,4 +1,5 @@
 import React from "react"
+import { Loader2, Lock, Trash2 } from "lucide-react"
 import type { AttendanceMember } from "@/types/recognition"
 import type { EditingMember, MemberField } from "@/components/settings/sections/types"
 import { Tooltip } from "@/components/shared"
@@ -142,17 +143,17 @@ export const MemberEntry = React.memo(
                 onClick={() => !isDeleteDisabled && onDeleteMember(member.person_id, member.name)}
                 disabled={deletingMember === member.person_id || isDeleteDisabled}
                 className="flex h-7 w-7 items-center justify-center rounded-md border-0 bg-transparent text-white/55 shadow-none transition-all duration-300 outline-none hover:bg-red-500/10 hover:text-red-400 focus:outline-none disabled:opacity-25">
-                <i
-                  className={`fa-solid ${
-                    deletingMember === member.person_id ? "fa-spinner fa-spin"
-                    : isDeleteDisabled ? "fa-lock text-amber-400/60"
-                    : "fa-trash-can opacity-40 group-hover/member:opacity-75 group-hover/member:hover:opacity-100"
-                  } text-[11px] transition-all`}></i>
+                {deletingMember === member.person_id ?
+                  <Loader2 className="size-3 animate-spin text-white/55" />
+                : isDeleteDisabled ?
+                  <Lock className="size-3 text-amber-400/60" />
+                : <Trash2 className="size-3 opacity-40 transition-all group-hover/member:opacity-75 group-hover/member:hover:opacity-100" />
+                }
               </button>
             </Tooltip>
           </div>
           {savingMember === member.person_id && (
-            <i className="fa-solid fa-spinner fa-spin absolute right-2 text-[10px] text-white/55"></i>
+            <Loader2 className="absolute right-2 size-2.5 animate-spin text-white/55" />
           )}
         </div>
       </div>

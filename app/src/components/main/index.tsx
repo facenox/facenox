@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from "react"
 import { AnimatePresence } from "framer-motion"
+import { AlertTriangle } from "lucide-react"
 import { attendanceManager, WebSocketService } from "@/services"
 import {
   useStreamState,
@@ -694,7 +695,7 @@ export default function Main() {
             onClick={handleOpenTimeSettings}
             className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-[11px] font-medium text-amber-300/90 shadow-lg transition-all hover:bg-amber-500/15 hover:text-amber-200"
             aria-label="Open device time settings">
-            <i className="fa-solid fa-triangle-exclamation text-[10px] text-amber-400" />
+            <AlertTriangle className="size-3 text-amber-400" />
             Device time needs attention
           </button>
         </div>

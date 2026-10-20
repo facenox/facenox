@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { AlertTriangle } from "lucide-react"
 import type { AttendanceGroup } from "@/components/main/types"
 import { Modal } from "@/components/common"
 
@@ -33,7 +34,7 @@ export function DeleteConfirmationModal({
         cancelDeleteGroup()
       }}
       title={groupSnapshot ? `Delete ${groupSnapshot.name}` : "Delete group"}
-      icon={<i className="fa-solid fa-triangle-exclamation text-red-400" />}
+      icon={<AlertTriangle className="size-4 text-red-400" />}
       maxWidth="sm">
       {!groupSnapshot ? null : (
         <>

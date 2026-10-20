@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { AlertTriangle, Info } from "lucide-react"
 
 import {
   DialogContext,
@@ -112,8 +113,8 @@ export function DialogProvider({ children }: { children: ReactNode }) {
         title={active?.options.title}
         icon={
           active?.type === "confirm" ?
-            <i className="fa-solid fa-triangle-exclamation text-orange-300" />
-          : <i className="fa-solid fa-circle-info text-cyan-300" />
+            <AlertTriangle className="size-4 text-orange-300" />
+          : <Info className="size-4 text-cyan-300" />
         }
         maxWidth="sm">
         <div className="space-y-6">

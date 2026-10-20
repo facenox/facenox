@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react"
+import { Layers, Loader2, Pencil, Lock, Trash2 } from "lucide-react"
 import type {
   GroupWithMembers,
   EditingMember,
@@ -107,7 +108,7 @@ export function GroupEntry({
       <div className="flex w-full items-center justify-between px-2 py-3.5 transition-colors">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <div className="flex h-5 w-5 shrink-0 items-center justify-center text-white/55 transition-colors group-hover/row:text-white/65">
-            <i className="fa-solid fa-layer-group text-[12px]"></i>
+            <Layers className="size-3.5" />
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col">
@@ -133,7 +134,7 @@ export function GroupEntry({
                   className="flex cursor-pointer items-center gap-2 truncate text-[13px] font-semibold text-white/90 transition-colors hover:text-white">
                   <span className="truncate">{group.displayName || group.name}</span>
                   {savingGroup === group.id && (
-                    <i className="fa-solid fa-spinner fa-spin text-[10px] text-white/55"></i>
+                    <Loader2 className="size-2.5 animate-spin text-white/55" />
                   )}
                 </div>
               </Tooltip>
@@ -158,7 +159,7 @@ export function GroupEntry({
             <button
               onClick={() => onToggle(group.id)}
               className="ml-1 flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent text-white/55 shadow-none transition-all duration-300 outline-none hover:bg-white/5 hover:text-white focus:outline-none active:scale-95 lg:opacity-0 lg:group-hover/row:opacity-100">
-              <i className="fa-solid fa-pen text-[11px] opacity-70" />
+              <Pencil className="size-3 opacity-70" />
             </button>
           </Tooltip>
         </div>
@@ -186,7 +187,7 @@ export function GroupEntry({
                 setIsEditModalOpen(true)
               }}
               className="flex h-7 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-white/[0.02] px-2.5 text-[10px] font-bold tracking-wider text-white/70 uppercase shadow-none transition-all hover:border-white/25 hover:bg-white/5 active:scale-95">
-              <i className="fa-solid fa-pen text-[10px]"></i>
+              <Pencil className="size-2.5" />
               <span>Edit</span>
             </button>
             <button
@@ -203,12 +204,11 @@ export function GroupEntry({
                 : undefined
               }
               className="flex h-7 items-center justify-center gap-1.5 rounded-md border-0 bg-red-500/10 px-2.5 text-[10px] font-bold tracking-wider text-red-400 uppercase shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-25">
-              <i
-                className={`fa-solid ${
-                  deletingGroup === group.id ? "fa-spinner fa-spin"
-                  : isDeleteDisabled ? "fa-lock text-amber-400/60"
-                  : "fa-trash-can"
-                } text-[10px]`}></i>
+              {deletingGroup === group.id ?
+                <Loader2 className="size-2.5 animate-spin" />
+              : isDeleteDisabled ?
+                <Lock className="size-2.5 text-amber-400/60" />
+              : <Trash2 className="size-2.5" />}
               <span>Delete</span>
             </button>
           </div>

@@ -1,5 +1,16 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import {
+  UserPlus,
+  ArrowLeft,
+  FileSpreadsheet,
+  Layers,
+  ChevronDown,
+  Download,
+  Check,
+  X,
+  Pencil,
+} from "lucide-react"
 import { Display } from "@/components/settings/sections/Display"
 import { DataStorage } from "@/components/settings/sections/DataStorage"
 import { Attendance } from "@/components/settings/sections/Attendance"
@@ -62,7 +73,11 @@ interface ContentPanelProps {
   addMemberHandler: (() => void) | null
   hasSelectedMember: boolean
   dropdownGroups: AttendanceGroup[]
-  groupSections: { id: GroupSection; label: string; icon: string }[]
+  groupSections: {
+    id: GroupSection
+    label: string
+    icon: React.ComponentType<{ className?: string }>
+  }[]
   setActiveSection: (section: string) => void
   streamRef?: React.RefObject<MediaStream | null>
 }
@@ -247,7 +262,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               onClick={() => addMemberHandler?.()}
               disabled={!addMemberHandler}
               className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-50">
-              <i className="fa-solid fa-user-plus text-[10px]"></i>
+              <UserPlus className="size-3" />
               Add member
             </button>
           </div>
@@ -257,7 +272,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
           <button
             onClick={resetEnrollment}
             className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
-            <i className="fa-solid fa-arrow-left text-[10px]"></i>
+            <ArrowLeft className="size-3" />
             Back to members
           </button>
         )
@@ -269,12 +284,12 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 {
                   value: "current",
                   label: "Export current group",
-                  icon: "fa-solid fa-file-csv",
+                  icon: <FileSpreadsheet className="size-3.5" />,
                 },
                 {
                   value: "all",
                   label: "Export all groups",
-                  icon: "fa-solid fa-layer-group",
+                  icon: <Layers className="size-3.5" />,
                 },
               ]}
               value={null}
@@ -296,9 +311,9 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   type="button"
                   disabled={!reportsExportHandlers}
                   className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white/80 transition-all duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40">
-                  <i className="fa-solid fa-file-csv text-[10px]" />
+                  <FileSpreadsheet className="size-3" />
                   <span>Export</span>
-                  <i className="fa-solid fa-chevron-down ml-0.5 text-[8px] opacity-70" />
+                  <ChevronDown className="ml-0.5 size-2.5 opacity-70" />
                 </button>
               }
             />
@@ -307,7 +322,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               disabled={!reportsExportHandlers}
               title="Export CSV for this group"
               className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white/80 transition-all duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40">
-              <i className="fa-solid fa-file-csv text-[10px]" />
+              <FileSpreadsheet className="size-3" />
               Export CSV
             </button>
       }
@@ -335,7 +350,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
           <button
             onClick={() => setIsAuditLogModalOpen(true)}
             className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
-            <i className="fa-solid fa-download text-[10px]" />
+            <Download className="size-3" />
             Audit log
           </button>
         : activeSection === "remote-sync" && syncConfig?.connected ?
@@ -467,7 +482,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                           disabled={!groupNameInput.trim() || isSavingGroupName}
                           aria-label="Save name"
                           className="flex h-5 w-5 shrink-0 items-center justify-center rounded border-none bg-transparent p-0 text-cyan-400/80 transition-all duration-150 hover:bg-cyan-500/10 hover:text-cyan-300 focus:outline-none active:scale-95 disabled:opacity-30">
-                          <i className="fa-solid fa-check text-[10px]" />
+                          <Check className="size-3" />
                         </button>
                       </Tooltip>
                       <Tooltip content="Cancel (Esc)" position="bottom" offset={6}>
@@ -477,7 +492,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                           disabled={isSavingGroupName}
                           aria-label="Cancel"
                           className="flex h-5 w-5 shrink-0 items-center justify-center rounded border-none bg-transparent p-0 text-white/35 transition-all duration-150 hover:bg-white/5 hover:text-white/75 focus:outline-none active:scale-95">
-                          <i className="fa-solid fa-xmark text-[10px]" />
+                          <X className="size-3" />
                         </button>
                       </Tooltip>
                     </motion.div>
@@ -514,7 +529,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                               }}
                               aria-label="Edit group name"
                               className="flex h-5 w-5 shrink-0 items-center justify-center border-none bg-transparent p-0 text-white/35 transition-colors duration-150 hover:text-cyan-400 focus:outline-none active:scale-95">
-                              <i className="fa-solid fa-pen text-[9px]" />
+                              <Pencil className="size-2.5" />
                             </button>
                           </Tooltip>
                         )}

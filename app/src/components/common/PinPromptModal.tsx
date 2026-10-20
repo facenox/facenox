@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
+import { Cloud, Shield, Clock, AlertCircle, Delete } from "lucide-react"
 import { useUIStore } from "@/components/main/stores"
 import { ModalCloseButton } from "@/components/common/ModalCloseButton"
 import { useCloudSyncStatus } from "@/components/common/useCloudSyncStatus"
@@ -260,7 +261,7 @@ export function PinPromptModal() {
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.14 }}
                         className="inline-flex items-center justify-center gap-1.5 text-center text-[11px] leading-snug text-white/40">
-                        <i className="fa-solid fa-cloud text-[9px] text-emerald-400" />
+                        <Cloud className="size-3 text-emerald-400" />
                         <span>No key? Device can be reset remotely via Cloud.</span>
                       </motion.span>
                     : <motion.span
@@ -270,7 +271,7 @@ export function PinPromptModal() {
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.14 }}
                         className="inline-flex items-center justify-center gap-1.5 text-center text-[11px] leading-snug text-white/40">
-                        <i className="fa-solid fa-shield-halved text-[9px] text-white/30" />
+                        <Shield className="size-3 text-white/30" />
                         <span>Standalone device. PIN can only be reset with this key.</span>
                       </motion.span>
                     }
@@ -372,8 +373,7 @@ export function PinPromptModal() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         className="flex items-center gap-1.5 text-[11px] font-medium text-amber-400">
-                        <i className="fa-solid fa-clock text-[10px]" /> Too many attempts. Wait{" "}
-                        {lockoutSeconds}s.
+                        <Clock className="size-3" /> Too many attempts. Wait {lockoutSeconds}s.
                       </motion.span>
                     : error ?
                       <motion.span
@@ -382,7 +382,7 @@ export function PinPromptModal() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         className="flex items-center gap-1.5 text-[11px] font-medium text-rose-400">
-                        <i className="fa-solid fa-circle-exclamation text-[10px]" /> Incorrect PIN.
+                        <AlertCircle className="size-3" /> Incorrect PIN.
                         {pinFailedAttempts >= 2 && pinFailedAttempts < 3 ?
                           " 1 attempt before lockout."
                         : " Try again."}
@@ -423,7 +423,7 @@ export function PinPromptModal() {
                     disabled={pin.length === 0 || lockoutSeconds > 0}
                     className="flex h-12 items-center justify-center rounded-xl border border-transparent text-white/50 transition-all duration-150 hover:bg-white/5 hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-20"
                     aria-label="Backspace">
-                    <i className="fa-solid fa-delete-left text-sm" />
+                    <Delete className="size-4" />
                   </button>
                 </div>
 

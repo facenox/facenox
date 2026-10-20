@@ -1,5 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import {
+  ChevronUp,
+  ChevronDown,
+  Wifi,
+  RotateCw,
+  AlertCircle,
+  ExternalLink,
+  Check,
+  Copy,
+  CloudUpload,
+  AlertTriangle,
+} from "lucide-react"
 
 import { useUIStore } from "@/components/main/stores"
 import { Modal, QRCodeView, Spinner } from "@/components/common"
@@ -441,9 +453,9 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
               onClick={() => setShowAdvanced((value) => !value)}
               className="group flex items-center gap-1.5 text-xs font-semibold text-white/45 transition hover:text-white/70">
               <span>{showAdvanced ? "Hide advanced" : "Advanced settings"}</span>
-              <i
-                className={`fa-solid ${showAdvanced ? "fa-chevron-up" : "fa-chevron-down"} text-[9px]`}
-              />
+              {showAdvanced ?
+                <ChevronUp className="size-2.5" />
+              : <ChevronDown className="size-2.5" />}
             </button>
           </div>
         </div>
@@ -488,7 +500,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       {isOfflineError(initiateError) ?
                         <>
                           <div className="flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/50">
-                            <i className="fa-solid fa-wifi text-sm text-white/40" />
+                            <Wifi className="size-4 text-white/40" />
                           </div>
                           <div className="space-y-1">
                             <p className="text-xs font-semibold text-white/90">Device is offline</p>
@@ -503,13 +515,13 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                               void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
                             }}
                             className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
-                            <i className="fa-solid fa-arrows-rotate text-[10px]" />
+                            <RotateCw className="size-3" />
                             Check connection
                           </button>
                         </>
                       : <>
                           <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-                            <i className="fa-solid fa-circle-exclamation text-sm" />
+                            <AlertCircle className="size-4" />
                           </div>
                           <div className="space-y-1">
                             <p className="text-xs font-medium text-white/90">
@@ -526,7 +538,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                               void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
                             }}
                             className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
-                            <i className="fa-solid fa-arrows-rotate text-[10px]" />
+                            <RotateCw className="size-3" />
                             Retry connection
                           </button>
                         </>
@@ -564,7 +576,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                             <span>
                               {reversePairing.verificationUri.replace(/^https?:\/\//, "")}
                             </span>
-                            <i className="fa-solid fa-arrow-up-right-from-square text-[9px]" />
+                            <ExternalLink className="size-2.5" />
                           </a>{" "}
                           and enter:
                         </p>
@@ -586,9 +598,9 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                                 setTimeout(() => setCopiedPin(false), 2000)
                               }}
                               className="flex size-8 items-center justify-center rounded-lg text-white/35 transition hover:bg-white/5 hover:text-white">
-                              <i
-                                className={`fa-solid ${copiedPin ? "fa-check text-emerald-400" : "fa-copy"} text-xs`}
-                              />
+                              {copiedPin ?
+                                <Check className="size-3.5 text-emerald-400" />
+                              : <Copy className="size-3.5" />}
                             </button>
                           </Tooltip>
                           <Tooltip content="Refresh code" position="top">
@@ -597,8 +609,8 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                               onClick={() => void startReversePairing()}
                               disabled={isInitiating}
                               className="flex size-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70 disabled:opacity-40">
-                              <i
-                                className={`fa-solid fa-arrows-rotate text-xs ${isInitiating ? "fa-spin text-cyan-400" : ""}`}
+                              <RotateCw
+                                className={`size-3.5 ${isInitiating ? "animate-spin text-cyan-400" : ""}`}
                               />
                             </button>
                           </Tooltip>
@@ -737,11 +749,11 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         config.unsyncedRecordsCount !== undefined && config.unsyncedRecordsCount > 0
                       ) ?
                         <div className="flex items-center gap-1.5 font-medium text-sky-400">
-                          <i className="fa-solid fa-cloud-arrow-up text-[10px]" />
+                          <CloudUpload className="size-3" />
                           <span>{config.unsyncedRecordsCount} record(s) queued for upload</span>
                         </div>
                       : <div className="flex items-center gap-1.5 font-medium text-emerald-400">
-                          <i className="fa-solid fa-check text-[10px]" />
+                          <Check className="size-3" />
                           <span>All records synchronized</span>
                         </div>
                       }
@@ -761,7 +773,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     className="flex items-center gap-1.5 rounded border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-white/80 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
                     {busyAction === "syncing" ?
                       <Spinner size="xs" color="white" />
-                    : <i className="fa-solid fa-arrows-rotate text-[10px]" />}
+                    : <RotateCw className="size-3" />}
                     Sync now
                   </button>
                   <button
@@ -822,9 +834,9 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         : "Copy Device ID"
                       }
                       className="flex h-8.5 shrink-0 items-center gap-1.5 rounded border border-white/10 bg-white/[0.04] px-3 text-[11px] font-medium text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 hover:disabled:bg-white/[0.04] hover:disabled:text-white/70">
-                      <i
-                        className={`fa-solid ${copiedId ? "fa-check text-emerald-400" : "fa-copy"}`}
-                      />
+                      {copiedId ?
+                        <Check className="size-3 text-emerald-400" />
+                      : <Copy className="size-3" />}
                       {copiedId ? "Copied" : "Copy"}
                     </button>
                   </div>
@@ -865,7 +877,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         />
                         {isLocalhost && (
                           <p className="flex items-center gap-1.5 text-[10px] font-medium text-amber-400/90">
-                            <i className="fa-solid fa-triangle-exclamation text-[9px]" />
+                            <AlertTriangle className="size-2.5" />
                             Localhost cannot sync across devices. Leave empty for Facenox Cloud.
                           </p>
                         )}

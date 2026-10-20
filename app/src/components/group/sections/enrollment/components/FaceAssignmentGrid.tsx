@@ -1,6 +1,15 @@
 import { useState, useRef, useEffect, useMemo, useLayoutEffect, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Plus,
+  Search,
+  UserPlus,
+} from "lucide-react"
 import type { AttendanceMember } from "@/types/recognition"
 import type { DetectedFace } from "@/components/group/sections/enrollment/types"
 import { createDisplayNameMap } from "@/utils/displayNameUtils"
@@ -124,8 +133,8 @@ function MemberAssignCombobox({
         }}
         className="flex w-full items-center justify-between border-b border-white/10 bg-transparent py-1.5 text-left text-[11px] font-medium text-white/55 transition-colors hover:border-white/25 hover:text-white/80 focus:border-white/25 focus:text-white focus:outline-none">
         <span className="truncate">Assign member…</span>
-        <i
-          className={`fa-solid fa-chevron-down text-[9px] text-white/40 transition-transform duration-200 ${
+        <ChevronDown
+          className={`size-2.5 text-white/40 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
@@ -148,7 +157,7 @@ function MemberAssignCombobox({
               className="fixed z-9999 flex max-h-[280px] flex-col overflow-hidden rounded-xl border border-white/10 bg-[#141518] shadow-2xl backdrop-blur-md">
               {/* Search Bar */}
               <div className="relative shrink-0 border-b border-white/10 p-2">
-                <i className="fa-solid fa-magnifying-glass absolute top-1/2 left-4 -translate-y-1/2 text-[10px] text-white/40" />
+                <Search className="absolute top-1/2 left-4 size-3 -translate-y-1/2 text-white/40" />
                 <input
                   ref={inputRef}
                   type="text"
@@ -283,13 +292,13 @@ export function FaceAssignmentGrid({
         </div>
         {autoMatchedCount > 0 && (
           <span className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-400">
-            <i className="fa-solid fa-circle-check mr-1 text-[10px]" />
+            <CheckCircle2 className="mr-1 inline size-3" />
             {autoMatchedCount} auto-matched
           </span>
         )}
         {newMembersCount > 0 && (
           <span className="rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 font-medium text-cyan-400">
-            <i className="fa-solid fa-user-plus mr-1 text-[10px]" />
+            <UserPlus className="mr-1 inline size-3" />
             {newMembersCount} new to create
           </span>
         )}
@@ -333,14 +342,14 @@ export function FaceAssignmentGrid({
                 {/* Status Badges Overlay */}
                 {face.isAutoMatched && isAssigned && (
                   <div className="absolute top-2 left-2 rounded-md bg-emerald-950/80 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300 backdrop-blur-sm">
-                    <i className="fa-solid fa-check mr-1" />
+                    <Check className="mr-1 inline size-2.5" />
                     Matched
                   </div>
                 )}
 
                 {isNew && (
                   <div className="absolute top-2 left-2 rounded-md bg-cyan-950/80 px-1.5 py-0.5 text-[9px] font-semibold text-cyan-300 backdrop-blur-sm">
-                    <i className="fa-solid fa-plus mr-1" />
+                    <Plus className="mr-1 inline size-2.5" />
                     New
                   </div>
                 )}
@@ -349,7 +358,7 @@ export function FaceAssignmentGrid({
                 {!face.isAcceptable && (
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-amber-950/90 to-transparent px-3 py-2.5">
                     <div className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-300">
-                      <i className="fa-solid fa-triangle-exclamation text-[9px]" />
+                      <AlertTriangle className="size-2.5" />
                       Low quality
                     </div>
                   </div>

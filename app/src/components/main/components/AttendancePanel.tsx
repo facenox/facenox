@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, memo, useCallback } from "react"
 import type { ReactNode } from "react"
 import { AnimatePresence, motion } from "framer-motion"
+import { Trash2, Plus, Users, Calendar, FolderOpen, Clock, Search, UserPlus } from "lucide-react"
 import {
   createDisplayNameMap,
   getLocalDateString,
@@ -31,9 +32,6 @@ interface AttendancePanelProps {
 
 const sidebarActionButtonClassName =
   "flex h-9 w-9 shrink-0 items-center justify-center border border-white/[0.08] bg-white/[0.02] text-white/45 transition-all duration-200 hover:bg-white/[0.05] hover:text-white focus:border-white/20 focus:text-white focus:outline-none"
-
-const sidebarActionIconClassName =
-  "pointer-events-none text-sm text-current transition-colors duration-200"
 
 const ScrollCenteredEmptyState = memo(function ScrollCenteredEmptyState({
   children,
@@ -261,7 +259,7 @@ const AttendanceRecordItem = memo(
                       }}
                       className="flex h-6 w-6 items-center justify-center rounded-full border-none bg-transparent p-0 text-red-500/50 shadow-none transition-all outline-none hover:bg-red-500/15 hover:text-red-400"
                       aria-label={`Remove manual attendance for ${displayName}`}>
-                      <i className="fa-regular fa-trash-can text-[12px]"></i>
+                      <Trash2 className="size-3" />
                     </button>
                   </motion.div>
                 : <motion.span
@@ -467,7 +465,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                 onClick={() => setShowGroupManagement(true)}
                 className={`${sidebarActionButtonClassName} rounded-none border-r-0`}
                 aria-label="Create group">
-                <i className={`fa-solid fa-plus ${sidebarActionIconClassName}`}></i>
+                <Plus className="size-3.5" />
               </button>
             </Tooltip>
             <Tooltip content="Members" position="top">
@@ -475,7 +473,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                 onClick={() => setShowManualEntry(true)}
                 className={`${sidebarActionButtonClassName} rounded-l-none rounded-r-lg`}
                 aria-label="Members">
-                <i className={`fa-solid fa-users ${sidebarActionIconClassName}`}></i>
+                <Users className="size-3.5" />
               </button>
             </Tooltip>
           </div>
@@ -506,7 +504,7 @@ export const AttendancePanel = memo(function AttendancePanel({
             <button
               onClick={() => setShowGroupManagement(true)}
               className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
-              <i className="fa-solid fa-plus text-xs"></i>
+              <Plus className="size-3.5" />
               Create group
             </button>
           </div>
@@ -517,18 +515,7 @@ export const AttendancePanel = memo(function AttendancePanel({
         <div className="shrink-0 px-2 pb-1.5">
           <div className="group/bar flex min-w-0 flex-1 items-center">
             <div className="relative flex-1">
-              <svg
-                className="absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+              <Search className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45" />
               <input
                 type="text"
                 placeholder="Search name…"
@@ -559,7 +546,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                   onChange={(val) => handleRecordScopeChange(val as AttendanceRecordScope)}
                   trigger={
                     <span className="inline-flex h-4 w-4 items-center justify-center">
-                      <i className={`fa-solid fa-calendar-day ${sidebarActionIconClassName}`} />
+                      <Calendar className="size-3.5 text-current" />
                     </span>
                   }
                   menuWidth={120}
@@ -681,14 +668,14 @@ export const AttendancePanel = memo(function AttendancePanel({
                   {!currentGroup ?
                     <ScrollCenteredEmptyState>
                       <div className="flex flex-col items-center justify-center text-center">
-                        <i className="fa-regular fa-folder-open mb-2 text-base text-white/20" />
+                        <FolderOpen className="mb-2 size-5 text-white/20" />
                         <p className="text-xs text-white/50">Select a group to view records</p>
                       </div>
                     </ScrollCenteredEmptyState>
                   : effectiveRecordScope === "today" ?
                     <ScrollCenteredEmptyState>
                       <div className="flex flex-col items-center justify-center text-center">
-                        <i className="fa-regular fa-clock mb-2 text-base text-white/20" />
+                        <Clock className="mb-2 size-5 text-white/20" />
                         <p className="text-xs text-white/50">No records today</p>
                       </div>
                     </ScrollCenteredEmptyState>
@@ -699,7 +686,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                         <button
                           onClick={handleOpenSettingsForEnrollment}
                           className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
-                          <i className="fa-solid fa-user-plus text-xs"></i>
+                          <UserPlus className="size-3.5" />
                           Add member
                         </button>
                       </div>
@@ -711,14 +698,14 @@ export const AttendancePanel = memo(function AttendancePanel({
                         <button
                           onClick={handleOpenSettingsForEnrollment}
                           className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
-                          <i className="fa-solid fa-user-plus text-xs"></i>
+                          <UserPlus className="size-3.5" />
                           Enroll member
                         </button>
                       </div>
                     </ScrollCenteredEmptyState>
                   : <ScrollCenteredEmptyState>
                       <div className="flex flex-col items-center justify-center text-center">
-                        <i className="fa-regular fa-calendar mb-2 text-base text-white/20" />
+                        <Calendar className="mb-2 size-5 text-white/20" />
                         <p className="text-xs text-white/50">No records for this period</p>
                       </div>
                     </ScrollCenteredEmptyState>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Cloud, Check, X, RotateCw, Eye, EyeOff, Copy } from "lucide-react"
 import type { AttendanceSettings } from "@/components/settings/types"
 import { InfoPopover, Switch, Tooltip } from "@/components/shared"
 import { useUIStore } from "@/components/main/stores"
@@ -342,12 +343,11 @@ export function Attendance({
                 {isPaired &&
                   (cloudCeiling ?
                     <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                      <i className="fa-solid fa-cloud text-[9px]" /> Cloud plan: {cloudCeiling}d
-                      window
+                      <Cloud className="size-2.5" /> Cloud plan: {cloudCeiling}d window
                     </span>
                   : isCloudUnlimited ?
                     <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                      <i className="fa-solid fa-cloud text-[9px]" /> Cloud plan: Unlimited
+                      <Cloud className="size-2.5" /> Cloud plan: Unlimited
                     </span>
                   : null)}
                 <InfoPopover
@@ -544,7 +544,7 @@ export function Attendance({
                               exit={{ opacity: 0, x: -4 }}
                               transition={{ duration: 0.15 }}
                               className="flex items-center text-[11px] font-medium text-cyan-400">
-                              <i className="fa-solid fa-check mr-1.5 text-[11px]" />
+                              <Check className="mr-1.5 size-3" />
                               PIN updated
                             </motion.div>
                           : pinMismatch ?
@@ -555,7 +555,7 @@ export function Attendance({
                               exit={{ opacity: 0, x: -4 }}
                               transition={{ duration: 0.15 }}
                               className="flex items-center text-[11px] font-medium text-rose-400">
-                              <i className="fa-solid fa-xmark mr-1.5 text-[11px]" />
+                              <X className="mr-1.5 size-3" />
                               PINs do not match
                             </motion.div>
                           : pinStep === "confirm" ?
@@ -566,7 +566,7 @@ export function Attendance({
                               exit={{ opacity: 0, x: -4 }}
                               transition={{ duration: 0.15 }}
                               className="flex items-center text-[11px] font-medium text-cyan-300">
-                              <i className="fa-solid fa-arrow-rotate-right mr-1 text-[10px]" />
+                              <RotateCw className="mr-1 size-2.5" />
                               Re-enter to confirm
                             </motion.div>
                           : null}
@@ -578,9 +578,9 @@ export function Attendance({
                             onClick={() => setShowPin(!showPin)}
                             className="flex h-8 w-8 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/5 hover:text-white"
                             aria-label={showPin ? "Hide PIN" : "Show PIN"}>
-                            <i
-                              className={`fa-solid ${showPin ? "fa-eye-slash" : "fa-eye"} text-xs`}
-                            />
+                            {showPin ?
+                              <EyeOff className="size-3.5" />
+                            : <Eye className="size-3.5" />}
                           </button>
                         </Tooltip>
                         <motion.div
@@ -643,9 +643,9 @@ export function Attendance({
                             onClick={handleCopyRecoveryKey}
                             className="flex h-7 w-7 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/5 hover:text-white"
                             aria-label="Copy recovery key">
-                            <i
-                              className={`fa-solid ${copiedKey ? "fa-check text-cyan-400" : "fa-copy"} text-xs`}
-                            />
+                            {copiedKey ?
+                              <Check className="size-3.5 text-cyan-400" />
+                            : <Copy className="size-3.5" />}
                           </button>
                         </Tooltip>
 
@@ -661,8 +661,8 @@ export function Attendance({
                               : "w-7 text-white/45 hover:bg-white/5 hover:text-white"
                             }`}
                             aria-label="Regenerate recovery key">
-                            <i
-                              className={`fa-solid fa-arrows-rotate text-xs ${confirmRegenerate ? "mr-1 animate-spin text-amber-300" : ""}`}
+                            <RotateCw
+                              className={`size-3.5 ${confirmRegenerate ? "mr-1 animate-spin text-amber-300" : ""}`}
                             />
                             {confirmRegenerate && "Confirm"}
                           </button>

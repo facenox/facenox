@@ -1,5 +1,15 @@
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import {
+  MoreVertical,
+  CloudUpload,
+  CloudDownload,
+  RefreshCw,
+  Cloud,
+  AlertTriangle,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react"
 import { Tooltip } from "@/components/shared"
 import { updaterService } from "@/services"
 import type { UpdateInfo } from "@/types/updater"
@@ -214,7 +224,7 @@ export default function WindowBar() {
               }`}
               style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
               title="App menu">
-              <i className="fa-solid fa-ellipsis-vertical text-[10px]" />
+              <MoreVertical className="size-3" />
             </button>
             <AnimatePresence>
               {isMenuOpen && (
@@ -237,7 +247,7 @@ export default function WindowBar() {
                         handleCheckUpdates()
                       }}
                       className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white">
-                      <i className="fa-solid fa-cloud-arrow-up w-4 text-[11px]" />
+                      <CloudUpload className="size-3.5" />
                       Check for updates
                     </button>
                     <button
@@ -250,7 +260,7 @@ export default function WindowBar() {
                         }, 120)
                       }}
                       className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white">
-                      <i className="fa-solid fa-rotate w-4 text-[11px]" />
+                      <RefreshCw className="size-3.5" />
                       Reload application
                     </button>
                   </motion.div>
@@ -271,7 +281,7 @@ export default function WindowBar() {
                   onClick={handleOpenCloudSync}
                   style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
                   className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-white/45 transition-all duration-150 select-none hover:bg-white/5 hover:text-white/80 active:scale-95">
-                  <i className="fa-solid fa-cloud text-[9px] opacity-60" />
+                  <Cloud className="size-2.5 opacity-60" />
                   <span>Connect cloud</span>
                 </button>
               </Tooltip>
@@ -284,7 +294,8 @@ export default function WindowBar() {
 
           let badgeBorderClass =
             "text-emerald-400/90 hover:bg-emerald-500/10 hover:text-emerald-300"
-          let iconClass = "fa-solid fa-cloud text-emerald-400 text-[9px]"
+          let StatusIcon = Cloud
+          let iconColor = "text-emerald-400"
           let statusText = "Synced"
           let tooltipContent =
             pendingCount > 0 ?
@@ -293,7 +304,8 @@ export default function WindowBar() {
 
           if (syncConfig.lastSyncStatus === "error") {
             badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
-            iconClass = "fa-solid fa-triangle-exclamation text-amber-400 text-[9px]"
+            StatusIcon = AlertTriangle
+            iconColor = "text-amber-400"
             const isQuota =
               syncConfig.lastSyncMessage?.includes("Plan limit exceeded") ||
               syncConfig.lastSyncMessage?.includes("PLAN_QUOTA_HARD_EXCEEDED") ||
@@ -319,7 +331,7 @@ export default function WindowBar() {
                 onClick={handleOpenCloudSync}
                 style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
                 className={`pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide transition-all duration-150 select-none active:scale-95 ${badgeBorderClass}`}>
-                <i className={iconClass} />
+                <StatusIcon className={`size-2.5 ${iconColor}`} />
                 <span>{statusText}</span>
               </button>
             </Tooltip>
@@ -431,7 +443,7 @@ export default function WindowBar() {
 
         {updateCheckState === "up-to-date" && (
           <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
-            <i className="fa-solid fa-circle-check text-4xl text-cyan-400" />
+            <CheckCircle2 className="size-10 text-cyan-400" />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-white">You&apos;re up to date</p>
               <p className="text-xs text-white/50">
@@ -443,7 +455,7 @@ export default function WindowBar() {
 
         {updateCheckState === "available" && (
           <div className="flex flex-col items-center justify-center gap-4 py-4 text-center">
-            <i className="fa-solid fa-cloud-arrow-down text-4xl text-cyan-400" />
+            <CloudDownload className="size-10 text-cyan-400" />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-white">New version available</p>
               <p className="text-xs text-white/50">
@@ -478,7 +490,7 @@ export default function WindowBar() {
 
         {(updateCheckState === "error" || updateCheckState === "offline") && (
           <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
-            <i className="fa-solid fa-circle-exclamation text-4xl text-red-400" />
+            <AlertCircle className="size-10 text-red-400" />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-white">Update check failed</p>
               <p className="text-xs text-white/50">
@@ -507,7 +519,7 @@ export default function WindowBar() {
         <div
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
           className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-3 bg-[#08090a]/90 backdrop-blur-md">
-          <i className="fa-solid fa-rotate animate-spin text-2xl text-white/70" />
+          <RefreshCw className="size-6 animate-spin text-white/70" />
           <span className="text-xs font-medium tracking-wide text-white/80">
             Reloading application…
           </span>

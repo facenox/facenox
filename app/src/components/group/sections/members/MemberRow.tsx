@@ -1,4 +1,5 @@
 import React from "react"
+import { Pencil, Trash2, UserX } from "lucide-react"
 import { Tooltip } from "@/components/shared"
 import type { AttendanceMember } from "@/types/recognition"
 import { EnrollmentAction } from "./EnrollmentAction"
@@ -73,7 +74,7 @@ export const MemberRow = React.memo(
                         onEdit(member)
                       }}
                       className="border-transparent bg-transparent p-1.5 text-white/20 transition-colors hover:bg-transparent hover:text-white">
-                      <i className="fa-solid fa-pen text-[12px]"></i>
+                      <Pencil className="size-3" />
                     </button>
                   </Tooltip>
                 )}
@@ -86,7 +87,7 @@ export const MemberRow = React.memo(
                         onResetFace(member)
                       }}
                       className="border-transparent bg-transparent p-1.5 text-white/20 transition-colors hover:bg-transparent hover:text-amber-500">
-                      <i className="fa-solid fa-user-slash text-[12px]"></i>
+                      <UserX className="size-3" />
                     </button>
                   </Tooltip>
                 )}
@@ -99,7 +100,7 @@ export const MemberRow = React.memo(
                         onDelete(member)
                       }}
                       className="border-transparent bg-transparent p-1.5 text-white/20 transition-colors hover:bg-transparent hover:text-red-400">
-                      <i className="fa-solid fa-trash-can text-[12px]"></i>
+                      <Trash2 className="size-3" />
                     </button>
                   </Tooltip>
                 )}

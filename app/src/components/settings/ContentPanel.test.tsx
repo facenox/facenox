@@ -277,7 +277,7 @@ describe("ContentPanel inline group name editing", () => {
     addMemberHandler: null,
     hasSelectedMember: false,
     dropdownGroups: [],
-    groupSections: [{ id: "overview" as const, label: "Overview", icon: "fa-chart-pie" }],
+    groupSections: [{ id: "overview" as const, label: "Overview", icon: () => null }],
   }
 
   it("renders the group name and a pencil edit icon in header", () => {

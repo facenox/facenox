@@ -1,3 +1,4 @@
+import { X } from "lucide-react"
 import { Dropdown, Tooltip } from "@/components/shared"
 import { generateGroupDisplayNames } from "@/utils"
 
@@ -76,15 +77,7 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
           aria-label="Close">
           {!isSidebarCollapsed ?
             <span className="text-sm">Close</span>
-          : <svg className="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          }
+          : <X className="mx-auto size-5" />}
         </button>
       </div>
     </aside>

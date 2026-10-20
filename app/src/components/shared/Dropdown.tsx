@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, forwardRef, useLayoutEffect, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
+import { ChevronDown } from "lucide-react"
 import { Tooltip } from "@/components/shared/Tooltip"
 
 export interface DropdownOption<T = string> {
@@ -8,7 +9,7 @@ export interface DropdownOption<T = string> {
   label: React.ReactNode
   disabled?: boolean
   dividerBelow?: boolean
-  icon?: string | React.ReactNode
+  icon?: React.ReactNode
 }
 
 interface DropdownProps<T = string> extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> {
@@ -278,10 +279,11 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
               </motion.span>
               <span
                 className={`${fit ? "" : "ms-3"} flex h-4 w-[10px] shrink-0 items-center justify-center`}>
-                <i
-                  className={`fa-solid fa-chevron-down text-xs text-white/65 transition-transform duration-200 ${
+                <ChevronDown
+                  className={`size-3 text-white/65 transition-transform duration-200 ${
                     isOpen ? "rotate-180" : ""
-                  } ${iconClassName}`}></i>
+                  } ${iconClassName}`}
+                />
               </span>
             </motion.button>
           </Tooltip>
@@ -392,9 +394,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                                 } ${optionClassName}`}>
                                 {option.icon && (
                                   <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-xs opacity-75">
-                                    {typeof option.icon === "string" ?
-                                      <i className={option.icon} />
-                                    : option.icon}
+                                    {option.icon}
                                   </span>
                                 )}
                                 <span className="block flex-1 truncate">{option.label}</span>

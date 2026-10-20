@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
+import { HelpCircle, Info } from "lucide-react"
 
 interface InfoPopoverProps {
   /** Short label shown in the header of the popover */
@@ -133,7 +134,7 @@ export function InfoPopover({
         onBlur={hide}
         className="m-0 inline-flex cursor-default items-center border-none bg-transparent p-0 leading-none text-white/20 shadow-none transition-colors duration-150 outline-none hover:text-cyan-400/70 focus:outline-none"
         aria-label={`More info about ${title}`}>
-        <i className="fa-regular fa-circle-question text-[11px] leading-none" aria-hidden="true" />
+        <HelpCircle className="size-3 leading-none" aria-hidden="true" />
       </button>
 
       {createPortal(
@@ -178,7 +179,7 @@ export function InfoPopover({
 
                 <div className="space-y-2 px-3.5 py-3">
                   <div className="flex items-center gap-1.5">
-                    <i className="fa-solid fa-circle-info text-[10px] text-cyan-400/60" />
+                    <Info className="size-3 text-cyan-400/60" />
                     <span className="text-[11px] font-semibold tracking-wide text-cyan-400/80">
                       {title}
                     </span>

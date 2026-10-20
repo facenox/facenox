@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Tooltip } from "@/components/shared"
 
 interface GroupHeaderProps {
@@ -21,8 +22,10 @@ export function GroupHeader({ isCollapsed, onToggleCollapse }: GroupHeaderProps)
           onClick={onToggleCollapse}
           className={`group flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] transition-all hover:bg-white/[0.08] ${isCollapsed ? "mx-auto" : "ml-auto"}`}
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
-          <i
-            className={`fa-solid text-sm ${isCollapsed ? "fa-chevron-right" : "fa-chevron-left"} text-white/65 transition-all duration-200 group-hover:text-white`}></i>
+          {isCollapsed ?
+            <ChevronRight className="size-4 text-white/65 transition-all duration-200 group-hover:text-white" />
+          : <ChevronLeft className="size-4 text-white/65 transition-all duration-200 group-hover:text-white" />
+          }
         </button>
       </Tooltip>
     </div>

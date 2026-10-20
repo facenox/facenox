@@ -32,6 +32,7 @@
   "dependencies": {
     "ably": "^2.29.0",
     "framer-motion": "^12.43.0",
+    "lucide-react": "^1.59.0",
     "qrcode": "^1.5.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -40,7 +41,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@fortawesome/fontawesome-free": "^7.3.1",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^6.10.0",

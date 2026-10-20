@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Check, Volume2, Play } from "lucide-react"
 import type { QuickSettings, AudioSettings } from "@/components/settings/types"
 import { Switch, Dropdown, Tooltip } from "@/components/shared"
 import { soundEffects } from "@/services/SoundEffectsService"
@@ -320,7 +321,7 @@ export function Display({
                   className="flex min-h-0 flex-col overflow-hidden border-t border-white/10 bg-[#08090a] p-2">
                   <div className="flex items-center justify-between rounded-lg bg-cyan-500/10 px-2 py-1.5">
                     <div className="h-1.5 w-11 rounded-full bg-white/70" />
-                    <i className="fa-solid fa-check text-[8px] text-cyan-400" />
+                    <Check className="size-2.5 stroke-[2.5] text-cyan-400" />
                   </div>
                 </motion.div>
               )}
@@ -436,11 +437,9 @@ export function Display({
                           disabled={isPlaying || sounds.length === 0}
                           aria-label="Test recognition sound"
                           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white/55 transition-colors hover:bg-white/5 hover:text-white active:scale-90 disabled:cursor-not-allowed disabled:opacity-30">
-                          <i
-                            className={`fa-solid ${
-                              isPlaying ? "fa-volume-high text-cyan-400" : "fa-play text-xs"
-                            } transition-colors`}
-                          />
+                          {isPlaying ?
+                            <Volume2 className="size-3.5 text-cyan-400 transition-colors" />
+                          : <Play className="size-3 fill-current transition-colors" />}
                         </button>
                       </Tooltip>
                     </div>

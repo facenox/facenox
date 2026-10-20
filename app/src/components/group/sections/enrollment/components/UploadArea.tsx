@@ -1,4 +1,5 @@
 import { useCallback } from "react"
+import { Upload } from "lucide-react"
 import { useImageProcessing } from "@/components/group/sections/enrollment/hooks/useImageProcessing"
 
 interface UploadAreaProps {
@@ -36,7 +37,7 @@ export function UploadArea({ onFileProcessed, onError }: UploadAreaProps) {
       <label className="group flex h-full cursor-pointer flex-col items-center justify-center p-8 text-center transition-all hover:bg-white/[0.04]">
         <div className="flex flex-col items-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.04] transition-colors group-hover:bg-cyan-500/10">
-            <i className="fa-solid fa-upload text-3xl text-white/20 transition-colors group-hover:text-cyan-400"></i>
+            <Upload className="size-8 text-white/20 transition-colors group-hover:text-cyan-400" />
           </div>
           <div>
             <div className="mb-1 text-sm font-semibold text-white/80">

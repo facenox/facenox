@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
+import { ChevronDown, FolderOpen, Ghost, Search, UserPlus, UserX, Video } from "lucide-react"
 import { attendanceManager } from "@/services"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
 import { useAttendanceStore } from "@/components/main/stores"
@@ -321,7 +322,7 @@ export function Members({
                 {
                   label: "Add member",
                   onClick: onAdd,
-                  iconClass: "fa-solid fa-user-plus text-[10px]",
+                  icon: <UserPlus className="size-3" />,
                 }
               : undefined
             }
@@ -335,18 +336,7 @@ export function Members({
               <div
                 className={`group/bar flex w-full items-center transition-all duration-300 ease-out ${searchBarMaxWidthClass}`}>
                 <div className="relative flex-1">
-                  <svg
-                    className="absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
+                  <Search className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45" />
                   <input
                     type="search"
                     value={memberSearch}
@@ -457,7 +447,7 @@ export function Members({
                                   value: "camera",
                                   label: (
                                     <div className="flex items-center gap-2">
-                                      <i className="fa-solid fa-video w-3 text-center text-xs text-white/55" />
+                                      <Video className="size-3.5 text-white/55" />
                                       <span>Webcam</span>
                                     </div>
                                   ),
@@ -466,7 +456,7 @@ export function Members({
                                   value: "upload",
                                   label: (
                                     <div className="flex items-center gap-2">
-                                      <i className="fa-solid fa-folder-open w-3 text-center text-xs text-white/55" />
+                                      <FolderOpen className="size-3.5 text-white/55" />
                                       <span>File upload</span>
                                     </div>
                                   ),
@@ -490,7 +480,7 @@ export function Members({
                                     "Re-enroll"
                                   : "Enroll"}{" "}
                                   ({selectedStats.eligible})
-                                  <i className="fa-solid fa-chevron-down ml-0.5 text-[9px] opacity-60"></i>
+                                  <ChevronDown className="ml-0.5 size-2.5 opacity-60" />
                                 </button>
                               }
                               menuWidth={180}
@@ -614,10 +604,10 @@ export function Members({
                       "All members in this group are enrolled."
                     : "No members have been added to this group yet."
                   }
-                  iconClass={
+                  icon={
                     memberSearch.trim() ?
-                      "fa-solid fa-ghost text-2xl"
-                    : "fa-solid fa-user-slash text-2xl"
+                      <Ghost className="size-8" />
+                    : <UserX className="size-8" />
                   }
                 />
               : <motion.div
