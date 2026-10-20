@@ -199,7 +199,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
 
           setPersistentCooldowns((prev) => {
             const next = new Map(prev)
-            next.set(cooldownKey, {
+            const info = {
               personId: payload.person_id,
               memberName,
               startTime: Date.now(),
@@ -219,7 +219,11 @@ export function useBackendService(options: UseBackendServiceOptions) {
                   }
                 : undefined,
               cooldownDurationSeconds: 5,
-            })
+            }
+            next.set(cooldownKey, info)
+            if (isAllGroups) {
+              next.set(`${payload.person_id}-all`, info)
+            }
             return next
           })
 

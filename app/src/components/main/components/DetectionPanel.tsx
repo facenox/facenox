@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Check } from "lucide-react"
 import { MemberTooltip } from "@/components/shared"
 import { createDisplayNameMap } from "@/utils"
-import type { DetectionResult, TrackedFace } from "@/components/main/types"
+import type { DetectionResult, TrackedFace, CooldownInfo } from "@/components/main/types"
 import type { AttendanceMember } from "@/types/recognition"
 import type { ExtendedFaceRecognitionResponse } from "@/components/main/utils"
 import { useAttendanceStore } from "@/components/main/stores"
@@ -16,7 +16,7 @@ interface DetectionPanelProps {
   groupMembers: AttendanceMember[]
   isStreaming: boolean
   isVideoLoading: boolean
-  persistentCooldowns: Map<string, { startTime: number }>
+  persistentCooldowns: Map<string, CooldownInfo>
   currentGroupId?: string
 }
 
@@ -280,7 +280,16 @@ export function DetectionPanel({
                 recognitionResult?.person_id && currentGroupId ?
                   `${recognitionResult.person_id}-${currentGroupId}`
                 : null
-              const isDone = !!(cooldownKey && persistentCooldowns.has(cooldownKey))
+              const isDone = Boolean(
+                recognitionResult?.person_id &&
+                  (
+                    (cooldownKey && persistentCooldowns.has(cooldownKey)) ||
+                    persistentCooldowns.has(`${recognitionResult.person_id}-all`) ||
+                    Array.from(persistentCooldowns.values()).some(
+                      (info) => info.personId === recognitionResult.person_id,
+                    )
+                  ),
+              )
 
               return (
                 <DetectionCard

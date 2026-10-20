@@ -250,6 +250,7 @@ export function useAttendanceGroups() {
 
   const refreshAttendanceData = useCallback(async () => {
     try {
+      panelDataCacheRef.current.clear()
       const currentGroupValue =
         useAttendanceStore.getState().currentGroup ??
         useGroupStore.getState().selectedGroup ??
