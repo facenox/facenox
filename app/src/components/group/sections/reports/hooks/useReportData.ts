@@ -41,25 +41,41 @@ export function useReportData(
     }
   }, [initialMembers])
 
+  const isMountedRef = useRef(true)
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
   const generateReport = useCallback(async () => {
     const startDate = parseLocalDate(startDateStr)
     const endDate = parseLocalDate(endDateStr)
 
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-      setError("Select a valid report date range.")
-      setLoading(false)
+      if (isMountedRef.current) {
+        setError("Select a valid report date range.")
+        setLoading(false)
+      }
       return
     }
 
     if (startDate > endDate) {
-      setError("The start date must be before the end date.")
-      setLoading(false)
+      if (isMountedRef.current) {
+        setError("The start date must be before the end date.")
+        setLoading(false)
+      }
       return
     }
 
-    setLoading(true)
+    if (isMountedRef.current) {
+      setLoading(true)
+    }
     try {
-      setError(null)
+      if (isMountedRef.current) {
+        setError(null)
+      }
 
       const [generatedReport, loadedSessions, loadedMembers] = await Promise.all([
         attendanceManager.generateReport(group.id, startDate, endDate),
@@ -72,14 +88,18 @@ export function useReportData(
           Promise.resolve(initialMembersRef.current)
         : attendanceManager.getGroupMembers(group.id),
       ])
+      if (!isMountedRef.current) return
       setReport(generatedReport)
       setSessions(loadedSessions)
       setMembers(loadedMembers)
     } catch (err) {
+      if (!isMountedRef.current) return
       console.error("Error generating report:", err)
       setError(err instanceof Error ? err.message : "Failed to generate report")
     } finally {
-      setLoading(false)
+      if (isMountedRef.current) {
+        setLoading(false)
+      }
     }
   }, [group.id, startDateStr, endDateStr])
 
