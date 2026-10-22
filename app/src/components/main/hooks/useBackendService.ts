@@ -221,9 +221,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
               cooldownDurationSeconds: 5,
             }
             next.set(cooldownKey, info)
-            if (isAllGroups) {
-              next.set(`${payload.person_id}-all`, info)
-            }
             return next
           })
 

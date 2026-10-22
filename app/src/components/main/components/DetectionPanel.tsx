@@ -276,19 +276,19 @@ export function DetectionPanel({
                     Math.abs(track.bbox.y - face.bbox.y) < 30),
               )
 
+              const member =
+                recognitionResult?.person_id ? memberMap.get(recognitionResult.person_id) : null
+              const effectiveGroupId = member?.group_id || currentGroupId
               const cooldownKey =
-                recognitionResult?.person_id && currentGroupId ?
-                  `${recognitionResult.person_id}-${currentGroupId}`
+                recognitionResult?.person_id && effectiveGroupId ?
+                  `${recognitionResult.person_id}-${effectiveGroupId}`
                 : null
               const isDone = Boolean(
                 recognitionResult?.person_id &&
-                  (
-                    (cooldownKey && persistentCooldowns.has(cooldownKey)) ||
-                    persistentCooldowns.has(`${recognitionResult.person_id}-all`) ||
-                    Array.from(persistentCooldowns.values()).some(
-                      (info) => info.personId === recognitionResult.person_id,
-                    )
-                  ),
+                ((cooldownKey && persistentCooldowns.has(cooldownKey)) ||
+                  Array.from(persistentCooldowns.values()).some(
+                    (info) => info.personId === recognitionResult.person_id,
+                  )),
               )
 
               return (
@@ -296,9 +296,7 @@ export function DetectionPanel({
                   key={trackId}
                   isRecognized={isRecognized}
                   displayName={displayName}
-                  member={
-                    recognitionResult?.person_id ? memberMap.get(recognitionResult.person_id) : null
-                  }
+                  member={member}
                   trackedFace={trackedFace}
                   isDone={isDone}
                 />

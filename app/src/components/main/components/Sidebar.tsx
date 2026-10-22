@@ -248,7 +248,9 @@ export const Sidebar = memo(function Sidebar({
                     const today = getLocalDateString(new Date())
                     const hasStats = Boolean(useGroupStore.getState().overviewStats[targetGroup.id])
                     const hasRecords = Boolean(
-                      useGroupStore.getState().overviewRecords[targetGroup.id]?.[`${today}_${today}`],
+                      useGroupStore.getState().overviewRecords[targetGroup.id]?.[
+                        `${today}_${today}`
+                      ],
                     )
                     if (!hasStats || !hasRecords) {
                       useGroupStore

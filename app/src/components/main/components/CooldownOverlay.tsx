@@ -27,31 +27,36 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
     return () => clearInterval(interval)
   }, [hasActiveCooldowns])
 
-  const activeItems = Array.from(persistentCooldowns.entries())
-    .filter(([, info]) => {
-      const elapsed = now - info.startTime
+  // Defensive deduplication by personId so a single person only ever displays one visual chip at a time
+  const uniqueByPerson = new Map<string, { key: string; info: CooldownInfo }>()
 
-      const visualThreshold = Math.min(
-        info.cooldownDurationSeconds * 1000,
-        MAX_CHIP_DISPLAY_DURATION_MS,
-      )
+  for (const [key, info] of persistentCooldowns.entries()) {
+    const elapsed = now - info.startTime
+    const visualThreshold = Math.min(
+      info.cooldownDurationSeconds * 1000,
+      MAX_CHIP_DISPLAY_DURATION_MS,
+    )
+    const isVisuallyActive = (elapsed >= 0 && elapsed < visualThreshold) || elapsed < 0
 
-      const isVisuallyActive = elapsed >= 0 && elapsed < visualThreshold
+    if (isVisuallyActive) {
+      const existing = uniqueByPerson.get(info.personId)
+      if (!existing || info.startTime > existing.info.startTime) {
+        uniqueByPerson.set(info.personId, { key, info })
+      }
+    }
+  }
 
-      if (elapsed < 0) return true
-
-      return isVisuallyActive
-    })
-    .sort((a, b) => b[1].startTime - a[1].startTime)
+  const activeItems = Array.from(uniqueByPerson.values())
+    .sort((a, b) => b.info.startTime - a.info.startTime)
     .slice(0, 3)
 
   return (
     <div className="pointer-events-none absolute top-6 left-6 z-100 flex flex-col gap-2">
       <AnimatePresence mode="popLayout">
-        {activeItems.map(([cooldownKey, info]) => (
+        {activeItems.map(({ key, info }) => (
           <motion.div
             layout
-            key={cooldownKey}
+            key={key}
             initial={{ opacity: 0, x: -20, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}

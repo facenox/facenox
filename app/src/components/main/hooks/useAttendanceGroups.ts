@@ -87,7 +87,10 @@ export async function bootstrapShellData(): Promise<void> {
   const warmGroup = resolvedGroup && resolvedGroup.id !== ALL_GROUPS_ID ? resolvedGroup : groups[0]
   if (warmGroup?.id) {
     const today = getLocalDateString(new Date())
-    useGroupStore.getState().fetchOverviewData(warmGroup.id, today, today).catch(() => {})
+    useGroupStore
+      .getState()
+      .fetchOverviewData(warmGroup.id, today, today)
+      .catch(() => {})
   }
 }
 
@@ -158,7 +161,10 @@ async function loadSelectedGroupData(
 
     if (groupId !== ALL_GROUPS_ID) {
       const today = getLocalDateString(new Date())
-      useGroupStore.getState().fetchOverviewData(groupId, today, today).catch(() => {})
+      useGroupStore
+        .getState()
+        .fetchOverviewData(groupId, today, today)
+        .catch(() => {})
     }
 
     if (skeletonDelayTimer) {
