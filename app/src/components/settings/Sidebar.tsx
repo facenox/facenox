@@ -159,8 +159,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     }}
                     className={`group/item relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-all duration-150 ${
                       isActive ?
-                        "border border-cyan-500/20 bg-cyan-500/[0.12] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.2)]"
-                      : "border border-transparent bg-transparent font-medium text-white/70 hover:bg-white/5 hover:text-white"
+                        "bg-gradient-to-r from-cyan-500/25 to-transparent font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)]"
+                      : "font-medium text-white/70 hover:bg-white/5 hover:text-white"
                     }`}>
                     {isActive && (
                       <motion.div
@@ -208,8 +208,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       onClick={() => setActiveSection(section.id)}
                       className={`group/item relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-all duration-150 ${
                         isActive ?
-                          "border border-cyan-500/20 bg-cyan-500/[0.12] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.2)]"
-                        : "border border-transparent bg-transparent font-medium text-white/70 hover:bg-white/5 hover:text-white"
+                          "bg-gradient-to-r from-cyan-500/25 to-transparent font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)]"
+                        : "font-medium text-white/70 hover:bg-white/5 hover:text-white"
                       }`}>
                       {isActive && (
                         <motion.div
