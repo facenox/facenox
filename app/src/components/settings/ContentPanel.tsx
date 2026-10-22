@@ -356,7 +356,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
       title:
         generalTitles[activeSection] ||
         activeSection.charAt(0).toUpperCase() + activeSection.slice(1),
-      eyebrow: activeSection === "groups" ? "Manage" : "Settings",
+      eyebrow:
+        activeSection === "groups" || activeSection === "remote-sync" ? "Manage" : "Settings",
       eyebrowColor: "text-white/45",
       actions:
         activeSection === "groups" ?
@@ -580,7 +581,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               </>
             : <>
                 <SectionHeader.Breadcrumb key="settings-label">
-                  {activeSection === "groups" ? "Manage" : "Settings"}
+                  {headerProps.eyebrow}
                 </SectionHeader.Breadcrumb>
                 <AnimatePresence mode="popLayout">
                   {

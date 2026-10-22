@@ -196,7 +196,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="space-y-1">
               {sections
                 .filter((section) =>
-                  category === "Manage" ? section.id === "groups" : section.id !== "groups",
+                  category === "Manage" ?
+                    section.id === "groups" || section.id === "remote-sync"
+                  : section.id !== "groups" && section.id !== "remote-sync",
                 )
                 .map((section) => {
                   const isActive = activeSection === section.id

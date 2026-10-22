@@ -98,10 +98,10 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
 
   const sections = [
     { id: "groups", label: "Groups", icon: Layers },
+    { id: "remote-sync", label: "Cloud sync", icon: Cloud },
     { id: "attendance", label: "General", icon: SlidersHorizontal },
     { id: "display", label: "Display & audio", icon: Monitor },
     { id: "database", label: "Data & storage", icon: Database },
-    { id: "remote-sync", label: "Cloud sync", icon: Cloud },
     { id: "about", label: "About", icon: Info },
   ]
 
