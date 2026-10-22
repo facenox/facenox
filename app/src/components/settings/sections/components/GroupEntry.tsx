@@ -139,9 +139,6 @@ export function GroupEntry({
                 </div>
               </Tooltip>
             }
-            <div className="mt-0.5 hidden truncate font-mono text-[11px] tracking-tight text-white/55 sm:block">
-              ID: {group.id}
-            </div>
           </div>
         </div>
 
