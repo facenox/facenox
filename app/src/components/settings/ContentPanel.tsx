@@ -240,6 +240,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     [setSuccess, setError],
   )
 
+  const handleLoadRecentAuditLogs = useCallback(() => attendanceManager.getAuditLogs(), [])
+
   // Dynamic Header Logic
   const headerProps = useMemo(() => {
     const isGroupSection = activeSection === "group"
@@ -765,6 +767,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         isOpen={isAuditLogModalOpen}
         onClose={() => setIsAuditLogModalOpen(false)}
         onExport={handleExportAuditLog}
+        onLoadRecent={handleLoadRecentAuditLogs}
       />
     </>
   )

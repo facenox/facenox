@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from api.schemas import (
     AttendanceSettingsUpdate,
@@ -92,6 +92,7 @@ async def update_settings(
 async def export_audit_log(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    format: Optional[str] = None,
     repo: AttendanceRepository = Depends(get_repository),
 ):
     """Export audit log as CSV for compliance review."""
@@ -120,6 +121,22 @@ async def export_audit_log(
                 )
 
         logs = await repo.get_audit_logs(start_date=start_dt, end_date=end_dt)
+        if format == "json":
+            return JSONResponse(
+                [
+                    {
+                        "timestamp": log.timestamp.isoformat()
+                        if log.timestamp
+                        else None,
+                        "action": log.action,
+                        "target_type": log.target_type,
+                        "target_id": log.target_id,
+                        "details": log.details,
+                    }
+                    for log in logs[:100]
+                ]
+            )
+
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(["Timestamp", "Action", "Target Type", "Target ID", "Details"])

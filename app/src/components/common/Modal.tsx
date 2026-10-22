@@ -12,6 +12,7 @@ interface ModalProps {
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | string
   hideCloseButton?: boolean
   headerActions?: React.ReactNode
+  animateLayout?: boolean
 }
 
 export function Modal({
@@ -23,6 +24,7 @@ export function Modal({
   maxWidth = "sm",
   hideCloseButton = false,
   headerActions,
+  animateLayout = false,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
   const windowBarHeightPx = 32
@@ -99,6 +101,7 @@ export function Modal({
 
           <motion.div
             ref={modalRef}
+            layout={animateLayout}
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}

@@ -18,6 +18,14 @@ import { MemberManager } from "./attendance/MemberManager"
 import { RecordManager } from "./attendance/RecordManager"
 import { notifyDataChanged } from "../utils/syncNotifier"
 
+export interface DesktopAuditLog {
+  timestamp: string | null
+  action: string
+  target_type: string | null
+  target_id: string | null
+  details: string | null
+}
+
 const API_BASE_URL = "http://127.0.0.1:7400"
 const API_ENDPOINTS = {
   groups: "/attendance/groups",
@@ -315,6 +323,10 @@ export class AttendanceManager {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
+  }
+
+  async getAuditLogs(): Promise<DesktopAuditLog[]> {
+    return this.httpClient.get<DesktopAuditLog[]>("/attendance/settings/audit-log?format=json")
   }
 
   async isBackendAvailable(): Promise<boolean> {
