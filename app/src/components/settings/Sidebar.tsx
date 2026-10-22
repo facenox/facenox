@@ -15,6 +15,7 @@ interface SidebarProps {
   dropdownGroups: AttendanceGroup[]
   dropdownValue: string | null
   onGroupSelect?: (group: AttendanceGroup) => void
+  onCreateGroup: () => void
   setTriggerCreateGroup: (trigger: number) => void
   setEnrollmentState: (
     source: "upload" | "camera" | null,
@@ -40,6 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   dropdownGroups,
   dropdownValue,
   onGroupSelect,
+  onCreateGroup,
   setTriggerCreateGroup,
   setEnrollmentState,
   sections,
@@ -48,6 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [syncStatus, setSyncStatus] = React.useState<{
     connected: boolean
     organizationName?: string
+    allowKioskDirectoryManagement?: boolean
   } | null>(null)
   const [appVersion, setAppVersion] = React.useState<string>("")
 
@@ -68,6 +71,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           setSyncStatus({
             connected: Boolean(cfg?.connected),
             organizationName: cfg?.organizationName,
+            allowKioskDirectoryManagement: (cfg as { allowKioskDirectoryManagement?: boolean })
+              .allowKioskDirectoryManagement,
           })
         })
         .catch(console.error)
@@ -117,14 +122,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <Tooltip content="Create group" position="bottom">
             <button
-              onClick={() => {
-                setActiveSection("group")
-                if (activeSection !== "group") {
-                  setGroupInitialSection("overview")
-                }
-                setEnrollmentState(null, null)
-                setTriggerCreateGroup(Date.now())
-              }}
+              aria-label="Create group"
+              onClick={onCreateGroup}
+              disabled={
+                !syncStatus ||
+                (syncStatus.connected && syncStatus.allowKioskDirectoryManagement === false)
+              }
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/5 bg-white/5 text-white/65 transition-all hover:border-white/10 hover:bg-white/[0.08] hover:text-white active:scale-95">
               <Plus className="size-3" />
             </button>

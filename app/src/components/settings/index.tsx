@@ -16,6 +16,8 @@ import {
 import { useSettings } from "./hooks/useSettings"
 import { Sidebar } from "./Sidebar"
 import { ContentPanel } from "./ContentPanel"
+import { CreateGroup } from "@/components/group/modals/CreateGroup"
+import { useUIStore } from "@/components/main/stores"
 import { useGroupUIStore } from "@/components/group/stores"
 import type { QuickSettings, AttendanceSettings, AudioSettings } from "./types"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
@@ -48,6 +50,8 @@ interface SettingsProps {
 
 export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, ref) => {
   const { isModal, onBack } = props
+  const [createGroupOpen, setCreateGroupOpen] = React.useState(false)
+  const openCreateGroup = React.useCallback(() => setCreateGroupOpen(true), [])
   const settings = useSettings({
     ...props,
     initialGroups: props.initialGroups || [],
@@ -59,7 +63,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
     if (!isModal) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || e.defaultPrevented) return
+      if (e.key !== "Escape" || e.defaultPrevented || createGroupOpen) return
 
       const activeTag = document.activeElement?.tagName
       if (activeTag === "INPUT" || activeTag === "TEXTAREA") return
@@ -83,7 +87,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [isModal, onBack, settings.hasSelectedMember])
+  }, [isModal, onBack, settings.hasSelectedMember, createGroupOpen])
 
   const groupSections = [
     { id: "overview" as const, label: "Overview", icon: LayoutDashboard },
@@ -111,6 +115,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         dropdownGroups={settings.dropdownGroups}
         dropdownValue={settings.dropdownValue}
         onGroupSelect={props.onGroupSelect}
+        onCreateGroup={openCreateGroup}
         setTriggerCreateGroup={settings.setTriggerCreateGroup}
         setEnrollmentState={settings.setEnrollmentState}
         sections={sections}
@@ -118,6 +123,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
       />
 
       <ContentPanel
+        onCreateGroup={openCreateGroup}
         onOpenGroup={(group) => {
           props.onGroupSelect?.(group)
           settings.setActiveSection("group")
@@ -174,6 +180,16 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         dropdownGroups={settings.dropdownGroups}
         groupSections={groupSections}
         setActiveSection={settings.setActiveSection}
+      />
+      <CreateGroup
+        isOpen={createGroupOpen}
+        existingGroups={settings.dropdownGroups}
+        onClose={() => setCreateGroupOpen(false)}
+        onSuccess={() => {
+          settings.loadSystemData()
+          props.onGroupsChanged?.()
+          useUIStore.getState().setSuccess("Group created successfully.")
+        }}
       />
     </div>
   )

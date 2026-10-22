@@ -39,6 +39,7 @@ import type {
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
 interface ContentPanelProps {
+  onCreateGroup?: () => void
   onOpenGroup?: (group: AttendanceGroup) => void
   activeSection: string
   groupInitialSection: GroupSection | undefined
@@ -88,6 +89,7 @@ interface ContentPanelProps {
 }
 
 export const ContentPanel: React.FC<ContentPanelProps> = ({
+  onCreateGroup,
   onOpenGroup,
   activeSection,
   groupInitialSection,
@@ -359,7 +361,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
       actions:
         activeSection === "groups" ?
           <button
-            onClick={openCreateGroup}
+            onClick={onCreateGroup ?? openCreateGroup}
             disabled={!canManageGroups}
             className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-50">
             <Plus aria-hidden="true" className="size-3" />
@@ -429,6 +431,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     syncConfig,
     canManageGroups,
     openCreateGroup,
+    onCreateGroup,
   ])
 
   const handleSpoofDetectionToggle = (enabled: boolean) => {

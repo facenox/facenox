@@ -20,9 +20,9 @@ export function Groups({
   const [searchFocused, setSearchFocused] = useState(false)
   const [editing, setEditing] = useState<AttendanceGroup | null>(null)
   const [editOpen, setEditOpen] = useState(false)
-  const [canManage, setCanManage] = useState(false)
+  const [canManage, setCanManage] = useState<boolean | null>(null)
   useEffect(() => {
-    onManagementChange?.(canManage)
+    onManagementChange?.(canManage === true)
     return () => onManagementChange?.(false)
   }, [canManage, onManagementChange])
   const dialog = useDialog()
@@ -84,7 +84,7 @@ export function Groups({
           />
         </div>
       </div>
-      {!canManage && (
+      {canManage === false && (
         <p className="text-xs text-white/55">
           Group editing is unavailable. Check Cloud sync for organization policy and connection
           details.
