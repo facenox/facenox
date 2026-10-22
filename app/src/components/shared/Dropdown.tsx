@@ -278,9 +278,9 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                 {displayText}
               </motion.span>
               <span
-                className={`${fit ? "" : "ms-3"} flex h-4 w-[10px] shrink-0 items-center justify-center`}>
+                className={`${fit ? "" : "ms-3"} flex size-4 shrink-0 items-center justify-center`}>
                 <ChevronDown
-                  className={`size-3 text-white/65 transition-transform duration-200 ${
+                  className={`size-3.5 text-white/65 transition-transform duration-200 ${
                     isOpen ? "rotate-180" : ""
                   } ${iconClassName}`}
                 />
