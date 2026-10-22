@@ -20,7 +20,7 @@ const formatTime = (value: Date | string): string => {
   if (Number.isNaN(date.getTime())) {
     return "-"
   }
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
 }
 
 const formatDate = (value: Date | string): string => {

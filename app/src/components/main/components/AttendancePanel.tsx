@@ -270,7 +270,7 @@ const AttendanceRecordItem = memo(
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                     className="absolute right-0 block w-full text-right font-mono text-[11px] text-white/55 tabular-nums">
                     {record.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
+                      hour: "numeric",
                       minute: "2-digit",
                     })}
                   </motion.span>

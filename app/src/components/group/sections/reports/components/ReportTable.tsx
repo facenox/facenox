@@ -84,7 +84,7 @@ function CellContent({ row, columnKey }: { row: RowData; columnKey: ColumnKey })
       <div className="flex flex-col">
         <span className="font-medium text-white/90">
           {new Date(row.check_in_time).toLocaleTimeString([], {
-            hour: "2-digit",
+            hour: "numeric",
             minute: "2-digit",
           })}
         </span>
@@ -102,7 +102,7 @@ function CellContent({ row, columnKey }: { row: RowData; columnKey: ColumnKey })
         <div className="flex flex-col">
           <span className="font-medium text-white/90">
             {new Date(row.check_out_time).toLocaleTimeString([], {
-              hour: "2-digit",
+              hour: "numeric",
               minute: "2-digit",
             })}
           </span>

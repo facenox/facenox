@@ -196,7 +196,7 @@ export function EditSessionModal({
   if (!rowSnapshot) return null
 
   const fmt = (d?: Date | string | null) =>
-    d ? new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"
+    d ? new Date(d).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—"
 
   const originalStatus = rowSnapshot.status === "no_records" ? "N/A" : rowSnapshot.status
 
