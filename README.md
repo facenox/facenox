@@ -23,7 +23,7 @@
 
 <p align="center">
   <strong>Facenox is an open-source, offline-first face recognition software for real-time attendance tracking.</strong><br>
-  Built for privacy: No photos stored. Biometric templates are encrypted.
+  Built for privacy: No photos stored. Biometric templates are AES-256-GCM encrypted.
 </p>
 
 <p align="center">
@@ -88,7 +88,7 @@ Most face recognition systems rely on cloud-based biometrics. Facenox doesn't. B
 
 | Feature                 |  Facenox   | Cloud-Based Systems |
 | :---------------------- | :--------: | :-----------------: |
-| **Data Residency**      | Encrypted On-Device · Optional Cloud Sync |    Remote Cloud     |
+| **Data Residency**      | AES-256-GCM Encrypted On-Device · Optional Cloud Sync |    Remote Cloud     |
 | **Internet Dependency** |  Optional  |      Mandatory      |
 | **Latency**             | Real-time  |  Network Dependent  |
 | **Privacy Risk**        | Minimized  |        High         |
