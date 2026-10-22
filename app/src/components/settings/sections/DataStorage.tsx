@@ -329,7 +329,7 @@ export function DataStorage({
             <div className="flex items-center justify-between rounded-lg border border-white/6 bg-white/[0.02] px-4 py-3">
               <div className="flex items-center gap-2.5 text-xs text-white/65">
                 <Cloud className="size-3 text-emerald-400" />
-                <span>Need automated cloud backup or multi-device sync?</span>
+                <span>Want to review synced records from a browser?</span>
               </div>
               <button
                 type="button"

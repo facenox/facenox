@@ -30,7 +30,7 @@ Include:
 
 ## Response Target
 
-Reports are normally acknowledged within 48 to 72 hours. The exact fix timeline depends on severity and reproducibility.
+Include affected versions and steps to reproduce. Response and resolution times depend on severity and available information.
 
 ## What Counts as High Severity
 

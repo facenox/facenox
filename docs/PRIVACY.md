@@ -39,9 +39,9 @@ Facenox is not designed as a raw face-image archive.
 
 ## Legal Responsibility and Compliance
 
-- **Data Processor vs Data Controller:** Facenox (the desktop application and cloud sync pipeline) operates strictly as a **Data Processor**. Deploying organizations (schools, enterprises, institutions) act as the **Data Controller** responsible for securing appropriate organizational waivers prior to biometric enrollment.
-- **Biometric Template Lifecycle:** Enrolling a member stores their encrypted mathematical vector. Deleting a member permanently purges their biometric template from both local storage and cloud sync.
-- **Compliance Disclosures:** Institutional compliance is supported via the integrated disclosures in **Settings ➔ About ➔ Privacy & Data Handling** and the organization's EULA/Terms of Service.
+- **Deployment responsibilities:** Legal roles depend on who determines the purposes and means of processing. Organizations should establish appropriate processing grounds, notices, access controls, and retention practices. Confirm responsibilities for the actual deployment with qualified advisers; software alone does not establish compliance.
+- **Biometric Template Lifecycle:** Enrolling a member stores their encrypted mathematical vector. Member removal clears the template in the system processing the removal. When Cloud is connected, removals propagate through sync; disconnected computers must reconnect to receive them. Cloud preserves attendance history separately from the removed template. Previously exported backup files are independent copies and must be handled separately.
+- **Data-handling information:** **Settings ➔ About ➔ Privacy & Data Handling** explains the local and Cloud data boundaries. These explanations do not replace deployment-specific policies or establish compliance.
 
 ## Backups and Restore
 
@@ -59,7 +59,9 @@ That does not automatically make every surrounding deployment private. If you ad
 
 ## Facenox Cloud data boundary
 
-The desktop app can optionally pair with **Facenox Cloud** for automatic backup, DTR generation, and multi-device synchronization.
+The desktop app can optionally pair with **Facenox Cloud** for browser access to synced records and reports. Essentials includes CSV export for one connected device. Paid plans add PDF and Excel DTR exports, additional devices, and encrypted face-template sync.
+
+Synchronization is not an independent recovery backup: updates and removals can propagate between connected systems. Keep password-protected `.facenox` archives separately when you need a recoverable copy.
 
 ### Data NOT sent to Facenox Cloud
 
@@ -78,7 +80,9 @@ The desktop app can optionally pair with **Facenox Cloud** for automatic backup,
 - attendance records and sessions
 - sync status and device health metadata
 
-The desktop app uses event-driven and snapshot sync. Encrypted biometric templates can sync between paired devices in the same organization so that enrolling on one device is sufficient for all devices across that site.
+The desktop app uses event-driven and snapshot sync. On plans with face-template sync, encrypted templates can sync between paired computers at the same location.
+
+Cloud manages the location encryption keys. During a transfer between locations, the server decrypts templates in memory and re-encrypts them with the destination key. Encrypted storage does not mean the Cloud service is technically unable to decrypt templates. Face recognition itself runs on the paired computers.
 
 ## Offline Operation
 
@@ -111,6 +115,10 @@ Operators are still responsible for:
 - vendor and processor management
 - incident response and breach handling
 
+## Website Analytics
+
+The website includes Vercel Analytics and Speed Insights. When configured, PostHog captures page views and page departures. These hosted services are separate from the desktop app's local processing. Actual production event fields, provider configuration, and retention require confirmation by the service operator.
+
 ## Google API Services Disclosure
 
 Facenox uses Google API Services to handle user authentication and account setup for Facenox Cloud.
@@ -124,21 +132,21 @@ When you authenticate via Google, we access your:
 We use the standard `openid`, `email`, and `profile` scopes.
 
 ### Data Usage
-This data is used exclusively to:
+The account workflow uses this data to:
 - Create and identify your Facenox Cloud account.
 - Personalize your profile.
 - Send transactional emails (e.g., password resets, organization invitations).
 
-We do not use this data for marketing, advertising, or any other purposes.
+This account-data description is separate from the website's analytics configuration.
 
 ### Data Sharing
-We do not share Google user data with any third-party applications, advertisers, or other services. Your data is kept strictly within the Facenox Cloud environment.
+Facenox Cloud uses external services for hosting, authentication, billing, and transactional email. Do not treat local desktop processing as a promise that hosted account data never reaches service providers. Contact privacy@facenox.com for questions about hosted data handling.
 
 ### Data Storage & Protection
-Your Google account information is stored in our secure, encrypted database (AES-256) and transmitted via secure protocols (TLS/SSL).
+Cloud access uses HTTPS. Face-template encryption is separate from account-data storage; the template encryption implementation does not establish the encryption configuration of every hosted database.
 
 ### Data Retention & Deletion
-We retain your Google user data for as long as your account remains active. You can request the deletion of your account and all associated Google user data at any time via your dashboard or by emailing privacy@facenox.com.
+Request account deletion by emailing privacy@facenox.com. The dashboard links to this request route; it does not perform immediate self-service deletion. Account data, organization records, paired computers, and independently exported backups have different deletion scopes.
 
 ---
 

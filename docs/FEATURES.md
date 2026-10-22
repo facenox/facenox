@@ -24,7 +24,7 @@ This page covers the shipped desktop feature set and the scope of the current Fa
 - Biometric enrollment via live camera capture or batch photo import.
 - Raw camera frames are processed in-memory and never written to disk or transmitted to external servers.
 - Embeddings are encrypted at rest locally and purged when a member is deleted.
-- Integrated privacy notices and terms in Settings support Data Controller compliance requirements.
+- Settings explain local processing, Cloud template access, and organizational data-handling responsibilities.
  
 ### Local storage and portability
  
@@ -59,6 +59,8 @@ Facenox Cloud connects offline Facenox desktop kiosks to a unified cloud control
 - Attendance sessions
 - Device and sync metadata
 
+Cloud directory changes, including group/member updates and removals, are applied on connected computers through sync. Disconnected computers receive updates when they reconnect.
+
 ### What does not get synced
 
 - Raw face photos
@@ -67,14 +69,14 @@ Facenox Cloud connects offline Facenox desktop kiosks to a unified cloud control
 
 ### What gets synced (encrypted)
 
-- **Enrolled face data**: AES-256-GCM encrypted before transmission and stored in encrypted form in the database for sync. Decryption happens on your paired devices.
+- **Enrolled face data (paid Cloud plans)**: AES-256-GCM encrypted before upload and stored encrypted for sync between paired computers at a location. Computers decrypt templates for local recognition. Cloud manages location keys and also decrypts/re-encrypts templates during transfers between locations.
 
 ## Not in Scope
 
 These items are outside the current desktop repository scope:
 
 - Remote-side face matching
-- Two-way sync for members and attendance edits
+- Two-way sync for attendance edits
 - Payroll or HRIS integrations
 - Self-serve billing
 - SSO or SCIM

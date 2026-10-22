@@ -28,9 +28,9 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox is an <strong>offline-first, privacy-focused</strong> face recognition system
-            designed for real-time attendance tracking. Everything is processed directly on this
-            device to keep your information secure and under local control.
+            Facenox records attendance using face recognition on this computer, even without
+            internet. You can use it locally or connect Facenox Cloud to review synced records from
+            a browser.
           </p>
           <p className="text-xs text-white/65">
             Here is a quick overview of how information is protected.
@@ -47,8 +47,8 @@ export function IntroModal() {
             secure face template.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
-            This template is encrypted and cannot be turned back into a photo, keeping
-            everyone&apos;s biometric identity private and safe from data breaches.
+            A face template is a numerical representation of a face used for recognition. Facenox
+            encrypts these templates when storing them on this computer.
           </p>
         </div>
       ),
@@ -73,19 +73,19 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox aligns with global privacy standards, ensuring your biometric information is
-            protected.
+            Before enrolling members, decide who can access their records, explain how their data
+            will be used, and set a policy for how long to keep it.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
-            Our codebase is{" "}
+            The{" "}
             <a
               href="https://github.com/facenox/facenox"
               target="_blank"
               rel="noopener noreferrer"
               className="rounded px-0.5 text-cyan-400/80 underline decoration-cyan-400/30 underline-offset-4 transition-colors hover:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500/30 focus-visible:outline-none">
-              open-source
-            </a>
-            , offering full transparency into how data is processed and secured.
+              source code
+            </a>{" "}
+            is available for review.
           </p>
 
           <div className="border-t border-white/5 pt-2 text-center">
@@ -110,7 +110,8 @@ export function IntroModal() {
       content: (
         <div className="space-y-3">
           <p className="text-[12.5px] leading-relaxed text-white/55">
-            Choose how this device operates. You can always change this later in{" "}
+            Both options record attendance without internet. Cloud needs a connection to sync
+            records. You can change this later in{" "}
             <span className="font-medium text-white/70">Settings → Cloud sync</span>.
           </p>
         </div>
@@ -196,13 +197,15 @@ export function IntroModal() {
                             : "text-white/60"
                           }`}
                         />
-                        <span className="text-[14px] font-semibold text-white">Use offline</span>
+                        <span className="text-[14px] font-semibold text-white">
+                          Use this computer only
+                        </span>
                         <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-medium text-white/60">
                           Default
                         </span>
                       </div>
                       <p className="mt-1.5 text-[11.5px] leading-relaxed text-white/50">
-                        No setup. All data stays local to this computer.
+                        Keep records on this computer. No Cloud account required.
                       </p>
                       {/* Active border indicator */}
                       <motion.div
@@ -232,21 +235,21 @@ export function IntroModal() {
                           }`}
                         />
                         <span className="text-[14px] font-semibold text-white">
-                          Connect to cloud
+                          Connect Facenox Cloud
                         </span>
                       </div>
                       <ul className="mt-1.5 space-y-1 text-[11px] leading-relaxed text-white/50">
                         <li className="flex items-start gap-1.5">
                           <Check className="mt-[3px] size-2.5 text-cyan-400/60" />
-                          <span>Access reports from any device</span>
+                          <span>Review synced records in a browser</span>
                         </li>
                         <li className="flex items-start gap-1.5">
                           <Check className="mt-[3px] size-2.5 text-cyan-400/60" />
-                          <span>Sync data across multiple devices</span>
+                          <span>Start free with one connected computer</span>
                         </li>
                         <li className="flex items-start gap-1.5">
                           <Check className="mt-[3px] size-2.5 text-cyan-400/60" />
-                          <span>Manage members remotely</span>
+                          <span>Paid plans add more devices and face-template sync</span>
                         </li>
                       </ul>
                       {/* Active border indicator */}

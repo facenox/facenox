@@ -2,6 +2,8 @@
 
 This guide covers local development and desktop builds for the open source Facenox repository.
 
+Installing a packaged release for your team? Start with [Set up Facenox Desktop](GETTING_STARTED.md). You do not need the developer tools below for a packaged installation.
+
 ## Prerequisites
 
 - Windows, macOS, or Linux

@@ -84,14 +84,12 @@ _Data and storage management panel detailing system clock accuracy validation, a
 
 ## Why Facenox
 
-Most face recognition systems rely on cloud-based biometrics. Facenox doesn't. Biometric matching stays local on the desktop.
+Facenox records attendance with a compatible computer and webcam. Face matching runs locally, without requiring a Cloud connection.
 
-| Feature                 |  Facenox   | Cloud-Based Systems |
-| :---------------------- | :--------: | :-----------------: |
-| **Data Residency**      | AES-256-GCM Encrypted On-Device · Optional Cloud Sync |    Remote Cloud     |
-| **Internet Dependency** |  Optional  |      Mandatory      |
-| **Latency**             | Real-time  |  Network Dependent  |
-| **Privacy Risk**        | Minimized  |        High         |
+- **Local operation:** Enroll members and record attendance without internet after installation.
+- **Optional browser access:** Connect Facenox Cloud to review synced records and export reports from another computer.
+- **Separate plan limits:** Desktop supports unlimited local members. Cloud has a free tier with limits and paid plans for additional capabilities and capacity.
+- **Data handling:** Templates are encrypted in storage, but remain sensitive biometric data. Review the [privacy documentation](docs/PRIVACY.md) before deployment.
 
 ## Features
 
@@ -143,13 +141,13 @@ python tests/stress_test_recognition.py
 Facenox Desktop continues to work locally when internet access is unavailable:
 
 - Recognition and liveness verification remain functional.
-- Attendance is recorded and stored permanently in a local SQLite database.
+- Attendance is recorded in a local SQLite database. Keep backups to protect against deletion or device failure.
 - Settings, backups, and member management remain accessible.
 - Facenox Cloud sync resumes automatically when connectivity returns.
   (Completely optional, as cloud sync is disabled by default and only active when your device is paired.)
 
 > [!NOTE]  
-> **Privacy Assurance:** Facenox does not store or upload raw face photos. Raw camera frames are processed locally and are never persisted to disk. Biometric embeddings are encrypted with AES-256-GCM before optional cloud synchronization to enable multi-device sync and automatic backup. Matching always stays on your local hardware.
+> **Data handling:** Raw camera frames are processed locally, not saved or uploaded. Paid Cloud plans can sync AES-256-GCM encrypted face templates between paired computers. Cloud manages location keys and re-encrypts templates during location transfers. Matching stays on your local hardware. Sync is separate from recovery backups.
 
 ## How it works
 
@@ -167,7 +165,7 @@ It's designed for standard CPUs and has been tested on hardware as old as 2nd-ge
 
 ### How do I protect my data?
 
-Because Facenox operates locally, no external servers have access to your database. Built-in backup utilities allow exporting encrypted `.facenox` archives for secure local or remote storage.
+Protect access to the computer and keep password-protected `.facenox` backup archives separately. Connecting Cloud sends directory and attendance data, and eligible plans also sync encrypted templates. See [Privacy and Data Handling](docs/PRIVACY.md) for the data boundary and deletion limitations.
 
 ## Roadmap
 
@@ -241,6 +239,7 @@ Facenox is in active development. Until code-signing is finalized in a future re
 
 ## Documentation
 
+- [GETTING_STARTED.md](docs/GETTING_STARTED.md): Packaged-app setup for administrators.
 - [FEATURES.md](docs/FEATURES.md): Capabilities and out-of-scope items.
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md): System design and sync boundaries.
 - [INSTALLATION.md](docs/INSTALLATION.md): Local development setup.

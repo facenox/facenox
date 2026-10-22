@@ -17,14 +17,16 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
       title="Privacy & data handling">
       <div className="space-y-5 pt-2">
         <p className="text-[12px] leading-relaxed text-white/65">
-          Facenox is built with a privacy-first architecture, ensuring full compliance and local
-          control over your biometric data:
+          Facenox processes faces on this computer and encrypts stored templates. Here is what stays
+          local and what can sync with Facenox Cloud:
         </p>
 
         <div className="custom-scroll max-h-[50vh] space-y-5 overflow-y-auto pr-1 text-xs">
           {/* Section 1 */}
           <div className="space-y-1">
-            <div className="text-[13px] font-semibold text-white/90">Data remains local</div>
+            <div className="text-[13px] font-semibold text-white/90">
+              Local storage and recognition
+            </div>
             <p className="text-[11px] leading-relaxed text-white/50">
               Biometric templates, attendance records, and app settings are stored locally on this
               machine. Face matching and liveness detection execute entirely on-device, independent
@@ -55,32 +57,25 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
 
           {/* Section 4 */}
           <div className="space-y-1">
-            <div className="text-[13px] font-semibold text-white/90">Cloud sync data boundary</div>
+            <div className="text-[13px] font-semibold text-white/90">What syncs with Cloud</div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Connecting to Facenox Cloud synchronizes member metadata, attendance logs, and
-              encrypted biometric vectors (embeddings) to enable multi-device sync and automatic
-              backup. Raw camera frames are processed locally and are never persisted to disk or
-              uploaded.
+              Connecting to Facenox Cloud syncs member details and attendance records for browser
+              access and reporting. Paid plans also sync encrypted face templates between paired
+              computers. Cloud manages the location keys and re-encrypts templates on the server
+              when members transfer between locations. Raw camera frames are not saved or uploaded.
             </p>
           </div>
 
           {/* Section 5 */}
           <div className="space-y-1">
-            <div className="text-[13px] font-semibold text-white/90">
-              Compliance and data responsibility
-            </div>
+            <div className="text-[13px] font-semibold text-white/90">Privacy responsibilities</div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Facenox operates strictly as a{" "}
-              <span className="font-medium text-white/75">Data Processor</span>. The organization or
-              administrator deploying this software acts as the{" "}
-              <span className="font-medium text-white/75">Data Controller</span> and is responsible
-              for establishing lawful basis or consent prior to biometric enrollment, in accordance
-              with applicable data privacy laws.
+              Before enrolling members, establish your organization&apos;s privacy notices,
+              processing grounds, access rules, and retention practices.
             </p>
             <p className="pt-1 text-[11px] leading-relaxed text-white/35">
-              Facenox provides the local technical safeguards (encrypted storage, local inference,
-              and deletion controls), but operational compliance and privacy policies remain the
-              responsibility of the operator.
+              Encrypted templates, local recognition, and removal controls do not by themselves
+              establish legal compliance.
             </p>
           </div>
         </div>

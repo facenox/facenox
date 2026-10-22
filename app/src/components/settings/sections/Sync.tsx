@@ -931,14 +931,10 @@ interface DataBoundariesModalProps {
 
 function DataBoundariesModal({ isOpen, onClose, onNavigateToDB }: DataBoundariesModalProps) {
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      maxWidth="max-w-[520px]"
-      title="Data boundaries & privacy">
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-[520px]" title="Cloud sync & privacy">
       <div className="space-y-5 pt-2">
         <p className="text-[12px] leading-relaxed text-white/65">
-          Facenox separates data synced with Facenox Cloud from data stored strictly on this device:
+          See what stays on this computer and what syncs with Facenox Cloud:
         </p>
 
         <div className="space-y-5 text-xs">
@@ -946,21 +942,23 @@ function DataBoundariesModal({ isOpen, onClose, onNavigateToDB }: DataBoundaries
           <div className="space-y-1">
             <div className="text-[13px] font-semibold text-white/90">Shared with Facenox Cloud</div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Member names, roles, attendance logs, device diagnostics, and encrypted biometric face
-              vectors (embeddings) are synchronized to Facenox Cloud for backup and reporting.
+              Member names, roles, attendance records, and sync activity are sent to Facenox Cloud
+              for reporting and management. Paid plans also sync encrypted face templates. Sync
+              includes updates and removals, so keep separate backup files for recovery.
             </p>
           </div>
 
           {/* Local Processing Section */}
           <div className="space-y-2">
-            <div className="text-[13px] font-semibold text-white/90">Stored locally only</div>
+            <div className="text-[13px] font-semibold text-white/90">Local camera processing</div>
             <p className="text-[11px] leading-relaxed text-white/50">
               Raw camera frames are processed locally and are{" "}
               <strong>never persisted to disk or uploaded</strong>.
             </p>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Facenox Cloud stores and transfers biometric vectors strictly in AES-256-GCM encrypted
-              form.
+              Face templates use AES-256-GCM encryption for Cloud sync. Cloud manages the location
+              keys and decrypts templates in memory to re-encrypt them during location transfers.
+              Face recognition still runs on paired computers.
             </p>
           </div>
         </div>
