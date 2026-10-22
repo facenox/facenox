@@ -9,6 +9,8 @@ import { DetectionPanel } from "@/components/main/components/DetectionPanel"
 
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { updaterService } from "@/services"
+import { useGroupStore } from "@/components/group/stores"
+import { getLocalDateString } from "@/utils"
 import type { UpdateInfo } from "@/types/updater"
 
 interface SidebarProps {
@@ -236,6 +238,25 @@ export const Sidebar = memo(function Sidebar({
               <motion.button
                 onClick={() => {
                   requestOpenSettings(updateInfo?.hasUpdate ? "about" : undefined)
+                }}
+                onMouseEnter={() => {
+                  const currentGroup = useAttendanceStore.getState().currentGroup
+                  const attendanceGroups = useAttendanceStore.getState().attendanceGroups
+                  const targetGroup =
+                    currentGroup && currentGroup.id !== "all" ? currentGroup : attendanceGroups[0]
+                  if (targetGroup?.id) {
+                    const today = getLocalDateString(new Date())
+                    const hasStats = Boolean(useGroupStore.getState().overviewStats[targetGroup.id])
+                    const hasRecords = Boolean(
+                      useGroupStore.getState().overviewRecords[targetGroup.id]?.[`${today}_${today}`],
+                    )
+                    if (!hasStats || !hasRecords) {
+                      useGroupStore
+                        .getState()
+                        .fetchOverviewData(targetGroup.id, today, today)
+                        .catch(() => {})
+                    }
+                  }
                 }}
                 className="group relative flex h-8 w-8 items-center justify-center rounded-lg border-none bg-transparent transition-all duration-200 hover:bg-white/[0.06] active:scale-95"
                 disabled={isCollapsed}

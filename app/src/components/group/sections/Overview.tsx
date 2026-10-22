@@ -180,20 +180,57 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
 
   if (!stats) {
     return (
-      <div className="flex h-full w-full items-center justify-center py-32">
-        <motion.div
-          key="loading"
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="flex flex-col items-center text-white/40">
-          <Spinner size="lg" className="mb-4" />
-          <div className="text-xs font-semibold tracking-wider text-white/55 uppercase">
-            Loading overview…
+      <section className="flex h-full w-full animate-pulse flex-col px-10 pt-8">
+        {/* Activity Overview Skeleton */}
+        <section className="shrink-0">
+          <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3">
+            <div className="flex flex-col items-center gap-1.5">
+              <p className="text-[11px] font-bold tracking-wider text-white/30 uppercase">
+                Present today
+              </p>
+              <div className="h-9 w-16 rounded bg-white/5" />
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <p className="text-[11px] font-bold tracking-wider text-white/30 uppercase">
+                Late arrivals
+              </p>
+              <div className="h-9 w-12 rounded bg-white/5" />
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <p className="text-[11px] font-bold tracking-wider text-white/30 uppercase">
+                Enrolled
+              </p>
+              <div className="h-9 w-16 rounded bg-white/5" />
+            </div>
           </div>
-        </motion.div>
-      </div>
+        </section>
+
+        {/* Activity Log Skeleton */}
+        <section className="mt-8 flex min-h-0 flex-1 flex-col">
+          <div className="mb-6 flex shrink-0 items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="h-4 w-24 rounded bg-white/10" />
+              <div className="mt-1 h-3 w-32 rounded bg-white/5" />
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-3 py-2">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between rounded-lg bg-white/[0.02] px-4 py-3">
+                <div className="flex items-center gap-4">
+                  <div className="space-y-1.5">
+                    <div className="h-3.5 w-28 rounded bg-white/10" />
+                    <div className="h-2.5 w-16 rounded bg-white/5" />
+                  </div>
+                </div>
+                <div className="h-3 w-12 rounded bg-white/5" />
+              </div>
+            ))}
+          </div>
+        </section>
+      </section>
     )
   }
 

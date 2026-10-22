@@ -4,6 +4,7 @@ import { persistentSettings } from "@/services/PersistentSettingsService"
 import type { AttendanceGroup, AttendanceMember, AttendanceRecord } from "@/types/recognition"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { useGroupStore } from "@/components/group/stores"
+import { getLocalDateString } from "@/utils"
 
 const PANEL_SWITCH_SKELETON_DELAY_MS = 120
 const MODAL_EXIT_DURATION_MS = 260
@@ -81,6 +82,13 @@ export async function bootstrapShellData(): Promise<void> {
   })
 
   useAttendanceStore.getState().setCurrentGroup(resolvedGroup)
+
+  // Pre-warm active group overview stats and records in the background so settings modal opens with zero layout pop-in
+  const warmGroup = resolvedGroup && resolvedGroup.id !== ALL_GROUPS_ID ? resolvedGroup : groups[0]
+  if (warmGroup?.id) {
+    const today = getLocalDateString(new Date())
+    useGroupStore.getState().fetchOverviewData(warmGroup.id, today, today).catch(() => {})
+  }
 }
 
 async function loadSelectedGroupData(
@@ -147,6 +155,11 @@ async function loadSelectedGroupData(
     useGroupStore.setState({
       members,
     })
+
+    if (groupId !== ALL_GROUPS_ID) {
+      const today = getLocalDateString(new Date())
+      useGroupStore.getState().fetchOverviewData(groupId, today, today).catch(() => {})
+    }
 
     if (skeletonDelayTimer) {
       clearTimeout(skeletonDelayTimer)
