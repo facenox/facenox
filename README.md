@@ -23,7 +23,7 @@
 
 <p align="center">
   <strong>Facenox is an open-source, offline-first face recognition software for real-time attendance tracking.</strong><br>
-  Built for privacy: No photos are saved. Biometric templates are end-to-end encrypted (E2EE).
+  Built for privacy: No photos stored. Biometric templates are encrypted.
 </p>
 
 <p align="center">
@@ -88,7 +88,7 @@ Most face recognition systems rely on cloud-based biometrics. Facenox doesn't. B
 
 | Feature                 |  Facenox   | Cloud-Based Systems |
 | :---------------------- | :--------: | :-----------------: |
-| **Data Residency**      | Encrypted End-to-End with Optional Cross-Device Sync |    Remote Cloud     |
+| **Data Residency**      | Encrypted On-Device · Optional Cloud Sync |    Remote Cloud     |
 | **Internet Dependency** |  Optional  |      Mandatory      |
 | **Latency**             | Real-time  |  Network Dependent  |
 | **Privacy Risk**        | Minimized  |        High         |
@@ -124,7 +124,7 @@ Evaluated on the standard **LFW (Labeled Faces in the Wild)** dataset with **500
 | **Rejection accuracy (TNR)** | `100.0%` | > 99.0% | Passed |
 | **Recognition accuracy (TPR)** | `94.0%` | > 90.0% | Passed |
 
-- **Security:** The system did not commit a single false match. An unregistered stranger will never be mistaken for a registered member.
+- **Security:** Zero false matches across the entire 500-profile test. No unregistered face was accepted as a known member.
 - **Speed:** It takes less than 0.02 seconds to search and match a face against all 500 profiles in the database.
 - **Accuracy:** It successfully recognizes registered members on the first try, even with changes in pose, expression, or lighting conditions.
 
