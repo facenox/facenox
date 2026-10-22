@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react"
-import { Layers, Loader2, Pencil, Lock, Trash2 } from "lucide-react"
+import { Loader2, Pencil, Lock, Trash2 } from "lucide-react"
 import type {
   GroupWithMembers,
   EditingMember,
@@ -106,11 +106,7 @@ export function GroupEntry({
     <div className="group/row flex flex-col bg-transparent transition-colors hover:bg-white/[0.01]">
       {/* Group Header */}
       <div className="flex w-full items-center justify-between px-2 py-3.5 transition-colors">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="flex h-5 w-5 shrink-0 items-center justify-center text-white/55 transition-colors group-hover/row:text-white/65">
-            <Layers className="size-3.5" />
-          </div>
-
+        <div className="flex min-w-0 flex-1 items-center">
           <div className="flex min-w-0 flex-1 flex-col">
             {/* Group Name */}
             {editingGroup?.groupId === group.id && editingGroup.field === "name" ?
