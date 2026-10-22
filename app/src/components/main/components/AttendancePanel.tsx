@@ -225,7 +225,7 @@ const AttendanceRecordItem = memo(
               </span>
             </MemberTooltip>
             {isAllGroupsMode && groupName && (
-              <Tooltip content={groupName} position="top" delay={250}>
+              <Tooltip content={groupName} position="top" delay={250} onlyWhenTruncated>
                 <span className="max-w-[80px] shrink-0 cursor-help truncate rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-medium tracking-tight text-white/45 transition-colors hover:bg-white/10 hover:text-white/70">
                   {groupName}
                 </span>

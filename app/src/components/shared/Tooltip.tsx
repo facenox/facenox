@@ -19,6 +19,7 @@ interface TooltipProps {
   disabled?: boolean
   offset?: number
   className?: string
+  onlyWhenTruncated?: boolean
 }
 
 interface TooltipCoords {
@@ -197,6 +198,7 @@ export function Tooltip({
   disabled = false,
   offset = TOOLTIP_OFFSET,
   className = "",
+  onlyWhenTruncated = false,
 }: TooltipProps) {
   const [visible, setVisible] = useState(false)
   const [coords, setCoords] = useState<TooltipCoords | null>(null)
@@ -218,9 +220,23 @@ export function Tooltip({
 
   const show = useCallback(() => {
     if (disabled || !content) return
+
+    if (onlyWhenTruncated && triggerRef.current) {
+      const el = triggerRef.current
+      const isSelfTruncated =
+        el.scrollWidth - el.clientWidth > 1 || el.scrollHeight - el.clientHeight > 1
+      const isChildTruncated = Array.from(
+        el.querySelectorAll<HTMLElement>(".truncate, [class*='truncate']"),
+      ).some((child) => child.scrollWidth - child.clientWidth > 1)
+
+      if (!isSelfTruncated && !isChildTruncated) {
+        return
+      }
+    }
+
     clearTimer()
     timerRef.current = setTimeout(() => setVisible(true), delay)
-  }, [disabled, content, clearTimer, delay])
+  }, [disabled, content, onlyWhenTruncated, clearTimer, delay])
 
   useEffect(() => {
     const handleWindowBlur = () => hide()

@@ -125,7 +125,7 @@ export function GroupEntry({
                 disabled={savingGroup === group.id}
                 className="h-6 rounded-md border-0 bg-white/10 px-2 py-0.5 text-[13px] font-semibold text-white transition-all outline-none focus:ring-1 focus:ring-white/20"
               />
-            : <Tooltip content={group.displayName || group.name} position="top">
+            : <Tooltip content={group.displayName || group.name} position="top" onlyWhenTruncated>
                 <div
                   onClick={(e) => {
                     e.stopPropagation()
@@ -168,7 +168,7 @@ export function GroupEntry({
         onClose={() => onToggle(group.id)}
         title={
           <div className="min-w-0 pr-2">
-            <Tooltip content={group.displayName || group.name} position="top">
+            <Tooltip content={group.displayName || group.name} position="top" onlyWhenTruncated>
               <h3 className="truncate text-xl font-semibold text-white">
                 {group.displayName || group.name}
               </h3>
