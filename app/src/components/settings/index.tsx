@@ -10,6 +10,7 @@ import {
   Database,
   Cloud,
   Info,
+  Layers,
   X,
 } from "lucide-react"
 import { useSettings } from "./hooks/useSettings"
@@ -92,6 +93,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
   ]
 
   const sections = [
+    { id: "groups", label: "Groups", icon: Layers },
     { id: "attendance", label: "General", icon: SlidersHorizontal },
     { id: "display", label: "Display & audio", icon: Monitor },
     { id: "database", label: "Data & storage", icon: Database },
@@ -116,6 +118,11 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
       />
 
       <ContentPanel
+        onOpenGroup={(group) => {
+          props.onGroupSelect?.(group)
+          settings.setActiveSection("group")
+          settings.setGroupInitialSection("members")
+        }}
         activeSection={settings.activeSection}
         groupInitialSection={settings.groupInitialSection}
         setGroupInitialSection={settings.setGroupInitialSection}

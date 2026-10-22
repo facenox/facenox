@@ -182,46 +182,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </section>
 
-        <section>
-          <div className="mb-3 px-3">
-            <h2 className="text-[10px] font-bold tracking-[0.15em] text-white/55 uppercase">
-              Preferences
-            </h2>
-          </div>
+        {(["Manage", "Settings"] as const).map((category) => (
+          <section key={category}>
+            <div className="mb-3 px-3">
+              <h2 className="text-[10px] font-bold tracking-[0.15em] text-white/55 uppercase">
+                {category}
+              </h2>
+            </div>
 
-          <div className="space-y-1">
-            {sections.map((section) => {
-              const isActive = activeSection === section.id
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => setActiveSection(section.id)}
-                  className={`group/item relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-all duration-150 ${
-                    isActive ?
-                      "border border-cyan-500/20 bg-cyan-500/[0.12] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.2)]"
-                    : "border border-transparent bg-transparent font-medium text-white/70 hover:bg-white/5 hover:text-white"
-                  }`}>
-                  {isActive && (
-                    <motion.div
-                      layoutId="active-settings-sidebar-pill"
-                      className="absolute left-[-16px] h-5 w-[3px] rounded-r-[2px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                  <section.icon
-                    className={`size-4 shrink-0 transition-all duration-150 ${
-                      isActive ? "scale-[1.06] text-cyan-400"
-                      : section.id === "remote-sync" && syncStatus?.connected ? "text-emerald-400"
-                      : "text-white/55 group-hover/item:text-white/75"
-                    }`}
-                    fill={isActive ? "rgba(34,211,238,0.22)" : "none"}
-                  />
-                  <span className="flex-1 truncate">{section.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        </section>
+            <div className="space-y-1">
+              {sections
+                .filter((section) =>
+                  category === "Manage" ? section.id === "groups" : section.id !== "groups",
+                )
+                .map((section) => {
+                  const isActive = activeSection === section.id
+                  return (
+                    <button
+                      key={section.id}
+                      onClick={() => setActiveSection(section.id)}
+                      className={`group/item relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-all duration-150 ${
+                        isActive ?
+                          "border border-cyan-500/20 bg-cyan-500/[0.12] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.2)]"
+                        : "border border-transparent bg-transparent font-medium text-white/70 hover:bg-white/5 hover:text-white"
+                      }`}>
+                      {isActive && (
+                        <motion.div
+                          layoutId="active-settings-sidebar-pill"
+                          className="absolute left-[-16px] h-5 w-[3px] rounded-r-[2px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                      <section.icon
+                        className={`size-4 shrink-0 transition-all duration-150 ${
+                          isActive ? "scale-[1.06] text-cyan-400"
+                          : section.id === "remote-sync" && syncStatus?.connected ?
+                            "text-emerald-400"
+                          : "text-white/55 group-hover/item:text-white/75"
+                        }`}
+                        fill={isActive ? "rgba(34,211,238,0.22)" : "none"}
+                      />
+                      <span className="flex-1 truncate">{section.label}</span>
+                    </button>
+                  )
+                })}
+            </div>
+          </section>
+        ))}
       </div>
 
       {appVersion && (

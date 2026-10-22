@@ -121,7 +121,7 @@ export function GroupEntry({
                 disabled={savingGroup === group.id}
                 className="h-6 rounded-md border-0 bg-white/10 px-2 py-0.5 text-[13px] font-semibold text-white transition-all outline-none focus:ring-1 focus:ring-white/20"
               />
-            : <Tooltip content={group.displayName || group.name} position="top" onlyWhenTruncated>
+              : <Tooltip content={group.displayName || group.name} position="top" onlyWhenTruncated>
                 <div
                   onClick={(e) => {
                     e.stopPropagation()
@@ -194,14 +194,14 @@ export function GroupEntry({
               title={
                 isDeleteDisabled ?
                   "Locked by Cloud Policy: Group deletion is disabled on kiosks."
-                : undefined
+                  : undefined
               }
               className="flex h-7 items-center justify-center gap-1.5 rounded-md border-0 bg-red-500/10 px-2.5 text-[10px] font-bold tracking-wider text-red-400 uppercase shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-25">
               {deletingGroup === group.id ?
                 <Loader2 className="size-2.5 animate-spin" />
-              : isDeleteDisabled ?
-                <Lock className="size-2.5 text-amber-400/60" />
-              : <Trash2 className="size-2.5" />}
+                : isDeleteDisabled ?
+                  <Lock className="size-2.5 text-amber-400/60" />
+                  : <Trash2 className="size-2.5" />}
               <span>Delete</span>
             </button>
           </div>
@@ -211,7 +211,7 @@ export function GroupEntry({
           <div className="px-4 py-8 text-center text-[12px] text-white/55">
             No members in this group
           </div>
-        : <div
+          : <div
             onScroll={handleScroll}
             className="custom-scroll max-h-[60vh] divide-y divide-white/5 overflow-y-auto pr-1">
             <div

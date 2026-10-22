@@ -21,6 +21,7 @@ export function useDatabaseManagement(
   groups: AttendanceGroup[],
   onGroupsChanged?: () => void,
   dialog?: DialogAPI,
+  loadDirectory = true,
 ) {
   const { setGroupToDelete, setShowDeleteConfirmation, showDeleteConfirmation, groupToDelete } =
     useAttendanceStore()
@@ -55,6 +56,7 @@ export function useDatabaseManagement(
 
   // Load members for all groups
   useEffect(() => {
+    if (!loadDirectory) return
     const loadMembers = async () => {
       // If we already have some data, don't show the full page loader
       if (groupsWithMembersRef.current.length === 0) {
@@ -91,7 +93,7 @@ export function useDatabaseManagement(
         setIsInitialLoad(false)
       })
     }
-  }, [groups])
+  }, [groups, loadDirectory])
 
   // Filter groups and members based on search
   const filteredData = useMemo(() => {

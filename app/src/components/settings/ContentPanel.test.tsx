@@ -3,6 +3,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ContentPanel } from "@/components/settings/ContentPanel"
 import { useUIStore } from "@/components/main/stores"
+import { useGroupUIStore } from "@/components/group/stores"
+import { attendanceManager } from "@/services"
+import { DialogProvider } from "@/components/shared/DialogProvider"
 
 const MOTION_PROP_KEYS = new Set([
   "layout",
@@ -118,10 +121,57 @@ describe("ContentPanel anti-spoof prompt", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    useGroupUIStore.setState({ showCreateGroupModal: false })
     useUIStore.setState({
       antiSpoofDetectionInfoDismissed: false,
       isHydrated: true,
     })
+  })
+
+  it("opens and cancels group creation without leaving the directory", async () => {
+    vi.spyOn(window.electronAPI.sync, "getConfig").mockResolvedValue({
+      connected: false,
+    } as Awaited<ReturnType<typeof window.electronAPI.sync.getConfig>>)
+    render(
+      <DialogProvider>
+        <ContentPanel {...baseProps} activeSection="groups" />
+      </DialogProvider>,
+    )
+    const create = screen.getByRole("button", { name: "Create group" })
+    await waitFor(() => expect(create).toBeEnabled())
+    fireEvent.click(create)
+    expect(screen.getByPlaceholderText("Group name")).toBeInTheDocument()
+    expect(screen.getByRole("searchbox", { name: "Search groups" })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
+    await waitFor(() => expect(screen.queryByPlaceholderText("Group name")).not.toBeInTheDocument())
+    expect(baseProps.setActiveSection).not.toHaveBeenCalled()
+  })
+
+  it("refreshes groups after creation without selecting a different workspace", async () => {
+    vi.spyOn(window.electronAPI.sync, "getConfig").mockResolvedValue({
+      connected: false,
+    } as Awaited<ReturnType<typeof window.electronAPI.sync.getConfig>>)
+    const createGroup = vi
+      .spyOn(attendanceManager, "createGroup")
+      .mockResolvedValue({ id: "new", name: "New group" } as Awaited<
+        ReturnType<typeof attendanceManager.createGroup>
+      >)
+    render(
+      <DialogProvider>
+        <ContentPanel {...baseProps} activeSection="groups" />
+      </DialogProvider>,
+    )
+    const create = screen.getByRole("button", { name: "Create group" })
+    await waitFor(() => expect(create).toBeEnabled())
+    fireEvent.click(create)
+    fireEvent.change(screen.getByPlaceholderText("Group name"), { target: { value: "New group" } })
+    const buttons = screen.getAllByRole("button", { name: "Create group" })
+    fireEvent.click(buttons[buttons.length - 1])
+    await waitFor(() => expect(baseProps.onGroupsChanged).toHaveBeenCalled())
+    expect(baseProps.loadSystemData).toHaveBeenCalled()
+    expect(baseProps.handleGroupsChanged).not.toHaveBeenCalled()
+    expect(baseProps.setActiveSection).not.toHaveBeenCalled()
+    createGroup.mockRestore()
   })
 
   it("shows a one-time modal before enabling anti-spoof detection", () => {

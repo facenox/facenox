@@ -3,9 +3,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   AlertTriangle,
   Loader2,
-  Check,
-  HelpCircle,
-  RotateCw,
   FileUp,
   FileDown,
   Info,
@@ -15,32 +12,25 @@ import {
   Folder,
   FolderOpen,
   FileText,
-  X,
-  Ghost,
   ChevronDown,
   Lock,
   Shield,
   Eye,
   EyeOff,
   CloudUpload,
-  Search,
 } from "lucide-react"
-import type { SettingsOverview, TimeHealthOverview } from "@/components/settings/types"
+import type { SettingsOverview } from "@/components/settings/types"
 import type { AttendanceGroup } from "@/types/recognition"
 import { useDatabaseManagement } from "@/components/settings/sections/hooks/useDatabaseManagement"
 import { DatabaseStats } from "@/components/settings/sections/components/DatabaseStats"
-import { GroupEntry } from "@/components/settings/sections/components/GroupEntry"
-import { useDialog, Switch, InfoPopover } from "@/components/shared"
+import { useDialog, Switch } from "@/components/shared"
 import { Modal } from "@/components/common/Modal"
 import { useUIStore } from "@/components/main/stores"
-import { EmptyState } from "@/components/group/shared"
 
 type BackupStatus = { type: "idle" } | { type: "loading"; action: "export" | "import" }
 
 interface DataStorageProps {
   systemData: SettingsOverview
-  timeHealthState: TimeHealthOverview
-  onRefreshTimeHealth: () => void
   groups: AttendanceGroup[]
   isLoading: boolean
   onClearDatabase: (skipConfirmation?: boolean) => void
@@ -50,8 +40,6 @@ interface DataStorageProps {
 
 export function DataStorage({
   systemData,
-  timeHealthState,
-  onRefreshTimeHealth,
   groups,
   isLoading,
   onClearDatabase,
@@ -59,32 +47,8 @@ export function DataStorage({
   onNavigateToSync,
 }: DataStorageProps) {
   const dialog = useDialog()
-  const {
-    expandedGroups,
-    searchQuery,
-    setSearchQuery,
-    editingMember,
-    editingGroup,
-    editValue,
-    setEditValue,
-    savingMember,
-    savingGroup,
-    deletingGroup,
-    deletingMember,
-    filteredData,
-    isInitialLoad,
-    toggleGroup,
-    startEditing,
-    startEditingGroup,
-    cancelEditing,
-    saveEdit,
-    saveGroupEdit,
-    handleDeleteGroup,
-    handleDeleteMember,
-    handleClearAllGroups,
-    handlePurgeHistory,
-    isPurgingHistory,
-  } = useDatabaseManagement(groups, onGroupsChanged, dialog)
+  const { handleClearAllGroups, handlePurgeHistory, isPurgingHistory, deletingGroup } =
+    useDatabaseManagement(groups, onGroupsChanged, dialog, false)
 
   const [isPaired, setIsPaired] = useState(false)
   const [allowKioskDirectoryManagement, setAllowKioskDirectoryManagement] = useState(true)
@@ -289,58 +253,6 @@ export function DataStorage({
 
   const isBackingUp = status.type === "loading"
 
-  const getFriendlyTimeZoneLabel = (): string => {
-    const health = timeHealthState.timeHealth
-    if (!health?.current_time_local) {
-      return "Local Time"
-    }
-
-    const localDate = new Date(health.current_time_local)
-    const offsetMinutes = -localDate.getTimezoneOffset()
-    const offsetSign = offsetMinutes >= 0 ? "+" : "-"
-    const absoluteOffset = Math.abs(offsetMinutes)
-    const offsetHours = String(Math.floor(absoluteOffset / 60)).padStart(2, "0")
-    const offsetRemainderMinutes = String(absoluteOffset % 60).padStart(2, "0")
-    const utcOffsetLabel = `UTC${offsetSign}${offsetHours}:${offsetRemainderMinutes}`
-
-    let ianaLabel: string | null
-    try {
-      ianaLabel = Intl.DateTimeFormat().resolvedOptions().timeZone || null
-    } catch {
-      ianaLabel = null
-    }
-
-    if (ianaLabel) {
-      return `${ianaLabel} (${utcOffsetLabel})`
-    }
-
-    if (health.time_zone_name?.trim()) {
-      return `${health.time_zone_name.trim()} (${utcOffsetLabel})`
-    }
-
-    return utcOffsetLabel
-  }
-
-  const timeHealth = timeHealthState.timeHealth
-  const timeHealthStatus = timeHealth?.online_verification_status ?? "unavailable"
-
-  const formattedLocalTime =
-    timeHealth?.current_time_local ?
-      new Date(timeHealth.current_time_local).toLocaleString([], {
-        hour: "numeric",
-        minute: "2-digit",
-        month: "short",
-        day: "numeric",
-      })
-    : null
-  const timeHealthDetails =
-    timeHealthState.loading ? "Verifying clock accuracy…"
-    : timeHealthStatus === "verified" ? "System clock is verified and accurate."
-    : timeHealthStatus === "drift_detected" ?
-      "Device clock is out of sync. Adjust date and time settings to prevent logging errors."
-    : timeHealthStatus === "offline" ? "Cannot verify time online."
-    : "Could not read the current time authority status."
-
   return (
     <motion.div
       layout="position"
@@ -353,81 +265,6 @@ export function DataStorage({
           totalMembers={systemData.totalMembers}
           totalPersons={systemData.totalPersons}
         />
-      </section>
-
-      {/* System Time */}
-      <section className="space-y-6">
-        <div className="pt-2 pb-2">
-          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            System time
-          </h3>
-        </div>
-
-        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h4 className="text-[15px] font-semibold text-white/90">System clock</h4>
-              <InfoPopover
-                title="System clock verification"
-                description="Compares your device time with network time to ensure accurate attendance timestamps."
-                details={[
-                  "Prevents attendance tampering caused by manually changing the computer's clock.",
-                  "Alerts you when the device clock is out of sync or drifting from real time.",
-                  "Ensures attendance logs stay in chronological order even offline.",
-                ]}
-                side="right"
-              />
-              {timeHealthStatus === "drift_detected" && (
-                <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-amber-400/90">
-                  <AlertTriangle className="size-3 text-amber-400/90" />
-                  Drift warning
-                </span>
-              )}
-            </div>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">{timeHealthDetails}</p>
-            <div className="mt-4 flex items-center gap-2 font-mono text-[11px] tracking-tight text-white/55">
-              {timeHealthState.loading ?
-                <Loader2 className="size-3 animate-spin text-white/40" />
-              : timeHealthStatus === "verified" ?
-                <Check
-                  title="System clock verified"
-                  className="size-3 -translate-y-0.5 stroke-[2.5] text-emerald-400"
-                />
-              : timeHealthStatus === "drift_detected" ?
-                <AlertTriangle title="Device clock out of sync" className="size-3 text-amber-400" />
-              : <HelpCircle title="Status unavailable" className="size-3 text-white/40" />}
-              <span>
-                {timeHealthState.loading ?
-                  "Checking…"
-                : timeHealth ?
-                  `${formattedLocalTime ?? "Unavailable"} / ${getFriendlyTimeZoneLabel()}`
-                : "Clock health unavailable."}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 flex-col items-end gap-3">
-            <button
-              onClick={onRefreshTimeHealth}
-              disabled={timeHealthState.loading}
-              className="flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40">
-              {timeHealthState.loading ?
-                <Loader2 className="size-3 animate-spin" />
-              : <RotateCw className="size-3 text-white/50" />}
-              <span>{timeHealthState.loading ? "Checking…" : "Check now"}</span>
-            </button>
-
-            {!timeHealthState.loading &&
-              timeHealth &&
-              timeHealthStatus === "drift_detected" &&
-              typeof timeHealth.online_drift_seconds === "number" && (
-                <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500/70">
-                  <AlertTriangle className="size-3" />
-                  <span>{Math.abs(timeHealth.online_drift_seconds).toFixed(1)}s drift</span>
-                </div>
-              )}
-          </div>
-        </div>
       </section>
 
       {/* Backup & Export */}
@@ -737,100 +574,6 @@ export function DataStorage({
               <span>Open folder</span>
             </button>
           </div>
-        </div>
-      </section>
-
-      {/* All Groups */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="pt-2 pb-2">
-            <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-              All groups
-            </h3>
-          </div>
-          <div className="group/search relative h-9 min-w-[280px]">
-            <Search className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/search:text-white/45" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search group name or ID…"
-              className="h-full w-full rounded-lg border border-white/5 bg-white/5 py-2 pr-7 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/search:border-white/20 placeholder:text-white/35 focus:bg-white/[0.08]"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute top-1/2 right-2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-sm text-white/55 hover:text-white">
-                <X className="size-2.5" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div
-          className={`${isInitialLoad || filteredData.length === 0 ? "min-h-[200px]" : "h-auto"} divide-y divide-white/5`}>
-          <AnimatePresence mode="wait">
-            {isInitialLoad ?
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="flex flex-col items-center justify-center py-12 text-white/20">
-                <Loader2 className="mb-3 size-6 animate-spin opacity-30" />
-                <div className="text-[12px] font-medium tracking-wide">Syncing directory…</div>
-              </motion.div>
-            : filteredData.length === 0 ?
-              <EmptyState
-                key="empty"
-                className="py-12"
-                title={searchQuery.trim() ? "No results found" : "No groups found"}
-                description={
-                  searchQuery.trim() ?
-                    `No groups matched "${searchQuery}".`
-                  : "Create a group to begin managing members."
-                }
-                icon={
-                  searchQuery.trim() ?
-                    <Ghost className="size-8" />
-                  : <FolderOpen className="size-8" />
-                }
-              />
-            : <motion.div
-                key="results"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}>
-                {filteredData.map((group, idx) => (
-                  <GroupEntry
-                    key={group.id || `group-${idx}`}
-                    group={group}
-                    isExpanded={expandedGroups.has(group.id)}
-                    editingGroup={editingGroup}
-                    editingMember={editingMember}
-                    editValue={editValue}
-                    savingGroup={savingGroup}
-                    savingMember={savingMember}
-                    deletingGroup={deletingGroup}
-                    deletingMember={deletingMember}
-                    onToggle={toggleGroup}
-                    onStartEditingGroup={startEditingGroup}
-                    onStartEditingMember={startEditing}
-                    onEditValueChange={setEditValue}
-                    onSaveGroupEdit={saveGroupEdit}
-                    onSaveMemberEdit={saveEdit}
-                    onCancelEditing={cancelEditing}
-                    onDeleteGroup={handleDeleteGroup}
-                    onDeleteMember={handleDeleteMember}
-                    onGroupsChanged={onGroupsChanged}
-                    isDeleteDisabled={isPaired && !allowKioskDirectoryManagement}
-                  />
-                ))}
-              </motion.div>
-            }
-          </AnimatePresence>
         </div>
       </section>
 

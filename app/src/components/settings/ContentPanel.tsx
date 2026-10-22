@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   UserPlus,
+  Plus,
   ArrowLeft,
   FileSpreadsheet,
   Layers,
@@ -13,6 +14,9 @@ import {
 } from "lucide-react"
 import { Display } from "@/components/settings/sections/Display"
 import { DataStorage } from "@/components/settings/sections/DataStorage"
+import { Groups } from "@/components/settings/sections/Groups"
+import { CreateGroup } from "@/components/group/modals/CreateGroup"
+import { ClockHealth } from "@/components/settings/sections/ClockHealth"
 import { Attendance } from "@/components/settings/sections/Attendance"
 import { About } from "@/components/settings/sections/About"
 import { Sync, type RemoteSyncConfig } from "@/components/settings/sections/Sync"
@@ -35,6 +39,7 @@ import type {
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
 interface ContentPanelProps {
+  onOpenGroup?: (group: AttendanceGroup) => void
   activeSection: string
   groupInitialSection: GroupSection | undefined
   setGroupInitialSection: (section: GroupSection) => void
@@ -83,6 +88,7 @@ interface ContentPanelProps {
 }
 
 export const ContentPanel: React.FC<ContentPanelProps> = ({
+  onOpenGroup,
   activeSection,
   groupInitialSection,
   setGroupInitialSection,
@@ -186,6 +192,10 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   const [dontShowAntiSpoofInfoAgain, setDontShowAntiSpoofInfoAgain] = useState(false)
   const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false)
   const [isPaired, setIsPaired] = useState(false)
+  const [canManageGroups, setCanManageGroups] = useState(false)
+  const showCreateGroupModal = useGroupUIStore((state) => state.showCreateGroupModal)
+  const openCreateGroup = useGroupUIStore((state) => state.openCreateGroup)
+  const closeCreateGroup = useGroupUIStore((state) => state.closeCreateGroup)
   const [syncConfig, setSyncConfig] = useState<RemoteSyncConfig | null>(null)
 
   useEffect(() => {
@@ -233,6 +243,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     const isGroupSection = activeSection === "group"
 
     const generalTitles: Record<string, string> = {
+      groups: "Groups",
       attendance: "General",
       display: "Display & audio",
       notifications: "Display & audio",
@@ -343,10 +354,18 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
       title:
         generalTitles[activeSection] ||
         activeSection.charAt(0).toUpperCase() + activeSection.slice(1),
-      eyebrow: "Preferences",
+      eyebrow: activeSection === "groups" ? "Manage" : "Settings",
       eyebrowColor: "text-white/45",
       actions:
-        activeSection === "database" ?
+        activeSection === "groups" ?
+          <button
+            onClick={openCreateGroup}
+            disabled={!canManageGroups}
+            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-50">
+            <Plus aria-hidden="true" className="size-3" />
+            Create group
+          </button>
+        : activeSection === "database" ?
           <button
             onClick={() => setIsAuditLogModalOpen(true)}
             className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
@@ -408,6 +427,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     reportsExportHandlers,
     setGroupInitialSection,
     syncConfig,
+    canManageGroups,
+    openCreateGroup,
   ])
 
   const handleSpoofDetectionToggle = (enabled: boolean) => {
@@ -555,18 +576,11 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 </AnimatePresence>
               </>
             : <>
-                <SectionHeader.Breadcrumb
-                  key="prefs-label"
-                  active={activeSection === "attendance"}
-                  onClick={
-                    activeSection === "attendance" ? undefined : (
-                      () => setActiveSection("attendance")
-                    )
-                  }>
-                  Preferences
+                <SectionHeader.Breadcrumb key="settings-label">
+                  {activeSection === "groups" ? "Manage" : "Settings"}
                 </SectionHeader.Breadcrumb>
                 <AnimatePresence mode="popLayout">
-                  {activeSection !== "attendance" && (
+                  {
                     <motion.div
                       key={activeSection}
                       initial={{ opacity: 0, x: -8 }}
@@ -579,7 +593,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                         {headerProps.title}
                       </SectionHeader.Breadcrumb>
                     </motion.div>
-                  )}
+                  }
                 </AnimatePresence>
               </>
             }
@@ -658,6 +672,27 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   }
                   isPaired={isPaired}
                 />
+                <ClockHealth
+                  timeHealthState={timeHealthState}
+                  onRefreshTimeHealth={loadSystemData}
+                />
+              </motion.div>
+            )}
+
+            {activeSection === "groups" && (
+              <motion.div
+                key="groups"
+                {...motionProps}
+                className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
+                <Groups
+                  groups={groups}
+                  onOpenGroup={onOpenGroup}
+                  onManagementChange={setCanManageGroups}
+                  onGroupsChanged={() => {
+                    loadSystemData()
+                    onGroupsChanged?.()
+                  }}
+                />
               </motion.div>
             )}
 
@@ -668,8 +703,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
                 <DataStorage
                   systemData={systemData}
-                  timeHealthState={timeHealthState}
-                  onRefreshTimeHealth={loadSystemData}
                   groups={groups}
                   isLoading={isLoading}
                   onClearDatabase={handleClearDatabase}
@@ -705,6 +738,18 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
           </AnimatePresence>
         </div>
       </div>
+      {activeSection === "groups" && (
+        <CreateGroup
+          isOpen={showCreateGroupModal}
+          existingGroups={groups}
+          onClose={closeCreateGroup}
+          onSuccess={() => {
+            loadSystemData()
+            onGroupsChanged?.()
+            setSuccess("Group created successfully.")
+          }}
+        />
+      )}
       <AntiSpoofDetectionModal
         isOpen={isAntiSpoofModalOpen}
         dontShowAgain={dontShowAntiSpoofInfoAgain}
