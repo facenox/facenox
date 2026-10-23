@@ -189,7 +189,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                           <div className="text-xs font-semibold text-white/90">Late tracking</div>
                           <div className="text-[11px] text-white/55">
                             {lateThresholdEnabled ?
-                              "Flag members as late when arriving after the scheduled start time."
+                              "Flag arrivals after the scheduled start time and grace period."
                             : "Late tracking is disabled."}
                           </div>
                         </div>
@@ -242,7 +242,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
                                 <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
 
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-xs text-white/65">Late threshold:</div>
+                                  <div className="text-xs text-white/65">Grace period:</div>
                                 </div>
 
                                 <div className="ml-auto flex shrink-0 items-center gap-3">

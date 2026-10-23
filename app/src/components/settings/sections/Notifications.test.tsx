@@ -78,7 +78,7 @@ describe("Notifications Settings", () => {
       />,
     )
 
-    expect(screen.getByText("Mute all recognition sounds.")).toBeInTheDocument()
+    expect(screen.getByText("Recognition sounds are off.")).toBeInTheDocument()
     expect(screen.queryByText("Tone")).not.toBeInTheDocument()
   })
 

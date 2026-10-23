@@ -27,6 +27,37 @@ function FeedbackDisplay() {
 }
 
 describe("Sync", () => {
+  it.each([
+    {
+      records: undefined,
+      sessions: undefined,
+      synced: true,
+      expected: "Current sync status unavailable",
+    },
+    { records: 0, sessions: undefined, synced: true, expected: "Current sync status unavailable" },
+    { records: 0, sessions: 0, synced: false, expected: "No successful sync yet" },
+    { records: 0, sessions: 0, synced: true, expected: "Last sync completed" },
+    { records: 1, sessions: 0, synced: true, expected: "1 record queued for upload" },
+    { records: 2, sessions: 0, synced: true, expected: "2 records queued for upload" },
+    { records: 0, sessions: 1, synced: true, expected: "Attendance updates queued for upload" },
+  ])(
+    "shows $expected for the corresponding queue state",
+    async ({ records, sessions, synced, expected }) => {
+      getElectronAPIMock().sync.getConfig.mockResolvedValue(
+        createSyncConfig({
+          connected: true,
+          lastSyncStatus: synced ? "success" : "idle",
+          lastSyncedAt: synced ? "2026-10-23T02:00:00Z" : null,
+          unsyncedRecordsCount: records,
+          unsyncedSessionsCount: sessions,
+        }),
+      )
+      renderWithProviders(<Sync />)
+      expect(await screen.findByText(expected)).toBeInTheDocument()
+      expect(screen.queryByText("All records synchronized")).not.toBeInTheDocument()
+    },
+  )
+
   it("loads config and renders both local-only and connected states", async () => {
     const electronAPI = getElectronAPIMock()
     electronAPI.sync.getConfig.mockResolvedValueOnce(createSyncConfig())

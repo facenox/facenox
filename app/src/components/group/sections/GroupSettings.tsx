@@ -181,7 +181,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       title="Late tracking"
                       description="Flags members who arrive past the scheduled start time plus your grace period."
                       details={[
-                        "Sets the official target arrival time for members in this group.",
+                        "Uses the scheduled start time for this group.",
                         "Grants extra minutes of grace before flagging members as late.",
                         "Displays late flags across Overview, Member history, and CSV reports.",
                       ]}
@@ -198,7 +198,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                         className="text-xs font-normal text-white/65">
                         {lateThresholdEnabled ?
-                          "Flag members as late when arriving after the scheduled start time."
+                          "Flag arrivals after the scheduled start time and grace period."
                         : "Late tracking is disabled."}
                       </motion.div>
                     </AnimatePresence>
@@ -254,7 +254,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
 
                         <div className="min-w-0 flex-1">
-                          <div className="text-xs text-white/65">Late threshold:</div>
+                          <div className="text-xs text-white/65">Grace period:</div>
                         </div>
 
                         <div className="ml-auto flex shrink-0 items-center gap-3.5">
@@ -295,12 +295,12 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                     <div className="text-sm font-medium text-white/90">Entry & exit tracking</div>
                     <InfoPopover
                       title="Entry & exit tracking"
-                      description="Tracks both initial check-in and final departure timestamps for each member per day."
+                      description="Records daily check-in and checkout times from member scans."
                       details={[
                         "Registers arrival on the first scan of the day.",
-                        "Updates departure time on subsequent scans throughout the day.",
-                        "Applies a 15-minute safety window after arrival to prevent accidental clock-outs.",
-                        "Calculates total active hours automatically between check-in and departure.",
+                        "Updates checkout time on later eligible scans.",
+                        `Waits ${minCheckoutDelayMinutes} ${minCheckoutDelayMinutes === 1 ? "minute" : "minutes"} after check-in before allowing checkout.`,
+                        "Calculates elapsed hours between check-in and checkout.",
                       ]}
                       side="right"
                     />

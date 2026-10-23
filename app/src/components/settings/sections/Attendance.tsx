@@ -170,9 +170,9 @@ export function Attendance({
                   title="Auto-start scanning"
                   description="Automatically activates the camera and face recognition scanner when Facenox launches."
                   details={[
-                    "Designed for dedicated attendance kiosks and unattended gate checkpoints.",
-                    "Starts face detection immediately on startup without requiring manual intervention.",
-                    "Requires a functioning camera to be connected.",
+                    "Use this on computers dedicated to attendance check-ins.",
+                    "Starts scanning when Facenox opens without pressing Start.",
+                    "Requires a connected camera.",
                   ]}
                   side="right"
                 />
@@ -214,9 +214,9 @@ export function Attendance({
                     title="Recognition limit"
                     description="Sets the maximum number of faces recognized simultaneously per camera frame."
                     details={[
-                      "Limits of 1–5 maximize frame rate and eliminate lag on standard PCs.",
-                      "Prioritizes matching the largest and closest faces in the scene first.",
-                      "Disabling the limit processes every detected face simultaneously.",
+                      "A lower limit reduces the number of faces processed per frame.",
+                      "Prioritizes faces that appear largest in the camera image.",
+                      "Turning this off removes the per-frame recognition limit.",
                     ]}
                     side="right"
                   />
@@ -231,8 +231,8 @@ export function Attendance({
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                       className="text-xs font-normal text-white/65">
                       {attendanceSettings.maxRecognitionFacesPerFrame === 0 ?
-                        "Process all detected faces without limits."
-                      : "Limit faces recognized per frame to optimize performance."}
+                        "No per-frame recognition limit is applied."
+                      : "Limit the number of faces recognized per frame."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -241,7 +241,7 @@ export function Attendance({
               <Switch
                 checked={attendanceSettings.maxRecognitionFacesPerFrame > 0}
                 onChange={(checked) => onMaxRecognitionFacesChange(checked ? 5 : 0)}
-                ariaLabel="Multi-face recognition"
+                ariaLabel="Recognition limit"
               />
             </div>
 

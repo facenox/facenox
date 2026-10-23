@@ -125,8 +125,8 @@ export function Notifications({ audioSettings, onAudioSettingsChange }: Notifica
                   transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                   className="text-xs font-medium text-white/65">
                   {audioSettings.recognitionSoundEnabled ?
-                    "Play a sound on successful recognition."
-                  : "Mute all recognition sounds."}
+                    "Play a sound when a face is recognized."
+                  : "Recognition sounds are off."}
                 </motion.div>
               </AnimatePresence>
             </div>

@@ -43,6 +43,8 @@ export function ClockHealth({
 
   const timeHealth = timeHealthState.timeHealth
   const timeHealthStatus = timeHealth?.online_verification_status ?? "unavailable"
+  const clockWarning = timeHealth?.warning_message?.trim() || timeHealth?.os_clock_warning?.trim()
+  const hasClockWarning = Boolean(clockWarning) || timeHealthStatus === "drift_detected"
 
   const formattedLocalTime =
     timeHealth?.current_time_local ?
@@ -54,12 +56,15 @@ export function ClockHealth({
       })
     : null
   const timeHealthDetails =
-    timeHealthState.loading ? "Verifying clock accuracy…"
-    : timeHealthStatus === "verified" ? "System clock is verified and accurate."
+    clockWarning ? clockWarning
+    : timeHealthState.loading ? "Checking clock status…"
     : timeHealthStatus === "drift_detected" ?
-      "Device clock is out of sync. Adjust date and time settings to prevent logging errors."
-    : timeHealthStatus === "offline" ? "Cannot verify time online."
-    : "Could not read the current time authority status."
+      "The attendance clock differs from network time. Check this computer's date and time settings."
+    : timeHealthStatus === "verified" ?
+      "The attendance clock is within the network-time check's tolerance."
+    : timeHealthStatus === "offline" ?
+      "Network time is unavailable. The online check could not be completed."
+    : "Clock status is unavailable. Try Check now."
 
   return (
     <div className="mx-auto w-full max-w-[900px] px-10 pb-20">
@@ -77,34 +82,31 @@ export function ClockHealth({
               <h4 className="text-[15px] font-semibold text-white/90">System clock</h4>
               <InfoPopover
                 title="System clock verification"
-                description="Compares your device time with network time to ensure accurate attendance timestamps."
+                description="Checks the clock used for attendance against network time and this computer's clock."
                 details={[
-                  "Prevents attendance tampering caused by manually changing the computer's clock.",
-                  "Alerts you when the device clock is out of sync or drifting from real time.",
-                  "Ensures attendance logs stay in chronological order even offline.",
+                  "Facenox tracks elapsed time while running to reduce the effect of manual clock changes.",
+                  "Warnings identify detected clock differences or timestamps earlier than recorded attendance.",
+                  "Network-time checks require an internet connection.",
                 ]}
                 side="right"
               />
-              {timeHealthStatus === "drift_detected" && (
+              {hasClockWarning && (
                 <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-amber-400/90">
                   <AlertTriangle className="size-3 text-amber-400/90" />
-                  Drift warning
+                  Clock warning
                 </span>
               )}
             </div>
             <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">{timeHealthDetails}</p>
             <div className="mt-4 flex items-center gap-2 font-mono text-[11px] tracking-tight text-white/55">
-              {timeHealthState.loading ?
+              {hasClockWarning ?
+                <AlertTriangle aria-label="Clock warning" className="size-3 text-amber-400" />
+              : timeHealthState.loading ?
                 <Loader2 className="size-3 animate-spin text-white/40" />
               : timeHealthStatus === "verified" ?
                 <Check
-                  aria-label="System clock verified"
+                  aria-label="Network-time check passed"
                   className="size-3 -translate-y-0.5 stroke-[2.5] text-emerald-400"
-                />
-              : timeHealthStatus === "drift_detected" ?
-                <AlertTriangle
-                  aria-label="Device clock out of sync"
-                  className="size-3 text-amber-400"
                 />
               : <HelpCircle aria-label="Status unavailable" className="size-3 text-white/40" />}
               <span>

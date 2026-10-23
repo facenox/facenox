@@ -357,7 +357,8 @@ export function DataStorage({
               <div className="min-w-0 flex-1">
                 <h4 className="text-[15px] font-semibold text-white/90">Daily auto-export</h4>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                  Export attendance reports to a local or network folder on a set daily schedule.
+                  Export daily attendance reports to a local or network folder at the scheduled time
+                  while Facenox is running.
                 </p>
               </div>
               <Switch
@@ -683,7 +684,7 @@ export function DataStorage({
                       {isPaired && (
                         <span className="mt-1 block font-medium text-white/50">
                           <Cloud className="mr-1 inline size-3" />
-                          Clears history on this device only. Cloud records remain safe.
+                          Clears history on this device only. Cloud records are unchanged.
                         </span>
                       )}
                     </p>

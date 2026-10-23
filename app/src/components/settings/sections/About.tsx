@@ -49,9 +49,8 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
           <div className="space-y-1">
             <div className="text-[13px] font-semibold text-white/90">Offline capability</div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Face matching and liveness verification run without active network connectivity. This
-              allows secure, offline deployments and ensures system availability during internet
-              outages.
+              Face recognition and liveness checks continue on this computer without an internet
+              connection.
             </p>
           </div>
 

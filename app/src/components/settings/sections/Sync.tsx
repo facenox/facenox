@@ -56,13 +56,17 @@ const defaultConfig: RemoteSyncConfig = {
   lastSyncStatus: "idle",
   lastSyncMessage: null,
   connected: false,
-  unsyncedRecordsCount: 0,
-  unsyncedSessionsCount: 0,
+  unsyncedRecordsCount: undefined,
+  unsyncedSessionsCount: undefined,
 }
 
 function getEffectiveRemoteUrl(url?: string): string {
   const clean = (url || "").trim()
   return !clean || isOfficialCloudUrl(clean) ? OFFICIAL_REMOTE_BASE_URL : clean
+}
+
+function formatQueuedRecords(count: number): string {
+  return `${count} ${count === 1 ? "record" : "records"} queued`
 }
 
 interface SyncProps {
@@ -442,7 +446,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     type="button"
                     onClick={() => setShowPrivacyModal(true)}
                     className="inline font-medium text-white/45 transition-colors hover:text-white/80 hover:underline">
-                    Privacy & boundaries
+                    Cloud sync & privacy
                   </button>
                 </>
               }
@@ -711,7 +715,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                             <div className="flex flex-wrap items-center gap-2 text-[11px] text-white/40">
                               {config.unsyncedRecordsCount !== undefined &&
                                 config.unsyncedRecordsCount > 0 && (
-                                  <span>{config.unsyncedRecordsCount} record(s) queued</span>
+                                  <span>{formatQueuedRecords(config.unsyncedRecordsCount)}</span>
                                 )}
                               <span>
                                 {config.lastSyncedAt ?
@@ -733,7 +737,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                           <div className="flex flex-wrap items-center gap-2 text-[11px] text-white/40">
                             {config.unsyncedRecordsCount !== undefined &&
                               config.unsyncedRecordsCount > 0 && (
-                                <span>{config.unsyncedRecordsCount} record(s) queued</span>
+                                <span>{formatQueuedRecords(config.unsyncedRecordsCount)}</span>
                               )}
                             <span>
                               {config.lastSyncedAt ?
@@ -750,11 +754,29 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       ) ?
                         <div className="flex items-center gap-1.5 font-medium text-sky-400">
                           <CloudUpload className="size-3" />
-                          <span>{config.unsyncedRecordsCount} record(s) queued for upload</span>
+                          <span>{formatQueuedRecords(config.unsyncedRecordsCount)} for upload</span>
+                        </div>
+                      : (
+                        config.unsyncedSessionsCount !== undefined &&
+                        config.unsyncedSessionsCount > 0
+                      ) ?
+                        <div className="flex items-center gap-1.5 font-medium text-sky-400">
+                          <CloudUpload className="size-3" />
+                          <span>Attendance updates queued for upload</span>
+                        </div>
+                      : !config.lastSyncedAt ?
+                        <div className="font-medium text-white/65">No successful sync yet</div>
+                      : (
+                        config.unsyncedRecordsCount !== 0 ||
+                        config.unsyncedSessionsCount !== 0 ||
+                        config.lastSyncStatus !== "success"
+                      ) ?
+                        <div className="font-medium text-white/65">
+                          Current sync status unavailable
                         </div>
                       : <div className="flex items-center gap-1.5 font-medium text-emerald-400">
                           <Check className="size-3" />
-                          <span>All records synchronized</span>
+                          <span>Last sync completed</span>
                         </div>
                       }
                       <div className="text-[11px] text-white/40">
@@ -886,7 +908,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                   </AnimatePresence>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
-                      Device name override
+                      Device name
                     </label>
                     <input
                       type="text"

@@ -705,11 +705,11 @@ export function AddMember({
                           </span>
                           <InfoPopover
                             title="Face enrollment"
-                            description="Enrolls facial features locally for instant camera recognition."
+                            description="Creates a face template on this computer to recognize the member during check-in."
                             details={[
                               "Processes biometric vectors on-device without persisting or uploading raw photos.",
                               "Enroll live with camera or upload a clear front-facing photo.",
-                              "Connect to Facenox Cloud to sync enrolled face data across devices.",
+                              "Paid Facenox Cloud plans sync encrypted face templates between paired computers.",
                             ]}
                             side="right"
                           />
@@ -740,11 +740,11 @@ export function AddMember({
                             </span>
                             <InfoPopover
                               title="Face enrollment"
-                              description="Enrolls facial features locally for instant camera recognition."
+                              description="Creates a face template on this computer to recognize the member during check-in."
                               details={[
                                 "Processes biometric vectors on-device without persisting or uploading raw photos.",
                                 "Enroll live with camera or upload a clear front-facing photo.",
-                                "Connect to Facenox Cloud to sync enrolled face data across devices.",
+                                "Paid Facenox Cloud plans sync encrypted face templates between paired computers.",
                               ]}
                               side="right"
                             />

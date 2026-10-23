@@ -42,7 +42,7 @@ describe("Display & Audio Settings Section", () => {
     expect(screen.getByText("Mirror view")).toBeInTheDocument()
     expect(screen.getByText("Show names")).toBeInTheDocument()
     expect(screen.getByText("Show tracking boxes")).toBeInTheDocument()
-    expect(screen.getByText("Fill viewport")).toBeInTheDocument()
+    expect(screen.getByText("Fill camera preview")).toBeInTheDocument()
     expect(screen.getByText("Real-time results")).toBeInTheDocument()
 
     const switches = screen.getAllByRole("switch")
@@ -84,7 +84,7 @@ describe("Display & Audio Settings Section", () => {
     )
 
     expect(screen.getByText("Audio feedback")).toBeInTheDocument()
-    expect(screen.getByText("Play sound chime on successful face recognition.")).toBeInTheDocument()
+    expect(screen.getByText("Play a sound when a face is recognized.")).toBeInTheDocument()
 
     expect(screen.getByText("Tone:")).toBeInTheDocument()
     const testBtn = screen.getByRole("button", { name: /test recognition sound/i })

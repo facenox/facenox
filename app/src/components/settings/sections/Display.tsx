@@ -157,23 +157,23 @@ export function Display({
       label: "Show names",
       descriptions: {
         on: "Display recognized member names on camera overlay.",
-        off: "Hide names to show tracking boxes only.",
+        off: "Hide member names from the camera preview.",
       },
     },
     {
       key: "showTrackingBoxes" as keyof QuickSettings,
       label: "Show tracking boxes",
       descriptions: {
-        on: "Display tracking reticles around detected faces.",
+        on: "Show boxes around detected faces.",
         off: "Hide tracking boxes from the camera feed.",
       },
     },
     {
       key: "cameraFitCover" as keyof QuickSettings,
-      label: "Fill viewport",
+      label: "Fill camera preview",
       descriptions: {
-        on: "Expand camera feed to fill screen edge-to-edge.",
-        off: "Letterbox feed to display the full frame without cropping.",
+        on: "Fill the preview area by cropping the image edges.",
+        off: "Show the full camera image without cropping.",
       },
     },
     {
@@ -374,8 +374,8 @@ export function Display({
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                       className="text-xs font-medium text-white/65">
                       {audioSettings.recognitionSoundEnabled ?
-                        "Play sound chime on successful face recognition."
-                      : "Mute all face recognition sound chimes."}
+                        "Play a sound when a face is recognized."
+                      : "Recognition sounds are off."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
