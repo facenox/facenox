@@ -178,9 +178,9 @@ export function Display({
     },
     {
       key: "showDetectionPanel" as keyof QuickSettings,
-      label: "Detection results",
+      label: "Live recognition results",
       descriptions: {
-        on: "Show live detection results in the sidebar.",
+        on: "Show live recognition results below the attendance list.",
         off: "Hide live results to give attendance records full height.",
       },
     },
