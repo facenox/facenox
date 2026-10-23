@@ -156,7 +156,7 @@ export function Display({
       key: "showRecognitionNames" as keyof QuickSettings,
       label: "Show names",
       descriptions: {
-        on: "Display recognized member names on camera overlay.",
+        on: "Show recognized members’ names in the camera preview.",
         off: "Hide member names from the camera preview.",
       },
     },
@@ -178,7 +178,7 @@ export function Display({
     },
     {
       key: "showDetectionPanel" as keyof QuickSettings,
-      label: "Real-time results",
+      label: "Detection results",
       descriptions: {
         on: "Show live detection results in the sidebar.",
         off: "Hide live results to give attendance records full height.",

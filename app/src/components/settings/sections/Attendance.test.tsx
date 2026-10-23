@@ -52,7 +52,24 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     expect(onDataRetentionChange).toHaveBeenCalledWith(60)
   })
 
-  it("preserves 0 (forever) locally even when paired under a capped cloud plan", () => {
+  it.each([1, 45, 400])("shows the exact retention period of %i days", (days) => {
+    render(
+      <Attendance
+        attendanceSettings={{ ...baseSettings, dataRetentionDays: days }}
+        onSpoofDetectionToggle={vi.fn()}
+        onMaxRecognitionFacesChange={vi.fn()}
+        onDataRetentionChange={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.getByText(
+        `Delete local attendance records older than ${days} ${days === 1 ? "day" : "days"} automatically. Member profiles and enrolled face data are unchanged.`,
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it("preserves disabled automatic cleanup under a capped cloud plan", () => {
     const onDataRetentionChange = vi.fn()
     render(
       <Attendance
@@ -68,24 +85,24 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
       />,
     )
 
-    // Local dataRetentionDays remains 0 (forever) regardless of cloud plan
+    // Local automatic cleanup remains disabled regardless of cloud plan
     const input = screen.getByDisplayValue("0") as HTMLInputElement
     expect(input).not.toBeDisabled()
-    expect(screen.getByText("forever")).toBeInTheDocument()
+    expect(screen.getByText("No automatic cleanup")).toBeInTheDocument()
     expect(
       screen.getByText(
-        "Keep all local attendance logs forever. Member profiles and face data are never deleted.",
+        "Automatic cleanup is off. Local attendance records are kept until you delete them.",
       ),
     ).toBeInTheDocument()
 
-    // Clearing input and blurring resets to 0 (forever)
+    // Clearing input and blurring resets to 0 (no automatic cleanup)
     fireEvent.focus(input)
     fireEvent.change(input, { target: { value: "" } })
     fireEvent.blur(input)
     expect(onDataRetentionChange).toHaveBeenCalledWith(0)
   })
 
-  it("allows setting 0 (forever) when paired with unlimited cloud plan", () => {
+  it("allows disabling automatic cleanup with an unlimited cloud plan", () => {
     const onDataRetentionChange = vi.fn()
     render(
       <Attendance
@@ -102,7 +119,7 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     )
 
     expect(screen.getByText(/Cloud plan: Unlimited/i)).toBeInTheDocument()
-    expect(screen.getByText("forever")).toBeInTheDocument()
+    expect(screen.getByText("No automatic cleanup")).toBeInTheDocument()
 
     const input = screen.getByDisplayValue("0") as HTMLInputElement
     expect(input).not.toBeDisabled()

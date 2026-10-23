@@ -225,8 +225,8 @@ function decryptBackup(blob: Buffer, password: string): Buffer {
 
 async function getExtendedSyncStatus() {
   const status = getRemoteSyncStatus()
-  let unsyncedRecordsCount = 0
-  let unsyncedSessionsCount = 0
+  let unsyncedRecordsCount: number | undefined
+  let unsyncedSessionsCount: number | undefined
   try {
     const statsUrl =
       status.lastSyncedAt ?
@@ -239,11 +239,17 @@ async function getExtendedSyncStatus() {
     })
     if (response.ok) {
       const stats = (await response.json()) as {
-        unsynced_records_count?: number
-        unsynced_sessions_count?: number
+        unsynced_records_count?: unknown
+        unsynced_sessions_count?: unknown
       }
-      unsyncedRecordsCount = stats.unsynced_records_count ?? 0
-      unsyncedSessionsCount = stats.unsynced_sessions_count ?? 0
+      const records = stats.unsynced_records_count
+      const sessions = stats.unsynced_sessions_count
+      if (typeof records === "number" && Number.isSafeInteger(records) && records >= 0) {
+        unsyncedRecordsCount = records
+      }
+      if (typeof sessions === "number" && Number.isSafeInteger(sessions) && sessions >= 0) {
+        unsyncedSessionsCount = sessions
+      }
     }
   } catch (err) {
     console.warn("[Sync] Failed to fetch unsynced counts:", err)

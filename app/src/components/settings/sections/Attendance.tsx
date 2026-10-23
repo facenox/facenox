@@ -354,7 +354,7 @@ export function Attendance({
                   title="Retention policy"
                   description="Controls how long past attendance check-in logs are stored before automatic cleanup."
                   details={[
-                    "Runs automatic cleanup in the background every 24 hours to free disk space.",
+                    "Checks for attendance records older than the retention period when the local service starts.",
                     "Automatic cleanup only removes attendance records. Member profiles, groups, and enrolled face data are unchanged.",
                     "Choose a retention period that matches your organization's recordkeeping needs.",
                     isPaired && cloudCeiling ?
@@ -378,21 +378,7 @@ export function Attendance({
                         return "Automatic cleanup is off. Local attendance records are kept until you delete them."
                       }
 
-                      const years = Math.floor(effectiveDays / 365)
-                      const remainingDays = effectiveDays % 365
-                      const months = Math.floor(remainingDays / 30)
-
-                      let timeStr = ""
-                      if (years > 0) {
-                        timeStr += `${years} ${years === 1 ? "year" : "years"}`
-                        if (months > 0) {
-                          timeStr += ` and ${months} ${months === 1 ? "month" : "months"}`
-                        }
-                      } else if (months > 0) {
-                        timeStr = `${months} ${months === 1 ? "month" : "months"}`
-                      } else {
-                        timeStr = `${effectiveDays} ${effectiveDays === 1 ? "day" : "days"}`
-                      }
+                      const timeStr = `${effectiveDays} ${effectiveDays === 1 ? "day" : "days"}`
 
                       return `Delete local attendance records older than ${timeStr} automatically. Member profiles and enrolled face data are unchanged.`
                     })()}
@@ -402,16 +388,16 @@ export function Attendance({
             </div>
             <div className="ml-auto flex shrink-0 flex-col items-end">
               <div className="flex items-center gap-2">
-                <div className="relative flex h-4 min-w-[36px] items-center justify-end overflow-hidden">
+                <div className="relative flex min-h-4 min-w-[36px] items-center justify-end">
                   <AnimatePresence mode="wait">
                     <motion.span
-                      key={effectiveDays <= 0 ? "forever" : "days"}
+                      key={effectiveDays <= 0 ? "cleanup-off" : "days"}
                       initial={{ opacity: 0, y: -2 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                       className="text-[11px] font-medium text-white/65">
-                      {effectiveDays <= 0 ? "forever" : "days"}
+                      {effectiveDays <= 0 ? "No automatic cleanup" : "days"}
                     </motion.span>
                   </AnimatePresence>
                 </div>
