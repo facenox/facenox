@@ -222,11 +222,9 @@ describe("ContentPanel anti-spoof prompt", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
 
-    expect(await screen.findByText("Allow natural movement")).toBeInTheDocument()
+    expect(await screen.findByText("Follow the head-turn prompt")).toBeInTheDocument()
     expect(
-      await screen.findByAltText(
-        "Admin setup slide showing natural face movement and depth for anti-spoof setup.",
-      ),
+      await screen.findByAltText("Head-turn prompt during a liveness check."),
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Back" }))

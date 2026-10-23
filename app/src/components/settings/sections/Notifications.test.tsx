@@ -37,9 +37,9 @@ describe("Notifications Settings", () => {
     )
 
     expect(screen.getByText("Audio feedback")).toBeInTheDocument()
-    expect(screen.getByText("Play a sound on successful recognition.")).toBeInTheDocument()
+    expect(screen.getByText("Play a sound when a face is recognized.")).toBeInTheDocument()
 
-    const switchBtn = screen.getByRole("switch")
+    const switchBtn = screen.getByRole("switch", { name: "Audio feedback" })
     fireEvent.click(switchBtn)
     expect(onAudioSettingsChange).toHaveBeenCalledWith({
       recognitionSoundEnabled: false,

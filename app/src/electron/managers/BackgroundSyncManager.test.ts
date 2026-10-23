@@ -424,7 +424,7 @@ describe("BackgroundSyncManager", () => {
     const result = await manager.performSync()
 
     expect(result.success).toBe(false)
-    expect(result.message).toContain("3 face profiles could not be imported")
+    expect(result.message).toContain("3 face templates could not be imported")
 
     // Valid profiles are imported, but partial failure must never report success.
     const importEmbeddingsCall = vi
