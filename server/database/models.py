@@ -250,9 +250,7 @@ class AttendanceGroupRule(Base, SyncMixin):
     group_id: Mapped[str] = mapped_column(
         String, ForeignKey("attendance_groups.id"), nullable=False
     )
-    effective_from: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, index=True
-    )
+    effective_from: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     late_threshold_minutes: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True
     )
@@ -283,6 +281,11 @@ class AttendanceGroupRule(Base, SyncMixin):
 class AttendanceSettings(Base, SyncMixin):
     __tablename__ = "attendance_settings"
 
+    # The unique partial index below covers organization lookups. Do not also
+    # create the mixin's redundant non-unique organization index.
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String, nullable=True, index=False
+    )
     attendance_timezone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     late_threshold_minutes: Mapped[int] = mapped_column(Integer, default=15)
