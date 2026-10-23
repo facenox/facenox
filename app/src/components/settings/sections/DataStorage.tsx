@@ -129,7 +129,7 @@ export function DataStorage({
       setAutoExportConfig(updated)
     } catch (err) {
       console.error("Failed to update auto export config:", err)
-      setError("Failed to save auto-export setting.")
+      setError("Facenox couldn't save the auto-export setting. Try again.")
     }
   }
 
@@ -144,7 +144,7 @@ export function DataStorage({
       }
     } catch (err) {
       console.error("Failed to select directory:", err)
-      setError("Failed to open folder picker.")
+      setError("Facenox couldn't open the folder picker. Try again.")
     }
   }
 
@@ -154,7 +154,7 @@ export function DataStorage({
       await window.electronAPI.autoExport.openDirectory()
     } catch (err) {
       console.error("Failed to open directory:", err)
-      setError("Failed to open folder.")
+      setError("Facenox couldn't open that folder. Check that it still exists.")
     }
   }
 
@@ -168,10 +168,10 @@ export function DataStorage({
         const updated = await window.electronAPI.autoExport.getConfig()
         setAutoExportConfig(updated)
       } else {
-        setError("Failed to export daily report. Check logs for details.")
+        setError("Facenox couldn't export the daily report. Try again.")
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to run export.")
+      setError(err instanceof Error ? err.message : "Facenox couldn't run the export. Try again.")
     } finally {
       setIsTriggeringAutoExport(false)
     }
@@ -197,11 +197,13 @@ export function DataStorage({
         setSuccess(`Backup saved to: ${result.filePath}`)
         setStatus({ type: "idle" })
       } else {
-        setError(result.error ?? "Failed to create backup.")
+        setError(result.error ?? "Facenox couldn't create the backup. Try again.")
         setStatus({ type: "idle" })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Backup failed.")
+      setError(
+        err instanceof Error ? err.message : "Facenox couldn't create the backup. Try again.",
+      )
       setStatus({ type: "idle" })
     }
   }
@@ -226,11 +228,18 @@ export function DataStorage({
         setImportFilePath(null)
         if (onGroupsChanged) onGroupsChanged()
       } else {
-        setError(result.error ?? "Failed to restore data.")
+        setError(
+          result.error ??
+            "Facenox couldn't restore the backup. Check the file and password, then try again.",
+        )
         setStatus({ type: "idle" })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Restore failed.")
+      setError(
+        err instanceof Error ?
+          err.message
+        : "Facenox couldn't restore the backup. Check the file and password, then try again.",
+      )
       setStatus({ type: "idle" })
     }
   }
@@ -247,7 +256,7 @@ export function DataStorage({
         overwrite: false,
       })
     } catch {
-      setError("Failed to open file picker.")
+      setError("Facenox couldn't open the file picker. Try again.")
     }
   }
 
@@ -304,11 +313,13 @@ export function DataStorage({
             <div className="min-w-0 flex-1">
               <h4 className="text-[15px] font-semibold text-white/90">Restore backup</h4>
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                Restore database from a backup file using its original encryption password.
+                Restore a backup using its original encryption password. Existing groups, members,
+                and attendance records are kept; the restore adds missing records and skips items
+                that already exist.
                 {isPaired && (
                   <span className="mt-1 block font-medium text-amber-500/80">
                     <Info className="mr-1 inline size-3" />
-                    Restored groups and members will sync to the cloud.
+                    Restored groups and members will sync to Facenox Cloud.
                   </span>
                 )}
               </p>
@@ -335,7 +346,7 @@ export function DataStorage({
                 type="button"
                 onClick={onNavigateToSync}
                 className="group flex items-center gap-1.5 text-xs font-semibold text-cyan-400 transition-colors hover:text-cyan-300">
-                <span>Set up cloud sync</span>
+                <span>Set up Facenox Cloud sync</span>
                 <ArrowRight className="size-2.5 transition-transform group-hover:translate-x-0.5" />
               </button>
             </div>
@@ -523,7 +534,9 @@ export function DataStorage({
           {/* Data Folder */}
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1">
-              <h4 className="text-[15px] font-semibold text-white/90">Database and system logs</h4>
+              <h4 className="text-[15px] font-semibold text-white/90">
+                Local data and system logs
+              </h4>
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
                 Access local database files, diagnostic logs, and enrolled face data on this device.
               </p>
@@ -614,7 +627,7 @@ export function DataStorage({
                       Delete group directory
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Remove all groups, member profiles, and enrolled face templates from this
+                      Delete all groups, member profiles, and enrolled face templates from this
                       directory. Existing attendance history is retained. Members must be added and
                       enrolled again to use face recognition.
                       {isPaired &&
@@ -649,13 +662,13 @@ export function DataStorage({
                   <div className="min-w-0 flex-1 text-left">
                     <h4 className="text-[15px] font-semibold text-red-400/80">Clear face data</h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Remove all enrolled face templates. Members will need to enroll again to use
+                      Clear all enrolled face templates. Members will need to enroll again to use
                       face recognition.
                       {isPaired &&
                         (!allowKioskDirectoryManagement ?
                           <span className="mt-1 block font-medium text-amber-400/80">
                             <Lock className="mr-1 inline size-3" />
-                            Your organization has disabled face-data removal on this computer.
+                            Your organization has disabled face-data clearing on this computer.
                             Contact your administrator.
                           </span>
                         : <span className="mt-1 block font-medium text-amber-400/80">
@@ -726,6 +739,12 @@ export function DataStorage({
               } to decrypt and restore data.`
             }
           </p>
+          {passwordModal.action === "import" && (
+            <p className="text-[11px] leading-relaxed text-white/50">
+              Existing groups, members, and attendance records are kept. Only missing records are
+              restored.
+            </p>
+          )}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-white/55">Backup password</label>
             <div className="relative">

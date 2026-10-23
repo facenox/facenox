@@ -157,6 +157,26 @@ interface CommandResult {
   [key: string]: unknown
 }
 
+async function readCommandError(response: Response, fallback: string): Promise<string> {
+  const text = await response.text().catch(() => "")
+  if (!text) return `${fallback} (HTTP ${response.status}).`
+
+  try {
+    const body = JSON.parse(text) as { detail?: unknown; error?: unknown; message?: unknown }
+    const detail = [body.detail, body.error, body.message].find(
+      (value): value is string => typeof value === "string" && value.trim().length > 0,
+    )
+    if (detail) return detail.trim()
+  } catch {
+    // The backend did not return JSON. Keep a short, inert excerpt below.
+  }
+
+  const compact = text.replace(/\s+/g, " ").trim()
+  return compact ?
+      `${fallback} (HTTP ${response.status}): ${compact.slice(0, 500)}`
+    : `${fallback} (HTTP ${response.status}).`
+}
+
 interface SyncAcknowledgements {
   groups: Record<string, number>
   members: Record<string, number>
@@ -551,13 +571,21 @@ export class BackgroundSyncManager {
               signal: AbortSignal.timeout(60000),
             })
             if (!wipeResponse.ok) {
-              throw new Error(`Wipe failed on local backend: ${wipeResponse.status}`)
+              throw new Error(await readCommandError(wipeResponse, "Wipe failed on this computer"))
             }
             // A durable upload is local data too. Never replay it after a wipe.
             persistentStore.set("sync.pendingUpload", null)
             persistentStore.set("sync.pendingAcknowledgements", null)
             persistentStore.set("sync.lastSyncedAt", null)
-            result = (await wipeResponse.json().catch(() => ({ success: true }))) as CommandResult
+            const wipeBody = (await wipeResponse.json().catch(() => null)) as CommandResult | null
+            if (wipeBody?.success !== true) {
+              throw new Error(
+                wipeBody?.error ||
+                  wipeBody?.message ||
+                  "The local service did not confirm that the wipe completed. Review this computer before using it again.",
+              )
+            }
+            result = wipeBody
           } finally {
             this.isWiping = false
           }
@@ -584,7 +612,21 @@ export class BackgroundSyncManager {
         case "UPGRADE": {
           console.log("[RemoteMgmt] Executing remote update check...")
           const updateInfo = await checkForUpdates(true) // force check
-          if (updateInfo.hasUpdate) {
+          if (updateInfo.isOffline) {
+            status = "failed"
+            result = {
+              error: "Could not check for updates because this computer is offline.",
+              latestVersion: updateInfo.latestVersion,
+              hasUpdate: false,
+            }
+          } else if (updateInfo.error) {
+            status = "failed"
+            result = {
+              error: `Could not check for updates: ${updateInfo.error}`,
+              latestVersion: updateInfo.latestVersion,
+              hasUpdate: false,
+            }
+          } else if (updateInfo.hasUpdate) {
             notifyRenderer(state.mainWindow, updateInfo)
             result = {
               message: `Update found: v${updateInfo.latestVersion}. Notified local operator.`,

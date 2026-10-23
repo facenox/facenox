@@ -2,6 +2,7 @@ import { create } from "zustand"
 import type { AudioSettings, QuickSettings } from "@/components/settings"
 import type { GroupSection } from "@/components/group"
 import { persistentSettings } from "@/services/PersistentSettingsService"
+import { isTechnicalErrorMessage } from "@/utils/errorText"
 import { compareRecoveryKeys, generateRecoveryKey } from "@/utils/recoveryKey"
 
 interface UIState {
@@ -161,7 +162,9 @@ export const useUIStore = create<UIState>((set, get) => ({
   setError: (error) => {
     set({ error })
     if (errorTimer) clearTimeout(errorTimer)
-    if (error) {
+    // Diagnostics stay until dismissed so an open "Technical details" panel
+    // cannot disappear while the operator is reading it.
+    if (error && !isTechnicalErrorMessage(error)) {
       errorTimer = setTimeout(() => set({ error: null }), 4500)
     }
   },

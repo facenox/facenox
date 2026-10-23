@@ -116,7 +116,7 @@ describe("updater", () => {
     expect(result.latestVersion).toBe("1.0.0")
   })
 
-  it("handles fetch failure gracefully", async () => {
+  it("reports a failed check instead of claiming the app is current", async () => {
     vi.mocked(fetch).mockRejectedValue(new TypeError("Failed to fetch"))
 
     const { checkForUpdates } = await loadUpdater()
@@ -124,9 +124,10 @@ describe("updater", () => {
 
     expect(result.hasUpdate).toBe(false)
     expect(result.currentVersion).toBe("1.0.0-beta.1")
+    expect(result.error).toContain("Could not reach the update service")
   })
 
-  it("handles request timeout (AbortError) gracefully", async () => {
+  it("reports a timeout instead of claiming the app is current", async () => {
     const abortError = new DOMException("The operation was aborted.", "AbortError")
     vi.mocked(fetch).mockRejectedValue(abortError)
 
@@ -134,9 +135,10 @@ describe("updater", () => {
     const result = await checkForUpdates()
 
     expect(result.hasUpdate).toBe(false)
+    expect(result.error).toContain("timed out")
   })
 
-  it("handles non-ok HTTP responses gracefully", async () => {
+  it("reports a non-ok HTTP response instead of claiming the app is current", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
       status: 403,
@@ -147,9 +149,10 @@ describe("updater", () => {
     const result = await checkForUpdates()
 
     expect(result.hasUpdate).toBe(false)
+    expect(result.error).toContain("HTTP 403")
   })
 
-  it("handles 404 (no releases) gracefully", async () => {
+  it("does not claim the app is current when no release is available", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
       status: 404,
@@ -160,6 +163,7 @@ describe("updater", () => {
     const result = await checkForUpdates()
 
     expect(result.hasUpdate).toBe(false)
+    expect(result.error).toContain("No published release")
   })
 
   it("delegates release page opening to Electron shell", async () => {

@@ -93,7 +93,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
     { id: "overview" as const, label: "Overview", icon: LayoutDashboard },
     { id: "reports" as const, label: "Reports", icon: BarChart3 },
     { id: "members" as const, label: "Members", icon: Users },
-    { id: "settings" as const, label: "Rules", icon: Clock },
+    { id: "settings" as const, label: "Group rules", icon: Clock },
   ]
 
   const sections = [

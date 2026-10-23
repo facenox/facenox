@@ -186,8 +186,10 @@ export function useCameraControl({
         try {
           await initializeWebSocket()
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Unknown error"
-          setError(`Failed to connect to detection service: ${errorMessage}`)
+          console.error("Camera connection failed:", error)
+          setError(
+            "Facenox couldn't connect to the detection service. Restart the app and try again.",
+          )
           isStreamingRef.current = false
           setIsStreaming(false)
           setIsVideoLoading(false)

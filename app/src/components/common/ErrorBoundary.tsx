@@ -35,10 +35,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 <AlertTriangle className="size-10 text-[var(--error)]" />
               </div>
               <h1 className="mb-2 text-lg font-semibold text-[var(--text-primary)]">
-                Something went wrong
+                Facenox hit an unexpected error
               </h1>
               <p className="mb-6 text-sm text-[var(--text-muted)]">
-                Reload the window to try again.
+                Reload the window to try again. If it keeps happening, open the system log from
+                Settings &gt; Data &amp; storage.
               </p>
               <button
                 onClick={() => window.location.reload()}

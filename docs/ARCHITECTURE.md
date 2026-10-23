@@ -52,7 +52,7 @@ graph TD
 
 - Face detection and recognition endpoints
 - Anti-spoofing and attendance APIs
-- Export and import endpoints for backups and cloud sync
+- Export and import endpoints for backups and Cloud sync
 - Local database access
 
 ### Local SQLite database
@@ -76,7 +76,7 @@ This path does not require internet access.
 ### Facenox Cloud integration flow
 
 1. An admin generates a pairing code in Facenox Cloud.
-2. The desktop app stores the cloud URL and redeems the pairing code.
+2. The desktop app stores the Cloud server address and redeems the pairing code.
 3. The desktop receives an organization ID, site ID, device ID, and device token.
 4. The desktop exports a local directory and attendance snapshot.
 5. The Electron sync manager wraps that export in a sync envelope and sends it to `POST /api/sync/push`.
@@ -91,7 +91,7 @@ On supported Cloud plans, encrypted face templates can sync between computers pa
 
 ## Desktop and Facenox Cloud Boundary
 
-The cloud boundary is intentionally narrow.
+The Facenox Cloud boundary is intentionally narrow.
 
 ### Data that stays local
 

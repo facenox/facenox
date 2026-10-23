@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it, vi, afterEach } from "vitest"
 import { encryptEmbedding } from "./EmbeddingCrypto.js"
 import type { SyncPushPayload } from "../../shared/syncContract.js"
+import { checkForUpdates } from "../updater.js"
 
 const mockStore: Record<string, unknown> = {}
 
@@ -243,6 +244,143 @@ describe("BackgroundSyncManager", () => {
     expect(acknowledgements).toBe(2)
     expect(mockStore["sync.commandReceipts.command-once"]).toMatchObject({ status: "completed" })
     expect(mockStore["sync.pendingUpload"]).toBeNull()
+  })
+
+  it.each(["not JSON", "null", "{}", '{"success":false}'])(
+    "does not confirm a wipe for an unconfirmed response: %s",
+    async (body) => {
+      const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+      const { dialog } = await import("electron")
+      let acknowledgement: { status?: string; result?: { error?: string } } | undefined
+      vi.mocked(fetch).mockImplementation(async (input, init) => {
+        const url = String(input)
+        if (url.endsWith("/api/devices/commands"))
+          return new Response(
+            JSON.stringify({ commands: [{ id: "command-unconfirmed", command: "WIPE" }] }),
+          )
+        if (url.endsWith("/attendance/wipe")) return new Response(body)
+        if (url.endsWith("/commands/ack")) {
+          acknowledgement = JSON.parse(String(init?.body))
+          return new Response("{}")
+        }
+        return new Response("{}")
+      })
+
+      await (
+        new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
+      ).pollCommands()
+
+      expect(acknowledgement).toMatchObject({ status: "failed" })
+      expect(acknowledgement?.result?.error).toContain("did not confirm")
+      expect(dialog.showMessageBox).not.toHaveBeenCalled()
+    },
+  )
+
+  it("reports the backend's partial-wipe explanation when the wipe fails", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    let acknowledgement: { status?: string; result?: { error?: string } } | undefined
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input)
+      if (url.endsWith("/api/devices/commands"))
+        return new Response(
+          JSON.stringify({
+            commands: [{ id: "command-partial-wipe", command: "WIPE" }],
+          }),
+        )
+      if (url.endsWith("/attendance/wipe"))
+        return new Response(
+          JSON.stringify({
+            detail:
+              "Local attendance was cleared, but face templates could not be removed. Review this computer before using it again.",
+          }),
+          { status: 500 },
+        )
+      if (url.endsWith("/commands/ack")) {
+        acknowledgement = JSON.parse(String(init?.body))
+        return new Response("{}")
+      }
+      return new Response("{}")
+    })
+
+    await (
+      new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
+    ).pollCommands()
+
+    expect(acknowledgement).toMatchObject({ status: "failed" })
+    expect(acknowledgement?.result?.error).toContain("Local attendance was cleared")
+    expect(acknowledgement?.result?.error).toContain("face templates could not be removed")
+  })
+
+  it("does not report an offline update check as already up to date", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    vi.mocked(checkForUpdates).mockResolvedValue({
+      currentVersion: "1.0.0",
+      latestVersion: "1.0.0",
+      hasUpdate: false,
+      isOffline: true,
+      releaseUrl: "",
+      releaseNotes: "",
+      publishedAt: "",
+      downloadUrl: null,
+    })
+    let acknowledgement: { status?: string; result?: { error?: string } } | undefined
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input)
+      if (url.endsWith("/api/devices/commands"))
+        return new Response(
+          JSON.stringify({
+            commands: [{ id: "command-upgrade-offline", command: "UPGRADE" }],
+          }),
+        )
+      if (url.endsWith("/commands/ack")) {
+        acknowledgement = JSON.parse(String(init?.body))
+        return new Response("{}")
+      }
+      return new Response("{}")
+    })
+
+    await (
+      new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
+    ).pollCommands()
+
+    expect(acknowledgement).toMatchObject({ status: "failed" })
+    expect(acknowledgement?.result?.error).toContain("offline")
+  })
+
+  it("reports an update-check error instead of already up to date", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    vi.mocked(checkForUpdates).mockResolvedValue({
+      currentVersion: "1.0.0",
+      latestVersion: "1.0.0",
+      hasUpdate: false,
+      error: "The update check timed out.",
+      releaseUrl: "",
+      releaseNotes: "",
+      publishedAt: "",
+      downloadUrl: null,
+    })
+    let acknowledgement: { status?: string; result?: { error?: string } } | undefined
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input)
+      if (url.endsWith("/api/devices/commands"))
+        return new Response(
+          JSON.stringify({
+            commands: [{ id: "command-upgrade-error", command: "UPGRADE" }],
+          }),
+        )
+      if (url.endsWith("/commands/ack")) {
+        acknowledgement = JSON.parse(String(init?.body))
+        return new Response("{}")
+      }
+      return new Response("{}")
+    })
+
+    await (
+      new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
+    ).pollCommands()
+
+    expect(acknowledgement).toMatchObject({ status: "failed" })
+    expect(acknowledgement?.result?.error).toContain("timed out")
   })
 
   it("acquires a site key after upgrade without pairing again", async () => {

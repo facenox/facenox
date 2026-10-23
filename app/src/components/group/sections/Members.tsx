@@ -502,7 +502,7 @@ export function Members({
                         onClick={async () => {
                           const confirmed = await dialog.confirm({
                             title: "Remove members",
-                            message: `Remove ${selectedIds.size} member${selectedIds.size > 1 ? "s" : ""}? This will delete their profiles from this group.`,
+                            message: `Remove ${selectedIds.size} member${selectedIds.size > 1 ? "s" : ""}? This removes them from this group and deletes their enrolled face data. Attendance history is retained.`,
                             confirmText: `Remove (${selectedIds.size})`,
                             confirmVariant: "danger",
                           })

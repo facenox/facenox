@@ -34,7 +34,7 @@ const SECTIONS: SectionConfig[] = [
   },
   {
     id: "settings",
-    label: "Rules",
+    label: "Group rules",
     shortcut: "4",
   },
 ]

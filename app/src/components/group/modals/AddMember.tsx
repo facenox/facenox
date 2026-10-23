@@ -1009,9 +1009,9 @@ export function AddMember({
                             </span>
                           </>
                         : <>
-                            <AlertTriangle className="size-3.5 text-amber-400" />
-                            <span className="text-[13px] font-semibold text-amber-400">
-                              Import complete with warnings
+                            <AlertTriangle className="size-3.5 text-red-400" />
+                            <span className="text-[13px] font-semibold text-red-300">
+                              Import finished with errors
                             </span>
                           </>
                         }
@@ -1021,16 +1021,21 @@ export function AddMember({
                       </span>
                     </div>
                     {bulkResults.errors.length > 0 && (
-                      <div className="custom-scroll mt-3 max-h-32 space-y-1.5 overflow-y-auto pl-1">
-                        {bulkResults.errors.map((err: string, idx: number) => (
-                          <div
-                            key={idx}
-                            className="flex items-start gap-1.5 text-[11px] leading-relaxed text-red-400/90">
-                            <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-red-400/60" />
-                            <span>{err}</span>
-                          </div>
-                        ))}
-                      </div>
+                      <>
+                        <p className="mt-2 text-[11px] leading-relaxed text-white/55">
+                          Review the errors below, then retry the failed entries.
+                        </p>
+                        <div className="custom-scroll mt-3 max-h-32 space-y-1.5 overflow-y-auto pl-1">
+                          {bulkResults.errors.map((err: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className="flex items-start gap-1.5 text-[11px] leading-relaxed text-red-400/90">
+                              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-red-400/60" />
+                              <span>{err}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     )}
                   </div>
                 )}

@@ -441,11 +441,13 @@ export function useBackendService(options: UseBackendServiceOptions) {
         if (errorMessage.includes("Models still loading")) {
           setError("AI models are loading. Wait a moment and retry.")
         } else if (errorMessage.includes("Backend service not started")) {
-          setError("Backend service is not running. Restart the application.")
+          setError("The local service isn't running. Restart Facenox.")
         } else if (errorMessage.includes("Timeout")) {
-          setError("Backend model loading timed out. Check if the backend service is active.")
+          setError("Facenox timed out while loading its models. Restart the app and try again.")
         } else {
-          setError(`Failed to connect to detection service: ${errorMessage}`)
+          setError(
+            "Facenox couldn't connect to the detection service. Restart the app and try again.",
+          )
         }
       }
       throw error

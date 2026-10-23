@@ -225,7 +225,7 @@ export const useSettings = ({
       const ok = await dialog.confirm({
         title: "Clear face data",
         message:
-          "Clear ALL face recognition data? This will delete all enrolled faces and embeddings. This cannot be undone.",
+          "Clear all enrolled face data? Groups, members, and attendance history are not affected. Members will need to enroll again before they can be recognized. This cannot be undone.",
         confirmText: "Clear face data",
         cancelText: "Cancel",
         confirmVariant: "danger",
@@ -242,14 +242,14 @@ export const useSettings = ({
       notifyDataChanged()
       await loadSystemData()
       await dialog.alert({
-        title: "Database cleared",
-        message: "Face recognition data cleared.",
+        title: "Face data cleared",
+        message: "All enrolled face data was removed.",
       })
     } catch (error) {
       console.error("Failed to clear database:", error)
       await dialog.alert({
-        title: "Clear failed",
-        message: "Failed to clear face recognition data. Try again.",
+        title: "Could not clear face data",
+        message: "Facenox couldn't clear the enrolled face data. Try again.",
         variant: "danger",
       })
     } finally {

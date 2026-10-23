@@ -29,14 +29,17 @@ export function useAttendanceBootstrap() {
         setShellReady(true)
         setShellBootstrapping(false)
       } catch (error) {
+        const technicalMessage = error instanceof Error ? error.message : ""
         const message =
-          error instanceof Error ? error.message : "Failed to load startup attendance data."
+          /offline|backend|connect/i.test(technicalMessage) ?
+            "Facenox couldn't load your data because the local service is offline. Restart the app and try again."
+          : "Facenox couldn't load your data. Restart the app and try again."
 
         setShellBootstrapError(message)
         setShellReady(false)
         setShellBootstrapping(false)
         setPanelLoading(false)
-        setError(`Startup data failed to load: ${message}`)
+        setError(message)
       }
     }
 

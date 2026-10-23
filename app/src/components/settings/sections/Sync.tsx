@@ -327,7 +327,9 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       }
       setSuccess("Cloud sync settings saved.")
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Could not save cloud sync settings.")
+      setError(
+        error instanceof Error ? error.message : "Could not save Facenox Cloud sync settings.",
+      )
     } finally {
       setBusyAction(null)
     }
@@ -492,7 +494,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       <p className="text-xs font-medium text-white/70">
                         Connecting to {serverDisplayName}...
                       </p>
-                      <p className="text-[11px] text-white/40">Generating secure pairing code</p>
+                      <p className="text-[11px] text-white/40">Generating secure device code</p>
                     </motion.div>
                   : initiateError ?
                     <motion.div
@@ -583,7 +585,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                             </span>
                             <ExternalLink className="size-2.5" />
                           </a>{" "}
-                          and enter:
+                          and enter this device code:
                         </p>
 
                         {/* Single seamless PIN capsule */}
@@ -650,7 +652,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         transition={{ duration: 0.15, ease: "easeOut" }}
                         onClick={() => setShowManualInput(true)}
                         className="cursor-pointer text-[11px] text-white/30 transition-colors hover:text-white/60">
-                        Have a pairing code from the web dashboard? Enter it here &rarr;
+                        Have a pairing code from Facenox Cloud? Enter it here &rarr;
                       </motion.button>
                     : <motion.div
                         key="manual-input"
@@ -725,7 +727,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                               <span>
                                 {config.lastSyncedAt ?
                                   `Last synced ${new Date(config.lastSyncedAt).toLocaleString()}`
-                                : "No successful sync yet"}
+                                : "No completed sync yet"}
                               </span>
                             </div>
                           </div>
@@ -749,7 +751,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                             <span>
                               {config.lastSyncedAt ?
                                 `Last synced ${new Date(config.lastSyncedAt).toLocaleString()}`
-                              : "No successful sync yet"}
+                              : "No completed sync yet"}
                             </span>
                           </div>
                         </div>
@@ -772,7 +774,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                           <span>Attendance updates queued for upload</span>
                         </div>
                       : !config.lastSyncedAt ?
-                        <div className="font-medium text-white/65">No successful sync yet</div>
+                        <div className="font-medium text-white/65">No completed sync yet</div>
                       : (
                         config.unsyncedRecordsCount !== 0 ||
                         config.unsyncedSessionsCount !== 0 ||
@@ -985,9 +987,9 @@ function DataBoundariesModal({ isOpen, onClose, onNavigateToDB }: DataBoundaries
               <strong>never persisted to disk or uploaded</strong>.
             </p>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Face templates use AES-256-GCM encryption for Cloud sync. Cloud manages the location
-              keys and decrypts templates in memory to re-encrypt them during location transfers.
-              Face recognition still runs on paired computers.
+              Face templates are encrypted for Cloud sync. Cloud manages the location keys and
+              decrypts templates in memory only when it needs to re-encrypt them during location
+              transfers. Face recognition still runs on paired computers.
             </p>
           </div>
         </div>

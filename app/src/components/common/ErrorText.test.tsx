@@ -47,7 +47,7 @@ describe("error presentation verification", () => {
     expect(screen.getByText("Check the server address in Cloud sync settings.")).toBeInTheDocument()
   })
 
-  it("reproduces the existing global-error expiry while details are open", () => {
+  it("keeps a global diagnostic error visible until it is dismissed", () => {
     vi.useFakeTimers()
     function Feedback() {
       const message = useUIStore((state) => state.error)
@@ -63,7 +63,25 @@ describe("error presentation verification", () => {
     act(() => useUIStore.getState().setError("HTTP 500: diagnostic"))
     container.querySelector("details")!.open = true
     act(() => vi.advanceTimersByTime(4500))
+    expect(useUIStore.getState().error).toBe("HTTP 500: diagnostic")
+    expect(container.querySelector("details")).not.toBeNull()
+  })
+
+  it("still auto-dismisses a routine global error", () => {
+    vi.useFakeTimers()
+    function Feedback() {
+      const message = useUIStore((state) => state.error)
+      return message ?
+          <FloatingAlert
+            message={message}
+            variant="error"
+            onDismiss={() => useUIStore.getState().setError(null)}
+          />
+        : null
+    }
+    render(<Feedback />)
+    act(() => useUIStore.getState().setError("The member could not be added. Try again."))
+    act(() => vi.advanceTimersByTime(4500))
     expect(useUIStore.getState().error).toBeNull()
-    expect(container.querySelector("details")).toBeNull()
   })
 })

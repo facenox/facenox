@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { AlertCircle, Camera, Check, Image } from "lucide-react"
+import { AlertCircle, Camera, Check, Image, X } from "lucide-react"
 import { useGroupUIStore } from "@/components/group/stores"
 import { Modal } from "@/components/common"
 import { ErrorText } from "@/components/common/ErrorText"
@@ -364,6 +364,7 @@ export function FaceCapture({
                 <AnimatePresence>
                   {globalError && (
                     <motion.div
+                      role="alert"
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -371,6 +372,13 @@ export function FaceCapture({
                       className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[85%] -translate-x-1/2 items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/85 px-4 py-2.5 text-center text-[11px] font-medium text-red-200">
                       <AlertCircle className="size-4 shrink-0 text-red-400" />
                       <ErrorText message={globalError} />
+                      <button
+                        type="button"
+                        aria-label="Dismiss error"
+                        onClick={() => setGlobalError(null)}
+                        className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2">
+                        <X className="size-4" aria-hidden="true" />
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>

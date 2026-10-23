@@ -5,6 +5,7 @@ import type { DialogAPI } from "@/components/shared"
 import type { CapturedFrame } from "@/components/group/sections/enrollment/types"
 import { makeId } from "@/utils/imageHelpers"
 import { dataUrlToBlob } from "@/utils/dataUrl"
+import { isTechnicalErrorMessage } from "@/utils/errorText"
 import { validateAndGetBestFace } from "@/utils/faceValidation"
 
 export function useFaceCapture(
@@ -18,9 +19,10 @@ export function useFaceCapture(
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isEnrolling, setIsEnrolling] = useState(false)
 
-  // Automatically clear errors after a few seconds so they don't linger on the UI
+  // Clear routine errors after a few seconds, but leave diagnostics visible
+  // until the operator dismisses or replaces them.
   useEffect(() => {
-    if (globalError) {
+    if (globalError && !isTechnicalErrorMessage(globalError)) {
       const timer = setTimeout(() => setGlobalError(null), 3500)
       return () => clearTimeout(timer)
     }

@@ -29,7 +29,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
             </div>
             <p className="text-[11px] leading-relaxed text-white/50">
               Biometric templates, attendance records, and app settings are stored locally on this
-              machine. Face matching and liveness detection execute entirely on-device, independent
+              computer. Face matching and liveness detection execute entirely on-device, independent
               of any cloud-based biometric matching engines.
             </p>
           </div>
@@ -37,11 +37,12 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
           {/* Section 2 */}
           <div className="space-y-1">
             <div className="text-[13px] font-semibold text-white/90">
-              Zero telemetry and tracking
+              No analytics or usage tracking
             </div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              The application runs without ads, telemetry scripts, or usage tracking. No diagnostic
-              or performance data is transmitted externally.
+              The application does not include ads, analytics, or usage tracking. Update checks and
+              optional Cloud sync use the network. Facenox does not send diagnostic or performance
+              data externally.
             </p>
           </div>
 
@@ -261,8 +262,8 @@ export const About: React.FC = () => {
       setUpdateInfo(info)
       setLastChecked(new Date())
 
-      // Show success state if no update found
-      if (!info.hasUpdate) {
+      // Show success only when the check actually completed and found no update.
+      if (!info.hasUpdate && !info.isOffline && !info.error) {
         setShowSuccess(true)
         successTimerRef.current = setTimeout(() => {
           setShowSuccess(false)
@@ -349,7 +350,7 @@ export const About: React.FC = () => {
               <button
                 onClick={() => setShowPrivacyModal(true)}
                 className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/65 transition-all hover:border-cyan-500/10 hover:bg-cyan-500/10 hover:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
-                Read policy
+                View privacy details
               </button>
             </div>
 

@@ -282,7 +282,7 @@ export default function WindowBar() {
                   style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
                   className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-white/45 transition-all duration-150 select-none hover:bg-white/5 hover:text-white/80 active:scale-95">
                   <Cloud className="size-2.5 opacity-60" />
-                  <span>Connect cloud</span>
+                  <span>Connect Facenox Cloud</span>
                 </button>
               </Tooltip>
             )
@@ -325,7 +325,7 @@ export default function WindowBar() {
               syncConfig.lastSyncMessage?.includes("Plan member limit exceeded") ||
               syncConfig.lastSyncMessage?.includes("Total active members reached")
 
-            statusText = isQuota ? "Plan limit reached" : "Sync warning"
+            statusText = isQuota ? "Plan limit reached" : "Sync issue"
 
             const cleanMsg = (syncConfig.lastSyncMessage || "The last sync could not complete.")
               .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
@@ -334,8 +334,8 @@ export default function WindowBar() {
 
             tooltipContent =
               isQuota ?
-                "Plan limit reached: Active members exceed cloud subscription. Click to open cloud sync."
-              : `Sync issue: ${cleanMsg} Click to open cloud sync.`
+                "Plan limit reached: Active members exceed your Cloud plan. Click to open Cloud sync."
+              : `Sync issue: ${cleanMsg} Click to open Cloud sync.`
           }
 
           return (

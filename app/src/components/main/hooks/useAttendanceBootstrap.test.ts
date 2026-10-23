@@ -99,13 +99,17 @@ describe("useAttendanceBootstrap", () => {
     renderHook(() => useAttendanceBootstrap())
 
     await waitFor(() => {
-      expect(useAttendanceStore.getState().shellBootstrapError).toBe("backend offline")
+      expect(useAttendanceStore.getState().shellBootstrapError).toBe(
+        "Facenox couldn't load your data because the local service is offline. Restart the app and try again.",
+      )
     })
 
     expect(useAttendanceStore.getState().isShellReady).toBe(false)
     expect(useAttendanceStore.getState().isShellBootstrapping).toBe(false)
     expect(useAttendanceStore.getState().isPanelLoading).toBe(false)
-    expect(useUIStore.getState().error).toBe("Startup data failed to load: backend offline")
+    expect(useUIStore.getState().error).toBe(
+      "Facenox couldn't load your data because the local service is offline. Restart the app and try again.",
+    )
     expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenCalledTimes(1)
     expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(1, 8)
   })

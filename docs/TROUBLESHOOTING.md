@@ -182,21 +182,20 @@ If performance is lower than expected:
 - Close other camera-heavy or high-CPU applications.
 - Reduce your active attendance group size for testing.
 
-
 ## Facenox Cloud pairing fails
 
 Common causes:
 
-- wrong cloud URL
+- wrong Cloud server address
 - expired or already-claimed pairing code
-- cloud deployment missing required environment variables
+- Cloud deployment missing required environment variables
 - the device cannot reach the Facenox Cloud server
 
 What to verify:
 
-- the cloud URL is correct and includes the protocol, for example `https://facenox.com`
+- the Cloud server address is correct and includes the protocol, for example `https://facenox.com`
 - the pairing code is still valid
-- the cloud server can respond to `POST /api/device/pair`
+- the Facenox Cloud server can respond to `POST /api/device/pair`
 
 ## Cloud sync fails
 
@@ -206,18 +205,18 @@ For sync issues, check:
 
 - the device is still paired
 - the stored device token has not been revoked
-- the cloud deployment is reachable
+- the Cloud deployment is reachable
 - the last sync message in Settings > Cloud sync
 
-The sync model is snapshot and event-based. A failed cloud push does not mean local attendance data was lost.
+The sync model is snapshot and event-based. A failed Cloud push does not mean local attendance data was lost.
 
-## Initial sync never appears in the cloud dashboard
+## Initial sync never appears in the Facenox Cloud Overview
 
-After pairing, the desktop attempts an immediate first sync. If that does not appear in the cloud dashboard:
+After pairing, the desktop attempts an immediate first sync. If that does not appear in the Facenox Cloud Overview:
 
 - confirm that pairing succeeded fully
 - check the last sync message in the desktop app
-- inspect the cloud server deployment logs for `/api/sync/push`
+- inspect the Facenox Cloud server deployment logs for `/api/sync/push`
 - retry with the manual **Sync now** button
 
 ## Need deeper inspection?

@@ -26,7 +26,7 @@ Review the entry/exit and attendance settings for your workflow. Scan an enrolle
 
 ## 5. Optionally connect Facenox Cloud
 
-You do not need an account for local use. To review synced records from a browser, create a Facenox Cloud account and set up an organization and location. Generate a pairing code in Cloud and enter it in **Settings → Cloud sync** in the desktop app. The settings also support a device-initiated approval flow.
+You do not need an account for local use. To review synced records from a browser, create a Facenox Cloud account and set up an organization and location. Generate an 8-character pairing code in Facenox Cloud and enter it in **Settings → Cloud sync** in the desktop app. The settings also support a device-initiated approval flow that uses a 6-character device code.
 
 Cloud requires internet for pairing, syncing, and browser access. If the connection drops, the desktop continues recording locally and pending records sync when it reconnects.
 

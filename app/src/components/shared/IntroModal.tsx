@@ -62,8 +62,8 @@ export function IntroModal() {
             <strong>on this computer</strong>.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
-            Connecting Facenox Cloud syncs member profiles and attendance records. Supported plans
-            also sync encrypted face templates between paired computers.
+            Connecting Facenox Cloud syncs member profiles and attendance records. Paid plans also
+            sync encrypted face templates between paired computers.
           </p>
         </div>
       ),

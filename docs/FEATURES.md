@@ -20,17 +20,17 @@ This page covers the shipped desktop feature set and the scope of the current Fa
 - Review historical attendance data and export reports.
 
 ### Privacy-first biometric architecture
- 
+
 - Biometric enrollment via live camera capture or batch photo import.
 - Raw camera frames are processed in-memory and never written to disk or transmitted to external servers.
 - Embeddings are encrypted at rest locally and purged when a member is deleted.
 - Settings explain local processing, Cloud template access, and organizational data-handling responsibilities.
- 
+
 ### Local storage and portability
- 
+
 - The local database stores groups, members, attendance, settings, and audit data.
 - Enrolled face data is encrypted at rest in the local store using AES-256.
-- Backup exports create password-protected `.facenox` files for full portability.
+- Backup exports create password-protected `.facenox` files that you can move to another computer.
 
 ### Operational features
 
@@ -40,13 +40,13 @@ This page covers the shipped desktop feature set and the scope of the current Fa
 
 ## Facenox Cloud Integration
 
-Facenox Cloud connects offline Facenox desktop kiosks to a unified cloud control plane for backup, automated DTR reporting, and multi-location management.
+Facenox Cloud connects offline Facenox desktop kiosks to a unified cloud control plane for browser-based review of synced records, automated DTR reporting, and multi-location management.
 
 ### What the desktop app supports
 
-- Store a custom cloud URL
-- Redeem a short-lived pairing code
-- Connect a desktop instance to an organization and branch/site
+- Store a custom Facenox Cloud server address (advanced)
+- Redeem a short-lived 8-character pairing code from Facenox Cloud
+- Connect a desktop instance to an organization and location
 - Show pairing state, last sync state, and sync messages
 - Run background auto-sync
 - Run manual sync on demand
@@ -77,7 +77,7 @@ These items are outside the current desktop repository scope:
 
 - Remote-side face matching
 - Two-way sync for attendance edits
-- Payroll or HRIS integrations
+- Direct payroll or HRIS integrations (DTR exports can feed payroll processing)
 - Self-serve billing
 - SSO or SCIM
 - Public developer API

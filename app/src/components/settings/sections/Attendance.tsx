@@ -156,7 +156,7 @@ export function Attendance({
       <div className="overflow-hidden">
         <div className="pt-6 pb-2">
           <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            Global settings
+            General
           </h3>
         </div>
 

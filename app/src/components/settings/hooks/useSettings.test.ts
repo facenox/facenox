@@ -170,8 +170,8 @@ describe("useSettings", () => {
     )
     expect(mockBackendService.clearDatabase).toHaveBeenCalledTimes(1)
     expect(mockAlert).toHaveBeenCalledWith({
-      title: "Database cleared",
-      message: "Face recognition data cleared.",
+      title: "Face data cleared",
+      message: "All enrolled face data was removed.",
     })
     expect(mockBackendService.getDatabaseStats).toHaveBeenCalledTimes(1)
     expect(mockAttendanceManager.getAttendanceStats).toHaveBeenCalledTimes(1)
@@ -203,8 +203,8 @@ describe("useSettings", () => {
     })
 
     expect(mockAlert).toHaveBeenCalledWith({
-      title: "Clear failed",
-      message: "Failed to clear face recognition data. Try again.",
+      title: "Could not clear face data",
+      message: "Facenox couldn't clear the enrolled face data. Try again.",
       variant: "danger",
     })
     expect(result.current.isLoading).toBe(false)

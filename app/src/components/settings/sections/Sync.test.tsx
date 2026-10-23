@@ -50,7 +50,7 @@ describe("Sync", () => {
       expected: "Current sync status unavailable",
     },
     { records: 0, sessions: undefined, synced: true, expected: "Current sync status unavailable" },
-    { records: 0, sessions: 0, synced: false, expected: "No successful sync yet" },
+    { records: 0, sessions: 0, synced: false, expected: "No completed sync yet" },
     { records: 0, sessions: 0, synced: true, expected: "Last sync completed" },
     { records: 1, sessions: 0, synced: true, expected: "1 record queued for upload" },
     { records: 2, sessions: 0, synced: true, expected: "2 records queued for upload" },

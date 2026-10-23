@@ -32,8 +32,9 @@ Facenox extracts 512-dimension float32 vectors from face scans. The local databa
 
 ### How biometric data is handled
 
-Facenox is not designed as a raw face-image archive. 
-- **Enrollment & Matching:** Raw camera frames are processed locally and are never persisted to disk or uploaded to the cloud. The pipeline extracts mathematical embeddings directly from camera frames.
+Facenox is not designed as a raw face-image archive.
+
+- **Enrollment & Matching:** Raw camera frames are processed locally and are never persisted to disk or uploaded to Facenox Cloud. The pipeline extracts mathematical embeddings directly from camera frames.
 - **Liveness Detection:** Anti-spoofing analysis executes locally on-device. No photos or video frames used for liveness checks are ever written to disk.
 - **Storage:** Templates are encrypted at rest locally using **AES-256**.
 
@@ -124,7 +125,9 @@ The website includes Vercel Analytics and Speed Insights. When configured, PostH
 Facenox uses Google API Services to handle user authentication and account setup for Facenox Cloud.
 
 ### Data Accessed
+
 When you authenticate via Google, we access your:
+
 - Primary email address
 - Full name
 - Profile picture URL
@@ -132,7 +135,9 @@ When you authenticate via Google, we access your:
 We use the standard `openid`, `email`, and `profile` scopes.
 
 ### Data Usage
+
 The account workflow uses this data to:
+
 - Create and identify your Facenox Cloud account.
 - Personalize your profile.
 - Send transactional emails (e.g., password resets, organization invitations).
@@ -140,13 +145,16 @@ The account workflow uses this data to:
 This account-data description is separate from the website's analytics configuration.
 
 ### Data Sharing
+
 Facenox Cloud uses external services for hosting, authentication, billing, and transactional email. These providers process the account data needed to deliver those services.
 
 ### Data Storage & Protection
+
 Cloud access uses HTTPS. Face-template encryption is separate from account-data storage; the template encryption implementation does not establish the encryption configuration of every hosted database.
 
 ### Data Retention & Deletion
-Request account deletion by emailing privacy@facenox.com. The dashboard links to this request route; it does not perform immediate self-service deletion. Include any organizations and paired computers whose records you also want removed. Exported backup files must be deleted separately.
+
+Request account deletion by emailing privacy@facenox.com. Facenox Cloud links to this request route; it does not perform immediate self-service deletion. Include any organizations and paired computers whose records you also want removed. Exported backup files must be deleted separately.
 
 ---
 

@@ -52,8 +52,15 @@ function isOnline(): boolean {
   return net.isOnline()
 }
 
-async function fetchLatestRelease(): Promise<GitHubRelease | null> {
-  if (!isOnline()) return null
+interface ReleaseFetchResult {
+  release: GitHubRelease | null
+  error?: string
+}
+
+async function fetchLatestRelease(): Promise<ReleaseFetchResult> {
+  if (!isOnline()) {
+    return { release: null, error: "This computer is offline." }
+  }
 
   try {
     const controller = new AbortController()
@@ -72,23 +79,28 @@ async function fetchLatestRelease(): Promise<GitHubRelease | null> {
     if (!response.ok) {
       if (response.status === 404) {
         console.log("[Updater] No releases found")
-        return null
+        return { release: null, error: "No published release was available to compare versions." }
       }
       console.log(`[Updater] GitHub API returned ${response.status}`)
-      return null
+      return {
+        release: null,
+        error: `The update service returned HTTP ${response.status}.`,
+      }
     }
 
-    return (await response.json()) as GitHubRelease
+    return { release: (await response.json()) as GitHubRelease }
   } catch (error) {
-    // Silently handle all errors - this is expected when offline
     if (error instanceof Error) {
       if (error.name === "AbortError") {
         console.log("[Updater] Request timed out - likely offline or slow connection")
-      } else {
-        console.log("[Updater] Network error (expected if offline):", error.message)
+        return { release: null, error: "The update check timed out." }
       }
+      console.log("[Updater] Network error (expected if offline):", error.message)
     }
-    return null
+    return {
+      release: null,
+      error: "Could not reach the update service. Check your connection and try again.",
+    }
   }
 }
 
@@ -122,7 +134,7 @@ export async function checkForUpdates(force = false): Promise<UpdateInfo> {
 
     console.log(`[Updater] Checking for updates (current: v${currentVersion})`)
 
-    const release = await fetchLatestRelease()
+    const { release, error: fetchError } = await fetchLatestRelease()
 
     if (!release) {
       const noUpdateInfo: UpdateInfo = {
@@ -133,6 +145,7 @@ export async function checkForUpdates(force = false): Promise<UpdateInfo> {
         releaseNotes: "",
         publishedAt: "",
         downloadUrl: null,
+        ...(fetchError ? { error: fetchError } : {}),
       }
       cachedUpdateInfo = noUpdateInfo
       lastCheckTime = now

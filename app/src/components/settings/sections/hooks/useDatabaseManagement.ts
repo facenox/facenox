@@ -294,13 +294,13 @@ export function useDatabaseManagement(
 
   const handleDeleteMember = useCallback(
     async (personId: string, memberName: string) => {
-      const confirmMessage = `Delete member "${memberName}"?\n\nThis cannot be undone.`
+      const confirmMessage = `Remove member "${memberName}"?\n\nThis removes them from the directory and deletes their enrolled face data. Attendance history is retained.`
 
       if (dialog) {
         const ok = await dialog.confirm({
-          title: "Delete member",
+          title: "Remove member",
           message: confirmMessage,
-          confirmText: "Delete",
+          confirmText: "Remove",
           cancelText: "Cancel",
           confirmVariant: "danger",
         })
@@ -322,24 +322,24 @@ export function useDatabaseManagement(
         } else {
           if (dialog) {
             await dialog.alert({
-              title: "Delete failed",
-              message: "Failed to delete member.",
+              title: "Could not remove member",
+              message: "Facenox couldn't remove the member. Try again.",
               variant: "danger",
             })
           } else {
-            alert("Failed to delete member")
+            alert("Facenox couldn't remove the member. Try again.")
           }
         }
       } catch (error) {
-        console.error("Error deleting member:", error)
+        console.error("Error removing member:", error)
         if (dialog) {
           await dialog.alert({
-            title: "Delete failed",
-            message: "Failed to delete member.",
+            title: "Could not remove member",
+            message: "Facenox couldn't remove the member. Try again.",
             variant: "danger",
           })
         } else {
-          alert("Failed to delete member")
+          alert("Facenox couldn't remove the member. Try again.")
         }
       } finally {
         setDeletingMember(null)

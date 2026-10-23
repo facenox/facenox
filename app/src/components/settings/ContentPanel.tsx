@@ -409,7 +409,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                     {syncConfig.lastSyncStatus === "error" ?
                       isQuota ?
                         "Plan limit"
-                      : "Sync warning"
+                      : "Sync issue"
                     : "Synced"}
                   </div>
                 </Tooltip>

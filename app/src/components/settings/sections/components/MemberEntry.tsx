@@ -135,8 +135,8 @@ export const MemberEntry = React.memo(
             <Tooltip
               content={
                 isDeleteDisabled ?
-                  "Your organization has disabled member deletion on this computer."
-                : "Delete member"
+                  "Your organization has disabled member removal on this computer."
+                : "Remove member"
               }
               position="top">
               <button
