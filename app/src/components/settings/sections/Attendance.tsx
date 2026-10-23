@@ -296,9 +296,9 @@ export function Attendance({
                 <div className="text-sm font-medium text-white/90">Liveness verification</div>
                 <InfoPopover
                   title="Liveness verification"
-                  description="Verifies physical presence to block printed photos, screen replays, and spoofing attempts."
+                  description="Checks for signs of photo and screen spoofing during face recognition."
                   details={[
-                    "Analyzes face texture, micro-motion, and depth cues in real time.",
+                    "Analyzes camera images locally and may request a head turn to check physical presence.",
                     "Works best with balanced ambient lighting and direct front-facing camera angles.",
                     "May slightly increase processing time on lower-powered CPUs.",
                     "Locked automatically when enforced by your organization policy.",
@@ -318,7 +318,7 @@ export function Attendance({
                     {attendanceSettings.forceLiveness ?
                       "Enforced and managed by your organization policy."
                     : attendanceSettings.enableSpoofDetection ?
-                      "Verify physical presence to block photo and screen spoofing."
+                      "Check for photo and screen spoofing during recognition."
                     : "Standard face recognition only."}
                   </motion.div>
                 </AnimatePresence>
@@ -355,11 +355,11 @@ export function Attendance({
                   description="Controls how long past attendance check-in logs are stored before automatic cleanup."
                   details={[
                     "Runs automatic cleanup in the background every 24 hours to free disk space.",
-                    "Member profiles, groups, and enrolled face data are never deleted.",
-                    "Shorter retention periods keep the database fast and comply with privacy regulations.",
+                    "Automatic cleanup only removes attendance records. Member profiles, groups, and enrolled face data are unchanged.",
+                    "Choose a retention period that matches your organization's recordkeeping needs.",
                     isPaired && cloudCeiling ?
-                      `Setting this to 0 keeps local attendance history indefinitely. Your cloud plan stores up to ${cloudCeiling} days online.`
-                    : "Setting this to 0 keeps local attendance history indefinitely.",
+                      `Setting this to 0 turns off automatic cleanup of local attendance records. Your cloud plan provides access to ${cloudCeiling} days of history.`
+                    : "Setting this to 0 turns off automatic cleanup of local attendance records.",
                   ]}
                   side="right"
                 />
@@ -375,7 +375,7 @@ export function Attendance({
                     className="text-xs text-white/65">
                     {(() => {
                       if (effectiveDays <= 0) {
-                        return "Keep all local attendance logs forever. Member profiles and face data are never deleted."
+                        return "Automatic cleanup is off. Local attendance records are kept until you delete them."
                       }
 
                       const years = Math.floor(effectiveDays / 365)
@@ -394,7 +394,7 @@ export function Attendance({
                         timeStr = `${effectiveDays} ${effectiveDays === 1 ? "day" : "days"}`
                       }
 
-                      return `Delete local attendance logs older than ${timeStr} automatically. Member profiles and face data are never deleted.`
+                      return `Delete local attendance records older than ${timeStr} automatically. Member profiles and enrolled face data are unchanged.`
                     })()}
                   </motion.div>
                 </AnimatePresence>

@@ -41,7 +41,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
             </div>
             <p className="text-[11px] leading-relaxed text-white/50">
               The application runs without ads, telemetry scripts, or usage tracking. No diagnostic
-              or performance data is transmitted externally, keeping your network traffic private.
+              or performance data is transmitted externally.
             </p>
           </div>
 

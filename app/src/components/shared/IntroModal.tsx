@@ -97,10 +97,6 @@ export function IntroModal() {
               View full privacy manual
             </a>
           </div>
-
-          <p className="pt-1 text-center text-[11px] text-white/55 italic">
-            By proceeding, you acknowledge the on-device management of your personal information.
-          </p>
         </div>
       ),
     },

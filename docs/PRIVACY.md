@@ -140,13 +140,13 @@ The account workflow uses this data to:
 This account-data description is separate from the website's analytics configuration.
 
 ### Data Sharing
-Facenox Cloud uses external services for hosting, authentication, billing, and transactional email. Do not treat local desktop processing as a promise that hosted account data never reaches service providers. Contact privacy@facenox.com for questions about hosted data handling.
+Facenox Cloud uses external services for hosting, authentication, billing, and transactional email. These providers process the account data needed to deliver those services.
 
 ### Data Storage & Protection
 Cloud access uses HTTPS. Face-template encryption is separate from account-data storage; the template encryption implementation does not establish the encryption configuration of every hosted database.
 
 ### Data Retention & Deletion
-Request account deletion by emailing privacy@facenox.com. The dashboard links to this request route; it does not perform immediate self-service deletion. Account data, organization records, paired computers, and independently exported backups have different deletion scopes.
+Request account deletion by emailing privacy@facenox.com. The dashboard links to this request route; it does not perform immediate self-service deletion. Include any organizations and paired computers whose records you also want removed. Exported backup files must be deleted separately.
 
 ---
 

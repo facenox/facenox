@@ -38,11 +38,10 @@ export function AntiSpoofDetectionModal({
         "Admin setup slide showing a clear camera lens and sharp face preview for anti-spoof setup.",
     },
     {
-      title: "Allow natural movement",
-      description:
-        "Ensure faces can move naturally. The system checks for 3D depth and motion to prevent spoofing.",
+      title: "Follow the head-turn prompt",
+      description: "When prompted, slowly turn your head while keeping your face in view.",
       imageSrc: "./assets/anti-spoof/check-head-turn.png",
-      imageAlt: "Admin setup slide showing natural face movement and depth for anti-spoof setup.",
+      imageAlt: "Head-turn prompt during a liveness check.",
     },
   ] as const
   const [step, setStep] = useState(0)
