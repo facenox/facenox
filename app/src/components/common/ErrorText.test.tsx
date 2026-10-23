@@ -11,18 +11,19 @@ afterEach(() => {
 })
 
 describe("error presentation verification", () => {
-  it.each(["HTTP 500: Internal Server Error", "TypeError: Failed to fetch", "Backend not available"])(
-    "keeps %s collapsed with the original diagnostic intact",
-    (message) => {
-      const { container } = render(<ErrorText message={message} />)
-      expect(screen.getByText("Facenox could not complete the request.")).toBeInTheDocument()
-      expect(container.querySelector("details")).not.toHaveAttribute("open")
-      expect(container.querySelector("pre")?.textContent).toBe(message)
-    },
-  )
+  it.each([
+    "HTTP 500: Internal Server Error",
+    "TypeError: Failed to fetch",
+    "Backend not available",
+  ])("keeps %s collapsed with the original diagnostic intact", (message) => {
+    const { container } = render(<ErrorText message={message} />)
+    expect(screen.getByText("Facenox could not complete the request.")).toBeInTheDocument()
+    expect(container.querySelector("details")).not.toHaveAttribute("open")
+    expect(container.querySelector("pre")?.textContent).toBe(message)
+  })
 
   it("renders HTML diagnostics as inert text", () => {
-    const message = '<html><script>window.__unsafe = true</script></html>'
+    const message = "<html><script>window.__unsafe = true</script></html>"
     const { container } = render(<ErrorMessage message={message} />)
     expect(container.querySelector("script")).toBeNull()
     expect(container.querySelector("pre")?.textContent).toBe(message)
@@ -37,7 +38,12 @@ describe("error presentation verification", () => {
   })
 
   it("preserves a supplied recovery instruction", () => {
-    render(<ErrorText message="<html>502</html>" summary="Check the server address in Cloud sync settings." />)
+    render(
+      <ErrorText
+        message="<html>502</html>"
+        summary="Check the server address in Cloud sync settings."
+      />,
+    )
     expect(screen.getByText("Check the server address in Cloud sync settings.")).toBeInTheDocument()
   })
 
@@ -45,7 +51,13 @@ describe("error presentation verification", () => {
     vi.useFakeTimers()
     function Feedback() {
       const message = useUIStore((state) => state.error)
-      return message ? <FloatingAlert message={message} variant="error" onDismiss={() => useUIStore.getState().setError(null)} /> : null
+      return message ?
+          <FloatingAlert
+            message={message}
+            variant="error"
+            onDismiss={() => useUIStore.getState().setError(null)}
+          />
+        : null
     }
     const { container } = render(<Feedback />)
     act(() => useUIStore.getState().setError("HTTP 500: diagnostic"))

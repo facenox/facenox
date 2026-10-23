@@ -25,8 +25,10 @@ class WipeCompletionTests(unittest.IsolatedAsyncioTestCase):
         path = Path(__file__).parents[1] / "api/routes/maintenance.py"
         tree = ast.parse(path.read_text())
         function = next(
-            node for node in tree.body
-            if isinstance(node, ast.AsyncFunctionDef) and node.name == "remote_wipe_data"
+            node
+            for node in tree.body
+            if isinstance(node, ast.AsyncFunctionDef)
+            and node.name == "remote_wipe_data"
         )
         function.decorator_list = []
         function.args.defaults = []
@@ -49,10 +51,14 @@ class WipeCompletionTests(unittest.IsolatedAsyncioTestCase):
             clear_all_attendance_data=AsyncMock(return_value={"records_deleted": 1}),
             add_audit_log=AsyncMock(),
         )
-        self.recognizer = SimpleNamespace(clear_database=AsyncMock(return_value={"success": True}))
+        self.recognizer = SimpleNamespace(
+            clear_database=AsyncMock(return_value={"success": True})
+        )
         dependency = ModuleType("api.recognition_deps")
         dependency.get_face_recognizer = AsyncMock(return_value=self.recognizer)
-        self.modules = patch.dict(sys.modules, {"api": ModuleType("api"), "api.recognition_deps": dependency})
+        self.modules = patch.dict(
+            sys.modules, {"api": ModuleType("api"), "api.recognition_deps": dependency}
+        )
         self.modules.start()
         self.addCleanup(self.modules.stop)
 
@@ -72,14 +78,18 @@ class WipeCompletionTests(unittest.IsolatedAsyncioTestCase):
         self.repo.add_audit_log.assert_not_awaited()
 
     async def test_face_exception_cannot_report_success(self):
-        self.recognizer.clear_database.side_effect = RuntimeError("synthetic face removal failure")
+        self.recognizer.clear_database.side_effect = RuntimeError(
+            "synthetic face removal failure"
+        )
         with self.assertRaises(FakeHTTPException) as caught:
             await self.handler(self.repo)
         self.assertEqual(caught.exception.status_code, 500)
         self.repo.add_audit_log.assert_not_awaited()
 
     async def test_attendance_exception_stops_before_face_removal(self):
-        self.repo.clear_all_attendance_data.side_effect = RuntimeError("synthetic attendance failure")
+        self.repo.clear_all_attendance_data.side_effect = RuntimeError(
+            "synthetic attendance failure"
+        )
         with self.assertRaises(FakeHTTPException):
             await self.handler(self.repo)
         self.recognizer.clear_database.assert_not_awaited()

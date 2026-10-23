@@ -149,7 +149,7 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     expect(screen.queryByText("Standalone")).not.toBeInTheDocument()
     expect(
       screen.getByText(
-        "Keep all local attendance logs forever. Member profiles and face data are never deleted.",
+        "Automatic cleanup is off. Local attendance records are kept until you delete them.",
       ),
     ).toBeInTheDocument()
     const input = screen.getByDisplayValue("0") as HTMLInputElement
@@ -217,9 +217,7 @@ describe("Global General Preferences Controls", () => {
     )
 
     expect(screen.getByText("Recognition limit")).toBeInTheDocument()
-    expect(
-      screen.getByText("Limit faces recognized per frame to optimize performance."),
-    ).toBeInTheDocument()
+    expect(screen.getByText("Limit the number of faces recognized per frame.")).toBeInTheDocument()
 
     const faceBtn10 = screen.getByRole("button", { name: "10" })
     fireEvent.click(faceBtn10)

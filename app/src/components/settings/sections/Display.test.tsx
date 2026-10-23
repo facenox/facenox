@@ -43,7 +43,7 @@ describe("Display & Audio Settings Section", () => {
     expect(screen.getByText("Show names")).toBeInTheDocument()
     expect(screen.getByText("Show tracking boxes")).toBeInTheDocument()
     expect(screen.getByText("Fill camera preview")).toBeInTheDocument()
-    expect(screen.getByText("Real-time results")).toBeInTheDocument()
+    expect(screen.getByText("Live recognition results")).toBeInTheDocument()
 
     const switches = screen.getAllByRole("switch")
     expect(switches.length).toBe(5)

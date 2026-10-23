@@ -143,7 +143,7 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
     // Open confirmation modal
     fireEvent.click(openDeleteBtn)
 
-    expect(screen.getByText(/All member profiles and attendance records/i)).toBeInTheDocument()
+    expect(screen.getByText(/Existing attendance history is retained/i)).toBeInTheDocument()
     const deleteButtons = screen.getAllByRole("button", { name: "Delete group" })
     const deleteModalBtn = deleteButtons[1]
     expect(deleteModalBtn).toBeDisabled()

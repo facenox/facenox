@@ -1,9 +1,32 @@
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import WindowBar from "@/components/window/WindowBar"
-import { createFacenoxElectronMock } from "@/test/mocks/electron"
+import {
+  createFacenoxElectronMock,
+  createSyncConfig,
+  getElectronAPIMock,
+} from "@/test/mocks/electron"
 
 describe("WindowBar", () => {
+  it.each([
+    [undefined, undefined, null, "Waiting for sync"],
+    [0, 0, "2026-10-23T02:00:00Z", "Last sync completed"],
+    [2, 0, "2026-10-23T02:00:00Z", "Sync pending"],
+  ] as const)("renders queue state %s / %s", async (records, sessions, timestamp, label) => {
+    getElectronAPIMock().sync.getConfig.mockResolvedValue(
+      createSyncConfig({
+        connected: true,
+        enabled: true,
+        lastSyncedAt: timestamp,
+        lastSyncStatus: timestamp ? "success" : "idle",
+        unsyncedRecordsCount: records,
+        unsyncedSessionsCount: sessions,
+      }),
+    )
+    render(<WindowBar />)
+    expect(await screen.findByText(label)).toBeInTheDocument()
+    expect(screen.queryByText("All records up to date.")).not.toBeInTheDocument()
+  })
   let bridge: ReturnType<typeof createFacenoxElectronMock>
   beforeEach(() => {
     bridge = createFacenoxElectronMock()

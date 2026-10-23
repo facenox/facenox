@@ -28,6 +28,21 @@ function FeedbackDisplay() {
 
 describe("Sync", () => {
   it.each([
+    ["Plan limit exceeded", "Plan member limit reached"],
+    ["Plan limit exceeded: reached 15 (limit: 10)", "Plan limit reached (15 / 10 members)"],
+  ])("renders quota feedback without invented counts: %s", async (message, expected) => {
+    getElectronAPIMock().sync.getConfig.mockResolvedValue(
+      createSyncConfig({
+        connected: true,
+        lastSyncStatus: "error",
+        lastSyncMessage: message,
+      }),
+    )
+    renderWithProviders(<Sync />)
+    expect(await screen.findByText(expected)).toBeInTheDocument()
+    expect(screen.queryByText(/0 \/ 0 members/)).not.toBeInTheDocument()
+  })
+  it.each([
     {
       records: undefined,
       sessions: undefined,
@@ -238,7 +253,7 @@ describe("Sync", () => {
 
     expect(
       await screen.findByText(
-        "Disconnected locally, but the cloud returned a warning: Cloud cleanup failed",
+        "Disconnected locally, but Cloud returned a warning: Cloud cleanup failed",
       ),
     ).toBeInTheDocument()
   })
