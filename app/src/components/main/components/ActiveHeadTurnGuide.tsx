@@ -23,14 +23,14 @@ export const ActiveHeadTurnGuide = memo(function ActiveHeadTurnGuide({
             <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/[0.04] ring-1 ring-cyan-400/25">
               <img
                 src="./assets/anti-spoof/head-turn-guide.webp"
-                alt="3D Head Turn Guidance"
+                alt="Head-turn guidance"
                 className="h-full w-full object-contain"
               />
             </div>
 
             {/* Clean Single-Line Command */}
             <span className="text-xs font-semibold tracking-wide whitespace-nowrap text-white/95">
-              Slowly Turn Head
+              Slowly turn your head
             </span>
           </div>
         </motion.div>

@@ -32,8 +32,8 @@ export function DeleteMemberModal({ isOpen, member, onClose, onConfirm }: Delete
       maxWidth="sm">
       <div className="space-y-4">
         <p className="text-xs leading-relaxed text-white/60">
-          This will permanently remove their attendance history and enrolled face data from this
-          group.
+          This removes the member from this group and deletes their enrolled face template. Existing
+          attendance history is retained. Paired computers sync the removal to Cloud.
         </p>
       </div>
 

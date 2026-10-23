@@ -191,7 +191,7 @@ function MemberAssignCombobox({
                         </p>
                         <p className="text-[10px] leading-relaxed text-white/40">
                           {totalMembersCount > 0 ?
-                            "All members in this group are already enrolled."
+                            "All members in this group are already assigned to photos."
                           : "No members in this group."}
                         </p>
                       </div>

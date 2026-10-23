@@ -71,8 +71,8 @@ Do not turn a local desktop workflow into a remote dependency by accident.
 The current rules are simple:
 
 - local attendance must keep working without internet
-- biometrics stay local unless a change explicitly documents and justifies otherwise
-- Cloud Sync must not block attendance capture
+- face recognition runs locally; changes to encrypted face-template sync must document the data flow and key access
+- Cloud sync must not block attendance capture
 
 ### 2. Prefer direct language in code and docs
 

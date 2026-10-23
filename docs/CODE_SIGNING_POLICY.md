@@ -4,20 +4,17 @@ This page explains how to tell whether a Facenox desktop build is official, and 
 
 ## Current Status
 
-Facenox desktop releases are currently **unsigned** while we finish our code-signing setup. However, we ensure build integrity through the following:
+The checked-in desktop build configuration does not configure code signing. Check each release's notes and installer signature for its signing status.
 
 - **Automated Builds:** All official binaries are compiled and packaged using GitHub Actions in this repository.
-- **Security Auditing:** Every commit is automatically scanned by **GitHub CodeQL** for potential vulnerabilities.
+- **Source scanning:** The CodeQL workflow is configured for pushes and pull requests to `main`, plus a weekly scan.
 - **Provenance:** Treat a build as official only if it is attached to an official GitHub release in this repository.
 
 ### Windows 11 Smart App Control & SmartScreen Notice
 
-Because preview/beta builds are unsigned and newly released binaries have not yet accumulated cloud reputation:
+If Windows blocks a downloaded build, verify that it came from the official release page and check the release's signing notes.
 
-- **Windows SmartScreen:** May display *"Windows protected your PC"*. You can proceed by clicking **More info** → **Run anyway**.
-- **Windows 11 Smart App Control (SAC):** If Smart App Control is enabled in **Enforce mode**, Windows may block unsigned executables from the internet without displaying the *"Run anyway"* bypass button.
-  - To unblock a downloaded binary: Right-click the `.exe` installer → select **Properties** → check the **Unblock** box at the bottom under Security → click **Apply**.
-  - For developers and test workstations: You can run Facenox from source in **Developer Mode** or adjust SAC settings in *Windows Security > App & browser control > Smart App Control*.
+On managed computers, ask the administrator to review the installer and installation policy. Do not treat a security warning as proof that the file is an official or safe release.
 
 Once code signing is live, we will update this page with:
 
@@ -67,7 +64,7 @@ Privacy and data handling are documented here:
 In short:
 
 - Facenox desktop does not send raw face images to other networked systems.
-- Facenox desktop may, if enabled by the operator, send attendance snapshots and encrypted biometric templates to Facenox Cloud.
+- Paired computers can sync attendance records and, on supported plans, encrypted face templates to Facenox Cloud. Cloud manages keys for synced templates.
 - Local recognition and attendance workflows continue to work without Facenox Cloud connectivity.
 
 ## Release Artifacts

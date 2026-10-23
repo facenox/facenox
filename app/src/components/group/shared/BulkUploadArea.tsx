@@ -74,13 +74,11 @@ export function BulkUploadArea({
         </div>
 
         <div>
-          <div className="mb-1 text-sm font-semibold text-white/90">
-            Import Photos from Folder or Files
-          </div>
+          <div className="mb-1 text-sm font-semibold text-white/90">Import photos</div>
           <p className="max-w-sm text-[11px] leading-relaxed text-white/40">
             Filenames like{" "}
             <code className="rounded bg-white/5 px-1 py-0.5 text-cyan-300">Juan_Dela_Cruz.jpg</code>{" "}
-            will automatically match existing members or create new members.
+            are used to suggest member matches and names. Review the assignments before enrolling.
           </p>
         </div>
 

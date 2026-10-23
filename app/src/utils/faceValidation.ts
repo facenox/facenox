@@ -25,11 +25,11 @@ export function validateAndGetBestFace(detection: FaceDetectionResult): Validate
   )
 
   if (!bestFace.bbox || bestFace.bbox.length < 4) {
-    throw new Error("Unable to locate face frame. Reposition face and try again.")
+    throw new Error("Could not locate the face. Try a clear, front-facing photo.")
   }
 
   if (!bestFace.landmarks_5 || bestFace.landmarks_5.length !== 5) {
-    throw new Error("Facial features unclear. Ensure face is clearly visible and try again.")
+    throw new Error("The face is not clear enough. Try a front-facing photo with even lighting.")
   }
 
   return {

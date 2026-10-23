@@ -193,7 +193,7 @@ export function GroupEntry({
               disabled={deletingGroup === group.id || deletingGroup === "all" || isDeleteDisabled}
               title={
                 isDeleteDisabled ?
-                  "Locked by Cloud Policy: Group deletion is disabled on kiosks."
+                  "Your organization has disabled group deletion on this computer."
                 : undefined
               }
               className="flex h-7 items-center justify-center gap-1.5 rounded-md border-0 bg-red-500/10 px-2.5 text-[10px] font-bold tracking-wider text-red-400 uppercase shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-25">

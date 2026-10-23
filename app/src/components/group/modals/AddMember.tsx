@@ -204,7 +204,7 @@ export function AddMember({
       const msg =
         err instanceof Error ?
           err.message
-        : "Face detection failed. Ensure face is clearly visible."
+        : "Could not detect a clear face. Try a front-facing photo with even lighting."
       setFaceError(msg)
     } finally {
       setIsProcessingFace(false)
@@ -241,7 +241,7 @@ export function AddMember({
       const msg =
         err instanceof Error ?
           err.message
-        : "Face detection failed. Ensure face is clearly visible."
+        : "Could not detect a clear face. Try a front-facing photo with even lighting."
       setFaceError(msg)
     } finally {
       setIsProcessingFace(false)
@@ -664,7 +664,7 @@ export function AddMember({
                           className="h-9 w-9 rounded-full border border-cyan-500/30 object-cover"
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="text-[11px] font-medium text-cyan-300">Face enrolled</div>
+                          <div className="text-[11px] font-medium text-cyan-300">Photo ready</div>
                         </div>
                         <div className="flex items-center gap-2">
                           <button

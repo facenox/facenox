@@ -557,7 +557,7 @@ export function DataStorage({
             <div className="min-w-0 flex-1">
               <h4 className="text-[15px] font-semibold text-white/90">Installation directory</h4>
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                View the core application resources and executable binary files.
+                Open the folder where Facenox is installed.
               </p>
               <div className="mt-1.5 flex items-center gap-1.5 text-[11px] leading-tight text-amber-500/80">
                 <AlertTriangle className="size-3 shrink-0" />
@@ -620,8 +620,8 @@ export function DataStorage({
                         (!allowKioskDirectoryManagement ?
                           <span className="mt-1 block font-medium text-amber-400/80">
                             <Lock className="mr-1 inline size-3" />
-                            Locked by Cloud Policy: Group directory wipe is disabled on kiosks.
-                            Manage directory in Cloud Dashboard.
+                            Your organization has disabled directory deletion on this computer.
+                            Manage groups in Facenox Cloud.
                           </span>
                         : <span className="mt-1 block font-medium text-amber-400/80">
                             <CloudUpload className="mr-1 inline size-3" />
@@ -654,8 +654,8 @@ export function DataStorage({
                         (!allowKioskDirectoryManagement ?
                           <span className="mt-1 block font-medium text-amber-400/80">
                             <Lock className="mr-1 inline size-3" />
-                            Locked by Cloud Policy: Face data reset is disabled on kiosks. Manage
-                            biometrics in Cloud Dashboard.
+                            Your organization has disabled face-data removal on this computer.
+                            Contact your administrator.
                           </span>
                         : <span className="mt-1 block font-medium text-amber-400/80">
                             <CloudUpload className="mr-1 inline size-3" />

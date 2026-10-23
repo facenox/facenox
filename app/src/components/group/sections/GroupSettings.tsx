@@ -405,15 +405,15 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         Delete this group
                       </h4>
                       <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                        Permanently delete this group, all member profiles, and enrolled biometric
-                        face data.
+                        Remove this group, its member profiles, and enrolled face templates.
+                        Attendance history is retained.
                         <span className="mt-1 block text-[12px] font-medium text-red-400/85">
                           This action cannot be undone.
                         </span>
                         {isDeleteDisabled && (
                           <span className="mt-1 block font-medium text-amber-400/80">
                             <Lock className="mr-1 inline size-3" />
-                            Locked by Cloud Policy: Group deletion is disabled on kiosks.
+                            Your organization has disabled group deletion on this computer.
                           </span>
                         )}
                       </p>
@@ -423,7 +423,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       type="button"
                       onClick={() => setIsDeleteModalOpen(true)}
                       disabled={isDeleteDisabled || isDeleting}
-                      title={isDeleteDisabled ? "Locked by Cloud Policy" : undefined}
+                      title={isDeleteDisabled ? "Disabled by your organization" : undefined}
                       className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                       {isDeleting && <Loader2 className="size-3.5 animate-spin" />}
                       <span>Delete group</span>

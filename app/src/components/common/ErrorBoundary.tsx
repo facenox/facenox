@@ -38,12 +38,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 Something went wrong
               </h1>
               <p className="mb-6 text-sm text-[var(--text-muted)]">
-                Restart the application to continue.
+                Reload the window to try again.
               </p>
               <button
                 onClick={() => window.location.reload()}
                 className="rounded-lg bg-cyan-400 px-5 py-2 text-sm font-semibold text-black shadow-sm transition-all hover:bg-cyan-300 active:scale-95">
-                Restart
+                Reload window
               </button>
             </div>
           </div>

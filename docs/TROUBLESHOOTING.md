@@ -35,30 +35,25 @@ The Electron app's process manager dynamically searches for a Python interpreter
 
 ## Port `7400` is already in use
 
-Facenox's local backend uses port `7400` by default. Another Facenox instance or an orphaned Python process can block startup.
+Facenox's local backend uses port `7400` by default. Another Facenox instance or an orphaned Python process can block startup. Identify the process first. Close it normally if it belongs to Facenox; do not terminate an unrelated service.
 
 ### Windows
 
 ```bash
 netstat -ano | findstr :7400
-taskkill /PID <PID> /F
+taskkill /PID <PID>
 ```
 
 ### macOS or Linux
 
 ```bash
 lsof -i :7400
-kill -9 <PID>
+kill <PID>
 ```
 
 ## Windows SmartScreen or Smart App Control (SAC) blocks execution
 
-When launching an installer or portable release on Windows:
-
-- **Windows SmartScreen:** If you see *"Windows protected your PC"*, click **More info** → **Run anyway**.
-- **Smart App Control (SAC) on Windows 11:** SAC operates on a cloud-reputation model and blocks unsigned downloads without offering a "Run anyway" button in Enforce mode.
-  - **Unblock downloaded files:** Right-click the `.exe` file → open **Properties** → check the **Unblock** box under Security → click **Apply**.
-  - **Developer Mode / SAC Configuration:** If developing or testing unsigned builds, configure Developer Mode in *Settings > System > For developers* or adjust Smart App Control in *Windows Security > App & browser control*.
+Verify that the installer came from the official Facenox release page and check its signing notes. On a managed computer, ask the administrator to review the warning and installation policy. See [Code Signing Policy](CODE_SIGNING_POLICY.md).
 
 ## `ImportError` or DLL errors on Windows
 
@@ -179,7 +174,7 @@ When reporting this issue, include:
 
 ## Recognition works slowly
 
-Facenox is designed exclusively for CPU execution. It runs local ONNX Runtime inference using optimized CPU vector instructions (such as AVX2 on x86 or NEON on ARM). It does not compile, distribute, or support GPU runtimes (like CUDA) to keep package sizes lightweight and ensure maximum system compatibility.
+Facenox is designed exclusively for CPU execution. It runs local ONNX Runtime inference using optimized CPU vector instructions (such as AVX2 on x86 or NEON on ARM). It does not compile, distribute, or support GPU runtimes (like CUDA) to avoid requiring a dedicated GPU.
 
 If performance is lower than expected:
 
@@ -203,16 +198,16 @@ What to verify:
 - the pairing code is still valid
 - the cloud server can respond to `POST /api/device/pair`
 
-## Cloud Sync fails
+## Cloud sync fails
 
-Cloud Sync failure should not stop local attendance. If local attendance stops, that is a separate problem.
+Cloud connectivity is not required for local attendance. If local recording also stops, check the camera and local service.
 
 For sync issues, check:
 
 - the device is still paired
 - the stored device token has not been revoked
 - the cloud deployment is reachable
-- the last sync message in the Cloud Sync settings panel
+- the last sync message in Settings > Cloud sync
 
 The sync model is snapshot and event-based. A failed cloud push does not mean local attendance data was lost.
 
@@ -223,7 +218,7 @@ After pairing, the desktop attempts an immediate first sync. If that does not ap
 - confirm that pairing succeeded fully
 - check the last sync message in the desktop app
 - inspect the cloud server deployment logs for `/api/sync/push`
-- retry with the manual `Sync Now` button
+- retry with the manual **Sync now** button
 
 ## Need deeper inspection?
 

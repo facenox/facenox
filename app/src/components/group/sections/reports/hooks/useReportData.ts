@@ -63,7 +63,7 @@ export function useReportData(
 
     if (startDate > endDate) {
       if (isMountedRef.current) {
-        setError("The start date must be before the end date.")
+        setError("The start date must be on or before the end date.")
         setLoading(false)
       }
       return

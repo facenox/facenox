@@ -40,7 +40,8 @@ export function DeleteConfirmationModal({
         <>
           <div className="space-y-4">
             <p className="text-xs leading-relaxed text-white/60">
-              All member profiles and attendance records will be permanently deleted.
+              This removes the group, its member profiles, and enrolled face templates. Existing
+              attendance history is retained. Paired computers sync these removals to Cloud.
             </p>
 
             <div className="space-y-1.5 pt-1">

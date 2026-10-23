@@ -356,7 +356,9 @@ export function Attendance({
                     "Older records are removed when the local service starts. Member profiles, groups, and face templates are unchanged.",
                     "Set this to 0 to turn off automatic cleanup.",
                     ...(isPaired && cloudCeiling ?
-                      [`Cloud history is separate. Your plan provides access to ${cloudCeiling} days online.`]
+                      [
+                        `Cloud history is separate. Your plan provides access to ${cloudCeiling} days online.`,
+                      ]
                     : []),
                   ]}
                   side="right"

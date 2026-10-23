@@ -60,8 +60,7 @@ export function ClockHealth({
     : timeHealthState.loading ? "Checking clock status…"
     : timeHealthStatus === "drift_detected" ?
       "The attendance clock differs from network time. Check this computer's date and time settings."
-    : timeHealthStatus === "verified" ?
-      "No significant clock difference detected."
+    : timeHealthStatus === "verified" ? "No significant clock difference detected."
     : timeHealthStatus === "offline" ?
       "Network time is unavailable. The online check could not be completed."
     : "Clock status is unavailable. Try Check now."

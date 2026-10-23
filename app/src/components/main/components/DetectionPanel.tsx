@@ -250,7 +250,7 @@ export function DetectionPanel({
           key="detections-list"
           role="region"
           aria-live="polite"
-          aria-label="Real-time facial detection and recognition results"
+          aria-label="Live recognition results"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

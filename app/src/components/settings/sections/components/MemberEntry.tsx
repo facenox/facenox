@@ -135,7 +135,7 @@ export const MemberEntry = React.memo(
             <Tooltip
               content={
                 isDeleteDisabled ?
-                  "Locked by Cloud Policy: Member deletion is disabled on kiosks."
+                  "Your organization has disabled member deletion on this computer."
                 : "Delete member"
               }
               position="top">

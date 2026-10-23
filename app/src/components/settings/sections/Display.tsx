@@ -199,7 +199,7 @@ export function Display({
                 playsInline
                 muted
                 autoPlay
-                aria-label="Viewport preview"
+                aria-label="Camera display preview"
                 className={`h-full w-full transition-all duration-300 ${
                   quickSettings.cameraFitCover ? "object-cover" : "object-contain"
                 } ${quickSettings.cameraMirrored ? "scale-x-[-1]" : ""}`}

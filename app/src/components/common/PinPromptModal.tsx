@@ -262,7 +262,10 @@ export function PinPromptModal() {
                         transition={{ duration: 0.14 }}
                         className="inline-flex items-center justify-center gap-1.5 text-center text-[11px] leading-snug text-white/40">
                         <Cloud className="size-3 text-emerald-400" />
-                        <span>No key? Device can be reset remotely via Cloud.</span>
+                        <span>
+                          No key? Request a PIN reset in Facenox Cloud. This computer must be online
+                          to receive it.
+                        </span>
                       </motion.span>
                     : <motion.span
                         key="unpaired-hint"
@@ -272,7 +275,7 @@ export function PinPromptModal() {
                         transition={{ duration: 0.14 }}
                         className="inline-flex items-center justify-center gap-1.5 text-center text-[11px] leading-snug text-white/40">
                         <Shield className="size-3 text-white/30" />
-                        <span>Standalone device. PIN can only be reset with this key.</span>
+                        <span>Use the recovery key saved when you set up this computer.</span>
                       </motion.span>
                     }
                   </AnimatePresence>

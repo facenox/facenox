@@ -19,12 +19,12 @@ export function EnrollmentInfoModal({
 }: EnrollmentInfoModalProps) {
   const slides = [
     {
-      title: "Live or upload enrollment",
+      title: "Use a camera or photo",
       description:
-        "Enroll members live via camera or by uploading photos. Live scans match local room lighting and camera optics for optimal accuracy, while photo uploads work well for remote enrollment.",
+        "Capture a photo with the attendance camera or select an existing photo. Use a clear, front-facing image with even lighting.",
     },
     {
-      title: "Proper framing & pose",
+      title: "Face the camera",
       description:
         "Face the camera directly with open eyes and a neutral expression. Avoid dim lighting, heavy shadows, and accessories like hats or sunglasses that obstruct the face.",
     },

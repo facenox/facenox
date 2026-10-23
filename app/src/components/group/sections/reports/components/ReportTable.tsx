@@ -187,7 +187,7 @@ function EmptyTableState({
   error?: string | null
 }) {
   if (error) {
-    const isInvalidRange = error === "The start date must be before the end date."
+    const isInvalidRange = error === "The start date must be on or before the end date."
     return (
       <EmptyState
         title={isInvalidRange ? "Invalid date range" : "Unable to generate report"}

@@ -289,6 +289,10 @@ export default function WindowBar() {
           }
 
           const relativeTime = formatRelativeTime(syncConfig.lastSyncedAt)
+          const queueKnown = [
+            syncConfig.unsyncedRecordsCount,
+            syncConfig.unsyncedSessionsCount,
+          ].every((count) => typeof count === "number" && Number.isSafeInteger(count) && count >= 0)
           const pendingCount =
             (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
 
@@ -296,11 +300,20 @@ export default function WindowBar() {
             "text-emerald-400/90 hover:bg-emerald-500/10 hover:text-emerald-300"
           let StatusIcon = Cloud
           let iconColor = "text-emerald-400"
-          let statusText = "Synced"
-          let tooltipContent =
-            pendingCount > 0 ?
-              `Last synced: ${relativeTime}. ${pendingCount} new record${pendingCount === 1 ? "" : "s"} queued for upload. Click to open cloud sync.`
-            : `Last synced: ${relativeTime}. All records up to date. Click to open cloud sync.`
+          let statusText =
+            queueKnown && pendingCount > 0 ? "Sync pending"
+            : syncConfig.lastSyncedAt ? "Last sync completed"
+            : "Waiting for sync"
+          const lastSyncText =
+            syncConfig.lastSyncedAt ?
+              `Last completed sync: ${relativeTime}.`
+            : "No completed sync yet."
+          const queueText =
+            !queueKnown ? "Queue status unavailable."
+            : pendingCount > 0 ?
+              `${pendingCount} attendance update${pendingCount === 1 ? "" : "s"} queued.`
+            : "No attendance updates queued."
+          let tooltipContent = `${lastSyncText} ${queueText} Open Cloud sync for details.`
 
           if (syncConfig.lastSyncStatus === "error") {
             badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
@@ -314,7 +327,7 @@ export default function WindowBar() {
 
             statusText = isQuota ? "Plan limit reached" : "Sync warning"
 
-            const cleanMsg = (syncConfig.lastSyncMessage || "Network connection error.")
+            const cleanMsg = (syncConfig.lastSyncMessage || "The last sync could not complete.")
               .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
               .replace(/^Sync rejected:\s*/i, "")
               .replace(/^Error:\s*/i, "")

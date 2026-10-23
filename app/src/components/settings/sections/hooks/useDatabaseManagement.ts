@@ -351,7 +351,7 @@ export function useDatabaseManagement(
   const handleClearAllGroups = useCallback(
     async (skipConfirmation = false) => {
       const groupCount = groups.length
-      const confirmMessage = `Delete ALL ${groupCount} groups and member profiles? This will permanently wipe out the entire local directory structure and soft-delete member accounts. This cannot be undone.`
+      const confirmMessage = `Delete ${groupCount} ${groupCount === 1 ? "group" : "groups"} and their member profiles? Paired computers will sync these deletions to Cloud. This cannot be undone.`
 
       if (!skipConfirmation) {
         if (dialog) {
@@ -389,7 +389,7 @@ export function useDatabaseManagement(
         if (dialog) {
           await dialog.alert({
             title: "Directory deleted",
-            message: `Deleted all ${groupCount} groups and cleared biometric cache.`,
+            message: `Deleted ${groupCount} ${groupCount === 1 ? "group" : "groups"}.`,
           })
         }
       } catch (error) {
@@ -397,7 +397,8 @@ export function useDatabaseManagement(
         if (dialog) {
           await dialog.alert({
             title: "Delete failed",
-            message: "Failed to delete directory structure.",
+            message:
+              "Could not delete all groups. Some may already have been deleted. Refresh the list before trying again.",
             variant: "danger",
           })
         }
@@ -412,7 +413,7 @@ export function useDatabaseManagement(
 
   const handlePurgeHistory = useCallback(
     async (skipConfirmation = false) => {
-      const confirmMessage = `Purge all attendance history?\n\nThis will delete all historical records and daily sessions. Configured groups, member profiles, and enrolled face data will remain. This cannot be undone.`
+      const confirmMessage = `Delete all local attendance history?\n\nThis deletes attendance records and sessions from this computer. Groups, member profiles, face templates, and existing Cloud records are unchanged. This cannot be undone.`
 
       if (!skipConfirmation) {
         if (dialog) {
@@ -442,10 +443,10 @@ export function useDatabaseManagement(
         if (dialog) {
           await dialog.alert({
             title: "History purged",
-            message: "Purged all attendance records and sessions.",
+            message: "Deleted all local attendance records and sessions.",
           })
         } else {
-          alert("Purged all attendance records.")
+          alert("Deleted all local attendance records and sessions.")
         }
       } catch (error) {
         console.error("Error purging history:", error)

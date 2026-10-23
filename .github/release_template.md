@@ -13,7 +13,7 @@
 * **[Component]:** [Describe the fix or optimization].
 
 ### Security & Privacy Notes
-* All biometric data remains stored locally on your machine in `facenox.db`.
+* Face recognition runs on the computer. Paired computers can sync encrypted face templates through Facenox Cloud on supported plans.
 * [Note any changes to anti-spoofing or data handling].
 
 ### Code Signing Status

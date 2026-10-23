@@ -140,7 +140,7 @@ export function EditSessionModal({
       return
     }
     if (trackCheckout && status === "present" && !checkOutTime) {
-      setError("Time out is required — the group has checkout tracking enabled.")
+      setError("Enter a time out. Entry & exit tracking is enabled for this group.")
       return
     }
 
@@ -181,7 +181,7 @@ export function EditSessionModal({
       )
     } catch (err) {
       console.error(err)
-      setError("Unable to save correction. Check connection and retry.")
+      setError("Could not save the correction. Try again.")
     } finally {
       setIsSubmitting(false)
     }

@@ -256,7 +256,7 @@ export function CameraQueue({
     canvas.height = height
     const ctx = canvas.getContext("2d")
     if (!ctx) {
-      setError("Unable to capture from camera context.")
+      setError("Could not capture a photo. Try again.")
       return
     }
 

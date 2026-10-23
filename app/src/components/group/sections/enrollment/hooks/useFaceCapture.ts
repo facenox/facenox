@@ -172,15 +172,17 @@ export function useFaceCapture(
 
       if (dialog) {
         const ok = await dialog.confirm({
-          title: "Purge embeddings",
-          message: `Remove all face embeddings for ${displayName}?`,
+          title: "Remove face enrollment",
+          message: `Remove face enrollment for ${displayName}? They will need to re-enroll to be recognized.`,
           confirmText: "Remove",
           cancelText: "Cancel",
           confirmVariant: "danger",
         })
         if (!ok) return
       } else {
-        const confirmation = window.confirm(`Remove all face embeddings for ${displayName}?`)
+        const confirmation = window.confirm(
+          `Remove face enrollment for ${displayName}? They will need to re-enroll to be recognized.`,
+        )
         if (!confirmation) return
       }
 
@@ -190,11 +192,11 @@ export function useFaceCapture(
           member.person_id,
         )
         if (!result.success) {
-          throw new Error(result.error || "Failed to remove embeddings")
+          throw new Error(result.error || "Could not remove face enrollment.")
         }
         await loadMemberStatus()
         if (onRefresh) await onRefresh()
-        setSuccessMessage(`Embeddings purged for ${displayName}.`)
+        setSuccessMessage(`Face enrollment removed for ${displayName}.`)
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to remove face data."
         setGlobalError(message)

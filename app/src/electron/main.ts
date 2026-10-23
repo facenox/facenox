@@ -112,7 +112,7 @@ app.whenReady().then(async () => {
     }
 
     if (!backendReady) {
-      throw new Error("Backend readiness synchronization timed out.")
+      throw new Error("The local attendance service took too long to start.")
     }
   } catch (e) {
     console.error("[Main] Backend initialization failed:", e)

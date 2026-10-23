@@ -570,7 +570,7 @@ export class BackgroundSyncManager {
             title: "Data wiped",
             message: "A remote wipe has been executed on this device.",
             detail:
-              "All local database tables and biometric keys have been erased by the organization administrator.",
+              "Local attendance records and enrolled face templates were removed at the organization administrator's request.",
             buttons: ["OK"],
           }
           if (parentWindow) {

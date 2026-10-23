@@ -53,7 +53,7 @@
     "entitlements": "entitlements.mac.plist",
     "entitlementsInherit": "entitlements.mac.plist",
     "extendInfo": {
-      "NSCameraUsageDescription": "This app requires camera access to capture video frames for secure, real-time facial recognition and attendance tracking."
+      "NSCameraUsageDescription": "Facenox uses the camera to enroll faces and record attendance on this computer."
     },
     "extraResources": [
       {
