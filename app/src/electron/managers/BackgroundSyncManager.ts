@@ -837,10 +837,10 @@ export class BackgroundSyncManager {
       if (hasMorePages) throw new Error("Cloud roster exceeds the page limit; sync is incomplete.")
       let pullMsg = ` Pulled ${accumulatedGroupsCount} groups, ${accumulatedMembersCount} members.`
       if (accumulatedEmbeddingsCount > 0) {
-        pullMsg += ` Imported ${accumulatedEmbeddingsCount} face embeddings.`
+        pullMsg += ` Imported ${accumulatedEmbeddingsCount} face templates.`
       }
       if (totalDecryptFailures > 0) {
-        pullMsg += ` ${totalDecryptFailures} face profiles could not be imported; retry or review sync conflicts.`
+        pullMsg += ` ${totalDecryptFailures} face templates could not be imported; retry or review sync conflicts.`
       }
 
       console.log(

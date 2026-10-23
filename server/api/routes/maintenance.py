@@ -72,7 +72,8 @@ async def remote_wipe_data(
         face_result = await face_recognizer.clear_database(repo.organization_id)
         if not face_result.get("success"):
             raise RuntimeError(
-                "Local attendance was cleared, but face templates could not be removed. Review this computer before using it again."
+                "Local attendance was cleared, but face templates could not be removed. "
+                "Review this computer before using it again."
             )
 
         await repo.add_audit_log(
