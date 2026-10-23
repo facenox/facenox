@@ -544,13 +544,15 @@ export const AttendancePanel = memo(function AttendancePanel({
                   ]}
                   value={recordScope}
                   onChange={(val) => handleRecordScopeChange(val as AttendanceRecordScope)}
+                  showChevron={false}
                   trigger={
-                    <span className="inline-flex h-4 w-4 items-center justify-center">
-                      <Calendar className="size-3.5 text-current" />
+                    <span className="flex items-center justify-center">
+                      <Calendar aria-hidden="true" className="size-3.5 text-current" />
+                      <span className="sr-only">Filter attendance by date</span>
                     </span>
                   }
                   menuWidth={120}
-                  buttonClassName={`h-9 w-full !border-white/5 !bg-white/5 group-focus-within/bar:!border-white/20 border border-l-0 rounded-l-none rounded-r-lg px-0 text-white/45 transition-all duration-200 hover:!bg-white/[0.08] hover:text-white focus:!border-white/20 focus:text-white focus:outline-none`}
+                  buttonClassName={`h-9 w-full !border-white/5 !bg-white/5 group-focus-within/bar:!border-white/20 border border-l-0 rounded-l-none rounded-r-lg !px-0 text-white/45 transition-colors duration-200 hover:!bg-white/[0.08] hover:text-white focus:!border-white/20 focus:text-white focus:outline-none`}
                   optionClassName="text-xs py-1.5"
                   showPlaceholderOption={false}
                   allowClear={false}

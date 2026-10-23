@@ -46,20 +46,20 @@ export function ExportAllGroupsModal({
       title: "Multi-sheet Excel workbook",
       badge: "Recommended",
       description: "Create one Excel file with a worksheet for each group.",
-      icon: <FileSpreadsheet className="size-4 text-emerald-400" />,
+      icon: <FileSpreadsheet className="size-4" />,
     },
     {
       id: "individual",
       title: "Individual CSV files per group",
       description: "Download a separate CSV file for each group.",
-      icon: <FolderTree className="size-4 text-cyan-400" />,
+      icon: <FolderTree className="size-4" />,
     },
     {
       id: "combined",
       title: "Single combined CSV",
       description:
         "Export all groups in one CSV file, with a Group column to identify each record.",
-      icon: <FileText className="size-4 text-amber-400" />,
+      icon: <FileText className="size-4" />,
     },
   ]
 
@@ -77,28 +77,29 @@ export function ExportAllGroupsModal({
       }
       maxWidth="md">
       <div className="space-y-4">
-        <div className="space-y-2.5">
+        <div role="group" aria-label="Export format" className="space-y-2.5">
           {options.map((opt) => {
             const isSelected = selectedFormat === opt.id
             return (
               <button
                 key={opt.id}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => setSelectedFormat(opt.id)}
                 disabled={isExporting}
-                className={`flex w-full items-start gap-3.5 rounded-xl border p-3.5 text-left transition-all ${
+                className={`flex w-full items-start gap-3.5 rounded-xl border p-3.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60 disabled:cursor-not-allowed disabled:opacity-50 ${
                   isSelected ?
-                    "border-cyan-500/50 bg-cyan-500/[0.08]"
+                    "border-white/20 bg-white/[0.06]"
                   : "border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
                 }`}>
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5">
+                <span aria-hidden="true" className="mt-0.5 shrink-0 text-white/65">
                   {opt.icon}
-                </div>
+                </span>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="text-xs font-semibold text-white/90">{opt.title}</span>
                     {opt.badge && (
-                      <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-[9px] font-bold tracking-wide text-cyan-300 uppercase">
+                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white/65 uppercase">
                         {opt.badge}
                       </span>
                     )}
@@ -107,7 +108,7 @@ export function ExportAllGroupsModal({
                     {opt.description}
                   </p>
                 </div>
-                <div className="mt-1 flex shrink-0 items-center">
+                <div aria-hidden="true" className="mt-1 flex shrink-0 items-center">
                   <div
                     className={`flex h-4 w-4 items-center justify-center rounded-full border transition-all ${
                       isSelected ?

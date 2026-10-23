@@ -75,6 +75,78 @@ describe("Dropdown", () => {
     expect(onChange).not.toHaveBeenCalled()
   })
 
+  it("uses the shared non-scaling trigger and rotating chevron for custom content", () => {
+    const onChange = vi.fn()
+    render(
+      <Dropdown
+        options={[{ value: "all", label: "Export all groups" }]}
+        value={null}
+        onChange={onChange}
+        trigger={<span>Export</span>}
+        fit
+        menuWidth={180}
+        showPlaceholderOption={false}
+        allowClear={false}
+      />,
+    )
+
+    const trigger = screen.getByRole("button", { name: "Export" })
+    const chevron = trigger.querySelector("svg")
+    const triggerClasses = trigger.className
+    expect(trigger).toHaveClass("dropdown-trigger")
+    expect(trigger.querySelector("button")).toBeNull()
+    expect(trigger).toHaveAttribute("aria-expanded", "false")
+    expect(chevron).not.toHaveClass("rotate-180")
+
+    fireEvent.click(trigger)
+    expect(trigger).toHaveAttribute("aria-expanded", "true")
+    expect(chevron).toHaveClass("rotate-180")
+    expect(trigger.className).toBe(triggerClasses)
+
+    fireEvent.click(screen.getByRole("button", { name: "Export all groups" }))
+    expect(onChange).toHaveBeenCalledWith("all")
+    expect(trigger).toHaveAttribute("aria-expanded", "false")
+    expect(chevron).not.toHaveClass("rotate-180")
+  })
+
+  it("does not open a disabled custom trigger", () => {
+    render(
+      <Dropdown
+        options={[{ value: "all", label: "Export all groups" }]}
+        value={null}
+        onChange={vi.fn()}
+        trigger={<span>Export</span>}
+        disabled
+      />,
+    )
+
+    const trigger = screen.getByRole("button", { name: "Export" })
+    expect(trigger).toBeDisabled()
+    fireEvent.click(trigger)
+    expect(trigger).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByRole("button", { name: "Export all groups" })).not.toBeInTheDocument()
+  })
+
+  it("supports an icon-only trigger without reserving chevron space", () => {
+    render(
+      <Dropdown
+        options={[{ value: "today", label: "Today" }]}
+        value="today"
+        onChange={vi.fn()}
+        trigger={<span className="sr-only">Filter attendance by date</span>}
+        showChevron={false}
+        showPlaceholderOption={false}
+      />,
+    )
+
+    const trigger = screen.getByRole("button", { name: "Filter attendance by date" })
+    expect(trigger).toHaveClass("dropdown-trigger")
+    expect(trigger.querySelector("svg")).toBeNull()
+    fireEvent.click(trigger)
+    expect(trigger).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getByRole("button", { name: "Today" })).toBeInTheDocument()
+  })
+
   it("supports clearing when allowClear is enabled", async () => {
     const onChange = vi.fn()
 

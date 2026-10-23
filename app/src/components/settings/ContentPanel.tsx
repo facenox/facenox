@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   FileSpreadsheet,
   Layers,
-  ChevronDown,
   Download,
   Check,
   X,
@@ -319,17 +318,15 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               allowClear={false}
               align="right"
               menuWidth={180}
+              fit
+              disabled={!reportsExportHandlers}
               className="inline-flex items-center"
-              buttonClassName="!border-0 !bg-transparent !p-0 hover:!bg-transparent focus:!bg-transparent"
+              buttonClassName="!gap-1.5 !border-white/10 !px-3 !py-1.5 !text-[11px] !font-medium !tracking-wide !text-white/80 hover:!border-white/20 hover:!bg-white/10 hover:!text-white disabled:!opacity-40"
               trigger={
-                <button
-                  type="button"
-                  disabled={!reportsExportHandlers}
-                  className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white/80 transition-all duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40">
-                  <FileSpreadsheet className="size-3" />
+                <span className="flex items-center gap-1.5">
+                  <FileSpreadsheet aria-hidden="true" className="size-3 shrink-0" />
                   <span>Export</span>
-                  <ChevronDown className="ml-0.5 size-2.5 opacity-70" />
-                </button>
+                </span>
               }
             />
           : <button

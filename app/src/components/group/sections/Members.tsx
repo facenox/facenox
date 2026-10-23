@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ChevronDown, FolderOpen, Ghost, Search, UserPlus, UserX, Video } from "lucide-react"
+import { FolderOpen, Ghost, Search, UserPlus, UserX, Video } from "lucide-react"
 import { attendanceManager } from "@/services"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
 import { useAttendanceStore } from "@/components/main/stores"
@@ -469,22 +469,21 @@ export function Members({
                               }}
                               allowClear={false}
                               showPlaceholderOption={false}
+                              fit
                               trigger={
-                                <button
-                                  className={`flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] font-bold tracking-wider transition-all ${
-                                    selectedStats.enrolled > 0 && selectedStats.ready === 0 ?
-                                      "border border-white/10 bg-transparent text-white/65 hover:bg-white/5 hover:text-white"
-                                    : "bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 hover:text-cyan-200"
-                                  }`}>
+                                <span>
                                   {selectedStats.enrolled > 0 && selectedStats.ready === 0 ?
                                     "Re-enroll"
                                   : "Enroll"}{" "}
                                   ({selectedStats.eligible})
-                                  <ChevronDown className="ml-0.5 size-2.5 opacity-60" />
-                                </button>
+                                </span>
                               }
                               menuWidth={180}
-                              buttonClassName="p-0 border-0 bg-transparent hover:bg-transparent h-auto w-auto"
+                              buttonClassName={`!gap-2 !rounded-md !px-2.5 !py-1 !text-[10px] !font-bold !tracking-wider ${
+                                selectedStats.enrolled > 0 && selectedStats.ready === 0 ?
+                                  "!border-white/10 !bg-transparent !text-white/65 hover:!bg-white/5 hover:!text-white"
+                                : "!border-transparent !bg-cyan-500/20 !text-cyan-300 hover:!bg-cyan-500/30 hover:!text-cyan-200"
+                              }`}
                               optionClassName="text-[11px] font-bold tracking-wider py-2.5"
                             />
                           </div>

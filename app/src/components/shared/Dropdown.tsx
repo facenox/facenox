@@ -26,7 +26,8 @@ interface DropdownProps<T = string> extends Omit<React.HTMLAttributes<HTMLDivEle
   maxHeight?: number // in pixels
   showPlaceholderOption?: boolean
   allowClear?: boolean // Allow selecting placeholder to clear value
-  trigger?: React.ReactNode
+  trigger?: React.ReactNode // Non-interactive content inside the shared trigger button
+  showChevron?: boolean
   menuWidth?: number | string
   align?: "left" | "right" | "center"
   alignToSelector?: string
@@ -51,6 +52,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
       showPlaceholderOption = true,
       allowClear = true,
       trigger,
+      showChevron = true,
       menuWidth,
       align,
       alignToSelector,
@@ -231,53 +233,31 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
         className={`relative min-w-0 ${fit ? "w-fit" : ""} ${className}`}
         ref={internalRef}
         {...cleanProps}>
-        {trigger ?
-          <div
-            ref={buttonRef as React.RefObject<HTMLDivElement | null>}
+        <Tooltip
+          content={displayText}
+          offset={4}
+          disabled={trigger != null || !shouldShowCustomTooltip(displayText)}
+          className="!px-2.5 !py-1.5 text-center break-all">
+          <motion.button
+            layout={fit ? "size" : undefined}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            type="button"
+            ref={buttonRef as React.RefObject<HTMLButtonElement | null>}
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleToggle}
-            className={`flex min-w-0 cursor-pointer items-center ${
+            disabled={disabled}
+            aria-expanded={isOpen && !disabled}
+            className={`dropdown-trigger flex min-w-0 cursor-pointer items-center ${
               fit ? "w-fit justify-start gap-2.5" : "justify-between"
-            } focus:outline-none ${
-              (
-                trigger &&
-                (buttonClassName.includes("bg-transparent") || buttonClassName.includes("border-0"))
-              ) ?
-                "justify-center border-0 bg-transparent p-0 hover:bg-transparent focus:bg-transparent"
-              : `${fit ? "w-fit" : "w-full"} rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-left text-sm text-white transition-all hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08]`
-            } ${buttonClassName} `}>
-            {trigger}
-          </div>
-        : <Tooltip
-            content={displayText}
-            offset={4}
-            disabled={!shouldShowCustomTooltip(displayText)}
-            className="!px-2.5 !py-1.5 text-center break-all">
-            <motion.button
-              layout={fit ? "size" : undefined}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              type="button"
-              ref={buttonRef as React.RefObject<HTMLButtonElement | null>}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={handleToggle}
-              disabled={disabled}
-              className={`flex min-w-0 cursor-pointer items-center ${
-                fit ? "w-fit justify-start gap-2.5" : "justify-between"
-              } focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                (
-                  trigger &&
-                  (buttonClassName.includes("bg-transparent") ||
-                    buttonClassName.includes("border-0"))
-                ) ?
-                  "justify-center border-0 bg-transparent p-0 hover:bg-transparent focus:bg-transparent"
-                : `dropdown-trigger ${fit ? "w-fit" : "w-full"} rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-left text-sm text-white transition-colors hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08]`
-              } ${buttonClassName} `}>
-              <motion.span
-                layout={fit ? "position" : undefined}
-                className={`min-w-0 ${fit ? "" : "flex-1"} truncate text-left`}>
-                {displayText}
-              </motion.span>
+            } ${fit ? "w-fit" : "w-full"} rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-left text-sm text-white transition-colors hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:cursor-not-allowed disabled:opacity-50 ${buttonClassName}`}>
+            <motion.span
+              layout={fit ? "position" : undefined}
+              className={`min-w-0 ${fit ? "" : "flex-1"} truncate text-left`}>
+              {trigger ?? displayText}
+            </motion.span>
+            {showChevron && (
               <span
+                aria-hidden="true"
                 className={`${fit ? "" : "ms-3"} flex size-4 shrink-0 items-center justify-center`}>
                 <ChevronDown
                   className={`size-3.5 text-white/65 transition-transform duration-200 ${
@@ -285,9 +265,9 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                   } ${iconClassName}`}
                 />
               </span>
-            </motion.button>
-          </Tooltip>
-        }
+            )}
+          </motion.button>
+        </Tooltip>
 
         {createPortal(
           <AnimatePresence>
