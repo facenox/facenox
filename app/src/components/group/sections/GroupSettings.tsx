@@ -179,11 +179,10 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                     <div className="text-sm font-medium text-white/90">Late tracking</div>
                     <InfoPopover
                       title="Late tracking"
-                      description="Flags members who arrive past the scheduled start time plus your grace period."
+                      description="Mark arrivals as late after the scheduled start time and grace period."
                       details={[
-                        "Uses the scheduled start time for this group.",
-                        "Grants extra minutes of grace before flagging members as late.",
-                        "Displays late flags across Overview, Member history, and CSV reports.",
+                        "Set the start time and grace period for this group.",
+                        "Late status appears in the overview, member history, and CSV reports.",
                       ]}
                       side="right"
                     />

@@ -168,10 +168,9 @@ export function Attendance({
                 <div className="text-sm font-medium text-white/90">Auto-start scanning</div>
                 <InfoPopover
                   title="Auto-start scanning"
-                  description="Automatically activates the camera and face recognition scanner when Facenox launches."
+                  description="Start the camera and face recognition automatically when Facenox opens."
                   details={[
                     "Use this on computers dedicated to attendance check-ins.",
-                    "Starts scanning when Facenox opens without pressing Start.",
                     "Requires a connected camera.",
                   ]}
                   side="right"
@@ -299,9 +298,9 @@ export function Attendance({
                   description="Checks for signs of photo and screen spoofing during face recognition."
                   details={[
                     "Analyzes camera images locally and may request a head turn to check physical presence.",
-                    "Works best with balanced ambient lighting and direct front-facing camera angles.",
-                    "May slightly increase processing time on lower-powered CPUs.",
-                    "Locked automatically when enforced by your organization policy.",
+                    "Use even lighting and face the camera.",
+                    "Liveness checks may take longer on slower computers.",
+                    "You cannot turn this off when your organization requires it.",
                   ]}
                   side="right"
                 />
@@ -352,14 +351,13 @@ export function Attendance({
                   : null)}
                 <InfoPopover
                   title="Retention policy"
-                  description="Controls how long past attendance check-in logs are stored before automatic cleanup."
+                  description="Choose how many days of local attendance records to keep."
                   details={[
-                    "Checks for attendance records older than the retention period when the local service starts.",
-                    "Automatic cleanup only removes attendance records. Member profiles, groups, and enrolled face data are unchanged.",
-                    "Choose a retention period that matches your organization's recordkeeping needs.",
-                    isPaired && cloudCeiling ?
-                      `Setting this to 0 turns off automatic cleanup of local attendance records. Your cloud plan provides access to ${cloudCeiling} days of history.`
-                    : "Setting this to 0 turns off automatic cleanup of local attendance records.",
+                    "Older records are removed when the local service starts. Member profiles, groups, and face templates are unchanged.",
+                    "Set this to 0 to turn off automatic cleanup.",
+                    ...(isPaired && cloudCeiling ?
+                      [`Cloud history is separate. Your plan provides access to ${cloudCeiling} days online.`]
+                    : []),
                   ]}
                   side="right"
                 />
@@ -459,11 +457,11 @@ export function Attendance({
                   <div className="text-sm font-medium text-white/90">Administrator PIN lock</div>
                   <InfoPopover
                     title="Administrator PIN lock"
-                    description="Restricts access to settings and member rosters behind a 4-digit security PIN."
+                    description="Require a 4-digit PIN to open settings and manage members."
                     details={[
-                      "Recommended when placed in public or unattended areas.",
-                      "Prompts for your PIN when clicking Settings or pressing the Ctrl+, shortcut.",
-                      "Default PIN is 1234. Update it in the sub-panel below.",
+                      "Use this on shared or unattended computers.",
+                      "The PIN is also required when opening Settings with the keyboard shortcut.",
+                      "Change the default PIN (1234) using the controls below.",
                     ]}
                     side="right"
                   />
@@ -602,16 +600,15 @@ export function Attendance({
                         <div className="text-xs font-medium text-white/80">Recovery key:</div>
                         <InfoPopover
                           title="Recovery key"
-                          description="Restores administrator access and resets the PIN if forgotten."
+                          description="Use this key to regain access if you forget the administrator PIN."
                           details={[
-                            "Used to unlock settings or reset credentials during emergency recovery.",
-                            "Keep this key secure. Anyone with this key can bypass the administrator lock.",
+                            "Keep a copy in a secure place. Anyone with this key can unlock administrator access.",
                             ...(isPaired ?
                               [
-                                "Remote reset is also available from your Facenox Cloud dashboard when paired.",
+                                "You can also request a PIN reset from Facenox Cloud. This computer must reconnect to receive it.",
                               ]
                             : [
-                                "Keep an offline backup of this key as remote reset is unavailable when disconnected.",
+                                "Cloud PIN reset requires pairing this computer with Facenox Cloud.",
                               ]),
                           ]}
                           side="right"
