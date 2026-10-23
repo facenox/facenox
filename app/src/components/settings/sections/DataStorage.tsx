@@ -614,8 +614,9 @@ export function DataStorage({
                       Delete group directory
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Permanently delete all groups, member profiles, and enrolled face data.
-                      Members must be re-created and enrolled for recognition to work.
+                      Remove all groups, member profiles, and enrolled face templates from this
+                      directory. Existing attendance history is retained. Members must be added and
+                      enrolled again to use face recognition.
                       {isPaired &&
                         (!allowKioskDirectoryManagement ?
                           <span className="mt-1 block font-medium text-amber-400/80">
@@ -625,7 +626,7 @@ export function DataStorage({
                           </span>
                         : <span className="mt-1 block font-medium text-amber-400/80">
                             <CloudUpload className="mr-1 inline size-3" />
-                            This will also delete groups from your cloud directory.
+                            These removals will sync to Facenox Cloud.
                           </span>)}
                     </p>
                   </div>
@@ -648,8 +649,8 @@ export function DataStorage({
                   <div className="min-w-0 flex-1 text-left">
                     <h4 className="text-[15px] font-semibold text-red-400/80">Clear face data</h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Wipe all enrolled biometric face data. Enrolled members will need to be
-                      re-enrolled.
+                      Remove all enrolled face templates. Members will need to enroll again to use
+                      face recognition.
                       {isPaired &&
                         (!allowKioskDirectoryManagement ?
                           <span className="mt-1 block font-medium text-amber-400/80">
@@ -659,7 +660,7 @@ export function DataStorage({
                           </span>
                         : <span className="mt-1 block font-medium text-amber-400/80">
                             <CloudUpload className="mr-1 inline size-3" />
-                            Face data will also be cleared from the cloud.
+                            Face-template removals will sync to Facenox Cloud.
                           </span>)}
                     </p>
                   </div>
@@ -675,12 +676,11 @@ export function DataStorage({
                 <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
                   <div className="min-w-0 flex-1 text-left">
                     <h4 className="text-[15px] font-semibold text-red-400/80">
-                      Purge attendance history
+                      Delete local attendance history
                     </h4>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Permanently wipe all daily attendance check-ins, checkout timestamps, and
-                      history records on this device. Groups, member profiles, and enrolled face
-                      data are preserved.
+                      Delete attendance records and sessions from this computer. Groups, member
+                      profiles, and face templates are unchanged. This cannot be undone.
                       {isPaired && (
                         <span className="mt-1 block font-medium text-white/50">
                           <Cloud className="mr-1 inline size-3" />
@@ -694,7 +694,7 @@ export function DataStorage({
                     disabled={isLoading || isPurgingHistory}
                     className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     {isPurgingHistory && <Loader2 className="size-3 animate-spin" />}
-                    Purge history
+                    Delete history
                   </button>
                 </div>
               </div>

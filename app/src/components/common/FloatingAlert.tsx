@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
 import { CheckCircle2, AlertTriangle, AlertCircle, X } from "lucide-react"
+import { ErrorText } from "./ErrorText"
 
 export type AlertVariant = "success" | "warning" | "error"
 
@@ -59,7 +60,9 @@ export function FloatingAlert({ message, variant, onDismiss }: FloatingAlertProp
         <span className={`mr-1.5 font-semibold whitespace-nowrap ${current.labelColor}`}>
           {current.label}:
         </span>
-        {cleanMessage || message}
+        {variant === "error" ?
+          <ErrorText message={cleanMessage || message} />
+        : cleanMessage || message}
       </div>
       <button
         type="button"

@@ -1,4 +1,5 @@
 import { AlertCircle, X } from "lucide-react"
+import { ErrorText } from "./ErrorText"
 
 interface ErrorMessageProps {
   message: string
@@ -18,7 +19,9 @@ export function ErrorMessage({
       role="alert"
       className={`flex items-center gap-2.5 rounded-xl border border-red-500/20 bg-red-500/10 px-3.5 py-2.5 text-xs font-medium text-red-200 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur-sm ${className}`}>
       {showIcon && <AlertCircle className="size-3.5 shrink-0 text-red-400" />}
-      <span className="flex-1 leading-snug">{message}</span>
+      <div className="min-w-0 flex-1 leading-snug">
+        <ErrorText message={message} />
+      </div>
       {onClose && (
         <button
           type="button"

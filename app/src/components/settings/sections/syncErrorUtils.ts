@@ -2,6 +2,7 @@ export interface ParsedSyncError {
   isPlanQuota: boolean
   title: string
   description: string
+  technicalDetails?: string
   currentPeople?: number
   peopleLimit?: number
   actionUrl?: string
@@ -30,7 +31,7 @@ export function isOfflineError(err: string | null): boolean {
 export function formatErrorMessage(err: string | null): string {
   if (!err) return ""
   if (err.includes("<!DOCTYPE") || err.includes("<html") || err.includes("<head")) {
-    return "Server returned an unexpected HTML response. Verify that your cloud server is running and reachable."
+    return "Cloud returned an unexpected response. Check the server address in Cloud sync settings."
   }
   return err
 }
@@ -60,8 +61,8 @@ export function parseSyncError(err: string | null): ParsedSyncError {
       title: "Plan member limit reached",
       description:
         currentPeople && peopleLimit ?
-          `Your local database has ${currentPeople.toLocaleString()} active members, which exceeds your cloud plan limit of ${peopleLimit.toLocaleString()}. Cloud sync is paused until upgraded.`
-        : "Your active member count exceeds your cloud plan limit. Cloud sync is paused until your plan is upgraded or excess members are deactivated.",
+          `This computer has ${currentPeople.toLocaleString()} active members, above the Cloud plan limit of ${peopleLimit.toLocaleString()}. Review the member list or upgrade the plan before syncing again.`
+        : "The active member count exceeds the Cloud plan limit. Review the member list or upgrade the plan before syncing again.",
       currentPeople,
       peopleLimit,
       actionUrl: "/pricing",
@@ -73,9 +74,9 @@ export function parseSyncError(err: string | null): ParsedSyncError {
   if (err.includes("<!DOCTYPE") || err.includes("<html") || err.includes("<head")) {
     return {
       isPlanQuota: false,
-      title: "Server unavailable",
-      description:
-        "Cloud server returned an unexpected HTML response. Verify cloud server availability.",
+      title: "Unexpected server response",
+      description: formatErrorMessage(err),
+      technicalDetails: err,
     }
   }
 

@@ -418,14 +418,14 @@ export function useDatabaseManagement(
       if (!skipConfirmation) {
         if (dialog) {
           const ok = await dialog.confirm({
-            title: "Purge attendance history",
+            title: "Delete local attendance history",
             message: confirmMessage,
-            confirmText: "Purge history",
+            confirmText: "Delete history",
             cancelText: "Cancel",
             confirmVariant: "danger",
             requireTypedConfirmation: {
-              label: "To confirm, type PURGE HISTORY",
-              value: "PURGE HISTORY",
+              label: "To confirm, type DELETE HISTORY",
+              value: "DELETE HISTORY",
             },
           })
           if (!ok) return
@@ -442,7 +442,7 @@ export function useDatabaseManagement(
         }
         if (dialog) {
           await dialog.alert({
-            title: "History purged",
+            title: "Local history deleted",
             message: "Deleted all local attendance records and sessions.",
           })
         } else {
@@ -452,12 +452,12 @@ export function useDatabaseManagement(
         console.error("Error purging history:", error)
         if (dialog) {
           await dialog.alert({
-            title: "Purge failed",
-            message: "Failed to purge attendance history. Try again.",
+            title: "Could not delete history",
+            message: "Could not delete local attendance history. Try again.",
             variant: "danger",
           })
         } else {
-          alert("Failed to purge history")
+          alert("Could not delete local attendance history. Try again.")
         }
       } finally {
         setIsPurgingHistory(false)

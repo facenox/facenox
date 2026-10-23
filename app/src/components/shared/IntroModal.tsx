@@ -43,8 +43,8 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox <strong>never saves actual photos</strong> of members. Instead, it creates a
-            secure face template.
+            Facenox stores <strong>encrypted face templates</strong> for recognition, not member
+            photos.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
             A face template is a numerical representation of a face used for recognition. Facenox
@@ -58,12 +58,12 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            All face detection, tracking, liveness verification, and recognition are processed{" "}
-            <strong>entirely on this device</strong>.
+            Face detection, tracking, liveness verification, and recognition run{" "}
+            <strong>on this computer</strong>.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
-            Your biometric face template never leaves this machine unencrypted. Basic profile info
-            (like names) and attendance logs are shared only if you choose to sync with the cloud.
+            Connecting Facenox Cloud syncs member profiles and attendance records. Supported plans
+            also sync encrypted face templates between paired computers.
           </p>
         </div>
       ),

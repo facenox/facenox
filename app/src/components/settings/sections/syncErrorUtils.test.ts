@@ -26,7 +26,7 @@ describe("syncErrorUtils", () => {
   describe("formatErrorMessage", () => {
     it("converts HTML dumps to friendly error message", () => {
       expect(formatErrorMessage("<!DOCTYPE html><html><body>502 Bad Gateway</body></html>")).toBe(
-        "Server returned an unexpected HTML response. Verify that your cloud server is running and reachable.",
+        "Cloud returned an unexpected response. Check the server address in Cloud sync settings.",
       )
     })
 

@@ -78,7 +78,7 @@ export function useFaceCapture(
         }))
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Biometric analysis failed. Try again."
+          error instanceof Error ? error.message : "Could not check the photo. Try again."
         setFrames((prev) => prev.filter((frame) => frame.id !== id))
         setGlobalError(message)
       }
@@ -100,7 +100,7 @@ export function useFaceCapture(
       const frame = frames.find((f) => f.angle === "Front")
 
       if (frame?.status !== "ready" || !frame.bbox) {
-        setGlobalError("Capture a valid enrollment image to proceed.")
+        setGlobalError("Capture a clear, front-facing photo.")
         return
       }
 
@@ -112,7 +112,9 @@ export function useFaceCapture(
         const blob = dataUrlToBlob(frame.dataUrl)
 
         if (frame.landmarks_5?.length !== 5) {
-          throw new Error("Cannot enroll: facial features are missing. Capture a new image.")
+          throw new Error(
+            "Facial features could not be detected. Capture a clear, front-facing photo.",
+          )
         }
 
         const result = await attendanceManager.enrollFaceForGroupPerson(

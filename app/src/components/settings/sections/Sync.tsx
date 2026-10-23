@@ -15,6 +15,7 @@ import {
 
 import { useUIStore } from "@/components/main/stores"
 import { Modal, QRCodeView, Spinner } from "@/components/common"
+import { ErrorText } from "@/components/common/ErrorText"
 import { Tooltip } from "@/components/shared"
 import {
   DEFAULT_REMOTE_BASE_URL,
@@ -22,7 +23,7 @@ import {
   OFFICIAL_REMOTE_BASE_URL,
   isOfficialCloudUrl,
 } from "../../../services/syncDefaults"
-import { formatErrorMessage, isOfflineError, parseSyncError } from "./syncErrorUtils.js"
+import { isOfflineError, parseSyncError } from "./syncErrorUtils.js"
 
 export type RemoteSyncConfig = {
   enabled: boolean
@@ -371,7 +372,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       setPairingCode("")
       setReversePairing(null)
       if (result.warning) {
-        setError(`Disconnected locally, but the cloud returned a warning: ${result.warning}`)
+        setError(`Disconnected locally, but Cloud returned a warning: ${result.warning}`)
       } else {
         setSuccess("Device disconnected from Facenox Cloud.")
       }
@@ -394,12 +395,12 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
         setSuccess("Sync completed.")
       } else {
         const parsed = parseSyncError(result.message)
-        setError(parsed.description || "Manual sync failed.")
+        setError(parsed.technicalDetails || parsed.description || "Manual sync failed.")
       }
     } catch (error) {
       const rawMsg = error instanceof Error ? error.message : "Manual sync failed."
       const parsed = parseSyncError(rawMsg)
-      setError(parsed.description || "Manual sync failed.")
+      setError(parsed.technicalDetails || parsed.description || "Manual sync failed.")
     } finally {
       setBusyAction(null)
     }
@@ -529,11 +530,11 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                           </div>
                           <div className="space-y-1">
                             <p className="text-xs font-medium text-white/90">
-                              Could not initialize cloud pairing
+                              Could not start Cloud pairing
                             </p>
-                            <p className="max-w-md text-[11px] break-words text-white/50">
-                              {formatErrorMessage(initiateError)}
-                            </p>
+                            <div className="max-w-md text-[11px] break-words text-white/50">
+                              <ErrorText message={initiateError} />
+                            </div>
                           </div>
                           <button
                             type="button"
@@ -699,8 +700,12 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                           <div className="space-y-1">
                             <div className="flex flex-wrap items-center gap-2 font-medium text-amber-400">
                               <span>
-                                Plan limit reached ({errInfo.currentPeople ?? 0} /{" "}
-                                {errInfo.peopleLimit ?? 0} members)
+                                {(
+                                  errInfo.currentPeople !== undefined &&
+                                  errInfo.peopleLimit !== undefined
+                                ) ?
+                                  `Plan limit reached (${errInfo.currentPeople} / ${errInfo.peopleLimit} members)`
+                                : "Plan member limit reached"}
                               </span>
                               {isOfficial && (
                                 <a
@@ -708,7 +713,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                                   target="_blank"
                                   rel="noreferrer"
                                   className="text-amber-300 underline underline-offset-2 transition hover:text-amber-200">
-                                  Upgrade plan to resume ↗
+                                  View plans ↗
                                 </a>
                               )}
                             </div>
@@ -730,9 +735,11 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       return (
                         <div className="space-y-1">
                           <div className="font-medium text-amber-400/90">
-                            <span>
-                              {errInfo.title}: {errInfo.description}
-                            </span>
+                            <div>{errInfo.title}</div>
+                            <ErrorText
+                              message={errInfo.technicalDetails || errInfo.description}
+                              summary={errInfo.technicalDetails ? errInfo.description : undefined}
+                            />
                           </div>
                           <div className="flex flex-wrap items-center gap-2 text-[11px] text-white/40">
                             {config.unsyncedRecordsCount !== undefined &&

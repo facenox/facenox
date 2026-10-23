@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import { AlertCircle, Camera, Check, Image } from "lucide-react"
 import { useGroupUIStore } from "@/components/group/stores"
 import { Modal } from "@/components/common"
+import { ErrorText } from "@/components/common/ErrorText"
 import { motion, AnimatePresence } from "framer-motion"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { useCamera } from "@/components/group/sections/enrollment/hooks/useCamera"
@@ -369,7 +370,7 @@ export function FaceCapture({
                       transition={{ duration: 0.22, ease: "easeOut" }}
                       className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[85%] -translate-x-1/2 items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/85 px-4 py-2.5 text-center text-[11px] font-medium text-red-200">
                       <AlertCircle className="size-4 shrink-0 text-red-400" />
-                      <span>{globalError}</span>
+                      <ErrorText message={globalError} />
                     </motion.div>
                   )}
                 </AnimatePresence>
