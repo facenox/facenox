@@ -8,7 +8,9 @@ vi.mock("@/services", () => ({
   attendanceManager: { purgeAttendanceHistory: vi.fn() },
   backendService: {},
 }))
-beforeEach(() => vi.mocked(attendanceManager.purgeAttendanceHistory).mockReset())
+beforeEach(() => {
+  vi.mocked(attendanceManager.purgeAttendanceHistory).mockReset()
+})
 
 it("keeps deletion behind the matching typed confirmation and reports its local scope", async () => {
   const confirm = vi.fn().mockResolvedValue(true)
