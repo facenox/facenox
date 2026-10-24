@@ -112,6 +112,21 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
     }
   }, [filterDropdownOpen, isSearchFocused, activitySearch])
 
+  useEffect(() => {
+    if (!filterDropdownOpen) return
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" && event.key !== "Esc" && event.keyCode !== 27) return
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      setFilterDropdownOpen(false)
+    }
+
+    window.addEventListener("keydown", handleEscape, true)
+    return () => window.removeEventListener("keydown", handleEscape, true)
+  }, [filterDropdownOpen])
+
   const isSearchExpanded = activitySearch.trim().length > 0 || isSearchFocused || shouldKeepExpanded
   const dropdownWidthClass =
     dateFilter === "today" ? "w-[98px]"
@@ -344,6 +359,16 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                   onChange={(e) => setActivitySearch(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setTimeout(() => setIsSearchFocused(false), 150)}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Escape" && e.key !== "Esc" && e.keyCode !== 27) return
+                    e.preventDefault()
+                    e.stopPropagation()
+                    if (e.currentTarget.value) {
+                      setActivitySearch("")
+                    } else {
+                      e.currentTarget.blur()
+                    }
+                  }}
                   placeholder="Search activity…"
                   className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-7 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/bar:border-white/20 placeholder:text-white/35 focus:bg-white/[0.08]"
                 />

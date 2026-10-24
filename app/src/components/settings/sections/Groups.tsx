@@ -80,6 +80,16 @@ export function Groups({
             placeholder="Search groups…"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key !== "Escape" && event.key !== "Esc" && event.keyCode !== 27) return
+              event.preventDefault()
+              event.stopPropagation()
+              if (event.currentTarget.value) {
+                setQuery("")
+              } else {
+                event.currentTarget.blur()
+              }
+            }}
             className="h-9 w-full rounded-lg border border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none placeholder:text-white/35 focus:border-white/20 focus:bg-white/[0.08]"
           />
         </div>

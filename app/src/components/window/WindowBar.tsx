@@ -74,6 +74,21 @@ function releaseActiveMediaStreams(): void {
 export default function WindowBar() {
   const [isMaximized, setIsMaximized] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  useEffect(() => {
+    if (!isMenuOpen) return
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" && event.key !== "Esc" && event.keyCode !== 27) return
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      setIsMenuOpen(false)
+    }
+
+    window.addEventListener("keydown", handleEscape, true)
+    return () => window.removeEventListener("keydown", handleEscape, true)
+  }, [isMenuOpen])
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
   const [updateCheckState, setUpdateCheckState] = useState<
     "idle" | "checking" | "up-to-date" | "available" | "error" | "offline"

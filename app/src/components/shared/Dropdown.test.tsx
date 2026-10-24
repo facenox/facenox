@@ -180,4 +180,19 @@ describe("Dropdown", () => {
       expect(screen.getAllByRole("button", { name: "Today" })).toHaveLength(1)
     })
   })
+
+  it("closes when the legacy Esc key value is pressed", async () => {
+    render(
+      <Dropdown options={[{ value: "today", label: "Today" }]} value="today" onChange={vi.fn()} />,
+    )
+
+    fireEvent.click(screen.getByRole("button"))
+    expect(await screen.findAllByRole("button", { name: "Today" })).toHaveLength(2)
+
+    fireEvent.keyDown(document, { key: "Esc", keyCode: 27 })
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Today" })).toHaveLength(1)
+    })
+  })
 })

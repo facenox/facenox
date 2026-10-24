@@ -121,7 +121,9 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
 
     useEffect(() => {
       const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === "Escape" && isOpen) {
+        if ((e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) && isOpen) {
+          e.preventDefault()
+          e.stopPropagation()
           e.stopImmediatePropagation()
           setIsOpen(false)
         }

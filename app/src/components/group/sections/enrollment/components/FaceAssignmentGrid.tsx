@@ -105,8 +105,10 @@ function MemberAssignCombobox({
   }, [isOpen, updatePosition])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
+    if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+      e.preventDefault()
       e.stopPropagation()
+      e.nativeEvent.stopImmediatePropagation()
       setIsOpen(false)
     } else if (e.key === "ArrowDown") {
       e.preventDefault()

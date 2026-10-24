@@ -208,6 +208,28 @@ export function ReportToolbar({
     }
   }, [dateDropdownOpen, isSearchFocused, search])
 
+  useEffect(() => {
+    if (!dateDropdownOpen && !showFilter && !showOptions) return
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" && event.key !== "Esc" && event.keyCode !== 27) return
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+
+      if (dateDropdownOpen) {
+        setDateDropdownOpen(false)
+      } else if (showFilter) {
+        setShowFilter(false)
+      } else {
+        setShowOptions(false)
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape, true)
+    return () => window.removeEventListener("keydown", handleEscape, true)
+  }, [dateDropdownOpen, showFilter, showOptions])
+
   const handleSearchFocus = () => {
     setIsSearchFocused(true)
   }
@@ -248,6 +270,16 @@ export function ReportToolbar({
               onChange={(e) => setSearch(e.target.value)}
               onFocus={handleSearchFocus}
               onBlur={handleSearchBlur}
+              onKeyDown={(e) => {
+                if (e.key !== "Escape" && e.key !== "Esc" && e.keyCode !== 27) return
+                e.preventDefault()
+                e.stopPropagation()
+                if (e.currentTarget.value) {
+                  setSearch("")
+                } else {
+                  e.currentTarget.blur()
+                }
+              }}
               className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/bar:border-white/20 placeholder:text-white/35 focus:bg-white/[0.08]"
             />
           </div>
@@ -256,7 +288,11 @@ export function ReportToolbar({
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => setDateDropdownOpen((o) => !o)}
+              onClick={() => {
+                setDateDropdownOpen((open) => !open)
+                setShowFilter(false)
+                setShowOptions(false)
+              }}
               className="flex h-9 transform-gpu items-center justify-between gap-1.5 rounded-l-none rounded-r-lg border border-l-0 border-white/5 bg-white/5 px-2.5 text-[12px] font-semibold text-white/80 transition-colors duration-300 outline-none group-focus-within/bar:border-white/20 focus-within:bg-white/[0.08] hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08]">
               <span className="flex min-w-0 items-center gap-1.5">
                 <Calendar className="size-3 text-white/55" />
@@ -362,7 +398,11 @@ export function ReportToolbar({
             }
             position="bottom">
             <button
-              onClick={() => setShowFilter(!showFilter)}
+              onClick={() => {
+                setShowFilter((open) => !open)
+                setDateDropdownOpen(false)
+                setShowOptions(false)
+              }}
               className={`relative flex h-9 w-9 items-center justify-center rounded-lg border-0 bg-transparent transition-all duration-300 active:scale-95 ${
                 showFilter || statusFilter !== "all" ?
                   "bg-cyan-500/[0.08] text-cyan-400"
@@ -406,7 +446,11 @@ export function ReportToolbar({
         <div className="relative" ref={optionsRef}>
           <Tooltip content="Options" position="bottom">
             <button
-              onClick={() => setShowOptions(!showOptions)}
+              onClick={() => {
+                setShowOptions((open) => !open)
+                setDateDropdownOpen(false)
+                setShowFilter(false)
+              }}
               className={`flex h-9 w-9 items-center justify-center rounded-lg border-0 bg-transparent transition-all duration-300 active:scale-95 ${
                 showOptions ?
                   "bg-cyan-500/[0.08] text-cyan-400"

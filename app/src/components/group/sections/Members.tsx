@@ -343,6 +343,16 @@ export function Members({
                     onChange={(e) => setMemberSearch(e.target.value)}
                     onFocus={handleSearchFocus}
                     onBlur={handleSearchBlur}
+                    onKeyDown={(e) => {
+                      if (e.key !== "Escape" && e.key !== "Esc" && e.keyCode !== 27) return
+                      e.preventDefault()
+                      e.stopPropagation()
+                      if (e.currentTarget.value) {
+                        setMemberSearch("")
+                      } else {
+                        e.currentTarget.blur()
+                      }
+                    }}
                     placeholder="Search name or role…"
                     className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none placeholder:text-white/35 focus:border-white/20 focus:bg-white/[0.08]"
                   />
