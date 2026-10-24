@@ -40,8 +40,8 @@ export function Groups({
         if (active)
           setCanManage(
             !config.connected ||
-            (config as { allowKioskDirectoryManagement?: boolean })
-              .allowKioskDirectoryManagement !== false,
+              (config as { allowKioskDirectoryManagement?: boolean })
+                .allowKioskDirectoryManagement !== false,
           )
       } catch {
         if (active) setCanManage(false)
@@ -88,7 +88,7 @@ export function Groups({
         <div className="text-xs text-white/55">
           {filtered.length !== groups.length ?
             `${filtered.length} of ${groups.length} group${groups.length !== 1 ? "s" : ""}`
-            : `${groups.length} group${groups.length !== 1 ? "s" : ""}`}
+          : `${groups.length} group${groups.length !== 1 ? "s" : ""}`}
         </div>
       )}
       {canManage === false && (
