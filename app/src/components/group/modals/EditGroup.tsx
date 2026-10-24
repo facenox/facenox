@@ -139,25 +139,27 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
               <div className="text-xs font-semibold text-white/90">Attendance mode</div>
               <div className="text-[11px] text-white/55">Choose what to record for this group.</div>
             </div>
-            <Dropdown
-              options={[
-                { value: "attendance", label: "Attendance" },
-                { value: "work_hours", label: "Time in & time out" },
-                { value: "visits", label: "Visits" },
-              ]}
-              value={attendanceMode}
-              onChange={(value) => {
-                if (!value) return
-                const mode = value as AttendanceMode
-                setAttendanceMode(mode)
-                setTrackCheckout(mode !== "attendance")
-              }}
-              allowClear={false}
-              menuWidth={180}
-              className="w-[180px] shrink-0"
-              buttonClassName="h-8 !border-white/10 !bg-white/5 px-2.5 text-xs font-medium text-white/90 hover:!border-white/20 hover:!bg-white/[0.08]"
-              optionClassName="text-xs"
-            />
+            <div className="flex w-[180px] shrink-0 justify-end">
+              <Dropdown
+                fit
+                options={[
+                  { value: "attendance", label: "Attendance" },
+                  { value: "work_hours", label: "Time in & time out" },
+                  { value: "visits", label: "Visits" },
+                ]}
+                value={attendanceMode}
+                onChange={(value) => {
+                  if (!value) return
+                  const mode = value as AttendanceMode
+                  setAttendanceMode(mode)
+                  setTrackCheckout(mode !== "attendance")
+                }}
+                allowClear={false}
+                menuWidth={180}
+                buttonClassName="h-8 !border-white/10 !bg-white/5 px-2.5 text-xs font-medium text-white/90 hover:!border-white/20 hover:!bg-white/[0.08]"
+                optionClassName="text-xs"
+              />
+            </div>
           </div>
 
           {/* Schedule & Attendance Rules */}

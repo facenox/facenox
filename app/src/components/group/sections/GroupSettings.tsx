@@ -202,12 +202,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
             </h3>
           </div>
 
-          <motion.div
-            layout="size"
-            transition={{
-              layout: { duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" },
-            }}
-            className="py-2">
+          <div className="py-2">
             <div className="flex flex-col">
               <div className="flex items-center gap-4 py-4">
                 <div className="min-w-0 flex-1">
@@ -228,20 +223,24 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                     Choose what to record for this group.
                   </div>
                 </div>
-                <Dropdown
-                  options={[
-                    { value: "attendance", label: "Attendance" },
-                    { value: "work_hours", label: "Time in & time out" },
-                    { value: "visits", label: "Visits" },
-                  ]}
-                  value={attendanceMode}
-                  onChange={(value) => value && handleAttendanceModeChange(value as AttendanceMode)}
-                  allowClear={false}
-                  menuWidth={180}
-                  className="w-[180px] shrink-0"
-                  buttonClassName="h-8 !border-white/10 !bg-white/5 px-2.5 text-xs font-medium text-white/90 hover:!border-white/20 hover:!bg-white/[0.08]"
-                  optionClassName="text-xs"
-                />
+                <div className="flex w-[180px] shrink-0 justify-end">
+                  <Dropdown
+                    fit
+                    options={[
+                      { value: "attendance", label: "Attendance" },
+                      { value: "work_hours", label: "Time in & time out" },
+                      { value: "visits", label: "Visits" },
+                    ]}
+                    value={attendanceMode}
+                    onChange={(value) =>
+                      value && handleAttendanceModeChange(value as AttendanceMode)
+                    }
+                    allowClear={false}
+                    menuWidth={180}
+                    buttonClassName="h-8 !border-white/10 !bg-white/5 px-2.5 text-xs font-medium text-white/90 hover:!border-white/20 hover:!bg-white/[0.08]"
+                    optionClassName="text-xs"
+                  />
+                </div>
               </div>
 
               <div className="relative flex items-center gap-4 py-2.5 pl-4">
@@ -384,169 +383,182 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
               )}
             </div>
 
-            {showsDepartureRules && <div className="h-px w-full bg-white/8" />}
+            <AnimatePresence initial={false} mode="wait">
+              <motion.div
+                key={attendanceMode}
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
+                className="overflow-hidden">
+                {showsDepartureRules && <div className="h-px w-full bg-white/8" />}
 
-            {showsDepartureRules && (
-              <div className="flex flex-col">
-                <div className="flex items-center gap-4 py-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <div className="text-sm font-medium text-white/90">
-                        Time in &amp; time out
-                      </div>
-                      <InfoPopover
-                        title="Time in & time out"
-                        description="Records Time in and Time out from member scans."
-                        details={[
-                          "The first valid scan records Time in.",
-                          "The next eligible scan records Time out after the minimum time below.",
-                          "Calculates total hours between Time in and Time out.",
-                          "Compares Time out with the scheduled end time to show Undertime or Overtime.",
-                          "The scheduled end time does not record Time out automatically.",
-                        ]}
-                        side="right"
-                      />
-                    </div>
-                    <div className="relative min-h-4">
-                      <AnimatePresence mode="wait">
-                        <motion.div
-                          key="work-hours-description"
-                          initial={{ opacity: 0, y: -2 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 2 }}
-                          transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                          className="text-xs font-normal text-white/65">
-                          Records Time in and Time out from member scans.
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                </div>
-
-                <AnimatePresence>
-                  {showsDepartureRules && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
-                      className="overflow-hidden">
-                      <div className="flex flex-col">
-                        {/* Scheduled End Time */}
-                        <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
-                          <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
-
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs text-white/65">Scheduled end time:</div>
+                {showsDepartureRules && (
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-4 py-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <div className="text-sm font-medium text-white/90">
+                            Time in &amp; time out
                           </div>
-                          <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                            <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
-                            <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
-                              <span>{formatTimeDisplay(classEndTime || "17:00").time}</span>
-                              <span className="text-[10px] font-medium text-white/55">
-                                {formatTimeDisplay(classEndTime || "17:00").period}
-                              </span>
-                            </div>
-                            <input
-                              type="time"
-                              title=""
-                              aria-label="Scheduled end time"
-                              value={classEndTime || "17:00"}
-                              onChange={(e) => handleEndTimeChange(e.target.value)}
-                              onClick={(e) => e.currentTarget.showPicker?.()}
-                              className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
-                            />
-                          </div>
-                        </div>
-                        <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
-                          <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
-                          <div className="min-w-0 flex-1 text-xs text-white/65">
-                            Minimum time before Time out:
-                          </div>
-                          <div className="ml-auto flex shrink-0 items-center gap-3.5">
-                            {([5, 15, 30, 60] as const).map((minutes) => (
-                              <button
-                                key={minutes}
-                                type="button"
-                                onClick={() => handleMinCheckoutDelayChange(minutes)}
-                                className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
-                                  minCheckoutDelayMinutes === minutes ? "text-cyan-400" : (
-                                    "text-white/40 hover:text-white/70"
-                                  )
-                                }`}>
-                                {minutes}m
-                                {minCheckoutDelayMinutes === minutes && (
-                                  <motion.div
-                                    layoutId="checkoutDelayUnderline"
-                                    className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
-                                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                                  />
-                                )}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-
-            {attendanceMode === "visits" && (
-              <>
-                <div className="mt-2 h-px w-full bg-white/8" />
-                <div className="flex items-center gap-4 py-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <div className="text-sm font-medium text-white/90">Visit rules</div>
-                      <InfoPopover
-                        title="Visit rules"
-                        description="Set the minimum time before ending a visit."
-                        details={[
-                          "The first scan starts a visit.",
-                          "The next eligible scan ends the visit.",
-                          "A later scan starts the next visit.",
-                        ]}
-                        side="right"
-                      />
-                    </div>
-                    <div className="text-xs font-normal text-white/65">
-                      Set the minimum time before ending a visit.
-                    </div>
-                  </div>
-                </div>
-                <div className="relative flex items-center gap-4 py-2.5 pl-4">
-                  <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
-                  <div className="min-w-0 flex-1 text-xs text-white/65">
-                    Minimum visit duration:
-                  </div>
-                  <div className="ml-auto flex shrink-0 items-center gap-3.5">
-                    {([5, 15, 30, 60] as const).map((minutes) => (
-                      <button
-                        key={minutes}
-                        type="button"
-                        onClick={() => handleMinCheckoutDelayChange(minutes)}
-                        className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
-                          minCheckoutDelayMinutes === minutes ? "text-cyan-400" : (
-                            "text-white/40 hover:text-white/70"
-                          )
-                        }`}>
-                        {minutes}m
-                        {minCheckoutDelayMinutes === minutes && (
-                          <motion.div
-                            layoutId="visitDurationUnderline"
-                            className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
-                            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                          <InfoPopover
+                            title="Time in & time out"
+                            description="Records Time in and Time out from member scans."
+                            details={[
+                              "The first valid scan records Time in.",
+                              "The next eligible scan records Time out after the minimum time below.",
+                              "Calculates total hours between Time in and Time out.",
+                              "Compares Time out with the scheduled end time to show Undertime or Overtime.",
+                              "The scheduled end time does not record Time out automatically.",
+                            ]}
+                            side="right"
                           />
-                        )}
-                      </button>
-                    ))}
+                        </div>
+                        <div className="relative min-h-4">
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key="work-hours-description"
+                              initial={{ opacity: 0, y: -2 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 2 }}
+                              transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
+                              className="text-xs font-normal text-white/65">
+                              Records Time in and Time out from member scans.
+                            </motion.div>
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                    </div>
+
+                    <AnimatePresence>
+                      {showsDepartureRules && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{
+                            duration: SETTINGS_PANEL_ANIMATION_DURATION,
+                            ease: "easeOut",
+                          }}
+                          className="overflow-hidden">
+                          <div className="flex flex-col">
+                            {/* Scheduled End Time */}
+                            <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
+                              <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs text-white/65">Scheduled end time:</div>
+                              </div>
+                              <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
+                                <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
+                                <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
+                                  <span>{formatTimeDisplay(classEndTime || "17:00").time}</span>
+                                  <span className="text-[10px] font-medium text-white/55">
+                                    {formatTimeDisplay(classEndTime || "17:00").period}
+                                  </span>
+                                </div>
+                                <input
+                                  type="time"
+                                  title=""
+                                  aria-label="Scheduled end time"
+                                  value={classEndTime || "17:00"}
+                                  onChange={(e) => handleEndTimeChange(e.target.value)}
+                                  onClick={(e) => e.currentTarget.showPicker?.()}
+                                  className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
+                                />
+                              </div>
+                            </div>
+                            <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
+                              <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+                              <div className="min-w-0 flex-1 text-xs text-white/65">
+                                Minimum time before Time out:
+                              </div>
+                              <div className="ml-auto flex shrink-0 items-center gap-3.5">
+                                {([5, 15, 30, 60] as const).map((minutes) => (
+                                  <button
+                                    key={minutes}
+                                    type="button"
+                                    onClick={() => handleMinCheckoutDelayChange(minutes)}
+                                    className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                                      minCheckoutDelayMinutes === minutes ? "text-cyan-400" : (
+                                        "text-white/40 hover:text-white/70"
+                                      )
+                                    }`}>
+                                    {minutes}m
+                                    {minCheckoutDelayMinutes === minutes && (
+                                      <motion.div
+                                        layoutId="checkoutDelayUnderline"
+                                        className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
+                                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                      />
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                </div>
-              </>
-            )}
-          </motion.div>
+                )}
+
+                {attendanceMode === "visits" && (
+                  <>
+                    <div className="mt-2 h-px w-full bg-white/8" />
+                    <div className="flex items-center gap-4 py-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <div className="text-sm font-medium text-white/90">Visit rules</div>
+                          <InfoPopover
+                            title="Visit rules"
+                            description="Set the minimum time before ending a visit."
+                            details={[
+                              "The first scan starts a visit.",
+                              "The next eligible scan ends the visit.",
+                              "A later scan starts the next visit.",
+                            ]}
+                            side="right"
+                          />
+                        </div>
+                        <div className="text-xs font-normal text-white/65">
+                          Set the minimum time before ending a visit.
+                        </div>
+                      </div>
+                    </div>
+                    <div className="relative flex items-center gap-4 py-2.5 pl-4">
+                      <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+                      <div className="min-w-0 flex-1 text-xs text-white/65">
+                        Minimum visit duration:
+                      </div>
+                      <div className="ml-auto flex shrink-0 items-center gap-3.5">
+                        {([5, 15, 30, 60] as const).map((minutes) => (
+                          <button
+                            key={minutes}
+                            type="button"
+                            onClick={() => handleMinCheckoutDelayChange(minutes)}
+                            className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                              minCheckoutDelayMinutes === minutes ? "text-cyan-400" : (
+                                "text-white/40 hover:text-white/70"
+                              )
+                            }`}>
+                            {minutes}m
+                            {minCheckoutDelayMinutes === minutes && (
+                              <motion.div
+                                layoutId="visitDurationUnderline"
+                                className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
+                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
 
         <span className="sr-only">Danger zone toggle</span>

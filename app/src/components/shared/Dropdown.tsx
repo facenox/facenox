@@ -229,7 +229,9 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
     /* eslint-enable @typescript-eslint/no-unused-vars */
 
     return (
-      <div
+      <motion.div
+        layout={fit ? "size" : false}
+        transition={{ layout: { duration: 0.22, ease: [0.16, 1, 0.3, 1] } }}
         className={`relative min-w-0 ${fit ? "w-fit" : ""} ${className}`}
         ref={internalRef}
         {...cleanProps}>
@@ -250,9 +252,17 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
             className={`dropdown-trigger flex min-w-0 cursor-pointer items-center ${
               fit ? "w-fit justify-start gap-2.5" : "justify-between"
             } ${fit ? "w-fit" : "w-full"} rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-left text-sm text-white transition-colors hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:cursor-not-allowed disabled:opacity-50 ${buttonClassName}`}>
-            <span className={`min-w-0 ${fit ? "" : "flex-1"} truncate text-left`}>
-              {trigger ?? displayText}
-            </span>
+            <AnimatePresence initial={false} mode="wait">
+              <motion.span
+                key={String(value ?? "placeholder")}
+                initial={{ opacity: 0, y: -2 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 2 }}
+                transition={{ duration: 0.14, ease: "easeOut" }}
+                className={`min-w-0 ${fit ? "" : "flex-1"} truncate text-left`}>
+                {trigger ?? displayText}
+              </motion.span>
+            </AnimatePresence>
             {showChevron && (
               <span
                 aria-hidden="true"
@@ -390,7 +400,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
           </AnimatePresence>,
           document.body,
         )}
-      </div>
+      </motion.div>
     )
   },
 )
