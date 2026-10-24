@@ -265,7 +265,7 @@ export function ReportToolbar({
                   exit={{ opacity: 0, scale: 0.95, y: -5 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   className="absolute top-full right-0 z-50 mt-1.5 flex w-[260px] flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0f1011]/95 p-2 shadow-xl backdrop-blur-md">
-                  <div className="grid grid-cols-2 gap-1 pb-2">
+                  <div className="grid grid-cols-2 gap-1">
                     {DATE_PRESETS.map(({ id, label }) => {
                       const isSelected = activePreset === id
                       return (
@@ -291,11 +291,16 @@ export function ReportToolbar({
                     })}
                   </div>
 
-                  <div className="border-t border-white/5 pt-2">
-                    <span className="px-1 text-[10px] font-bold tracking-wider text-white/40 uppercase">
-                      Custom Range
+                  <div className="my-2.5 flex items-center gap-2 px-1">
+                    <div className="h-px flex-1 bg-white/10" />
+                    <span className="text-[9px] font-bold tracking-wider text-white/35 uppercase">
+                      Custom
                     </span>
-                    <div className="mt-1.5 flex items-center gap-1.5">
+                    <div className="h-px flex-1 bg-white/10" />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-1.5">
                       <input
                         type="date"
                         value={customStart}
