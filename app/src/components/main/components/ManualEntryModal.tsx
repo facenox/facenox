@@ -238,20 +238,17 @@ export const ManualEntryModal = ({
                 <span className="ml-1 text-white/55">Present</span>
               </span>
               {noFaceCount > 0 && (
-                <>
-                  <span className="text-white/10 select-none">•</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-white/55">
-                      <strong className="font-semibold text-white/70">{noFaceCount}</strong> not
-                      enrolled
-                    </span>
-                    <InfoPopover
-                      title="Not enrolled"
-                      description="Members marked 'not enrolled' do not have enrolled face data. They must complete face enrollment in group settings to be recognized by the camera."
-                      side="top"
-                    />
-                  </div>
-                </>
+                <div className="ml-auto flex items-center gap-1">
+                  <span className="text-white/55">
+                    <strong className="font-semibold text-white/70">{noFaceCount}</strong> not
+                    enrolled
+                  </span>
+                  <InfoPopover
+                    title="Not enrolled"
+                    description="Members marked 'not enrolled' do not have enrolled face data. They must complete face enrollment in group settings to be recognized by the camera."
+                    side="top"
+                  />
+                </div>
               )}
             </div>
 

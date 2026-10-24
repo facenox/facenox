@@ -1,7 +1,7 @@
 import { useState } from "react"
 
 import { ErrorMessage, Modal } from "@/components/common"
-import { InfoPopover } from "@/components/shared"
+import { InfoPopover, Tooltip } from "@/components/shared"
 import { attendanceManager } from "@/services/AttendanceManager"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { useGroupStore } from "@/components/group/stores"
@@ -140,13 +140,15 @@ export function ManualCorrectionModal({
             className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
             Cancel
           </button>
-          <button
-            type="button"
-            onClick={() => void handleSubmit()}
-            disabled={isSubmitting || !trimmedReason}
-            className="rounded-lg bg-amber-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 transition-all duration-200 hover:bg-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
-            {isSubmitting ? "Voiding…" : "Void entry"}
-          </button>
+          <Tooltip content="Marks this entry invalid without deleting it." position="top">
+            <button
+              type="button"
+              onClick={() => void handleSubmit()}
+              disabled={isSubmitting || !trimmedReason}
+              className="rounded-lg bg-amber-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 transition-all duration-200 hover:bg-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
+              {isSubmitting ? "Voiding…" : "Void entry"}
+            </button>
+          </Tooltip>
         </div>
       </div>
     </Modal>
