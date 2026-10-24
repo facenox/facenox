@@ -302,9 +302,9 @@ export function Members({
 
   const searchBarMaxWidthClass =
     isSearchExpanded ?
-      enrollmentFilter === "all" ? "max-w-[320px]"
-      : enrollmentFilter === "enrolled" ? "max-w-[364px]"
-      : "max-w-[390px]"
+      enrollmentFilter === "all" ? "max-w-[280px]"
+      : enrollmentFilter === "enrolled" ? "max-w-[324px]"
+      : "max-w-[350px]"
     : enrollmentFilter === "all" ? "max-w-[260px]"
     : enrollmentFilter === "enrolled" ? "max-w-[304px]"
     : "max-w-[330px]"

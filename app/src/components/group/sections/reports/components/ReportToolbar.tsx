@@ -222,7 +222,7 @@ export function ReportToolbar({
   }, [startDate, endDate])
 
   const isSearchExpanded = search.trim().length > 0 || isSearchFocused || shouldKeepExpanded
-  const searchBarMaxWidthClass = isSearchExpanded ? "max-w-[460px]" : "max-w-[380px]"
+  const searchBarMaxWidthClass = isSearchExpanded ? "max-w-[340px]" : "max-w-[320px]"
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 pb-3">
@@ -279,11 +279,10 @@ export function ReportToolbar({
                             onEndDateChange(range.end)
                             setDateDropdownOpen(false)
                           }}
-                          className={`flex items-center justify-between rounded px-2.5 py-1.5 text-left text-[11px] font-semibold transition-all duration-150 ${
-                            isSelected ?
-                              "bg-cyan-500/10 font-bold text-cyan-400"
+                          className={`flex items-center justify-between rounded px-2.5 py-1.5 text-left text-[11px] font-semibold transition-all duration-150 ${isSelected ?
+                            "bg-cyan-500/10 font-bold text-cyan-400"
                             : "text-white/70 hover:bg-white/5 hover:text-white"
-                          }`}>
+                            }`}>
                           <span>{label}</span>
                           {isSelected && <Check className="size-3 text-cyan-400" />}
                         </button>
@@ -348,16 +347,15 @@ export function ReportToolbar({
             content={
               statusFilter !== "all" ?
                 `Filter: ${STATUS_OPTIONS.find((s) => s.value === statusFilter)?.label}`
-              : "Filter"
+                : "Filter"
             }
             position="bottom">
             <button
               onClick={() => setShowFilter(!showFilter)}
-              className={`relative flex h-9 w-9 items-center justify-center rounded-lg border-0 bg-transparent transition-all duration-300 active:scale-95 ${
-                showFilter || statusFilter !== "all" ?
-                  "bg-cyan-500/[0.08] text-cyan-400"
+              className={`relative flex h-9 w-9 items-center justify-center rounded-lg border-0 bg-transparent transition-all duration-300 active:scale-95 ${showFilter || statusFilter !== "all" ?
+                "bg-cyan-500/[0.08] text-cyan-400"
                 : "text-white/55 hover:bg-white/5 hover:text-white"
-              }`}>
+                }`}>
               <Filter className="size-3.5" />
               {statusFilter !== "all" && (
                 <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-[1px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
@@ -380,11 +378,10 @@ export function ReportToolbar({
                       setStatusFilter(st as ReportStatusFilter)
                       setShowFilter(false)
                     }}
-                    className={`w-full border-0 px-3 py-2.5 text-left text-[11px] font-bold tracking-wider transition-colors ${
-                      statusFilter === st ?
-                        "bg-cyan-500/10 text-cyan-400"
+                    className={`w-full border-0 px-3 py-2.5 text-left text-[11px] font-bold tracking-wider transition-colors ${statusFilter === st ?
+                      "bg-cyan-500/10 text-cyan-400"
                       : "text-white/65 hover:bg-white/5 hover:text-white"
-                    }`}>
+                      }`}>
                     {label}
                   </button>
                 ))}
@@ -397,11 +394,10 @@ export function ReportToolbar({
           <Tooltip content="Options" position="bottom">
             <button
               onClick={() => setShowOptions(!showOptions)}
-              className={`flex h-9 w-9 items-center justify-center rounded-lg border-0 bg-transparent transition-all duration-300 active:scale-95 ${
-                showOptions ?
-                  "bg-cyan-500/[0.08] text-cyan-400"
+              className={`flex h-9 w-9 items-center justify-center rounded-lg border-0 bg-transparent transition-all duration-300 active:scale-95 ${showOptions ?
+                "bg-cyan-500/[0.08] text-cyan-400"
                 : "text-white/55 hover:bg-white/5 hover:text-white"
-              }`}>
+                }`}>
               <SlidersHorizontal className="size-3.5" />
             </button>
           </Tooltip>

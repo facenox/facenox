@@ -120,9 +120,9 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
 
   const searchBarMaxWidthClass =
     isSearchExpanded ?
-      dateFilter === "today" ? "max-w-[320px]"
-      : dateFilter === "yesterday" ? "max-w-[340px]"
-      : "max-w-[350px]"
+      dateFilter === "today" ? "max-w-[280px]"
+      : dateFilter === "yesterday" ? "max-w-[300px]"
+      : "max-w-[310px]"
     : dateFilter === "today" ? "max-w-[260px]"
     : dateFilter === "yesterday" ? "max-w-[280px]"
     : "max-w-[290px]"

@@ -40,8 +40,8 @@ export function Groups({
         if (active)
           setCanManage(
             !config.connected ||
-              (config as { allowKioskDirectoryManagement?: boolean })
-                .allowKioskDirectoryManagement !== false,
+            (config as { allowKioskDirectoryManagement?: boolean })
+              .allowKioskDirectoryManagement !== false,
           )
       } catch {
         if (active) setCanManage(false)
@@ -67,7 +67,7 @@ export function Groups({
     <div className="w-full space-y-4 px-10 pt-8 pb-20">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div
-          className={`group/bar relative w-full transition-all duration-300 ease-out motion-reduce:transition-none ${searchFocused || query.trim() ? "max-w-[320px]" : "max-w-[260px]"}`}>
+          className={`group/bar relative w-full transition-all duration-300 ease-out motion-reduce:transition-none ${searchFocused || query.trim() ? "max-w-[190px]" : "max-w-[170px]"}`}>
           <Search
             aria-hidden="true"
             className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45"
@@ -88,7 +88,7 @@ export function Groups({
         <div className="text-xs text-white/55">
           {filtered.length !== groups.length ?
             `${filtered.length} of ${groups.length} group${groups.length !== 1 ? "s" : ""}`
-          : `${groups.length} group${groups.length !== 1 ? "s" : ""}`}
+            : `${groups.length} group${groups.length !== 1 ? "s" : ""}`}
         </div>
       )}
       {canManage === false && (
