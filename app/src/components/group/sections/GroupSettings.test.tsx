@@ -100,6 +100,7 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
 
     expect(screen.getAllByText("Time in & time out").length).toBeGreaterThan(1)
     expect(screen.getByText("Scheduled end time:")).toBeInTheDocument()
+    expect(screen.getByText("Minimum time before Time out:")).toBeInTheDocument()
     expect(screen.queryByRole("switch", { name: "Time in and time out" })).not.toBeInTheDocument()
   })
 

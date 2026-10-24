@@ -456,6 +456,34 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                             />
                           </div>
                         </div>
+                        <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
+                          <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+                          <div className="min-w-0 flex-1 text-xs text-white/65">
+                            Minimum time before Time out:
+                          </div>
+                          <div className="ml-auto flex shrink-0 items-center gap-3.5">
+                            {([5, 15, 30, 60] as const).map((minutes) => (
+                              <button
+                                key={minutes}
+                                type="button"
+                                onClick={() => handleMinCheckoutDelayChange(minutes)}
+                                className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                                  minCheckoutDelayMinutes === minutes ? "text-cyan-400" : (
+                                    "text-white/40 hover:text-white/70"
+                                  )
+                                }`}>
+                                {minutes}m
+                                {minCheckoutDelayMinutes === minutes && (
+                                  <motion.div
+                                    layoutId="checkoutDelayUnderline"
+                                    className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
+                                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                  />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </motion.div>
                   )}
