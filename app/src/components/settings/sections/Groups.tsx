@@ -84,6 +84,13 @@ export function Groups({
           />
         </div>
       </div>
+      {groups.length > 0 && filtered.length > 0 && (
+        <div className="text-xs text-white/55">
+          {filtered.length !== groups.length ?
+            `${filtered.length} of ${groups.length} group${groups.length !== 1 ? "s" : ""}`
+          : `${groups.length} group${groups.length !== 1 ? "s" : ""}`}
+        </div>
+      )}
       {canManage === false && (
         <p className="text-xs text-white/55">
           Group editing is unavailable. Check Cloud sync for organization policy and connection
