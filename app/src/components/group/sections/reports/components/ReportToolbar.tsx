@@ -113,7 +113,7 @@ export function ReportToolbar({
   }
 
   const isSearchExpanded = search.trim().length > 0 || isSearchFocused || shouldKeepExpanded
-  const searchBarMaxWidthClass = isSearchExpanded ? "max-w-[560px]" : "max-w-[500px]"
+  const searchBarMaxWidthClass = isSearchExpanded ? "max-w-[500px]" : "max-w-[460px]"
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 pb-3">
@@ -140,7 +140,7 @@ export function ReportToolbar({
               onChange={(e) => onStartDateChange(e.target.value)}
               onFocus={handleDateFocus}
               onBlur={handleDateBlur}
-              className="h-full w-[112px] cursor-pointer border-0 bg-transparent text-[11px] font-bold tracking-wider text-white outline-none hover:text-cyan-400 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:p-0"
+              className="h-full w-[92px] cursor-pointer border-0 bg-transparent text-[11px] font-bold tracking-wider text-white outline-none hover:text-cyan-400 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:p-0"
               style={{ colorScheme: "dark" } as React.CSSProperties}
             />
             <span
@@ -154,7 +154,7 @@ export function ReportToolbar({
               onChange={(e) => onEndDateChange(e.target.value)}
               onFocus={handleDateFocus}
               onBlur={handleDateBlur}
-              className="h-full w-[112px] cursor-pointer border-0 bg-transparent text-[11px] font-bold tracking-wider text-white outline-none hover:text-cyan-400 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:p-0"
+              className="h-full w-[92px] cursor-pointer border-0 bg-transparent text-[11px] font-bold tracking-wider text-white outline-none hover:text-cyan-400 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:p-0"
               style={{ colorScheme: "dark" } as React.CSSProperties}
             />
           </div>

@@ -181,6 +181,22 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     setIsEditingGroupName(false)
     setGroupNameInput(validInitialGroup?.name || "")
   }, [validInitialGroup?.name])
+
+  useEffect(() => {
+    if (!isEditingGroupName) return
+
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
+        handleCancelGroupNameEdit()
+      }
+    }
+
+    window.addEventListener("keydown", handleGlobalKeyDown, true)
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown, true)
+  }, [isEditingGroupName, handleCancelGroupNameEdit])
   const antiSpoofDetectionInfoDismissed = useUIStore(
     (state) => state.antiSpoofDetectionInfoDismissed,
   )
@@ -493,6 +509,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                           } else if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
                             e.preventDefault()
                             e.stopPropagation()
+                            e.nativeEvent.stopImmediatePropagation()
                             handleCancelGroupNameEdit()
                           }
                         }}

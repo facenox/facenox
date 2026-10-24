@@ -96,8 +96,13 @@ export function GroupEntry({
 
   const handleGroupKeyDown = (e: React.KeyboardEvent, field: GroupField) => {
     if (e.key === "Enter") {
+      e.preventDefault()
+      e.stopPropagation()
       onSaveGroupEdit(group.id, field, editValue)
     } else if (e.key === "Escape") {
+      e.preventDefault()
+      e.stopPropagation()
+      e.nativeEvent.stopImmediatePropagation()
       onCancelEditing()
     }
   }

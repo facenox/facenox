@@ -37,8 +37,13 @@ export const MemberEntry = React.memo(
 
     const handleKeyDown = (e: React.KeyboardEvent, field: MemberField) => {
       if (e.key === "Enter") {
+        e.preventDefault()
+        e.stopPropagation()
         onSaveEdit(member.person_id, field, editValue)
       } else if (e.key === "Escape") {
+        e.preventDefault()
+        e.stopPropagation()
+        e.nativeEvent.stopImmediatePropagation()
         onCancelEditing()
       }
     }
