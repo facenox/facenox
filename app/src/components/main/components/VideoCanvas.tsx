@@ -95,6 +95,13 @@ export const VideoCanvas = memo(function VideoCanvas({
   }
 
   const isAllGroups = currentGroup?.id === ALL_GROUPS_ID || currentGroup?.id === "all"
+  const attendanceMode =
+    currentGroup?.settings?.attendance_mode ??
+    (currentGroup?.settings?.track_checkout ? "work_hours" : "attendance")
+  const attendanceModeLabel =
+    attendanceMode === "work_hours" ? "Time in & time out"
+    : attendanceMode === "visits" ? "Visits"
+    : "Attendance"
 
   const tooltipContent =
     currentGroup ?
@@ -117,27 +124,44 @@ export const VideoCanvas = memo(function VideoCanvas({
           </span>
         </div>
 
-        {/* 2. Entry & Exit */}
+        {/* 2. Attendance mode */}
         <div className="flex items-center justify-between gap-4">
-          <span>Entry & exit</span>
-          <span className="text-right font-mono font-medium text-white/85">
-            {isAllGroups ?
-              <span className="font-sans text-white/70">Per-group</span>
-            : currentGroup.settings?.track_checkout ?
-              currentGroup.settings?.class_end_time ?
-                `Enabled (${format12hTime(currentGroup.settings.class_end_time)})`
-              : "Enabled"
-            : <span className="font-sans text-white/40">Disabled</span>}
+          <span>Mode</span>
+          <span className="text-right font-medium text-white/85">
+            {isAllGroups ? <span className="font-sans text-white/70">Per-group</span> : attendanceModeLabel}
           </span>
         </div>
 
-        {/* 3. Duplicate Filter */}
+        {/* 3. Time in & Time out */}
+        <div className="flex items-center justify-between gap-4">
+          <span>Time in &amp; time out</span>
+          <span className="text-right font-mono font-medium text-white/85">
+            {isAllGroups ?
+              <span className="font-sans text-white/70">Per-group</span>
+            : attendanceMode === "work_hours" ?
+              currentGroup.settings?.class_end_time ?
+                `Enabled (${format12hTime(currentGroup.settings.class_end_time)})`
+              : "Enabled"
+            : <span className="font-sans text-white/40">Not used</span>}
+          </span>
+        </div>
+
+        {attendanceMode === "work_hours" && !isAllGroups && (
+          <div className="flex items-center justify-between gap-4">
+            <span>Minimum Time out</span>
+            <span className="text-right font-medium text-white/85">
+              {currentGroup.settings?.min_checkout_delay_minutes ?? 15}m
+            </span>
+          </div>
+        )}
+
+        {/* 4. Duplicate Filter */}
         <div className="flex items-center justify-between gap-4">
           <span>Duplicate filter</span>
           <span className="text-right font-medium text-white/85">5s auto</span>
         </div>
 
-        {/* 4. Recognition Limit */}
+        {/* 5. Recognition Limit */}
         <div className="flex items-center justify-between gap-4">
           <span>Face limit</span>
           <span className="text-right font-medium text-white/85">
@@ -145,7 +169,7 @@ export const VideoCanvas = memo(function VideoCanvas({
           </span>
         </div>
 
-        {/* 5. Anti-Spoofing */}
+        {/* 6. Anti-Spoofing */}
         <div className="flex items-center justify-between gap-4">
           <span>Anti-spoofing</span>
           <span className="text-right font-medium text-white/85">
