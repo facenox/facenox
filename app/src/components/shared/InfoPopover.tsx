@@ -24,7 +24,7 @@ interface InfoPopoverProps {
   }
   /** Preferred side to open. Defaults to "right" (good for inline settings). */
   side?: "top" | "bottom" | "left" | "right"
-  /** Custom width class. Defaults to "w-80" (320px). */
+  /** Custom width class. Defaults to "w-84" (336px). */
   widthClass?: string
 }
 
@@ -40,7 +40,7 @@ export function InfoPopover({
   detailsNode,
   media,
   side = "right",
-  widthClass = "w-80",
+  widthClass = "w-84",
 }: InfoPopoverProps) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
@@ -193,7 +193,9 @@ export function InfoPopover({
                         <li
                           key={index}
                           className="flex items-start gap-1.5 text-[10.5px] text-white/65">
-                          <span className="mt-[5px] h-1 w-1 shrink-0 rounded-[1px] bg-cyan-400/40" />
+                          <span className="shrink-0 text-white/35" aria-hidden="true">
+                            –
+                          </span>
                           <span>{detail}</span>
                         </li>
                       ))}
@@ -204,7 +206,9 @@ export function InfoPopover({
                           {!(node as { props?: Record<string, unknown> })?.props?.[
                             "data-hide-chevron"
                           ] && (
-                            <span className="mt-[5px] h-1 w-1 shrink-0 rounded-[1px] bg-cyan-400/40" />
+                            <span className="shrink-0 text-white/35" aria-hidden="true">
+                              –
+                            </span>
                           )}
                           <span>{node}</span>
                         </li>
