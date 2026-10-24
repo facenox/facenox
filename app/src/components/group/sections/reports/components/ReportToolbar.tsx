@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Check, Filter, Search, SlidersHorizontal } from "lucide-react"
+import { Calendar, Check, ChevronDown, Filter, Search, SlidersHorizontal } from "lucide-react"
 import { Dropdown, Tooltip } from "@/components/shared"
+import { getLocalDateString, parseLocalDate } from "@/utils"
 import type {
   ColumnKey,
   GroupByKey,
@@ -39,6 +40,100 @@ const GROUP_OPTIONS = [
   { value: "date", label: "Date" },
 ] as const
 
+type DatePreset = "today" | "yesterday" | "week" | "7days" | "month" | "30days"
+
+const DATE_PRESETS: { id: DatePreset; label: string }[] = [
+  { id: "today", label: "Today" },
+  { id: "yesterday", label: "Yesterday" },
+  { id: "week", label: "This Week" },
+  { id: "7days", label: "Last 7 Days" },
+  { id: "month", label: "This Month" },
+  { id: "30days", label: "Last 30 Days" },
+]
+
+function getPresetRange(preset: DatePreset): { start: string; end: string } {
+  const now = new Date()
+  const today = getLocalDateString(now)
+
+  if (preset === "today") {
+    return { start: today, end: today }
+  }
+  if (preset === "yesterday") {
+    const y = new Date(now)
+    y.setDate(y.getDate() - 1)
+    const yesterday = getLocalDateString(y)
+    return { start: yesterday, end: yesterday }
+  }
+  if (preset === "week") {
+    const monday = new Date(now)
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+    return { start: getLocalDateString(monday), end: today }
+  }
+  if (preset === "7days") {
+    const d7 = new Date(now)
+    d7.setDate(now.getDate() - 6)
+    return { start: getLocalDateString(d7), end: today }
+  }
+  if (preset === "month") {
+    const m1 = new Date(now.getFullYear(), now.getMonth(), 1)
+    return { start: getLocalDateString(m1), end: today }
+  }
+  if (preset === "30days") {
+    const d30 = new Date(now)
+    d30.setDate(now.getDate() - 29)
+    return { start: getLocalDateString(d30), end: today }
+  }
+  return { start: today, end: today }
+}
+
+function getDisplayDateLabel(startDate: string, endDate: string): string {
+  const now = new Date()
+  const today = getLocalDateString(now)
+  const y = new Date(now)
+  y.setDate(y.getDate() - 1)
+  const yesterday = getLocalDateString(y)
+
+  if (startDate === today && endDate === today) return "Today"
+  if (startDate === yesterday && endDate === yesterday) return "Yesterday"
+
+  const monday = new Date(now)
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+  if (startDate === getLocalDateString(monday) && endDate === today) return "This Week"
+
+  const d7 = new Date(now)
+  d7.setDate(now.getDate() - 6)
+  if (startDate === getLocalDateString(d7) && endDate === today) return "Last 7 Days"
+
+  const m1 = new Date(now.getFullYear(), now.getMonth(), 1)
+  if (startDate === getLocalDateString(m1) && endDate === today) return "This Month"
+
+  const d30 = new Date(now)
+  d30.setDate(now.getDate() - 29)
+  if (startDate === getLocalDateString(d30) && endDate === today) return "Last 30 Days"
+
+  const s = parseLocalDate(startDate)
+  const e = parseLocalDate(endDate)
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) {
+    return `${startDate} – ${endDate}`
+  }
+
+  const sMonth = s.toLocaleDateString("en-US", { month: "short" })
+  const eMonth = e.toLocaleDateString("en-US", { month: "short" })
+
+  if (startDate === endDate) {
+    return `${sMonth} ${s.getDate()}`
+  }
+
+  if (s.getFullYear() === e.getFullYear()) {
+    if (s.getMonth() === e.getMonth()) {
+      return `${sMonth} ${s.getDate()} – ${e.getDate()}`
+    }
+    return `${sMonth} ${s.getDate()} – ${eMonth} ${e.getDate()}`
+  }
+
+  return `${sMonth} ${s.getDate()}, ${s.getFullYear()} – ${eMonth} ${e.getDate()}, ${e.getFullYear()}`
+}
+
 export function ReportToolbar({
   startDate,
   endDate,
@@ -56,11 +151,23 @@ export function ReportToolbar({
 }: ReportToolbarProps) {
   const [showOptions, setShowOptions] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
+  const [dateDropdownOpen, setDateDropdownOpen] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [shouldKeepExpanded, setShouldKeepExpanded] = useState(false)
+
+  const [customStart, setCustomStart] = useState(startDate)
+  const [customEnd, setCustomEnd] = useState(endDate)
+
   const optionsRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
+  const dateDropdownRef = useRef<HTMLDivElement>(null)
 
   const finalStatusOptions = STATUS_OPTIONS
+
+  useEffect(() => {
+    setCustomStart(startDate)
+    setCustomEnd(endDate)
+  }, [startDate, endDate])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -70,37 +177,26 @@ export function ReportToolbar({
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
         setShowFilter(false)
       }
+      if (dateDropdownRef.current && !dateDropdownRef.current.contains(event.target as Node)) {
+        setDateDropdownOpen(false)
+      }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const [shouldKeepExpanded, setShouldKeepExpanded] = useState(false)
-  const dateBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const handleDateFocus = () => {
-    if (dateBlurTimeoutRef.current) {
-      clearTimeout(dateBlurTimeoutRef.current)
-      dateBlurTimeoutRef.current = null
-    }
-    if (isSearchFocused || search.trim().length > 0 || shouldKeepExpanded) {
-      setShouldKeepExpanded(true)
-    }
-  }
-
-  const handleDateBlur = () => {
-    dateBlurTimeoutRef.current = setTimeout(() => {
-      setShouldKeepExpanded(false)
-    }, 150)
-  }
-
   useEffect(() => {
-    return () => {
-      if (dateBlurTimeoutRef.current) {
-        clearTimeout(dateBlurTimeoutRef.current)
+    if (dateDropdownOpen) {
+      if (isSearchFocused || search.trim().length > 0) {
+        setShouldKeepExpanded(true)
       }
+    } else {
+      const timer = setTimeout(() => {
+        setShouldKeepExpanded(false)
+      }, 150)
+      return () => clearTimeout(timer)
     }
-  }, [])
+  }, [dateDropdownOpen, isSearchFocused, search])
 
   const handleSearchFocus = () => {
     setIsSearchFocused(true)
@@ -112,8 +208,21 @@ export function ReportToolbar({
     }, 150)
   }
 
+  const dateRangeLabel = useMemo(
+    () => getDisplayDateLabel(startDate, endDate),
+    [startDate, endDate],
+  )
+
+  const activePreset = useMemo(() => {
+    for (const p of DATE_PRESETS) {
+      const r = getPresetRange(p.id)
+      if (r.start === startDate && r.end === endDate) return p.id
+    }
+    return null
+  }, [startDate, endDate])
+
   const isSearchExpanded = search.trim().length > 0 || isSearchFocused || shouldKeepExpanded
-  const searchBarMaxWidthClass = isSearchExpanded ? "max-w-[500px]" : "max-w-[460px]"
+  const searchBarMaxWidthClass = isSearchExpanded ? "max-w-[460px]" : "max-w-[380px]"
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 pb-3">
@@ -133,30 +242,97 @@ export function ReportToolbar({
             />
           </div>
 
-          <div className="flex h-9 items-center gap-1.5 rounded-l-none rounded-r-lg border border-l-0 border-white/5 bg-white/5 px-2.5 transition-all duration-300 group-focus-within/bar:border-white/20 focus-within:bg-white/[0.08] hover:bg-white/[0.08]">
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => onStartDateChange(e.target.value)}
-              onFocus={handleDateFocus}
-              onBlur={handleDateBlur}
-              className="h-full w-[92px] cursor-pointer border-0 bg-transparent text-[11px] font-bold tracking-wider text-white outline-none hover:text-cyan-400 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:p-0"
-              style={{ colorScheme: "dark" } as React.CSSProperties}
-            />
-            <span
+          <div className="relative shrink-0" ref={dateDropdownRef}>
+            <button
+              type="button"
               onMouseDown={(e) => e.preventDefault()}
-              className="text-[10px] font-bold tracking-wider text-white/30 uppercase">
-              to
-            </span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => onEndDateChange(e.target.value)}
-              onFocus={handleDateFocus}
-              onBlur={handleDateBlur}
-              className="h-full w-[92px] cursor-pointer border-0 bg-transparent text-[11px] font-bold tracking-wider text-white outline-none hover:text-cyan-400 [&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:p-0"
-              style={{ colorScheme: "dark" } as React.CSSProperties}
-            />
+              onClick={() => setDateDropdownOpen((o) => !o)}
+              className="flex h-9 transform-gpu items-center justify-between gap-1.5 rounded-l-none rounded-r-lg border border-l-0 border-white/5 bg-white/5 px-2.5 text-[12px] font-semibold text-white/80 transition-colors duration-300 outline-none group-focus-within/bar:border-white/20 focus-within:bg-white/[0.08] hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08]">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <Calendar className="size-3 text-white/55" />
+                <span className="truncate">{dateRangeLabel}</span>
+              </span>
+              <ChevronDown
+                className={`size-2.5 shrink-0 text-white/55 transition-transform duration-150 ${dateDropdownOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            <AnimatePresence>
+              {dateDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  className="absolute top-full right-0 z-50 mt-1.5 flex w-[260px] flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0f1011]/95 p-2 shadow-xl backdrop-blur-md">
+                  <div className="grid grid-cols-2 gap-1 pb-2">
+                    {DATE_PRESETS.map(({ id, label }) => {
+                      const isSelected = activePreset === id
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            const range = getPresetRange(id)
+                            onStartDateChange(range.start)
+                            onEndDateChange(range.end)
+                            setDateDropdownOpen(false)
+                          }}
+                          className={`flex items-center justify-between rounded px-2.5 py-1.5 text-left text-[11px] font-semibold transition-all duration-150 ${
+                            isSelected ?
+                              "bg-cyan-500/10 font-bold text-cyan-400"
+                            : "text-white/70 hover:bg-white/5 hover:text-white"
+                          }`}>
+                          <span>{label}</span>
+                          {isSelected && <Check className="size-3 text-cyan-400" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <div className="border-t border-white/5 pt-2">
+                    <span className="px-1 text-[10px] font-bold tracking-wider text-white/40 uppercase">
+                      Custom Range
+                    </span>
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <input
+                        type="date"
+                        value={customStart}
+                        min="2000-01-01"
+                        max="2099-12-31"
+                        onChange={(e) => setCustomStart(e.target.value)}
+                        className="h-7 w-full rounded border border-white/10 bg-white/5 px-2 text-[11px] font-medium text-white outline-none focus:border-white/25 focus:bg-white/[0.08]"
+                        style={{ colorScheme: "dark" } as React.CSSProperties}
+                      />
+                      <span className="text-[10px] font-bold text-white/30 uppercase">to</span>
+                      <input
+                        type="date"
+                        value={customEnd}
+                        min="2000-01-01"
+                        max="2099-12-31"
+                        onChange={(e) => setCustomEnd(e.target.value)}
+                        className="h-7 w-full rounded border border-white/10 bg-white/5 px-2 text-[11px] font-medium text-white outline-none focus:border-white/25 focus:bg-white/[0.08]"
+                        style={{ colorScheme: "dark" } as React.CSSProperties}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      disabled={!customStart || !customEnd || customStart > customEnd}
+                      onClick={() => {
+                        if (customStart && customEnd && customStart <= customEnd) {
+                          onStartDateChange(customStart)
+                          onEndDateChange(customEnd)
+                          setDateDropdownOpen(false)
+                        }
+                      }}
+                      className="mt-2 w-full rounded bg-white/10 py-1.5 text-center text-[11px] font-semibold text-white transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40">
+                      Apply Range
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

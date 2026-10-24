@@ -74,6 +74,8 @@ export function Reports({
     reportEndDate,
   )
 
+  const hasMembers = members.length > 0 || storeMembers.length > 0
+
   const {
     visibleColumns,
     setVisibleColumns,
@@ -100,8 +102,10 @@ export function Reports({
   )
 
   useEffect(() => {
-    // Execute immediately on mount/change, no need for artificial delay
-    generateReport()
+    const timer = setTimeout(() => {
+      generateReport()
+    }, 250)
+    return () => clearTimeout(timer)
   }, [generateReport])
 
   useEffect(() => {
@@ -153,85 +157,89 @@ export function Reports({
   return (
     <section className="flex h-full w-full flex-col overflow-hidden bg-transparent">
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <AnimatePresence mode="wait">
-          {loading ?
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex flex-1 items-center justify-center">
-              <div className="flex flex-col items-center gap-4">
-                <Spinner size="lg" className="mb-1" />
-                <span className="text-sm font-medium text-white/65">Generating report</span>
-              </div>
-            </motion.div>
-          : !loading && members.length === 0 && !error ?
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex flex-1 items-center justify-center">
-              <EmptyState
-                title="This group has no members"
-                description="Add members to start generating reports and viewing attendance data."
-                action={
-                  onAddMember ?
-                    {
-                      label: "Add member",
-                      onClick: onAddMember,
-                      icon: <UserPlus className="size-3" />,
-                    }
-                  : undefined
-                }
-              />
-            </motion.div>
-          : <motion.div
-              key="table"
-              initial={{ opacity: 0, scale: 0.998 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="flex min-w-0 flex-1 flex-col overflow-hidden bg-transparent">
-              <div className="shrink-0 px-10 pt-8">
-                <ReportToolbar
-                  startDate={reportStartDate}
-                  endDate={reportEndDate}
-                  onStartDateChange={setReportStartDate}
-                  onEndDateChange={setReportEndDate}
-                  visibleColumns={visibleColumns}
-                  setVisibleColumns={setVisibleColumns}
-                  groupBy={groupBy}
-                  setGroupBy={setGroupBy}
-                  statusFilter={statusFilter}
-                  setStatusFilter={setStatusFilter}
-                  search={search}
-                  setSearch={setSearch}
-                  allColumns={allColumns}
-                />
-              </div>
+        {hasMembers && (
+          <div className="shrink-0 px-10 pt-8">
+            <ReportToolbar
+              startDate={reportStartDate}
+              endDate={reportEndDate}
+              onStartDateChange={setReportStartDate}
+              onEndDateChange={setReportEndDate}
+              visibleColumns={visibleColumns}
+              setVisibleColumns={setVisibleColumns}
+              groupBy={groupBy}
+              setGroupBy={setGroupBy}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              search={search}
+              setSearch={setSearch}
+              allColumns={allColumns}
+            />
+          </div>
+        )}
 
-              <ReportTable
-                groupedRows={groupedRows}
-                visibleColumns={visibleColumns}
-                allColumns={allColumns}
-                search={search}
-                statusFilter={statusFilter}
-                onResetFilter={() => setStatusFilter("all")}
-                onResetDates={() => {
-                  setReportStartDate(getLocalDateString())
-                  setReportEndDate(getLocalDateString())
-                }}
-                onEditRow={setEditingRow}
-                pageSize={pageSize}
-                onPageSizeChange={setPageSize}
-                error={error}
-              />
-            </motion.div>
-          }
-        </AnimatePresence>
+        <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <AnimatePresence mode="wait">
+            {!hasMembers && !loading ?
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex flex-1 items-center justify-center">
+                <EmptyState
+                  title="This group has no members"
+                  description="Add members to start generating reports and viewing attendance data."
+                  action={
+                    onAddMember ?
+                      {
+                        label: "Add member",
+                        onClick: onAddMember,
+                        icon: <UserPlus className="size-3" />,
+                      }
+                    : undefined
+                  }
+                />
+              </motion.div>
+            : loading ?
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="flex flex-1 items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                  <Spinner size="lg" className="mb-1" />
+                  <span className="text-sm font-medium text-white/65">Generating report</span>
+                </div>
+              </motion.div>
+            : <motion.div
+                key="table"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="flex min-w-0 flex-1 flex-col overflow-hidden bg-transparent">
+                <ReportTable
+                  groupedRows={groupedRows}
+                  visibleColumns={visibleColumns}
+                  allColumns={allColumns}
+                  search={search}
+                  statusFilter={statusFilter}
+                  onResetFilter={() => setStatusFilter("all")}
+                  onResetDates={() => {
+                    setReportStartDate(getLocalDateString())
+                    setReportEndDate(getLocalDateString())
+                  }}
+                  onEditRow={setEditingRow}
+                  pageSize={pageSize}
+                  onPageSizeChange={setPageSize}
+                  error={error}
+                />
+              </motion.div>
+            }
+          </AnimatePresence>
+        </div>
       </div>
 
       <EditSessionModal

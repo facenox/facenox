@@ -61,6 +61,12 @@ export function useReportData(
       return
     }
 
+    // Ignore incomplete intermediate year inputs while typing (e.g. typing "2" yields year 0002)
+    // Prevents lagging by not querying thousands of years from the database
+    if (startDate.getFullYear() < 2000 || endDate.getFullYear() < 2000) {
+      return
+    }
+
     if (startDate > endDate) {
       if (isMountedRef.current) {
         setError("The start date must be on or before the end date.")
