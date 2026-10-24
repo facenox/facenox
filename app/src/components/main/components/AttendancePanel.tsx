@@ -270,7 +270,7 @@ const AttendanceRecordItem = memo(
                         onVoidManual(record)
                       }}
                       className="flex h-6 w-6 items-center justify-center rounded-full border-none bg-transparent p-0 text-red-500/50 shadow-none transition-all outline-none hover:bg-red-500/15 hover:text-red-400"
-                      aria-label={`Remove manual attendance for ${displayName}`}>
+                      aria-label={`Void manual attendance for ${displayName}`}>
                       <Trash2 className="size-3" />
                     </button>
                   </motion.div>
