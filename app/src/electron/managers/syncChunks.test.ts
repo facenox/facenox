@@ -136,6 +136,7 @@ it("retains capture context through validation and chunk packing", () => {
       member_id: "p",
       group_id: "g",
       date: "2026-11-01",
+      visit_number: 1,
       check_in_time: "2026-11-01T05:30:00Z",
       check_out_time: "2026-11-01T06:30:00Z",
       check_in_time_timezone: "America/New_York",
