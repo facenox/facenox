@@ -43,10 +43,10 @@ const DetectionCard = memo(
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -8 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className={`group relative rounded-lg px-2.5 py-1.5 transition-all ${
+        className={`group relative rounded-md px-2.5 py-1.5 transition-all duration-150 ${
           isActive ?
-            "border border-cyan-500/20 bg-cyan-500/10"
-          : "border border-transparent hover:bg-white/[0.04]"
+            "bg-gradient-to-r from-cyan-500/20 to-transparent shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)] hover:from-cyan-500/28"
+          : "hover:bg-gradient-to-r hover:from-white/5 hover:to-transparent"
         }`}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
@@ -67,8 +67,8 @@ const DetectionCard = memo(
                     <span
                       className={`block cursor-help truncate text-[13px] font-semibold transition-colors ${
                         isActive ?
-                          "text-cyan-100 hover:text-cyan-300"
-                        : "text-white hover:text-cyan-400"
+                          "text-cyan-100 group-hover:text-cyan-200"
+                        : "text-white group-hover:text-cyan-300"
                       }`}>
                       {displayName}
                     </span>
