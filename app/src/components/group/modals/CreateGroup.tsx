@@ -2,9 +2,9 @@ import { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { AlertTriangle, Clock } from "lucide-react"
 import { attendanceManager } from "@/services"
-import type { AttendanceGroup } from "@/types/recognition"
+import type { AttendanceGroup, AttendanceMode } from "@/types/recognition"
 import { ErrorMessage, FormInput, Modal } from "@/components/common"
-import { Switch } from "@/components/shared"
+import { Dropdown, Switch } from "@/components/shared"
 
 interface CreateGroupProps {
   isOpen: boolean
@@ -41,9 +41,12 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
   const [classEndTime, setClassEndTime] = useState("17:00")
   const [lateThresholdMinutes, setLateThresholdMinutes] = useState(15)
   const [trackCheckout, setTrackCheckout] = useState(false)
+  const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>("attendance")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmDuplicate, setConfirmDuplicate] = useState(false)
+  const showsLateTracking = true
+  const showsDepartureRules = attendanceMode === "work_hours"
 
   // Reset confirmation state whenever the typed name changes
   useEffect(() => {
@@ -64,6 +67,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
     setClassEndTime("17:00")
     setLateThresholdMinutes(15)
     setTrackCheckout(false)
+    setAttendanceMode("attendance")
     setLoading(false)
     setError(null)
     setConfirmDuplicate(false)
@@ -86,6 +90,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
         class_start_time: classStartTime,
         class_end_time: trackCheckout ? classEndTime : null,
         late_threshold_minutes: lateThresholdMinutes,
+        attendance_mode: attendanceMode,
         track_checkout: trackCheckout,
       })
       onSuccess(newGroup)
@@ -98,7 +103,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
     }
   }
 
-  const hasConfiguredSchedule = lateThresholdEnabled || trackCheckout
+  const hasConfiguredSchedule = (showsLateTracking && lateThresholdEnabled) || showsDepartureRules
 
   return (
     <Modal
@@ -137,211 +142,248 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
             )}
           </div>
 
+          <div className="flex items-center justify-between gap-4 rounded-md border border-white/8 bg-white/[0.025] px-3 py-3">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-white/90">Attendance mode</div>
+              <div className="mt-0.5 text-[11px] text-white/55">
+                Choose what Facenox records for this group.
+              </div>
+            </div>
+            <Dropdown
+              options={[
+                { value: "attendance", label: "Attendance" },
+                { value: "work_hours", label: "Time in & time out" },
+                { value: "visits", label: "Visits" },
+              ]}
+              value={attendanceMode}
+              onChange={(value) => {
+                if (!value) return
+                const mode = value as AttendanceMode
+                setAttendanceMode(mode)
+                setTrackCheckout(mode !== "attendance")
+              }}
+              allowClear={false}
+              menuWidth={180}
+              className="w-[180px] shrink-0"
+              buttonClassName="h-8 !border-white/10 !bg-white/5 px-2.5 text-xs font-medium text-white/90 hover:!border-white/20 hover:!bg-white/[0.08]"
+              optionClassName="text-xs"
+            />
+          </div>
+
           {/* Schedule Rules Collapsible / Section */}
-          <div>
-            <AnimatePresence mode="wait" initial={false}>
-              {!isScheduleSectionOpen && !hasConfiguredSchedule ?
-                <motion.div
-                  key="collapsed"
-                  initial={{ opacity: 0, y: 3 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -3 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="flex items-center justify-between py-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-medium text-white/80">Schedule rules</span>
-                    <span className="text-[10px] text-white/35">(optional)</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsScheduleSectionOpen(true)}
-                    className="text-[11px] font-medium text-cyan-400 transition-colors hover:text-cyan-300">
-                    + Set schedule
-                  </button>
-                </motion.div>
-              : <motion.div
-                  key="expanded"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  className="space-y-3">
-                  <div className="flex items-center justify-between px-0.5">
+          <>
+            <div>
+              <AnimatePresence mode="wait" initial={false}>
+                {!isScheduleSectionOpen && !hasConfiguredSchedule ?
+                  <motion.div
+                    key="collapsed"
+                    initial={{ opacity: 0, y: 3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -3 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="flex items-center justify-between py-1">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px] font-medium text-white/80">Schedule rules</span>
                       <span className="text-[10px] text-white/35">(optional)</span>
                     </div>
-                    {!hasConfiguredSchedule && (
-                      <button
-                        type="button"
-                        onClick={() => setIsScheduleSectionOpen(false)}
-                        className="text-[10px] font-medium text-white/40 transition-colors hover:text-white/70">
-                        Hide
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="divide-y divide-white/6">
-                    {/* Late Tracking Row */}
-                    <div className="py-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="text-xs font-semibold text-white/90">Late tracking</div>
-                          <div className="text-[11px] text-white/55">
-                            {lateThresholdEnabled ?
-                              "Flag arrivals after the scheduled start time and grace period."
-                            : "Late tracking is disabled."}
-                          </div>
-                        </div>
-                        <Switch
-                          checked={lateThresholdEnabled}
-                          onChange={setLateThresholdEnabled}
-                          ariaLabel="Late tracking"
-                        />
+                    <button
+                      type="button"
+                      onClick={() => setIsScheduleSectionOpen(true)}
+                      className="text-[11px] font-medium text-cyan-400 transition-colors hover:text-cyan-300">
+                      + Set schedule
+                    </button>
+                  </motion.div>
+                : <motion.div
+                    key="expanded"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                    className="space-y-3">
+                    <div className="flex items-center justify-between px-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-medium text-white/80">
+                          Schedule rules
+                        </span>
+                        <span className="text-[10px] text-white/35">(optional)</span>
                       </div>
-
-                      <AnimatePresence>
-                        {lateThresholdEnabled && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.18, ease: "easeOut" }}
-                            className="overflow-hidden">
-                            <div className="flex flex-col pt-1">
-                              {/* Scheduled Start Time */}
-                              <div className="relative flex items-center gap-4 py-2 pl-4">
-                                <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10" />
-                                <div className="pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10" />
-
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-xs text-white/65">Scheduled start time:</div>
-                                </div>
-                                <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                                  <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
-                                  <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
-                                    <span>{formatTimeDisplay(classStartTime).time}</span>
-                                    <span className="text-[10px] font-medium text-white/55">
-                                      {formatTimeDisplay(classStartTime).period}
-                                    </span>
-                                  </div>
-                                  <input
-                                    type="time"
-                                    title=""
-                                    aria-label="Scheduled start time"
-                                    value={classStartTime}
-                                    onChange={(e) => setClassStartTime(e.target.value)}
-                                    onClick={(e) => e.currentTarget.showPicker?.()}
-                                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Late Grace Period */}
-                              <div className="relative flex items-center gap-4 py-2 pl-4">
-                                <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
-
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-xs text-white/65">Grace period:</div>
-                                </div>
-
-                                <div className="ml-auto flex shrink-0 items-center gap-3">
-                                  {([0, 5, 10, 15, 30, 45, 60] as const).map((mins) => (
-                                    <button
-                                      key={mins}
-                                      type="button"
-                                      onClick={() => setLateThresholdMinutes(mins)}
-                                      className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
-                                        lateThresholdMinutes === mins ? "text-cyan-400" : (
-                                          "text-white/40 hover:text-white/70"
-                                        )
-                                      }`}>
-                                      {mins === 0 ? "Exact" : `${mins}m`}
-                                      {lateThresholdMinutes === mins && (
-                                        <motion.div
-                                          layoutId="createGroupLateUnderline"
-                                          className="absolute right-1 bottom-[-2px] left-1 h-[2px] rounded-[1px] bg-cyan-400"
-                                          transition={{
-                                            type: "spring",
-                                            stiffness: 380,
-                                            damping: 30,
-                                          }}
-                                        />
-                                      )}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      {!hasConfiguredSchedule && (
+                        <button
+                          type="button"
+                          onClick={() => setIsScheduleSectionOpen(false)}
+                          className="text-[10px] font-medium text-white/40 transition-colors hover:text-white/70">
+                          Hide
+                        </button>
+                      )}
                     </div>
 
-                    {/* Departure & Checkout Tracking Row */}
-                    <div className="py-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="text-xs font-semibold text-white/90">
-                            Entry & exit tracking
-                          </div>
-                          <div className="text-[11px] text-white/55">
-                            {trackCheckout ?
-                              "Record arrival (time in) and departure (time out)."
-                            : "Record arrival times only."}
-                          </div>
-                        </div>
-                        <Switch
-                          checked={trackCheckout}
-                          onChange={setTrackCheckout}
-                          ariaLabel="Entry & exit tracking"
-                        />
-                      </div>
-
-                      <AnimatePresence>
-                        {trackCheckout && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.18, ease: "easeOut" }}
-                            className="overflow-hidden">
-                            <div className="flex flex-col pt-1">
-                              <div className="relative flex items-center gap-4 py-2 pl-4">
-                                <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
-
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-xs text-white/65">Scheduled end time:</div>
-                                </div>
-                                <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                                  <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
-                                  <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
-                                    <span>{formatTimeDisplay(classEndTime).time}</span>
-                                    <span className="text-[10px] font-medium text-white/55">
-                                      {formatTimeDisplay(classEndTime).period}
-                                    </span>
-                                  </div>
-                                  <input
-                                    type="time"
-                                    title=""
-                                    aria-label="Scheduled end time"
-                                    value={classEndTime}
-                                    onChange={(e) => setClassEndTime(e.target.value)}
-                                    onClick={(e) => e.currentTarget.showPicker?.()}
-                                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
-                                  />
-                                </div>
+                    <div className="divide-y divide-white/6">
+                      {/* Late Tracking Row */}
+                      {showsLateTracking && (
+                        <div className="py-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <div className="text-xs font-semibold text-white/90">
+                                Late tracking
+                              </div>
+                              <div className="text-[11px] text-white/55">
+                                {lateThresholdEnabled ?
+                                  "Flag arrivals after the scheduled start time and grace period."
+                                : "Late tracking is disabled."}
                               </div>
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                            <Switch
+                              checked={lateThresholdEnabled}
+                              onChange={setLateThresholdEnabled}
+                              ariaLabel="Late tracking"
+                            />
+                          </div>
+
+                          <AnimatePresence>
+                            {lateThresholdEnabled && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.18, ease: "easeOut" }}
+                                className="overflow-hidden">
+                                <div className="flex flex-col pt-1">
+                                  {/* Scheduled Start Time */}
+                                  <div className="relative flex items-center gap-4 py-2 pl-4">
+                                    <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10" />
+                                    <div className="pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10" />
+
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-xs text-white/65">
+                                        Scheduled start time:
+                                      </div>
+                                    </div>
+                                    <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
+                                      <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
+                                      <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
+                                        <span>{formatTimeDisplay(classStartTime).time}</span>
+                                        <span className="text-[10px] font-medium text-white/55">
+                                          {formatTimeDisplay(classStartTime).period}
+                                        </span>
+                                      </div>
+                                      <input
+                                        type="time"
+                                        title=""
+                                        aria-label="Scheduled start time"
+                                        value={classStartTime}
+                                        onChange={(e) => setClassStartTime(e.target.value)}
+                                        onClick={(e) => e.currentTarget.showPicker?.()}
+                                        className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Late Grace Period */}
+                                  <div className="relative flex items-center gap-4 py-2 pl-4">
+                                    <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-xs text-white/65">Grace period:</div>
+                                    </div>
+
+                                    <div className="ml-auto flex shrink-0 items-center gap-3">
+                                      {([0, 5, 10, 15, 30, 45, 60] as const).map((mins) => (
+                                        <button
+                                          key={mins}
+                                          type="button"
+                                          onClick={() => setLateThresholdMinutes(mins)}
+                                          className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                                            lateThresholdMinutes === mins ? "text-cyan-400" : (
+                                              "text-white/40 hover:text-white/70"
+                                            )
+                                          }`}>
+                                          {mins === 0 ? "Exact" : `${mins}m`}
+                                          {lateThresholdMinutes === mins && (
+                                            <motion.div
+                                              layoutId="createGroupLateUnderline"
+                                              className="absolute right-1 bottom-[-2px] left-1 h-[2px] rounded-[1px] bg-cyan-400"
+                                              transition={{
+                                                type: "spring",
+                                                stiffness: 380,
+                                                damping: 30,
+                                              }}
+                                            />
+                                          )}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )}
+
+                      {/* Departure & Checkout Tracking Row */}
+                      {showsDepartureRules && (
+                        <div className="py-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <div className="text-xs font-semibold text-white/90">
+                                Time in &amp; time out
+                              </div>
+                              <div className="text-[11px] text-white/55">
+                                {trackCheckout ?
+                                  "Record arrival (time in) and departure (time out)."
+                                : "Record arrival times only."}
+                              </div>
+                            </div>
+                          </div>
+
+                          <AnimatePresence>
+                            {trackCheckout && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.18, ease: "easeOut" }}
+                                className="overflow-hidden">
+                                <div className="flex flex-col pt-1">
+                                  <div className="relative flex items-center gap-4 py-2 pl-4">
+                                    <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-xs text-white/65">
+                                        Scheduled end time:
+                                      </div>
+                                    </div>
+                                    <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
+                                      <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
+                                      <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
+                                        <span>{formatTimeDisplay(classEndTime).time}</span>
+                                        <span className="text-[10px] font-medium text-white/55">
+                                          {formatTimeDisplay(classEndTime).period}
+                                        </span>
+                                      </div>
+                                      <input
+                                        type="time"
+                                        title=""
+                                        aria-label="Scheduled end time"
+                                        value={classEndTime}
+                                        onChange={(e) => setClassEndTime(e.target.value)}
+                                        onClick={(e) => e.currentTarget.showPicker?.()}
+                                        className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </motion.div>
-              }
-            </AnimatePresence>
-          </div>
+                  </motion.div>
+                }
+              </AnimatePresence>
+            </div>
+          </>
         </div>
 
         <div className="mt-8 flex justify-end gap-3">

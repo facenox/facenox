@@ -97,6 +97,15 @@ async def get_group_stats(
                 late_threshold_enabled=group.late_threshold_enabled or False,
                 existing_sessions=sessions,
                 track_checkout=getattr(group, "track_checkout", False),
+                attendance_mode=(
+                    getattr(group, "attendance_mode", None)
+                    or (
+                        "work_hours"
+                        if getattr(group, "track_checkout", False)
+                        else "attendance"
+                    )
+                ),
+                scan_behavior=getattr(group, "scan_behavior", "automatic"),
                 rule_history=rule_history,
             )
 

@@ -41,7 +41,6 @@ const CHECKOUT_DEFAULT_COLUMNS = [
   "check_out_time",
   "total_hours",
 ] as unknown as ColumnKey[]
-const DEFAULT_COLUMN_PRESETS = [DEFAULT_COLUMNS, CHECKOUT_DEFAULT_COLUMNS]
 
 export function Reports({
   group,
@@ -59,10 +58,16 @@ export function Reports({
     originalRow: RowData
   } | null>(null)
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const defaultColumns = useMemo(
-    () => (group.settings?.track_checkout ? CHECKOUT_DEFAULT_COLUMNS : DEFAULT_COLUMNS),
-    [group.settings?.track_checkout],
-  )
+  const defaultColumns = useMemo(() => {
+    const mode =
+      group.settings?.attendance_mode ??
+      (group.settings?.track_checkout ? "work_hours" : "attendance")
+    if (mode === "visits") {
+      return [...DEFAULT_COLUMNS, "visit_number", "check_out_time", "total_hours"] as ColumnKey[]
+    }
+    return mode === "work_hours" ? CHECKOUT_DEFAULT_COLUMNS : DEFAULT_COLUMNS
+  }, [group.settings?.attendance_mode, group.settings?.track_checkout])
+  const defaultColumnPresets = useMemo(() => [DEFAULT_COLUMNS, CHECKOUT_DEFAULT_COLUMNS], [])
 
   const [reportStartDate, setReportStartDate] = useState<string>(getLocalDateString())
   const [reportEndDate, setReportEndDate] = useState<string>(getLocalDateString())
@@ -87,9 +92,9 @@ export function Reports({
     setSearch,
     pageSize,
     setPageSize,
-  } = useReportViews(group.id, defaultColumns, DEFAULT_COLUMN_PRESETS)
+  } = useReportViews(group.id, defaultColumns, defaultColumnPresets)
 
-  const { groupedRows, daysTracked, allColumns } = useReportTransform(
+  const { groupedRows, daysTracked, allColumns, unavailableColumns } = useReportTransform(
     group,
     members,
     sessions,
@@ -100,6 +105,12 @@ export function Reports({
     statusFilter,
     search,
   )
+
+  const modeVisibleColumns = useMemo(() => {
+    const supportedColumns = new Set(allColumns.map((column) => column.key))
+    const compatibleColumns = visibleColumns.filter((column) => supportedColumns.has(column))
+    return compatibleColumns.length > 0 ? compatibleColumns : defaultColumns
+  }, [allColumns, defaultColumns, visibleColumns])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -119,13 +130,13 @@ export function Reports({
   const handleExportCSV = useCallback(() => {
     exportReportToCSV(
       groupedRows,
-      visibleColumns,
+      modeVisibleColumns,
       allColumns,
       group.name,
       reportStartDate,
       reportEndDate,
     )
-  }, [groupedRows, visibleColumns, allColumns, group.name, reportStartDate, reportEndDate])
+  }, [groupedRows, modeVisibleColumns, allColumns, group.name, reportStartDate, reportEndDate])
 
   const handleOpenExportAllModal = useCallback(() => {
     setShowExportAllModal(true)
@@ -164,7 +175,7 @@ export function Reports({
               endDate={reportEndDate}
               onStartDateChange={setReportStartDate}
               onEndDateChange={setReportEndDate}
-              visibleColumns={visibleColumns}
+              visibleColumns={modeVisibleColumns}
               setVisibleColumns={setVisibleColumns}
               groupBy={groupBy}
               setGroupBy={setGroupBy}
@@ -173,6 +184,7 @@ export function Reports({
               search={search}
               setSearch={setSearch}
               allColumns={allColumns}
+              unavailableColumns={unavailableColumns}
             />
           </div>
         )}
@@ -222,7 +234,7 @@ export function Reports({
                 className="flex min-w-0 flex-1 flex-col overflow-hidden bg-transparent">
                 <ReportTable
                   groupedRows={groupedRows}
-                  visibleColumns={visibleColumns}
+                  visibleColumns={modeVisibleColumns}
                   allColumns={allColumns}
                   search={search}
                   statusFilter={statusFilter}
@@ -308,6 +320,7 @@ export function Reports({
                         orig.check_out_time ? new Date(orig.check_out_time) : undefined,
                       is_late: orig.is_late,
                       late_minutes: orig.late_minutes,
+                      visit_number: orig.visit_number,
                     })
                     generateReport()
                   } catch (e) {

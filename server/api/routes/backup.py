@@ -252,7 +252,14 @@ async def import_backup(
                             "late_threshold_enabled", False
                         ),
                         class_start_time=settings_dict.get("class_start_time", "08:00"),
+                        attendance_mode=settings_dict.get(
+                            "attendance_mode",
+                            "work_hours"
+                            if settings_dict.get("track_checkout")
+                            else "attendance",
+                        ),
                         track_checkout=settings_dict.get("track_checkout", False),
+                        scan_behavior=settings_dict.get("scan_behavior", "automatic"),
                         organization_id=repo.organization_id,
                         is_active=group.is_active,
                         is_deleted=False,
@@ -271,8 +278,14 @@ async def import_backup(
                     existing.class_start_time = settings_dict.get(
                         "class_start_time", existing.class_start_time
                     )
+                    existing.attendance_mode = settings_dict.get(
+                        "attendance_mode", existing.attendance_mode
+                    )
                     existing.track_checkout = settings_dict.get(
                         "track_checkout", existing.track_checkout
+                    )
+                    existing.scan_behavior = settings_dict.get(
+                        "scan_behavior", existing.scan_behavior
                     )
                 existing.is_active = group.is_active
                 existing.is_deleted = False
@@ -297,7 +310,9 @@ async def import_backup(
                     late_threshold_minutes=rule.late_threshold_minutes,
                     late_threshold_enabled=rule.late_threshold_enabled,
                     class_start_time=rule.class_start_time,
+                    attendance_mode=rule.attendance_mode,
                     track_checkout=rule.track_checkout,
+                    scan_behavior=rule.scan_behavior,
                     organization_id=repo.organization_id,
                     is_deleted=False,
                 )
@@ -359,6 +374,8 @@ async def import_backup(
                     **restore_fields(record, "timestamp"),
                     confidence=record.confidence,
                     location=record.location,
+                    device_id=getattr(record, "device_id", None),
+                    event_type=getattr(record, "event_type", None),
                     notes=record.notes,
                     is_manual=record.is_manual,
                     created_by=record.created_by,
@@ -389,6 +406,7 @@ async def import_backup(
                     group_id=session.group_id,
                     applied_rule_id=session.applied_rule_id,
                     date=session.date,
+                    visit_number=session.visit_number,
                     **restore_fields(session, "check_in_time"),
                     **restore_fields(session, "check_out_time"),
                     total_hours=session.total_hours,

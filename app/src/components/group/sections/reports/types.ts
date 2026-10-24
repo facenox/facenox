@@ -3,6 +3,7 @@ import type { AttendanceSession } from "@/types/recognition"
 export type ColumnKey =
   | "name"
   | "date"
+  | "visit_number"
   | "check_in_time"
   | "check_out_time"
   | "total_hours"
@@ -29,6 +30,7 @@ export interface RowData {
   date: string
   check_in_time?: Date
   check_out_time?: Date
+  visit_number?: number
   total_hours?: number
   status: ReportStatusFilter
   is_late: boolean

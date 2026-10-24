@@ -35,6 +35,8 @@ class LiveSessionConfig:
     active_group_id: Optional[str] = None
     max_recognition_faces_per_frame: int = 6
     client_id: Optional[str] = None
+    device_id: Optional[str] = None
+    scan_behavior: str = "automatic"
     organization_id: Optional[str] = None
     group_context: LiveGroupContext = field(default_factory=LiveGroupContext)
     attendance_cooldowns: Dict[str, float] = field(default_factory=dict)
@@ -225,6 +227,14 @@ class LiveStreamService:
 
         if "client_id" in message:
             config.client_id = message.get("client_id")
+
+        if "device_id" in message:
+            config.device_id = message.get("device_id")
+
+        if "scan_behavior" in message:
+            behavior = message.get("scan_behavior")
+            if behavior in {"automatic", "entry_only", "exit_only"}:
+                config.scan_behavior = behavior
 
         if "group_id" in message:
             requested_group_id = message.get("group_id")
@@ -580,6 +590,8 @@ class LiveStreamService:
                             liveness_confidence=(face.get("liveness") or {}).get(
                                 "confidence"
                             ),
+                            device_id=config.device_id or config.client_id,
+                            scan_behavior=config.scan_behavior,
                         ),
                         member,
                         settings,

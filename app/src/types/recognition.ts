@@ -123,6 +123,8 @@ export interface DetectionWithRecognitionResult {
 }
 
 export type AttendanceStatus = "present" | "absent"
+export type AttendanceMode = "attendance" | "work_hours" | "visits"
+export type ScanBehavior = "automatic" | "entry_only" | "exit_only"
 
 export interface AttendanceGroup {
   id: string
@@ -131,12 +133,14 @@ export interface AttendanceGroup {
   created_at: Date
   is_active: boolean
   settings: {
+    attendance_mode?: AttendanceMode
     late_threshold_minutes?: number
     late_threshold_enabled?: boolean
     class_start_time?: string
     class_end_time?: string | null
     track_checkout?: boolean
     min_checkout_delay_minutes?: number
+    scan_behavior?: ScanBehavior
   }
   remote_id?: string | null
 }
@@ -161,6 +165,7 @@ export interface AttendanceRecord {
   group_id: string
   timestamp: Date
   confidence: number
+  device_id?: string | null
   location?: string
   notes?: string
   is_manual: boolean
@@ -186,6 +191,7 @@ export interface AttendanceSession {
   is_late: boolean
   late_minutes?: number
   notes?: string
+  visit_number?: number
 }
 
 export interface AttendanceStats {

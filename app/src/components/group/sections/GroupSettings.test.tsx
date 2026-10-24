@@ -11,6 +11,12 @@ vi.mock("framer-motion", () => ({
     div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
       <div {...props}>{children}</div>
     ),
+    button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+      <button {...props}>{children}</button>
+    ),
+    span: ({ children, ...props }: React.HTMLAttributes<HTMLSpanElement>) => (
+      <span {...props}>{children}</span>
+    ),
   },
 }))
 
@@ -45,7 +51,7 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
 
     expect(screen.getByText(/Schedule & Attendance Rules/i)).toBeInTheDocument()
     expect(screen.getByText("Late tracking")).toBeInTheDocument()
-    expect(screen.getByText("Entry & exit tracking")).toBeInTheDocument()
+    expect(screen.getAllByText("Time in & time out").length).toBeGreaterThan(0)
     expect(screen.getByText("Exact")).toBeInTheDocument()
     expect(screen.getByText("10m")).toBeInTheDocument()
   })
@@ -75,31 +81,63 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
     })
   })
 
-  it("saves updated departure tracking when checkout toggle is changed", async () => {
+  it("renders departure rules for the time in and time out mode", () => {
     const group = createAttendanceGroup({
       id: "group-2",
       name: "Section B",
       settings: {
         late_threshold_enabled: false,
         class_start_time: "08:00",
-        class_end_time: null,
+        class_end_time: "17:00",
         late_threshold_minutes: 15,
-        track_checkout: false,
+        attendance_mode: "work_hours",
+        min_checkout_delay_minutes: 15,
+        track_checkout: true,
       },
     })
 
     render(<GroupSettings group={group} />)
 
-    const switchBtn = screen.getByRole("switch", {
-      name: "Entry & exit tracking",
-    })
-    fireEvent.click(switchBtn)
+    expect(screen.getAllByText("Time in & time out").length).toBeGreaterThan(1)
+    expect(screen.getByText("Scheduled end time:")).toBeInTheDocument()
+    expect(screen.queryByRole("switch", { name: "Time in and time out" })).not.toBeInTheDocument()
+  })
 
-    expect(attendanceManager.updateGroup).toHaveBeenCalledWith("group-2", {
-      settings: expect.objectContaining({
-        track_checkout: true,
-      }),
+  it("shows only mode-relevant rules", () => {
+    const attendanceGroup = createAttendanceGroup({
+      id: "group-attendance",
+      name: "Section A",
+      settings: {
+        attendance_mode: "attendance",
+        late_threshold_enabled: false,
+        track_checkout: false,
+      },
     })
+
+    const { unmount } = render(<GroupSettings group={attendanceGroup} />)
+
+    expect(screen.getByText("Late tracking")).toBeInTheDocument()
+    expect(screen.queryByText("Time in & time out")).not.toBeInTheDocument()
+
+    unmount()
+
+    const visitsGroup = createAttendanceGroup({
+      id: "group-visits",
+      name: "Gym members",
+      settings: {
+        attendance_mode: "visits",
+        late_threshold_enabled: true,
+        track_checkout: true,
+        min_checkout_delay_minutes: 15,
+      },
+    })
+
+    render(<GroupSettings group={visitsGroup} />)
+
+    expect(screen.getByText("Late tracking")).toBeInTheDocument()
+    expect(screen.queryByText("Time in & time out")).not.toBeInTheDocument()
+    expect(screen.getByText("Visit rules")).toBeInTheDocument()
+    expect(screen.getByText("Minimum visit duration:")).toBeInTheDocument()
   })
 
   it("renders clean Entry & Exit settings with Scheduled end time", async () => {

@@ -28,6 +28,9 @@ export function useReportTransform(
   statusFilter: ReportStatusFilter,
   search: string,
 ) {
+  const attendanceMode =
+    _group.settings?.attendance_mode ??
+    (_group.settings?.track_checkout ? "work_hours" : "attendance")
   // Build table rows from sessions + members
   const displayNameMap = useMemo(() => {
     return createDisplayNameMap(members)
@@ -35,10 +38,12 @@ export function useReportTransform(
 
   // Create a map of sessions by person_id and date for quick lookup
   const sessionsMap = useMemo(() => {
-    const map = new Map<string, AttendanceSession>()
+    const map = new Map<string, AttendanceSession[]>()
     sessions.forEach((s) => {
       const key = `${s.person_id}_${s.date}`
-      map.set(key, s)
+      const existing = map.get(key) || []
+      existing.push(s)
+      map.set(key, existing)
     })
     return map
   }, [sessions])
@@ -64,8 +69,28 @@ export function useReportTransform(
         const shouldShowNoRecords = isBeforeJoined || isFutureDate
 
         const sessionKey = `${member.person_id}_${date}`
-        const session = sessionsMap.get(sessionKey) || null
-        const finalSession = shouldShowNoRecords ? null : session
+        const sessionsForDate = shouldShowNoRecords ? [] : sessionsMap.get(sessionKey) || []
+        const finalSession = sessionsForDate[0] || null
+
+        if (attendanceMode === "visits" && sessionsForDate.length > 0) {
+          for (const visitSession of sessionsForDate) {
+            rows.push({
+              person_id: member.person_id,
+              name: displayNameMap.get(member.person_id) || member.name || "Member",
+              date,
+              check_in_time: visitSession.check_in_time,
+              check_out_time: visitSession.check_out_time,
+              visit_number: visitSession.visit_number || 1,
+              total_hours: visitSession.total_hours,
+              status: visitSession.is_late ? "late" : (visitSession.status as ReportStatusFilter),
+              is_late: Boolean(visitSession.is_late),
+              late_minutes: visitSession.late_minutes || 0,
+              notes: visitSession.notes || "",
+              session: visitSession,
+            })
+          }
+          continue
+        }
 
         let status: ReportStatusFilter
         if (shouldShowNoRecords) {
@@ -87,6 +112,7 @@ export function useReportTransform(
           date: date,
           check_in_time: finalSession?.check_in_time,
           check_out_time: finalSession?.check_out_time,
+          visit_number: finalSession?.visit_number || 1,
           total_hours: finalSession?.total_hours,
           status: status,
           is_late: isLate,
@@ -97,7 +123,7 @@ export function useReportTransform(
       }
     }
     return rows
-  }, [sessionsMap, members, displayNameMap, startDateStr, endDateStr])
+  }, [attendanceMode, sessionsMap, members, displayNameMap, startDateStr, endDateStr])
 
   // 2. Filter rows based on status and search query
   const filteredRows = useMemo(() => {
@@ -154,14 +180,33 @@ export function useReportTransform(
   }, [report, startDateStr, endDateStr])
 
   const finalColumns = useMemo(() => {
-    return ALL_COLUMNS
-  }, [])
+    if (attendanceMode === "attendance") {
+      return ALL_COLUMNS.filter(
+        (column) => column.key !== "check_out_time" && column.key !== "total_hours",
+      )
+    }
+    return attendanceMode === "visits" ? [...ALL_COLUMNS, VISIT_COLUMN] : ALL_COLUMNS
+  }, [attendanceMode])
+
+  const unavailableColumns = useMemo(() => {
+    const availableKeys = new Set(finalColumns.map((column) => column.key))
+    return ALL_COLUMNS_WITH_VISITS.filter((column) => !availableKeys.has(column.key)).map(
+      (column) => ({
+        ...column,
+        reason:
+          column.key === "visit_number" ?
+            "Only available in Visits mode."
+          : "Not recorded in Attendance mode.",
+      }),
+    )
+  }, [finalColumns])
 
   return {
     filteredRows,
     groupedRows,
     daysTracked,
     allColumns: finalColumns,
+    unavailableColumns,
   }
 }
 
@@ -175,3 +220,6 @@ const ALL_COLUMNS = [
   { key: "late_minutes", label: "Late (mins)", align: "center" },
   { key: "notes", label: "Notes", align: "left" },
 ] as const
+
+const VISIT_COLUMN = { key: "visit_number", label: "Visit", align: "center" } as const
+const ALL_COLUMNS_WITH_VISITS = [...ALL_COLUMNS, VISIT_COLUMN] as const

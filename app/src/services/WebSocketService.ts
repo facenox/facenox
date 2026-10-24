@@ -36,6 +36,7 @@ export class WebSocketService {
     enableLivenessDetection?: boolean
     groupId?: string | null
     maxRecognitionFacesPerFrame?: number
+    deviceId?: string
   } | null = null
   private statusHandlers = new Set<StatusChangeHandler>()
   private messageHandlers = new Map<keyof WebSocketEventMap, Set<(data: unknown) => void>>()
@@ -293,6 +294,7 @@ export class WebSocketService {
     enableLivenessDetection?: boolean
     groupId?: string | null
     maxRecognitionFacesPerFrame?: number
+    deviceId?: string
   }): void {
     if (!this.isWebSocketReady()) {
       return
@@ -310,6 +312,8 @@ export class WebSocketService {
         ...(config.maxRecognitionFacesPerFrame !== undefined && {
           max_recognition_faces_per_frame: config.maxRecognitionFacesPerFrame,
         }),
+        ...(config.deviceId !== undefined && { device_id: config.deviceId }),
+        scan_behavior: "automatic",
       }),
     )
   }
@@ -318,6 +322,7 @@ export class WebSocketService {
     enableLivenessDetection?: boolean
     groupId?: string | null
     maxRecognitionFacesPerFrame?: number
+    deviceId?: string
   }): void {
     this.pendingLiveConfig = {
       ...(this.pendingLiveConfig ?? {}),

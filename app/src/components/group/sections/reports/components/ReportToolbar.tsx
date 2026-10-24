@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, Check, ChevronDown, Filter, Search, SlidersHorizontal } from "lucide-react"
+import {
+  Calendar,
+  Check,
+  ChevronDown,
+  Filter,
+  HelpCircle,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react"
 import { Dropdown, Tooltip } from "@/components/shared"
 import { getLocalDateString, parseLocalDate } from "@/utils"
 import type {
@@ -25,6 +33,7 @@ interface ReportToolbarProps {
   setSearch: (val: string) => void
 
   allColumns: readonly { key: ColumnKey; label: string }[]
+  unavailableColumns: readonly { key: ColumnKey; label: string; reason: string }[]
 }
 
 const STATUS_OPTIONS = [
@@ -148,6 +157,7 @@ export function ReportToolbar({
   search,
   setSearch,
   allColumns,
+  unavailableColumns,
 }: ReportToolbarProps) {
   const [showOptions, setShowOptions] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
@@ -418,6 +428,11 @@ export function ReportToolbar({
                   <span className="px-1 text-[10px] font-extrabold tracking-wider text-white/50 uppercase">
                     Columns
                   </span>
+                  {unavailableColumns.length > 0 && (
+                    <span className="mt-1 block px-1 text-[10px] leading-4 text-white/35">
+                      Some columns are unavailable for this mode.
+                    </span>
+                  )}
                   <div className="custom-scroll mt-1 max-h-[150px] overflow-y-auto pr-1">
                     {allColumns.map((c) => (
                       <label
@@ -443,6 +458,19 @@ export function ReportToolbar({
                           {c.label}
                         </span>
                       </label>
+                    ))}
+                    {unavailableColumns.map((c) => (
+                      <Tooltip key={c.key} content={c.reason} position="top" offset={8}>
+                        <div
+                          aria-disabled="true"
+                          className="group flex cursor-not-allowed items-center gap-2 rounded-md px-1.5 py-1.5 opacity-35 transition-colors hover:bg-white/5 hover:opacity-60">
+                          <div className="h-3.5 w-3.5 shrink-0 rounded border border-white/10 bg-white/5" />
+                          <span className="text-[11px] font-bold tracking-wider text-white/65 transition-colors group-hover:text-white/85">
+                            {c.label}
+                          </span>
+                          <HelpCircle className="size-3 shrink-0 text-white/30 transition-colors group-hover:text-white/65" />
+                        </div>
+                      </Tooltip>
                     ))}
                   </div>
                 </div>

@@ -101,17 +101,17 @@ export function Groups({
         {filtered.map((group) => (
           <div
             key={group.id}
-            className="group/row flex items-center gap-3 px-2 py-3.5 transition-colors hover:bg-white/[0.01]">
+            className="group/row flex w-full items-center justify-between gap-4 border-b border-l-2 border-b-white/[0.03] border-l-transparent px-6 py-2.5 transition-all duration-200 hover:border-l-cyan-400/70 hover:bg-white/[0.02]">
             <button
               aria-label={`Open ${group.name} members`}
-              className="min-w-0 flex-1 text-left text-white/85 hover:text-white"
+              className="min-w-0 flex-1 text-left text-white/85 transition-colors hover:text-white"
               onClick={() => onOpenGroup?.(group)}
               disabled={!onOpenGroup}>
               <span className="block truncate text-[13px] font-semibold text-white/90">
                 {group.name}
               </span>
             </button>
-            <div className="flex items-center gap-1.5 transition-opacity duration-200 group-focus-within/row:opacity-100 group-hover/row:opacity-100 [@media(hover:hover)]:opacity-0">
+            <div className="flex shrink-0 items-center gap-1.5 opacity-0 transition-opacity duration-200 group-focus-within/row:opacity-100 group-hover/row:opacity-100">
               <Tooltip content="Edit group">
                 <button
                   aria-label={`Edit ${group.name}`}

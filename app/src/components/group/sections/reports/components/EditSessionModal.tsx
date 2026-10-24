@@ -140,7 +140,7 @@ export function EditSessionModal({
       return
     }
     if (trackCheckout && status === "present" && !checkOutTime) {
-      setError("Enter a time out. Entry & exit tracking is enabled for this group.")
+      setError("Enter a time out. Time in & time out is enabled for this group.")
       return
     }
 
@@ -173,6 +173,7 @@ export function EditSessionModal({
         check_out_time: finalCheckOut,
         is_late: status === "present" ? (row.is_late ?? false) : false,
         late_minutes: status === "present" ? (row.late_minutes ?? 0) : 0,
+        visit_number: row.visit_number,
       })
 
       onSuccess(

@@ -39,8 +39,18 @@ export class GroupManager {
             : "08:00",
           class_end_time:
             settings && "class_end_time" in settings ? (settings.class_end_time ?? null) : null,
+          attendance_mode:
+            settings && "attendance_mode" in settings ? (settings.attendance_mode ?? "attendance")
+            : settings && "track_checkout" in settings && settings.track_checkout ? "work_hours"
+            : "attendance",
           track_checkout:
-            settings && "track_checkout" in settings ? Boolean(settings.track_checkout) : false,
+            settings && "attendance_mode" in settings ? settings.attendance_mode !== "attendance"
+            : settings && "track_checkout" in settings ? Boolean(settings.track_checkout)
+            : false,
+          scan_behavior:
+            settings && "scan_behavior" in settings ?
+              (settings.scan_behavior ?? "automatic")
+            : "automatic",
         },
       }
 

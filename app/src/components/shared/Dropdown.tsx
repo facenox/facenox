@@ -239,7 +239,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
           disabled={trigger != null || !shouldShowCustomTooltip(displayText)}
           className="!px-2.5 !py-1.5 text-center break-all">
           <motion.button
-            layout={fit ? "size" : undefined}
+            layout="size"
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             type="button"
             ref={buttonRef as React.RefObject<HTMLButtonElement | null>}
@@ -250,11 +250,9 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
             className={`dropdown-trigger flex min-w-0 cursor-pointer items-center ${
               fit ? "w-fit justify-start gap-2.5" : "justify-between"
             } ${fit ? "w-fit" : "w-full"} rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-left text-sm text-white transition-colors hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:cursor-not-allowed disabled:opacity-50 ${buttonClassName}`}>
-            <motion.span
-              layout={fit ? "position" : undefined}
-              className={`min-w-0 ${fit ? "" : "flex-1"} truncate text-left`}>
+            <span className={`min-w-0 ${fit ? "" : "flex-1"} truncate text-left`}>
               {trigger ?? displayText}
-            </motion.span>
+            </span>
             {showChevron && (
               <span
                 aria-hidden="true"

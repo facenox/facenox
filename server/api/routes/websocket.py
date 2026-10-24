@@ -107,6 +107,7 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
         logger.debug("[WebSocket] Created face tracker for client %s", client_id)
 
     live_session_config = await live_stream_service.load_initial_config()
+    live_session_config.client_id = client_id
     logger.info(
         "[WebSocket] Client %s connected (liveness: %s)",
         client_id,

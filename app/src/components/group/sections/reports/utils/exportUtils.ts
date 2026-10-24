@@ -194,14 +194,16 @@ async function fetchAllGroupsProcessedData(
     if (!members || members.length === 0) continue
 
     const displayNameMap = createDisplayNameMap(members)
-    const sessionsMap = new Map<string, AttendanceSession>()
+    const sessionsMap = new Map<string, AttendanceSession[]>()
     sessions.forEach((s) => {
-      sessionsMap.set(`${s.person_id}_${s.date}`, s)
+      const key = `${s.person_id}_${s.date}`
+      sessionsMap.set(key, [...(sessionsMap.get(key) || []), s])
     })
 
     const header = [
       "Name",
       "Date",
+      ...(group.settings?.attendance_mode === "visits" ? ["Visit"] : []),
       "Status",
       "Time in",
       "Time out",
@@ -226,62 +228,75 @@ async function fetchAllGroupsProcessedData(
         const shouldShowNoRecords = isBeforeJoined || isFutureDate
 
         const sessionKey = `${member.person_id}_${date}`
-        const session = sessionsMap.get(sessionKey) || null
-        const finalSession = shouldShowNoRecords ? null : session
+        const sessionsForDate = shouldShowNoRecords ? [] : sessionsMap.get(sessionKey) || []
+        const finalSession = sessionsForDate[0] || null
 
-        let status: string
-        if (shouldShowNoRecords) {
-          status = "No Records"
-        } else if (!finalSession) {
-          status = "Absent"
-        } else if (finalSession.is_late) {
-          status = "Late"
-        } else {
-          status =
-            finalSession.status ?
-              finalSession.status.charAt(0).toUpperCase() + finalSession.status.slice(1)
-            : "Present"
+        const sessionsToExport =
+          group.settings?.attendance_mode === "visits" && sessionsForDate.length > 0 ?
+            sessionsForDate
+          : [finalSession]
+
+        for (const sessionToExport of sessionsToExport) {
+          const exportSession = sessionToExport
+
+          let status: string
+          if (shouldShowNoRecords) {
+            status = "No Records"
+          } else if (!finalSession) {
+            status = "Absent"
+          } else if (finalSession.is_late) {
+            status = "Late"
+          } else {
+            status =
+              finalSession.status ?
+                finalSession.status.charAt(0).toUpperCase() + finalSession.status.slice(1)
+              : "Present"
+          }
+
+          let timeIn = ""
+          if (exportSession?.check_in_time) {
+            const d =
+              exportSession.check_in_time instanceof Date ?
+                exportSession.check_in_time
+              : new Date(exportSession.check_in_time)
+            if (!isNaN(d.getTime())) timeIn = formatTimeOnly(d)
+          }
+
+          let timeOut = ""
+          if (exportSession?.check_out_time) {
+            const d =
+              exportSession.check_out_time instanceof Date ?
+                exportSession.check_out_time
+              : new Date(exportSession.check_out_time)
+            if (!isNaN(d.getTime())) timeOut = formatTimeOnly(d)
+          }
+
+          let totalHoursStr = ""
+          if (typeof exportSession?.total_hours === "number") {
+            const hrs = Math.floor(exportSession.total_hours)
+            const mins = Math.round((exportSession.total_hours - hrs) * 60)
+            totalHoursStr =
+              `${hrs > 0 ? `${hrs}h ` : ""}${mins > 0 || hrs === 0 ? `${mins}m` : ""}`.trim()
+          }
+
+          const lateMinutesStr =
+            exportSession?.late_minutes ? String(exportSession.late_minutes) : ""
+          const notesStr = exportSession?.notes || ""
+
+          rows.push([
+            displayNameMap.get(member.person_id) || member.name || "Member",
+            formatDateOnly(parseLocalDate(date)),
+            ...(group.settings?.attendance_mode === "visits" ?
+              [exportSession ? String(exportSession.visit_number || 1) : ""]
+            : []),
+            status,
+            timeIn,
+            timeOut,
+            totalHoursStr,
+            lateMinutesStr,
+            notesStr,
+          ])
         }
-
-        let timeIn = ""
-        if (finalSession?.check_in_time) {
-          const d =
-            finalSession.check_in_time instanceof Date ?
-              finalSession.check_in_time
-            : new Date(finalSession.check_in_time)
-          if (!isNaN(d.getTime())) timeIn = formatTimeOnly(d)
-        }
-
-        let timeOut = ""
-        if (finalSession?.check_out_time) {
-          const d =
-            finalSession.check_out_time instanceof Date ?
-              finalSession.check_out_time
-            : new Date(finalSession.check_out_time)
-          if (!isNaN(d.getTime())) timeOut = formatTimeOnly(d)
-        }
-
-        let totalHoursStr = ""
-        if (typeof finalSession?.total_hours === "number") {
-          const hrs = Math.floor(finalSession.total_hours)
-          const mins = Math.round((finalSession.total_hours - hrs) * 60)
-          totalHoursStr =
-            `${hrs > 0 ? `${hrs}h ` : ""}${mins > 0 || hrs === 0 ? `${mins}m` : ""}`.trim()
-        }
-
-        const lateMinutesStr = finalSession?.late_minutes ? String(finalSession.late_minutes) : ""
-        const notesStr = finalSession?.notes || ""
-
-        rows.push([
-          displayNameMap.get(member.person_id) || member.name || "Member",
-          formatDateOnly(parseLocalDate(date)),
-          status,
-          timeIn,
-          timeOut,
-          totalHoursStr,
-          lateMinutesStr,
-          notesStr,
-        ])
       }
     }
 
@@ -439,6 +454,7 @@ export async function exportAllGroupsReportToCSV(
       "Group",
       "Name",
       "Date",
+      "Visit",
       "Status",
       "Time in",
       "Time out",
@@ -450,7 +466,10 @@ export async function exportAllGroupsReportToCSV(
     const combinedRows: string[][] = []
     for (const { group, rows } of processedGroups) {
       for (const row of rows) {
-        combinedRows.push([group.name, ...row])
+        combinedRows.push([
+          group.name,
+          ...(group.settings?.attendance_mode === "visits" ? row : ["", ...row]),
+        ])
       }
     }
 

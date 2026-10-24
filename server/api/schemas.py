@@ -92,12 +92,18 @@ class AttendanceStatus(str, Enum):
 
 # Group Models
 class GroupSettings(BaseModel):
+    attendance_mode: str = Field(
+        "attendance", pattern="^(attendance|work_hours|visits)$"
+    )
     late_threshold_minutes: Optional[int] = 15
     late_threshold_enabled: bool = False
     class_start_time: Optional[str] = None  # HH:MM, defaults to creation time
     class_end_time: Optional[str] = None  # HH:MM, target departure/dismissal time
     track_checkout: bool = False
     min_checkout_delay_minutes: Optional[int] = 15
+    scan_behavior: str = Field(
+        "automatic", pattern="^(automatic|entry_only|exit_only)$"
+    )
 
 
 class AttendanceGroupCreate(BaseModel):
@@ -138,8 +144,10 @@ class AttendanceGroupRuleResponse(BaseModel):
     late_threshold_enabled: bool
     class_start_time: str
     class_end_time: Optional[str] = None
+    attendance_mode: str = "attendance"
     track_checkout: bool
     min_checkout_delay_minutes: Optional[int] = 15
+    scan_behavior: str = "automatic"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -202,6 +210,8 @@ class AttendanceRecordCreate(BaseModel):
     timestamp: Optional[datetime] = None
     confidence: float = Field(1.0, ge=0.0, le=1.0)
     location: Optional[str] = Field(None, max_length=255)
+    device_id: Optional[str] = Field(None, max_length=255)
+    event_type: Optional[str] = Field(None, pattern="^(check_in|check_out)$")
     notes: Optional[str] = Field(None, max_length=500)
     is_manual: bool = False
     created_by: Optional[str] = Field(None, max_length=100)
@@ -217,6 +227,8 @@ class AttendanceRecordResponse(CapturedAttendanceResponse):
     timestamp_offset_seconds: Optional[int] = None
     confidence: float
     location: Optional[str]
+    device_id: Optional[str] = None
+    event_type: Optional[str] = None
     notes: Optional[str]
     is_manual: bool
     created_by: Optional[str]
@@ -245,6 +257,7 @@ class AttendanceSessionResponse(CapturedAttendanceResponse):
     group_id: str
     applied_rule_id: Optional[str] = None
     date: str  # YYYY-MM-DD format
+    visit_number: int = 1
     check_in_time: Optional[datetime]
     check_out_time: Optional[datetime] = None
     check_in_time_timezone: Optional[str] = None
@@ -301,6 +314,10 @@ class AttendanceEventCreate(BaseModel):
     person_id: str = Field(..., min_length=1)
     confidence: float = Field(..., ge=0.0, le=1.0)
     location: Optional[str] = Field(None, max_length=255)
+    device_id: Optional[str] = Field(None, max_length=255)
+    scan_behavior: Optional[str] = Field(
+        None, pattern="^(automatic|entry_only|exit_only)$"
+    )
 
     # Optional metadata from recognition pipeline.
     # Not persisted today, but accepted for forward compatibility.
@@ -319,6 +336,7 @@ class AttendanceEventResponse(BaseModel):
     location: Optional[str]
     processed: bool
     event_type: Optional[str] = None  # "check_in" or "check_out"
+    device_id: Optional[str] = None
     error: Optional[str]
     time_health: Optional[AttendanceTimeHealthResponse] = None
 

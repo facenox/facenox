@@ -88,12 +88,15 @@ class AttendanceRepository:
             "class_start_time": settings.get("class_start_time")
             or local_now().strftime("%H:%M"),
             "class_end_time": settings.get("class_end_time"),
+            "attendance_mode": settings.get("attendance_mode")
+            or ("work_hours" if settings.get("track_checkout") else "attendance"),
             "track_checkout": settings.get("track_checkout") or False,
             "min_checkout_delay_minutes": (
                 settings.get("min_checkout_delay_minutes")
                 if settings.get("min_checkout_delay_minutes") is not None
                 else 15
             ),
+            "scan_behavior": settings.get("scan_behavior") or "automatic",
             "organization_id": self.organization_id,
         }
 
@@ -107,12 +110,16 @@ class AttendanceRepository:
             "%H:%M"
         )
         class_end_time = settings.get("class_end_time")
+        attendance_mode = settings.get("attendance_mode") or (
+            "work_hours" if settings.get("track_checkout") else "attendance"
+        )
         track_checkout = settings.get("track_checkout")
         if track_checkout is None:
             track_checkout = False
         min_checkout_delay_minutes = settings.get("min_checkout_delay_minutes")
         if min_checkout_delay_minutes is None:
             min_checkout_delay_minutes = 15
+        scan_behavior = settings.get("scan_behavior") or "automatic"
 
         group = AttendanceGroup(
             id=group_data["id"],
@@ -123,8 +130,10 @@ class AttendanceRepository:
             late_threshold_enabled=late_threshold_enabled,
             class_start_time=class_start_time,
             class_end_time=class_end_time,
+            attendance_mode=attendance_mode,
             track_checkout=track_checkout,
             min_checkout_delay_minutes=min_checkout_delay_minutes,
+            scan_behavior=scan_behavior,
             organization_id=self.organization_id,
             is_active=group_data.get("is_active", True),
             is_deleted=not group_data.get("is_active", True),
@@ -141,8 +150,10 @@ class AttendanceRepository:
                     "late_threshold_enabled": group.late_threshold_enabled,
                     "class_start_time": group.class_start_time,
                     "class_end_time": group.class_end_time,
+                    "attendance_mode": group.attendance_mode,
                     "track_checkout": group.track_checkout,
                     "min_checkout_delay_minutes": group.min_checkout_delay_minutes,
+                    "scan_behavior": group.scan_behavior,
                 },
                 effective_from=to_storage_local(local_now()),
             )
@@ -231,8 +242,10 @@ class AttendanceRepository:
             "late_threshold_enabled": group.late_threshold_enabled,
             "class_start_time": group.class_start_time,
             "class_end_time": group.class_end_time,
+            "attendance_mode": group.attendance_mode,
             "track_checkout": group.track_checkout,
             "min_checkout_delay_minutes": group.min_checkout_delay_minutes,
+            "scan_behavior": group.scan_behavior,
         }
 
         for key, value in updates.items():
@@ -245,12 +258,16 @@ class AttendanceRepository:
                     group.class_start_time = value["class_start_time"]
                 if "class_end_time" in value:
                     group.class_end_time = value["class_end_time"]
+                if "attendance_mode" in value:
+                    group.attendance_mode = value["attendance_mode"]
                 if "track_checkout" in value:
                     group.track_checkout = value["track_checkout"]
                 if "min_checkout_delay_minutes" in value:
                     group.min_checkout_delay_minutes = value[
                         "min_checkout_delay_minutes"
                     ]
+                if "scan_behavior" in value:
+                    group.scan_behavior = value["scan_behavior"]
             elif hasattr(group, key):
                 setattr(group, key, value)
 
@@ -259,8 +276,10 @@ class AttendanceRepository:
             "late_threshold_enabled": group.late_threshold_enabled,
             "class_start_time": group.class_start_time,
             "class_end_time": group.class_end_time,
+            "attendance_mode": group.attendance_mode,
             "track_checkout": group.track_checkout,
             "min_checkout_delay_minutes": group.min_checkout_delay_minutes,
+            "scan_behavior": group.scan_behavior,
         }
         group.last_modified_at = to_storage_local(local_now())
         if tracked_before != tracked_after:
@@ -546,6 +565,8 @@ class AttendanceRepository:
             **capture_fields("timestamp", event_time(record_data, "timestamp")),
             confidence=record_data["confidence"],
             location=record_data.get("location"),
+            device_id=record_data.get("device_id"),
+            event_type=record_data.get("event_type"),
             notes=record_data.get("notes"),
             is_manual=record_data.get("is_manual", False),
             created_by=record_data.get("created_by"),
@@ -673,10 +694,13 @@ class AttendanceRepository:
         member_id = member.id if member else None
 
         session_obj = await self.get_session(
-            session_data["person_id"], session_data["date"]
+            session_data["person_id"],
+            session_data["date"],
+            visit_number=session_data.get("visit_number", 1),
         )
         if session_obj:
             session_obj.group_id = session_data["group_id"]
+            session_obj.visit_number = session_data.get("visit_number", 1)
             session_obj.applied_rule_id = session_data.get("applied_rule_id")
             session_obj.check_in_time = session_data.get("check_in_time")
             session_obj.check_out_time = session_data.get("check_out_time")
@@ -698,6 +722,7 @@ class AttendanceRepository:
                 group_id=session_data["group_id"],
                 applied_rule_id=session_data.get("applied_rule_id"),
                 date=session_data["date"],
+                visit_number=session_data.get("visit_number", 1),
                 check_in_time=session_data.get("check_in_time"),
                 check_out_time=session_data.get("check_out_time"),
                 total_hours=session_data.get("total_hours"),
@@ -787,7 +812,7 @@ class AttendanceRepository:
         from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
         # Exclude primary keys and conflict target columns from update clause
-        non_update_cols = {"id", "member_id", "date"}
+        non_update_cols = {"id", "member_id", "date", "visit_number"}
         update_cols = {col for col in session_columns if col not in non_update_cols}
 
         stmt = sqlite_insert(AttendanceSession)
@@ -799,7 +824,7 @@ class AttendanceRepository:
         dynamic_set["modified_at_utc"] = func.current_timestamp()
 
         upsert_stmt = stmt.on_conflict_do_update(
-            index_elements=["member_id", "date"],
+            index_elements=["member_id", "date", "visit_number"],
             set_=dynamic_set,
         )
 
@@ -810,14 +835,31 @@ class AttendanceRepository:
         return values_to_insert
 
     async def get_session(
-        self, person_id: str, date: str
+        self, person_id: str, date: str, visit_number: Optional[int] = None
     ) -> Optional[AttendanceSession]:
         query = select(AttendanceSession).where(
             AttendanceSession.person_id == person_id, AttendanceSession.date == date
         )
+        if visit_number is not None:
+            query = query.where(AttendanceSession.visit_number == visit_number)
+        query = query.order_by(AttendanceSession.visit_number.asc())
         query = self._apply_org_scope(query, AttendanceSession)
         result = await self.session.execute(query)
         return result.scalars().first()
+
+    async def get_latest_session(
+        self, person_id: str, date: str
+    ) -> Optional[AttendanceSession]:
+        query = (
+            select(AttendanceSession)
+            .where(
+                AttendanceSession.person_id == person_id,
+                AttendanceSession.date == date,
+            )
+            .order_by(AttendanceSession.visit_number.desc())
+        )
+        query = self._apply_org_scope(query, AttendanceSession)
+        return (await self.session.execute(query)).scalars().first()
 
     async def get_sessions(
         self,
@@ -839,7 +881,9 @@ class AttendanceRepository:
             query = query.where(AttendanceSession.date <= end_date)
 
         query = query.order_by(
-            desc(AttendanceSession.date), AttendanceSession.person_id
+            desc(AttendanceSession.date),
+            AttendanceSession.person_id,
+            AttendanceSession.visit_number,
         )
         result = await self.session.execute(query)
         return result.scalars().all()

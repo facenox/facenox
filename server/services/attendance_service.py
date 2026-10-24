@@ -65,9 +65,11 @@ class AttendanceService:
         late_threshold_minutes: int,
         class_start_time: Optional[str],
         class_end_time: Optional[str] = None,
+        attendance_mode: Optional[str] = None,
         late_threshold_enabled: bool,
         track_checkout: bool,
         min_checkout_delay_minutes: Optional[int] = 15,
+        scan_behavior: str = "automatic",
     ) -> Dict[str, Any]:
         if rule is None:
             return {
@@ -75,6 +77,11 @@ class AttendanceService:
                 "late_threshold_minutes": late_threshold_minutes,
                 "class_start_time": class_start_time or local_now().strftime("%H:%M"),
                 "class_end_time": class_end_time,
+                "attendance_mode": (
+                    "work_hours"
+                    if track_checkout and attendance_mode in (None, "attendance")
+                    else (attendance_mode or "attendance")
+                ),
                 "late_threshold_enabled": late_threshold_enabled,
                 "track_checkout": track_checkout,
                 "min_checkout_delay_minutes": (
@@ -82,7 +89,13 @@ class AttendanceService:
                     if min_checkout_delay_minutes is not None
                     else 15
                 ),
+                "scan_behavior": scan_behavior or "automatic",
             }
+
+        rule_track_checkout = getattr(rule, "track_checkout", track_checkout)
+        normalized_mode = getattr(rule, "attendance_mode", None)
+        if normalized_mode == "attendance" and rule_track_checkout:
+            normalized_mode = "work_hours"
 
         return {
             "id": getattr(rule, "id", None),
@@ -95,10 +108,12 @@ class AttendanceService:
                 class_start_time or local_now().strftime("%H:%M"),
             ),
             "class_end_time": getattr(rule, "class_end_time", class_end_time),
+            "attendance_mode": normalized_mode
+            or ("work_hours" if rule_track_checkout else "attendance"),
             "late_threshold_enabled": getattr(
                 rule, "late_threshold_enabled", late_threshold_enabled
             ),
-            "track_checkout": getattr(rule, "track_checkout", track_checkout),
+            "track_checkout": rule_track_checkout,
             "min_checkout_delay_minutes": (
                 getattr(rule, "min_checkout_delay_minutes", None)
                 if getattr(rule, "min_checkout_delay_minutes", None) is not None
@@ -108,6 +123,7 @@ class AttendanceService:
                     else 15
                 )
             ),
+            "scan_behavior": getattr(rule, "scan_behavior", None) or "automatic",
         }
 
     @staticmethod
@@ -181,6 +197,8 @@ class AttendanceService:
         late_threshold_enabled: bool = False,
         existing_sessions: Optional[List[Any]] = None,
         track_checkout: bool = False,
+        attendance_mode: Optional[str] = None,
+        scan_behavior: str = "automatic",
         rule_history: Optional[List[Any]] = None,
     ) -> List[dict]:
         """Compute attendance sessions from records using effective-dated group rules."""
@@ -284,15 +302,50 @@ class AttendanceService:
                 selected_rule,
                 late_threshold_minutes=late_threshold_minutes,
                 class_start_time=class_start_time,
+                attendance_mode=attendance_mode,
                 late_threshold_enabled=late_threshold_enabled,
                 track_checkout=track_checkout,
+                scan_behavior=scan_behavior,
             )
             is_late, late_minutes = self._calculate_late_status(
                 timestamp, normalized_rule
             )
 
+            if normalized_rule.get("attendance_mode") == "visits":
+                for index in range(0, len(person_records), 2):
+                    visit_in = event_time(person_records[index], "timestamp")
+                    visit_out = (
+                        event_time(person_records[index + 1], "timestamp")
+                        if index + 1 < len(person_records)
+                        else None
+                    )
+                    sessions.append(
+                        {
+                            "id": self.generate_id(),
+                            "person_id": person_id,
+                            "group_id": member.group_id,
+                            "applied_rule_id": normalized_rule.get("id"),
+                            "date": target_date,
+                            "visit_number": index // 2 + 1,
+                            "check_in_time": visit_in,
+                            "check_out_time": visit_out,
+                            "total_hours": (
+                                elapsed_seconds(visit_in, visit_out) / 3600.0
+                                if visit_out
+                                else None
+                            ),
+                            "status": "present",
+                            "is_late": is_late if index == 0 else False,
+                            "late_minutes": late_minutes if index == 0 else None,
+                            "notes": None,
+                        }
+                    )
+                continue
+
             existing_session = existing_sessions_map.get(person_id)
-            should_track_checkout = bool(normalized_rule.get("track_checkout"))
+            should_track_checkout = (
+                normalized_rule.get("attendance_mode") != "attendance"
+            )
             sessions.append(
                 {
                     "id": (
@@ -417,6 +470,15 @@ class AttendanceService:
             late_threshold_enabled=group.late_threshold_enabled or False,
             existing_sessions=existing_sessions,
             track_checkout=getattr(group, "track_checkout", False),
+            attendance_mode=(
+                getattr(group, "attendance_mode", None)
+                or (
+                    "work_hours"
+                    if getattr(group, "track_checkout", False)
+                    else "attendance"
+                )
+            ),
+            scan_behavior=getattr(group, "scan_behavior", "automatic"),
             rule_history=rule_history,
         )
 
@@ -483,16 +545,70 @@ class AttendanceService:
                 if group and group.late_threshold_enabled is not None
                 else False
             ),
+            attendance_mode=(
+                getattr(group, "attendance_mode", None)
+                or (
+                    "work_hours"
+                    if getattr(group, "track_checkout", False)
+                    else "attendance"
+                )
+            )
+            if group
+            else "attendance",
             track_checkout=getattr(group, "track_checkout", False) if group else False,
             min_checkout_delay_minutes=(
                 getattr(group, "min_checkout_delay_minutes", 15) if group else 15
             ),
+            scan_behavior=(
+                getattr(group, "scan_behavior", "automatic") if group else "automatic"
+            ),
         )
 
-        track_checkout = normalized_rule["track_checkout"]
-        existing_session = await self.repo.get_session(event_data.person_id, today_str)
+        attendance_mode = normalized_rule.get("attendance_mode") or (
+            "work_hours" if normalized_rule.get("track_checkout") else "attendance"
+        )
+        track_checkout = attendance_mode != "attendance"
+        scan_behavior = (
+            getattr(event_data, "scan_behavior", None)
+            or normalized_rule.get("scan_behavior")
+            or "automatic"
+        )
+        latest_session = await (
+            self.repo.get_latest_session(event_data.person_id, today_str)
+            if attendance_mode == "visits"
+            else self.repo.get_session(event_data.person_id, today_str)
+        )
+        visit_number = 1
+        existing_session = latest_session
+        if (
+            attendance_mode in ("work_hours", "visits")
+            and scan_behavior == "exit_only"
+            and not existing_session
+        ):
+            return AttendanceEventResponse(
+                id=None,
+                person_id=event_data.person_id,
+                group_id=member.group_id,
+                timestamp=current_time,
+                confidence=event_data.confidence,
+                location=event_data.location,
+                processed=False,
+                error="No open session is available for this exit scan.",
+                time_health=time_health_payload,
+            )
+        if (
+            attendance_mode == "visits"
+            and latest_session
+            and latest_session.check_out_time
+        ):
+            visit_number = (latest_session.visit_number or 1) + 1
+            existing_session = None
 
-        if not track_checkout and existing_session and existing_session.check_in_time:
+        if (
+            attendance_mode == "attendance"
+            and existing_session
+            and existing_session.check_in_time
+        ):
             return AttendanceEventResponse(
                 id=None,
                 person_id=event_data.person_id,
@@ -506,7 +622,7 @@ class AttendanceService:
             )
 
         if (
-            track_checkout
+            attendance_mode == "work_hours"
             and existing_session
             and existing_session.check_in_time
             and existing_session.check_out_time
@@ -524,7 +640,27 @@ class AttendanceService:
             )
 
         if (
-            track_checkout
+            attendance_mode in ("work_hours", "visits")
+            and scan_behavior == "entry_only"
+            and existing_session
+            and existing_session.check_in_time
+            and not existing_session.check_out_time
+        ):
+            return AttendanceEventResponse(
+                id=None,
+                person_id=event_data.person_id,
+                group_id=member.group_id,
+                timestamp=current_time,
+                confidence=event_data.confidence,
+                location=event_data.location,
+                processed=False,
+                error="Entry-only scanning is enabled for this device.",
+                time_health=time_health_payload,
+            )
+
+        if (
+            attendance_mode in ("work_hours", "visits")
+            and scan_behavior != "entry_only"
             and existing_session
             and existing_session.check_in_time
             and not existing_session.check_out_time
@@ -586,12 +722,11 @@ class AttendanceService:
             "timestamp": timestamp,
             "confidence": event_data.confidence,
             "location": event_data.location,
+            "device_id": getattr(event_data, "device_id", None),
             "notes": None,
             "is_manual": False,
             "created_by": None,
         }
-
-        await self.repo.add_record(record_data)
 
         # Determine event type and session data
         event_type = "check_in"
@@ -601,7 +736,7 @@ class AttendanceService:
 
         if existing_session and existing_session.check_in_time:
             check_in_time = event_time(existing_session, "check_in_time")
-            if track_checkout:
+            if track_checkout and scan_behavior != "entry_only":
                 event_type = "check_out"
                 check_out_time = timestamp
                 total_hours = max(
@@ -616,6 +751,9 @@ class AttendanceService:
                     ),
                 )
 
+        record_data["event_type"] = event_type
+        await self.repo.add_record(record_data)
+
         is_late, late_minutes = self._calculate_late_status(
             check_in_time, normalized_rule
         )
@@ -626,6 +764,7 @@ class AttendanceService:
             "group_id": member.group_id,
             "applied_rule_id": normalized_rule.get("id"),
             "date": today_str,
+            "visit_number": visit_number,
             "check_in_time": check_in_time,
             "check_out_time": check_out_time,
             "total_hours": total_hours,

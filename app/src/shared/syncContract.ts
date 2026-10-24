@@ -18,12 +18,14 @@ const captureTimezoneSchema = z
 const captureOffsetSchema = z.number().int().min(-86399).max(86399).nullable().optional()
 
 export const groupSettingsSchema = z.object({
+  attendance_mode: z.enum(["attendance", "work_hours", "visits"]).default("attendance"),
   late_threshold_minutes: z.number().nullable().optional(),
   late_threshold_enabled: z.boolean().default(false),
   class_start_time: z.string().nullable().optional(),
   class_end_time: z.string().nullable().optional(),
   track_checkout: z.boolean().default(false),
   min_checkout_delay_minutes: z.number().nullable().optional(),
+  scan_behavior: z.enum(["automatic", "entry_only", "exit_only"]).default("automatic"),
 })
 
 export const attendanceGroupSchema = z.object({
@@ -63,6 +65,8 @@ export const attendanceRecordSchema = z.object({
   timestamp_offset_seconds: captureOffsetSchema,
   confidence: z.number(),
   location: z.string().nullable().optional(),
+  device_id: z.string().nullable().optional(),
+  event_type: z.enum(["check_in", "check_out"]).nullable().optional(),
   notes: z.string().nullable().optional(),
   is_manual: z.boolean(),
   created_by: z.string().nullable().optional(),
@@ -78,6 +82,7 @@ export const attendanceSessionSchema = z.object({
   member_id: z.string().min(1),
   group_id: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  visit_number: z.number().int().positive().default(1),
   check_in_time: z.string().datetime().nullable().optional(),
   check_out_time: z.string().datetime().nullable().optional(),
   check_in_time_timezone: captureTimezoneSchema,

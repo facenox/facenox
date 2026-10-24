@@ -336,6 +336,7 @@ export class RecordManager {
       check_out_time?: Date
       is_late?: boolean
       late_minutes?: number
+      visit_number?: number
     },
   ): Promise<AttendanceSession> {
     try {

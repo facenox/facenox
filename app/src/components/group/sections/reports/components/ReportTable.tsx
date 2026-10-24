@@ -36,6 +36,7 @@ const COL_WIDTHS: Record<ColumnKey, string> = {
   status: "w-[100px] min-w-[100px]",
   check_in_time: "w-[120px] min-w-[120px]",
   check_out_time: "w-[120px] min-w-[120px]",
+  visit_number: "w-[80px] min-w-[80px]",
   total_hours: "w-[100px] min-w-[100px]",
   late_minutes: "w-[100px] min-w-[100px]",
   is_late: "w-[100px] min-w-[100px]",
@@ -95,6 +96,12 @@ function CellContent({ row, columnKey }: { row: RowData; columnKey: ColumnKey })
         )}
       </div>
     )
+  }
+
+  if (columnKey === "visit_number") {
+    return row.visit_number ?
+        <span className="font-medium text-white/70">{row.visit_number}</span>
+      : <span className="text-white/10">-</span>
   }
 
   if (columnKey === "check_out_time") {

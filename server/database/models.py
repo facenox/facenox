@@ -69,9 +69,15 @@ class AttendanceGroup(Base, SyncMixin, DirectorySyncState):
         String, default=lambda: datetime.now().strftime("%H:%M")
     )
     class_end_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    attendance_mode: Mapped[str] = mapped_column(
+        String, default="attendance", server_default="attendance", nullable=False
+    )
     track_checkout: Mapped[bool] = mapped_column(Boolean, default=False)
     min_checkout_delay_minutes: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True, default=15
+    )
+    scan_behavior: Mapped[str] = mapped_column(
+        String, default="automatic", server_default="automatic", nullable=False
     )
 
     members: Mapped[List["AttendanceMember"]] = relationship(back_populates="group")
@@ -88,12 +94,14 @@ class AttendanceGroup(Base, SyncMixin, DirectorySyncState):
             "late_threshold_enabled": self.late_threshold_enabled,
             "class_start_time": self.class_start_time,
             "class_end_time": self.class_end_time,
+            "attendance_mode": self.attendance_mode,
             "track_checkout": self.track_checkout,
             "min_checkout_delay_minutes": (
                 self.min_checkout_delay_minutes
                 if self.min_checkout_delay_minutes is not None
                 else 15
             ),
+            "scan_behavior": self.scan_behavior,
         }
 
 
@@ -163,6 +171,8 @@ class AttendanceRecord(Base, SyncMixin):
     )
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
     location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    device_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    event_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     is_manual: Mapped[bool] = mapped_column(Boolean, default=False)
     created_by: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -180,6 +190,7 @@ class AttendanceRecord(Base, SyncMixin):
         Index("ix_record_member_id", "member_id"),
         Index("ix_record_timestamp", "timestamp"),
         Index("ix_record_group_timestamp", "group_id", "timestamp"),
+        Index("ix_record_device_id", "device_id"),
     )
 
 
@@ -198,6 +209,7 @@ class AttendanceSession(Base, SyncMixin):
         String, ForeignKey("attendance_group_rules.id"), nullable=True
     )
     date: Mapped[str] = mapped_column(String, nullable=False)  # YYYY-MM-DD
+    visit_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     check_in_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     check_out_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     check_in_time_utc: Mapped[Optional[datetime]] = mapped_column(
@@ -239,7 +251,13 @@ class AttendanceSession(Base, SyncMixin):
         Index("ix_session_applied_rule_id", "applied_rule_id"),
         Index("ix_session_date", "date"),
         Index("ix_session_group_date", "group_id", "date"),
-        Index("ux_session_member_date", "member_id", "date", unique=True),
+        Index(
+            "ux_session_member_date_visit",
+            "member_id",
+            "date",
+            "visit_number",
+            unique=True,
+        ),
     )
 
 
@@ -257,9 +275,15 @@ class AttendanceGroupRule(Base, SyncMixin):
     late_threshold_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     class_start_time: Mapped[str] = mapped_column(String, nullable=False)
     class_end_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    attendance_mode: Mapped[str] = mapped_column(
+        String, default="attendance", server_default="attendance", nullable=False
+    )
     track_checkout: Mapped[bool] = mapped_column(Boolean, default=False)
     min_checkout_delay_minutes: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True, default=15
+    )
+    scan_behavior: Mapped[str] = mapped_column(
+        String, default="automatic", server_default="automatic", nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.current_timestamp()
@@ -375,6 +399,7 @@ _SYNC_FIELDS = {
         "late_threshold_enabled",
         "class_start_time",
         "class_end_time",
+        "attendance_mode",
         "track_checkout",
     ),
     AttendanceMember: ("name", "group_id", "role", "email", "is_active", "is_deleted"),

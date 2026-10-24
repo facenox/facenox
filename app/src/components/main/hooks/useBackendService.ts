@@ -18,6 +18,7 @@ import {
   useUIStore,
 } from "@/components/main/stores"
 import { notifyDataChanged } from "@/utils/syncNotifier"
+import { persistentSettings } from "@/services"
 
 interface UseBackendServiceOptions {
   webSocketServiceRef: React.RefObject<WebSocketService | null>
@@ -82,12 +83,21 @@ export function useBackendService(options: UseBackendServiceOptions) {
   }>({ initialized: false, isInitializing: false })
 
   useEffect(() => {
-    if (webSocketServiceRef.current) {
+    let cancelled = false
+    const syncLiveConfig = async () => {
+      if (cancelled || !webSocketServiceRef.current) return
+      const deviceId = await persistentSettings.get<string>("sync.deviceId")
+      if (cancelled) return
       webSocketServiceRef.current.updateLiveConfig({
         enableLivenessDetection: enableSpoofDetection,
         groupId: currentGroupId,
         maxRecognitionFacesPerFrame,
+        deviceId: deviceId || undefined,
       })
+    }
+    void syncLiveConfig()
+    return () => {
+      cancelled = true
     }
   }, [enableSpoofDetection, currentGroupId, maxRecognitionFacesPerFrame, webSocketServiceRef])
 

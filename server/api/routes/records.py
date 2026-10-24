@@ -52,6 +52,8 @@ async def add_record(
             "timestamp": timestamp,
             "confidence": record_data.confidence,
             "location": record_data.location,
+            "device_id": record_data.device_id,
+            "event_type": record_data.event_type,
             "notes": record_data.notes,
             "is_manual": record_data.is_manual,
             "created_by": (
@@ -253,6 +255,15 @@ async def get_sessions(
                         late_threshold_enabled=group.late_threshold_enabled or False,
                         existing_sessions=existing_day_sessions,
                         track_checkout=getattr(group, "track_checkout", False),
+                        attendance_mode=(
+                            getattr(group, "attendance_mode", None)
+                            or (
+                                "work_hours"
+                                if getattr(group, "track_checkout", False)
+                                else "attendance"
+                            )
+                        ),
+                        scan_behavior=getattr(group, "scan_behavior", "automatic"),
                         rule_history=rule_history,
                     )
 
@@ -300,6 +311,7 @@ async def get_session(
 
 
 class SessionUpdateRequest(BaseModel):
+    visit_number: int = 1
     status: Optional[str] = None
     notes: Optional[str] = None
     check_in_time: Optional[datetime] = None
@@ -329,7 +341,9 @@ async def update_session(
                     manual_event_time(value, settings.attendance_timezone),
                 )
 
-        session_obj = await repo.get_session(person_id, date)
+        session_obj = await repo.get_session(
+            person_id, date, visit_number=payload.visit_number
+        )
         if not session_obj:
             # If session doesn't exist (e.g. member was absent), create an override session!
             member = await repo.get_member(person_id)
@@ -341,6 +355,7 @@ async def update_session(
                 "group_id": member.group_id,
                 "applied_rule_id": None,
                 "date": date,
+                "visit_number": payload.visit_number,
                 "check_in_time": payload.check_in_time,
                 "check_out_time": payload.check_out_time,
                 "total_hours": None,
