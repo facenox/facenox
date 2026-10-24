@@ -179,7 +179,7 @@ export function Reports({
 
         <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <AnimatePresence mode="wait">
-            {!hasMembers && !loading ?
+            {!hasMembers && !loading && !error ?
               <motion.div
                 key="empty"
                 initial={{ opacity: 0 }}
