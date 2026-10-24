@@ -28,7 +28,7 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox records attendance using face recognition on this computer, even without
+            Facenox Desktop records attendance using face recognition on this computer, even without
             internet. You can use it locally or connect Facenox Cloud to review synced records from
             a browser.
           </p>
@@ -43,7 +43,7 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox stores <strong>encrypted face templates</strong> for recognition, not member
+            Facenox Desktop stores <strong>encrypted face templates</strong> for recognition, not member
             photos.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
