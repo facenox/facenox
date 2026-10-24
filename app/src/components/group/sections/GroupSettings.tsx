@@ -399,7 +399,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         description="Records Time in and Time out from member scans."
                         details={[
                           "The first valid scan records Time in.",
-                          `Waits ${minCheckoutDelayMinutes} ${minCheckoutDelayMinutes === 1 ? "minute" : "minutes"} before recording Time out.`,
+                          "The next eligible scan records Time out after the minimum time below.",
                           "Calculates total hours between Time in and Time out.",
                         ]}
                         side="right"

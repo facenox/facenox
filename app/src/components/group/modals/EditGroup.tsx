@@ -268,9 +268,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                         Time in &amp; time out
                       </div>
                       <div className="text-[11px] text-white/55">
-                        {trackCheckout ?
-                          "Record arrival (time in) and departure (time out)."
-                        : "Record arrival times only."}
+                        Records Time in and Time out from member scans.
                       </div>
                     </div>
                   </div>
