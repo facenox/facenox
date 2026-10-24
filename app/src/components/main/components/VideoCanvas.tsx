@@ -134,9 +134,15 @@ export const VideoCanvas = memo(function VideoCanvas({
           </span>
         </div>
 
-        {/* 3. Time in & Time out */}
+        {/* 3. Mode-specific timing */}
         <div className="flex items-center justify-between gap-4">
-          <span>Time in &amp; time out</span>
+          <span>
+            {isAllGroups ?
+              "Time in & time out"
+            : attendanceMode === "visits" ?
+              "Minimum visit duration"
+            : "Time in & time out"}
+          </span>
           <span className="text-right font-mono font-medium text-white/85">
             {isAllGroups ?
               <span className="font-sans text-white/70">Per-group</span>
@@ -144,26 +150,22 @@ export const VideoCanvas = memo(function VideoCanvas({
               currentGroup.settings?.class_end_time ?
                 `Enabled (${format12hTime(currentGroup.settings.class_end_time)})`
               : "Enabled"
+            : attendanceMode === "visits" ?
+              `${currentGroup.settings?.min_checkout_delay_minutes ?? 15}m minimum`
             : <span className="font-sans text-white/40">Not used</span>}
           </span>
         </div>
 
         {attendanceMode === "work_hours" && !isAllGroups && (
           <div className="flex items-center justify-between gap-4">
-            <span>Minimum Time out</span>
+            <span>Minimum time before Time out</span>
             <span className="text-right font-medium text-white/85">
               {currentGroup.settings?.min_checkout_delay_minutes ?? 15}m
             </span>
           </div>
         )}
 
-        {/* 4. Duplicate Filter */}
-        <div className="flex items-center justify-between gap-4">
-          <span>Duplicate filter</span>
-          <span className="text-right font-medium text-white/85">5s auto</span>
-        </div>
-
-        {/* 5. Recognition Limit */}
+        {/* 4. Recognition Limit */}
         <div className="flex items-center justify-between gap-4">
           <span>Face limit</span>
           <span className="text-right font-medium text-white/85">
@@ -171,7 +173,7 @@ export const VideoCanvas = memo(function VideoCanvas({
           </span>
         </div>
 
-        {/* 6. Anti-Spoofing */}
+        {/* 5. Anti-Spoofing */}
         <div className="flex items-center justify-between gap-4">
           <span>Anti-spoofing</span>
           <span className="text-right font-medium text-white/85">
