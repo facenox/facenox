@@ -257,7 +257,7 @@ export default function WindowBar() {
                         releaseActiveMediaStreams()
                         setTimeout(() => {
                           window.location.reload()
-                        }, 120)
+                        }, 250)
                       }}
                       className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white">
                       <RefreshCw className="size-3.5" />
@@ -528,16 +528,19 @@ export default function WindowBar() {
         )}
       </Modal>
 
-      {isReloading && (
-        <div
-          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-3 bg-[#08090a]/90 backdrop-blur-md">
-          <RefreshCw className="size-6 animate-spin text-white/70" />
-          <span className="text-xs font-medium tracking-wide text-white/80">
-            Reloading application…
-          </span>
-        </div>
-      )}
+      <AnimatePresence>
+        {isReloading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#08090a]/85 backdrop-blur-md">
+            <Spinner size="lg" color="cyan" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
