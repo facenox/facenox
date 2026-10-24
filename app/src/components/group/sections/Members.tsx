@@ -394,8 +394,9 @@ export function Members({
                       </div>
                     </div>
                   : <span>
-                      Showing {filteredMembers.length} of {members.length} member
-                      {members.length !== 1 ? "s" : ""}
+                      {filteredMembers.length !== members.length ?
+                        `${filteredMembers.length} of ${members.length} member${members.length !== 1 ? "s" : ""}`
+                      : `${members.length} member${members.length !== 1 ? "s" : ""}`}
                     </span>
                   }
                 </div>
