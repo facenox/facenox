@@ -257,9 +257,9 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       {attendanceMode === "attendance" &&
                         "Marks a member present on the first valid scan."}
                       {attendanceMode === "work_hours" &&
-                        "Records arrival and departure times from member scans."}
+                        "Records Time in and Time out from member scans."}
                       {attendanceMode === "visits" &&
-                        "Records each visit when members can leave and return."}
+                        "Records each visit separately."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -397,11 +397,11 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       </div>
                       <InfoPopover
                         title="Time in & time out"
-                        description="Records arrival and departure times from member scans."
+                        description="Records Time in and Time out from member scans."
                         details={[
-                          "Records arrival on the first scan of the day.",
-                          `Waits ${minCheckoutDelayMinutes} ${minCheckoutDelayMinutes === 1 ? "minute" : "minutes"} before recording a departure.`,
-                          "Calculates elapsed hours between time in and time out.",
+                          "The first valid scan records Time in.",
+                          `Waits ${minCheckoutDelayMinutes} ${minCheckoutDelayMinutes === 1 ? "minute" : "minutes"} before recording Time out.`,
+                          "Calculates total hours between Time in and Time out.",
                         ]}
                         side="right"
                       />
@@ -415,7 +415,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                           exit={{ opacity: 0, y: 2 }}
                           transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                           className="text-xs font-normal text-white/65">
-                          Record arrival (time in) and departure (time out).
+                          Records Time in and Time out from member scans.
                         </motion.div>
                       </AnimatePresence>
                     </div>
@@ -476,14 +476,14 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         description="Set how long a member must remain before a visit can end."
                         details={[
                           "The first scan starts a visit.",
-                          "A later eligible scan records the departure.",
-                          "A new scan after departure starts the next visit.",
+                          "The next eligible scan ends the visit.",
+                          "A later scan starts the next visit.",
                         ]}
                         side="right"
                       />
                     </div>
                     <div className="text-xs font-normal text-white/65">
-                      Set the minimum time before recording a departure.
+                      Set the minimum time before ending a visit.
                     </div>
                   </div>
                 </div>

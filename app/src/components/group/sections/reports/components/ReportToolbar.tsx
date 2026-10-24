@@ -430,7 +430,7 @@ export function ReportToolbar({
                   </span>
                   {unavailableColumns.length > 0 && (
                     <span className="mt-1 block px-1 text-[10px] leading-4 text-white/35">
-                      Some columns are unavailable for this mode.
+                      Some columns do not apply to this mode.
                     </span>
                   )}
                   <div className="custom-scroll mt-1 max-h-[150px] overflow-y-auto pr-1">
