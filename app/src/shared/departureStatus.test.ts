@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { getDepartureStatus } from "@/components/group/sections/reports/utils/departureStatus"
+import { getDepartureStatus } from "./departureStatus"
 
 describe("getDepartureStatus", () => {
   it("marks a checkout before the scheduled end as undertime", () => {

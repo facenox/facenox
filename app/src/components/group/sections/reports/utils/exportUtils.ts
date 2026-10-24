@@ -7,7 +7,7 @@ import {
 } from "@/utils"
 import { attendanceManager } from "@/services/AttendanceManager"
 import type { AttendanceGroup, AttendanceMember, AttendanceSession } from "@/types/recognition"
-import { getDepartureStatus } from "@/components/group/sections/reports/utils/departureStatus"
+import { getDepartureStatus } from "@/shared/departureStatus"
 
 export function exportReportToCSV(
   groupedRows: Record<string, RowData[]>,

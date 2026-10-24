@@ -114,7 +114,13 @@ describe("AutoExportManager", () => {
         return Promise.resolve({
           ok: true,
           json: async () => [
-            { id: "g1", name: "Faculty Staff", is_active: true, is_deleted: false },
+            {
+              id: "g1",
+              name: "Faculty Staff",
+              is_active: true,
+              is_deleted: false,
+              settings: { attendance_mode: "work_hours", class_end_time: "17:00" },
+            },
           ],
         })
       }

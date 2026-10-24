@@ -4,6 +4,7 @@ import fs from "node:fs/promises"
 import { backendService } from "../backendService.js"
 import { persistentStore } from "../persistentStore.js"
 import { withLocalBackendHeaders } from "../localBackendScope.js"
+import { getDepartureStatus } from "../../shared/departureStatus.js"
 
 export interface AutoExportConfig {
   enabled: boolean
@@ -18,6 +19,11 @@ export interface GroupRecord {
   name: string
   is_active?: boolean
   is_deleted?: boolean
+  settings?: {
+    attendance_mode?: string
+    class_end_time?: string | null
+    track_checkout?: boolean
+  }
 }
 
 export interface MemberRecord {
@@ -244,6 +250,7 @@ export class AutoExportManager {
           "Status",
           "Time in",
           "Time out",
+          "Departure",
           "Total hours",
           "Late (mins)",
           "Notes",
@@ -286,6 +293,18 @@ export class AutoExportManager {
           }
 
           const lateMinutesStr = session?.late_minutes ? String(session.late_minutes) : ""
+          const tracksTimeOut =
+            group.settings?.attendance_mode === "work_hours" ||
+            (!group.settings?.attendance_mode && group.settings?.track_checkout === true)
+          const departureStatus =
+            tracksTimeOut ?
+              getDepartureStatus(
+                dateStr,
+                session?.check_in_time ?? undefined,
+                session?.check_out_time ?? undefined,
+                group.settings?.class_end_time || "17:00",
+              )
+            : undefined
           const notesStr = session?.notes || ""
 
           rows.push([
@@ -294,6 +313,7 @@ export class AutoExportManager {
             status,
             timeIn,
             timeOut,
+            departureStatus ? departureStatus[0].toUpperCase() + departureStatus.slice(1) : "",
             totalHoursStr,
             lateMinutesStr,
             notesStr,
@@ -338,6 +358,7 @@ export class AutoExportManager {
         "Status",
         "Time in",
         "Time out",
+        "Departure",
         "Total hours",
         "Late (mins)",
         "Notes",
@@ -390,6 +411,7 @@ ${row.map((cell) => `    <Cell><Data ss:Type="String">${escapeXml(cell)}</Data><
         return ` <Worksheet ss:Name="${escapeXml(uniqueName)}">
   <Table>
    <Column ss:Width="160"/>
+   <Column ss:Width="95"/>
    <Column ss:Width="95"/>
    <Column ss:Width="90"/>
    <Column ss:Width="85"/>

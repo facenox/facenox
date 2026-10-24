@@ -265,7 +265,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
               label="Present today"
               tooltipText={
                 <span>
-                  Members who have checked in at least once today.{" "}
+                  Members with at least one valid scan today.{" "}
                   <span className="text-white/65">Resets at midnight.</span>
                 </span>
               }

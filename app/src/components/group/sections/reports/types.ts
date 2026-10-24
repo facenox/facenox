@@ -1,5 +1,5 @@
 import type { AttendanceSession } from "@/types/recognition"
-import type { DepartureStatus } from "@/components/group/sections/reports/utils/departureStatus"
+import type { DepartureStatus } from "@/shared/departureStatus"
 
 export type ColumnKey =
   | "name"

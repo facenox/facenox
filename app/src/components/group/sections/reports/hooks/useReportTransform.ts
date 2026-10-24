@@ -16,7 +16,7 @@ import type {
   GroupByKey,
   ReportStatusFilter,
 } from "@/components/group/sections/reports/types"
-import { getDepartureStatus } from "@/components/group/sections/reports/utils/departureStatus"
+import { getDepartureStatus } from "@/shared/departureStatus"
 
 export function useReportTransform(
   _group: AttendanceGroup,
