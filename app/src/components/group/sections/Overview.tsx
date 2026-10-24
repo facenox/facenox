@@ -285,15 +285,15 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
               disabled={!(group.settings?.late_threshold_enabled ?? false)}
               tooltipText={
                 <span>
-                  Members who checked in past the scheduled start time and grace period today.{" "}
-                  <span className="text-white/65">Resets at midnight.</span>
+                  Members whose first valid scan was after the scheduled start time and grace period
+                  today. <span className="text-white/65">Resets at midnight.</span>
                 </span>
               }
               disabledTooltipText={
                 <span>
                   Late tracking is disabled for this group. Enable it in{" "}
-                  <span className="font-medium text-cyan-400">Edit group</span> to automatically
-                  flag and count late arrivals.
+                  <span className="font-medium text-cyan-400">Group rules</span> to flag and count
+                  late arrivals.
                 </span>
               }
             />

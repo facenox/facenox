@@ -39,6 +39,7 @@ const DEFAULT_COLUMNS = ["name", "date", "status", "check_in_time"] as unknown a
 const CHECKOUT_DEFAULT_COLUMNS = [
   ...DEFAULT_COLUMNS,
   "check_out_time",
+  "departure_status",
   "total_hours",
 ] as unknown as ColumnKey[]
 

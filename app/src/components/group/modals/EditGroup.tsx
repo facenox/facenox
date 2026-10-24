@@ -137,9 +137,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
           <div className="flex items-center justify-between gap-3 rounded-md border border-white/8 bg-white/[0.025] px-3 py-3">
             <div>
               <div className="text-xs font-semibold text-white/90">Attendance mode</div>
-              <div className="text-[11px] text-white/55">
-                Choose what to record for this group.
-              </div>
+              <div className="text-[11px] text-white/55">Choose what to record for this group.</div>
             </div>
             <Dropdown
               options={[

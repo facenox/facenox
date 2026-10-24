@@ -43,8 +43,8 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox Desktop stores <strong>encrypted face templates</strong> for recognition, not member
-            photos.
+            Facenox Desktop stores <strong>encrypted face templates</strong> for recognition, not
+            member photos.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
             A face template is a numerical representation of a face used for recognition. Facenox

@@ -16,6 +16,7 @@ import type {
   GroupByKey,
   ReportStatusFilter,
 } from "@/components/group/sections/reports/types"
+import { getDepartureStatus } from "@/components/group/sections/reports/utils/departureStatus"
 
 export function useReportTransform(
   _group: AttendanceGroup,
@@ -112,6 +113,15 @@ export function useReportTransform(
           date: date,
           check_in_time: finalSession?.check_in_time,
           check_out_time: finalSession?.check_out_time,
+          departure_status:
+            attendanceMode === "work_hours" ?
+              getDepartureStatus(
+                date,
+                finalSession?.check_in_time,
+                finalSession?.check_out_time,
+                _group.settings?.class_end_time || "17:00",
+              )
+            : undefined,
           visit_number: finalSession?.visit_number || 1,
           total_hours: finalSession?.total_hours,
           status: status,
@@ -123,7 +133,15 @@ export function useReportTransform(
       }
     }
     return rows
-  }, [attendanceMode, sessionsMap, members, displayNameMap, startDateStr, endDateStr])
+  }, [
+    attendanceMode,
+    sessionsMap,
+    members,
+    displayNameMap,
+    startDateStr,
+    endDateStr,
+    _group.settings?.class_end_time,
+  ])
 
   // 2. Filter rows based on status and search query
   const filteredRows = useMemo(() => {
@@ -182,10 +200,15 @@ export function useReportTransform(
   const finalColumns = useMemo(() => {
     if (attendanceMode === "attendance") {
       return ALL_COLUMNS.filter(
-        (column) => column.key !== "check_out_time" && column.key !== "total_hours",
+        (column) =>
+          column.key !== "check_out_time" &&
+          column.key !== "departure_status" &&
+          column.key !== "total_hours",
       )
     }
-    return attendanceMode === "visits" ? [...ALL_COLUMNS, VISIT_COLUMN] : ALL_COLUMNS
+    return attendanceMode === "visits" ?
+        ALL_COLUMNS.filter((column) => column.key !== "departure_status").concat(VISIT_COLUMN)
+      : ALL_COLUMNS
   }, [attendanceMode])
 
   const unavailableColumns = useMemo(() => {
@@ -194,8 +217,8 @@ export function useReportTransform(
       (column) => ({
         ...column,
         reason:
-          column.key === "visit_number" ?
-            "Only available in Visits mode."
+          column.key === "visit_number" ? "Only available in Visits mode."
+          : column.key === "departure_status" ? "Only available in Time in & time out mode."
           : "Not recorded in Attendance mode.",
       }),
     )
@@ -216,6 +239,7 @@ const ALL_COLUMNS = [
   { key: "status", label: "Status", align: "center" },
   { key: "check_in_time", label: "Time in", align: "center" },
   { key: "check_out_time", label: "Time out", align: "center" },
+  { key: "departure_status", label: "Departure", align: "center" },
   { key: "total_hours", label: "Total hours", align: "center" },
   { key: "late_minutes", label: "Late (mins)", align: "center" },
   { key: "notes", label: "Notes", align: "left" },

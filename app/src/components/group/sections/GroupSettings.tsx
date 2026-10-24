@@ -273,7 +273,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         <div className="text-sm font-medium text-white/90">Late tracking</div>
                         <InfoPopover
                           title="Late tracking"
-                          description="Mark arrivals as late after the scheduled start time and grace period."
+                          description="Flag arrivals after the scheduled start time and grace period."
                           details={[
                             "Set the start time and grace period for this group.",
                             "Late status appears in the overview, member history, and CSV reports.",
@@ -401,6 +401,8 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                           "The first valid scan records Time in.",
                           "The next eligible scan records Time out after the minimum time below.",
                           "Calculates total hours between Time in and Time out.",
+                          "Compares Time out with the scheduled end time to show Undertime or Overtime.",
+                          "The scheduled end time does not record Time out automatically.",
                         ]}
                         side="right"
                       />
@@ -500,7 +502,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       <div className="text-sm font-medium text-white/90">Visit rules</div>
                       <InfoPopover
                         title="Visit rules"
-                        description="Set how long a member must remain before a visit can end."
+                        description="Set the minimum time before ending a visit."
                         details={[
                           "The first scan starts a visit.",
                           "The next eligible scan ends the visit.",

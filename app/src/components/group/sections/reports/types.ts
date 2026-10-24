@@ -1,4 +1,5 @@
 import type { AttendanceSession } from "@/types/recognition"
+import type { DepartureStatus } from "@/components/group/sections/reports/utils/departureStatus"
 
 export type ColumnKey =
   | "name"
@@ -6,6 +7,7 @@ export type ColumnKey =
   | "visit_number"
   | "check_in_time"
   | "check_out_time"
+  | "departure_status"
   | "total_hours"
   | "status"
   | "is_late"
@@ -30,6 +32,7 @@ export interface RowData {
   date: string
   check_in_time?: Date
   check_out_time?: Date
+  departure_status?: DepartureStatus
   visit_number?: number
   total_hours?: number
   status: ReportStatusFilter

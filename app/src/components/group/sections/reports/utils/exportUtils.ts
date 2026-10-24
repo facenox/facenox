@@ -7,6 +7,7 @@ import {
 } from "@/utils"
 import { attendanceManager } from "@/services/AttendanceManager"
 import type { AttendanceGroup, AttendanceMember, AttendanceSession } from "@/types/recognition"
+import { getDepartureStatus } from "@/components/group/sections/reports/utils/departureStatus"
 
 export function exportReportToCSV(
   groupedRows: Record<string, RowData[]>,
@@ -207,6 +208,7 @@ async function fetchAllGroupsProcessedData(
       "Status",
       "Time in",
       "Time out",
+      "Departure",
       "Total hours",
       "Late (mins)",
       "Notes",
@@ -281,6 +283,15 @@ async function fetchAllGroupsProcessedData(
 
           const lateMinutesStr =
             exportSession?.late_minutes ? String(exportSession.late_minutes) : ""
+          const departureStatus =
+            group.settings?.attendance_mode === "work_hours" ?
+              getDepartureStatus(
+                date,
+                exportSession?.check_in_time,
+                exportSession?.check_out_time,
+                group.settings.class_end_time || "17:00",
+              )
+            : undefined
           const notesStr = exportSession?.notes || ""
 
           rows.push([
@@ -292,6 +303,7 @@ async function fetchAllGroupsProcessedData(
             status,
             timeIn,
             timeOut,
+            departureStatus ? departureStatus[0].toUpperCase() + departureStatus.slice(1) : "",
             totalHoursStr,
             lateMinutesStr,
             notesStr,
@@ -458,6 +470,7 @@ export async function exportAllGroupsReportToCSV(
       "Status",
       "Time in",
       "Time out",
+      "Departure",
       "Total hours",
       "Late (mins)",
       "Notes",
@@ -468,7 +481,9 @@ export async function exportAllGroupsReportToCSV(
       for (const row of rows) {
         combinedRows.push([
           group.name,
-          ...(group.settings?.attendance_mode === "visits" ? row : ["", ...row]),
+          ...(group.settings?.attendance_mode === "visits" ?
+            [row[0], row[1], row[2], row[3], row[4], "", row[5], row[6], row[7], row[8]]
+          : [row[0], row[1], "", row[2], row[3], row[4], row[5], row[6], row[7], row[8]]),
         ])
       }
     }
