@@ -170,7 +170,7 @@ export function Attendance({
                   title="Auto-start scanning"
                   description="Start the camera and face recognition automatically when Facenox opens."
                   details={[
-                    "Use this on computers dedicated to attendance check-ins.",
+                    "Use this on computers dedicated to recording attendance.",
                     "Requires a connected camera.",
                   ]}
                   side="right"

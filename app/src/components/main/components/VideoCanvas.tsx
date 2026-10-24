@@ -197,7 +197,7 @@ export const VideoCanvas = memo(function VideoCanvas({
       className="relative h-full min-h-65 w-full overflow-hidden rounded-lg border border-white/10 bg-[var(--bg-canvas)]">
       <video
         ref={videoRef}
-        aria-label="Real-time camera capture feed"
+        aria-label="Local camera capture feed"
         className={`absolute inset-0 h-full w-full bg-[var(--bg-canvas)] ${
           quickSettings.cameraFitCover ? "object-cover" : "object-contain"
         } transition-opacity duration-300 ${

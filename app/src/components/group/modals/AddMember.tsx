@@ -705,7 +705,7 @@ export function AddMember({
                           </span>
                           <InfoPopover
                             title="Face enrollment"
-                            description="Creates a face template on this computer to recognize the member during check-in."
+                            description="Creates a face template on this computer to recognize the member during attendance."
                             details={[
                               "Face images are processed on this computer without saving or uploading them to Cloud.",
                               "Use the camera or select a clear, front-facing photo.",
@@ -740,7 +740,7 @@ export function AddMember({
                             </span>
                             <InfoPopover
                               title="Face enrollment"
-                              description="Creates a face template on this computer to recognize the member during check-in."
+                              description="Creates a face template on this computer to recognize the member during attendance."
                               details={[
                                 "Face images are processed on this computer without saving or uploading them to Cloud.",
                                 "Use the camera or select a clear, front-facing photo.",
