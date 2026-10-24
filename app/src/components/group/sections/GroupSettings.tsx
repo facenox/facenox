@@ -213,8 +213,8 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       description="Choose what to record for this group."
                       details={[
                         "Attendance records one presence per member each day.",
-                        "Time in & time out records arrival and departure times.",
-                        "Visits records each separate visit when members can leave and return.",
+                        "Time in & time out records one arrival and departure per member each day.",
+                        "Visits records separate visits when members leave and return.",
                       ]}
                       side="right"
                     />
@@ -407,6 +407,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                             details={[
                               "The first valid scan records Time in.",
                               "The next eligible scan records Time out after the minimum time below.",
+                              "After Time out, additional scans are ignored until the next day.",
                               "Calculates total hours between Time in and Time out.",
                               "Compares Time out with the scheduled end time to show Undertime or Overtime.",
                               "The scheduled end time does not record Time out automatically.",
@@ -516,7 +517,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                             details={[
                               "The first scan starts a visit.",
                               "The next eligible scan ends the visit.",
-                              "A later scan starts the next visit.",
+                              "An eligible later scan starts the next visit on the same day.",
                             ]}
                             side="right"
                           />
