@@ -1,4 +1,4 @@
-import { useMemo, memo } from "react"
+import { useMemo, memo, useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Check } from "lucide-react"
 import { MemberTooltip } from "@/components/shared"
@@ -158,6 +158,18 @@ export function DetectionPanel({
 
   const hasDetections = filteredFaces.length > 0
 
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!hasDetections || persistentCooldowns.size === 0) return
+
+    const interval = setInterval(() => {
+      setNow(Date.now())
+    }, 250)
+
+    return () => clearInterval(interval)
+  }, [hasDetections, persistentCooldowns])
+
   return (
     <AnimatePresence mode="popLayout" initial={false}>
       {!hasDetections ?
@@ -283,12 +295,31 @@ export function DetectionPanel({
                 recognitionResult?.person_id && effectiveGroupId ?
                   `${recognitionResult.person_id}-${effectiveGroupId}`
                 : null
+
+              const matchingCooldowns =
+                recognitionResult?.person_id ?
+                  Array.from(persistentCooldowns.values()).filter(
+                    (info) => info.personId === recognitionResult.person_id,
+                  )
+                : []
+
+              const newestCooldown =
+                matchingCooldowns.length > 0 ?
+                  matchingCooldowns.reduce((latest, curr) =>
+                    curr.startTime > latest.startTime ? curr : latest,
+                  )
+                : undefined
+
+              const cooldownInfo =
+                (cooldownKey ? persistentCooldowns.get(cooldownKey) : undefined) || newestCooldown
+
+              const cooldownDurationMs = (cooldownInfo?.cooldownDurationSeconds ?? 5) * 1000
+              const elapsed = cooldownInfo ? now - cooldownInfo.startTime : Infinity
               const isDone = Boolean(
                 recognitionResult?.person_id &&
-                ((cooldownKey && persistentCooldowns.has(cooldownKey)) ||
-                  Array.from(persistentCooldowns.values()).some(
-                    (info) => info.personId === recognitionResult.person_id,
-                  )),
+                cooldownInfo &&
+                elapsed >= 0 &&
+                elapsed < cooldownDurationMs,
               )
 
               return (
