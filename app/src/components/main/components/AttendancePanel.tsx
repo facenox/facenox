@@ -320,12 +320,35 @@ export const AttendancePanel = memo(function AttendancePanel({
 
   const todayPresentPersonIds = useMemo(() => {
     const today = getLocalDateString()
+    const todayRecordsByPerson = new Map<string, number>()
+
+    recentAttendance.forEach((record) => {
+      if (record.is_voided || getLocalDateString(record.timestamp) !== today) return
+      todayRecordsByPerson.set(
+        record.person_id,
+        (todayRecordsByPerson.get(record.person_id) ?? 0) + 1,
+      )
+    })
+
     return new Set(
-      recentAttendance
-        .filter((record) => !record.is_voided && getLocalDateString(record.timestamp) === today)
-        .map((record) => record.person_id),
+      groupMembers
+        .filter((member) => {
+          const recordCount = todayRecordsByPerson.get(member.person_id) ?? 0
+          if (recordCount === 0) return false
+
+          const memberGroup =
+            currentGroup?.id === ALL_GROUPS_ID ?
+              attendanceGroups.find((group) => group.id === member.group_id)
+            : currentGroup
+          const attendanceMode =
+            memberGroup?.settings?.attendance_mode ??
+            (memberGroup?.settings?.track_checkout ? "work_hours" : "attendance")
+
+          return attendanceMode === "visits" ? recordCount % 2 === 1 : true
+        })
+        .map((member) => member.person_id),
     )
-  }, [recentAttendance])
+  }, [attendanceGroups, currentGroup, groupMembers, recentAttendance])
 
   const lateTrackingSettings = useMemo(() => {
     if (!currentGroup?.settings) {
