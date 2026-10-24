@@ -138,7 +138,7 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
             <div>
               <div className="text-xs font-semibold text-white/90">Attendance mode</div>
               <div className="text-[11px] text-white/55">
-                Choose what Facenox records for this group.
+                Choose what to record for this group.
               </div>
             </div>
             <Dropdown

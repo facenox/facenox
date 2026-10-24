@@ -146,7 +146,7 @@ export function CreateGroup({ isOpen, existingGroups = [], onClose, onSuccess }:
             <div className="min-w-0">
               <div className="text-xs font-semibold text-white/90">Attendance mode</div>
               <div className="mt-0.5 text-[11px] text-white/55">
-                Choose what Facenox records for this group.
+                Choose what to record for this group.
               </div>
             </div>
             <Dropdown

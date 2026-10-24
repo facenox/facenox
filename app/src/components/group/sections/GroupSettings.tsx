@@ -215,7 +215,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                     <div className="text-sm font-medium text-white/90">Attendance mode</div>
                     <InfoPopover
                       title="Attendance mode"
-                      description="Choose what Facenox records for this group."
+                      description="Choose what to record for this group."
                       details={[
                         "Attendance records one presence per member each day.",
                         "Time in & time out records arrival and departure times.",
@@ -225,7 +225,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                     />
                   </div>
                   <div className="text-xs font-normal text-white/65">
-                    Choose what Facenox records for this group.
+                    Choose what to record for this group.
                   </div>
                 </div>
                 <Dropdown

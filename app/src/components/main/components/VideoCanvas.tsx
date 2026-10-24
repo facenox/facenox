@@ -128,7 +128,9 @@ export const VideoCanvas = memo(function VideoCanvas({
         <div className="flex items-center justify-between gap-4">
           <span>Mode</span>
           <span className="text-right font-medium text-white/85">
-            {isAllGroups ? <span className="font-sans text-white/70">Per-group</span> : attendanceModeLabel}
+            {isAllGroups ?
+              <span className="font-sans text-white/70">Per-group</span>
+            : attendanceModeLabel}
           </span>
         </div>
 
