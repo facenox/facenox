@@ -258,8 +258,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         "Marks a member present on the first valid scan."}
                       {attendanceMode === "work_hours" &&
                         "Records Time in and Time out from member scans."}
-                      {attendanceMode === "visits" &&
-                        "Records each visit separately."}
+                      {attendanceMode === "visits" && "Records each visit separately."}
                     </motion.div>
                   </AnimatePresence>
                 </div>
