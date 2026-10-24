@@ -1,7 +1,17 @@
 import { useState, useMemo, useEffect, memo, useCallback } from "react"
 import type { ReactNode } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { Trash2, Plus, Users, Calendar, FolderOpen, Clock, Search, UserPlus } from "lucide-react"
+import {
+  Trash2,
+  Plus,
+  Users,
+  Calendar,
+  FolderOpen,
+  Clock,
+  Search,
+  UserPlus,
+  Layers,
+} from "lucide-react"
 import {
   createDisplayNameMap,
   getLocalDateString,
@@ -225,9 +235,11 @@ const AttendanceRecordItem = memo(
               </span>
             </MemberTooltip>
             {isAllGroupsMode && groupName && (
-              <Tooltip content={groupName} position="top" delay={250} onlyWhenTruncated>
-                <span className="max-w-[80px] shrink-0 cursor-help truncate rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-medium tracking-tight text-white/45 transition-colors hover:bg-white/10 hover:text-white/70">
-                  {groupName}
+              <Tooltip content={groupName} position="top" delay={250}>
+                <span
+                  aria-label={`Group: ${groupName}`}
+                  className="inline-flex size-5 shrink-0 cursor-help items-center justify-center rounded text-white/45 transition-colors hover:bg-white/8 hover:text-white/70">
+                  <Layers aria-hidden="true" className="size-3" />
                 </span>
               </Tooltip>
             )}
