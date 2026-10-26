@@ -1,8 +1,9 @@
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from config.paths import DATA_DIR
+from config.paths import get_active_database_path
 
-DATABASE_URL = f"sqlite+aiosqlite:///{DATA_DIR}/attendance.db"
+DATABASE_PATH = get_active_database_path()
+DATABASE_URL = f"sqlite+aiosqlite:///{DATABASE_PATH.as_posix()}"
 
 engine = create_async_engine(
     DATABASE_URL,

@@ -6,8 +6,8 @@ Key derivation: PBKDF2-HMAC-SHA256, 480k iterations.
 
 Machine key storage (encrypt_local_data / decrypt_local_data):
   Windows : DPAPI (CryptProtectData) tied to the Windows user login.
-  macOS   : macOS Keychain via the `security` CLI.
-  Linux   : File-based fallback with 0600 permissions.
+  macOS   : macOS Keychain via the native keyring backend, with a pinned file fallback.
+  Linux   : Secret Service when available, with a pinned 0600 file fallback.
 """
 
 import os
@@ -15,6 +15,12 @@ import logging
 import platform
 import hashlib
 import hmac
+import base64
+import json
+import sys
+import uuid
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -60,54 +66,260 @@ def decrypt_backup(blob: bytes, password: str) -> bytes:
     return AESGCM(_derive_key(password, salt)).decrypt(iv, ciphertext, None)
 
 
+KEY_PROVIDER_FILENAME = ".machine_key.json"
+KEY_PROVIDER_FORMAT = 1
+
+
+@dataclass(frozen=True)
+class MachineKeyRecord:
+    key: bytes
+    provider: str
+    key_id: str
+
+
 _CACHED_MACHINE_KEY: Optional[bytes] = None
+_CACHED_MACHINE_PROVIDER: Optional[str] = None
+_CACHED_MACHINE_DATA_DIR: Optional[Path] = None
 
 
-def get_machine_key() -> bytes:
-    """Get or create the machine-specific AES key for local database encryption.
+def _key_id(key: bytes) -> str:
+    return hashlib.sha256(key).hexdigest()
 
-    Delegates to the OS-appropriate secure store:
-      Windows  -> DPAPI (CryptProtectData/CryptUnprotectData)
-      macOS    -> macOS Keychain via the `security` CLI
-      Linux    -> 0600-mode file fallback
-    """
-    global _CACHED_MACHINE_KEY
-    if _CACHED_MACHINE_KEY is not None:
-        return _CACHED_MACHINE_KEY
 
-    env_key = os.getenv("FACENOX_MACHINE_KEY")
-    if env_key:
-        try:
-            import base64
+def _canonical_json(value: dict[str, object]) -> bytes:
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    ).encode("utf-8")
 
-            # Try Base64 decoding
-            try:
-                decoded = base64.b64decode(env_key.strip(), validate=True)
-                if len(decoded) == KEY_SIZE:
-                    _CACHED_MACHINE_KEY = decoded
-                    return decoded
-            except Exception:
-                pass
-            # Try Hex decoding
-            decoded = bytes.fromhex(env_key.strip())
-            if len(decoded) == KEY_SIZE:
-                _CACHED_MACHINE_KEY = decoded
-                return decoded
-        except Exception as e:
-            logger.error("Failed to decode FACENOX_MACHINE_KEY from environment: %s", e)
+
+def _fsync_directory(path: Path) -> None:
+    if sys.platform == "win32":
+        return
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _write_secure_file(path: Path, value: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        with temporary.open("xb") as stream:
+            stream.write(value)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if os.name != "nt":
+            temporary.chmod(0o600)
+        os.replace(temporary, path)
+        if os.name != "nt":
+            path.chmod(0o600)
+        _fsync_directory(path.parent)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _decode_environment_key() -> bytes | None:
+    value = os.getenv("FACENOX_MACHINE_KEY")
+    if not value:
+        return None
+    try:
+        decoded = base64.b64decode(value.strip(), validate=True)
+        if len(decoded) == KEY_SIZE:
+            return decoded
+    except Exception:
+        pass
+    try:
+        decoded = bytes.fromhex(value.strip())
+        if len(decoded) == KEY_SIZE:
+            return decoded
+    except Exception:
+        pass
+    raise MachineKeyUnavailableError(
+        "FACENOX_MACHINE_KEY must be exactly 32 bytes encoded as Base64 or hex."
+    )
+
+
+def _provider_payload(provider: str, key: bytes) -> dict[str, object]:
+    return {
+        "format": KEY_PROVIDER_FORMAT,
+        "provider": provider,
+        "key_id": _key_id(key),
+    }
+
+
+def _pin_provider(data_dir: Path, provider: str, key: bytes) -> None:
+    payload = _provider_payload(provider, key)
+    payload["hmac_sha256"] = hmac.new(
+        key, b"facenox-key-provider\x00" + _canonical_json(payload), hashlib.sha256
+    ).hexdigest()
+    _write_secure_file(
+        data_dir / KEY_PROVIDER_FILENAME,
+        (json.dumps(payload, indent=2, sort_keys=True) + "\n").encode("utf-8"),
+    )
+
+
+def _read_provider(data_dir: Path) -> dict[str, object] | None:
+    path = data_dir / KEY_PROVIDER_FILENAME
+    if not path.exists():
+        return None
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise MachineKeyUnavailableError(
+            f"Machine-key provider metadata is unreadable: {path}"
+        ) from exc
+    if not isinstance(value, dict) or value.get("format") != KEY_PROVIDER_FORMAT:
+        raise MachineKeyUnavailableError(
+            f"Machine-key provider metadata is invalid: {path}"
+        )
+    return value
+
+
+def _validate_record(
+    data_dir: Path, provider: str, key: bytes, metadata: dict[str, object]
+) -> MachineKeyRecord:
+    if len(key) != KEY_SIZE:
+        raise MachineKeyUnavailableError(
+            f"Machine key from provider '{provider}' has an invalid length."
+        )
+    key_id = _key_id(key)
+    payload = _provider_payload(provider, key)
+    expected_mac = hmac.new(
+        key, b"facenox-key-provider\x00" + _canonical_json(payload), hashlib.sha256
+    ).hexdigest()
+    if (
+        metadata.get("provider") != provider
+        or metadata.get("key_id") != key_id
+        or not isinstance(metadata.get("hmac_sha256"), str)
+        or not hmac.compare_digest(str(metadata["hmac_sha256"]), expected_mac)
+    ):
+        raise MachineKeyUnavailableError(
+            f"Machine-key identity validation failed: {data_dir / KEY_PROVIDER_FILENAME}"
+        )
+    return MachineKeyRecord(key, provider, key_id)
+
+
+def _load_exact_provider(
+    provider: str, data_dir: Path, *, create_if_missing: bool
+) -> bytes:
+    if provider == "environment":
+        key = _decode_environment_key()
+        if key is None:
+            raise MachineKeyUnavailableError(
+                "The database is pinned to FACENOX_MACHINE_KEY, but it is not set."
+            )
+        return key
+    if provider == "windows-dpapi":
+        if platform.system() != "Windows":
+            raise MachineKeyUnavailableError(
+                "This database is pinned to Windows DPAPI on a different platform."
+            )
+        return _machine_key_windows(
+            create_if_missing=create_if_missing, data_dir=data_dir
+        )
+    if provider == "macos-keychain":
+        if platform.system() != "Darwin":
+            raise MachineKeyUnavailableError(
+                "This database is pinned to macOS Keychain on a different platform."
+            )
+        return _machine_key_macos_keyring(create_if_missing=create_if_missing)
+    if provider == "linux-keyring":
+        if platform.system() != "Linux":
+            raise MachineKeyUnavailableError(
+                "This database is pinned to Linux Secret Service on a different platform."
+            )
+        return _machine_key_linux_keyring(create_if_missing=create_if_missing)
+    if provider == "file":
+        return _machine_key_file(create_if_missing=create_if_missing, data_dir=data_dir)
+    raise MachineKeyUnavailableError(f"Unsupported machine-key provider: {provider}")
+
+
+def _discover_provider(data_dir: Path, *, create_if_missing: bool) -> tuple[str, bytes]:
+    environment_key = _decode_environment_key()
+    if environment_key is not None:
+        return "environment", environment_key
 
     system = platform.system()
+    file_key = data_dir / ".machine_key"
     if system == "Windows":
-        key = _machine_key_windows()
-    elif system == "Darwin":
-        key = _machine_key_macos()
-    elif system == "Linux":
-        key = _machine_key_linux()
-    else:
-        key = _machine_key_file()
+        return "windows-dpapi", _machine_key_windows(
+            create_if_missing=create_if_missing, data_dir=data_dir
+        )
+    if file_key.exists():
+        return "file", _machine_key_file(create_if_missing=False, data_dir=data_dir)
+    if system == "Darwin":
+        try:
+            return "macos-keychain", _machine_key_macos_keyring(
+                create_if_missing=create_if_missing
+            )
+        except MachineKeyUnavailableError:
+            return "file", _machine_key_file(
+                create_if_missing=create_if_missing, data_dir=data_dir
+            )
+    if system == "Linux" and os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+        try:
+            return "linux-keyring", _machine_key_linux_keyring(
+                create_if_missing=create_if_missing
+            )
+        except MachineKeyUnavailableError:
+            return "file", _machine_key_file(
+                create_if_missing=create_if_missing, data_dir=data_dir
+            )
+    return "file", _machine_key_file(
+        create_if_missing=create_if_missing, data_dir=data_dir
+    )
 
-    _CACHED_MACHINE_KEY = key
-    return key
+
+def get_machine_key_record(
+    *, create_if_missing: bool = True, data_dir: Path | None = None
+) -> MachineKeyRecord:
+    """Load the pinned machine key for a data directory."""
+
+    global _CACHED_MACHINE_KEY, _CACHED_MACHINE_PROVIDER, _CACHED_MACHINE_DATA_DIR
+    active_data_dir = (data_dir or DATA_DIR).resolve()
+    if (
+        _CACHED_MACHINE_KEY is not None
+        and _CACHED_MACHINE_PROVIDER is not None
+        and _CACHED_MACHINE_DATA_DIR == active_data_dir
+    ):
+        return MachineKeyRecord(
+            _CACHED_MACHINE_KEY,
+            _CACHED_MACHINE_PROVIDER,
+            _key_id(_CACHED_MACHINE_KEY),
+        )
+
+    metadata = _read_provider(active_data_dir)
+    if metadata is not None:
+        provider = metadata.get("provider")
+        if not isinstance(provider, str):
+            raise MachineKeyUnavailableError("Machine-key provider is missing.")
+        key = _load_exact_provider(provider, active_data_dir, create_if_missing=False)
+        record = _validate_record(active_data_dir, provider, key, metadata)
+    else:
+        provider, key = _discover_provider(
+            active_data_dir, create_if_missing=create_if_missing
+        )
+        if len(key) != KEY_SIZE:
+            raise MachineKeyUnavailableError(
+                f"Machine key from provider '{provider}' has an invalid length."
+            )
+        _pin_provider(active_data_dir, provider, key)
+        record = MachineKeyRecord(key, provider, _key_id(key))
+
+    _CACHED_MACHINE_KEY = record.key
+    _CACHED_MACHINE_PROVIDER = record.provider
+    _CACHED_MACHINE_DATA_DIR = active_data_dir
+    return record
+
+
+def get_machine_key(
+    *, create_if_missing: bool = True, data_dir: Path | None = None
+) -> bytes:
+    return get_machine_key_record(
+        create_if_missing=create_if_missing, data_dir=data_dir
+    ).key
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +327,9 @@ def get_machine_key() -> bytes:
 # ---------------------------------------------------------------------------
 
 
-def _machine_key_windows() -> bytes:
+def _machine_key_windows(
+    *, create_if_missing: bool = True, data_dir: Path | None = None
+) -> bytes:
     """DPAPI-protected key: only decryptable on the same Windows user account."""
     import ctypes
     import ctypes.wintypes
@@ -126,7 +340,8 @@ def _machine_key_windows() -> bytes:
             ("pbData", ctypes.POINTER(ctypes.c_byte)),
         ]
 
-    key_path = DATA_DIR / ".machine_key.dpapi"
+    active_data_dir = (data_dir or DATA_DIR).resolve()
+    key_path = active_data_dir / ".machine_key.dpapi"
     crypt32 = ctypes.windll.crypt32
 
     if key_path.exists():
@@ -143,7 +358,14 @@ def _machine_key_windows() -> bytes:
             )
         key = bytes(ctypes.string_at(dec_blob.pbData, dec_blob.cbData))
         ctypes.windll.kernel32.LocalFree(dec_blob.pbData)
+        if len(key) != KEY_SIZE:
+            raise MachineKeyUnavailableError("DPAPI machine key has an invalid length.")
         return key
+
+    if not create_if_missing:
+        raise MachineKeyUnavailableError(
+            f"Biometric machine key is missing: {key_path}"
+        )
 
     raw_key = os.urandom(KEY_SIZE)
     raw_array = (ctypes.c_byte * KEY_SIZE).from_buffer_copy(raw_key)
@@ -156,9 +378,7 @@ def _machine_key_windows() -> bytes:
     encrypted = bytes(ctypes.string_at(enc_blob.pbData, enc_blob.cbData))
     ctypes.windll.kernel32.LocalFree(enc_blob.pbData)
 
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    with open(key_path, "wb") as f:
-        f.write(encrypted)
+    _write_secure_file(key_path, encrypted)
     try:
         ctypes.windll.kernel32.SetFileAttributesW(str(key_path), 0x02)  # HIDDEN
     except Exception:
@@ -166,52 +386,52 @@ def _machine_key_windows() -> bytes:
     return raw_key
 
 
-def _machine_key_macos() -> bytes:
-    """Keychain-stored key via the industry-standard keyring library.
-
-    Provides native C-level API communication with macOS Keychain Services,
-    avoiding subprocess fork latency bottlenecks (reducing read overhead from ~100ms to <1ms).
-    Safely falls back to file-based key storage on access failure.
-    """
+def _machine_key_macos_keyring(*, create_if_missing: bool = True) -> bytes:
     try:
         import keyring
-        import base64
 
         service = "facenox-biometric-key"
         account = "machine-key"
 
         password = keyring.get_password(service, account)
         if password is not None:
-            return base64.b64decode(password.strip())
+            key = base64.b64decode(password.strip(), validate=True)
+            if len(key) != KEY_SIZE:
+                raise MachineKeyUnavailableError(
+                    "macOS Keychain machine key has an invalid length."
+                )
+            return key
+
+        if not create_if_missing:
+            raise MachineKeyUnavailableError(
+                "Biometric machine key is missing from macOS Keychain."
+            )
 
         raw_key = os.urandom(KEY_SIZE)
         encoded = base64.b64encode(raw_key).decode()
         keyring.set_password(service, account, encoded)
         return raw_key
-    except Exception as e:
+    except MachineKeyUnavailableError:
+        raise
+    except Exception as exc:
+        raise MachineKeyUnavailableError(
+            f"macOS Keychain is unavailable: {exc}"
+        ) from exc
+
+
+def _machine_key_macos(*, create_if_missing: bool = True) -> bytes:
+    try:
+        return _machine_key_macos_keyring(create_if_missing=create_if_missing)
+    except MachineKeyUnavailableError as exc:
         logger.warning(
-            "macOS Keychain access failed via keyring (%s). "
-            "Falling back to local file-based machine key to ensure service availability.",
-            e,
+            "macOS Keychain unavailable; using pinned file provider: %s", exc
         )
-        return _machine_key_file()
+        return _machine_key_file(create_if_missing=create_if_missing)
 
 
-def _machine_key_linux() -> bytes:
-    """Linux system keyring-stored key using the keyring library.
-
-    Attempts to query Gnome Keyring / KWallet via D-Bus Secret Service,
-    falling back to file-based key storage on headless/unauthenticated hosts.
-    """
-    if not os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
-        logger.info(
-            "Headless Linux environment detected (no D-Bus). Bypassing keyring access."
-        )
-        return _machine_key_file()
-
+def _machine_key_linux_keyring(*, create_if_missing: bool = True) -> bytes:
     try:
         import keyring
-        import base64
 
         service = "facenox-biometric-key"
         account = "machine-key"
@@ -225,35 +445,60 @@ def _machine_key_linux() -> bytes:
 
         password = keyring.get_password(service, account)
         if password is not None:
-            return base64.b64decode(password.strip())
+            key = base64.b64decode(password.strip(), validate=True)
+            if len(key) != KEY_SIZE:
+                raise MachineKeyUnavailableError(
+                    "Linux keyring machine key has an invalid length."
+                )
+            return key
+
+        if not create_if_missing:
+            raise MachineKeyUnavailableError(
+                "Biometric machine key is missing from Linux Secret Service."
+            )
 
         raw_key = os.urandom(KEY_SIZE)
         encoded = base64.b64encode(raw_key).decode()
         keyring.set_password(service, account, encoded)
         return raw_key
-    except Exception as e:
-        logger.warning(
-            "Linux Keyring access failed (%s). "
-            "Falling back to local file-based machine key to ensure service availability.",
-            e,
-        )
-        return _machine_key_file()
+    except MachineKeyUnavailableError:
+        raise
+    except Exception as exc:
+        raise MachineKeyUnavailableError(
+            f"Linux Secret Service is unavailable: {exc}"
+        ) from exc
 
 
-def _machine_key_file() -> bytes:
+def _machine_key_linux(*, create_if_missing: bool = True) -> bytes:
+    if not os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+        return _machine_key_file(create_if_missing=create_if_missing)
+    try:
+        return _machine_key_linux_keyring(create_if_missing=create_if_missing)
+    except MachineKeyUnavailableError as exc:
+        logger.warning("Linux keyring unavailable; using pinned file provider: %s", exc)
+        return _machine_key_file(create_if_missing=create_if_missing)
+
+
+def _machine_key_file(
+    *, create_if_missing: bool = True, data_dir: Path | None = None
+) -> bytes:
     """File-based fallback for Linux. Permissions set to 0600."""
-    key_path = DATA_DIR / ".machine_key"
+    active_data_dir = (data_dir or DATA_DIR).resolve()
+    key_path = active_data_dir / ".machine_key"
     if key_path.exists():
         with open(key_path, "rb") as f:
-            return f.read()
+            key = f.read()
+        if len(key) != KEY_SIZE:
+            raise MachineKeyUnavailableError(
+                f"File-based machine key has an invalid length: {key_path}"
+            )
+        return key
+    if not create_if_missing:
+        raise MachineKeyUnavailableError(
+            f"Biometric machine key is missing: {key_path}"
+        )
     key = os.urandom(KEY_SIZE)
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    with open(key_path, "wb") as f:
-        f.write(key)
-    try:
-        os.chmod(str(key_path), 0o600)
-    except Exception:
-        pass
+    _write_secure_file(key_path, key)
     logger.warning(
         "Machine key stored as a file (%s). On Linux there is no OS-managed secure store. "
         "Ensure the filesystem permissions and full-disk encryption protect this file.",
@@ -274,16 +519,28 @@ class DecryptionError(Exception):
     """Raised when local data decryption fails."""
 
 
-def decrypt_local_data(blob: bytes) -> bytes:
+class MachineKeyUnavailableError(RuntimeError):
+    """Raised when encrypted local data exists but its machine key is unavailable."""
+
+
+def decrypt_local_data(
+    blob: bytes,
+    *,
+    create_key_if_missing: bool = True,
+    key: bytes | None = None,
+    data_dir: Path | None = None,
+) -> bytes:
     """Decrypt data from local SQLite database storage."""
-    key = get_machine_key()
+    active_key = key or get_machine_key(
+        create_if_missing=create_key_if_missing, data_dir=data_dir
+    )
     if len(blob) < IV_SIZE:
         raise DecryptionError("Blob too short to be encrypted data")
 
     iv = blob[:IV_SIZE]
     ciphertext = blob[IV_SIZE:]
     try:
-        return AESGCM(key).decrypt(iv, ciphertext, None)
+        return AESGCM(active_key).decrypt(iv, ciphertext, None)
     except Exception as e:
         logger.error(f"decrypt_local_data: decryption failed: {e}")
         raise DecryptionError("Failed to decrypt local data") from e

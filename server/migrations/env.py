@@ -25,6 +25,10 @@ def get_target_metadata():
 
 
 def get_db_url():
+    configured_url = config.get_main_option("sqlalchemy.url")
+    if configured_url and not configured_url.startswith("driver://"):
+        return configured_url
+
     from database.session import DATABASE_URL
 
     return DATABASE_URL

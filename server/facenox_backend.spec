@@ -17,7 +17,7 @@ onnx_datas = collect_data_files('onnxruntime')
 import platform
 
 # Common imports for all platforms
-hidden_imports = collect_submodules("uvicorn") + [
+hidden_imports = collect_submodules("uvicorn") + collect_submodules("keyring") + [
     "onnxruntime",
     "onnxruntime.capi",
     "onnxruntime.capi.onnxruntime_pybind11_state",
@@ -29,6 +29,8 @@ hidden_imports = collect_submodules("uvicorn") + [
 # Windows-specific imports (only include on Windows)
 if platform.system() == "Windows":
     hidden_imports.extend(collect_submodules("win32ctypes"))
+elif platform.system() == "Linux":
+    hidden_imports.extend(collect_submodules("secretstorage"))
 
 # Disable custom runtime hook to avoid bundling PyInstaller dependencies
 runtime_hooks = []

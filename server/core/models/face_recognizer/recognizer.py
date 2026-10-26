@@ -71,6 +71,20 @@ class FaceRecognizer:
                 logger.info(message)
             await self._refresh_cache()
 
+    def finalize_legacy_migration(self) -> None:
+        if not self.db_manager:
+            return
+        try:
+            backup_path = self.db_manager.finalize_legacy_migration()
+            if backup_path is not None:
+                logger.info("Archived imported legacy face database at %s", backup_path)
+        except OSError as exc:
+            logger.warning(
+                "Legacy face database was imported but could not be archived; "
+                "the source was retained for a safe retry: %s",
+                exc,
+            )
+
     @staticmethod
     def _cache_key(organization_id: Optional[str]) -> str:
         return organization_id or "__global__"

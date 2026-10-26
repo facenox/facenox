@@ -7,6 +7,7 @@ and the new SQLAlchemy-based unified database.
 
 import os
 import sqlite3
+import time
 import numpy as np
 import logging
 from pathlib import Path
@@ -36,6 +37,7 @@ class FaceDatabaseManager:
         """
         self.legacy_path = Path(legacy_database_path) if legacy_database_path else None
         self.organization_id = organization_id
+        self._legacy_import_succeeded = False
 
         # Trigger migration in background or wait for it?
         # For a desktop app, we'll do it on first access or during startup check.
@@ -221,15 +223,32 @@ class FaceDatabaseManager:
 
             conn.close()
 
-            # Archive legacy database
-            backup_path = self.legacy_path.with_suffix(".db.bak")
-            os.replace(self.legacy_path, backup_path)
-
-            return True, f"Migrated {migrated_count} records from legacy database."
+            # Archive only after the generation is confirmed healthy.
+            self._legacy_import_succeeded = True
+            return True, f"Imported {migrated_count} records from legacy database."
 
         except Exception as e:
             logger.error(f"Migration failed: {e}")
             return False, f"Migration failed: {str(e)}"
+
+    def finalize_legacy_migration(self) -> Optional[Path]:
+        """Archive a successfully imported legacy DB after startup is committed."""
+
+        if (
+            not self._legacy_import_succeeded
+            or self.legacy_path is None
+            or not self.legacy_path.exists()
+        ):
+            return None
+
+        backup_path = self.legacy_path.with_suffix(".db.bak")
+        if backup_path.exists():
+            backup_path = self.legacy_path.with_name(
+                f"{self.legacy_path.name}.{time.time_ns()}.bak"
+            )
+        os.replace(self.legacy_path, backup_path)
+        self._legacy_import_succeeded = False
+        return backup_path
 
     def close(self):
         pass

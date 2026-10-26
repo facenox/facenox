@@ -60,7 +60,12 @@ it("sends large group lists before dependent members and faces after all members
     name: "Group",
     created_at: input.exported_at,
     is_active: true,
-    settings: { late_threshold_enabled: false, track_checkout: false },
+    settings: {
+      attendance_mode: "attendance",
+      late_threshold_enabled: false,
+      track_checkout: false,
+      scan_behavior: "automatic",
+    },
     sync_revision: 0,
     version: 1,
     sync_dirty: true,

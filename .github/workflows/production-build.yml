@@ -89,6 +89,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-build.txt
+          pip install -r requirements-dev.txt
+
+      - name: Test Native Migration And Key Storage
+        run: |
+          cd server
+          python -m pytest -q tests/test_safe_migrations.py tests/test_alembic_heads.py
 
       - name: Build Executable
         run: |

@@ -1,5 +1,6 @@
-import { app, protocol, BrowserWindow, nativeTheme, powerMonitor, net } from "electron"
+import { app, protocol, BrowserWindow, nativeTheme, powerMonitor, net, shell } from "electron"
 import path from "path"
+import fs from "fs"
 import { fileURLToPath, pathToFileURL } from "node:url"
 import { backendService } from "./backendService.js"
 import { startBackgroundUpdateCheck } from "./updater.js"
@@ -21,6 +22,10 @@ if (isDev()) {
 } else {
   app.setName("Facenox")
 }
+
+const sessionDataPath = path.join(app.getPath("userData"), "session")
+fs.mkdirSync(sessionDataPath, { recursive: true })
+app.setPath("sessionData", sessionDataPath)
 
 if (process.platform === "win32") {
   app.setAppUserModelId(FACENOX_APP_ID)
@@ -126,12 +131,20 @@ app.whenReady().then(async () => {
       title: "Facenox startup error",
       message: "Failed to start background services.",
       detail: e instanceof Error ? e.message : "An unknown error occurred during backend startup.",
-      buttons: ["Retry", "Quit"],
+      buttons: ["Retry", "Open data folder", "Quit"],
     })
 
     if (response === 0) {
       app.relaunch()
       app.exit(0)
+    } else if (response === 1) {
+      const dataPath =
+        isDev() ?
+          path.join(process.cwd(), "..", "data")
+        : path.join(app.getPath("userData"), "data")
+      fs.mkdirSync(dataPath, { recursive: true })
+      await shell.openPath(dataPath)
+      app.quit()
     } else {
       app.quit()
     }

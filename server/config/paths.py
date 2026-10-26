@@ -7,6 +7,7 @@ IS_FROZEN = getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS")
 
 
 APP_NAME = "Facenox"
+ACTIVE_DATABASE_ENV = "FACENOX_ACTIVE_DB_PATH"
 
 
 def get_base_dir() -> Path:
@@ -59,6 +60,21 @@ MODELS_DIR = BASE_DIR / "assets" / "models"
 ALEMBIC_CONFIG_PATH = BASE_DIR / "alembic.ini"
 MIGRATIONS_DIR = BASE_DIR / "migrations"
 PROJECT_ROOT = get_project_root()
+
+
+def get_active_database_path() -> Path:
+    """Return the database selected during startup."""
+
+    selected = os.getenv(ACTIVE_DATABASE_ENV)
+    if selected:
+        return Path(selected).resolve()
+    return (DATA_DIR / "attendance.db").resolve()
+
+
+def set_active_database_path(path: Path) -> Path:
+    selected = path.resolve()
+    os.environ[ACTIVE_DATABASE_ENV] = str(selected)
+    return selected
 
 
 # Helpers for specific path retrieval if needed dynamically

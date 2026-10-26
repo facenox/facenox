@@ -56,6 +56,7 @@ export class BackendProcessManager {
   private isRotating = false
   private logWriteQueue: string[] = []
   private lastStartupActivityTime = 0
+  private startupErrorBuffer = ""
 
   constructor(config: BackendConfig, status: BackendStatus) {
     this.config = config
@@ -206,6 +207,7 @@ export class BackendProcessManager {
   private async _start(): Promise<void> {
     this.isStoppingManually = false
     if (this.status.isRunning) return
+    this.startupErrorBuffer = ""
 
     // Generate a fresh per-session token before spawning the backend.
     this.token = randomBytes(32).toString("hex")
@@ -231,9 +233,15 @@ export class BackendProcessManager {
         FACENOX_API_TOKEN: this.token,
       }
 
-      // In production, force data to AppData. In dev, let backend use repo root/data
+      let productionLogDir: string | null = null
       if (!isDev()) {
-        env.FACENOX_DATA_DIR = app.getPath("userData")
+        const userDataDir = app.getPath("userData")
+        const durableDataDir = path.join(userDataDir, "data")
+        productionLogDir = path.join(userDataDir, "logs")
+        fs.mkdirSync(durableDataDir, { recursive: true })
+        fs.mkdirSync(productionLogDir, { recursive: true })
+        env.FACENOX_DATA_DIR = durableDataDir
+        env.FACENOX_LEGACY_DATA_DIR = userDataDir
       }
 
       this.process = spawn(command, args, {
@@ -243,12 +251,31 @@ export class BackendProcessManager {
         env,
       })
 
-      const logDir = isDev() ? path.join(process.cwd(), "..", "data") : app.getPath("userData")
+      const logDir =
+        isDev() ?
+          path.join(process.cwd(), "..", "data")
+        : (productionLogDir ?? path.join(app.getPath("userData"), "logs"))
+      fs.mkdirSync(logDir, { recursive: true })
       this.logFilePath = path.join(logDir, "facenox.log")
       this.logOldFilePath = path.join(logDir, "facenox.old.log")
       const logFileLegacy = path.join(logDir, "backend-startup.log")
       const logFileOldBackend = path.join(logDir, "backend.log")
       try {
+        if (!isDev()) {
+          const oldLogDir = app.getPath("userData")
+          for (const fileName of [
+            "facenox.log",
+            "facenox.old.log",
+            "backend-startup.log",
+            "backend.log",
+          ]) {
+            const oldPath = path.join(oldLogDir, fileName)
+            const newPath = path.join(logDir, fileName)
+            if (fs.existsSync(oldPath) && !fs.existsSync(newPath)) {
+              fs.copyFileSync(oldPath, newPath)
+            }
+          }
+        }
         if (fs.existsSync(logFileLegacy)) {
           if (!fs.existsSync(this.logOldFilePath)) {
             fs.renameSync(logFileLegacy, this.logOldFilePath)
@@ -276,9 +303,9 @@ export class BackendProcessManager {
       }
 
       const startupNotice = `[${new Date().toISOString()}] Facenox starting...\n`
-      fs.writeFileSync(this.logFilePath, startupNotice)
+      fs.appendFileSync(this.logFilePath, startupNotice)
       this.logStream = fs.createWriteStream(this.logFilePath, { flags: "a" })
-      this.currentLogSizeBytes = Buffer.byteLength(startupNotice, "utf8")
+      this.currentLogSizeBytes = fs.statSync(this.logFilePath).size
 
       this.lastStartupActivityTime = Date.now()
 
@@ -290,6 +317,7 @@ export class BackendProcessManager {
       this.process.stderr?.on("data", (data) => {
         this.lastStartupActivityTime = Date.now()
         const msg = data.toString()
+        this.startupErrorBuffer = (this.startupErrorBuffer + msg).slice(-4000)
         this.writeToBackendLog(`[STDERR] ${msg}`)
         if (/(\bERROR\b|\bCRITICAL\b|Traceback|Exception)/.test(msg)) {
           console.error(`[Backend Error] ${msg.trim()}`)
@@ -378,7 +406,11 @@ export class BackendProcessManager {
       const inactiveElapsed = now - this.lastStartupActivityTime
 
       if (this.process?.exitCode !== null && this.process?.exitCode !== undefined) {
-        throw new Error(`Backend process exited unexpectedly with code ${this.process.exitCode}`)
+        const diagnostic = this.startupErrorBuffer.trim()
+        throw new Error(
+          `Backend process exited unexpectedly with code ${this.process.exitCode}` +
+            (diagnostic ? `\n\n${diagnostic}` : ""),
+        )
       }
 
       if (await this.healthCheck()) return

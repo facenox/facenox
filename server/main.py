@@ -8,6 +8,12 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi import Request
 
+# Select the database before SQLAlchemy is imported.
+if __name__ == "__main__":
+    from database.migrate import run_migrations as _run_startup_migrations
+
+    _run_startup_migrations()
+
 from config.models import (
     FACE_DETECTOR_CONFIG,
     FACE_RECOGNIZER_CONFIG,
@@ -216,7 +222,6 @@ async def get_available_models():
 
 if __name__ == "__main__":
     import argparse
-    from database.migrate import run_migrations
 
     parser = argparse.ArgumentParser(description="Face Detection API Backend")
     parser.add_argument(
@@ -226,8 +231,6 @@ if __name__ == "__main__":
         "--host", type=str, default="127.0.0.1", help="Host to run the server on"
     )
     args = parser.parse_known_args()[0]
-
-    run_migrations()
 
     from config.logging_config import get_logging_config
 

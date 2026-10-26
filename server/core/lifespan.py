@@ -88,6 +88,11 @@ async def lifespan(app: FastAPI):
         # async-only step: DB migration + cache warm-up (must run after __init__)
         await face_recognizer.initialize()
 
+        from database.migrate import mark_active_generation_healthy
+
+        mark_active_generation_healthy()
+        face_recognizer.finalize_legacy_migration()
+
         # Warm-up ONNX execution graphs to eliminate first-frame inference stutter
         def _warmup_models():
             try:

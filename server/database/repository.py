@@ -988,9 +988,9 @@ class AttendanceRepository:
 
     # Stats
     async def get_stats(self) -> Dict[str, Any]:
-        from config.paths import DATA_DIR
+        from config.paths import get_active_database_path
 
-        db_path = DATA_DIR / "attendance.db"
+        db_path = get_active_database_path()
 
         groups_count = await self.session.scalar(
             self._apply_org_scope(
