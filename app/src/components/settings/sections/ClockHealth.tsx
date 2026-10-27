@@ -45,6 +45,7 @@ export function ClockHealth({
   const timeHealthStatus = timeHealth?.online_verification_status ?? "unavailable"
   const clockWarning = timeHealth?.warning_message?.trim() || timeHealth?.os_clock_warning?.trim()
   const hasClockWarning = Boolean(clockWarning) || timeHealthStatus === "drift_detected"
+  const hasClockError = Boolean(timeHealthState.error)
 
   const formattedLocalTime =
     timeHealth?.current_time_local ?
@@ -57,6 +58,7 @@ export function ClockHealth({
     : null
   const timeHealthDetails =
     clockWarning ? clockWarning
+    : timeHealthState.error ? timeHealthState.error
     : timeHealthState.loading ? "Checking clock status…"
     : timeHealthStatus === "drift_detected" ?
       "The attendance clock differs from network time. Check this computer's date and time settings."
@@ -92,10 +94,10 @@ export function ClockHealth({
                 ]}
                 side="right"
               />
-              {hasClockWarning && (
+              {(hasClockWarning || hasClockError) && (
                 <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-amber-400/90">
                   <AlertTriangle className="size-3 text-amber-400/90" />
-                  Clock warning
+                  {hasClockWarning ? "Clock warning" : "Check failed"}
                 </span>
               )}
             </div>
@@ -103,6 +105,8 @@ export function ClockHealth({
             <div className="mt-4 flex items-center gap-2 font-mono text-[11px] tracking-tight text-white/55">
               {hasClockWarning ?
                 <AlertTriangle aria-label="Clock warning" className="size-3 text-amber-400" />
+              : hasClockError ?
+                <AlertTriangle aria-label="Clock check failed" className="size-3 text-amber-400" />
               : timeHealthState.loading ?
                 <Loader2 className="size-3 animate-spin text-white/40" />
               : timeHealthStatus === "verified" ?

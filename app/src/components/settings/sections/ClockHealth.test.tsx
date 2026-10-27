@@ -59,6 +59,21 @@ describe("ClockHealth status", () => {
     expect(screen.queryByLabelText("Clock warning")).not.toBeInTheDocument()
   })
 
+  it("shows a failed refresh instead of the previous successful state", () => {
+    render(
+      <ClockHealth
+        timeHealthState={{
+          timeHealth: healthyClock,
+          loading: false,
+          error: "Clock check failed. Check your connection and try again.",
+        }}
+        onRefreshTimeHealth={vi.fn()}
+      />,
+    )
+    expect(screen.getByLabelText("Clock check failed")).toBeInTheDocument()
+    expect(screen.queryByLabelText("Network-time check passed")).not.toBeInTheDocument()
+  })
+
   it("explains and explicitly triggers the online check", () => {
     const onRefreshTimeHealth = vi.fn()
     render(

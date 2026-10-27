@@ -60,6 +60,7 @@ class TimeAuthorityService:
         self._boot_time_mono = _get_monotonic_time()
         self._cache_lock = asyncio.Lock()
         self._cached_online_result: Optional[dict] = None
+        self._cached_online_result_mono: Optional[float] = None
 
         self._os_warning_threshold_seconds = float(
             os.getenv("FACENOX_OS_CLOCK_WARNING_SECONDS", "60")
@@ -98,6 +99,16 @@ class TimeAuthorityService:
         self._boot_time_utc = ensure_utc_aware(target_utc)
         self._boot_time_mono = _get_monotonic_time()
 
+    def _has_fresh_online_result(self) -> bool:
+        if (
+            self._cached_online_result is None
+            or self._cached_online_result_mono is None
+        ):
+            return False
+
+        age_seconds = _get_monotonic_time() - self._cached_online_result_mono
+        return 0 <= age_seconds <= self._online_cache_ttl_seconds
+
     async def get_time_health(
         self, *, verify_online: bool = False
     ) -> TimeHealthSnapshot:
@@ -115,13 +126,7 @@ class TimeAuthorityService:
 
         if verify_online:
             online_result = await self._get_online_reference_result(force_refresh=True)
-        elif (
-            self._cached_online_result is not None
-            and (
-                current_utc - self._cached_online_result["checked_at"]
-            ).total_seconds()
-            <= self._online_cache_ttl_seconds
-        ):
+        elif self._has_fresh_online_result():
             online_result = self._cached_online_result
         else:
             online_result = {
@@ -162,8 +167,10 @@ class TimeAuthorityService:
                 online_result = {
                     **online_result,
                     "status": online_status,
+                    "checked_at": current_utc,
                     "drift_seconds": online_drift_seconds,
                 }
+                self._cached_online_result = online_result
 
         warning_message = os_clock_warning
 
@@ -207,15 +214,12 @@ class TimeAuthorityService:
 
     async def _get_online_reference_result(self, *, force_refresh: bool) -> dict:
         async with self._cache_lock:
-            if not force_refresh and self._cached_online_result is not None:
-                age_seconds = (
-                    self.current_time_utc() - self._cached_online_result["checked_at"]
-                ).total_seconds()
-                if age_seconds <= self._online_cache_ttl_seconds:
-                    return self._cached_online_result
+            if not force_refresh and self._has_fresh_online_result():
+                return self._cached_online_result
 
             result = await self._fetch_online_reference_time()
             self._cached_online_result = result
+            self._cached_online_result_mono = _get_monotonic_time()
             return result
 
     async def _fetch_online_reference_time(self) -> dict:

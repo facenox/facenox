@@ -165,6 +165,22 @@ describe("useSettings", () => {
     expect(mockAttendanceManager.getTimeHealth).toHaveBeenCalledWith(true)
   })
 
+  it("shows an error instead of stale success when online verification fails", async () => {
+    const { result } = renderHook(() => useSettings(createProps()))
+
+    await flushInitialLoad()
+    mockAttendanceManager.getTimeHealth.mockRejectedValueOnce(new Error("offline"))
+
+    await act(async () => {
+      await result.current.verifyTimeOnline()
+    })
+
+    expect(result.current.timeHealthState.error).toBe(
+      "Clock check failed. Check your connection and try again.",
+    )
+    expect(result.current.timeHealthState.loading).toBe(false)
+  })
+
   it("clears the database after confirmation and shows a success dialog", async () => {
     const { result } = renderHook(() => useSettings(createProps()))
 

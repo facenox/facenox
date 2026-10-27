@@ -81,13 +81,15 @@ export const useSettings = ({
   const systemData = useAttendanceStore((state) => state.systemStats)
   const timeHealth = useAttendanceStore((state) => state.timeHealth)
   const isStatsLoading = useAttendanceStore((state) => state.isStatsLoading)
+  const [timeHealthError, setTimeHealthError] = useState<string | null>(null)
 
   const timeHealthState = useMemo(
     () => ({
       timeHealth,
       loading: isStatsLoading,
+      error: timeHealthError,
     }),
-    [timeHealth, isStatsLoading],
+    [timeHealth, isStatsLoading, timeHealthError],
   )
 
   const [isLoading, setIsLoading] = useState(false)
@@ -136,6 +138,9 @@ export const useSettings = ({
         lastUpdated: new Date().toISOString(),
       })
       useAttendanceStore.getState().setTimeHealth(timeHealthData)
+      setTimeHealthError(
+        timeHealthData ? null : "Clock status could not be loaded. Select Check now to try again.",
+      )
     } catch (error) {
       console.error("Failed to load system data:", error)
     } finally {
@@ -145,11 +150,13 @@ export const useSettings = ({
 
   const verifyTimeOnline = useCallback(async () => {
     try {
+      setTimeHealthError(null)
       useAttendanceStore.getState().setStatsLoading(true)
       const timeHealthData = await attendanceManager.getTimeHealth(true)
       useAttendanceStore.getState().setTimeHealth(timeHealthData)
     } catch (error) {
       console.error("Failed to verify system time:", error)
+      setTimeHealthError("Clock check failed. Check your connection and try again.")
     } finally {
       useAttendanceStore.getState().setStatsLoading(false)
     }

@@ -39,4 +39,5 @@ export interface SettingsOverview {
 export interface TimeHealthOverview {
   timeHealth: AttendanceTimeHealth | null
   loading: boolean
+  error?: string | null
 }

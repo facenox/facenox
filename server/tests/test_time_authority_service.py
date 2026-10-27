@@ -37,6 +37,30 @@ async def test_time_authority_does_not_reuse_stale_online_result() -> None:
         "reference_time": stale_time,
         "drift_seconds": 0.0,
     }
+    service._cached_online_result_mono = (
+        service._boot_time_mono - service._online_cache_ttl_seconds - 1
+    )
+
+    health = await service.get_time_health()
+
+    assert health.online_verification_status == "not_checked"
+    assert health.online_reference_url is None
+
+
+@pytest.mark.asyncio
+async def test_time_authority_cache_age_is_not_bypassed_by_clock_rollback() -> None:
+    service = TimeAuthorityService()
+    future_time = service.current_time_utc() + timedelta(days=1)
+    service._cached_online_result = {
+        "status": "verified",
+        "reference_url": "https://example.com",
+        "checked_at": future_time,
+        "reference_time": future_time,
+        "drift_seconds": 0.0,
+    }
+    service._cached_online_result_mono = (
+        service._boot_time_mono - service._online_cache_ttl_seconds - 1
+    )
 
     health = await service.get_time_health()
 
