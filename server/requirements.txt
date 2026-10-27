@@ -8,7 +8,8 @@ uvicorn[standard]==0.42.0
 # Computer vision and numeric processing
 opencv-python==4.13.0.92
 numpy==2.4.3
-onnxruntime==1.24.4
+onnxruntime==1.24.4; sys_platform != "darwin" or platform_machine != "x86_64"
+onnxruntime==1.23.2; sys_platform == "darwin" and platform_machine == "x86_64"
 lap==0.5.13
 
 # Data validation and storage
