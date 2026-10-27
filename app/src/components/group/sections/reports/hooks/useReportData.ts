@@ -17,7 +17,6 @@ export function useReportData(
   const [report, setReport] = useState<AttendanceReport | null>(null)
   const [sessions, setSessions] = useState<AttendanceSession[]>([])
   const [members, setMembers] = useState<AttendanceMember[]>(initialMembers)
-  const [attendanceTimeZone, setAttendanceTimeZone] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -84,7 +83,7 @@ export function useReportData(
         setError(null)
       }
 
-      const [generatedReport, loadedSessions, loadedMembers, settings] = await Promise.all([
+      const [generatedReport, loadedSessions, loadedMembers] = await Promise.all([
         attendanceManager.generateReport(group.id, startDate, endDate),
         attendanceManager.getSessions({
           group_id: group.id,
@@ -94,13 +93,11 @@ export function useReportData(
         initialMembersRef.current.length > 0 ?
           Promise.resolve(initialMembersRef.current)
         : attendanceManager.getGroupMembers(group.id),
-        attendanceManager.getSettings(),
       ])
       if (!isMountedRef.current) return
       setReport(generatedReport)
       setSessions(loadedSessions)
       setMembers(loadedMembers)
-      setAttendanceTimeZone(settings.attendance_timezone ?? null)
     } catch (err) {
       if (!isMountedRef.current) return
       console.error("Error generating report:", err)
@@ -118,7 +115,6 @@ export function useReportData(
     members,
     loading,
     error,
-    attendanceTimeZone,
     generateReport,
   }
 }

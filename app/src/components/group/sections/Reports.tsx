@@ -79,16 +79,13 @@ export function Reports({
     getAttendanceDateString(new Date(), configuredTimeZone),
   )
 
-  const {
-    report,
-    sessions,
-    members,
-    loading,
-    error,
-    attendanceTimeZone: loadedAttendanceTimeZone,
-    generateReport,
-  } = useReportData(group, storeMembers, reportStartDate, reportEndDate)
-  const attendanceTimeZone = loadedAttendanceTimeZone || configuredTimeZone
+  const { report, sessions, members, loading, error, generateReport } = useReportData(
+    group,
+    storeMembers,
+    reportStartDate,
+    reportEndDate,
+  )
+  const attendanceTimeZone = configuredTimeZone
 
   const hasMembers = members.length > 0 || storeMembers.length > 0
 

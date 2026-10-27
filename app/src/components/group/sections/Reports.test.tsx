@@ -3,6 +3,7 @@ import { screen, fireEvent, act } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { Reports } from "@/components/group/sections/Reports"
 import { useGroupStore } from "@/components/group/stores"
+import { useAttendanceStore } from "@/components/main/stores"
 import { createAttendanceGroup, createAttendanceMember } from "@/test/fixtures"
 import { renderWithProviders } from "@/test/utils/renderWithProviders"
 
@@ -73,13 +74,16 @@ vi.mock("@/components/group/sections/reports/components/ReportTable", () => ({
   ReportTable: ({
     groupedRows,
     error,
+    attendanceTimeZone,
   }: {
     groupedRows: Record<string, unknown[]>
     error?: string | null
+    attendanceTimeZone?: string | null
   }) => (
     <div>
       {error && <div>{error}</div>}
       <div>Mock Report Table ({Object.keys(groupedRows).length})</div>
+      <div data-testid="report-timezone">{attendanceTimeZone}</div>
     </div>
   ),
 }))
@@ -111,6 +115,7 @@ function defaultViewsState() {
 describe("Reports", () => {
   beforeEach(() => {
     resetGroupStore()
+    useAttendanceStore.setState({ attendanceTimezone: null })
     mockUseReportViews.mockReturnValue(defaultViewsState())
     mockUseReportTransform.mockReturnValue({
       groupedRows: { __all__: [] },
@@ -169,6 +174,35 @@ describe("Reports", () => {
     renderWithProviders(<Reports group={createAttendanceGroup()} />)
 
     expect(screen.getByText("Mock Report Table (1)")).toBeInTheDocument()
+  })
+
+  it("applies attendance timezone changes without remounting the report", () => {
+    const members = [createAttendanceMember({ person_id: "member-1", name: "Alice" })]
+    useGroupStore.setState({ members })
+    useAttendanceStore.setState({ attendanceTimezone: "Asia/Manila" })
+    mockUseReportData.mockReturnValue({
+      report: null,
+      sessions: [],
+      members,
+      loading: false,
+      error: null,
+      attendanceTimeZone: "Asia/Manila",
+      generateReport: vi.fn(),
+    })
+    mockUseReportTransform.mockReturnValue({
+      groupedRows: { __all__: [{ person_id: "member-1" }] },
+      daysTracked: 7,
+      allColumns: [],
+    })
+
+    renderWithProviders(<Reports group={createAttendanceGroup()} />)
+    expect(screen.getByTestId("report-timezone")).toHaveTextContent("Asia/Manila")
+
+    act(() => {
+      useAttendanceStore.setState({ attendanceTimezone: "America/New_York" })
+    })
+
+    expect(screen.getByTestId("report-timezone")).toHaveTextContent("America/New_York")
   })
 
   it("emits days tracked and export handlers when report data is ready", () => {
