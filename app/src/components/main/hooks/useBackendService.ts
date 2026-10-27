@@ -19,6 +19,10 @@ import {
 } from "@/components/main/stores"
 import { notifyDataChanged } from "@/utils/syncNotifier"
 import { persistentSettings } from "@/services"
+import {
+  ATTENDANCE_TIMEZONE_MISMATCH_WARNING_KEY,
+  dispatchClockWarning,
+} from "@/services/clockWarnings"
 
 interface UseBackendServiceOptions {
   webSocketServiceRef: React.RefObject<WebSocketService | null>
@@ -189,10 +193,11 @@ export function useBackendService(options: UseBackendServiceOptions) {
         const { currentGroup } = useAttendanceStore.getState()
         const payload = data.data ?? data
         if (payload.time_health?.warning_message) {
-          window.dispatchEvent(
-            new CustomEvent("facenox:clock-warning", {
-              detail: { message: payload.time_health.warning_message },
-            }),
+          dispatchClockWarning(
+            payload.time_health.warning_message,
+            payload.time_health.timezone_mismatch ?
+              ATTENDANCE_TIMEZONE_MISMATCH_WARNING_KEY
+            : undefined,
           )
         }
 

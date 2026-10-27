@@ -104,6 +104,7 @@ export interface AttendanceEvent {
   total_hours?: number
   time_health?: {
     warning_message?: string
+    timezone_mismatch?: boolean
     online_verification_status?: string
     online_drift_seconds?: number
   }

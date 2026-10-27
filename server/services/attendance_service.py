@@ -499,12 +499,14 @@ class AttendanceService:
         current_time = time_health.current_time_local
         attendance_zone = getattr(settings, "attendance_timezone", None)
         if attendance_zone:
+            device_zone = str(time_health.time_zone_name or "").strip()
             current_time = time_health.current_time_utc.astimezone(
                 ZoneInfo(attendance_zone)
             )
             time_health_payload["current_time_local"] = current_time.isoformat()
             time_health_payload["time_zone_name"] = attendance_zone
-            if current_time.utcoffset() != time_health.current_time_local.utcoffset():
+            if device_zone and device_zone != attendance_zone:
+                time_health_payload["timezone_mismatch"] = True
                 warning = "Your device timezone doesn't match the configured attendance timezone."
                 time_health_payload["warning_message"] = " ".join(
                     filter(None, [time_health_payload.get("warning_message"), warning])

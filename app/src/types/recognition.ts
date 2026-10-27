@@ -254,6 +254,7 @@ export interface AttendanceTimeHealth {
   online_reference_time?: Date | string
   online_drift_seconds?: number
   warning_message?: string
+  timezone_mismatch?: boolean
 }
 
 export interface AttendanceEvent {

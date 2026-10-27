@@ -35,6 +35,7 @@ import { MainModals } from "@/components/main/components/MainModals"
 import { CooldownOverlay } from "@/components/main/components/CooldownOverlay"
 import type { DetectionResult } from "@/components/main/types"
 import { soundEffects } from "@/services/SoundEffectsService"
+import { consumeClockWarning, type ClockWarningDetail } from "@/services/clockWarnings"
 
 let globalStopCamera: ((forceCleanup: boolean) => void) | null = null
 
@@ -52,6 +53,7 @@ export default function Main() {
   const skipFramesRef = useRef(0)
   const trackingSessionRef = useRef(0)
   const detectionInFlightRef = useRef(false)
+  const shownClockWarningKeysRef = useRef(new Set<string>())
 
   const lastStartTimeRef = useRef<number>(0)
   const lastStopTimeRef = useRef<number>(0)
@@ -491,8 +493,8 @@ export default function Main() {
 
   // Listen for system clock warnings emitted by AttendanceManager
   useEffect(() => {
-    const handleClockWarning = (event: CustomEvent<{ message?: string }>) => {
-      const message = event.detail?.message
+    const handleClockWarning = (event: CustomEvent<ClockWarningDetail>) => {
+      const message = consumeClockWarning(event.detail, shownClockWarningKeysRef.current)
       if (message) {
         setWarning(message)
       }

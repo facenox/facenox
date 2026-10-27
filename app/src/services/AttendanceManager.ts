@@ -16,6 +16,7 @@ import { HttpClient } from "./attendance/HttpClient"
 import { GroupManager } from "./attendance/GroupManager"
 import { MemberManager } from "./attendance/MemberManager"
 import { RecordManager } from "./attendance/RecordManager"
+import { dispatchClockWarning } from "./clockWarnings"
 import { notifyDataChanged } from "../utils/syncNotifier"
 
 export interface DesktopAuditLog {
@@ -390,12 +391,8 @@ export class AttendanceManager {
       if (Number.isFinite(last) && now + this.clockBackwardWarnThresholdMs < last) {
         const diffMs = last - now
         const diffMinutes = Math.max(1, Math.round(diffMs / 60000))
-        window.dispatchEvent(
-          new CustomEvent("facenox:clock-warning", {
-            detail: {
-              message: `System clock appears to have moved backwards by more than 1 minute (~${diffMinutes} minute(s)).`,
-            },
-          }),
+        dispatchClockWarning(
+          `System clock appears to have moved backwards by more than 1 minute (~${diffMinutes} minute(s)).`,
         )
       }
       localStorage.setItem(this.clockCheckStorageKey, String(now))
@@ -404,12 +401,8 @@ export class AttendanceManager {
     }
   }
 
-  private emitClockWarning(message: string): void {
-    window.dispatchEvent(
-      new CustomEvent("facenox:clock-warning", {
-        detail: { message },
-      }),
-    )
+  private emitClockWarning(message: string, dedupeKey?: string): void {
+    dispatchClockWarning(message, dedupeKey)
   }
 
   private toApiDateTimeParam(date: Date): string {

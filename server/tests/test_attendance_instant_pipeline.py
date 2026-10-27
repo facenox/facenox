@@ -51,12 +51,12 @@ class AttendancePipelineTests(unittest.IsolatedAsyncioTestCase):
         self.env.stop()
         self.temp.cleanup()
 
-    def health(self, instant):
+    def health(self, instant, device_zone="Asia/Manila"):
         return SimpleNamespace(
             source="test",
             current_time_utc=instant,
-            current_time_local=instant.astimezone(ZoneInfo("Asia/Manila")),
-            time_zone_name="Asia/Manila",
+            current_time_local=instant.astimezone(ZoneInfo(device_zone)),
+            time_zone_name=device_zone,
             os_clock_drift_seconds=0,
             os_clock_warning=None,
             online_verification_status="offline",
@@ -91,6 +91,7 @@ class AttendancePipelineTests(unittest.IsolatedAsyncioTestCase):
             check_in_response.time_health.warning_message,
             "Your device timezone doesn't match the configured attendance timezone.",
         )
+        self.assertTrue(check_in_response.time_health.timezone_mismatch)
         await self.session.commit()
         response = await self.service.process_event(event, self.member, self.settings)
         self.assertTrue(response.processed)
@@ -122,6 +123,49 @@ class AttendancePipelineTests(unittest.IsolatedAsyncioTestCase):
                 for r in records
             )
             self.assertEqual(actual, [early, late])
+
+    async def test_timezone_mismatch_detects_zones_with_the_same_current_offset(self):
+        from api.schemas import AttendanceEventCreate
+
+        instant = datetime(2026, 1, 15, 12, tzinfo=timezone.utc)
+        self.settings.attendance_timezone = "America/Denver"
+        self.service.time_authority = SimpleNamespace(
+            get_time_health=AsyncMock(
+                return_value=self.health(instant, device_zone="America/Phoenix")
+            )
+        )
+
+        response = await self.service.process_event(
+            AttendanceEventCreate(person_id="p", confidence=1),
+            self.member,
+            self.settings,
+        )
+
+        self.assertEqual(
+            instant.astimezone(ZoneInfo("America/Denver")).utcoffset(),
+            instant.astimezone(ZoneInfo("America/Phoenix")).utcoffset(),
+        )
+        self.assertTrue(response.time_health.timezone_mismatch)
+
+    async def test_matching_timezone_does_not_warn(self):
+        from api.schemas import AttendanceEventCreate
+
+        instant = datetime(2026, 1, 15, 12, tzinfo=timezone.utc)
+        self.settings.attendance_timezone = "America/New_York"
+        self.service.time_authority = SimpleNamespace(
+            get_time_health=AsyncMock(
+                return_value=self.health(instant, device_zone="America/New_York")
+            )
+        )
+
+        response = await self.service.process_event(
+            AttendanceEventCreate(person_id="p", confidence=1),
+            self.member,
+            self.settings,
+        )
+
+        self.assertFalse(response.time_health.timezone_mismatch)
+        self.assertIsNone(response.time_health.warning_message)
 
     async def test_api_backup_metadata_and_manual_session_upsert(self):
         from api.schemas import AttendanceRecordResponse

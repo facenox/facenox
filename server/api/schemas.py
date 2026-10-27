@@ -292,6 +292,7 @@ class AttendanceTimeHealthResponse(BaseModel):
     online_reference_time: Optional[datetime]
     online_drift_seconds: Optional[float]
     warning_message: Optional[str]
+    timezone_mismatch: bool = False
 
     @field_validator(
         "current_time_utc",
