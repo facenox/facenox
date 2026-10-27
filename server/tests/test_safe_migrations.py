@@ -132,6 +132,31 @@ def test_beta15_upgrade_publishes_generation_and_retains_legacy(tmp_path):
     assert _hash(active_db) == active_hash
 
 
+def test_healthy_startup_uses_one_lightweight_validation(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    result = _run(data_dir)
+    _mark_healthy(data_dir)
+    quick_checks = 0
+    original_quick_check = migrate._check_quick_integrity
+
+    def track_quick_check(connection):
+        nonlocal quick_checks
+        quick_checks += 1
+        original_quick_check(connection)
+
+    def reject_exhaustive_validation(*_args, **_kwargs):
+        raise AssertionError("healthy startup performed exhaustive validation")
+
+    monkeypatch.setattr(migrate, "_check_quick_integrity", track_quick_check)
+    monkeypatch.setattr(migrate, "_preflight_database", reject_exhaustive_validation)
+
+    restarted = _run(data_dir)
+
+    assert restarted.migrated is False
+    assert restarted.generation == result.generation
+    assert quick_checks == 1
+
+
 def test_beta22_head_database_is_adopted_without_rewriting_legacy(tmp_path):
     data_dir = tmp_path / "data"
     data_dir.mkdir()

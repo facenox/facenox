@@ -138,6 +138,52 @@ def _check_integrity(connection: sqlite3.Connection) -> None:
         )
 
 
+def _check_quick_integrity(connection: sqlite3.Connection) -> None:
+    result = [row[0] for row in connection.execute("PRAGMA quick_check(1)")]
+    if result != ["ok"]:
+        raise MigrationSafetyError(
+            "Database quick integrity check failed: " + "; ".join(result[:5])
+        )
+
+
+def _read_database_metadata(
+    connection: sqlite3.Connection, script_directory: ScriptDirectory
+) -> tuple[set[str], tuple[str, ...]]:
+    tables = _user_tables(connection)
+    revisions = _read_revisions(connection, tables)
+    domain_tables = tables - {"alembic_version"}
+    if domain_tables and not revisions:
+        raise MigrationSafetyError(
+            "Database contains application tables but has no Alembic revision. "
+            "Automatic schema guessing is disabled because it can corrupt a valid "
+            "database. Restore a verified snapshot or use the recovery tools."
+        )
+    if len(revisions) != len(set(revisions)):
+        raise MigrationSafetyError("Database contains duplicate Alembic revisions.")
+    _assert_known_revisions(revisions, script_directory)
+    return tables, revisions
+
+
+def _metadata_database_report(
+    db_path: Path, script_directory: ScriptDirectory
+) -> DatabaseReport:
+    if not db_path.exists() or db_path.stat().st_size == 0:
+        raise MigrationSafetyError(f"Database does not exist or is empty: {db_path}")
+
+    try:
+        with closing(_connect_read_only(db_path)) as connection:
+            _check_quick_integrity(connection)
+            _, revisions = _read_database_metadata(connection, script_directory)
+            return DatabaseReport(revisions, {}, 0, {}, {})
+    except MigrationSafetyError:
+        raise
+    except sqlite3.Error as exc:
+        raise MigrationSafetyError(
+            f"SQLite could not safely read '{db_path.name}': {exc}. "
+            "The database was not changed."
+        ) from exc
+
+
 def _assert_known_revisions(
     revisions: tuple[str, ...], script_directory: ScriptDirectory
 ) -> None:
@@ -266,20 +312,7 @@ def _preflight_database(
     try:
         with closing(_connect_read_only(db_path)) as connection:
             _check_integrity(connection)
-            tables = _user_tables(connection)
-            revisions = _read_revisions(connection, tables)
-            domain_tables = tables - {"alembic_version"}
-            if domain_tables and not revisions:
-                raise MigrationSafetyError(
-                    "Database contains application tables but has no Alembic revision. "
-                    "Automatic schema guessing is disabled because it can corrupt a valid "
-                    "database. Restore a verified snapshot or use the recovery tools."
-                )
-            if len(revisions) != len(set(revisions)):
-                raise MigrationSafetyError(
-                    "Database contains duplicate Alembic revisions."
-                )
-            _assert_known_revisions(revisions, script_directory)
+            tables, revisions = _read_database_metadata(connection, script_directory)
             counts = _table_counts(connection, tables)
             content_columns, content_hashes = _table_content_hashes(connection, tables)
             faces_checked = _check_face_embeddings(connection, tables, decryptor)
@@ -863,6 +896,7 @@ def _validate_generation(
     key_id: str,
     *,
     verify_creation_hash: bool = False,
+    exhaustive: bool = True,
 ) -> tuple[DatabaseReport, dict[str, object]]:
     try:
         manifest = generations.read_generation_manifest(data_dir, generation, auth_key)
@@ -873,7 +907,11 @@ def _validate_generation(
             f"Generation '{generation}' belongs to a different biometric key."
         )
     db_path = generations.generation_database(data_dir, generation)
-    report = _preflight_database(db_path, script_directory, decryptor)
+    report = (
+        _preflight_database(db_path, script_directory, decryptor)
+        if exhaustive
+        else _metadata_database_report(db_path, script_directory)
+    )
     revisions = manifest.get("revisions")
     if not isinstance(revisions, list) or tuple(sorted(revisions)) != report.revisions:
         raise MigrationSafetyError(
@@ -894,7 +932,7 @@ def _recover_or_read_pointer(
     decryptor: Decryptor,
     auth_key: bytes,
     key_id: str,
-) -> generations.GenerationPointer | None:
+) -> tuple[generations.GenerationPointer | None, DatabaseReport | None]:
     try:
         pointer = generations.read_pointer(data_dir, auth_key)
     except generations.GenerationStoreError:
@@ -903,15 +941,16 @@ def _recover_or_read_pointer(
 
     if pointer is not None:
         try:
-            _validate_generation(
+            report, _ = _validate_generation(
                 data_dir,
                 pointer.generation,
                 script_directory,
                 decryptor,
                 auth_key,
                 key_id,
+                exhaustive=pointer.activation != "healthy",
             )
-            return pointer
+            return pointer, report
         except MigrationSafetyError:
             logger.exception(
                 "Selected generation '%s' is invalid; scanning recovery generations.",
@@ -922,7 +961,7 @@ def _recover_or_read_pointer(
         data_dir, auth_key
     ):
         try:
-            _, manifest = _validate_generation(
+            report, manifest = _validate_generation(
                 data_dir,
                 generation,
                 script_directory,
@@ -941,8 +980,8 @@ def _recover_or_read_pointer(
         )
         generations.write_pointer(data_dir, recovered, auth_key)
         logger.error("Recovered generation pointer to %s.", generation)
-        return recovered
-    return None
+        return recovered, report
+    return None, None
 
 
 def _recover_unactivated_first_generation(
@@ -951,14 +990,14 @@ def _recover_unactivated_first_generation(
     decryptor: Decryptor,
     auth_key: bytes,
     key_id: str,
-) -> generations.GenerationPointer | None:
+) -> tuple[generations.GenerationPointer | None, DatabaseReport | None]:
     """Close the publish-before-pointer crash window for a new installation."""
 
     for sequence, generation in generations.published_generation_candidates(
         data_dir, auth_key
     ):
         try:
-            _, manifest = _validate_generation(
+            report, manifest = _validate_generation(
                 data_dir,
                 generation,
                 script_directory,
@@ -986,8 +1025,8 @@ def _recover_unactivated_first_generation(
             "pointer activation.",
             generation,
         )
-        return recovered
-    return None
+        return recovered, report
+    return None, None
 
 
 def _publish_database_generation(
@@ -1063,13 +1102,14 @@ def _publish_database_generation(
 def _rollback_unhealthy_pointer(
     data_dir: Path,
     pointer: generations.GenerationPointer,
+    selected_report: DatabaseReport | None,
     script_directory: ScriptDirectory,
     decryptor: Decryptor,
     auth_key: bytes,
     key_id: str,
-) -> generations.GenerationPointer:
+) -> tuple[generations.GenerationPointer, DatabaseReport | None]:
     if pointer.activation != "pending":
-        return pointer
+        return pointer, selected_report
     if generations.has_health_marker(data_dir, pointer.generation, auth_key):
         healthy = generations.GenerationPointer(
             pointer.generation,
@@ -1078,11 +1118,11 @@ def _rollback_unhealthy_pointer(
             "healthy",
         )
         generations.write_pointer(data_dir, healthy, auth_key)
-        return healthy
+        return healthy, selected_report
     if pointer.previous_generation is None:
-        return pointer
+        return pointer, selected_report
 
-    _, previous_manifest = _validate_generation(
+    previous_report, previous_manifest = _validate_generation(
         data_dir,
         pointer.previous_generation,
         script_directory,
@@ -1103,7 +1143,7 @@ def _rollback_unhealthy_pointer(
         pointer.generation,
         rolled_back.generation,
     )
-    return rolled_back
+    return rolled_back, previous_report
 
 
 def run_migrations(
@@ -1145,7 +1185,7 @@ def run_migrations(
         lock_context = generations.migration_lock(active_data_dir)
         with lock_context:
             generations.cleanup_pending_generations(active_data_dir)
-            pointer = _recover_or_read_pointer(
+            pointer, selected_report = _recover_or_read_pointer(
                 active_data_dir,
                 script_directory,
                 active_decryptor,
@@ -1155,7 +1195,7 @@ def run_migrations(
             if pointer is None and generations.has_published_generations(
                 active_data_dir
             ):
-                pointer = _recover_unactivated_first_generation(
+                pointer, selected_report = _recover_unactivated_first_generation(
                     active_data_dir,
                     script_directory,
                     active_decryptor,
@@ -1171,9 +1211,10 @@ def run_migrations(
                     "disabled to prevent silent data rollback."
                 )
             if pointer is not None:
-                pointer = _rollback_unhealthy_pointer(
+                pointer, selected_report = _rollback_unhealthy_pointer(
                     active_data_dir,
                     pointer,
+                    selected_report,
                     script_directory,
                     active_decryptor,
                     auth_key,
@@ -1186,7 +1227,7 @@ def run_migrations(
                     source_db, script_directory, active_decryptor
                 )
                 _assert_migration_disk_space(source_db, active_data_dir)
-                adopted_generation, _ = _publish_database_generation(
+                adopted_generation, selected_report = _publish_database_generation(
                     data_dir=active_data_dir,
                     source_db=source_db,
                     source_report=source_report,
@@ -1214,14 +1255,18 @@ def run_migrations(
                 source_db = generations.generation_database(
                     active_data_dir, pointer.generation
                 )
-                source_report, _ = _validate_generation(
-                    active_data_dir,
-                    pointer.generation,
-                    script_directory,
-                    active_decryptor,
-                    auth_key,
-                    key_id,
-                )
+                if selected_report is None:
+                    source_report, _ = _validate_generation(
+                        active_data_dir,
+                        pointer.generation,
+                        script_directory,
+                        active_decryptor,
+                        auth_key,
+                        key_id,
+                        exhaustive=pointer.activation != "healthy",
+                    )
+                else:
+                    source_report = selected_report
                 orphaned = _orphaned_batch_tables(source_db)
                 if source_report.revisions == expected_heads and not orphaned:
                     _assert_model_schema(source_db)
@@ -1241,6 +1286,9 @@ def run_migrations(
                         pointer.previous_generation,
                         str(source_db),
                     )
+                source_report = _preflight_database(
+                    source_db, script_directory, active_decryptor
+                )
                 sequence = pointer.sequence + 1
                 previous_generation = pointer.generation
             else:
