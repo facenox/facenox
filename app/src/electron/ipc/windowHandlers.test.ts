@@ -2,13 +2,21 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const { mockHandle, mockOn, mockRevealMainWindowFromSplash, mockHandleSplashProgressRendered } =
-  vi.hoisted(() => ({
-    mockHandle: vi.fn(),
-    mockOn: vi.fn(),
-    mockRevealMainWindowFromSplash: vi.fn(),
-    mockHandleSplashProgressRendered: vi.fn(),
-  }))
+const {
+  mockHandle,
+  mockOn,
+  mockUpdateSplashProgress,
+  mockUpdateSplashDataStep,
+  mockRevealMainWindowFromSplash,
+  mockHandleSplashProgressRendered,
+} = vi.hoisted(() => ({
+  mockHandle: vi.fn(),
+  mockOn: vi.fn(),
+  mockUpdateSplashProgress: vi.fn(),
+  mockUpdateSplashDataStep: vi.fn(),
+  mockRevealMainWindowFromSplash: vi.fn(),
+  mockHandleSplashProgressRendered: vi.fn(),
+}))
 
 const mockMainWindow = {
   minimize: vi.fn(),
@@ -33,8 +41,8 @@ vi.mock("../State.js", () => ({
 
 vi.mock("../window/WindowManager.js", () => ({
   WindowManager: {
-    updateSplashProgress: vi.fn(),
-    updateSplashDataStep: vi.fn(),
+    updateSplashProgress: mockUpdateSplashProgress,
+    updateSplashDataStep: mockUpdateSplashDataStep,
     handleSplashProgressRendered: mockHandleSplashProgressRendered,
     revealMainWindowFromSplash: mockRevealMainWindowFromSplash,
   },
@@ -45,6 +53,8 @@ describe("registerWindowHandlers", () => {
     vi.resetModules()
     mockHandle.mockReset()
     mockOn.mockReset()
+    mockUpdateSplashProgress.mockReset()
+    mockUpdateSplashDataStep.mockReset()
     mockRevealMainWindowFromSplash.mockReset()
     mockHandleSplashProgressRendered.mockReset()
     mockMainWindow.minimize.mockReset()
@@ -89,13 +99,23 @@ describe("registerWindowHandlers", () => {
 
     const appReadyListener = mockOn.mock.calls.find(([channel]) => channel === "app:ready")?.[1] as
       (() => void) | undefined
+    const splashProgressListener = mockOn.mock.calls.find(
+      ([channel]) => channel === "splash:update-progress",
+    )?.[1] as ((_event: unknown, progress: number, detail?: string) => void) | undefined
+    const splashDataStepListener = mockOn.mock.calls.find(
+      ([channel]) => channel === "splash:update-data-step",
+    )?.[1] as ((_event: unknown, step: number, detail?: string) => void) | undefined
     const splashRenderedListener = mockOn.mock.calls.find(
       ([channel]) => channel === "splash:rendered-progress",
     )?.[1] as ((_event: unknown, progress: number) => void) | undefined
 
+    splashProgressListener?.({}, 78, "Opening Facenox")
+    splashDataStepListener?.({}, 8, "Loading attendance data")
     splashRenderedListener?.({}, 100)
     appReadyListener?.()
 
+    expect(mockUpdateSplashProgress).toHaveBeenCalledWith(78, "Opening Facenox")
+    expect(mockUpdateSplashDataStep).toHaveBeenCalledWith(8, "Loading attendance data")
     expect(mockHandleSplashProgressRendered).toHaveBeenCalledWith(100)
     expect(mockRevealMainWindowFromSplash).toHaveBeenCalledTimes(1)
   })

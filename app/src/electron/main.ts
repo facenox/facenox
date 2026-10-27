@@ -1,4 +1,4 @@
-import { app, protocol, BrowserWindow, nativeTheme, powerMonitor, net, shell } from "electron"
+import { app, protocol, nativeTheme, powerMonitor, net, shell } from "electron"
 import path from "path"
 import fs from "fs"
 import { fileURLToPath, pathToFileURL } from "node:url"
@@ -65,7 +65,7 @@ app.whenReady().then(async () => {
   registerAllHandlers()
   const unsubscribeStartupProgress = backendService.onStartupProgress((update) => {
     state.startupTotalSteps = update.totalSteps
-    WindowManager.updateSplashProgress(update.progress)
+    WindowManager.updateSplashProgress(update.progress, update.detail)
   })
 
   // Custom protocol for static file access using modern protocol.handle and net.fetch
@@ -149,19 +149,14 @@ app.whenReady().then(async () => {
     return
   }
 
-  // Advance splash state to stage 7 (backend hot) and spawn background syncing.
-  WindowManager.updateSplashProgress(WindowManager.progressFromStep(7))
+  WindowManager.updateSplashProgress(WindowManager.progressFromStep(7), "Opening Facenox")
   WindowManager.unlockSplashDataPhase()
   syncManager.start()
   autoExportManager.start()
 
-  // Instantiate Chromium window only after CPU-bound backend boot sequence ends.
-  WindowManager.createWindow()
-
-  // Wait for compositor ready before unlocking transition handshakes.
-  await new Promise<void>((resolve) => {
-    state.mainWindow?.once("ready-to-show", () => resolve())
-  })
+  const mainWindowReady = WindowManager.createWindow()
+  WindowManager.startRendererReadyWatchdog()
+  await mainWindowReady
 
   // Listen for OS resume events to notify renderer for drift corrections and restore backend readiness
   powerMonitor.on("resume", async () => {
@@ -201,9 +196,7 @@ app.on("before-quit", (event) => {
 
 app.on("activate", () => {
   if (state.mainWindow === null) {
-    WindowManager.createWindow()
-    const win = state.mainWindow as BrowserWindow | null
-    win?.once("ready-to-show", () => WindowManager.showMainWindow())
+    void WindowManager.createWindow().then(() => WindowManager.showMainWindow())
   } else if (state.mainWindow && !state.mainWindow.isVisible()) {
     state.mainWindow.show()
   }

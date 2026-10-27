@@ -18,13 +18,13 @@ export function useAttendanceBootstrap() {
     setShellBootstrapping(true)
     setShellReady(false)
     setShellBootstrapError(null)
-    window.facenoxElectron?.updateSplashDataStep(8)
+    window.facenoxElectron?.updateSplashDataStep(8, "Loading attendance data")
 
     const bootstrap = async () => {
       try {
         await bootstrapShellData()
 
-        window.facenoxElectron?.updateSplashDataStep(9)
+        window.facenoxElectron?.updateSplashDataStep(9, "Ready")
 
         setShellReady(true)
         setShellBootstrapping(false)

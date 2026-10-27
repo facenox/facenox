@@ -48,7 +48,7 @@ describe("preload bridge", () => {
     }
     const facenoxElectron = exposedEntries.facenoxElectron as {
       maximize: () => Promise<unknown>
-      updateSplashDataStep: (step: number) => void
+      updateSplashDataStep: (step: number, detail?: string) => void
       onAppReady: () => void
     }
 
@@ -56,7 +56,7 @@ describe("preload bridge", () => {
     await electronAPI.store.set("ui.sidebarWidth", 320)
     await electronAPI.updater.openReleasePage("https://example.com/release")
     await facenoxElectron.maximize()
-    facenoxElectron.updateSplashDataStep(9)
+    facenoxElectron.updateSplashDataStep(9, "Ready")
     facenoxElectron.onAppReady()
 
     expect(mockExposeInMainWorld).toHaveBeenCalledWith("electronAPI", expect.any(Object))
@@ -68,7 +68,7 @@ describe("preload bridge", () => {
       "https://example.com/release",
     )
     expect(mockInvoke).toHaveBeenCalledWith("window:maximize")
-    expect(mockSend).toHaveBeenCalledWith("splash:update-data-step", 9)
+    expect(mockSend).toHaveBeenCalledWith("splash:update-data-step", 9, "Ready")
     expect(mockSend).toHaveBeenCalledWith("app:ready")
   })
 

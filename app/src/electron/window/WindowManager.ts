@@ -8,6 +8,8 @@ import { getWindowIconPath } from "../iconPaths.js"
 
 const window_filename = fileURLToPath(import.meta.url)
 const window_dirname = path.dirname(window_filename)
+const MIN_SPLASH_VISIBLE_MS = 450
+const RENDERER_READY_TIMEOUT_MS = 30_000
 
 export class WindowManager {
   static progressFromStep(step: number, totalSteps = state.startupTotalSteps): number {
@@ -20,18 +22,20 @@ export class WindowManager {
     state.startupTotalSteps = 9
     state.splashProgress = {
       progress: 0,
+      detail: "Starting",
     }
     state.pendingSplashProgress = [state.splashProgress]
     state.isSplashReady = false
     state.isRevealingMainWindow = false
     state.maxSplashProgressSeen = 0
     state.splashRenderedProgress = 0
-    state.splashCompletedAt = 0
+    state.splashShownAt = 0
     state.isSplashDataPhaseUnlocked = false
     state.pendingDeferredSplashProgress = null
     state.pendingRevealAfterSplashRender = false
     state.splashRevealTimeout = null
     state.splashRevealSafetyTimeout = null
+    state.rendererReadyTimeout = null
 
     const splash = new BrowserWindow({
       width: 300,
@@ -65,6 +69,7 @@ export class WindowManager {
       state.pendingSplashProgress = []
       splash.webContents.send("splash:progress", initialUpdate)
       if (!splash.isDestroyed()) {
+        state.splashShownAt = Date.now()
         splash.show()
       }
     })
@@ -86,18 +91,22 @@ export class WindowManager {
       clearTimeout(state.splashRevealSafetyTimeout)
       state.splashRevealSafetyTimeout = null
     }
+    if (state.rendererReadyTimeout) {
+      clearTimeout(state.rendererReadyTimeout)
+      state.rendererReadyTimeout = null
+    }
     state.pendingSplashProgress = []
     state.isSplashReady = false
     state.isRevealingMainWindow = false
     state.maxSplashProgressSeen = 0
     state.splashRenderedProgress = 0
-    state.splashCompletedAt = 0
+    state.splashShownAt = 0
     state.isSplashDataPhaseUnlocked = false
     state.pendingDeferredSplashProgress = null
     state.pendingRevealAfterSplashRender = false
   }
 
-  static updateSplashProgress(progress: number): void {
+  static updateSplashProgress(progress: number, detail?: string): void {
     const clampedProgress = Math.max(0, Math.min(100, progress))
 
     if (clampedProgress < state.maxSplashProgressSeen) {
@@ -106,6 +115,7 @@ export class WindowManager {
 
     const update = {
       progress: clampedProgress,
+      ...(detail?.trim() ? { detail: detail.trim() } : {}),
     }
 
     state.splashProgress = update
@@ -123,15 +133,18 @@ export class WindowManager {
     state.splashWindow.webContents.send("splash:progress", update)
   }
 
-  static updateSplashDataStep(step: number): void {
-    const clampedProgress = WindowManager.progressFromStep(step)
+  static updateSplashDataStep(step: number, detail?: string): void {
+    const update = {
+      progress: WindowManager.progressFromStep(step),
+      ...(detail?.trim() ? { detail: detail.trim() } : {}),
+    }
 
     if (!state.isSplashDataPhaseUnlocked) {
-      state.pendingDeferredSplashProgress = clampedProgress
+      state.pendingDeferredSplashProgress = update
       return
     }
 
-    WindowManager.updateSplashProgress(clampedProgress)
+    WindowManager.updateSplashProgress(update.progress, update.detail)
   }
 
   static unlockSplashDataPhase(): void {
@@ -141,21 +154,18 @@ export class WindowManager {
 
     state.isSplashDataPhaseUnlocked = true
 
-    if (!state.pendingDeferredSplashProgress) {
+    if (state.pendingDeferredSplashProgress === null) {
       return
     }
 
-    const deferredProgress = state.pendingDeferredSplashProgress
+    const deferredUpdate = state.pendingDeferredSplashProgress
     state.pendingDeferredSplashProgress = null
-    WindowManager.updateSplashProgress(deferredProgress)
+    WindowManager.updateSplashProgress(deferredUpdate.progress, deferredUpdate.detail)
   }
 
   static handleSplashProgressRendered(progress: number): void {
     const clampedProgress = Math.max(0, Math.min(100, progress))
     state.splashRenderedProgress = Math.max(state.splashRenderedProgress, clampedProgress)
-    if (state.splashRenderedProgress >= 100 && state.splashCompletedAt === 0) {
-      state.splashCompletedAt = Date.now()
-    }
 
     if (state.pendingRevealAfterSplashRender && state.splashRenderedProgress >= 100) {
       WindowManager.scheduleSplashRevealAfterCompletion()
@@ -171,8 +181,11 @@ export class WindowManager {
       clearTimeout(state.splashRevealTimeout)
       state.splashRevealTimeout = null
     }
+    if (state.rendererReadyTimeout) {
+      clearTimeout(state.rendererReadyTimeout)
+      state.rendererReadyTimeout = null
+    }
     WindowManager.showMainWindow()
-    // Overlap windows to prevent the OS compositor from showing desktop wallpaper.
     setTimeout(() => {
       WindowManager.destroySplash()
     }, 100)
@@ -184,7 +197,38 @@ export class WindowManager {
       clearTimeout(state.splashRevealTimeout)
       state.splashRevealTimeout = null
     }
-    WindowManager.finalizeSplashReveal()
+    const elapsed = state.splashShownAt > 0 ? Date.now() - state.splashShownAt : 0
+    const remaining = Math.max(0, MIN_SPLASH_VISIBLE_MS - elapsed)
+    if (remaining === 0) {
+      WindowManager.finalizeSplashReveal()
+      return
+    }
+
+    state.splashRevealTimeout = setTimeout(() => {
+      state.splashRevealTimeout = null
+      WindowManager.finalizeSplashReveal()
+    }, remaining)
+  }
+
+  static startRendererReadyWatchdog(timeoutMs = RENDERER_READY_TIMEOUT_MS): void {
+    if (state.isRevealingMainWindow) {
+      return
+    }
+
+    if (state.rendererReadyTimeout) {
+      clearTimeout(state.rendererReadyTimeout)
+    }
+
+    state.rendererReadyTimeout = setTimeout(() => {
+      state.rendererReadyTimeout = null
+      if (state.isRevealingMainWindow || !state.mainWindow || state.mainWindow.isDestroyed()) {
+        return
+      }
+
+      console.warn("[WindowManager] Renderer startup timed out. Revealing the loading shell.")
+      WindowManager.updateSplashProgress(100, "Opening Facenox")
+      void WindowManager.revealMainWindowFromSplash()
+    }, timeoutMs)
   }
 
   static async revealMainWindowFromSplash(): Promise<void> {
@@ -193,8 +237,11 @@ export class WindowManager {
     }
 
     state.isRevealingMainWindow = true
+    if (state.rendererReadyTimeout) {
+      clearTimeout(state.rendererReadyTimeout)
+      state.rendererReadyTimeout = null
+    }
 
-    // Fallback guard to prevent persistent UI hang if renderer crashes.
     state.splashRevealSafetyTimeout = setTimeout(() => {
       console.warn("[WindowManager] Splash reveal handshake timed out. Forcing show.")
       WindowManager.finalizeSplashReveal()
@@ -222,7 +269,7 @@ export class WindowManager {
     WindowManager.finalizeSplashReveal()
   }
 
-  static createWindow(): void {
+  static createWindow(): Promise<void> {
     const mainWindow = new BrowserWindow({
       title: "Facenox",
       width: 1280,
@@ -250,13 +297,15 @@ export class WindowManager {
 
     state.mainWindow = mainWindow
 
+    const readyToShow = new Promise<void>((resolve) => {
+      mainWindow.once("ready-to-show", () => resolve())
+    })
+
     if (isDev() && process.env.ELECTRON_RENDERER_URL) {
       mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL)
     } else {
       mainWindow.loadFile(path.join(window_dirname, "../renderer/index.html"))
     }
-
-    mainWindow.once("ready-to-show", () => {})
 
     mainWindow.on("maximize", () => {
       mainWindow.webContents.send("window:maximized")
@@ -325,6 +374,8 @@ export class WindowManager {
         })
       return { action: "deny" }
     })
+
+    return readyToShow
   }
 
   static showMainWindow(): void {

@@ -49,30 +49,39 @@
       let animationFrameId = null
       let lastAnimationTime = performance.now()
       let hasShownProgress = false
+      let currentDetail = ""
+
+      const fallbackStatus = (progress) => {
+        if (progress >= 100) return "Ready"
+        if (progress >= 85) return "Loading attendance data"
+        if (progress >= 60) return "Opening Facenox"
+        if (progress >= 20) return "Preparing face recognition"
+        if (progress > 0) return "Checking your data"
+        return "Starting"
+      }
 
       const updateStatusText = (progress) => {
         if (!statusText) return
 
-        let text = "Starting"
-        if (progress >= 100) {
-          text = "Ready"
-        } else if (progress >= 85) {
-          text = "Almost ready"
-        } else if (progress >= 50) {
-          text = "Loading models"
-        } else if (progress >= 20) {
-          text = "Checking database"
-        } else if (progress > 0) {
-          text = "Starting"
-        }
+        const isReady = progress >= 100
+        const text = isReady ? "Ready" : currentDetail || fallbackStatus(progress)
+        if (statusText.dataset.status !== text || statusText.dataset.ready !== String(isReady)) {
+          statusText.dataset.status = text
+          statusText.dataset.ready = String(isReady)
+          statusText.replaceChildren(document.createTextNode(text))
 
-        const currentText = statusText.childNodes[0]?.textContent?.trim()
-        if (currentText !== text) {
-          if (text === "Ready") {
-            statusText.innerHTML = "Ready"
-          } else {
-            statusText.innerHTML = `${text}<span class="dots"><span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>`
+          if (!isReady) {
+            const dots = document.createElement("span")
+            dots.className = "dots"
+            for (let index = 0; index < 3; index += 1) {
+              const dot = document.createElement("span")
+              dot.className = "dot"
+              dot.textContent = "."
+              dots.appendChild(dot)
+            }
+            statusText.appendChild(dots)
           }
+
           statusText.style.opacity = 0.5
           setTimeout(() => {
             statusText.style.opacity = 1
@@ -117,7 +126,13 @@
         animationFrameId = window.requestAnimationFrame(animateProgress)
       }
 
-      const applyProgress = (progress) => {
+      const applyProgress = (progress, detail) => {
+        if (typeof detail === "string" && detail.trim()) {
+          currentDetail = detail.trim()
+        } else if (typeof progress === "number") {
+          currentDetail = fallbackStatus(progress)
+        }
+
         if (typeof progress === "number") {
           const clamped = Math.max(0, Math.min(100, progress))
           if (clamped > 0 && !hasShownProgress) {
@@ -137,9 +152,11 @@
               container.classList.add("is-success")
             }
 
-            setTimeout(() => {
-              window.facenoxElectron?.reportSplashRenderedProgress?.(100)
-            }, 600)
+            window.requestAnimationFrame(() => {
+              window.requestAnimationFrame(() => {
+                window.facenoxElectron?.reportSplashRenderedProgress?.(100)
+              })
+            })
             return
           }
 
@@ -150,15 +167,13 @@
 
       renderProgress()
 
-      // Smooth delayed reveal of status details to prioritize primary logo breathing entrance
       setTimeout(() => {
         const brandBlock = document.querySelector(".brand-block")
         if (brandBlock) {
           brandBlock.classList.add("is-visible")
         }
-      }, 500)
+      }, 180)
 
-      // Enable local browser previewing/testing
       if (!window.facenoxElectron) {
         window.facenoxElectron = {
           reportSplashRenderedProgress: (progress) => {
@@ -171,7 +186,7 @@
               if (current > 100) {
                 clearInterval(interval)
               } else {
-                callback({ progress: current })
+                callback({ progress: current, detail: fallbackStatus(current) })
               }
             }, 180)
             return () => clearInterval(interval)
@@ -180,8 +195,8 @@
       }
 
       if (window.facenoxElectron?.onSplashProgress) {
-        window.facenoxElectron.onSplashProgress(({ progress }) => {
-          applyProgress(progress)
+        window.facenoxElectron.onSplashProgress(({ progress, detail }) => {
+          applyProgress(progress, detail)
         })
       }
     </script>

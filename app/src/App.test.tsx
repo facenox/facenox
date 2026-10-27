@@ -93,7 +93,7 @@ describe("App", () => {
 
     expect(screen.getByText("Mock WindowBar")).toBeInTheDocument()
     expect(screen.queryByText("Mock Main")).not.toBeInTheDocument()
-    expect(screen.queryByText("Mock App Skeleton")).not.toBeInTheDocument()
+    expect(screen.getByText("Mock App Skeleton")).toBeInTheDocument()
     expect(bridge.onAppReady).not.toHaveBeenCalled()
     expect(mockUseAttendanceBootstrap).toHaveBeenCalledTimes(1)
   })

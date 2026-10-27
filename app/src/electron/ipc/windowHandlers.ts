@@ -24,12 +24,12 @@ export function registerWindowHandlers() {
     return true
   })
 
-  ipcMain.on("splash:update-progress", (_event, progress: number) => {
-    WindowManager.updateSplashProgress(progress)
+  ipcMain.on("splash:update-progress", (_event, progress: number, detail?: string) => {
+    WindowManager.updateSplashProgress(progress, detail)
   })
 
-  ipcMain.on("splash:update-data-step", (_event, step: number) => {
-    WindowManager.updateSplashDataStep(step)
+  ipcMain.on("splash:update-data-step", (_event, step: number, detail?: string) => {
+    WindowManager.updateSplashDataStep(step, detail)
   })
 
   ipcMain.on("splash:rendered-progress", (_event, progress: number) => {

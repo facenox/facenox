@@ -193,13 +193,17 @@ contextBridge.exposeInMainWorld("facenoxElectron", {
   minimize: () => ipcRenderer.invoke("window:minimize"),
   maximize: () => ipcRenderer.invoke("window:maximize"),
   close: () => ipcRenderer.invoke("window:close"),
-  updateSplashProgress: (progress: number) => ipcRenderer.send("splash:update-progress", progress),
-  updateSplashDataStep: (step: number) => ipcRenderer.send("splash:update-data-step", step),
+  updateSplashProgress: (progress: number, detail?: string) =>
+    ipcRenderer.send("splash:update-progress", progress, detail),
+  updateSplashDataStep: (step: number, detail?: string) =>
+    ipcRenderer.send("splash:update-data-step", step, detail),
   reportSplashRenderedProgress: (progress: number) =>
     ipcRenderer.send("splash:rendered-progress", progress),
-  onSplashProgress: (callback: (update: { progress: number }) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, update: { progress: number }) =>
-      callback(update)
+  onSplashProgress: (callback: (update: { progress: number; detail?: string }) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      update: { progress: number; detail?: string },
+    ) => callback(update)
     ipcRenderer.on("splash:progress", listener)
     return () => ipcRenderer.removeListener("splash:progress", listener)
   },

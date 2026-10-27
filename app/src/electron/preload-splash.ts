@@ -21,8 +21,13 @@ contextBridge.exposeInMainWorld("facenoxElectron", {
    *
    * @param callback - Handler executed when a progress increment is received
    */
-  onSplashProgress: (callback: (update: { progress: number }) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, update: { progress: number }): void => {
+  onSplashProgress: (
+    callback: (update: { progress: number; detail?: string }) => void,
+  ): (() => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      update: { progress: number; detail?: string },
+    ): void => {
       callback(update)
     }
     ipcRenderer.on("splash:progress", listener)

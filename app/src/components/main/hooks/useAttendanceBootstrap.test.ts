@@ -79,14 +79,18 @@ describe("useAttendanceBootstrap", () => {
 
     renderHook(() => useAttendanceBootstrap())
 
-    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(1, 8)
+    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(
+      1,
+      8,
+      "Loading attendance data",
+    )
 
     await waitFor(() => {
       expect(useAttendanceStore.getState().isShellReady).toBe(true)
     })
 
     expect(mockBootstrapShellData).toHaveBeenCalledTimes(1)
-    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(2, 9)
+    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(2, 9, "Ready")
     expect(useAttendanceStore.getState().isShellBootstrapping).toBe(false)
     expect(useAttendanceStore.getState().shellBootstrapError).toBeNull()
     expect(useUIStore.getState().error).toBeNull()
@@ -111,7 +115,11 @@ describe("useAttendanceBootstrap", () => {
       "Facenox couldn't load your data because the local service is offline. Restart the app and try again.",
     )
     expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenCalledTimes(1)
-    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(1, 8)
+    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(
+      1,
+      8,
+      "Loading attendance data",
+    )
   })
 
   it("completes bootstrap state mutation even if the hook unmounts (no cancellation)", async () => {
@@ -121,7 +129,11 @@ describe("useAttendanceBootstrap", () => {
 
     const { unmount } = renderHook(() => useAttendanceBootstrap())
 
-    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(1, 8)
+    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(
+      1,
+      8,
+      "Loading attendance data",
+    )
 
     unmount()
 

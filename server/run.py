@@ -82,9 +82,9 @@ def main():
         print("Setup validation failed. Please check the configuration.")
         sys.exit(1)
 
-    emit_startup_progress(1, "Setup verified")
+    emit_startup_progress(1, "Checking your data")
     ensure_database_selected()
-    emit_startup_progress(2, "Migrations complete")
+    emit_startup_progress(2, "Preparing face recognition")
 
     server_config = config["server"].copy()
 

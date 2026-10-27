@@ -29,7 +29,9 @@ function App() {
     return (
       <div className="electron-window-container bg-[var(--bg-primary)]">
         <WindowBar />
-        <div className="flex-1" />
+        <div className="app-content-wrapper">
+          <AppSkeleton />
+        </div>
       </div>
     )
   }

@@ -77,17 +77,18 @@ async def lifespan(app: FastAPI):
                 legacy_source_path=str(legacy_source) if legacy_source else None,
             )
 
-        async def _load_with_progress(loader, detail: str):
+        async def _load_with_progress(loader):
             result = await loop.run_in_executor(None, loader)
-            emit_startup_progress(next(model_progress_steps), detail)
+            step = next(model_progress_steps)
+            emit_startup_progress(step, "Preparing face recognition")
             return result
 
         # All 3 ONNX model constructors run in parallel — each calls
         # init_*_session() which is the heavyweight disk+memory operation
         face_detector, liveness_detector, face_recognizer = await asyncio.gather(
-            _load_with_progress(_load_face_detector, "Face detector ready"),
-            _load_with_progress(_load_liveness_detector, "Liveness model ready"),
-            _load_with_progress(_load_face_recognizer, "Recognition model ready"),
+            _load_with_progress(_load_face_detector),
+            _load_with_progress(_load_liveness_detector),
+            _load_with_progress(_load_face_recognizer),
         )
 
         # async-only step: DB migration + cache warm-up (must run after __init__)
@@ -127,7 +128,7 @@ async def lifespan(app: FastAPI):
 
         await loop.run_in_executor(None, _warmup_models)
 
-        emit_startup_progress(6, "Recognition data ready")
+        emit_startup_progress(6, "Opening Facenox")
         logger.info(
             "AI models initialized and warmed up successfully (FaceDetector, LivenessDetector, FaceRecognizer)"
         )
