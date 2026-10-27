@@ -173,6 +173,7 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         isLoading={settings.isLoading}
         handleClearDatabase={settings.handleClearDatabase}
         loadSystemData={settings.loadSystemData}
+        verifyTimeOnline={settings.verifyTimeOnline}
         onGroupsChanged={props.onGroupsChanged}
         members={settings.members}
         reportsExportHandlers={settings.reportsExportHandlers}

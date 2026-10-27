@@ -73,6 +73,8 @@ graph TD
 
 This path does not require internet access.
 
+Packaged builds perform a non-blocking update check against GitHub after startup and no more than once every 24 hours. Online clock comparison is user-triggered from settings; routine clock protection and attendance processing do not contact a public time service.
+
 ### Facenox Cloud integration flow
 
 1. An admin generates a pairing code in Facenox Cloud.
@@ -84,6 +86,8 @@ This path does not require internet access.
 7. Next, the sync manager pulls Cloud updates from `GET /api/sync/pull` and imports them locally via `POST /attendance/import-metadata`. Even if push fails (e.g. quota limits), pulls continue so Cloud updates remain accessible.
 
 The desktop remains the system of record for biometrics and local attendance capture.
+
+Pairing also enables Cloud policies and authenticated remote administration. The current client can receive commands to wipe local Facenox data, reset the local admin PIN, or request an update check, and it returns the result to Cloud. These controls are separate from synchronization telemetry and require explicit disclosure and Cloud-side authorization.
 
 Local directory management (creating, editing, and deleting groups/members) is fully supported while paired. Edits are revisioned: local changes are marked dirty and pushed to Cloud along with acknowledged revisions. Cloud updates advance revisions and are applied locally without overwriting in-flight local modifications.
 
@@ -104,7 +108,7 @@ The Facenox Cloud boundary is intentionally narrow.
 - **Encrypted face templates** (AES-256-GCM encrypted; key access is described above)
 - Organization, site, and device identifiers
 - Attendance records and sessions
-- Sync status and device health metadata
+- Device name, app version, sync timestamps, outcomes, and operational activity
 
 ### Data that is sent for reporting and directory sync
 

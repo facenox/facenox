@@ -69,6 +69,7 @@ interface ContentPanelProps {
   isLoading: boolean
   handleClearDatabase: () => void
   loadSystemData: () => void
+  verifyTimeOnline: () => void
   onGroupsChanged?: () => void
   members: AttendanceMember[]
   reportsExportHandlers: {
@@ -115,6 +116,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   isLoading,
   handleClearDatabase,
   loadSystemData,
+  verifyTimeOnline,
   onGroupsChanged,
   members,
   reportsExportHandlers,
@@ -694,7 +696,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 />
                 <ClockHealth
                   timeHealthState={timeHealthState}
-                  onRefreshTimeHealth={loadSystemData}
+                  onRefreshTimeHealth={verifyTimeOnline}
                 />
               </motion.div>
             )}

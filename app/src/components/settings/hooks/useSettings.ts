@@ -143,6 +143,18 @@ export const useSettings = ({
     }
   }, [])
 
+  const verifyTimeOnline = useCallback(async () => {
+    try {
+      useAttendanceStore.getState().setStatsLoading(true)
+      const timeHealthData = await attendanceManager.getTimeHealth(true)
+      useAttendanceStore.getState().setTimeHealth(timeHealthData)
+    } catch (error) {
+      console.error("Failed to verify system time:", error)
+    } finally {
+      useAttendanceStore.getState().setStatsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     // Only fetch if data is null or extremely old
     const stats = useAttendanceStore.getState().systemStats
@@ -338,6 +350,7 @@ export const useSettings = ({
     dropdownValue,
     validInitialGroup,
     loadSystemData,
+    verifyTimeOnline,
     forceLiveness,
     policyOverrides,
     enrollmentSource,

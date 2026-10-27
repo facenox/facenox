@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import { ClockHealth } from "./ClockHealth"
 import type { AttendanceTimeHealth } from "@/types/recognition"
@@ -57,5 +57,24 @@ describe("ClockHealth status", () => {
     )
     expect(screen.getByLabelText("Network-time check passed")).toBeInTheDocument()
     expect(screen.queryByLabelText("Clock warning")).not.toBeInTheDocument()
+  })
+
+  it("explains and explicitly triggers the online check", () => {
+    const onRefreshTimeHealth = vi.fn()
+    render(
+      <ClockHealth
+        timeHealthState={{
+          timeHealth: { ...healthyClock, online_verification_status: "not_checked" },
+          loading: false,
+        }}
+        onRefreshTimeHealth={onRefreshTimeHealth}
+      />,
+    )
+
+    expect(
+      screen.getByText(/Select Check now to compare it with network time/i),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Check now" }))
+    expect(onRefreshTimeHealth).toHaveBeenCalledOnce()
   })
 })

@@ -64,7 +64,7 @@ Privacy and data handling are documented here:
 In short:
 
 - Facenox desktop does not send raw face images to other networked systems.
-- Paired computers can sync attendance records and, on supported plans, encrypted face templates to Facenox Cloud. Cloud manages keys for synced templates.
+- Paired computers can sync attendance records and, on Starter and higher plans, encrypted face templates to Facenox Cloud. Cloud manages keys for synced templates.
 - Local recognition and attendance workflows continue to work without Facenox Cloud connectivity.
 
 ## Release Artifacts

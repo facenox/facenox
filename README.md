@@ -22,8 +22,8 @@
 </p>
 
 <p align="center">
-  <strong>Facenox is an open-source, offline-first face recognition software for real-time attendance tracking.</strong><br>
-  Built for privacy: No photos stored. Biometric templates are encrypted.
+  <strong>Facenox is open-source, offline-first face recognition software for local attendance recording.</strong><br>
+  Camera frames are processed locally and are not stored by the application. Biometric templates are encrypted.
 </p>
 
 <p align="center">
@@ -80,7 +80,7 @@ _Data and storage management panel detailing system clock accuracy validation, a
 > This is the official open source repository for Facenox. Treat other repositories, installers, and downloads as unverified unless they come from official sources.
 
 > [!NOTE]  
-> **Privacy First:** Facenox processes face detection, tracking, and template matching locally. Encrypted face templates can optionally sync between your devices, with decryption keys stored on your paired hardware and encrypted in the cloud database.
+> **Local biometric processing:** Facenox runs face detection, tracking, liveness checks, and matching on the computer. Starter and higher Cloud plans can sync encrypted face templates. Cloud manages the location keys used for that sync.
 
 ## Why Facenox
 
@@ -88,12 +88,12 @@ Facenox records attendance with a compatible computer and webcam. Face matching 
 
 - **Local operation:** Enroll members and record attendance without internet after installation.
 - **Optional browser access:** Connect Facenox Cloud to review synced records and export reports from another computer.
-- **Separate plan limits:** Desktop supports unlimited local members. Cloud has a free tier with limits and paid plans for additional capabilities and capacity.
+- **Separate plan limits:** Desktop has no plan-based local member limit. Cloud plans have separate capabilities and capacity limits.
 - **Data handling:** Templates are encrypted in storage, but remain sensitive biometric data. Review the [privacy documentation](docs/PRIVACY.md) before deployment.
 
 ## Features
 
-- **On-Device AI Inference:** Real-time face detection with recognition, ByteTrack multi-subject tracking, and liveness verification running entirely on the local machine.
+- **On-Device AI Inference:** Local face detection and recognition with ByteTrack multi-subject tracking and liveness verification.
 - **Cross-Platform:** Supports Windows, macOS, and Linux.
 - **Directory Management:** Full control over group and member directories.
 - **Attendance Tracking:** Automated session recording and CSV/JSON exports.
@@ -157,7 +157,7 @@ Everything is stored in a local SQLite database on your machine. Biometric templ
 
 ### Does it need the internet?
 
-No. The local FastAPI server processes all camera frames on your machine. Internet connectivity is only required to upload attendance logs or sync encrypted templates to the web dashboard.
+Core attendance does not require internet. Camera frames are processed on your computer. Packaged builds check GitHub for updates, and system-time settings offer a user-triggered online comparison. Pairing with Facenox Cloud requires internet for synchronization and supported remote administration.
 
 ### What hardware do I need?
 
@@ -179,11 +179,11 @@ Protect access to the computer and keep password-protected `.facenox` backup arc
 > [!IMPORTANT]
 > **Security & Trust**
 >
-> - **Automated Audits:** GitHub CodeQL scans commits for security vulnerabilities on every push.
-> - **Build Transparency:** GitHub Actions compiles all release binaries from public source code.
-> - **Privacy First:** Devices encrypt all outbound templates with AES-256-GCM. The database only stores templates in encrypted form.
+> - **Automated Analysis:** GitHub Actions runs CodeQL analysis on configured source changes.
+> - **Build Transparency:** Release workflows build Desktop artifacts from the public source repository.
+> - **Encrypted template sync:** Starter and higher plans encrypt face templates before upload. Cloud stores encrypted templates and manages their location keys.
 
-> **Cloud Dashboard:** The **official Facenox Cloud Dashboard** is an optional service for centralized reporting. This repository contains the source for the **desktop client** only.
+> **Facenox Cloud:** The official hosted service is optional and provides browser reporting and administration for synced data. This repository contains Facenox Desktop.
 
 ## Download
 

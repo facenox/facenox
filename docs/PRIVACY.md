@@ -52,11 +52,24 @@ Facenox is not designed as a raw face-image archive.
 
 If you export a backup, treat the backup file as sensitive data.
 
-## Telemetry
+## Analytics, Diagnostics, and Network Connections
 
-The open source desktop app does not include analytics, ads, or hidden background telemetry by default.
+The open source desktop app does not include ads, behavioral analytics, session recording, or automatic diagnostic uploads.
 
-That does not automatically make every surrounding deployment private. If you add hosting, external logs, monitoring, or third-party infrastructure, those systems need their own review.
+The following desktop features can make outbound connections:
+
+| Connection | When it occurs | Destination | Data and purpose |
+| --- | --- | --- | --- |
+| Update check | In packaged builds, first after a short startup delay and then at most once every 24 hours | GitHub Releases API | Current app version in the user agent; retrieves the latest release metadata |
+| Online clock check | Only when a user selects **Check now** in system-time settings | Google, Cloudflare, or Microsoft public web endpoint | Reads the HTTP `Date` header; no attendance record, member data, or biometric template is included |
+| Facenox Cloud | Only after a computer is explicitly paired | The configured Cloud service and its Ably realtime connection | Pairing, synchronization, operational status, policies, and supported remote administration |
+| External links | Only when a user opens one | The selected website | Normal browser request |
+
+Normal HTTPS connections expose network metadata such as the public IP address and request time to the destination. The application does not treat update checks or a user-requested clock comparison as product analytics.
+
+Health reports are generated only when a user selects **Export health data**. They are written to the Downloads folder and are not uploaded automatically. A report contains app and operating-system details, CPU and memory information, local backend status, and recent local log lines. Review it before sharing it with another party.
+
+That does not automatically make every surrounding deployment private. Hosted logs, monitoring, analytics, and third-party infrastructure need their own documented review.
 
 ## Facenox Cloud data boundary
 
@@ -77,13 +90,37 @@ Synchronization is not an independent recovery backup: updates and removals can 
 ### Data that MAY be sent to Facenox Cloud
 
 - organization, site, and device identifiers
+- device name and app version
 - groups and member directory data needed for reports
 - attendance records and sessions
-- sync status and device health metadata
+- sync timestamps, outcomes, and operational activity
 
 The desktop app uses event-driven and snapshot sync. On plans with face-template sync, encrypted templates can sync between paired computers at the same location.
 
 Cloud manages the location encryption keys. During a transfer between locations, the server decrypts templates in memory and re-encrypts them with the destination key. Encrypted storage does not mean the Cloud service is technically unable to decrypt templates. Face recognition itself runs on the paired computers.
+
+### Remote administration
+
+Pairing also authorizes the organization to apply attendance policies and send supported commands to the computer. The current desktop client supports commands that:
+
+- remove local Facenox attendance records and enrolled templates
+- reset and disable the local admin PIN
+- request an application update check
+
+The computer returns the command outcome to Cloud. Organizations should restrict these controls to authorized administrators and protect destructive commands with appropriate authentication and audit controls in the hosted service.
+
+### Hosted-service documentation
+
+This repository defines the desktop-side data boundary. The operator of an official or self-hosted Cloud deployment must separately publish and maintain:
+
+- the exact operational and security log fields
+- purposes and lawful bases for processing
+- retention periods for attendance, audit, device, account, billing, and support data
+- deletion procedures and completion timelines
+- subprocessors, processing regions, and international transfers
+- access controls, incident handling, and a privacy contact
+
+Cloud synchronization, service logs, security audit logs, and optional product analytics are different data categories and should not be combined under a generic telemetry label.
 
 ## Offline Operation
 
@@ -118,7 +155,7 @@ Operators are still responsible for:
 
 ## Website Analytics
 
-The website includes Vercel Analytics and Speed Insights. When configured, PostHog captures page views and page departures. These hosted services are separate from the desktop app's local processing. Actual production event fields, provider configuration, and retention require confirmation by the service operator.
+The website code includes Vercel Analytics and Speed Insights. When configured, PostHog captures page views and page departures. These hosted services are separate from the desktop app's local processing. The public website privacy notice must identify the active providers, event fields, storage technologies, purposes, retention, processing region, and available consent or opt-out controls. Production behavior cannot be established from the desktop repository alone.
 
 ## Google API Services Disclosure
 

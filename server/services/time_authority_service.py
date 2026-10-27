@@ -99,7 +99,7 @@ class TimeAuthorityService:
         self._boot_time_mono = _get_monotonic_time()
 
     async def get_time_health(
-        self, *, force_refresh: bool = False
+        self, *, verify_online: bool = False
     ) -> TimeHealthSnapshot:
         current_utc = self.current_time_utc()
         current_local = current_utc.astimezone(get_local_timezone())
@@ -113,14 +113,29 @@ class TimeAuthorityService:
                 "backend monotonic time, but the system clock should be corrected."
             )
 
-        online_result = await self._get_online_reference_result(
-            force_refresh=force_refresh
-        )
+        if verify_online:
+            online_result = await self._get_online_reference_result(force_refresh=True)
+        elif (
+            self._cached_online_result is not None
+            and (
+                current_utc - self._cached_online_result["checked_at"]
+            ).total_seconds()
+            <= self._online_cache_ttl_seconds
+        ):
+            online_result = self._cached_online_result
+        else:
+            online_result = {
+                "status": "not_checked",
+                "reference_url": None,
+                "checked_at": None,
+                "reference_time": None,
+                "drift_seconds": None,
+            }
         online_status = online_result["status"]
         online_drift_seconds = online_result.get("drift_seconds")
 
         if (
-            force_refresh
+            verify_online
             and online_result.get("reference_time") is not None
             and os_clock_drift_seconds > self._os_warning_threshold_seconds
         ):

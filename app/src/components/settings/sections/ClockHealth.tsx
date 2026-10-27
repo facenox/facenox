@@ -63,6 +63,8 @@ export function ClockHealth({
     : timeHealthStatus === "verified" ? "No significant clock difference detected."
     : timeHealthStatus === "offline" ?
       "Network time is unavailable. The online check could not be completed."
+    : timeHealthStatus === "not_checked" ?
+      "Local clock protection is active. Select Check now to compare it with network time."
     : "Clock status is unavailable. Try Check now."
 
   return (
@@ -85,7 +87,8 @@ export function ClockHealth({
                 details={[
                   "Facenox tracks elapsed time while running to reduce the effect of manual clock changes.",
                   "Warnings identify detected clock differences or timestamps earlier than recorded attendance.",
-                  "Network-time checks require an internet connection.",
+                  "Only Check now contacts Google, Cloudflare, or Microsoft to read a public HTTP time header.",
+                  "The request does not include attendance records or biometric data.",
                 ]}
                 side="right"
               />

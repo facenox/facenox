@@ -1,10 +1,47 @@
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from api.schemas import AttendanceEventResponse
 from services.time_authority_service import TimeAuthorityService
+
+
+@pytest.mark.asyncio
+async def test_time_authority_does_not_contact_network_by_default() -> None:
+    service = TimeAuthorityService()
+    network_called = False
+
+    async def unexpected_network_result():
+        nonlocal network_called
+        network_called = True
+        raise AssertionError("Online time lookup must be explicit")
+
+    service._fetch_online_reference_time = unexpected_network_result  # type: ignore[method-assign]
+
+    health = await service.get_time_health()
+
+    assert network_called is False
+    assert health.online_verification_status == "not_checked"
+    assert health.online_checked_at is None
+
+
+@pytest.mark.asyncio
+async def test_time_authority_does_not_reuse_stale_online_result() -> None:
+    service = TimeAuthorityService()
+    stale_time = service.current_time_utc() - timedelta(days=1)
+    service._cached_online_result = {
+        "status": "verified",
+        "reference_url": "https://example.com",
+        "checked_at": stale_time,
+        "reference_time": stale_time,
+        "drift_seconds": 0.0,
+    }
+
+    health = await service.get_time_health()
+
+    assert health.online_verification_status == "not_checked"
+    assert health.online_reference_url is None
 
 
 @pytest.mark.asyncio
@@ -22,7 +59,7 @@ async def test_time_authority_handles_offline_reference_gracefully() -> None:
 
     service._fetch_online_reference_time = offline_result  # type: ignore[method-assign]
 
-    health = await service.get_time_health(force_refresh=True)
+    health = await service.get_time_health(verify_online=True)
 
     assert health.online_verification_status == "offline"
     assert health.online_reference_time is None
@@ -44,7 +81,7 @@ async def test_time_authority_warns_when_online_reference_drift_is_large() -> No
 
     service._fetch_online_reference_time = drift_result  # type: ignore[method-assign]
 
-    health = await service.get_time_health(force_refresh=True)
+    health = await service.get_time_health(verify_online=True)
 
     assert health.online_verification_status == "drift_detected"
     assert health.warning_message is not None
@@ -78,7 +115,7 @@ async def test_time_authority_rebases_when_os_clock_is_corrected_and_verified() 
     original_local_now = module.local_now
     module.local_now = lambda: corrected_os_time.astimezone()  # type: ignore[assignment]
     try:
-        health = await service.get_time_health(force_refresh=True)
+        health = await service.get_time_health(verify_online=True)
     finally:
         module.local_now = original_local_now  # type: ignore[assignment]
         time.monotonic = original_monotonic  # type: ignore[assignment]

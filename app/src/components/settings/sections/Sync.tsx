@@ -973,8 +973,9 @@ function DataBoundariesModal({ isOpen, onClose, onNavigateToDB }: DataBoundaries
           <div className="space-y-1">
             <div className="text-[13px] font-semibold text-white/90">Shared with Facenox Cloud</div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Member names, roles, attendance records, and sync activity are sent to Facenox Cloud
-              for reporting and management. Paid plans also sync encrypted face templates. Sync
+              Organization, location, device name and ID, app version, member directory, attendance
+              policies, records, sessions, and sync activity are sent to Facenox Cloud for reporting
+              and management. Starter and higher plans can also sync encrypted face templates. Sync
               includes updates and removals, so keep separate backup files for recovery.
             </p>
           </div>
@@ -990,6 +991,15 @@ function DataBoundariesModal({ isOpen, onClose, onNavigateToDB }: DataBoundaries
               Face templates are encrypted for Cloud sync. Cloud manages the location keys and
               decrypts templates in memory only when it needs to re-encrypt them during location
               transfers. Face recognition still runs on paired computers.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <div className="text-[13px] font-semibold text-white/90">Remote administration</div>
+            <p className="text-[11px] leading-relaxed text-white/50">
+              Pairing authorizes organization administrators to apply attendance policies and send
+              supported device commands. These commands can remove local Facenox data, reset the
+              local admin PIN, or request an update check. Command outcomes are returned to Cloud.
             </p>
           </div>
         </div>

@@ -50,6 +50,7 @@ Facenox Cloud connects offline Facenox desktop kiosks to a unified cloud control
 - Show pairing state, last sync state, and sync messages
 - Run background auto-sync
 - Run manual sync on demand
+- Receive organization attendance policies and supported remote administration commands
 
 ### What gets synced
 
@@ -57,7 +58,7 @@ Facenox Cloud connects offline Facenox desktop kiosks to a unified cloud control
 - Member directory data needed for reports
 - Attendance records
 - Attendance sessions
-- Device and sync metadata
+- Device name and ID, app version, and sync activity
 
 Cloud directory changes, including group/member updates and removals, are applied on connected computers through sync. Disconnected computers receive updates when they reconnect.
 
@@ -66,10 +67,15 @@ Cloud directory changes, including group/member updates and removals, are applie
 - Raw face photos
 - Face matching decisions
 - Remote-side recognition state
+- Camera video, CPU or memory diagnostics, and exported health reports
 
 ### What gets synced (encrypted)
 
 - **Enrolled face data (paid Cloud plans)**: AES-256-GCM encrypted before upload and stored encrypted for sync between paired computers at a location. Computers decrypt templates for local recognition. Cloud manages location keys and also decrypts/re-encrypts templates during transfers between locations.
+
+### Remote administration
+
+After pairing, authorized Cloud commands can wipe local Facenox data, reset the local admin PIN, or request an update check. Command results are returned to Cloud. Hosted deployments are responsible for administrator authorization, step-up protection for destructive actions, auditability, and retention.
 
 ## Not in Scope
 

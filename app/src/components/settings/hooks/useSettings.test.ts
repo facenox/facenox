@@ -148,6 +148,21 @@ describe("useSettings", () => {
     expect(result.current.systemData.totalMembers).toBe(7)
     expect(result.current.timeHealthState.timeHealth?.source).toBe("system")
     expect(result.current.timeHealthState.loading).toBe(false)
+    expect(mockAttendanceManager.getTimeHealth).toHaveBeenCalledWith()
+  })
+
+  it("only requests online time verification after an explicit action", async () => {
+    const { result } = renderHook(() => useSettings(createProps()))
+
+    await flushInitialLoad()
+    mockAttendanceManager.getTimeHealth.mockClear()
+
+    await act(async () => {
+      await result.current.verifyTimeOnline()
+    })
+
+    expect(mockAttendanceManager.getTimeHealth).toHaveBeenCalledOnce()
+    expect(mockAttendanceManager.getTimeHealth).toHaveBeenCalledWith(true)
   })
 
   it("clears the database after confirmation and shows a success dialog", async () => {

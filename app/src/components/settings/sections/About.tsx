@@ -22,31 +22,26 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
         </p>
 
         <div className="custom-scroll max-h-[50vh] space-y-5 overflow-y-auto pr-1 text-xs">
-          {/* Section 1 */}
           <div className="space-y-1">
             <div className="text-[13px] font-semibold text-white/90">
               Local storage and recognition
             </div>
             <p className="text-[11px] leading-relaxed text-white/50">
               Biometric templates, attendance records, and app settings are stored locally on this
-              computer. Face matching and liveness detection execute entirely on-device, independent
-              of any cloud-based biometric matching engines.
+              computer. Face matching and liveness checks run on this computer.
             </p>
           </div>
 
-          {/* Section 2 */}
           <div className="space-y-1">
-            <div className="text-[13px] font-semibold text-white/90">
-              No analytics or usage tracking
-            </div>
+            <div className="text-[13px] font-semibold text-white/90">No behavioral analytics</div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              The application does not include ads, analytics, or usage tracking. Update checks and
-              optional Cloud sync use the network. Facenox does not send diagnostic or performance
-              data externally.
+              Facenox Desktop does not include ads, behavioral analytics, session recording, or
+              automatic diagnostic uploads. It checks GitHub for updates. Facenox Cloud and its
+              notification service connect only after pairing. The online clock check runs only when
+              you select Check now and does not send attendance or biometric data.
             </p>
           </div>
 
-          {/* Section 3 */}
           <div className="space-y-1">
             <div className="text-[13px] font-semibold text-white/90">Offline capability</div>
             <p className="text-[11px] leading-relaxed text-white/50">
@@ -55,46 +50,38 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
             </p>
           </div>
 
-          {/* Section 4 */}
           <div className="space-y-1">
             <div className="text-[13px] font-semibold text-white/90">What syncs with Cloud</div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Connecting to Facenox Cloud syncs member details and attendance records for browser
-              access and reporting. Paid plans also sync encrypted face templates between paired
-              computers. Cloud manages the location keys and re-encrypts templates on the server
-              when members transfer between locations. Raw camera frames are not saved or uploaded.
+              Connecting Facenox Cloud syncs directory and attendance data for browser access and
+              reporting. Starter and higher plans can also sync encrypted face templates. Cloud
+              manages the template keys. Face recognition remains on paired computers, and raw
+              camera frames are not saved or uploaded.
             </p>
           </div>
 
-          {/* Section 5 */}
           <div className="space-y-1">
             <div className="text-[13px] font-semibold text-white/90">Privacy responsibilities</div>
             <p className="text-[11px] leading-relaxed text-white/50">
-              Before enrolling members, establish your organization&apos;s privacy notices,
-              processing grounds, access rules, and retention practices.
+              Before enrolling members, determine who can access their records, provide required
+              notices, and set appropriate retention practices.
             </p>
             <p className="pt-1 text-[11px] leading-relaxed text-white/35">
-              Encrypted templates, local recognition, and removal controls do not by themselves
-              establish legal compliance.
+              Product controls do not by themselves establish legal compliance.
             </p>
           </div>
         </div>
 
         <div className="flex items-center justify-between border-t border-white/5 pt-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => updaterService.openReleasePage("https://gdpr-info.eu/")}
-              className="rounded bg-white/5 px-2.5 py-1 text-[9px] font-semibold text-white/55 transition-all hover:bg-white/10 hover:text-white/70 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none active:scale-95">
-              GDPR (EU)
-            </button>
-            <button
-              onClick={() =>
-                updaterService.openReleasePage("https://privacy.gov.ph/data-privacy-act/")
-              }
-              className="rounded bg-white/5 px-2.5 py-1 text-[9px] font-semibold text-white/55 transition-all hover:bg-white/10 hover:text-white/70 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none active:scale-95">
-              Data Privacy Act (PH)
-            </button>
-          </div>
+          <button
+            onClick={() =>
+              updaterService.openReleasePage(
+                "https://github.com/facenox/facenox/blob/main/docs/PRIVACY.md",
+              )
+            }
+            className="rounded bg-white/5 px-2.5 py-1 text-[9px] font-semibold text-white/55 transition-all hover:bg-white/10 hover:text-white/70 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none active:scale-95">
+            Privacy documentation
+          </button>
 
           <button
             onClick={onClose}

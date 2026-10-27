@@ -2,7 +2,7 @@
   "name": "facenox",
   "private": true,
   "version": "1.0.0-beta.23",
-  "description": "Open-source, offline-first face recognition software for real-time attendance tracking.",
+  "description": "Open-source, offline-first face recognition software for local attendance recording.",
   "author": "Facenox <support@facenox.com>",
   "repository": {
     "type": "git",

@@ -33,10 +33,12 @@ async def get_settings(repo: AttendanceRepository = Depends(get_repository)):
 
 
 @router.get("/time-health", response_model=AttendanceTimeHealthResponse)
-async def get_time_health():
+async def get_time_health(verify_online: bool = False):
     """Return backend time authority health and drift diagnostics."""
     try:
-        return await get_time_authority().get_time_health(force_refresh=True)
+        return await get_time_authority().get_time_health(
+            verify_online=verify_online
+        )
     except Exception as e:
         logger.error(f"Error getting time health: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

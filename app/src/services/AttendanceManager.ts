@@ -268,8 +268,9 @@ export class AttendanceManager {
     return { ...this.settings! }
   }
 
-  async getTimeHealth(): Promise<AttendanceTimeHealth> {
-    return this.httpClient.get<AttendanceTimeHealth>("/attendance/settings/time-health")
+  async getTimeHealth(verifyOnline = false): Promise<AttendanceTimeHealth> {
+    const query = verifyOnline ? "?verify_online=true" : ""
+    return this.httpClient.get<AttendanceTimeHealth>(`/attendance/settings/time-health${query}`)
   }
 
   async updateSettings(newSettings: Partial<AttendanceSettings>): Promise<void> {
