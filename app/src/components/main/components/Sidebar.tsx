@@ -10,7 +10,7 @@ import { DetectionPanel } from "@/components/main/components/DetectionPanel"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { updaterService } from "@/services"
 import { useGroupStore } from "@/components/group/stores"
-import { getLocalDateString } from "@/utils"
+import { getAttendanceDateString } from "@/utils/attendanceTime"
 import type { UpdateInfo } from "@/types/updater"
 
 interface SidebarProps {
@@ -245,7 +245,10 @@ export const Sidebar = memo(function Sidebar({
                   const targetGroup =
                     currentGroup && currentGroup.id !== "all" ? currentGroup : attendanceGroups[0]
                   if (targetGroup?.id) {
-                    const today = getLocalDateString(new Date())
+                    const today = getAttendanceDateString(
+                      new Date(),
+                      useAttendanceStore.getState().attendanceTimezone,
+                    )
                     const hasStats = Boolean(useGroupStore.getState().overviewStats[targetGroup.id])
                     const hasRecords = Boolean(
                       useGroupStore.getState().overviewRecords[targetGroup.id]?.[

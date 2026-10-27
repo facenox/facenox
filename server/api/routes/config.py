@@ -25,6 +25,8 @@ async def get_settings(repo: AttendanceRepository = Depends(get_repository)):
     """Get attendance settings"""
     try:
         settings = await repo.get_settings()
+        await repo.session.commit()
+        await repo.session.refresh(settings)
         return settings
 
     except Exception as e:
@@ -125,9 +127,9 @@ async def export_audit_log(
             return JSONResponse(
                 [
                     {
-                        "timestamp": log.timestamp.isoformat()
-                        if log.timestamp
-                        else None,
+                        "timestamp": (
+                            log.timestamp.isoformat() if log.timestamp else None
+                        ),
                         "action": log.action,
                         "target_type": log.target_type,
                         "target_id": log.target_id,

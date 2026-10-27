@@ -44,6 +44,8 @@ export function MainModals({
     groupToDelete,
     attendanceCooldownSeconds,
     setAttendanceCooldownSeconds,
+    attendanceTimezone,
+    setAttendanceTimezone,
     enableSpoofDetection,
     setEnableSpoofDetection,
     maxRecognitionFacesPerFrame,
@@ -129,6 +131,7 @@ export function MainModals({
             onAudioSettingsChange={setAudioSettings}
             streamRef={streamRef}
             attendanceSettings={{
+              attendanceTimezone,
               lateThresholdEnabled:
                 (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
                   ?.late_threshold_enabled ?? false,
@@ -150,6 +153,10 @@ export function MainModals({
               dataRetentionDays: dataRetentionDays,
             }}
             onAttendanceSettingsChange={async (updates) => {
+              if (updates.attendanceTimezone) {
+                setAttendanceTimezone(updates.attendanceTimezone)
+              }
+
               if (updates.enableSpoofDetection !== undefined) {
                 setEnableSpoofDetection(updates.enableSpoofDetection)
               }

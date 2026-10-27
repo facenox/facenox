@@ -1,10 +1,6 @@
 import { useMemo } from "react"
-import {
-  generateDateRange,
-  createDisplayNameMap,
-  parseLocalDate,
-  getLocalDateString,
-} from "@/utils"
+import { generateDateRange, createDisplayNameMap, parseLocalDate } from "@/utils"
+import { getAttendanceDateString } from "@/utils/attendanceTime"
 import type {
   AttendanceSession,
   AttendanceMember,
@@ -12,6 +8,7 @@ import type {
   AttendanceReport,
 } from "@/types/recognition"
 import type {
+  ColumnKey,
   RowData,
   GroupByKey,
   ReportStatusFilter,
@@ -28,6 +25,7 @@ export function useReportTransform(
   groupBy: GroupByKey,
   statusFilter: ReportStatusFilter,
   search: string,
+  attendanceTimeZone?: string | null,
 ) {
   const attendanceMode =
     _group.settings?.attendance_mode ??
@@ -53,13 +51,13 @@ export function useReportTransform(
   const allRows = useMemo(() => {
     const allDates = generateDateRange(startDateStr, endDateStr)
     const rows: RowData[] = []
-    const todayStr = getLocalDateString()
+    const todayStr = getAttendanceDateString(new Date(), attendanceTimeZone)
 
     for (const member of members) {
       let memberJoinedStr: string | null = null
       const rawJoinedAt = member.joined_at as unknown
       if (rawJoinedAt instanceof Date) {
-        memberJoinedStr = getLocalDateString(rawJoinedAt)
+        memberJoinedStr = getAttendanceDateString(rawJoinedAt, attendanceTimeZone)
       } else if (typeof rawJoinedAt === "string") {
         memberJoinedStr = rawJoinedAt.split("T")[0]
       }
@@ -120,6 +118,9 @@ export function useReportTransform(
                 finalSession?.check_in_time,
                 finalSession?.check_out_time,
                 _group.settings?.class_end_time || "17:00",
+                finalSession?.check_out_time_timezone ||
+                  finalSession?.check_in_time_timezone ||
+                  attendanceTimeZone,
               )
             : undefined,
           visit_number: finalSession?.visit_number || 1,
@@ -141,6 +142,7 @@ export function useReportTransform(
     startDateStr,
     endDateStr,
     _group.settings?.class_end_time,
+    attendanceTimeZone,
   ])
 
   // 2. Filter rows based on status and search query
@@ -233,7 +235,13 @@ export function useReportTransform(
   }
 }
 
-const ALL_COLUMNS = [
+interface ReportColumn {
+  key: ColumnKey
+  label: string
+  align: "left" | "center" | "right"
+}
+
+const ALL_COLUMNS: readonly ReportColumn[] = [
   { key: "name", label: "Name", align: "left" },
   { key: "date", label: "Date", align: "left" },
   { key: "status", label: "Status", align: "center" },
@@ -245,5 +253,9 @@ const ALL_COLUMNS = [
   { key: "notes", label: "Notes", align: "left" },
 ] as const
 
-const VISIT_COLUMN = { key: "visit_number", label: "Visit", align: "center" } as const
-const ALL_COLUMNS_WITH_VISITS = [...ALL_COLUMNS, VISIT_COLUMN] as const
+const VISIT_COLUMN: ReportColumn = {
+  key: "visit_number",
+  label: "Visit",
+  align: "center",
+}
+const ALL_COLUMNS_WITH_VISITS: readonly ReportColumn[] = [...ALL_COLUMNS, VISIT_COLUMN]

@@ -73,6 +73,50 @@ describe("exportUtils", () => {
     removeSpy.mockRestore()
   })
 
+  it("exports captured attendance time instead of browser-local time", async () => {
+    let exportedBlob: Blob | undefined
+    vi.mocked(global.URL.createObjectURL).mockImplementation((blob) => {
+      exportedBlob = blob as Blob
+      return "mock-url"
+    })
+    const appendSpy = vi.spyOn(document.body, "appendChild").mockImplementation((node) => {
+      if (node instanceof HTMLAnchorElement) node.click = vi.fn()
+      return node
+    })
+    const removeSpy = vi.spyOn(document.body, "removeChild").mockImplementation((node) => node)
+
+    exportReportToCSV(
+      {
+        __all__: [
+          {
+            person_id: "p-1",
+            name: "Alice",
+            date: "2026-01-15",
+            status: "present",
+            check_in_time: new Date("2026-01-15T13:30:00.000Z"),
+            is_late: false,
+            late_minutes: 0,
+            notes: "",
+            session: null,
+          },
+        ],
+      },
+      ["name", "check_in_time"],
+      [
+        { key: "name", label: "Name" },
+        { key: "check_in_time", label: "Time in" },
+      ],
+      "Group",
+      "2026-01-15",
+      "2026-01-15",
+      "America/Toronto",
+    )
+
+    expect(await exportedBlob?.text()).toContain("8:30 AM")
+    appendSpy.mockRestore()
+    removeSpy.mockRestore()
+  })
+
   it("exports consolidated master report for all groups to CSV", async () => {
     const clickSpy = vi.fn()
     const appendSpy = vi.spyOn(document.body, "appendChild").mockImplementation((node) => {

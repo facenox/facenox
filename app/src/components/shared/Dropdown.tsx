@@ -1,7 +1,15 @@
-import { useState, useEffect, useRef, forwardRef, useLayoutEffect, useCallback } from "react"
+import {
+  useState,
+  useEffect,
+  useRef,
+  forwardRef,
+  useLayoutEffect,
+  useCallback,
+  useMemo,
+} from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Search } from "lucide-react"
 import { Tooltip } from "@/components/shared/Tooltip"
 
 export interface DropdownOption<T = string> {
@@ -33,6 +41,13 @@ interface DropdownProps<T = string> extends Omit<React.HTMLAttributes<HTMLDivEle
   alignToSelector?: string
   onOpenChange?: (isOpen: boolean) => void
   fit?: boolean
+  ariaLabel?: string
+  searchable?: boolean
+  searchPlaceholder?: string
+  searchAriaLabel?: string
+  getOptionSearchText?: (option: DropdownOption<string | number>) => string
+  maxVisibleOptions?: number
+  renderOption?: (option: DropdownOption<string | number>, selected: boolean) => React.ReactNode
 }
 
 export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number>>(
@@ -58,11 +73,19 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
       alignToSelector,
       onOpenChange,
       fit = false,
+      ariaLabel,
+      searchable = false,
+      searchPlaceholder = "Search options...",
+      searchAriaLabel = "Search options",
+      getOptionSearchText,
+      maxVisibleOptions,
+      renderOption,
       ...props
     },
     ref,
   ) => {
     const [isOpen, setIsOpen] = useState(false)
+    const [searchQuery, setSearchQuery] = useState("")
 
     // Notify parent safely of open state changes in an effect to avoid render-phase state updates!
     const lastOpenRef = useRef(isOpen)
@@ -84,6 +107,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
     const internalRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLElement>(null)
     const menuRef = useRef<HTMLDivElement>(null)
+    const searchInputRef = useRef<HTMLInputElement>(null)
 
     // Combine refs
     useEffect(() => {
@@ -98,6 +122,27 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
     const selectedOption = options.find((opt) => opt.value === value)
     const displayText = selectedOption?.label || placeholder
     const shouldShowCustomTooltip = (text: unknown) => typeof text === "string" && text.length > 24
+    const visibleOptions = useMemo(() => {
+      const normalizedQuery = searchQuery.trim().toLowerCase()
+      const filtered =
+        !searchable || !normalizedQuery ?
+          options
+        : options.filter((option) => {
+            const searchText =
+              getOptionSearchText?.(option) ??
+              (typeof option.label === "string" ? option.label : String(option.value))
+            return searchText.toLowerCase().includes(normalizedQuery)
+          })
+      return maxVisibleOptions ? filtered.slice(0, maxVisibleOptions) : filtered
+    }, [getOptionSearchText, maxVisibleOptions, options, searchQuery, searchable])
+
+    useEffect(() => {
+      if (!isOpen) {
+        setSearchQuery("")
+        return
+      }
+      if (searchable) searchInputRef.current?.focus()
+    }, [isOpen, searchable])
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -148,7 +193,10 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
 
       const estimatedHeight = Math.min(
         maxHeight,
-        options.length * 36 + (showPlaceholderOption && allowClear ? 44 : 0) + 12,
+        visibleOptions.length * 36 +
+          (showPlaceholderOption && allowClear ? 44 : 0) +
+          (searchable ? 48 : 0) +
+          12,
       )
       const measuredHeight = menuRef.current?.offsetHeight ?? estimatedHeight
       const spaceBelow = window.innerHeight - buttonRect.bottom
@@ -172,7 +220,14 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
         parentLeft: parentRect.left,
         parentWidth: parentRect.width,
       })
-    }, [allowClear, maxHeight, options.length, showPlaceholderOption, alignToSelector])
+    }, [
+      allowClear,
+      maxHeight,
+      searchable,
+      showPlaceholderOption,
+      alignToSelector,
+      visibleOptions.length,
+    ])
 
     useLayoutEffect(() => {
       if ((!isOpen && !menuRef.current) || !buttonRef.current) return
@@ -250,6 +305,8 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleToggle}
             disabled={disabled}
+            aria-label={ariaLabel}
+            aria-haspopup={searchable ? "listbox" : "menu"}
             aria-expanded={isOpen && !disabled}
             className={`dropdown-trigger flex min-w-0 cursor-pointer items-center ${
               fit ? "w-fit justify-start gap-2.5" : "justify-between"
@@ -338,10 +395,34 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                       : "top right",
                     visibility: menuPosition ? "visible" : "hidden",
                   }}>
+                  {searchable && (
+                    <div className="border-b border-white/5 p-1.5">
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-white/35" />
+                        <input
+                          ref={searchInputRef}
+                          value={searchQuery}
+                          onChange={(event) => setSearchQuery(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key !== "Enter") return
+                            const firstEnabled = visibleOptions.find((option) => !option.disabled)
+                            if (!firstEnabled) return
+                            event.preventDefault()
+                            handleSelect(firstEnabled.value)
+                          }}
+                          placeholder={searchPlaceholder}
+                          aria-label={searchAriaLabel}
+                          className="h-8 w-full rounded-md border border-white/10 bg-white/[0.04] pr-2 pl-8 text-xs text-white outline-none placeholder:text-white/30 focus:border-white/25"
+                        />
+                      </div>
+                    </div>
+                  )}
                   <div
+                    role={searchable ? "listbox" : undefined}
+                    aria-label={searchable ? ariaLabel : undefined}
                     className="custom-scroll overflow-y-auto"
                     style={{ maxHeight: `${maxHeight}px` }}>
-                    {options.length === 0 ?
+                    {visibleOptions.length === 0 ?
                       <div className="px-3 py-2 text-center text-[11px] font-medium text-white/55">
                         {emptyMessage}
                       </div>
@@ -365,7 +446,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                           </>
                         )}
 
-                        {options.map((option, idx) => (
+                        {visibleOptions.map((option, idx) => (
                           <div key={option.value !== "" ? String(option.value) : `empty-${idx}`}>
                             <Tooltip
                               content={typeof option.label === "string" ? option.label : undefined}
@@ -374,6 +455,8 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                               className="!px-2.5 !py-1.5 text-center break-all">
                               <button
                                 type="button"
+                                role={searchable ? "option" : undefined}
+                                aria-selected={searchable ? value === option.value : undefined}
                                 onClick={() => handleSelect(option.value)}
                                 disabled={option.disabled}
                                 className={`flex w-full items-center gap-2 truncate rounded-none px-3 py-1.5 text-left text-xs transition-colors ${
@@ -387,7 +470,9 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                                     {option.icon}
                                   </span>
                                 )}
-                                <span className="block flex-1 truncate">{option.label}</span>
+                                <span className="block flex-1 truncate">
+                                  {renderOption?.(option, value === option.value) ?? option.label}
+                                </span>
                               </button>
                             </Tooltip>
                             {option.dividerBelow && <div className="mx-2 my-1 h-px bg-white/5" />}

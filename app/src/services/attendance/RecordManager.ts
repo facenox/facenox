@@ -314,6 +314,7 @@ export class RecordManager {
       return sessions.map((session) => ({
         ...session,
         check_in_time: session.check_in_time ? new Date(session.check_in_time) : undefined,
+        check_out_time: session.check_out_time ? new Date(session.check_out_time) : undefined,
       }))
     } catch (error) {
       console.error("Error getting sessions:", error)

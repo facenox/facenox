@@ -1,13 +1,9 @@
 import type { RowData, ColumnKey } from "@/components/group/sections/reports/types"
-import {
-  parseLocalDate,
-  generateDateRange,
-  createDisplayNameMap,
-  getLocalDateString,
-} from "@/utils"
+import { parseLocalDate, generateDateRange, createDisplayNameMap } from "@/utils"
 import { attendanceManager } from "@/services/AttendanceManager"
 import type { AttendanceGroup, AttendanceMember, AttendanceSession } from "@/types/recognition"
 import { getDepartureStatus } from "@/shared/departureStatus"
+import { formatAttendanceTime, getAttendanceDateString } from "@/utils/attendanceTime"
 
 export function exportReportToCSV(
   groupedRows: Record<string, RowData[]>,
@@ -16,20 +12,13 @@ export function exportReportToCSV(
   groupName: string,
   startDate: string,
   endDate: string,
+  attendanceTimeZone?: string | null,
 ) {
   try {
     const pad = (n: number, len = 2) => String(n).padStart(len, "0")
     const formatDateOnly = (d: Date): string => {
       return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`
     }
-    const formatTimeOnly = (d: Date): string => {
-      const hours = d.getHours()
-      const minutes = pad(d.getMinutes())
-      const period = hours >= 12 ? "PM" : "AM"
-      const displayHours = hours % 12 || 12
-      return `${displayHours}:${minutes} ${period}`
-    }
-
     const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, "_").trim()
 
     const cols = allColumns.filter((c) => visibleColumns.includes(c.key))
@@ -51,7 +40,11 @@ export function exportReportToCSV(
           }
 
           if ((c.key === "check_in_time" || c.key === "check_out_time") && v instanceof Date) {
-            return formatTimeOnly(v)
+            const capturedTimeZone =
+              c.key === "check_in_time" ?
+                r.session?.check_in_time_timezone
+              : r.session?.check_out_time_timezone
+            return formatAttendanceTime(v, capturedTimeZone || attendanceTimeZone)
           }
 
           if (typeof v === "boolean") return v ? "true" : "false"
@@ -157,21 +150,14 @@ async function fetchAllGroupsProcessedData(
   groups: AttendanceGroup[],
   startDate: string,
   endDate: string,
+  attendanceTimeZone?: string | null,
 ): Promise<ProcessedGroupReportData[]> {
   const pad = (n: number, len = 2) => String(n).padStart(len, "0")
   const formatDateOnly = (d: Date): string => {
     return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`
   }
-  const formatTimeOnly = (d: Date): string => {
-    const hours = d.getHours()
-    const minutes = pad(d.getMinutes())
-    const period = hours >= 12 ? "PM" : "AM"
-    const displayHours = hours % 12 || 12
-    return `${displayHours}:${minutes} ${period}`
-  }
-
   const allDates = generateDateRange(startDate, endDate)
-  const todayStr = getLocalDateString()
+  const todayStr = getAttendanceDateString(new Date(), attendanceTimeZone)
 
   const validGroups = groups.filter((g) => g.id !== "all")
   const groupDataPromises = validGroups.map(async (group) => {
@@ -219,7 +205,7 @@ async function fetchAllGroupsProcessedData(
       let memberJoinedStr: string | null = null
       const rawJoinedAt = member.joined_at as unknown
       if (rawJoinedAt instanceof Date) {
-        memberJoinedStr = getLocalDateString(rawJoinedAt)
+        memberJoinedStr = getAttendanceDateString(rawJoinedAt, attendanceTimeZone)
       } else if (typeof rawJoinedAt === "string") {
         memberJoinedStr = rawJoinedAt.split("T")[0]
       }
@@ -261,7 +247,12 @@ async function fetchAllGroupsProcessedData(
               exportSession.check_in_time instanceof Date ?
                 exportSession.check_in_time
               : new Date(exportSession.check_in_time)
-            if (!isNaN(d.getTime())) timeIn = formatTimeOnly(d)
+            if (!isNaN(d.getTime())) {
+              timeIn = formatAttendanceTime(
+                d,
+                exportSession.check_in_time_timezone || attendanceTimeZone,
+              )
+            }
           }
 
           let timeOut = ""
@@ -270,7 +261,12 @@ async function fetchAllGroupsProcessedData(
               exportSession.check_out_time instanceof Date ?
                 exportSession.check_out_time
               : new Date(exportSession.check_out_time)
-            if (!isNaN(d.getTime())) timeOut = formatTimeOnly(d)
+            if (!isNaN(d.getTime())) {
+              timeOut = formatAttendanceTime(
+                d,
+                exportSession.check_out_time_timezone || attendanceTimeZone,
+              )
+            }
           }
 
           let totalHoursStr = ""
@@ -290,6 +286,9 @@ async function fetchAllGroupsProcessedData(
                 exportSession?.check_in_time,
                 exportSession?.check_out_time,
                 group.settings.class_end_time || "17:00",
+                exportSession?.check_out_time_timezone ||
+                  exportSession?.check_in_time_timezone ||
+                  attendanceTimeZone,
               )
             : undefined
           const notesStr = exportSession?.notes || ""
@@ -326,10 +325,16 @@ export async function exportAllGroupsReportToExcel(
   groups: AttendanceGroup[],
   startDate: string,
   endDate: string,
+  attendanceTimeZone?: string | null,
 ) {
   try {
     const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, "_").trim()
-    const processedGroups = await fetchAllGroupsProcessedData(groups, startDate, endDate)
+    const processedGroups = await fetchAllGroupsProcessedData(
+      groups,
+      startDate,
+      endDate,
+      attendanceTimeZone,
+    )
     if (processedGroups.length === 0) return { success: true }
 
     const usedSheetNames = new Set<string>()
@@ -421,10 +426,16 @@ export async function exportAllGroupsReportToIndividualCSVs(
   groups: AttendanceGroup[],
   startDate: string,
   endDate: string,
+  attendanceTimeZone?: string | null,
 ) {
   try {
     const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, "_").trim()
-    const processedGroups = await fetchAllGroupsProcessedData(groups, startDate, endDate)
+    const processedGroups = await fetchAllGroupsProcessedData(
+      groups,
+      startDate,
+      endDate,
+      attendanceTimeZone,
+    )
     const dateRange = getDateRangeFilenameLabel(startDate, endDate)
 
     for (let i = 0; i < processedGroups.length; i++) {
@@ -457,10 +468,16 @@ export async function exportAllGroupsReportToCSV(
   groups: AttendanceGroup[],
   startDate: string,
   endDate: string,
+  attendanceTimeZone?: string | null,
 ) {
   try {
     const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, "_").trim()
-    const processedGroups = await fetchAllGroupsProcessedData(groups, startDate, endDate)
+    const processedGroups = await fetchAllGroupsProcessedData(
+      groups,
+      startDate,
+      endDate,
+      attendanceTimeZone,
+    )
 
     const combinedHeader = [
       "Group",

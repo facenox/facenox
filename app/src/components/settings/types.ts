@@ -17,6 +17,7 @@ export interface AudioSettings {
 }
 
 export interface AttendanceSettings {
+  attendanceTimezone?: string | null
   lateThresholdEnabled: boolean
   lateThresholdMinutes: number
   classStartTime: string

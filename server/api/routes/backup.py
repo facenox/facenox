@@ -31,7 +31,7 @@ from api.schemas import (
     ImportDataRequest,
     SuccessResponse,
 )
-from core.cipher import encrypt_local_data
+from core.cipher import decrypt_local_data, encrypt_local_data
 from services.time_authority_service import get_time_authority
 from time_utils import to_storage_local
 from attendance_time import restore_fields
@@ -65,6 +65,37 @@ class BackupImportRequest(BaseModel):
     password: Optional[str] = None  # Added password for decryption
 
 
+def _scope_query(query, model, organization_id: Optional[str]):
+    if organization_id is None:
+        return query.where(model.organization_id.is_(None))
+    return query.where(model.organization_id == organization_id)
+
+
+async def _export_biometrics(repo: AttendanceRepository) -> List[BiometricEntry]:
+    query = _scope_query(
+        select(FaceModel).where(FaceModel.is_deleted.is_(False)),
+        FaceModel,
+        repo.organization_id,
+    )
+    faces = (await repo.session.execute(query)).scalars().all()
+    biometrics: List[BiometricEntry] = []
+
+    for face in faces:
+        raw_bytes = decrypt_local_data(face.embedding)
+        expected_size = face.embedding_dimension * np.dtype(np.float32).itemsize
+        if face.embedding_dimension <= 0 or len(raw_bytes) != expected_size:
+            raise ValueError("Stored biometric data has an invalid dimension")
+        biometrics.append(
+            BiometricEntry(
+                person_id=face.person_id,
+                embedding_b64=base64.b64encode(raw_bytes).decode("ascii"),
+                embedding_dim=face.embedding_dimension,
+            )
+        )
+
+    return biometrics
+
+
 # Routes
 
 
@@ -78,24 +109,23 @@ async def export_backup(
     If a password is provided, returns an encrypted .facenox blob payload.
     If not, returns the complete unencrypted JSON payload (typically encrypted by Electron before saving).
     """
+    export_succeeded = False
     try:
         # Gather attendance data
         groups_orm = await repo.get_groups(active_only=False)
         settings_orm = await repo.get_settings()
 
-        members_query = select(MemberModel).where(MemberModel.is_deleted.is_(False))
-        if repo.organization_id:
-            members_query = members_query.where(
-                MemberModel.organization_id == repo.organization_id
-            )
+        members_query = _scope_query(
+            select(MemberModel).where(MemberModel.is_deleted.is_(False)),
+            MemberModel,
+            repo.organization_id,
+        )
         members_result = await repo.session.execute(members_query)
         members_orm = members_result.scalars().all()
 
-        group_rules_query = select(GroupRuleModel)
-        if repo.organization_id:
-            group_rules_query = group_rules_query.where(
-                GroupRuleModel.organization_id == repo.organization_id
-            )
+        group_rules_query = _scope_query(
+            select(GroupRuleModel), GroupRuleModel, repo.organization_id
+        )
         group_rules_result = await repo.session.execute(
             group_rules_query.order_by(
                 GroupRuleModel.group_id, GroupRuleModel.effective_from
@@ -103,21 +133,17 @@ async def export_backup(
         )
         group_rules_orm = group_rules_result.scalars().all()
 
-        records_query = select(RecordModel)
-        if repo.organization_id:
-            records_query = records_query.where(
-                RecordModel.organization_id == repo.organization_id
-            )
+        records_query = _scope_query(
+            select(RecordModel), RecordModel, repo.organization_id
+        )
         records_result = await repo.session.execute(
             records_query.order_by(RecordModel.timestamp.desc())
         )
         records_orm = records_result.scalars().all()
 
-        sessions_query = select(SessionModel)
-        if repo.organization_id:
-            sessions_query = sessions_query.where(
-                SessionModel.organization_id == repo.organization_id
-            )
+        sessions_query = _scope_query(
+            select(SessionModel), SessionModel, repo.organization_id
+        )
         sessions_result = await repo.session.execute(
             sessions_query.order_by(SessionModel.date.desc())
         )
@@ -150,30 +176,7 @@ async def export_backup(
             exported_at=get_time_authority().current_time_local(),
         )
 
-        # Gather face embeddings
-        biometrics: List[BiometricEntry] = []
-        try:
-            from core.lifespan import face_recognizer
-
-            if face_recognizer:
-                persons: dict[
-                    str, np.ndarray
-                ] = await face_recognizer.export_embeddings(repo.organization_id)
-                for person_id, embedding in persons.items():
-                    arr = embedding.astype(np.float32)
-                    biometrics.append(
-                        BiometricEntry(
-                            person_id=person_id,
-                            embedding_b64=base64.b64encode(arr.tobytes()).decode(
-                                "ascii"
-                            ),
-                            embedding_dim=len(arr),
-                        )
-                    )
-        except Exception as bio_err:
-            logger.warning(
-                f"[Backup] Could not export biometrics (non-fatal): {bio_err}"
-            )
+        biometrics = await _export_biometrics(repo)
 
         response_obj = BackupExportResponse(
             version=1,
@@ -187,6 +190,7 @@ async def export_backup(
 
             plaintext = response_obj.model_dump_json().encode("utf-8")
             encrypted_blob = encrypt_backup(plaintext, password)
+            export_succeeded = True
             return {
                 "success": True,
                 "encrypted": True,
@@ -194,6 +198,7 @@ async def export_backup(
                 "filename": f"facenox_backup_{attendance_data.exported_at.strftime('%Y%m%d_%H%M')}.facenox",
             }
 
+        export_succeeded = True
         return response_obj
 
     except Exception as e:
@@ -201,13 +206,15 @@ async def export_backup(
         raise HTTPException(status_code=500, detail=f"Backup export failed: {e}")
 
     finally:
-        # Audit log is written even if export partially succeeded
         try:
             await repo.add_audit_log(
-                action="BACKUP_EXPORTED",
+                action=(
+                    "BACKUP_EXPORTED" if export_succeeded else "BACKUP_EXPORT_FAILED"
+                ),
                 target_type="backup",
                 details=f"exported_at={get_time_authority().current_time_utc().isoformat()}",
             )
+            await repo.session.commit()
         except Exception as audit_err:
             logger.warning(
                 f"[Backup] Failed to write audit log for export: {audit_err}"
@@ -223,6 +230,7 @@ async def import_backup(
     Import complete system state from a decrypted backup payload.
     Restores attendance data AND face embeddings so re-registration is not needed.
     """
+    import_succeeded = False
     try:
         data = payload.attendance.data
         overwrite = payload.attendance.overwrite_existing
@@ -254,9 +262,11 @@ async def import_backup(
                         class_start_time=settings_dict.get("class_start_time", "08:00"),
                         attendance_mode=settings_dict.get(
                             "attendance_mode",
-                            "work_hours"
-                            if settings_dict.get("track_checkout")
-                            else "attendance",
+                            (
+                                "work_hours"
+                                if settings_dict.get("track_checkout")
+                                else "attendance"
+                            ),
                         ),
                         track_checkout=settings_dict.get("track_checkout", False),
                         scan_behavior=settings_dict.get("scan_behavior", "automatic"),
@@ -434,8 +444,10 @@ async def import_backup(
                 skipped += 1
                 continue
 
-            raw_bytes = base64.b64decode(entry.embedding_b64)
-            # Encrypt before persisting, same as the normal registration path.
+            raw_bytes = base64.b64decode(entry.embedding_b64, validate=True)
+            expected_size = entry.embedding_dim * np.dtype(np.float32).itemsize
+            if entry.embedding_dim <= 0 or len(raw_bytes) != expected_size:
+                raise ValueError("Backup biometric data has an invalid dimension")
             encrypted_bytes = encrypt_local_data(raw_bytes)
             existing_face_result = await repo.session.execute(
                 select(FaceModel).where(
@@ -462,6 +474,7 @@ async def import_backup(
             imported_biometrics += 1
 
         await repo.session.commit()
+        import_succeeded = True
 
         from core.lifespan import face_recognizer
 
@@ -483,14 +496,19 @@ async def import_backup(
 
     finally:
         try:
+            if not import_succeeded:
+                await repo.session.rollback()
             await repo.add_audit_log(
-                action="BACKUP_IMPORTED",
+                action=(
+                    "BACKUP_IMPORTED" if import_succeeded else "BACKUP_IMPORT_FAILED"
+                ),
                 target_type="backup",
                 details=(
                     f"overwrite={payload.attendance.overwrite_existing}, "
                     f"imported_at={get_time_authority().current_time_utc().isoformat()}"
                 ),
             )
+            await repo.session.commit()
         except Exception as audit_err:
             logger.warning(
                 f"[Backup] Failed to write audit log for import: {audit_err}"

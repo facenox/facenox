@@ -1,13 +1,20 @@
 import { AlertTriangle, Loader2, Check, HelpCircle, RotateCw } from "lucide-react"
 import { InfoPopover } from "@/components/shared"
+import { AttendanceTimezonePicker } from "@/components/settings/components/AttendanceTimezonePicker"
 import type { TimeHealthOverview } from "@/components/settings/types"
 
 export function ClockHealth({
   timeHealthState,
   onRefreshTimeHealth,
+  attendanceTimeZone,
+  onAttendanceTimezoneChange,
+  isPaired = false,
 }: {
   timeHealthState: TimeHealthOverview
   onRefreshTimeHealth: () => void
+  attendanceTimeZone?: string | null
+  onAttendanceTimezoneChange?: (timeZone: string) => void
+  isPaired?: boolean
 }) {
   const getFriendlyTimeZoneLabel = (): string => {
     const health = timeHealthState.timeHealth
@@ -46,6 +53,8 @@ export function ClockHealth({
   const clockWarning = timeHealth?.warning_message?.trim() || timeHealth?.os_clock_warning?.trim()
   const hasClockWarning = Boolean(clockWarning) || timeHealthStatus === "drift_detected"
   const hasClockError = Boolean(timeHealthState.error)
+  const resolvedAttendanceTimeZone =
+    attendanceTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
 
   const formattedLocalTime =
     timeHealth?.current_time_local ?
@@ -71,15 +80,43 @@ export function ClockHealth({
 
   return (
     <div className="mx-auto w-full max-w-[900px] px-10 pb-20">
-      {/* System Time */}
-      <section className="space-y-6">
+      <section>
         <div className="pt-2 pb-2">
           <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            System time
+            Time &amp; location
           </h3>
         </div>
 
-        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+        <div className="flex items-center gap-4 py-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <div className="text-sm font-medium text-white/90">Attendance timezone</div>
+              <InfoPopover
+                title="Attendance timezone"
+                description="Keeps attendance times consistent when this computer's timezone changes."
+                details={[
+                  "Reports, exports, and manual corrections use this timezone.",
+                  isPaired ?
+                    "This setting is managed by your organization in Facenox Cloud."
+                  : "Change this only when the attendance location moves to another timezone.",
+                ]}
+                side="right"
+              />
+            </div>
+            <div className="text-xs font-normal text-white/65">
+              {isPaired ? "Managed by Facenox Cloud." : "Pinned to this attendance location."}
+            </div>
+          </div>
+          <AttendanceTimezonePicker
+            value={resolvedAttendanceTimeZone}
+            disabled={isPaired}
+            onChange={(timeZone) => onAttendanceTimezoneChange?.(timeZone)}
+          />
+        </div>
+
+        <div className="h-px w-full bg-white/8" />
+
+        <div className="flex flex-col gap-6 py-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h4 className="text-[15px] font-semibold text-white/90">System clock</h4>

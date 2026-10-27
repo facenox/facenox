@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from fastapi import HTTPException
 from sqlalchemy import select
 
 from database.models import AttendanceGroup, AttendanceMember, Face, AttendanceSettings
@@ -100,3 +101,42 @@ async def test_backup_export_and_import_biometrics_roundtrip(
         decrypted_raw = decrypt_local_data(restored_faces[0].embedding)
         restored_array = np.frombuffer(decrypted_raw, dtype=np.float32)
         assert np.allclose(restored_array, dummy_embedding)
+
+
+@pytest.mark.asyncio
+async def test_backup_export_fails_when_any_biometric_cannot_be_decrypted(
+    async_session_factory,
+):
+    async with async_session_factory() as session:
+        from database.repository import AttendanceRepository
+        from api.routes.backup import export_backup
+
+        session.add(AttendanceSettings(late_threshold_minutes=15))
+        session.add(AttendanceGroup(id="grp_test_1", name="Grade 10", is_active=True))
+        session.add(
+            AttendanceMember(
+                id="mem_test_1",
+                person_id="person_test_1",
+                group_id="grp_test_1",
+                name="John Doe",
+                is_active=True,
+                is_deleted=False,
+            )
+        )
+        session.add(
+            Face(
+                id="face_test_1",
+                person_id="person_test_1",
+                embedding=b"not-an-encrypted-embedding",
+                embedding_dimension=512,
+                is_deleted=False,
+            )
+        )
+        await session.commit()
+
+        repo = AttendanceRepository(session, organization_id=None)
+        with pytest.raises(HTTPException) as error:
+            await export_backup(password=None, repo=repo)
+
+        assert error.value.status_code == 500
+        assert "Backup export failed" in error.value.detail

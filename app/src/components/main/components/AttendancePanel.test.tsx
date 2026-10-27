@@ -8,6 +8,7 @@ import {
   createAttendanceRecord,
 } from "@/test/fixtures"
 import { renderWithProviders } from "@/test/utils/renderWithProviders"
+import { attendanceDateTimeToDate, getAttendanceDateString } from "@/utils/attendanceTime"
 
 vi.mock("@/components/shared", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -63,6 +64,7 @@ function resetStores() {
     newGroupName: "",
     persistentCooldowns: new Map(),
     attendanceCooldownSeconds: 8,
+    attendanceTimezone: null,
     enableSpoofDetection: true,
     maxRecognitionFacesPerFrame: 6,
     dataRetentionDays: 0,
@@ -149,6 +151,35 @@ describe("AttendancePanel", () => {
     })
 
     expect(await screen.findByText('No results for "Bob"')).toBeInTheDocument()
+  })
+
+  it("shows captured attendance time after the computer timezone changes", () => {
+    const group = createAttendanceGroup()
+    const attendanceDate = getAttendanceDateString(new Date(), "Asia/Manila")
+    useAttendanceStore.setState({
+      attendanceTimezone: "Asia/Manila",
+      attendanceGroups: [group],
+      currentGroup: group,
+      groupMembers: [createAttendanceMember({ person_id: "person-1", name: "Alice" })],
+      recentAttendance: [
+        createAttendanceRecord({
+          id: "record-1",
+          person_id: "person-1",
+          timestamp: attendanceDateTimeToDate(attendanceDate, "08:30", "America/Toronto"),
+          timestamp_timezone: "America/Toronto",
+        }),
+      ],
+    })
+
+    renderWithProviders(
+      <AttendancePanel
+        handleSelectGroup={vi.fn()}
+        refreshAttendanceData={vi.fn().mockResolvedValue(undefined)}
+      />,
+      { withDialogProvider: false },
+    )
+
+    expect(screen.getByText("8:30 AM")).toBeInTheDocument()
   })
 
   it("reveals additional records after clicking Load More", async () => {

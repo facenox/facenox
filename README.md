@@ -22,8 +22,8 @@
 </p>
 
 <p align="center">
-  <strong>Facenox is open-source, offline-first face recognition software for local attendance recording.</strong><br>
-  Camera frames are processed locally and are not stored by the application. Biometric templates are encrypted.
+  <strong>Facenox is open-source, offline-first face recognition for real-time attendance.</strong><br>
+  Built for privacy: Facenox does not store photos. Face templates are encrypted.
 </p>
 
 <p align="center">
@@ -80,7 +80,7 @@ _Data and storage management panel detailing system clock accuracy validation, a
 > This is the official open source repository for Facenox. Treat other repositories, installers, and downloads as unverified unless they come from official sources.
 
 > [!NOTE]  
-> **Local biometric processing:** Facenox runs face detection, tracking, liveness checks, and matching on the computer. Starter and higher Cloud plans can sync encrypted face templates. Cloud manages the location keys used for that sync.
+> **Local biometric processing:** Facenox runs face detection, tracking, liveness checks, and matching on the computer. Starter and higher Cloud plans can sync encrypted face templates between paired computers.
 
 ## Why Facenox
 

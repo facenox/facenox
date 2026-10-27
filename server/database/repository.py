@@ -15,7 +15,7 @@ from database.models import (
     AuditLog,
     Face,
 )
-from time_utils import local_now, to_storage_local, ensure_utc_aware
+from time_utils import get_local_timezone, local_now, to_storage_local, ensure_utc_aware
 from attendance_time import capture_fields, event_time, normalize_session_times
 
 logger = logging.getLogger(__name__)
@@ -917,6 +917,7 @@ class AttendanceRepository:
 
         # Patch any NULL fields with their column defaults
         defaults = {
+            "attendance_timezone": str(get_local_timezone()),
             "late_threshold_minutes": 15,
             "enable_location_tracking": False,
             "confidence_threshold": 0.8,
@@ -1122,12 +1123,17 @@ class AttendanceRepository:
         await self.session.commit()
 
         return {
-            "records_deleted": records_result.rowcount
-            if records_result.rowcount is not None and records_result.rowcount >= 0
-            else 0,
-            "sessions_deleted": sessions_result.rowcount
-            if sessions_result.rowcount is not None and sessions_result.rowcount >= 0
-            else 0,
+            "records_deleted": (
+                records_result.rowcount
+                if records_result.rowcount is not None and records_result.rowcount >= 0
+                else 0
+            ),
+            "sessions_deleted": (
+                sessions_result.rowcount
+                if sessions_result.rowcount is not None
+                and sessions_result.rowcount >= 0
+                else 0
+            ),
         }
 
     async def clear_attendance_history(self) -> Dict[str, int]:
@@ -1147,12 +1153,17 @@ class AttendanceRepository:
         await self.session.commit()
 
         return {
-            "records_deleted": records_result.rowcount
-            if records_result.rowcount is not None and records_result.rowcount >= 0
-            else 0,
-            "sessions_deleted": sessions_result.rowcount
-            if sessions_result.rowcount is not None and sessions_result.rowcount >= 0
-            else 0,
+            "records_deleted": (
+                records_result.rowcount
+                if records_result.rowcount is not None and records_result.rowcount >= 0
+                else 0
+            ),
+            "sessions_deleted": (
+                sessions_result.rowcount
+                if sessions_result.rowcount is not None
+                and sessions_result.rowcount >= 0
+                else 0
+            ),
         }
 
     async def assign_organization_id(self, org_id: str) -> Dict[str, int]:

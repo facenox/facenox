@@ -45,6 +45,21 @@ async def test_org_settings_clone_global_defaults_and_stay_isolated(
 
 
 @pytest.mark.asyncio
+async def test_settings_pin_the_installation_timezone(
+    async_session_factory, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        "database.repository.get_local_timezone", lambda: "America/Toronto"
+    )
+
+    async with async_session_factory() as session:
+        repo = AttendanceRepository(session)
+        settings = await repo.get_settings()
+
+        assert settings.attendance_timezone == "America/Toronto"
+
+
+@pytest.mark.asyncio
 async def test_records_sessions_and_groups_are_filtered_by_org(
     async_session_factory,
 ) -> None:

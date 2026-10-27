@@ -164,6 +164,8 @@ export interface AttendanceRecord {
   member_id: string
   group_id: string
   timestamp: Date
+  timestamp_timezone?: string | null
+  timestamp_offset_seconds?: number | null
   confidence: number
   device_id?: string | null
   location?: string
@@ -186,6 +188,10 @@ export interface AttendanceSession {
   date: string
   check_in_time?: Date
   check_out_time?: Date
+  check_in_time_timezone?: string | null
+  check_in_time_offset_seconds?: number | null
+  check_out_time_timezone?: string | null
+  check_out_time_offset_seconds?: number | null
   total_hours?: number
   status: AttendanceStatus
   is_late: boolean
@@ -225,6 +231,7 @@ export interface AttendanceReport {
 }
 
 export interface AttendanceSettings {
+  attendance_timezone?: string | null
   late_threshold_minutes: number
   enable_location_tracking: boolean
   enable_liveness_detection: boolean

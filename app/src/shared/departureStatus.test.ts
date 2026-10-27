@@ -30,4 +30,16 @@ describe("getDepartureStatus", () => {
     ).toBeUndefined()
     expect(getDepartureStatus("2026-04-01", new Date(), undefined, "17:00")).toBeUndefined()
   })
+
+  it("uses the attendance timezone instead of the computer timezone", () => {
+    expect(
+      getDepartureStatus(
+        "2026-01-15",
+        "2026-01-15T13:00:00.000Z",
+        "2026-01-15T21:30:00.000Z",
+        "17:00",
+        "America/Toronto",
+      ),
+    ).toBe("undertime")
+  })
 })

@@ -6,6 +6,11 @@ import { attendanceManager } from "@/services/AttendanceManager"
 import type { RowData } from "@/components/group/sections/reports/types"
 import type { AttendanceGroup } from "@/types/recognition"
 import { parseLocalDate } from "@/utils"
+import {
+  attendanceDateTimeToDate,
+  formatAttendanceTime,
+  formatAttendanceTimeInput,
+} from "@/utils/attendanceTime"
 
 const REASON_PRESETS = [
   "Forgot to scan",
@@ -27,6 +32,7 @@ interface EditSessionModalProps {
   onClose: () => void
   row: RowData | null
   group: AttendanceGroup | null
+  attendanceTimeZone?: string | null
   /** Called after a successful save. Passes the corrected message and the pre-correction row snapshot for undo. */
   onSuccess: (message: string, originalRow: RowData) => void
 }
@@ -42,6 +48,7 @@ export function EditSessionModal({
   onClose,
   row,
   group,
+  attendanceTimeZone,
   onSuccess,
 }: EditSessionModalProps) {
   const [status, setStatus] = useState<"present" | "absent">("present")
@@ -83,30 +90,31 @@ export function EditSessionModal({
     setCustomNote(parsedNote)
 
     if (row.check_in_time) {
-      const d = new Date(row.check_in_time)
       setCheckInTime(
-        `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
+        formatAttendanceTimeInput(
+          row.check_in_time,
+          row.session?.check_in_time_timezone || attendanceTimeZone,
+        ),
       )
     } else if (initialStatus !== "absent") {
-      const now = new Date()
-      setCheckInTime(
-        `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-      )
+      setCheckInTime(formatAttendanceTimeInput(new Date(), attendanceTimeZone))
     } else {
       setCheckInTime("")
     }
 
     if (row.check_out_time) {
-      const d = new Date(row.check_out_time)
       setCheckOutTime(
-        `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
+        formatAttendanceTimeInput(
+          row.check_out_time,
+          row.session?.check_out_time_timezone || attendanceTimeZone,
+        ),
       )
     } else {
       setCheckOutTime("")
     }
 
     setError(null)
-  }, [row])
+  }, [row, attendanceTimeZone])
 
   const handleStatusSelect = (s: "present" | "absent") => {
     setStatus(s)
@@ -115,10 +123,7 @@ export function EditSessionModal({
       if (defaultTime) {
         setCheckInTime(defaultTime)
       } else {
-        const now = new Date()
-        setCheckInTime(
-          `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-        )
+        setCheckInTime(formatAttendanceTimeInput(new Date(), attendanceTimeZone))
       }
     }
   }
@@ -152,17 +157,10 @@ export function EditSessionModal({
       let finalCheckOut: Date | undefined
 
       if (status === "present") {
-        const baseDate = parseLocalDate(row.date)
-        const [hh, mm] = checkInTime.split(":")
-        const d = new Date(baseDate)
-        d.setHours(parseInt(hh, 10), parseInt(mm, 10), 0, 0)
-        finalCheckIn = d
+        finalCheckIn = attendanceDateTimeToDate(row.date, checkInTime, attendanceTimeZone)
 
         if (checkOutTime) {
-          const [ohh, omm] = checkOutTime.split(":")
-          const out = new Date(baseDate)
-          out.setHours(parseInt(ohh, 10), parseInt(omm, 10), 0, 0)
-          finalCheckOut = out
+          finalCheckOut = attendanceDateTimeToDate(row.date, checkOutTime, attendanceTimeZone)
         }
       }
 
@@ -182,7 +180,7 @@ export function EditSessionModal({
       )
     } catch (err) {
       console.error(err)
-      setError("Could not save the correction. Try again.")
+      setError(err instanceof Error ? err.message : "Could not save the correction. Try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -195,9 +193,6 @@ export function EditSessionModal({
   }
 
   if (!rowSnapshot) return null
-
-  const fmt = (d?: Date | string | null) =>
-    d ? new Date(d).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—"
 
   const originalStatus = rowSnapshot.status === "no_records" ? "N/A" : rowSnapshot.status
 
@@ -249,13 +244,19 @@ export function EditSessionModal({
               <div>
                 <p className="mb-0.5 text-[10px] text-white/30">Time in</p>
                 <p className="text-sm font-semibold text-white/70">
-                  {fmt(rowSnapshot.check_in_time)}
+                  {formatAttendanceTime(
+                    rowSnapshot.check_in_time,
+                    rowSnapshot.session?.check_in_time_timezone || attendanceTimeZone,
+                  )}
                 </p>
               </div>
               <div>
                 <p className="mb-0.5 text-[10px] text-white/30">Time out</p>
                 <p className="text-sm font-semibold text-white/70">
-                  {fmt(rowSnapshot.check_out_time)}
+                  {formatAttendanceTime(
+                    rowSnapshot.check_out_time,
+                    rowSnapshot.session?.check_out_time_timezone || attendanceTimeZone,
+                  )}
                 </p>
               </div>
             </div>

@@ -697,6 +697,11 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 <ClockHealth
                   timeHealthState={timeHealthState}
                   onRefreshTimeHealth={verifyTimeOnline}
+                  attendanceTimeZone={attendanceSettings.attendanceTimezone}
+                  onAttendanceTimezoneChange={(timeZone) =>
+                    updateAttendanceSetting({ attendanceTimezone: timeZone })
+                  }
+                  isPaired={isPaired}
                 />
               </motion.div>
             )}

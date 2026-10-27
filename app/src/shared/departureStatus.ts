@@ -1,3 +1,5 @@
+import { attendanceDateTimeToDate } from "@/utils/attendanceTime"
+
 export type DepartureStatus = "undertime" | "overtime"
 
 export function getDepartureStatus(
@@ -5,6 +7,7 @@ export function getDepartureStatus(
   checkInTime: Date | string | undefined,
   checkOutTime: Date | string | undefined,
   scheduledEndTime: string | null | undefined,
+  timeZone?: string | null,
 ): DepartureStatus | undefined {
   if (!checkInTime || !checkOutTime || !scheduledEndTime) return undefined
 
@@ -16,10 +19,21 @@ export function getDepartureStatus(
   const checkOut = new Date(checkOutTime)
   if (Number.isNaN(checkIn.getTime()) || Number.isNaN(checkOut.getTime())) return undefined
 
-  const end = new Date(`${date}T00:00:00`)
-  if (Number.isNaN(end.getTime())) return undefined
-  end.setHours(hours, minutes, 0, 0)
-  if (end <= checkIn) end.setDate(end.getDate() + 1)
+  let end: Date
+  try {
+    end = attendanceDateTimeToDate(date, scheduledEndTime, timeZone)
+    if (end <= checkIn) {
+      const nextDate = new Date(`${date}T00:00:00Z`)
+      nextDate.setUTCDate(nextDate.getUTCDate() + 1)
+      end = attendanceDateTimeToDate(
+        nextDate.toISOString().slice(0, 10),
+        scheduledEndTime,
+        timeZone,
+      )
+    }
+  } catch {
+    return undefined
+  }
 
   return (
     checkOut < end ? "undertime"

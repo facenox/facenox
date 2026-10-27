@@ -150,7 +150,6 @@ export function Attendance({
 
   const rawLocalDays = attendanceSettings.dataRetentionDays ?? 0
   const effectiveDays = Math.max(0, rawLocalDays)
-
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
       <div className="overflow-hidden">

@@ -35,6 +35,7 @@ interface AttendanceState {
   persistentCooldowns: Map<string, CooldownInfo>
 
   attendanceCooldownSeconds: number
+  attendanceTimezone: string | null
   enableSpoofDetection: boolean
   maxRecognitionFacesPerFrame: number
   dataRetentionDays: number
@@ -60,6 +61,7 @@ interface AttendanceState {
       Map<string, CooldownInfo> | ((prev: Map<string, CooldownInfo>) => Map<string, CooldownInfo>),
   ) => void
   setAttendanceCooldownSeconds: (seconds: number) => void
+  setAttendanceTimezone: (timeZone: string) => void
   setEnableSpoofDetection: (enabled: boolean) => void
   setMaxRecognitionFacesPerFrame: (count: number) => void
   setDataRetentionDays: (days: number) => void
@@ -93,6 +95,7 @@ export const useAttendanceStore = create<AttendanceState>()(
     persistentCooldowns: new Map(),
 
     attendanceCooldownSeconds: 8,
+    attendanceTimezone: null,
     enableSpoofDetection: false,
     maxRecognitionFacesPerFrame: 5,
     dataRetentionDays: 0,
@@ -131,6 +134,10 @@ export const useAttendanceStore = create<AttendanceState>()(
       persistentSettings
         .setAttendanceSettings({ attendanceCooldownSeconds: seconds })
         .catch(console.error)
+    },
+    setAttendanceTimezone: (timeZone) => {
+      set({ attendanceTimezone: timeZone })
+      attendanceManager.updateSettings({ attendance_timezone: timeZone }).catch(console.error)
     },
     setEnableSpoofDetection: (enabled) => {
       set({ enableSpoofDetection: enabled })

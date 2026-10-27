@@ -375,6 +375,7 @@ export class AttendanceManager {
       check_out_time?: Date
       is_late?: boolean
       late_minutes?: number
+      visit_number?: number
     },
   ): Promise<AttendanceSession> {
     return this.recordManager.updateSession(personId, date, updates)

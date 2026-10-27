@@ -4,7 +4,7 @@ import { persistentSettings } from "@/services/PersistentSettingsService"
 import type { AttendanceGroup, AttendanceMember, AttendanceRecord } from "@/types/recognition"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { useGroupStore } from "@/components/group/stores"
-import { getLocalDateString } from "@/utils"
+import { getAttendanceDateString } from "@/utils/attendanceTime"
 
 const PANEL_SWITCH_SKELETON_DELAY_MS = 120
 const MODAL_EXIT_DURATION_MS = 260
@@ -58,6 +58,7 @@ export async function bootstrapShellData(): Promise<void> {
 
   useAttendanceStore.setState({
     attendanceCooldownSeconds: settings.attendance_cooldown_seconds ?? 300,
+    attendanceTimezone: settings.attendance_timezone ?? null,
     enableSpoofDetection: settings.enable_liveness_detection ?? false,
     maxRecognitionFacesPerFrame: settings.max_recognition_faces_per_frame ?? 6,
     dataRetentionDays: settings.data_retention_days ?? 0,
@@ -86,7 +87,7 @@ export async function bootstrapShellData(): Promise<void> {
   // Pre-warm active group overview stats and records in the background so settings modal opens with zero layout pop-in
   const warmGroup = resolvedGroup && resolvedGroup.id !== ALL_GROUPS_ID ? resolvedGroup : groups[0]
   if (warmGroup?.id) {
-    const today = getLocalDateString(new Date())
+    const today = getAttendanceDateString(new Date(), settings.attendance_timezone)
     useGroupStore
       .getState()
       .fetchOverviewData(warmGroup.id, today, today)
@@ -160,7 +161,10 @@ async function loadSelectedGroupData(
     })
 
     if (groupId !== ALL_GROUPS_ID) {
-      const today = getLocalDateString(new Date())
+      const today = getAttendanceDateString(
+        new Date(),
+        useAttendanceStore.getState().attendanceTimezone,
+      )
       useGroupStore
         .getState()
         .fetchOverviewData(groupId, today, today)

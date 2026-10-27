@@ -166,6 +166,34 @@ describe("Dropdown", () => {
     expect(onChange).toHaveBeenCalledWith(null)
   })
 
+  it("filters searchable options and selects the first result with Enter", async () => {
+    const onChange = vi.fn()
+
+    render(
+      <Dropdown
+        options={[
+          { value: "Asia/Manila", label: "Manila" },
+          { value: "UTC", label: "Coordinated Universal Time" },
+        ]}
+        value="Asia/Manila"
+        onChange={onChange}
+        ariaLabel="Attendance timezone"
+        searchable
+        searchAriaLabel="Search attendance timezones"
+        getOptionSearchText={(option) => `${option.value} ${String(option.label)}`}
+        showPlaceholderOption={false}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Attendance timezone" }))
+    const search = await screen.findByRole("textbox", { name: "Search attendance timezones" })
+    fireEvent.change(search, { target: { value: "UTC" } })
+
+    expect(screen.queryByRole("option", { name: "Manila" })).not.toBeInTheDocument()
+    fireEvent.keyDown(search, { key: "Enter" })
+    expect(onChange).toHaveBeenCalledWith("UTC")
+  })
+
   it("closes when escape is pressed", async () => {
     render(
       <Dropdown options={[{ value: "today", label: "Today" }]} value="today" onChange={vi.fn()} />,

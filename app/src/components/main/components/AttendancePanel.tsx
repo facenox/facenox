@@ -12,12 +12,13 @@ import {
   UserPlus,
   Layers,
 } from "lucide-react"
+import { createDisplayNameMap, formatDuration, generateGroupDisplayNames } from "@/utils"
 import {
-  createDisplayNameMap,
-  getLocalDateString,
-  formatDuration,
-  generateGroupDisplayNames,
-} from "@/utils"
+  attendanceDateTimeToDate,
+  formatAttendanceTime,
+  formatAttendanceTimeInput,
+  getAttendanceDateString,
+} from "@/utils/attendanceTime"
 import { Dropdown, Tooltip, MemberTooltip } from "@/components/shared"
 import type { AttendanceGroup, AttendanceRecord, AttendanceMember } from "@/components/main/types"
 import {
@@ -113,6 +114,7 @@ const AttendanceRecordItem = memo(
     hasCheckedInEarlier,
     isAllGroupsMode = false,
     groupName,
+    attendanceTimeZone,
     onVoidManual,
   }: {
     record: AttendanceRecord
@@ -125,6 +127,7 @@ const AttendanceRecordItem = memo(
     hasCheckedInEarlier: boolean
     isAllGroupsMode?: boolean
     groupName?: string
+    attendanceTimeZone?: string | null
     onVoidManual?: (record: AttendanceRecord) => void
   }) => {
     const [isHovered, setIsHovered] = useState(false)
@@ -148,10 +151,9 @@ const AttendanceRecordItem = memo(
           }
         }
 
-        const [startHours, startMinutes] = classStartTime.split(":").map(Number)
-
-        const startDate = new Date(record.timestamp)
-        startDate.setHours(startHours, startMinutes, 0, 0)
+        const recordTimeZone = record.timestamp_timezone || attendanceTimeZone
+        const recordDate = getAttendanceDateString(record.timestamp, recordTimeZone)
+        const startDate = attendanceDateTimeToDate(recordDate, classStartTime, recordTimeZone)
 
         const diffMs = record.timestamp.getTime() - startDate.getTime()
         const diffMinutes = Math.floor(diffMs / 60000)
@@ -281,10 +283,10 @@ const AttendanceRecordItem = memo(
                     exit={{ opacity: 0, scale: 0.95, y: -8 }}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                     className="absolute right-0 block w-full text-right font-mono text-[11px] text-white/55 tabular-nums">
-                    {record.timestamp.toLocaleTimeString([], {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
+                    {formatAttendanceTime(
+                      record.timestamp,
+                      record.timestamp_timezone || attendanceTimeZone,
+                    )}
                   </motion.span>
                 }
               </AnimatePresence>
@@ -311,6 +313,7 @@ export const AttendancePanel = memo(function AttendancePanel({
     isPanelLoading,
     isPanelSwitchPending,
     setShowGroupManagement,
+    attendanceTimezone,
   } = useAttendanceStore()
 
   const { requestOpenSettings } = useUIStore()
@@ -319,11 +322,13 @@ export const AttendancePanel = memo(function AttendancePanel({
   const [recordToVoid, setRecordToVoid] = useState<AttendanceRecord | null>(null)
 
   const todayPresentPersonIds = useMemo(() => {
-    const today = getLocalDateString()
+    const today = getAttendanceDateString(new Date(), attendanceTimezone)
     const todayRecordsByPerson = new Map<string, number>()
 
     recentAttendance.forEach((record) => {
-      if (record.is_voided || getLocalDateString(record.timestamp) !== today) return
+      const recordTimeZone = record.timestamp_timezone || attendanceTimezone
+      if (record.is_voided || getAttendanceDateString(record.timestamp, recordTimeZone) !== today)
+        return
       todayRecordsByPerson.set(
         record.person_id,
         (todayRecordsByPerson.get(record.person_id) ?? 0) + 1,
@@ -348,18 +353,14 @@ export const AttendancePanel = memo(function AttendancePanel({
         })
         .map((member) => member.person_id),
     )
-  }, [attendanceGroups, currentGroup, groupMembers, recentAttendance])
+  }, [attendanceGroups, attendanceTimezone, currentGroup, groupMembers, recentAttendance])
 
   const lateTrackingSettings = useMemo(() => {
     if (!currentGroup?.settings) {
       return {
         lateThresholdEnabled: false,
         lateThresholdMinutes: 5,
-        classStartTime: new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }),
+        classStartTime: formatAttendanceTimeInput(new Date(), attendanceTimezone),
       }
     }
 
@@ -368,13 +369,9 @@ export const AttendancePanel = memo(function AttendancePanel({
       lateThresholdMinutes: currentGroup.settings.late_threshold_minutes ?? 5,
       classStartTime:
         currentGroup.settings.class_start_time ??
-        new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }),
+        formatAttendanceTimeInput(new Date(), attendanceTimezone),
     }
-  }, [currentGroup])
+  }, [attendanceTimezone, currentGroup])
 
   const handleOpenSettingsForEnrollment = useCallback(() => {
     // Force active settings tab to "group" (Group Management) to override cached history
@@ -662,6 +659,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                           hasCheckedInEarlier={hasCheckedInEarlier}
                           isAllGroupsMode={currentGroup?.id === ALL_GROUPS_ID}
                           groupName={memberGroup?.name}
+                          attendanceTimeZone={attendanceTimezone}
                           onVoidManual={(record) => {
                             setRecordToVoid(record)
                             setIsManualCorrectionOpen(true)

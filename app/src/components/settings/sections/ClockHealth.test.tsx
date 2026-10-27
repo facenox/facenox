@@ -13,6 +13,41 @@ const healthyClock: AttendanceTimeHealth = {
 }
 
 describe("ClockHealth status", () => {
+  it("searches and changes the standalone attendance timezone", async () => {
+    const onAttendanceTimezoneChange = vi.fn()
+    render(
+      <ClockHealth
+        timeHealthState={{ timeHealth: healthyClock, loading: false }}
+        onRefreshTimeHealth={vi.fn()}
+        attendanceTimeZone="Asia/Manila"
+        onAttendanceTimezoneChange={onAttendanceTimezoneChange}
+      />,
+    )
+
+    expect(screen.getByText("Time & location")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "Attendance timezone" }))
+    const search = await screen.findByRole("textbox", { name: "Search attendance timezones" })
+    fireEvent.change(search, { target: { value: "UTC" } })
+    fireEvent.click(await screen.findByRole("option", { name: /UTC/ }))
+
+    expect(onAttendanceTimezoneChange).toHaveBeenCalledWith("UTC")
+  })
+
+  it("keeps the Cloud-managed attendance timezone read-only", () => {
+    render(
+      <ClockHealth
+        timeHealthState={{ timeHealth: healthyClock, loading: false }}
+        onRefreshTimeHealth={vi.fn()}
+        attendanceTimeZone="Asia/Manila"
+        onAttendanceTimezoneChange={vi.fn()}
+        isPaired
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: "Attendance timezone" })).toBeDisabled()
+    expect(screen.getByText("Managed by Facenox Cloud.")).toBeInTheDocument()
+  })
+
   it.each(["warning_message", "os_clock_warning"] as const)(
     "prioritizes %s over online verification",
     (field) => {

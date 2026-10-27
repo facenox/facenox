@@ -15,6 +15,7 @@ import type { RowData, ColumnKey } from "@/components/group/sections/reports/typ
 import { parseLocalDate, formatDuration } from "@/utils"
 import { Tooltip, Dropdown } from "@/components/shared"
 import { EmptyState } from "@/components/group/shared"
+import { formatAttendanceTime } from "@/utils/attendanceTime"
 
 interface ReportTableProps {
   groupedRows: Record<string, RowData[]>
@@ -28,6 +29,7 @@ interface ReportTableProps {
   pageSize: number
   onPageSizeChange: (size: number) => void
   error?: string | null
+  attendanceTimeZone?: string | null
 }
 
 const COL_WIDTHS: Record<ColumnKey, string> = {
@@ -62,7 +64,15 @@ function alignClass(align?: string) {
   return "text-left"
 }
 
-function CellContent({ row, columnKey }: { row: RowData; columnKey: ColumnKey }): React.ReactNode {
+function CellContent({
+  row,
+  columnKey,
+  attendanceTimeZone,
+}: {
+  row: RowData
+  columnKey: ColumnKey
+  attendanceTimeZone?: string | null
+}): React.ReactNode {
   const val = row[columnKey]
 
   if (columnKey === "status") {
@@ -85,10 +95,10 @@ function CellContent({ row, columnKey }: { row: RowData; columnKey: ColumnKey })
     return (
       <div className="flex flex-col">
         <span className="font-medium text-white/90">
-          {new Date(row.check_in_time).toLocaleTimeString([], {
-            hour: "numeric",
-            minute: "2-digit",
-          })}
+          {formatAttendanceTime(
+            row.check_in_time,
+            row.session?.check_in_time_timezone || attendanceTimeZone,
+          )}
         </span>
         {row.is_late && row.late_minutes > 0 && (
           <span className="mt-0.5 text-[10px] font-semibold text-orange-500/75">
@@ -109,10 +119,10 @@ function CellContent({ row, columnKey }: { row: RowData; columnKey: ColumnKey })
     return row.check_out_time ?
         <div className="flex flex-col">
           <span className="font-medium text-white/90">
-            {new Date(row.check_out_time).toLocaleTimeString([], {
-              hour: "numeric",
-              minute: "2-digit",
-            })}
+            {formatAttendanceTime(
+              row.check_out_time,
+              row.session?.check_out_time_timezone || attendanceTimeZone,
+            )}
           </span>
         </div>
       : <span className="text-white/10">-</span>
@@ -377,6 +387,7 @@ export function ReportTable({
   pageSize,
   onPageSizeChange,
   error,
+  attendanceTimeZone,
 }: ReportTableProps) {
   const [page, setPage] = useState(0)
 
@@ -495,7 +506,11 @@ export function ReportTable({
                             {cIdx === 0 && (
                               <div className="absolute top-0 bottom-0 left-0 w-0.5 bg-cyan-500 opacity-0 transition-opacity group-hover:opacity-100" />
                             )}
-                            <CellContent row={row} columnKey={c.key} />
+                            <CellContent
+                              row={row}
+                              columnKey={c.key}
+                              attendanceTimeZone={attendanceTimeZone}
+                            />
                           </td>
                         ))}
                         {onEditRow && (

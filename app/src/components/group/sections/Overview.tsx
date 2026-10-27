@@ -2,7 +2,15 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, ChevronDown, Clock, Ghost, Search, UserPlus, X } from "lucide-react"
 import { useGroupStore } from "@/components/group/stores"
-import { createDisplayNameMap, getLocalDateString } from "@/utils"
+import { useAttendanceStore } from "@/components/main/stores"
+import { createDisplayNameMap } from "@/utils"
+import {
+  addAttendanceDays,
+  formatAttendanceDate,
+  formatAttendanceTime,
+  getAttendanceDateString,
+  getAttendanceWeekStart,
+} from "@/utils/attendanceTime"
 import { StatsCard, EmptyState } from "@/components/group/shared"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { Spinner } from "@/components/common"
@@ -15,26 +23,7 @@ interface OverviewProps {
 
 const toDate = (value: Date | string): Date => (value instanceof Date ? value : new Date(value))
 
-const formatTime = (value: Date | string): string => {
-  const date = toDate(value)
-  if (Number.isNaN(date.getTime())) {
-    return "-"
-  }
-  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-}
-
-const formatDate = (value: Date | string): string => {
-  const date = toDate(value)
-  if (Number.isNaN(date.getTime())) {
-    return "-"
-  }
-  const month = date.toLocaleDateString("en-US", { month: "short" })
-  const day = date.getDate()
-  const year = date.getFullYear()
-  return `${month} ${day}, ${year}`
-}
-
-const getRelativeTime = (value: Date | string): string => {
+const getRelativeTime = (value: Date | string, timeZone?: string | null): string => {
   const date = toDate(value)
   if (Number.isNaN(date.getTime())) return "Just now"
   const diffInSeconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
@@ -45,7 +34,7 @@ const getRelativeTime = (value: Date | string): string => {
   if (diffInHours < 24) return `${diffInHours}h ago`
   const diffInDays = Math.floor(diffInHours / 24)
   if (diffInDays < 7) return `${diffInDays}d ago`
-  return formatDate(date)
+  return formatAttendanceDate(date, timeZone)
 }
 
 const getLateScheduleDisplay = (startTimeStr?: string | null, thresholdMinutes = 0): string => {
@@ -72,28 +61,26 @@ const DATE_FILTER_LABELS: Record<DateFilter, string> = {
   week: "This Week",
 }
 
-const getDateRange = (filter: DateFilter): { start: string; end: string } => {
-  const now = new Date()
-  const today = getLocalDateString(now)
+const getDateRange = (
+  filter: DateFilter,
+  timeZone?: string | null,
+): { start: string; end: string } => {
+  const today = getAttendanceDateString(new Date(), timeZone)
 
   if (filter === "today") return { start: today, end: today }
 
   if (filter === "yesterday") {
-    const yesterday = new Date(now)
-    yesterday.setDate(yesterday.getDate() - 1)
-    const y = getLocalDateString(yesterday)
+    const y = addAttendanceDays(today, -1)
     return { start: y, end: y }
   }
 
-  // This week: Monday to today
-  const monday = new Date(now)
-  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
-  return { start: getLocalDateString(monday), end: today }
+  return { start: getAttendanceWeekStart(today), end: today }
 }
 
 export function Overview({ group, members, onAddMember }: OverviewProps) {
   const fetchOverviewData = useGroupStore((state) => state.fetchOverviewData)
   const stats = useGroupStore((state) => state.overviewStats[group.id])
+  const attendanceTimeZone = useAttendanceStore((state) => state.attendanceTimezone)
 
   const [activitySearch, setActivitySearch] = useState("")
   const [dateFilter, setDateFilter] = useState<DateFilter>("today")
@@ -142,7 +129,10 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
     : dateFilter === "yesterday" ? "max-w-[280px]"
     : "max-w-[290px]"
 
-  const { start, end } = useMemo(() => getDateRange(dateFilter), [dateFilter])
+  const { start, end } = useMemo(
+    () => getDateRange(dateFilter, attendanceTimeZone),
+    [dateFilter, attendanceTimeZone],
+  )
   const cacheKey = `${start}_${end}`
 
   const cachedRecords = useGroupStore((state) => state.overviewRecords[group.id]?.[cacheKey])
@@ -182,9 +172,9 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
   }, [recentRecords, activitySearch, displayNameMap])
 
   const loadOverviewData = useCallback(async () => {
-    const { start, end } = getDateRange(dateFilter)
+    const { start, end } = getDateRange(dateFilter, attendanceTimeZone)
     await fetchOverviewData(group.id, start, end, false)
-  }, [group.id, dateFilter, fetchOverviewData])
+  }, [group.id, dateFilter, fetchOverviewData, attendanceTimeZone])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -494,14 +484,22 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                                 </span>
                                 <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-white/65">
                                   <Clock className="size-2.5 opacity-70" />
-                                  <span>{formatTime(record.timestamp)}</span>
+                                  <span>
+                                    {formatAttendanceTime(
+                                      record.timestamp,
+                                      record.timestamp_timezone || attendanceTimeZone,
+                                    )}
+                                  </span>
                                 </div>
                               </div>
                             </div>
 
                             <div className="flex items-center gap-4">
                               <span className="text-[12px] font-medium text-white/55">
-                                {getRelativeTime(record.timestamp)}
+                                {getRelativeTime(
+                                  record.timestamp,
+                                  record.timestamp_timezone || attendanceTimeZone,
+                                )}
                               </span>
                             </div>
                           </div>

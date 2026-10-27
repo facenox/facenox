@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { UserPlus, X } from "lucide-react"
 import { useGroupStore } from "@/components/group/stores"
-import { getLocalDateString } from "@/utils"
+import { useAttendanceStore } from "@/components/main/stores"
+import { getAttendanceDateString } from "@/utils/attendanceTime"
 import type { AttendanceGroup } from "@/types/recognition"
 
 import { useReportData } from "@/components/group/sections/reports/hooks/useReportData"
@@ -70,15 +71,24 @@ export function Reports({
   }, [group.settings?.attendance_mode, group.settings?.track_checkout])
   const defaultColumnPresets = useMemo(() => [DEFAULT_COLUMNS, CHECKOUT_DEFAULT_COLUMNS], [])
 
-  const [reportStartDate, setReportStartDate] = useState<string>(getLocalDateString())
-  const [reportEndDate, setReportEndDate] = useState<string>(getLocalDateString())
-
-  const { report, sessions, members, loading, error, generateReport } = useReportData(
-    group,
-    storeMembers,
-    reportStartDate,
-    reportEndDate,
+  const configuredTimeZone = useAttendanceStore((state) => state.attendanceTimezone)
+  const [reportStartDate, setReportStartDate] = useState<string>(() =>
+    getAttendanceDateString(new Date(), configuredTimeZone),
   )
+  const [reportEndDate, setReportEndDate] = useState<string>(() =>
+    getAttendanceDateString(new Date(), configuredTimeZone),
+  )
+
+  const {
+    report,
+    sessions,
+    members,
+    loading,
+    error,
+    attendanceTimeZone: loadedAttendanceTimeZone,
+    generateReport,
+  } = useReportData(group, storeMembers, reportStartDate, reportEndDate)
+  const attendanceTimeZone = loadedAttendanceTimeZone || configuredTimeZone
 
   const hasMembers = members.length > 0 || storeMembers.length > 0
 
@@ -105,6 +115,7 @@ export function Reports({
     groupBy,
     statusFilter,
     search,
+    attendanceTimeZone,
   )
 
   const modeVisibleColumns = useMemo(() => {
@@ -136,8 +147,17 @@ export function Reports({
       group.name,
       reportStartDate,
       reportEndDate,
+      attendanceTimeZone,
     )
-  }, [groupedRows, modeVisibleColumns, allColumns, group.name, reportStartDate, reportEndDate])
+  }, [
+    groupedRows,
+    modeVisibleColumns,
+    allColumns,
+    group.name,
+    reportStartDate,
+    reportEndDate,
+    attendanceTimeZone,
+  ])
 
   const handleOpenExportAllModal = useCallback(() => {
     setShowExportAllModal(true)
@@ -147,14 +167,29 @@ export function Reports({
     async (format: ExportAllGroupsFormat) => {
       const allGroups = useGroupStore.getState().groups
       if (format === "excel") {
-        await exportAllGroupsReportToExcel(allGroups, reportStartDate, reportEndDate)
+        await exportAllGroupsReportToExcel(
+          allGroups,
+          reportStartDate,
+          reportEndDate,
+          attendanceTimeZone,
+        )
       } else if (format === "individual") {
-        await exportAllGroupsReportToIndividualCSVs(allGroups, reportStartDate, reportEndDate)
+        await exportAllGroupsReportToIndividualCSVs(
+          allGroups,
+          reportStartDate,
+          reportEndDate,
+          attendanceTimeZone,
+        )
       } else {
-        await exportAllGroupsReportToCSV(allGroups, reportStartDate, reportEndDate)
+        await exportAllGroupsReportToCSV(
+          allGroups,
+          reportStartDate,
+          reportEndDate,
+          attendanceTimeZone,
+        )
       }
     },
-    [reportStartDate, reportEndDate],
+    [reportStartDate, reportEndDate, attendanceTimeZone],
   )
 
   useEffect(() => {
@@ -186,6 +221,7 @@ export function Reports({
               setSearch={setSearch}
               allColumns={allColumns}
               unavailableColumns={unavailableColumns}
+              attendanceTimeZone={attendanceTimeZone}
             />
           </div>
         )}
@@ -241,13 +277,15 @@ export function Reports({
                   statusFilter={statusFilter}
                   onResetFilter={() => setStatusFilter("all")}
                   onResetDates={() => {
-                    setReportStartDate(getLocalDateString())
-                    setReportEndDate(getLocalDateString())
+                    const today = getAttendanceDateString(new Date(), attendanceTimeZone)
+                    setReportStartDate(today)
+                    setReportEndDate(today)
                   }}
                   onEditRow={setEditingRow}
                   pageSize={pageSize}
                   onPageSizeChange={setPageSize}
                   error={error}
+                  attendanceTimeZone={attendanceTimeZone}
                 />
               </motion.div>
             }
@@ -260,6 +298,7 @@ export function Reports({
         onClose={() => setEditingRow(null)}
         row={editingRow}
         group={group}
+        attendanceTimeZone={attendanceTimeZone}
         onSuccess={(message, originalRow) => {
           setEditingRow(null)
           generateReport()

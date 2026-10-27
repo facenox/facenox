@@ -10,7 +10,12 @@ import {
   SlidersHorizontal,
 } from "lucide-react"
 import { Dropdown, Tooltip } from "@/components/shared"
-import { getLocalDateString, parseLocalDate } from "@/utils"
+import { parseLocalDate } from "@/utils"
+import {
+  addAttendanceDays,
+  getAttendanceDateString,
+  getAttendanceWeekStart,
+} from "@/utils/attendanceTime"
 import type {
   ColumnKey,
   GroupByKey,
@@ -34,6 +39,7 @@ interface ReportToolbarProps {
 
   allColumns: readonly { key: ColumnKey; label: string }[]
   unavailableColumns: readonly { key: ColumnKey; label: string; reason: string }[]
+  attendanceTimeZone?: string | null
 }
 
 const STATUS_OPTIONS = [
@@ -60,65 +66,39 @@ const DATE_PRESETS: { id: DatePreset; label: string }[] = [
   { id: "30days", label: "Last 30 Days" },
 ]
 
-function getPresetRange(preset: DatePreset): { start: string; end: string } {
-  const now = new Date()
-  const today = getLocalDateString(now)
+function getPresetRange(
+  preset: DatePreset,
+  timeZone?: string | null,
+): { start: string; end: string } {
+  const today = getAttendanceDateString(new Date(), timeZone)
 
   if (preset === "today") {
     return { start: today, end: today }
   }
   if (preset === "yesterday") {
-    const y = new Date(now)
-    y.setDate(y.getDate() - 1)
-    const yesterday = getLocalDateString(y)
+    const yesterday = addAttendanceDays(today, -1)
     return { start: yesterday, end: yesterday }
   }
   if (preset === "week") {
-    const monday = new Date(now)
-    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
-    return { start: getLocalDateString(monday), end: today }
+    return { start: getAttendanceWeekStart(today), end: today }
   }
   if (preset === "7days") {
-    const d7 = new Date(now)
-    d7.setDate(now.getDate() - 6)
-    return { start: getLocalDateString(d7), end: today }
+    return { start: addAttendanceDays(today, -6), end: today }
   }
   if (preset === "month") {
-    const m1 = new Date(now.getFullYear(), now.getMonth(), 1)
-    return { start: getLocalDateString(m1), end: today }
+    return { start: `${today.slice(0, 7)}-01`, end: today }
   }
   if (preset === "30days") {
-    const d30 = new Date(now)
-    d30.setDate(now.getDate() - 29)
-    return { start: getLocalDateString(d30), end: today }
+    return { start: addAttendanceDays(today, -29), end: today }
   }
   return { start: today, end: today }
 }
 
-function getDisplayDateLabel(startDate: string, endDate: string): string {
-  const now = new Date()
-  const today = getLocalDateString(now)
-  const y = new Date(now)
-  y.setDate(y.getDate() - 1)
-  const yesterday = getLocalDateString(y)
-
-  if (startDate === today && endDate === today) return "Today"
-  if (startDate === yesterday && endDate === yesterday) return "Yesterday"
-
-  const monday = new Date(now)
-  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
-  if (startDate === getLocalDateString(monday) && endDate === today) return "This Week"
-
-  const d7 = new Date(now)
-  d7.setDate(now.getDate() - 6)
-  if (startDate === getLocalDateString(d7) && endDate === today) return "Last 7 Days"
-
-  const m1 = new Date(now.getFullYear(), now.getMonth(), 1)
-  if (startDate === getLocalDateString(m1) && endDate === today) return "This Month"
-
-  const d30 = new Date(now)
-  d30.setDate(now.getDate() - 29)
-  if (startDate === getLocalDateString(d30) && endDate === today) return "Last 30 Days"
+function getDisplayDateLabel(startDate: string, endDate: string, timeZone?: string | null): string {
+  for (const preset of DATE_PRESETS) {
+    const range = getPresetRange(preset.id, timeZone)
+    if (startDate === range.start && endDate === range.end) return preset.label
+  }
 
   const s = parseLocalDate(startDate)
   const e = parseLocalDate(endDate)
@@ -158,6 +138,7 @@ export function ReportToolbar({
   setSearch,
   allColumns,
   unavailableColumns,
+  attendanceTimeZone,
 }: ReportToolbarProps) {
   const [showOptions, setShowOptions] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
@@ -241,17 +222,17 @@ export function ReportToolbar({
   }
 
   const dateRangeLabel = useMemo(
-    () => getDisplayDateLabel(startDate, endDate),
-    [startDate, endDate],
+    () => getDisplayDateLabel(startDate, endDate, attendanceTimeZone),
+    [startDate, endDate, attendanceTimeZone],
   )
 
   const activePreset = useMemo(() => {
     for (const p of DATE_PRESETS) {
-      const r = getPresetRange(p.id)
+      const r = getPresetRange(p.id, attendanceTimeZone)
       if (r.start === startDate && r.end === endDate) return p.id
     }
     return null
-  }, [startDate, endDate])
+  }, [startDate, endDate, attendanceTimeZone])
 
   const isSearchExpanded = search.trim().length > 0 || isSearchFocused || shouldKeepExpanded
   const searchBarMaxWidthClass = isSearchExpanded ? "max-w-[340px]" : "max-w-[320px]"
@@ -320,7 +301,7 @@ export function ReportToolbar({
                           type="button"
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => {
-                            const range = getPresetRange(id)
+                            const range = getPresetRange(id, attendanceTimeZone)
                             onStartDateChange(range.start)
                             onEndDateChange(range.end)
                             setDateDropdownOpen(false)

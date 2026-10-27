@@ -6,7 +6,7 @@ import { attendanceManager } from "@/services/AttendanceManager"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { useGroupStore } from "@/components/group/stores"
 import { getActiveWebSocketService } from "@/services/WebSocketService"
-import { getLocalDateString } from "@/utils"
+import { getAttendanceDateString } from "@/utils/attendanceTime"
 import type { AttendanceRecord } from "@/components/main/types"
 
 interface ManualCorrectionModalProps {
@@ -76,7 +76,7 @@ export function ManualCorrectionModal({
 
       // Refresh Overview cache so Activity Log shows up-to-date data immediately
       if (record.group_id) {
-        const today = getLocalDateString(new Date())
+        const today = getAttendanceDateString(new Date(), store.attendanceTimezone)
         await useGroupStore.getState().fetchOverviewData(record.group_id, today, today)
       }
 
