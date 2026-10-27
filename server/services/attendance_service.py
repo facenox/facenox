@@ -505,7 +505,7 @@ class AttendanceService:
             time_health_payload["current_time_local"] = current_time.isoformat()
             time_health_payload["time_zone_name"] = attendance_zone
             if current_time.utcoffset() != time_health.current_time_local.utcoffset():
-                warning = "Kiosk clock timezone differs from the configured attendance location."
+                warning = "Your device timezone doesn't match the configured attendance timezone."
                 time_health_payload["warning_message"] = " ".join(
                     filter(None, [time_health_payload.get("warning_message"), warning])
                 )

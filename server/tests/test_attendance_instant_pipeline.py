@@ -83,10 +83,13 @@ class AttendancePipelineTests(unittest.IsolatedAsyncioTestCase):
             )
         )
         event = AttendanceEventCreate(person_id="p", confidence=1)
-        self.assertTrue(
-            (
-                await self.service.process_event(event, self.member, self.settings)
-            ).processed
+        check_in_response = await self.service.process_event(
+            event, self.member, self.settings
+        )
+        self.assertTrue(check_in_response.processed)
+        self.assertEqual(
+            check_in_response.time_health.warning_message,
+            "Your device timezone doesn't match the configured attendance timezone.",
         )
         await self.session.commit()
         response = await self.service.process_event(event, self.member, self.settings)
