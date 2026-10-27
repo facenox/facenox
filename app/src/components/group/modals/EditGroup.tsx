@@ -5,6 +5,7 @@ import { attendanceManager } from "@/services"
 import type { AttendanceGroup, AttendanceMode } from "@/types/recognition"
 import { ErrorMessage, FormInput, Modal } from "@/components/common"
 import { Dropdown, Switch } from "@/components/shared"
+import { AttendanceModeInfoPopover } from "@/components/group/shared"
 
 interface EditGroupProps {
   isOpen: boolean
@@ -134,9 +135,12 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
             />
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-md border border-white/8 bg-white/[0.025] px-3 py-3">
+          <div className="flex items-center justify-between gap-4 px-0.5 py-1">
             <div>
-              <div className="text-xs font-semibold text-white/90">Attendance mode</div>
+              <div className="flex items-center gap-1.5">
+                <div className="text-xs font-semibold text-white/90">Attendance mode</div>
+                <AttendanceModeInfoPopover />
+              </div>
               <div className="text-[11px] text-white/55">Choose what to record for this group.</div>
             </div>
             <div className="flex w-[180px] shrink-0 justify-end">

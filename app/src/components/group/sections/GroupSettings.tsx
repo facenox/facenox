@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { AlertTriangle, ChevronDown, Clock, Loader2, Lock } from "lucide-react"
 import { Dropdown, InfoPopover, Switch } from "@/components/shared"
+import { AttendanceModeInfoPopover } from "@/components/group/shared"
 import { attendanceManager } from "@/services"
 import { useGroupStore } from "@/components/group/stores"
 import { useCloudSyncStatus } from "@/components/common"
@@ -208,16 +209,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <div className="text-sm font-medium text-white/90">Attendance mode</div>
-                    <InfoPopover
-                      title="Attendance mode"
-                      description="Choose what to record for this group."
-                      details={[
-                        "Attendance records one presence per member each day.",
-                        "Time in & time out records one arrival and departure per member each day.",
-                        "Visits records separate visits when members leave and return.",
-                      ]}
-                      side="right"
-                    />
+                    <AttendanceModeInfoPopover />
                   </div>
                   <div className="text-xs font-normal text-white/65">
                     Choose what to record for this group.
