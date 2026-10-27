@@ -27,14 +27,15 @@ class FaceRecognizer:
         input_size: Tuple[int, int],
         similarity_threshold: float,
         providers: Optional[List[str]],
-        database_path: Optional[str],
+        legacy_database_path: Optional[str],
         session_options: Optional[Dict[str, Any]],
+        legacy_source_path: Optional[str] = None,
     ):
         self.model_path = model_path
         self.input_size = input_size
         self.similarity_threshold = similarity_threshold
         self.providers = providers or ["CPUExecutionProvider"]
-        self.database_path = database_path
+        self.legacy_database_path = legacy_database_path
 
         self.INPUT_MEAN = 127.5
         self.INPUT_STD = 127.5
@@ -43,15 +44,19 @@ class FaceRecognizer:
             model_path, self.providers, session_options
         )
 
-        if self.database_path:
-            if self.database_path.endswith(".json"):
-                self.sqlite_path = self.database_path.replace(".json", ".db")
+        if self.legacy_database_path:
+            if self.legacy_database_path.endswith(".json"):
+                self.legacy_sqlite_path = self.legacy_database_path.replace(
+                    ".json", ".db"
+                )
             else:
-                self.sqlite_path = self.database_path
+                self.legacy_sqlite_path = self.legacy_database_path
 
-            self.db_manager = FaceDatabaseManager(self.sqlite_path)
+            self.db_manager = FaceDatabaseManager(
+                self.legacy_sqlite_path, legacy_source_path=legacy_source_path
+            )
         else:
-            self.sqlite_path = None
+            self.legacy_sqlite_path = None
             self.db_manager = None
             logger.warning("No database path provided, running without persistence")
 
@@ -75,8 +80,8 @@ class FaceRecognizer:
         if not self.db_manager:
             return
         try:
-            backup_path = self.db_manager.finalize_legacy_migration()
-            if backup_path is not None:
+            backup_paths = self.db_manager.finalize_legacy_migration()
+            for backup_path in backup_paths:
                 logger.info("Archived imported legacy face database at %s", backup_path)
         except OSError as exc:
             logger.warning(
@@ -92,7 +97,7 @@ class FaceRecognizer:
     def _get_db_manager(
         self, organization_id: Optional[str] = None
     ) -> Optional[FaceDatabaseManager]:
-        if self.sqlite_path is None:
+        if self.legacy_sqlite_path is None:
             return None
 
         if organization_id is None:
@@ -101,9 +106,7 @@ class FaceRecognizer:
         cache_key = self._cache_key(organization_id)
         manager = self._db_managers.get(cache_key)
         if manager is None:
-            manager = FaceDatabaseManager(
-                self.sqlite_path, organization_id=organization_id
-            )
+            manager = FaceDatabaseManager(organization_id=organization_id)
             self._db_managers[cache_key] = manager
         return manager
 

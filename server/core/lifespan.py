@@ -13,6 +13,7 @@ from config.models import (
     FACE_RECOGNIZER_MODEL_PATH,
     LIVENESS_DETECTOR_CONFIG,
 )
+from config.paths import get_legacy_face_database_path
 from core.models import (
     LivenessDetector,
     FaceDetector,
@@ -63,13 +64,17 @@ async def lifespan(app: FastAPI):
             )
 
         def _load_face_recognizer():
+            legacy_source = get_legacy_face_database_path()
             return FaceRecognizer(
                 model_path=str(FACE_RECOGNIZER_MODEL_PATH),
                 input_size=FACE_RECOGNIZER_CONFIG["input_size"],
                 similarity_threshold=FACE_RECOGNIZER_CONFIG["similarity_threshold"],
                 providers=FACE_RECOGNIZER_CONFIG["providers"],
-                database_path=str(FACE_RECOGNIZER_CONFIG["database_path"]),
+                legacy_database_path=str(
+                    FACE_RECOGNIZER_CONFIG["legacy_database_path"]
+                ),
                 session_options=FACE_RECOGNIZER_CONFIG["session_options"],
+                legacy_source_path=str(legacy_source) if legacy_source else None,
             )
 
         async def _load_with_progress(loader, detail: str):

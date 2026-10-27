@@ -20,6 +20,18 @@ beforeEach(() => {
     value: createFacenoxElectronMock(),
   })
 
+  Object.defineProperty(window, "scrollTo", {
+    configurable: true,
+    writable: true,
+    value: vi.fn(),
+  })
+
+  Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+    configurable: true,
+    writable: true,
+    value: vi.fn(() => null),
+  })
+
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
     writable: true,

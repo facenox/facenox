@@ -1,4 +1,4 @@
-from .paths import BASE_DIR, PROJECT_ROOT, MODELS_DIR, DATA_DIR
+from .paths import BASE_DIR, PROJECT_ROOT, MODELS_DIR, DATA_DIR, LOG_DIR
 from .server import SERVER_CONFIG, get_server_config
 from .cors import CORS_CONFIG
 from .onnx import OPTIMIZED_PROVIDERS, OPTIMIZED_SESSION_OPTIONS
@@ -20,6 +20,7 @@ __all__ = [
     "PROJECT_ROOT",
     "MODELS_DIR",
     "DATA_DIR",
+    "LOG_DIR",
     "SERVER_CONFIG",
     "get_server_config",
     "CORS_CONFIG",

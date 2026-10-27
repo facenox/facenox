@@ -61,9 +61,9 @@ declare global {
     }>
     exportHealth: () => Promise<{ success: boolean; path: string }>
     getVersion: () => Promise<string>
-    openDataDir: () => Promise<{ success: boolean; path: string }>
+    openDataDir: () => Promise<{ success: boolean; path: string; error?: string }>
     openInstallDir: () => Promise<{ success: boolean; path: string }>
-    openLogFile: () => Promise<{ success: boolean; path: string }>
+    openLogFile: () => Promise<{ success: boolean; path: string; error?: string }>
     onAppReady: () => void
   }
 

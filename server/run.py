@@ -11,7 +11,7 @@ from config.models import validate_model_paths, validate_directories
 from config.logging_config import get_logging_config
 from config.server import get_server_config
 from config.paths import BASE_DIR
-from database.migrate import run_migrations
+from bootstrap import ensure_database_selected
 from startup_progress import emit_startup_progress
 
 sys.path.insert(0, str(BASE_DIR))
@@ -83,7 +83,7 @@ def main():
         sys.exit(1)
 
     emit_startup_progress(1, "Setup verified")
-    run_migrations()
+    ensure_database_selected()
     emit_startup_progress(2, "Migrations complete")
 
     server_config = config["server"].copy()

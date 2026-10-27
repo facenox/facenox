@@ -2,7 +2,7 @@ import { ipcMain, shell, app } from "electron"
 import path from "path"
 import fs from "node:fs"
 import { diagnosticsService } from "../services/DiagnosticsService.js"
-import isDev from "../util.js"
+import { getDataDirectory, getLogDirectory } from "../paths.js"
 
 export function registerSystemHandlers() {
   ipcMain.handle("system:get-stats", () => {
@@ -27,9 +27,10 @@ export function registerSystemHandlers() {
   })
 
   ipcMain.handle("system:open-data-dir", async () => {
-    const dataPath = isDev() ? path.join(app.getAppPath(), "..", "data") : app.getPath("userData")
-    await shell.openPath(dataPath)
-    return { success: true, path: dataPath }
+    const dataPath = getDataDirectory()
+    fs.mkdirSync(dataPath, { recursive: true })
+    const error = await shell.openPath(dataPath)
+    return error ? { success: false, path: dataPath, error } : { success: true, path: dataPath }
   })
 
   ipcMain.handle("system:open-install-dir", async () => {
@@ -39,7 +40,7 @@ export function registerSystemHandlers() {
   })
 
   ipcMain.handle("system:open-log-file", async () => {
-    const logDir = isDev() ? path.join(app.getAppPath(), "..", "data") : app.getPath("userData")
+    const logDir = getLogDirectory()
     const logFile = path.join(logDir, "facenox.log")
     if (!fs.existsSync(logFile)) {
       if (!fs.existsSync(logDir)) {
@@ -51,6 +52,8 @@ export function registerSystemHandlers() {
     if (errorMsg) {
       shell.showItemInFolder(logFile)
     }
-    return { success: true, path: logFile }
+    return errorMsg ?
+        { success: false, path: logFile, error: errorMsg }
+      : { success: true, path: logFile }
   })
 }

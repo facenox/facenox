@@ -546,7 +546,14 @@ export function DataStorage({
                 type="button"
                 aria-label="Open data folder"
                 onClick={async () => {
-                  await window.facenoxElectron?.openDataDir()
+                  try {
+                    const result = await window.facenoxElectron?.openDataDir()
+                    if (result && !result.success) {
+                      setError(result.error ?? "Facenox couldn't open the data folder.")
+                    }
+                  } catch {
+                    setError("Facenox couldn't open the data folder.")
+                  }
                 }}
                 className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
                 <FolderOpen className="size-3 text-white/50" />
@@ -556,7 +563,14 @@ export function DataStorage({
                 type="button"
                 aria-label="View system log"
                 onClick={async () => {
-                  await window.facenoxElectron?.openLogFile()
+                  try {
+                    const result = await window.facenoxElectron?.openLogFile()
+                    if (result && !result.success) {
+                      setError(result.error ?? "Facenox couldn't open the system log.")
+                    }
+                  } catch {
+                    setError("Facenox couldn't open the system log.")
+                  }
                 }}
                 className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
                 <FileText className="size-3 text-white/50" />

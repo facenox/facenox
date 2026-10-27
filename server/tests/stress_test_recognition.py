@@ -501,7 +501,7 @@ async def main():
         input_size=FACE_RECOGNIZER_CONFIG["input_size"],
         similarity_threshold=FACE_RECOGNIZER_CONFIG["similarity_threshold"],
         providers=FACE_RECOGNIZER_CONFIG["providers"],
-        database_path=TEST_FACE_DB_PATH,
+        legacy_database_path=TEST_FACE_DB_PATH,
         session_options=FACE_RECOGNIZER_CONFIG["session_options"],
     )
     await face_recognizer.initialize()

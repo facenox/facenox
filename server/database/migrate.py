@@ -21,6 +21,7 @@ from alembic.script import ScriptDirectory
 from config.paths import (
     ALEMBIC_CONFIG_PATH,
     DATA_DIR,
+    LEGACY_DATA_ENV,
     MIGRATIONS_DIR,
     set_active_database_path,
 )
@@ -680,7 +681,7 @@ def _legacy_source(data_dir: Path) -> tuple[Path | None, Path | None]:
     local = data_dir / DB_FILENAME
     if local.exists() and local.stat().st_size:
         return local, data_dir
-    legacy_value = os.getenv("FACENOX_LEGACY_DATA_DIR")
+    legacy_value = os.getenv(LEGACY_DATA_ENV)
     if legacy_value:
         legacy_dir = Path(legacy_value).resolve()
         legacy = legacy_dir / DB_FILENAME

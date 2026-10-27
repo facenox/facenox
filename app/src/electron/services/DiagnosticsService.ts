@@ -3,7 +3,7 @@ import fs from "fs"
 import path from "path"
 import { app } from "electron"
 import { backendService } from "../backendService.js"
-import isDev from "../util.js"
+import { getLogDirectory } from "../paths.js"
 
 export interface SystemHealthReport {
   timestamp: string
@@ -33,20 +33,22 @@ export class DiagnosticsService {
     const totalMem = os.totalmem()
     const freeMem = os.freemem()
 
-    // Get last 100 lines of facenox.log
-    const logDir = isDev() ? path.join(process.cwd(), "..", "data") : app.getPath("userData")
-    const logPath = path.join(logDir, "facenox.log")
+    const logDir = getLogDirectory()
+    const logPaths = [path.join(logDir, "facenox.log"), path.join(logDir, "server.log")]
 
-    let logs: string[]
-    try {
-      if (fs.existsSync(logPath)) {
-        const content = fs.readFileSync(logPath, "utf8")
-        logs = content.split(/\r?\n/).slice(-100)
-      } else {
-        logs = [`No system logs found at ${logPath}`]
+    const logs: string[] = []
+    for (const logPath of logPaths) {
+      try {
+        if (fs.existsSync(logPath)) {
+          logs.push(`[${path.basename(logPath)}]`)
+          logs.push(...fs.readFileSync(logPath, "utf8").split(/\r?\n/).slice(-50))
+        }
+      } catch (error) {
+        logs.push(`Failed to read ${path.basename(logPath)}: ${error}`)
       }
-    } catch (error) {
-      logs = [`Failed to read logs: ${error}`]
+    }
+    if (logs.length === 0) {
+      logs.push(`No system logs found at ${logDir}`)
     }
 
     return {

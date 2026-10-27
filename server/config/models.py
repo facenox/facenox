@@ -24,7 +24,7 @@ MODEL_CONFIGS = {
         "providers": OPTIMIZED_PROVIDERS,
         "session_options": OPTIMIZED_SESSION_OPTIONS,
         "embedding_dimension": 512,
-        "database_path": DATA_DIR / "face_database.db",
+        "legacy_database_path": DATA_DIR / "face_database.db",
     },
     "face_tracker": {
         "track_thresh": 0.5,

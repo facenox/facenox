@@ -10,6 +10,7 @@ import sqlite3
 import time
 import numpy as np
 import logging
+from contextlib import closing
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 
@@ -26,6 +27,7 @@ class FaceDatabaseManager:
     def __init__(
         self,
         legacy_database_path: Optional[str] = None,
+        legacy_source_path: Optional[str] = None,
         organization_id: Optional[str] = None,
     ):
         """
@@ -36,6 +38,9 @@ class FaceDatabaseManager:
             organization_id: Optional organization ID for multi-tenant isolation.
         """
         self.legacy_path = Path(legacy_database_path) if legacy_database_path else None
+        self.legacy_source_path = (
+            Path(legacy_source_path) if legacy_source_path else None
+        )
         self.organization_id = organization_id
         self._legacy_import_succeeded = False
 
@@ -200,15 +205,13 @@ class FaceDatabaseManager:
         try:
             logger.info(f"Starting legacy migration from {self.legacy_path}")
 
-            # Connect to legacy SQLite
-            conn = sqlite3.connect(str(self.legacy_path))
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-
-            cursor.execute(
-                "SELECT person_id, embedding, embedding_dimension FROM faces"
-            )
-            rows = cursor.fetchall()
+            with closing(sqlite3.connect(str(self.legacy_path))) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT person_id, embedding, embedding_dimension FROM faces"
+                )
+                rows = cursor.fetchall()
 
             migrated_count = 0
             async with AsyncSessionLocal() as session:
@@ -221,17 +224,29 @@ class FaceDatabaseManager:
                     migrated_count += 1
                 await session.commit()
 
-            conn.close()
-
             # Archive only after the generation is confirmed healthy.
             self._legacy_import_succeeded = True
             return True, f"Imported {migrated_count} records from legacy database."
 
         except Exception as e:
             logger.error(f"Migration failed: {e}")
-            return False, f"Migration failed: {str(e)}"
+            raise RuntimeError(f"Legacy face migration failed: {e}") from e
 
-    def finalize_legacy_migration(self) -> Optional[Path]:
+    @staticmethod
+    def _archive_legacy_database(database_path: Path) -> Path:
+        backup_path = database_path.with_suffix(".db.bak")
+        if backup_path.exists():
+            backup_path = database_path.with_name(
+                f"{database_path.name}.{time.time_ns()}.bak"
+            )
+        os.replace(database_path, backup_path)
+        for suffix in ("-wal", "-shm", "-journal"):
+            sidecar = database_path.with_name(database_path.name + suffix)
+            if sidecar.exists():
+                os.replace(sidecar, backup_path.with_name(backup_path.name + suffix))
+        return backup_path
+
+    def finalize_legacy_migration(self) -> List[Path]:
         """Archive a successfully imported legacy DB after startup is committed."""
 
         if (
@@ -239,16 +254,20 @@ class FaceDatabaseManager:
             or self.legacy_path is None
             or not self.legacy_path.exists()
         ):
-            return None
+            return []
 
-        backup_path = self.legacy_path.with_suffix(".db.bak")
-        if backup_path.exists():
-            backup_path = self.legacy_path.with_name(
-                f"{self.legacy_path.name}.{time.time_ns()}.bak"
-            )
-        os.replace(self.legacy_path, backup_path)
+        archived: List[Path] = []
+        seen: set[Path] = set()
+        for database_path in (self.legacy_path, self.legacy_source_path):
+            if database_path is None or not database_path.exists():
+                continue
+            resolved = database_path.resolve()
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            archived.append(self._archive_legacy_database(database_path))
         self._legacy_import_succeeded = False
-        return backup_path
+        return archived
 
     def close(self):
         pass

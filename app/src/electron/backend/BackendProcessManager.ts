@@ -5,6 +5,7 @@ import path from "path"
 import fs from "fs"
 import { promisify } from "util"
 import isDev from "../util.js"
+import { getDataDirectory, getLogDirectory } from "../paths.js"
 
 const sleep = promisify(setTimeout)
 const execAsync = promisify(exec)
@@ -233,13 +234,14 @@ export class BackendProcessManager {
         FACENOX_API_TOKEN: this.token,
       }
 
-      let productionLogDir: string | null = null
+      const logDir = getLogDirectory()
+      fs.mkdirSync(logDir, { recursive: true })
+      env.FACENOX_LOG_DIR = logDir
+
       if (!isDev()) {
         const userDataDir = app.getPath("userData")
-        const durableDataDir = path.join(userDataDir, "data")
-        productionLogDir = path.join(userDataDir, "logs")
+        const durableDataDir = getDataDirectory()
         fs.mkdirSync(durableDataDir, { recursive: true })
-        fs.mkdirSync(productionLogDir, { recursive: true })
         env.FACENOX_DATA_DIR = durableDataDir
         env.FACENOX_LEGACY_DATA_DIR = userDataDir
       }
@@ -251,11 +253,6 @@ export class BackendProcessManager {
         env,
       })
 
-      const logDir =
-        isDev() ?
-          path.join(process.cwd(), "..", "data")
-        : (productionLogDir ?? path.join(app.getPath("userData"), "logs"))
-      fs.mkdirSync(logDir, { recursive: true })
       this.logFilePath = path.join(logDir, "facenox.log")
       this.logOldFilePath = path.join(logDir, "facenox.old.log")
       const logFileLegacy = path.join(logDir, "backend-startup.log")

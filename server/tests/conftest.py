@@ -52,11 +52,13 @@ def async_session_factory(tmp_path):
 
 @pytest.fixture
 def test_client(tmp_path, monkeypatch):
+    db_path = tmp_path / "attendance-api.db"
+    monkeypatch.setenv("FACENOX_ACTIVE_DB_PATH", str(db_path))
+
     from api.deps import get_db
     import database.session as database_session
     from main import app
 
-    db_path = tmp_path / "attendance-api.db"
     engine = create_async_engine(
         f"sqlite+aiosqlite:///{db_path}",
         connect_args={"check_same_thread": False},

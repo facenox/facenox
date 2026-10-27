@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 import json
@@ -497,6 +498,57 @@ def test_external_legacy_import_is_non_destructive_and_wal_safe(tmp_path, monkey
         assert _hash(legacy_face_db) == legacy_face_hash
     finally:
         writer.close()
+
+
+def test_completed_external_face_import_is_not_restaged(tmp_path):
+    from database.face import FaceDatabaseManager
+
+    legacy_dir = tmp_path / "legacy"
+    legacy_dir.mkdir()
+    legacy_face_db = legacy_dir / "face_database.db"
+    with closing(sqlite3.connect(legacy_face_db)) as connection:
+        connection.execute(
+            "CREATE TABLE faces "
+            "(person_id TEXT, embedding BLOB, embedding_dimension INTEGER)"
+        )
+        connection.execute(
+            "INSERT INTO faces VALUES ('legacy-face', ?, 2)", (bytes(8),)
+        )
+        connection.commit()
+
+    data_dir = tmp_path / "data"
+    migrate._stage_legacy_face_database(data_dir, legacy_dir)
+    staged_face_db = data_dir / "face_database.db"
+    manager = FaceDatabaseManager(
+        str(staged_face_db), legacy_source_path=str(legacy_face_db)
+    )
+    manager._legacy_import_succeeded = True
+
+    archived = manager.finalize_legacy_migration()
+
+    assert len(archived) == 2
+    assert all(path.exists() for path in archived)
+    assert not staged_face_db.exists()
+    assert not legacy_face_db.exists()
+
+    migrate._stage_legacy_face_database(data_dir, legacy_dir)
+    assert not staged_face_db.exists()
+
+
+def test_invalid_legacy_face_database_fails_closed(tmp_path):
+    from database.face import FaceDatabaseManager
+
+    legacy_face_db = tmp_path / "face_database.db"
+    with closing(sqlite3.connect(legacy_face_db)) as connection:
+        connection.execute("CREATE TABLE unexpected (id INTEGER PRIMARY KEY)")
+        connection.commit()
+
+    manager = FaceDatabaseManager(str(legacy_face_db))
+
+    with pytest.raises(RuntimeError, match="Legacy face migration failed"):
+        asyncio.run(manager.migrate_legacy_data())
+
+    assert legacy_face_db.exists()
 
 
 def test_authenticated_pointer_recovers_from_highest_healthy_generation(tmp_path):

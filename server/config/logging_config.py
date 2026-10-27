@@ -33,7 +33,7 @@ def get_logging_config():
     This is generated dynamically to ensure it uses the correct paths
     resolved at runtime.
     """
-    from config.paths import DATA_DIR
+    from config.paths import LOG_DIR
 
     # Define base configuration
     config = {
@@ -60,7 +60,7 @@ def get_logging_config():
                 "class": "logging.handlers.RotatingFileHandler",
                 "level": "INFO",
                 "formatter": "default",
-                "filename": str(DATA_DIR / "server.log"),
+                "filename": str(LOG_DIR / "server.log"),
                 "maxBytes": 10485760,  # 10MB
                 "backupCount": 5,
                 "encoding": "utf8",

@@ -12,6 +12,7 @@ import { TrayManager } from "./tray/TrayManager.js"
 import { registerAllHandlers } from "./ipc/index.js"
 import { syncManager } from "./managers/BackgroundSyncManager.js"
 import { autoExportManager } from "./managers/AutoExportManager.js"
+import { getDataDirectory } from "./paths.js"
 
 const main_filename = fileURLToPath(import.meta.url)
 const main_dirname = path.dirname(main_filename)
@@ -138,10 +139,7 @@ app.whenReady().then(async () => {
       app.relaunch()
       app.exit(0)
     } else if (response === 1) {
-      const dataPath =
-        isDev() ?
-          path.join(process.cwd(), "..", "data")
-        : path.join(app.getPath("userData"), "data")
+      const dataPath = getDataDirectory()
       fs.mkdirSync(dataPath, { recursive: true })
       await shell.openPath(dataPath)
       app.quit()

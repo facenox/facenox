@@ -8,21 +8,19 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi import Request
 
-# Select the database before SQLAlchemy is imported.
-if __name__ == "__main__":
-    from database.migrate import run_migrations as _run_startup_migrations
+from bootstrap import ensure_database_selected
 
-    _run_startup_migrations()
+ensure_database_selected()
 
-from config.models import (
+from config.models import (  # noqa: E402
     FACE_DETECTOR_CONFIG,
     FACE_RECOGNIZER_CONFIG,
     FACE_TRACKER_CONFIG,
     LIVENESS_DETECTOR_CONFIG,
 )
-from core.lifespan import lifespan
-from api.endpoints import router
-from middleware.cors import setup_cors
+from core.lifespan import lifespan  # noqa: E402
+from api.endpoints import router  # noqa: E402
+from middleware.cors import setup_cors  # noqa: E402
 
 if not logging.getLogger().handlers:
     from config.logging_config import get_logging_config

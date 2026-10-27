@@ -8,6 +8,7 @@ IS_FROZEN = getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS")
 
 APP_NAME = "Facenox"
 ACTIVE_DATABASE_ENV = "FACENOX_ACTIVE_DB_PATH"
+LEGACY_DATA_ENV = "FACENOX_LEGACY_DATA_DIR"
 
 
 def get_base_dir() -> Path:
@@ -53,9 +54,22 @@ def get_data_dir() -> Path:
     return data_dir
 
 
+def get_log_dir(data_dir: Path) -> Path:
+    configured = os.getenv("FACENOX_LOG_DIR")
+    if configured:
+        log_dir = Path(configured)
+    elif IS_FROZEN:
+        log_dir = data_dir.parent / "logs"
+    else:
+        log_dir = data_dir
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir
+
+
 # Initialize core paths
 BASE_DIR = get_base_dir()
 DATA_DIR = get_data_dir()
+LOG_DIR = get_log_dir(DATA_DIR)
 MODELS_DIR = BASE_DIR / "assets" / "models"
 ALEMBIC_CONFIG_PATH = BASE_DIR / "alembic.ini"
 MIGRATIONS_DIR = BASE_DIR / "migrations"
@@ -75,6 +89,16 @@ def set_active_database_path(path: Path) -> Path:
     selected = path.resolve()
     os.environ[ACTIVE_DATABASE_ENV] = str(selected)
     return selected
+
+
+def get_legacy_face_database_path() -> Path | None:
+    configured = os.getenv(LEGACY_DATA_ENV)
+    if not configured:
+        return None
+    legacy_dir = Path(configured).resolve()
+    if legacy_dir == DATA_DIR.resolve():
+        return None
+    return legacy_dir / "face_database.db"
 
 
 # Helpers for specific path retrieval if needed dynamically
