@@ -232,15 +232,17 @@ export default function WindowBar() {
           <div
             style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
             className="pointer-events-auto relative flex items-center">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className={`flex h-5 w-5 items-center justify-center rounded border border-transparent bg-transparent text-white/40 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white/80 focus:outline-none active:scale-95 ${
-                isMenuOpen ? "border-white/10 bg-white/5 text-white/80" : ""
-              }`}
-              style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-              title="App menu">
-              <MoreVertical className="size-3" />
-            </button>
+            <Tooltip content="App menu" position="bottom" offset={6} disabled={isMenuOpen}>
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className={`flex h-5 w-5 items-center justify-center rounded border border-transparent bg-transparent text-white/40 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white/80 focus:outline-none active:scale-95 ${
+                  isMenuOpen ? "border-white/10 bg-white/5 text-white/80" : ""
+                }`}
+                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+                aria-label="App menu">
+                <MoreVertical className="size-3" />
+              </button>
+            </Tooltip>
             <AnimatePresence>
               {isMenuOpen && (
                 <>
