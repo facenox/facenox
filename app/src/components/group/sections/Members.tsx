@@ -412,7 +412,7 @@ export function Members({
                 </div>
                 <div className="flex items-center gap-4">
                   <AnimatePresence>
-                    {selectedIds.size >= 2 && selectedStats.eligible === 1 && (
+                    {selectedStats.eligible === 1 && (
                       <motion.div
                         key="enroll-single"
                         initial={{ opacity: 0, scale: 0.95, x: 10 }}
@@ -438,7 +438,7 @@ export function Members({
                       </motion.div>
                     )}
 
-                    {selectedIds.size >= 2 && selectedStats.eligible > 1 && (
+                    {selectedStats.eligible > 1 && (
                       <motion.div
                         key="enroll-multi"
                         initial={{ opacity: 0, scale: 0.95, x: 10 }}

@@ -32,6 +32,7 @@ export function EnrollmentAction({ memberId, isEnrolled }: EnrollmentActionProps
             <Tooltip content="Re-enroll member">
               <button
                 onClick={() => jumpToEnrollment(memberId)}
+                aria-label="Re-enroll member"
                 className="flex h-7 w-7 items-center justify-center rounded border-none bg-transparent text-white/55 transition-all hover:bg-white/10 hover:text-white">
                 <RotateCw className="size-3" />
               </button>

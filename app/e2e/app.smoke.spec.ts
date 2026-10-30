@@ -441,4 +441,28 @@ test.describe("renderer smoke", () => {
       )
       .toBe(1)
   })
+
+  test("allows re-enrolling an existing enrolled member from the members list", async ({
+    page,
+  }) => {
+    await bootApp(page, { hasSeenIntro: true })
+
+    // Open Settings and go to Members
+    await page.getByRole("button", { name: "Open settings" }).click()
+    await page
+      .locator("button")
+      .filter({ hasText: /^Members$/ })
+      .click()
+    await expect(page.getByText("Alice")).toBeVisible()
+
+    // Clicking member row selects Alice and exposes the Re-enroll (1) action button
+    await page.getByText("Alice").click()
+    const reenrollButton = page.getByRole("button", { name: "Re-enroll (1)" })
+    await expect(reenrollButton).toBeVisible()
+    await reenrollButton.click()
+
+    // Face capture overlay opens with member's name and back navigation
+    await expect(page.getByRole("heading", { name: "Alice" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Back to members" })).toBeVisible()
+  })
 })
