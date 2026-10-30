@@ -156,8 +156,8 @@ export function GroupEntry({
           <Tooltip content="Edit group" position="top">
             <button
               onClick={() => onToggle(group.id)}
-              className="ml-1 flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent text-white/55 shadow-none transition-all duration-300 outline-none hover:bg-white/5 hover:text-white focus:outline-none active:scale-95 lg:opacity-0 lg:group-hover/row:opacity-100">
-              <Pencil className="size-3 opacity-70" />
+              className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg border-0 bg-transparent text-white/45 shadow-none transition-all duration-150 outline-none hover:bg-white/10 hover:text-white focus:outline-none active:scale-95 lg:opacity-0 lg:group-hover/row:opacity-100">
+              <Pencil className="size-3.5" />
             </button>
           </Tooltip>
         </div>

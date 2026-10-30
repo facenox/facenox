@@ -61,11 +61,11 @@ export const MemberRow = React.memo(
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2">
           {!isSelectionMode && (
             <>
-              {/* Row Actions (Ultra-Subtle) */}
-              <div className="flex items-center gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              {/* Row Actions */}
+              <div className="flex items-center gap-1 opacity-0 transition-opacity duration-200 group-focus-within:opacity-100 group-hover:opacity-100">
                 {onEdit && (
                   <Tooltip content="Edit details">
                     <button
@@ -73,8 +73,9 @@ export const MemberRow = React.memo(
                         e.stopPropagation()
                         onEdit(member)
                       }}
-                      className="border-transparent bg-transparent p-1.5 text-white/20 transition-colors hover:bg-transparent hover:text-white">
-                      <Pencil className="size-3" />
+                      aria-label="Edit member"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border-0 bg-transparent text-white/45 transition-all duration-150 hover:bg-white/10 hover:text-white focus:outline-none active:scale-95">
+                      <Pencil className="size-3.5" />
                     </button>
                   </Tooltip>
                 )}
@@ -86,8 +87,9 @@ export const MemberRow = React.memo(
                         e.stopPropagation()
                         onResetFace(member)
                       }}
-                      className="border-transparent bg-transparent p-1.5 text-white/20 transition-colors hover:bg-transparent hover:text-amber-500">
-                      <UserX className="size-3" />
+                      aria-label="Remove enrollment"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border-0 bg-transparent text-white/45 transition-all duration-150 hover:bg-amber-500/10 hover:!text-amber-400 focus:outline-none active:scale-95">
+                      <UserX className="size-3.5" />
                     </button>
                   </Tooltip>
                 )}
@@ -99,16 +101,25 @@ export const MemberRow = React.memo(
                         e.stopPropagation()
                         onDelete(member)
                       }}
-                      className="border-transparent bg-transparent p-1.5 text-white/20 transition-colors hover:bg-transparent hover:text-red-400">
-                      <Trash2 className="size-3" />
+                      aria-label="Remove member"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border-0 bg-transparent text-white/45 transition-all duration-150 hover:bg-red-500/10 hover:!text-red-400 focus:outline-none active:scale-95">
+                      <Trash2 className="size-3.5" />
                     </button>
                   </Tooltip>
                 )}
+
+                {isEnrolled && (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <EnrollmentAction memberId={member.person_id} isEnrolled={isEnrolled} />
+                  </div>
+                )}
               </div>
 
-              <div onClick={(e) => e.stopPropagation()}>
-                <EnrollmentAction memberId={member.person_id} isEnrolled={isEnrolled} />
-              </div>
+              {!isEnrolled && (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <EnrollmentAction memberId={member.person_id} isEnrolled={isEnrolled} />
+                </div>
+              )}
             </>
           )}
         </div>

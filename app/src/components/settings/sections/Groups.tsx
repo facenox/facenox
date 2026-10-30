@@ -62,7 +62,7 @@ export function Groups({
       group.id.toLowerCase().includes(query.trim().toLowerCase()),
   )
   const actionClass =
-    "flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent text-white/55 shadow-none transition-colors duration-200 hover:text-white focus-visible:outline-2 focus-visible:outline-cyan-400 active:scale-95 disabled:opacity-40"
+    "flex h-7 w-7 items-center justify-center rounded-lg border-0 bg-transparent text-white/45 shadow-none transition-all duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-cyan-400 active:scale-95 disabled:opacity-40"
   return (
     <div className="w-full space-y-4 px-10 pt-8 pb-20">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -121,7 +121,7 @@ export function Groups({
                 {group.name}
               </span>
             </button>
-            <div className="flex shrink-0 items-center gap-1.5 opacity-0 transition-opacity duration-200 group-focus-within/row:opacity-100 group-hover/row:opacity-100">
+            <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-200 group-focus-within/row:opacity-100 group-hover/row:opacity-100">
               <Tooltip content="Edit group">
                 <button
                   aria-label={`Edit ${group.name}`}
@@ -131,16 +131,16 @@ export function Groups({
                     setEditing(group)
                     setEditOpen(true)
                   }}>
-                  <Pencil aria-hidden="true" className="size-3" />
+                  <Pencil aria-hidden="true" className="size-3.5" />
                 </button>
               </Tooltip>
               <Tooltip content="Delete group">
                 <button
                   aria-label={`Delete ${group.name}`}
-                  className={`${actionClass} hover:!text-red-400`}
+                  className={`${actionClass} hover:bg-red-500/10 hover:!text-red-400`}
                   disabled={!canManage || deletingGroup === group.id}
                   onClick={() => handleDeleteGroup(group.id)}>
-                  <Trash2 aria-hidden="true" className="size-3" />
+                  <Trash2 aria-hidden="true" className="size-3.5" />
                 </button>
               </Tooltip>
             </div>
