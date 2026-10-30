@@ -134,9 +134,10 @@ export function requireSecretStorage() {
   if (isSafeStorageUsable()) return
   try {
     getVaultKey()
-  } catch {
+  } catch (error) {
     throw new Error(
       "Secure credential storage is unavailable. Unlock/configure the system keyring or ensure local vault directory is writable.",
+      { cause: error },
     )
   }
 }
@@ -147,7 +148,16 @@ export const persistentStore: TypedStore<PersistentSettingsSchema> = {
     if (!secretKeys.has(key) || typeof value !== "string" || !value) return value
     requireSecretStorage()
     if (value.startsWith(protectedPrefix)) {
-      return safeStorage.decryptString(Buffer.from(value.slice(protectedPrefix.length), "base64"))
+      try {
+        return safeStorage.decryptString(Buffer.from(value.slice(protectedPrefix.length), "base64"))
+      } catch (error) {
+        throw new Error(
+          error instanceof Error ?
+            `Could not unlock credentials from system keyring: ${error.message}`
+          : "Could not unlock credentials from system keyring.",
+          { cause: error },
+        )
+      }
     }
     if (value.startsWith(vaultPrefix)) {
       return decryptWithVault(value)
