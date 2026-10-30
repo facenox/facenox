@@ -141,16 +141,63 @@ def _decode_environment_key() -> bytes | None:
     )
 
 
-def _provider_payload(provider: str, key: bytes) -> dict[str, object]:
-    return {
-        "format": KEY_PROVIDER_FORMAT,
+UNAMBIGUOUS_RECOVERY_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+
+
+def _generate_recovery_key() -> str:
+    """Generates an unambiguous, human-readable recovery key formatted as FNX-XXXX-XXXX-XXXX."""
+    import secrets
+
+    parts = ["FNX"]
+    for _ in range(3):
+        chunk = "".join(secrets.choice(UNAMBIGUOUS_RECOVERY_CHARS) for _ in range(4))
+        parts.append(chunk)
+    return "-".join(parts)
+
+
+def _normalize_recovery_key(key_str: str) -> str:
+    return "".join(c for c in key_str.strip().upper() if c.isalnum())
+
+
+def _derive_recovery_kek(key_str: str, salt: bytes) -> bytes:
+    norm = _normalize_recovery_key(key_str)
+    return hashlib.pbkdf2_hmac(
+        "sha256", norm.encode("utf-8"), salt, 120_000, dklen=KEY_SIZE
+    )
+
+
+def _wrap_key(kek: bytes, target_key: bytes) -> str:
+    nonce = os.urandom(IV_SIZE)
+    encrypted = AESGCM(kek).encrypt(nonce, target_key, None)
+    return base64.b64encode(nonce + encrypted).decode("ascii")
+
+
+def _unwrap_key(kek: bytes, wrapped_b64: str) -> bytes:
+    raw = base64.b64decode(wrapped_b64.strip())
+    if len(raw) < IV_SIZE + 16:
+        raise ValueError("Invalid wrapped key format.")
+    nonce = raw[:IV_SIZE]
+    ciphertext = raw[IV_SIZE:]
+    return AESGCM(kek).decrypt(nonce, ciphertext, None)
+
+
+def _provider_payload(
+    provider: str, key: bytes, envelope: dict[str, object] | None = None
+) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "format": 2 if envelope is not None else KEY_PROVIDER_FORMAT,
         "provider": provider,
         "key_id": _key_id(key),
     }
+    if envelope is not None:
+        payload["envelope"] = envelope
+    return payload
 
 
-def _pin_provider(data_dir: Path, provider: str, key: bytes) -> None:
-    payload = _provider_payload(provider, key)
+def _pin_provider(
+    data_dir: Path, provider: str, key: bytes, envelope: dict[str, object] | None = None
+) -> None:
+    payload = _provider_payload(provider, key, envelope=envelope)
     payload["hmac_sha256"] = hmac.new(
         key, b"facenox-key-provider\x00" + _canonical_json(payload), hashlib.sha256
     ).hexdigest()
@@ -170,7 +217,7 @@ def _read_provider(data_dir: Path) -> dict[str, object] | None:
         raise MachineKeyUnavailableError(
             f"Machine-key provider metadata is unreadable: {path}"
         ) from exc
-    if not isinstance(value, dict) or value.get("format") != KEY_PROVIDER_FORMAT:
+    if not isinstance(value, dict) or value.get("format") not in (1, 2):
         raise MachineKeyUnavailableError(
             f"Machine-key provider metadata is invalid: {path}"
         )
@@ -185,7 +232,10 @@ def _validate_record(
             f"Machine key from provider '{provider}' has an invalid length."
         )
     key_id = _key_id(key)
-    payload = _provider_payload(provider, key)
+    envelope = (
+        metadata.get("envelope") if isinstance(metadata.get("envelope"), dict) else None
+    )
+    payload = _provider_payload(provider, key, envelope=envelope)
     expected_mac = hmac.new(
         key, b"facenox-key-provider\x00" + _canonical_json(payload), hashlib.sha256
     ).hexdigest()
@@ -201,9 +251,102 @@ def _validate_record(
     return MachineKeyRecord(key, provider, key_id)
 
 
+def _reestablish_envelope_keystores(
+    data_dir: Path, dek: bytes, envelope: dict[str, object], metadata: dict[str, object]
+) -> None:
+    try:
+        file_kek = _machine_key_file(create_if_missing=True, data_dir=data_dir)
+        envelope["wrapped_file"] = _wrap_key(file_kek, dek)
+        try:
+            system = platform.system()
+            if system == "Linux" and os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+                keyring_kek = _machine_key_linux_keyring(create_if_missing=True)
+                envelope["wrapped_keyring"] = _wrap_key(keyring_kek, dek)
+        except Exception:
+            pass
+        _pin_provider(data_dir, "envelope", dek, envelope=envelope)
+    except Exception as exc:
+        logger.warning("Failed to re-establish local keystores: %s", exc)
+
+
+def _load_envelope_key(data_dir: Path, metadata: dict[str, object]) -> bytes:
+    envelope = metadata.get("envelope")
+    if not isinstance(envelope, dict):
+        raise MachineKeyUnavailableError(
+            "Corrupted envelope metadata in provider configuration."
+        )
+
+    expected_key_id = metadata.get("key_id")
+
+    # Try OS Keyring unwrap
+    wrapped_keyring = envelope.get("wrapped_keyring")
+    if isinstance(wrapped_keyring, str) and wrapped_keyring:
+        try:
+            system = platform.system()
+            keyring_kek = None
+            if system == "Windows":
+                keyring_kek = _machine_key_windows(
+                    create_if_missing=False, data_dir=data_dir
+                )
+            elif system == "Darwin":
+                keyring_kek = _machine_key_macos_keyring(create_if_missing=False)
+            elif system == "Linux" and os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+                keyring_kek = _machine_key_linux_keyring(create_if_missing=False)
+            if keyring_kek:
+                dek = _unwrap_key(keyring_kek, wrapped_keyring)
+                if len(dek) == KEY_SIZE and _key_id(dek) == expected_key_id:
+                    return dek
+        except Exception as exc:
+            logger.debug("Primary keyring unwrap bypassed: %s", exc)
+
+    # Fallback to local File Vault (.machine_key)
+    wrapped_file = envelope.get("wrapped_file")
+    if isinstance(wrapped_file, str) and wrapped_file:
+        try:
+            file_kek = _machine_key_file(create_if_missing=False, data_dir=data_dir)
+            dek = _unwrap_key(file_kek, wrapped_file)
+            if len(dek) == KEY_SIZE and _key_id(dek) == expected_key_id:
+                return dek
+        except Exception as exc:
+            logger.debug("File vault unwrap bypassed: %s", exc)
+
+    # Emergency fallback via Master Recovery Key
+    wrapped_recovery = envelope.get("wrapped_recovery")
+    recovery_salt_hex = envelope.get("recovery_salt")
+    if isinstance(wrapped_recovery, str) and isinstance(recovery_salt_hex, str):
+        rec_candidate = os.getenv("FACENOX_RECOVERY_KEY")
+        if not rec_candidate:
+            rec_file = data_dir / "RECOVERY_KEY.txt"
+            if rec_file.exists():
+                for line in rec_file.read_text(encoding="utf-8").splitlines():
+                    if "Recovery Key:" in line:
+                        rec_candidate = line.split(":", 1)[1].strip()
+                        break
+        if rec_candidate:
+            try:
+                rec_salt = bytes.fromhex(recovery_salt_hex)
+                rec_kek = _derive_recovery_kek(rec_candidate, rec_salt)
+                dek = _unwrap_key(rec_kek, wrapped_recovery)
+                if len(dek) == KEY_SIZE and _key_id(dek) == expected_key_id:
+                    _reestablish_envelope_keystores(data_dir, dek, envelope, metadata)
+                    return dek
+            except Exception as exc:
+                logger.warning("Recovery key attempt failed: %s", exc)
+
+    raise MachineKeyUnavailableError(
+        "Biometric encryption key could not be unlocked from OS Keyring or File Vault. "
+        "Provide your Master Recovery Key via FACENOX_RECOVERY_KEY or save RECOVERY_KEY.txt in the data directory."
+    )
+
+
 def _load_exact_provider(
     provider: str, data_dir: Path, *, create_if_missing: bool
 ) -> bytes:
+    if provider == "envelope":
+        metadata = _read_provider(data_dir)
+        if metadata is None:
+            raise MachineKeyUnavailableError("Envelope metadata is missing.")
+        return _load_envelope_key(data_dir, metadata)
     if provider == "environment":
         key = _decode_environment_key()
         if key is None:
@@ -230,10 +373,70 @@ def _load_exact_provider(
             raise MachineKeyUnavailableError(
                 "This database is pinned to Linux Secret Service on a different platform."
             )
-        return _machine_key_linux_keyring(create_if_missing=create_if_missing)
+        try:
+            return _machine_key_linux_keyring(create_if_missing=create_if_missing)
+        except MachineKeyUnavailableError:
+            file_key = data_dir / ".machine_key"
+            if file_key.exists():
+                return _machine_key_file(create_if_missing=False, data_dir=data_dir)
+            raise
     if provider == "file":
         return _machine_key_file(create_if_missing=create_if_missing, data_dir=data_dir)
     raise MachineKeyUnavailableError(f"Unsupported machine-key provider: {provider}")
+
+
+def _create_envelope(data_dir: Path, *, create_if_missing: bool) -> tuple[str, bytes]:
+    if not create_if_missing:
+        raise MachineKeyUnavailableError("No existing machine-key envelope found.")
+
+    dek = os.urandom(KEY_SIZE)
+
+    recovery_key = _generate_recovery_key()
+    recovery_salt = os.urandom(16)
+    recovery_kek = _derive_recovery_kek(recovery_key, recovery_salt)
+    wrapped_recovery = _wrap_key(recovery_kek, dek)
+
+    rec_txt = (
+        "Facenox Master Recovery Key\n"
+        f"Recovery Key: {recovery_key}\n\n"
+        "Store this key securely. It allows restoring access if your system keyring is reset or migrated.\n"
+    )
+    _write_secure_file(data_dir / "RECOVERY_KEY.txt", rec_txt.encode("utf-8"))
+
+    file_kek = _machine_key_file(create_if_missing=True, data_dir=data_dir)
+    wrapped_file = _wrap_key(file_kek, dek)
+
+    wrapped_keyring = None
+    try:
+        system = platform.system()
+        if system == "Windows":
+            keyring_kek = _machine_key_windows(
+                create_if_missing=True, data_dir=data_dir
+            )
+            wrapped_keyring = _wrap_key(keyring_kek, dek)
+        elif system == "Darwin":
+            keyring_kek = _machine_key_macos_keyring(create_if_missing=True)
+            wrapped_keyring = _wrap_key(keyring_kek, dek)
+        elif system == "Linux" and os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+            try:
+                keyring_kek = _machine_key_linux_keyring(create_if_missing=True)
+                wrapped_keyring = _wrap_key(keyring_kek, dek)
+            except Exception:
+                pass
+    except Exception as exc:
+        logger.warning(
+            "OS Keyring registration skipped during envelope creation: %s", exc
+        )
+
+    envelope = {
+        "wrapped_file": wrapped_file,
+        "wrapped_keyring": wrapped_keyring,
+        "wrapped_recovery": wrapped_recovery,
+        "recovery_salt": recovery_salt.hex(),
+        "recovery_preview": f"FNX-****-****-{recovery_key.split('-')[-1]}",
+    }
+    _pin_provider(data_dir, "envelope", dek, envelope=envelope)
+    return "envelope", dek
 
 
 def _discover_provider(data_dir: Path, *, create_if_missing: bool) -> tuple[str, bytes]:
@@ -241,35 +444,13 @@ def _discover_provider(data_dir: Path, *, create_if_missing: bool) -> tuple[str,
     if environment_key is not None:
         return "environment", environment_key
 
-    system = platform.system()
+    # Check for legacy .machine_key file without .machine_key.json
     file_key = data_dir / ".machine_key"
-    if system == "Windows":
-        return "windows-dpapi", _machine_key_windows(
-            create_if_missing=create_if_missing, data_dir=data_dir
-        )
-    if file_key.exists():
+    if not create_if_missing and file_key.exists():
         return "file", _machine_key_file(create_if_missing=False, data_dir=data_dir)
-    if system == "Darwin":
-        try:
-            return "macos-keychain", _machine_key_macos_keyring(
-                create_if_missing=create_if_missing
-            )
-        except MachineKeyUnavailableError:
-            return "file", _machine_key_file(
-                create_if_missing=create_if_missing, data_dir=data_dir
-            )
-    if system == "Linux" and os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
-        try:
-            return "linux-keyring", _machine_key_linux_keyring(
-                create_if_missing=create_if_missing
-            )
-        except MachineKeyUnavailableError:
-            return "file", _machine_key_file(
-                create_if_missing=create_if_missing, data_dir=data_dir
-            )
-    return "file", _machine_key_file(
-        create_if_missing=create_if_missing, data_dir=data_dir
-    )
+
+    # Use Dual Envelope Architecture (Rank 1)
+    return _create_envelope(data_dir, create_if_missing=create_if_missing)
 
 
 def get_machine_key_record(
@@ -305,7 +486,8 @@ def get_machine_key_record(
             raise MachineKeyUnavailableError(
                 f"Machine key from provider '{provider}' has an invalid length."
             )
-        _pin_provider(active_data_dir, provider, key)
+        if provider == "environment":
+            _pin_provider(active_data_dir, provider, key)
         record = MachineKeyRecord(key, provider, _key_id(key))
 
     _CACHED_MACHINE_KEY = record.key
