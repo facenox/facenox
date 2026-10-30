@@ -319,8 +319,8 @@ export function Display({
                   exit={{ opacity: 0, flex: "0 0 0px" }}
                   transition={{ duration: 0.22, ease: "easeInOut" }}
                   className="flex min-h-0 flex-col overflow-hidden border-t border-white/10 bg-[#08090a] p-2">
-                  <div className="flex items-center justify-between rounded-lg bg-cyan-500/10 px-2 py-1.5">
-                    <div className="h-1.5 w-11 rounded-full bg-white/70" />
+                  <div className="flex items-center justify-between rounded-md bg-gradient-to-r from-cyan-500/20 to-transparent px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)]">
+                    <div className="h-1.5 w-11 rounded-full bg-cyan-100/80" />
                     <Check className="size-2.5 stroke-[2.5] text-cyan-400" />
                   </div>
                 </motion.div>
