@@ -212,7 +212,10 @@ def _read_provider(data_dir: Path) -> dict[str, object] | None:
     if not path.exists():
         return None
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        raw_text = path.read_text(encoding="utf-8").strip()
+        if not raw_text:
+            return None
+        value = json.loads(raw_text)
     except (OSError, json.JSONDecodeError) as exc:
         raise MachineKeyUnavailableError(
             f"Machine-key provider metadata is unreadable: {path}"
