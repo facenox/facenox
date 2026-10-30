@@ -107,7 +107,7 @@ export const VideoCanvas = memo(function VideoCanvas({
     currentGroup ?
       <div className="flex min-w-[250px] flex-col text-[11px] select-none">
         {/* Header */}
-        <div className="mb-1.5 flex items-center justify-between border-b border-white/[0.08] pb-2">
+        <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <SlidersHorizontal className="size-3 text-cyan-400" />
             <span className="text-[10px] font-bold tracking-wider text-white/50 uppercase">
@@ -336,10 +336,10 @@ export const VideoCanvas = memo(function VideoCanvas({
             onMouseEnter={() => setShowSettings(true)}
             onMouseLeave={() => setShowSettings(false)}>
             <div
-              className={`flex h-full w-full cursor-help items-center justify-center rounded-lg border transition-all duration-200 select-none ${
+              className={`flex h-full w-full cursor-help items-center justify-center rounded-lg transition-all duration-200 select-none ${
                 showSettings ?
-                  "border-white/15 bg-[#121316]/90 text-white shadow-lg backdrop-blur-md"
-                : "border-transparent bg-black/25 text-white/35 backdrop-blur-sm hover:border-white/10 hover:bg-[#121316]/70 hover:text-white/70"
+                  "bg-white/10 text-white backdrop-blur-md"
+                : "bg-black/25 text-white/40 backdrop-blur-sm hover:bg-white/10 hover:text-white/75"
               }`}>
               <SlidersHorizontal className="size-3.5" />
             </div>
