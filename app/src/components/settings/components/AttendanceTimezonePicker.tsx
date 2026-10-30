@@ -81,8 +81,7 @@ export function AttendanceTimezonePicker({
       showPlaceholderOption={false}
       allowClear={false}
       emptyMessage="No matching timezones."
-      maxHeight={280}
-      menuWidth={360}
+      maxHeight={200}
       align="right"
       className="w-[280px] max-w-full shrink-0"
       buttonClassName="h-11 border-white/10 bg-white/[0.04] px-3 py-1.5 hover:border-white/20 hover:bg-white/[0.06] disabled:hover:border-white/10 disabled:hover:bg-white/[0.04]"
