@@ -105,80 +105,104 @@ export const VideoCanvas = memo(function VideoCanvas({
 
   const tooltipContent =
     currentGroup ?
-      <div className="flex min-w-56 flex-col gap-1.5 p-1 text-[11px] text-white/60 select-none">
-        <div className="mb-0.5 text-[10px] font-bold tracking-wider text-white/30 uppercase">
-          Active settings
-        </div>
-
-        {/* 1. Late Tracking */}
-        <div className="flex items-center justify-between gap-4">
-          <span>Late tracking</span>
-          <span className="text-right font-mono font-medium text-white/85">
-            {isAllGroups ?
-              <span className="font-sans text-white/70">Per-group</span>
-            : currentGroup.settings?.late_threshold_enabled ?
-              (currentGroup.settings?.late_threshold_minutes ?? 0) > 0 ?
-                `${format12hTime(currentGroup.settings?.class_start_time)} (+${currentGroup.settings?.late_threshold_minutes}m)`
-              : `${format12hTime(currentGroup.settings?.class_start_time)} (Exact)`
-            : <span className="font-sans text-white/40">Disabled</span>}
-          </span>
-        </div>
-
-        {/* 2. Attendance mode */}
-        <div className="flex items-center justify-between gap-4">
-          <span>Mode</span>
-          <span className="text-right font-medium text-white/85">
-            {isAllGroups ?
-              <span className="font-sans text-white/70">Per-group</span>
-            : attendanceModeLabel}
-          </span>
-        </div>
-
-        {/* 3. Mode-specific timing */}
-        <div className="flex items-center justify-between gap-4">
-          <span>
-            {isAllGroups ?
-              "Time in & time out"
-            : attendanceMode === "visits" ?
-              "Minimum visit duration"
-            : "Time in & time out"}
-          </span>
-          <span className="text-right font-mono font-medium text-white/85">
-            {isAllGroups ?
-              <span className="font-sans text-white/70">Per-group</span>
-            : attendanceMode === "work_hours" ?
-              currentGroup.settings?.class_end_time ?
-                `Enabled (${format12hTime(currentGroup.settings.class_end_time)})`
-              : "Enabled"
-            : attendanceMode === "visits" ?
-              `${currentGroup.settings?.min_checkout_delay_minutes ?? 15}m minimum`
-            : <span className="font-sans text-white/40">Not used</span>}
-          </span>
-        </div>
-
-        {attendanceMode === "work_hours" && !isAllGroups && (
-          <div className="flex items-center justify-between gap-4">
-            <span>Minimum time before Time out</span>
-            <span className="text-right font-medium text-white/85">
-              {currentGroup.settings?.min_checkout_delay_minutes ?? 15}m
+      <div className="flex min-w-[250px] flex-col text-[11px] select-none">
+        {/* Header */}
+        <div className="mb-1.5 flex items-center justify-between border-b border-white/[0.08] pb-2">
+          <div className="flex items-center gap-1.5">
+            <SlidersHorizontal className="size-3 text-cyan-400" />
+            <span className="text-[10px] font-bold tracking-wider text-white/50 uppercase">
+              Active Rules
             </span>
           </div>
-        )}
-
-        {/* 4. Recognition Limit */}
-        <div className="flex items-center justify-between gap-4">
-          <span>Face limit</span>
-          <span className="text-right font-medium text-white/85">
-            {maxRecognitionFacesPerFrame > 0 ? `${maxRecognitionFacesPerFrame} faces` : "Unlimited"}
+          <span className="max-w-[120px] truncate rounded bg-white/5 px-1.5 py-0.5 text-[9.5px] font-medium text-white/50">
+            {isAllGroups ? "All Groups" : currentGroup.name}
           </span>
         </div>
 
-        {/* 5. Anti-Spoofing */}
-        <div className="flex items-center justify-between gap-4">
-          <span>Anti-spoofing</span>
-          <span className="text-right font-medium text-white/85">
-            {enableSpoofDetection ? "Enabled" : <span className="text-white/40">Disabled</span>}
-          </span>
+        <div className="flex flex-col gap-1.5">
+          {/* 1. Late Tracking */}
+          <div className="flex items-center justify-between gap-4 py-0.5">
+            <span className="text-white/60">Late tracking</span>
+            <span className="text-right font-medium">
+              {isAllGroups ?
+                <span className="text-white/70">Per-group</span>
+              : currentGroup.settings?.late_threshold_enabled ?
+                <span className="font-mono text-[10.5px] text-white/90">
+                  {(currentGroup.settings?.late_threshold_minutes ?? 0) > 0 ?
+                    `${format12hTime(currentGroup.settings?.class_start_time)} (+${currentGroup.settings?.late_threshold_minutes}m)`
+                  : `${format12hTime(currentGroup.settings?.class_start_time)} (Exact)`}
+                </span>
+              : <span className="text-white/40">Disabled</span>}
+            </span>
+          </div>
+
+          {/* 2. Attendance mode */}
+          <div className="flex items-center justify-between gap-4 py-0.5">
+            <span className="text-white/60">Mode</span>
+            <span className="text-right font-medium">
+              {isAllGroups ?
+                <span className="text-white/70">Per-group</span>
+              : <span className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-semibold text-white/85">
+                  {attendanceModeLabel}
+                </span>
+              }
+            </span>
+          </div>
+
+          {/* 3. Mode-specific timing */}
+          <div className="flex items-center justify-between gap-4 py-0.5">
+            <span className="text-white/60">
+              {isAllGroups ?
+                "Time in & time out"
+              : attendanceMode === "visits" ?
+                "Min. visit duration"
+              : "Time in & time out"}
+            </span>
+            <span className="text-right font-medium">
+              {isAllGroups ?
+                <span className="text-white/70">Per-group</span>
+              : attendanceMode === "work_hours" ?
+                <span className="font-mono text-[10.5px] text-white/90">
+                  {currentGroup.settings?.class_end_time ?
+                    `Enabled (${format12hTime(currentGroup.settings.class_end_time)})`
+                  : "Enabled"}
+                </span>
+              : attendanceMode === "visits" ?
+                <span className="font-mono text-[10.5px] text-white/85">
+                  {currentGroup.settings?.min_checkout_delay_minutes ?? 15}m minimum
+                </span>
+              : <span className="text-white/40">Not used</span>}
+            </span>
+          </div>
+
+          {attendanceMode === "work_hours" && !isAllGroups && (
+            <div className="flex items-center justify-between gap-4 py-0.5">
+              <span className="text-white/60">Min. before time out</span>
+              <span className="text-right font-mono text-[10.5px] font-medium text-white/85">
+                {currentGroup.settings?.min_checkout_delay_minutes ?? 15}m
+              </span>
+            </div>
+          )}
+
+          {/* 4. Recognition Limit */}
+          <div className="flex items-center justify-between gap-4 py-0.5">
+            <span className="text-white/60">Face limit</span>
+            <span className="text-right font-mono text-[10.5px] font-medium text-white/85">
+              {maxRecognitionFacesPerFrame > 0 ?
+                `${maxRecognitionFacesPerFrame} faces`
+              : "Unlimited"}
+            </span>
+          </div>
+
+          {/* 5. Anti-Spoofing */}
+          <div className="flex items-center justify-between gap-4 py-0.5">
+            <span className="text-white/60">Anti-spoofing</span>
+            <span className="text-right font-medium">
+              {enableSpoofDetection ?
+                <span className="text-[10.5px] font-semibold text-emerald-400">Enabled</span>
+              : <span className="text-white/40">Disabled</span>}
+            </span>
+          </div>
         </div>
       </div>
     : null
@@ -312,7 +336,11 @@ export const VideoCanvas = memo(function VideoCanvas({
             onMouseEnter={() => setShowSettings(true)}
             onMouseLeave={() => setShowSettings(false)}>
             <div
-              className={`flex h-full w-full cursor-help items-center justify-center transition-all select-none ${showSettings ? "text-white/65" : "text-white/25 hover:text-white/65"}`}>
+              className={`flex h-full w-full cursor-help items-center justify-center rounded-lg border transition-all duration-200 select-none ${
+                showSettings ?
+                  "border-white/15 bg-[#121316]/90 text-white shadow-lg backdrop-blur-md"
+                : "border-transparent bg-black/25 text-white/35 backdrop-blur-sm hover:border-white/10 hover:bg-[#121316]/70 hover:text-white/70"
+              }`}>
               <SlidersHorizontal className="size-3.5" />
             </div>
 
@@ -322,9 +350,9 @@ export const VideoCanvas = memo(function VideoCanvas({
                   initial={{ opacity: 0, y: 4, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 4, scale: 0.96 }}
-                  transition={{ duration: 0.1, ease: "easeOut" }}
-                  className="absolute top-full right-0 z-50 pt-1.5">
-                  <div className="rounded-lg border border-white/10 bg-[#141518] p-2.5 shadow-2xl backdrop-blur-md">
+                  transition={{ duration: 0.12, ease: "easeOut" }}
+                  className="absolute top-full right-0 z-50 pt-2">
+                  <div className="rounded-xl border border-white/10 bg-[#121316]/95 p-3 shadow-2xl ring-1 ring-white/5 backdrop-blur-xl">
                     {tooltipContent}
                   </div>
                 </motion.div>
