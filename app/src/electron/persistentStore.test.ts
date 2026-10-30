@@ -48,10 +48,12 @@ it("migrates legacy plaintext credentials on first access", () => {
   expect(persistentStore.get("sync.encryptionKey")).toBe("legacy-key")
   expect(disk["sync.encryptionKey"]).toMatch(/^os:v1:/)
 })
-it("fails closed when secure OS storage is unavailable", () => {
+it("falls back to secure vault encryption when OS storage is unavailable", () => {
   cryptoMock.isEncryptionAvailable.mockReturnValue(false)
-  expect(() => persistentStore.set("sync.deviceToken", "token")).toThrow("credential storage")
-  expect(disk["sync.deviceToken"]).toBeUndefined()
+  persistentStore.set("sync.deviceToken", "fallback-token")
+  expect(disk["sync.deviceToken"]).toMatch(/^vault:v1:/)
+  expect(disk["sync.deviceToken"]).not.toBe("fallback-token")
+  expect(persistentStore.get("sync.deviceToken")).toBe("fallback-token")
   persistentStore.set("sync.deviceToken", "")
   expect(persistentStore.get("sync.deviceToken")).toBe("")
 })
