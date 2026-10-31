@@ -6,7 +6,7 @@ import json
 
 from api.deps import get_repository
 from api.recognition_deps import get_face_recognizer
-from database.repository import AttendanceRepository
+from database.repository import AttendanceRepository, FaceRepository
 from api.schemas import (
     FaceRecognitionResponse,
     PersonUpdateRequest,
@@ -189,27 +189,36 @@ async def update_person(
                 ),
             )
 
-        result = await face_recognizer.update_person_id(
-            request.old_person_id.strip(),
-            request.new_person_id.strip(),
-            repo.organization_id,
-        )
+        # Rename both records in one transaction. A separate face-manager session
+        # would contend with the member session's SQLite write lock.
+        faces = FaceRepository(repo.session, repo.organization_id)
+        old_id = request.old_person_id.strip()
+        new_id = request.new_person_id.strip()
+        if await faces.get_face(new_id) is not None:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Face data for '{new_id}' already exists",
+            )
+        if await faces.get_face(old_id) is not None:
+            if not await faces.update_person_id(old_id, new_id):
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Face data for '{new_id}' already exists",
+                )
 
-        if result["success"]:
-            await repo.session.commit()
-            return result
+        await repo.session.commit()
+        await face_recognizer.refresh_cache(repo.organization_id)
         return {
             "success": True,
-            "message": (
-                result.get("message")
-                or f"Person '{request.old_person_id.strip()}' renamed successfully"
-            ),
-            "updated_records": result.get("updated_records", 1),
+            "message": f"Person '{old_id}' renamed to '{new_id}' successfully",
+            "updated_records": 1,
         }
 
     except HTTPException:
+        await repo.session.rollback()
         raise
     except Exception as e:
+        await repo.session.rollback()
         logger.error(f"Person update error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to update person: {e}")
 

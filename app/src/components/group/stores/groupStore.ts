@@ -55,11 +55,18 @@ const getInitialState = () => {
   }
 }
 
+let groupDetailsRequestId = 0
+
 export const useGroupStore = create<GroupState>((set, get) => ({
   ...getInitialState(),
 
   setSelectedGroup: (group) => {
-    set({ selectedGroup: group })
+    if (get().selectedGroup?.id !== group?.id) {
+      groupDetailsRequestId += 1
+      set({ selectedGroup: group, members: [], loading: false, error: null })
+    } else {
+      set({ selectedGroup: group })
+    }
     if (group) {
       persistentSettings.setUIState({ selectedGroupId: group.id }).catch(console.error)
     } else {
@@ -104,16 +111,21 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   },
 
   fetchGroupDetails: async (groupId: string) => {
+    if (get().selectedGroup?.id !== groupId) return
+
+    const requestId = ++groupDetailsRequestId
+    const isCurrentRequest = () =>
+      requestId === groupDetailsRequestId && get().selectedGroup?.id === groupId
     set({ loading: true, error: null })
     try {
       const groupMembers = await attendanceManager.getGroupMembers(groupId)
-      set({ members: groupMembers })
+      if (isCurrentRequest()) set({ members: groupMembers })
     } catch (err) {
-      set({
-        error: err instanceof Error ? err.message : "Failed to load group data",
-      })
+      if (isCurrentRequest()) {
+        set({ error: err instanceof Error ? err.message : "Failed to load group data" })
+      }
     } finally {
-      set({ loading: false })
+      if (isCurrentRequest()) set({ loading: false })
     }
   },
 
@@ -210,5 +222,8 @@ export const useGroupStore = create<GroupState>((set, get) => ({
     }
   },
 
-  reset: () => set(getInitialState()),
+  reset: () => {
+    groupDetailsRequestId += 1
+    set(getInitialState())
+  },
 }))

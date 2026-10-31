@@ -190,6 +190,7 @@ export class AttendanceManager {
       bbox: number[] | { x: number; y: number; width: number; height: number }
       landmarks_5: number[][]
       filename?: string
+      image_index?: number
     }[],
     images: { file: File; filename: string }[],
   ): Promise<BulkEnrollResponse> {

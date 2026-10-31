@@ -1,3 +1,4 @@
+import asyncio
 import json
 from collections import defaultdict
 from unittest.mock import AsyncMock, Mock
@@ -324,6 +325,253 @@ def _enroll_metadata(enable_liveness_detection: bool = False) -> str:
             "enable_liveness_detection": enable_liveness_detection,
         }
     )
+
+
+def test_bulk_enrollment_reuses_a_photo_for_multiple_faces(biometrics_env):
+    client = biometrics_env["client"]
+    headers = _headers("org-shared-photo")
+    group_id = _create_group(client, headers, "Team")
+    registrations = []
+    for person_id in ("one", "two"):
+        _create_member(client, headers, group_id, person_id, person_id)
+        registrations.append(
+            dict(
+                json.loads(_enroll_metadata()), person_id=person_id, filename="team.jpg"
+            )
+        )
+
+    response = client.post(
+        f"/attendance/groups/{group_id}/bulk-enroll-faces",
+        headers=headers,
+        data={"metadata": json.dumps(registrations)},
+        files={"images": ("team.jpg", _make_image_bytes(), "image/jpeg")},
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["success_count"] == 2, response.json()
+    assert response.json()["failed_count"] == 0
+    assert set(biometrics_env["recognizer"].enrolled["org-shared-photo"]) == {
+        "one",
+        "two",
+    }
+
+
+@pytest.mark.parametrize("indexed", [False, True])
+def test_bulk_enrollment_duplicate_filenames_are_never_silently_mismatched(
+    biometrics_env,
+    indexed,
+):
+    client = biometrics_env["client"]
+    headers = _headers("org-repeated-name")
+    group_id = _create_group(client, headers, "Photos")
+    registrations = []
+    for index, person_id in enumerate(("one", "two")):
+        _create_member(client, headers, group_id, person_id, person_id)
+        registration = dict(
+            json.loads(_enroll_metadata()), person_id=person_id, filename="photo.jpg"
+        )
+        if indexed:
+            registration["image_index"] = index
+        registrations.append(registration)
+
+    image = np.tile(np.linspace(0, 255, 96, dtype=np.uint8), (48, 1))
+    ok, encoded = cv2.imencode(".jpg", np.stack([image] * 3, axis=-1))
+    assert ok
+    response = client.post(
+        f"/attendance/groups/{group_id}/bulk-enroll-faces",
+        headers=headers,
+        data={"metadata": json.dumps(registrations)},
+        files=[
+            ("images", ("photo.jpg", _make_image_bytes(), "image/jpeg")),
+            ("images", ("photo.jpg", encoded.tobytes(), "image/jpeg")),
+        ],
+    )
+
+    assert response.status_code == 200, response.text
+    result = response.json()
+    enrolled = biometrics_env["recognizer"].enrolled["org-repeated-name"]
+    if indexed:
+        assert result["success_count"] == 2, result
+        assert enrolled["one"]["shape"] == (48, 48, 3)
+        assert enrolled["two"]["shape"] == (48, 96, 3)
+    else:
+        assert result["success_count"] == 0, result
+        assert result["failed_count"] == 2
+        assert all(
+            "Ambiguous image filename" in row["error"] for row in result["results"]
+        )
+        assert enrolled == {}
+
+
+@pytest.mark.parametrize("image_index", [-1, 1, True, "0", None])
+def test_bulk_enrollment_invalid_image_index_does_not_fall_back_to_filename(
+    biometrics_env,
+    image_index,
+):
+    client = biometrics_env["client"]
+    headers = _headers("org-invalid-image")
+    group_id = _create_group(client, headers, "Photos")
+    _create_member(client, headers, group_id, "one", "One")
+    registration = dict(
+        json.loads(_enroll_metadata()),
+        person_id="one",
+        filename="photo.jpg",
+        image_index=image_index,
+    )
+    response = client.post(
+        f"/attendance/groups/{group_id}/bulk-enroll-faces",
+        headers=headers,
+        data={"metadata": json.dumps([registration])},
+        files={"images": ("photo.jpg", _make_image_bytes(), "image/jpeg")},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["success_count"] == 0
+    assert response.json()["results"][0]["error"] == "Invalid image index"
+
+
+def test_bulk_members_report_duplicate_id_without_rolling_back_valid_entries(
+    biometrics_env,
+):
+    client = biometrics_env["client"]
+    headers = _headers("org-bulk-duplicates")
+    group_id = _create_group(client, headers, "Members")
+    response = client.post(
+        "/attendance/members/bulk",
+        headers=headers,
+        json={
+            "members": [
+                {"person_id": person_id, "group_id": group_id, "name": name}
+                for person_id, name in (
+                    ("duplicate", "First"),
+                    ("duplicate", "Second"),
+                    ("valid", "Third"),
+                )
+            ]
+        },
+    )
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["success_count"] == 2
+    assert result["error_count"] == 1
+    assert result["errors"][0]["person_id"] == "duplicate"
+    members = client.get("/attendance/members", headers=headers).json()
+    assert {row["person_id"]: row["name"] for row in members} == {
+        "duplicate": "First",
+        "valid": "Third",
+    }
+
+
+@pytest.mark.parametrize("enrolled", [False, True])
+def test_person_id_rename_commits_member_and_face_together(
+    biometrics_env,
+    test_client,
+    monkeypatch,
+    enrolled,
+):
+    from database.repository import FaceRepository
+
+    client, factory = test_client
+    headers = _headers("org-rename")
+    group_id = _create_group(client, headers, "Rename")
+    _create_member(client, headers, group_id, "old", "Member")
+
+    async def seed():
+        async with factory() as session:
+            if enrolled:
+                await FaceRepository(session, "org-rename").upsert_face(
+                    "old", b"encrypted-test-template", 512
+                )
+            await FaceRepository(session, "other-org").upsert_face(
+                "old", b"other-org-template", 512
+            )
+            await session.commit()
+
+    asyncio.run(seed())
+
+    async def verify_committed_cache_refresh(organization_id):
+        assert organization_id == "org-rename"
+        async with factory() as session:
+            from database.repository import AttendanceRepository
+
+            repo = AttendanceRepository(session, organization_id)
+            assert await repo.get_member("old") is None
+            assert (await repo.get_member("new")).name == "Member"
+            faces = FaceRepository(session, organization_id)
+            assert await faces.get_face("old") is None
+            renamed = await faces.get_face("new")
+            assert (renamed is not None) is enrolled
+            if enrolled:
+                assert renamed.embedding == b"encrypted-test-template"
+            assert (
+                await FaceRepository(session, "other-org").get_face("old")
+            ).embedding == b"other-org-template"
+
+    refresh = AsyncMock(side_effect=verify_committed_cache_refresh)
+    monkeypatch.setattr(
+        biometrics_env["recognizer"], "refresh_cache", refresh, raising=False
+    )
+    rename = AsyncMock(side_effect=AssertionError("Must use the member transaction"))
+    monkeypatch.setattr(biometrics_env["recognizer"], "update_person_id", rename)
+    response = client.put(
+        "/face/person",
+        headers=headers,
+        json={"old_person_id": "old", "new_person_id": "new"},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["success"] is True
+    assert client.get("/attendance/members/old", headers=headers).status_code == 404
+    assert client.get("/attendance/members/new", headers=headers).status_code == 200
+    refresh.assert_awaited_once_with("org-rename")
+    rename.assert_not_awaited()
+
+
+@pytest.mark.parametrize("enrolled", [False, True])
+def test_person_id_rename_face_conflict_rolls_back_member_change(
+    biometrics_env,
+    test_client,
+    monkeypatch,
+    enrolled,
+):
+    from database.repository import FaceRepository
+
+    client, factory = test_client
+    headers = _headers("org-rename-conflict")
+    group_id = _create_group(client, headers, "Conflict")
+    _create_member(client, headers, group_id, "old", "Member")
+
+    async def seed():
+        async with factory() as session:
+            faces = FaceRepository(session, "org-rename-conflict")
+            if enrolled:
+                await faces.upsert_face("old", b"old-template", 512)
+            await faces.upsert_face("new", b"existing-template", 512)
+            await session.commit()
+
+    asyncio.run(seed())
+    refresh = AsyncMock()
+    monkeypatch.setattr(
+        biometrics_env["recognizer"], "refresh_cache", refresh, raising=False
+    )
+    response = client.put(
+        "/face/person",
+        headers=headers,
+        json={"old_person_id": "old", "new_person_id": "new"},
+    )
+    assert response.status_code == 409, response.text
+    assert client.get("/attendance/members/old", headers=headers).status_code == 200
+    assert client.get("/attendance/members/new", headers=headers).status_code == 404
+
+    async def check_faces():
+        async with factory() as session:
+            faces = FaceRepository(session, "org-rename-conflict")
+            old_face = await faces.get_face("old")
+            assert (old_face is not None) is enrolled
+            if enrolled:
+                assert old_face.embedding == b"old-template"
+            assert (await faces.get_face("new")).embedding == b"existing-template"
+
+    asyncio.run(check_faces())
+    refresh.assert_not_awaited()
 
 
 @pytest.mark.parametrize("reported_success", [False, True])

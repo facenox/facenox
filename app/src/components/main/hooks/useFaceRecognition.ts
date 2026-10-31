@@ -124,9 +124,9 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
             memberCacheRef,
           )
           const memberName =
-            memberResult?.memberName ||
             response.name ||
             response.memberName ||
+            memberResult?.memberName ||
             response.person_id ||
             "Member"
 

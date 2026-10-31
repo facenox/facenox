@@ -89,4 +89,19 @@ describe("getMemberFromCache", () => {
     const result = await getMemberFromCache("person-1", otherGroup, memberCacheRef)
     expect(result).toBeNull()
   })
+
+  it("does not insert a pending old lookup into a refreshed member cache", async () => {
+    let finishLookup!: (member: AttendanceMember) => void
+    vi.mocked(attendanceManager.getMember).mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishLookup = resolve
+      }),
+    )
+    const pending = getMemberFromCache("person-1", mockGroup, memberCacheRef)
+    const updatedMember = { ...mockMember, name: "Updated Alice" }
+    memberCacheRef.current = new Map([["person-1", updatedMember]])
+    finishLookup(mockMember)
+    await pending
+    expect(memberCacheRef.current.get("person-1")).toEqual(updatedMember)
+  })
 })

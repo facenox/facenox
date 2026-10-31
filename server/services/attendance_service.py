@@ -1003,125 +1003,99 @@ class AttendanceService:
         if not group:
             raise ValueError("Group not found")
 
-        file_map = {f.filename: f for f in files if f.filename}
-        file_list = [f for f in files]
+        file_list = list(files)
+        files_by_name = {}
+        for file in file_list:
+            if file.filename:
+                files_by_name.setdefault(file.filename, []).append(file)
 
         success_count = 0
         failed_count = 0
         results = []
 
-        for idx, reg_data in enumerate(registrations):
-            person_id = reg_data.get("person_id")
-            filename = reg_data.get("filename")
+        try:
+            for idx, reg_data in enumerate(registrations):
+                person_id = reg_data.get("person_id")
+                filename = reg_data.get("filename")
 
-            try:
-                file = None
-                if filename and filename in file_map:
-                    file = file_map[filename]
-                elif idx < len(file_list):
-                    file = file_list[idx]
+                try:
+                    file = None
+                    if "image_index" in reg_data:
+                        image_index = reg_data["image_index"]
+                        if type(image_index) is not int or not 0 <= image_index < len(
+                            file_list
+                        ):
+                            raise ValueError("Invalid image index")
+                        file = file_list[image_index]
+                    elif filename:
+                        matches = files_by_name.get(filename, [])
+                        if len(matches) > 1:
+                            raise ValueError(
+                                "Ambiguous image filename; provide an image index"
+                            )
+                        if matches:
+                            file = matches[0]
+                    elif idx < len(file_list):
+                        file = file_list[idx]
 
-                if not file:
+                    if file is None:
+                        raise ValueError("No image file matched")
+
+                    member = await self.repo.get_member(person_id)
+                    if not member or member.group_id != group_id:
+                        raise ValueError("Invalid member")
+
+                    # Multiple registrations may reference different faces in
+                    # the same photo. Keep it open and rewind before each read.
+                    await file.seek(0)
+                    contents = await file.read()
+                    nparr = np.frombuffer(contents, np.uint8)
+                    image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+                    if image is None:
+                        raise ValueError("Failed to decode image")
+
+                    from hooks import process_face_detection
+
+                    detections = await process_face_detection(
+                        image, min_face_size=0, enable_liveness=False
+                    )
+                    if not detections:
+                        raise ValueError("No detectable face found in image")
+
+                    landmarks_5 = reg_data.get("landmarks_5")
+                    if landmarks_5 is None:
+                        raise ValueError("Landmarks required")
+
+                    result = await self.face_recognizer.enroll_person(
+                        person_id, image, landmarks_5, self.repo.organization_id
+                    )
+
+                    if result["success"] and result.get("database_saved") is not False:
+                        success_count += 1
+                        results.append(
+                            {"index": idx, "person_id": person_id, "success": True}
+                        )
+                    else:
+                        raise ValueError(
+                            result.get("error")
+                            or "Failed to save face data. Please try enrolling again."
+                        )
+
+                except Exception as e:
+                    logger.error(f"Error in bulk enroll item {idx}: {e}")
                     failed_count += 1
                     results.append(
                         {
                             "index": idx,
                             "person_id": person_id,
                             "success": False,
-                            "error": "No image file matched",
+                            "error": str(e),
                         }
                     )
-                    continue
-
-                member = await self.repo.get_member(person_id)
-                if not member or member.group_id != group_id:
-                    failed_count += 1
-                    results.append(
-                        {"index": idx, "success": False, "error": "Invalid member"}
-                    )
-                    continue
-
-                contents = await file.read()
-                nparr = np.frombuffer(contents, np.uint8)
-                image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-                if image is None:
-                    failed_count += 1
-                    results.append(
-                        {
-                            "index": idx,
-                            "person_id": person_id,
-                            "success": False,
-                            "error": "Failed to decode image",
-                        }
-                    )
-                    continue
-
-                from hooks import process_face_detection
-
-                detections = await process_face_detection(
-                    image, min_face_size=0, enable_liveness=False
-                )
-                if not detections:
-                    failed_count += 1
-                    results.append(
-                        {
-                            "index": idx,
-                            "person_id": person_id,
-                            "success": False,
-                            "error": "No detectable face found in image",
-                        }
-                    )
-                    continue
-
-                landmarks_5 = reg_data.get("landmarks_5")
-                if landmarks_5 is None:
-                    failed_count += 1
-                    results.append(
-                        {
-                            "index": idx,
-                            "person_id": person_id,
-                            "success": False,
-                            "error": "Landmarks required",
-                        }
-                    )
-                    continue
-
-                result = await self.face_recognizer.enroll_person(
-                    person_id, image, landmarks_5, self.repo.organization_id
-                )
-
-                if result["success"] and result.get("database_saved") is not False:
-                    success_count += 1
-                    results.append(
-                        {"index": idx, "person_id": person_id, "success": True}
-                    )
-                else:
-                    failed_count += 1
-                    results.append(
-                        {
-                            "index": idx,
-                            "person_id": person_id,
-                            "success": False,
-                            "error": result.get("error")
-                            or "Failed to save face data. Please try enrolling again.",
-                        }
-                    )
-
-            except Exception as e:
-                logger.error(f"Error in bulk enroll item {idx}: {e}")
-                failed_count += 1
-                results.append(
-                    {
-                        "index": idx,
-                        "person_id": person_id,
-                        "success": False,
-                        "error": str(e),
-                    }
-                )
-            finally:
-                if file:
-                    await file.close()
+        finally:
+            for file in file_list:
+                await file.close()
 
         if success_count > 0:
             from services.live_stream_service import LiveStreamService

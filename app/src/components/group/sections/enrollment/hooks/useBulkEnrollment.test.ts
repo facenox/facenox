@@ -12,10 +12,13 @@ vi.mock("@/services/AttendanceManager", () => ({
   },
 }))
 
-vi.mock("@/utils/imageHelpers", () => ({
-  makeId: () => "mock-face-id-1",
-  readFileAsDataUrl: () => Promise.resolve("data:image/jpeg;base64,mock"),
-}))
+vi.mock("@/utils/imageHelpers", () => {
+  let nextId = 0
+  return {
+    makeId: () => `mock-face-${++nextId}`,
+    readFileAsDataUrl: () => Promise.resolve("data:image/jpeg;base64,mock"),
+  }
+})
 
 const mockGroup: AttendanceGroup = {
   id: "group-1",
@@ -142,5 +145,72 @@ describe("useBulkEnrollment", () => {
     expect(detected?.assignedPersonId).toBeNull()
     expect(detected?.isNewMember).toBe(true)
     expect(detected?.customMemberName).toBe("Maria Santos")
+  })
+
+  it("indexes the uploaded subset so repeated filenames and shared photos stay distinct", async () => {
+    const files = [
+      new File(["unused"], "unused.jpg", { type: "image/jpeg" }),
+      new File(["first"], "photo.jpg", { type: "image/jpeg" }),
+      new File(["second"], "photo.jpg", { type: "image/jpeg" }),
+    ]
+    const face = {
+      bbox: [10, 10, 60, 60] as [number, number, number, number],
+      confidence: 0.98,
+      landmarks_5: [
+        [15, 15],
+        [45, 15],
+        [30, 30],
+        [20, 45],
+        [40, 45],
+      ],
+      quality_score: 95,
+      is_acceptable: true,
+      suggestions: [],
+    }
+    vi.mocked(attendanceManager.bulkDetectFaces).mockResolvedValueOnce({
+      success: true,
+      group_id: mockGroup.id,
+      total_images: 3,
+      results: [
+        { image_id: "image_0", success: true, faces: [face] },
+        { image_id: "image_1", success: true, faces: [face, face] },
+        { image_id: "image_2", success: true, faces: [face] },
+      ],
+    })
+    vi.mocked(attendanceManager.bulkEnrollFaces).mockResolvedValueOnce({
+      success: true,
+      group_id: mockGroup.id,
+      success_count: 3,
+      failed_count: 0,
+      results: [],
+    })
+    const { result } = renderHook(() => useBulkEnrollment(mockGroup, mockMembers))
+    await act(async () => {
+      await result.current.handleFilesSelected(files as unknown as FileList)
+    })
+    const faces = result.current.detectedFaces
+    act(() => {
+      result.current.handleUnassign(faces[0].faceId)
+      result.current.handleAssignMember(faces[1].faceId, "one")
+      result.current.handleAssignMember(faces[2].faceId, "two")
+      result.current.handleAssignMember(faces[3].faceId, "three")
+    })
+    await act(async () => {
+      await result.current.handleBulkEnroll()
+    })
+
+    expect(attendanceManager.addMember).not.toHaveBeenCalled()
+    expect(attendanceManager.bulkEnrollFaces).toHaveBeenCalledWith(
+      mockGroup.id,
+      [
+        expect.objectContaining({ person_id: "one", image_index: 0 }),
+        expect.objectContaining({ person_id: "two", image_index: 0 }),
+        expect.objectContaining({ person_id: "three", image_index: 1 }),
+      ],
+      [
+        { file: files[1], filename: "photo.jpg" },
+        { file: files[2], filename: "photo.jpg" },
+      ],
+    )
   })
 })

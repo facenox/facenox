@@ -23,12 +23,13 @@ export async function getMemberFromCache(
   memberCacheRef: React.RefObject<Map<string, AttendanceMember | null>>,
 ): Promise<{ member: AttendanceMember | null; memberName: string } | null> {
   try {
-    if (!memberCacheRef.current) return null
-    let member = memberCacheRef.current.get(personId)
+    const cache = memberCacheRef.current
+    if (!cache) return null
+    let member = cache.get(personId)
     if (member === undefined) {
       member = (await attendanceManager.getMember(personId)) || null
-      if (member) {
-        memberCacheRef.current.set(personId, member)
+      if (member && memberCacheRef.current === cache) {
+        cache.set(personId, member)
       }
     }
 

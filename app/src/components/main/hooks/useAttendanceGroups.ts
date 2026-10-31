@@ -8,6 +8,7 @@ import { getAttendanceDateString } from "@/utils/attendanceTime"
 
 const PANEL_SWITCH_SKELETON_DELAY_MS = 120
 const MODAL_EXIT_DURATION_MS = 260
+let panelDataRequestId = 0
 
 interface PanelDataCacheEntry {
   members: AttendanceMember[]
@@ -103,6 +104,9 @@ async function loadSelectedGroupData(
     onResolvedData?: (members: AttendanceMember[], records: AttendanceRecord[]) => void
   } = {},
 ): Promise<void> {
+  const requestId = ++panelDataRequestId
+  const isCurrentRequest = () =>
+    requestId === panelDataRequestId && useAttendanceStore.getState().currentGroup?.id === groupId
   const preserveExisting = options.preserveExisting ?? false
   const delaySkeleton = options.delaySkeleton ?? false
   const onResolvedData = options.onResolvedData
@@ -123,7 +127,7 @@ async function loadSelectedGroupData(
     })
 
     skeletonDelayTimer = setTimeout(() => {
-      if (useAttendanceStore.getState().currentGroup?.id !== groupId) return
+      if (!isCurrentRequest()) return
 
       hasShownLoading = true
       useAttendanceStore.setState({
@@ -155,10 +159,12 @@ async function loadSelectedGroupData(
       }),
     ])
 
-    // Sync with group store too
-    useGroupStore.setState({
-      members,
-    })
+    if (skeletonDelayTimer) clearTimeout(skeletonDelayTimer)
+    if (!isCurrentRequest()) return
+
+    if (useGroupStore.getState().selectedGroup?.id === groupId) {
+      useGroupStore.setState({ members })
+    }
 
     if (groupId !== ALL_GROUPS_ID) {
       const today = getAttendanceDateString(
@@ -171,15 +177,7 @@ async function loadSelectedGroupData(
         .catch(() => {})
     }
 
-    if (skeletonDelayTimer) {
-      clearTimeout(skeletonDelayTimer)
-    }
-
     onResolvedData?.(members, records)
-
-    if (useAttendanceStore.getState().currentGroup?.id !== groupId) {
-      return
-    }
 
     useAttendanceStore.setState({
       groupMembers: members,
@@ -193,7 +191,7 @@ async function loadSelectedGroupData(
       clearTimeout(skeletonDelayTimer)
     }
 
-    if (useAttendanceStore.getState().currentGroup?.id === groupId) {
+    if (isCurrentRequest()) {
       useAttendanceStore.setState({
         isPanelLoading: false,
         isPanelRefreshing: false,
@@ -244,7 +242,7 @@ export function useAttendanceGroups() {
     (group: AttendanceGroup | null) => {
       setCurrentGroup(group)
       currentGroupRef.current = group
-      memberCacheRef.current.clear()
+      memberCacheRef.current = new Map()
     },
     [setCurrentGroup],
   )
@@ -252,6 +250,9 @@ export function useAttendanceGroups() {
   const cachePanelData = useCallback(
     (groupId: string, members: AttendanceMember[], records: AttendanceRecord[]) => {
       panelDataCacheRef.current.set(groupId, { members, records })
+      if (currentGroupRef.current?.id === groupId) {
+        memberCacheRef.current = new Map(members.map((member) => [member.person_id, member]))
+      }
     },
     [],
   )
@@ -280,6 +281,12 @@ export function useAttendanceGroups() {
         currentGroupRef.current
       const groups = await attendanceManager.getGroups()
       setAttendanceGroups(groups)
+
+      const latestGroup =
+        useAttendanceStore.getState().currentGroup ??
+        useGroupStore.getState().selectedGroup ??
+        currentGroupRef.current
+      if (latestGroup?.id !== currentGroupValue?.id) return
 
       let resolvedGroup: AttendanceGroup | null = null
       if (currentGroupValue?.id === ALL_GROUPS_ID) {

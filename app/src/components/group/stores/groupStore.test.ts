@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import type { AttendanceMember } from "@/types/recognition"
 
 const mockPersistentSettings = {
   setUIState: vi.fn().mockResolvedValue(undefined),
@@ -33,6 +34,20 @@ function createGroup(id: string, name: string) {
     is_active: true,
     settings: {},
   }
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason: Error) => void
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise
+    reject = rejectPromise
+  })
+  return { promise, resolve, reject }
+}
+
+function createMember(groupId: string, name: string): AttendanceMember {
+  return { person_id: name, group_id: groupId, name, joined_at: new Date(), is_active: true }
 }
 
 describe("groupStore", () => {
@@ -145,6 +160,7 @@ describe("groupStore", () => {
 
   it("fetchGroupDetails loads members for a group", async () => {
     const useGroupStore = await loadStore()
+    useGroupStore.getState().setSelectedGroup(createGroup("group-1", "Morning Class"))
     const members = [
       {
         person_id: "member-1",
@@ -159,6 +175,62 @@ describe("groupStore", () => {
     await useGroupStore.getState().fetchGroupDetails("group-1")
 
     expect(useGroupStore.getState().members).toEqual(members)
+  })
+
+  it("ignores a late response from the previously selected group", async () => {
+    const store = await loadStore()
+    const older = deferred<AttendanceMember[]>()
+    const membersB = [createMember("group-b", "B Member")]
+    mockAttendanceManager.getGroupMembers
+      .mockReturnValueOnce(older.promise)
+      .mockResolvedValueOnce(membersB)
+
+    store.getState().setSelectedGroup(createGroup("group-a", "A"))
+    const loadingA = store.getState().fetchGroupDetails("group-a")
+    store.getState().setSelectedGroup(createGroup("group-b", "B"))
+    await store.getState().fetchGroupDetails("group-b")
+    older.resolve([createMember("group-a", "A Member")])
+    await loadingA
+
+    expect(store.getState().selectedGroup?.id).toBe("group-b")
+    expect(store.getState().members).toEqual(membersB)
+    expect(store.getState().loading).toBe(false)
+  })
+
+  it("does not show an older request's error or stop the current loading state", async () => {
+    const store = await loadStore()
+    const older = deferred<AttendanceMember[]>()
+    const latest = deferred<AttendanceMember[]>()
+    mockAttendanceManager.getGroupMembers
+      .mockReturnValueOnce(older.promise)
+      .mockReturnValueOnce(latest.promise)
+    store.getState().setSelectedGroup(createGroup("group-a", "A"))
+    const loadingA = store.getState().fetchGroupDetails("group-a")
+    store.getState().setSelectedGroup(createGroup("group-b", "B"))
+    const loadingB = store.getState().fetchGroupDetails("group-b")
+    older.reject(new Error("Old request failed"))
+    await loadingA
+
+    expect(store.getState().error).toBeNull()
+    expect(store.getState().loading).toBe(true)
+    latest.resolve([createMember("group-b", "B Member")])
+    await loadingB
+    expect(store.getState().loading).toBe(false)
+  })
+
+  it("keeps the latest members when requests for the same group complete out of order", async () => {
+    const store = await loadStore()
+    const older = deferred<AttendanceMember[]>()
+    const latestMembers = [createMember("group-a", "Updated Member")]
+    mockAttendanceManager.getGroupMembers
+      .mockReturnValueOnce(older.promise)
+      .mockResolvedValueOnce(latestMembers)
+    store.getState().setSelectedGroup(createGroup("group-a", "A"))
+    const first = store.getState().fetchGroupDetails("group-a")
+    await store.getState().fetchGroupDetails("group-a")
+    older.resolve([createMember("group-a", "Old Member")])
+    await first
+    expect(store.getState().members).toEqual(latestMembers)
   })
 
   it("deleteGroup dispatches the reset selection event and refreshes groups", async () => {

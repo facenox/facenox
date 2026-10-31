@@ -415,6 +415,7 @@ class AttendanceRepository:
                     remote_id=m_data.get("remote_id"),
                 )
                 self.session.add(new_member)
+                existing_members_map[person_id] = new_member
                 results.append(
                     {"member": new_member, "person_id": person_id, "success": True}
                 )
@@ -1292,6 +1293,8 @@ class FaceRepository:
         )
         if self.organization_id:
             query = query.where(Face.organization_id == self.organization_id)
+        else:
+            query = query.where(Face.organization_id.is_(None))
         result = await self.session.execute(query)
         return result.scalars().first()
 
@@ -1299,6 +1302,8 @@ class FaceRepository:
         query = select(Face).where(Face.is_deleted.is_(False))
         if self.organization_id:
             query = query.where(Face.organization_id == self.organization_id)
+        else:
+            query = query.where(Face.organization_id.is_(None))
         result = await self.session.execute(query)
         return list(result.scalars().all())
 

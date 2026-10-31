@@ -235,6 +235,48 @@ async def test_duplicate_face_person_id_across_orgs_is_supported(
 
 
 @pytest.mark.asyncio
+async def test_global_face_reads_and_deletion_exclude_organization_faces(
+    async_session_factory,
+) -> None:
+    async with async_session_factory() as session:
+        local = FaceRepository(session)
+        org = FaceRepository(session, "org-1")
+        await org.upsert_face("org-only", b"org-only", 1)
+        await org.upsert_face("shared-id", b"org-template", 1)
+        await local.upsert_face("shared-id", b"local-template", 1)
+        await session.commit()
+
+    async with async_session_factory() as session:
+        local = FaceRepository(session)
+        assert await local.get_face("org-only") is None
+        assert await local.remove_face("org-only") is False
+        assert (await local.get_face("shared-id")).embedding == b"local-template"
+        assert [face.person_id for face in await local.get_all_faces()] == ["shared-id"]
+        assert await local.remove_face("shared-id") is True
+        await session.commit()
+
+    async with async_session_factory() as session:
+        org = FaceRepository(session, "org-1")
+        assert (await org.get_face("org-only")).embedding == b"org-only"
+        assert (await org.get_face("shared-id")).embedding == b"org-template"
+
+
+@pytest.mark.asyncio
+async def test_global_face_rename_does_not_rename_organization_faces(
+    async_session_factory,
+) -> None:
+    async with async_session_factory() as session:
+        local = FaceRepository(session)
+        org = FaceRepository(session, "org-1")
+        await org.upsert_face("org-only", b"org-template", 1)
+        await session.commit()
+
+        assert await local.update_person_id("org-only", "renamed") is False
+        assert await org.get_face("renamed") is None
+        assert (await org.get_face("org-only")).embedding == b"org-template"
+
+
+@pytest.mark.asyncio
 async def test_rename_person_id_is_scoped_to_one_org(async_session_factory) -> None:
     async with async_session_factory() as session:
         org_one = AttendanceRepository(session, organization_id="org-1")

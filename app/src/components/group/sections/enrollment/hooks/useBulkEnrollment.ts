@@ -349,6 +349,9 @@ export function useBulkEnrollment(
         throw new Error("No members could be prepared for enrollment.")
       }
 
+      const imageIndices = [
+        ...new Set(readyFaces.map((face) => Number(face.imageId.replace("image_", "")))),
+      ]
       const enrollments = readyFaces.map((face) => {
         const imageIdx = parseInt(face.imageId.replace("image_", ""))
         const file = uploadedFiles[imageIdx]
@@ -358,18 +361,17 @@ export function useBulkEnrollment(
           landmarks_5: face.landmarks_5 as number[][],
           skip_quality_check: false,
           filename: file.name,
+          image_index: imageIndices.indexOf(imageIdx),
         }
       })
 
       const result = await attendanceManager.bulkEnrollFaces(
         group.id,
         enrollments,
-        uploadedFiles
-          .filter((_, i) => readyFaces.some((f) => parseInt(f.imageId.replace("image_", "")) === i))
-          .map((file) => ({
-            file,
-            filename: file.name,
-          })),
+        imageIndices.map((index) => ({
+          file: uploadedFiles[index],
+          filename: uploadedFiles[index].name,
+        })),
       )
 
       const results: BulkEnrollmentResult[] = result.results.map((r: BulkEnrollResponseItem) => ({

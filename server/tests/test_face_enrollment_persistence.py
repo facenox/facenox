@@ -75,3 +75,36 @@ async def test_embedding_failure_does_not_attempt_to_save(recognizer):
     assert result["success"] is False
     recognizer._get_db_manager.assert_not_called()
     recognizer._refresh_cache.assert_not_awaited()
+
+
+async def test_encrypted_same_id_templates_stay_isolated_during_reenrollment(
+    async_session_factory,
+    monkeypatch,
+):
+    import database.face as face_module
+    from database.face import FaceDatabaseManager
+    from core.models.face_recognizer.postprocess import find_best_match
+
+    monkeypatch.setattr(face_module, "AsyncSessionLocal", async_session_factory)
+    local = FaceDatabaseManager()
+    org = FaceDatabaseManager(organization_id="org-one")
+    local_embedding = np.zeros(512, dtype=np.float32)
+    local_embedding[0] = 1
+    org_embedding = np.zeros(512, dtype=np.float32)
+    org_embedding[1] = 1
+    replacement = np.zeros(512, dtype=np.float32)
+    replacement[2] = 1
+
+    assert await local.add_person("shared", local_embedding)
+    assert await org.add_person("shared", org_embedding)
+    assert await local.add_person("shared", replacement)
+
+    local_database = await local.get_all_persons()
+    org_database = await org.get_all_persons()
+    np.testing.assert_array_equal(local_database["shared"], replacement)
+    np.testing.assert_array_equal(org_database["shared"], org_embedding)
+    assert find_best_match(replacement, local_database, 0.5)[0] == "shared"
+    assert find_best_match(org_embedding, local_database, 0.5)[0] is None
+    assert (await local.get_stats())["total_persons"] == 1
+    assert await local.remove_person("shared")
+    np.testing.assert_array_equal(await org.get_person("shared"), org_embedding)
