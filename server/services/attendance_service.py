@@ -861,7 +861,7 @@ class AttendanceService:
             person_id, image, landmarks_5, self.repo.organization_id
         )
 
-        if result["success"]:
+        if result["success"] and result.get("database_saved") is not False:
             from services.live_stream_service import LiveStreamService
 
             LiveStreamService.invalidate_all(self.repo.organization_id)
@@ -879,7 +879,10 @@ class AttendanceService:
             logger.error(
                 f"Face enrollment failed for {person_id}: {result.get('error', 'Unknown error')}"
             )
-            raise ValueError(result.get("error", "Face enrollment failed"))
+            raise ValueError(
+                result.get("error")
+                or "Failed to save face data. Please try enrolling again."
+            )
 
     async def remove_face_data(self, group_id: str, person_id: str) -> Dict[str, Any]:
         """Remove face data for a person"""
@@ -1088,7 +1091,7 @@ class AttendanceService:
                     person_id, image, landmarks_5, self.repo.organization_id
                 )
 
-                if result["success"]:
+                if result["success"] and result.get("database_saved") is not False:
                     success_count += 1
                     results.append(
                         {"index": idx, "person_id": person_id, "success": True}
@@ -1100,7 +1103,8 @@ class AttendanceService:
                             "index": idx,
                             "person_id": person_id,
                             "success": False,
-                            "error": result.get("error"),
+                            "error": result.get("error")
+                            or "Failed to save face data. Please try enrolling again.",
                         }
                     )
 

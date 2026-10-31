@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from unittest.mock import AsyncMock, Mock
 
 import cv2
 import numpy as np
@@ -323,6 +324,53 @@ def _enroll_metadata(enable_liveness_detection: bool = False) -> str:
             "enable_liveness_detection": enable_liveness_detection,
         }
     )
+
+
+@pytest.mark.parametrize("reported_success", [False, True])
+@pytest.mark.parametrize("bulk", [False, True])
+def test_enrollment_rejects_unsaved_face_data(
+    biometrics_env, monkeypatch, reported_success, bulk
+) -> None:
+    from services.live_stream_service import LiveStreamService
+
+    client = biometrics_env["client"]
+    headers = _headers("org-save-failure")
+    group_id = _create_group(client, headers, "Enrollment Storage")
+    _create_member(client, headers, group_id, "unsaved-person", "Unsaved Person")
+    monkeypatch.setattr(
+        biometrics_env["recognizer"],
+        "enroll_person",
+        AsyncMock(return_value={"success": reported_success, "database_saved": False}),
+    )
+    invalidate = Mock()
+    monkeypatch.setattr(LiveStreamService, "invalidate_all", invalidate)
+
+    if bulk:
+        metadata = json.loads(_enroll_metadata())
+        metadata.update(person_id="unsaved-person", filename="face.jpg")
+        response = client.post(
+            f"/attendance/groups/{group_id}/bulk-enroll-faces",
+            headers=headers,
+            data={"metadata": json.dumps([metadata])},
+            files=[("images", ("face.jpg", _make_image_bytes(), "image/jpeg"))],
+        )
+        assert response.status_code == 200, response.text
+        assert response.json()["success_count"] == 0
+        assert response.json()["failed_count"] == 1
+        assert response.json()["results"][0]["success"] is False
+        error = response.json()["results"][0]["error"]
+    else:
+        response = client.post(
+            f"/attendance/groups/{group_id}/persons/unsaved-person/enroll-face",
+            headers=headers,
+            data={"metadata": _enroll_metadata()},
+            files={"image": ("face.jpg", _make_image_bytes(), "image/jpeg")},
+        )
+        assert response.status_code == 400, response.text
+        error = response.json()["detail"]
+
+    assert error == "Failed to save face data. Please try enrolling again."
+    invalidate.assert_not_called()
 
 
 def test_enroll_and_list_face_data_stays_org_scoped(biometrics_env) -> None:

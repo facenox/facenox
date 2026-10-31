@@ -94,6 +94,21 @@ Facenox runs on desktops in real environments. Avoid unnecessary dependencies an
 
 ## Commands
 
+### Line endings
+
+The repository uses LF for source files on Windows, macOS, and Linux. Windows
+`.bat` and `.cmd` scripts use CRLF. `.gitattributes` controls Git checkouts,
+`.editorconfig` guides editors, and Prettier and Ruff use LF when formatting.
+No global Git configuration change is needed.
+
+For a checkout created before these rules were added, commit or stash your work
+before refreshing the checkout. A fresh clone applies the rules automatically.
+`pnpm fix` can still change code that needs linting or formatting, but should not
+produce changes solely because you switched operating systems.
+
+Run `node scripts/check-line-endings.mjs` to check a checkout. The native Windows,
+macOS, and Linux build jobs also run this check.
+
 ### Desktop app
 
 ```bash

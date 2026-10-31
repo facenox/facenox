@@ -130,6 +130,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Check Checkout Line Endings
+        run: node scripts/check-line-endings.mjs
+
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:

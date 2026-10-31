@@ -341,25 +341,34 @@ class FaceRecognizer:
             embedding = embeddings[0]
 
             db_manager = self._get_db_manager(organization_id)
-            if db_manager:
-                from utils.image_utils import calculate_image_hash
+            if not db_manager:
+                return {
+                    "success": False,
+                    "person_id": person_id,
+                    "database_saved": False,
+                    "error": "Face storage is unavailable. Please restart Facenox and try again.",
+                }
 
-                image_hash = calculate_image_hash(image)
-                save_success = await db_manager.add_person(
-                    person_id, embedding, image_hash
-                )
-                stats = await db_manager.get_stats()
-                total_persons = stats.get("total_persons", 0)
-                await self._refresh_cache(organization_id)
-            else:
-                save_success = False
-                total_persons = 0
-                logger.warning("No database manager available for enrollment")
+            from utils.image_utils import calculate_image_hash
+
+            image_hash = calculate_image_hash(image)
+            save_success = await db_manager.add_person(person_id, embedding, image_hash)
+            if not save_success:
+                return {
+                    "success": False,
+                    "person_id": person_id,
+                    "database_saved": False,
+                    "error": "Failed to save face data. Please try enrolling again.",
+                }
+
+            stats = await db_manager.get_stats()
+            total_persons = stats.get("total_persons", 0)
+            await self._refresh_cache(organization_id)
 
             return {
                 "success": True,
                 "person_id": person_id,
-                "database_saved": save_success,
+                "database_saved": True,
                 "total_persons": total_persons,
             }
 

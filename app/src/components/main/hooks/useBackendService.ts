@@ -88,18 +88,30 @@ export function useBackendService(options: UseBackendServiceOptions) {
 
   useEffect(() => {
     let cancelled = false
-    const syncLiveConfig = async () => {
-      if (cancelled || !webSocketServiceRef.current) return
-      const deviceId = await persistentSettings.get<string>("sync.deviceId")
-      if (cancelled) return
-      webSocketServiceRef.current.updateLiveConfig({
-        enableLivenessDetection: enableSpoofDetection,
-        groupId: currentGroupId,
-        maxRecognitionFacesPerFrame,
-        deviceId: deviceId || undefined,
-      })
+    if (!webSocketServiceRef.current) {
+      webSocketServiceRef.current = new WebSocketService()
     }
-    void syncLiveConfig()
+    const webSocketService = webSocketServiceRef.current
+
+    // Queue recognition settings before connecting, without waiting for device metadata.
+    webSocketService.updateLiveConfig({
+      enableLivenessDetection: enableSpoofDetection,
+      groupId: currentGroupId,
+      maxRecognitionFacesPerFrame,
+    })
+
+    const syncDeviceId = async () => {
+      try {
+        const deviceId = await persistentSettings.get<string>("sync.deviceId")
+        if (cancelled || webSocketServiceRef.current !== webSocketService) return
+        webSocketService.updateLiveConfig({ deviceId: deviceId || undefined })
+      } catch (error) {
+        if (!cancelled) {
+          console.warn("Could not load device ID for live scanning:", error)
+        }
+      }
+    }
+    void syncDeviceId()
     return () => {
       cancelled = true
     }
