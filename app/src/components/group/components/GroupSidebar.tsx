@@ -1,4 +1,4 @@
-import { X } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import { Dropdown, Tooltip } from "@/components/shared"
 import { generateGroupDisplayNames } from "@/utils"
 
@@ -53,9 +53,9 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
             <Tooltip content="New group" position="top">
               <button
                 onClick={openCreateGroup}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-white/[0.06]"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-white/65 transition-all hover:border-white/10 hover:bg-white/[0.08] hover:text-white active:scale-95"
                 aria-label="New group">
-                <span className="text-lg">+</span>
+                <Plus className="size-4" />
               </button>
             </Tooltip>
           </div>

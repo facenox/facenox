@@ -42,7 +42,7 @@ interface AttendancePanelProps {
 }
 
 const sidebarActionButtonClassName =
-  "flex h-9 w-9 shrink-0 items-center justify-center border border-white/[0.08] bg-white/[0.02] text-white/45 transition-all duration-200 hover:bg-white/[0.05] hover:text-white focus:border-white/20 focus:text-white focus:outline-none"
+  "flex h-9 w-9 shrink-0 items-center justify-center border border-white/5 bg-white/5 text-white/45 transition-all duration-200 hover:bg-white/[0.08] hover:text-white focus:border-white/20 focus:text-white focus:outline-none"
 
 const ScrollCenteredEmptyState = memo(function ScrollCenteredEmptyState({
   children,
@@ -486,7 +486,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                 placeholder="Select group…"
                 emptyMessage="No groups available"
                 maxHeight={256}
-                buttonClassName="text-xs h-9 !bg-white/[0.02] hover:!bg-white/[0.05] !border-white/[0.08] border-r-0 rounded-r-none focus:ring-0! focus:border-white/20!"
+                buttonClassName="text-xs h-9 !bg-white/5 hover:!bg-white/[0.08] !border-white/5 border-r-0 rounded-r-none focus:ring-0! focus:border-white/20!"
                 optionClassName="text-xs py-1.5"
                 allowClear={false}
                 showPlaceholderOption={false}
