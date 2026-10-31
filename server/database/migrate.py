@@ -30,7 +30,12 @@ from database import generation_store as generations
 logger = logging.getLogger(__name__)
 
 DB_FILENAME = "attendance.db"
-KEY_FILENAMES = (".machine_key.dpapi", ".machine_key", ".machine_key.json")
+KEY_FILENAMES = (
+    ".machine_key.dpapi",
+    ".machine_key",
+    ".machine_key.json",
+    "RECOVERY_KEY.txt",
+)
 MINIMUM_MIGRATION_HEADROOM = 64 * 1024 * 1024
 CRITICAL_DATA_TABLES = (
     "attendance_groups",

@@ -104,3 +104,53 @@ def test_disaster_recovery_via_master_recovery_key_on_foreign_machine(
         create_if_missing=False, data_dir=data_dir
     )
     assert record_auto.key == original_key
+
+
+def test_legacy_windows_dpapi_discovery_without_metadata(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir(parents=True)
+
+    fake_dpapi_key = b"W" * 32
+    (data_dir / ".machine_key.dpapi").write_bytes(b"encrypted_dpapi_blob")
+
+    monkeypatch.setattr(cipher.platform, "system", lambda: "Windows")
+    monkeypatch.setattr(
+        cipher,
+        "_machine_key_windows",
+        lambda *, create_if_missing=True, data_dir=None: fake_dpapi_key,
+    )
+    monkeypatch.setattr(cipher, "_CACHED_MACHINE_KEY", None)
+    monkeypatch.setattr(cipher, "_CACHED_MACHINE_PROVIDER", None)
+    monkeypatch.setattr(cipher, "_CACHED_MACHINE_DATA_DIR", None)
+
+    record = cipher.get_machine_key_record(create_if_missing=False, data_dir=data_dir)
+    assert record.provider == "windows-dpapi"
+    assert record.key == fake_dpapi_key
+
+    # Verifies that it gets pinned into .machine_key.json
+    metadata = cipher._read_provider(data_dir)
+    assert metadata is not None
+    assert metadata["provider"] == "windows-dpapi"
+    assert metadata["format"] == 1
+
+
+def test_legacy_file_discovery_without_metadata(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir(parents=True)
+
+    fake_file_key = b"F" * 32
+    (data_dir / ".machine_key").write_bytes(fake_file_key)
+
+    monkeypatch.setattr(cipher.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(cipher, "_CACHED_MACHINE_KEY", None)
+    monkeypatch.setattr(cipher, "_CACHED_MACHINE_PROVIDER", None)
+    monkeypatch.setattr(cipher, "_CACHED_MACHINE_DATA_DIR", None)
+
+    record = cipher.get_machine_key_record(create_if_missing=False, data_dir=data_dir)
+    assert record.provider == "file"
+    assert record.key == fake_file_key
+
+    metadata = cipher._read_provider(data_dir)
+    assert metadata is not None
+    assert metadata["provider"] == "file"
+    assert metadata["format"] == 1

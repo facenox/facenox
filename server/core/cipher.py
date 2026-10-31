@@ -447,12 +447,34 @@ def _discover_provider(data_dir: Path, *, create_if_missing: bool) -> tuple[str,
     if environment_key is not None:
         return "environment", environment_key
 
-    # Check for legacy .machine_key file without .machine_key.json
+    system = platform.system()
+    if system == "Windows":
+        dpapi_key = data_dir / ".machine_key.dpapi"
+        if dpapi_key.exists():
+            return "windows-dpapi", _machine_key_windows(
+                create_if_missing=False, data_dir=data_dir
+            )
+
     file_key = data_dir / ".machine_key"
-    if not create_if_missing and file_key.exists():
+    if file_key.exists():
         return "file", _machine_key_file(create_if_missing=False, data_dir=data_dir)
 
-    # Use Dual Envelope Architecture (Rank 1)
+    if not create_if_missing:
+        if system == "Darwin":
+            try:
+                return "macos-keychain", _machine_key_macos_keyring(
+                    create_if_missing=False
+                )
+            except MachineKeyUnavailableError:
+                pass
+        elif system == "Linux" and os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+            try:
+                return "linux-keyring", _machine_key_linux_keyring(
+                    create_if_missing=False
+                )
+            except MachineKeyUnavailableError:
+                pass
+
     return _create_envelope(data_dir, create_if_missing=create_if_missing)
 
 
@@ -489,7 +511,7 @@ def get_machine_key_record(
             raise MachineKeyUnavailableError(
                 f"Machine key from provider '{provider}' has an invalid length."
             )
-        if provider == "environment":
+        if provider != "envelope":
             _pin_provider(active_data_dir, provider, key)
         record = MachineKeyRecord(key, provider, _key_id(key))
 
