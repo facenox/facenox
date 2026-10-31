@@ -455,13 +455,22 @@ class AttendanceRepository:
         result = await self.session.execute(query)
         return result.scalars().all()
 
-    async def get_group_person_ids(self, group_id: str) -> List[str]:
-        query = select(AttendanceMember.person_id).where(
-            AttendanceMember.group_id == group_id,
-            AttendanceMember.is_active,
-            AttendanceMember.is_deleted.is_(False),
+    async def get_group_person_ids(self, group_id: Optional[str] = None) -> List[str]:
+        """Recognition candidates in active groups, optionally limited to one group."""
+        query = (
+            select(AttendanceMember.person_id)
+            .join(AttendanceGroup, AttendanceMember.group_id == AttendanceGroup.id)
+            .where(
+                AttendanceMember.is_active,
+                AttendanceMember.is_deleted.is_(False),
+                AttendanceGroup.is_active,
+                AttendanceGroup.is_deleted.is_(False),
+            )
         )
+        if group_id is not None:
+            query = query.where(AttendanceMember.group_id == group_id)
         query = self._apply_org_scope(query, AttendanceMember)
+        query = self._apply_org_scope(query, AttendanceGroup)
         result = await self.session.execute(query)
         return list(result.scalars().all())
 

@@ -85,10 +85,9 @@ async def recognize_face(
                 error=error_msg,
             )
 
-        if group_id and group_id.lower() == "all":
-            allowed_person_ids = None
-        else:
-            allowed_person_ids = await repo.get_group_person_ids(group_id)
+        allowed_person_ids = await repo.get_group_person_ids(
+            None if group_id.lower() == "all" else group_id
+        )
 
         result = await face_recognizer.recognize_face(
             img, landmarks_5, allowed_person_ids, repo.organization_id

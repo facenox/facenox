@@ -260,6 +260,7 @@ async def import_backup(
                             "late_threshold_enabled", False
                         ),
                         class_start_time=settings_dict.get("class_start_time", "08:00"),
+                        class_end_time=settings_dict.get("class_end_time"),
                         attendance_mode=settings_dict.get(
                             "attendance_mode",
                             (
@@ -269,6 +270,9 @@ async def import_backup(
                             ),
                         ),
                         track_checkout=settings_dict.get("track_checkout", False),
+                        min_checkout_delay_minutes=settings_dict.get(
+                            "min_checkout_delay_minutes", 15
+                        ),
                         scan_behavior=settings_dict.get("scan_behavior", "automatic"),
                         organization_id=repo.organization_id,
                         is_active=group.is_active,
@@ -288,11 +292,15 @@ async def import_backup(
                     existing.class_start_time = settings_dict.get(
                         "class_start_time", existing.class_start_time
                     )
+                    existing.class_end_time = settings_dict.get("class_end_time")
                     existing.attendance_mode = settings_dict.get(
                         "attendance_mode", existing.attendance_mode
                     )
                     existing.track_checkout = settings_dict.get(
                         "track_checkout", existing.track_checkout
+                    )
+                    existing.min_checkout_delay_minutes = settings_dict.get(
+                        "min_checkout_delay_minutes", 15
                     )
                     existing.scan_behavior = settings_dict.get(
                         "scan_behavior", existing.scan_behavior
@@ -320,8 +328,10 @@ async def import_backup(
                     late_threshold_minutes=rule.late_threshold_minutes,
                     late_threshold_enabled=rule.late_threshold_enabled,
                     class_start_time=rule.class_start_time,
+                    class_end_time=rule.class_end_time,
                     attendance_mode=rule.attendance_mode,
                     track_checkout=rule.track_checkout,
+                    min_checkout_delay_minutes=rule.min_checkout_delay_minutes,
                     scan_behavior=rule.scan_behavior,
                     organization_id=repo.organization_id,
                     is_deleted=False,

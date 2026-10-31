@@ -207,13 +207,17 @@ class FaceRecognizer:
     async def _refresh_cache(self, organization_id: Optional[str] = None):
         """Refresh cache after database modifications"""
         cache_key = self._cache_key(organization_id)
-        db_manager = self._get_db_manager(organization_id)
-        if db_manager:
-            self._persons_cache[cache_key] = await db_manager.get_all_persons()
-            self._cache_timestamp[cache_key] = time.time()
-        else:
-            self._persons_cache.pop(cache_key, None)
-            self._cache_timestamp.pop(cache_key, None)
+        if cache_key not in self._cache_locks:
+            self._cache_locks[cache_key] = asyncio.Lock()
+        # An older cache load must finish before publishing the post-write state.
+        async with self._cache_locks[cache_key]:
+            db_manager = self._get_db_manager(organization_id)
+            if db_manager:
+                self._persons_cache[cache_key] = await db_manager.get_all_persons()
+                self._cache_timestamp[cache_key] = time.time()
+            else:
+                self._persons_cache.pop(cache_key, None)
+                self._cache_timestamp.pop(cache_key, None)
 
         try:
             from services.live_stream_service import LiveStreamService

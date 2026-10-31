@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import { startTransition } from "react"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import type { DetectionResult } from "@/components/main/types"
@@ -26,6 +26,13 @@ interface UseFaceRecognitionOptions {
 
 export function useFaceRecognition(options: UseFaceRecognitionOptions) {
   const { currentGroupRef, memberCacheRef, calculateAngleConsistencyRef } = options
+  const recognitionRequestRef = useRef(0)
+
+  useEffect(() => {
+    return () => {
+      recognitionRequestRef.current += 1
+    }
+  }, [])
 
   const { currentRecognitionResults, setCurrentRecognitionResults, setTrackedFaces } =
     useDetectionStore()
@@ -91,7 +98,13 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
 
   const performFaceRecognition = useCallback(
     async (detectionResult: DetectionResult) => {
+      const requestId = ++recognitionRequestRef.current
       const currentGroupValue = currentGroupRef.current
+      const memberCache = memberCacheRef.current
+      const isCurrentRequest = () =>
+        requestId === recognitionRequestRef.current &&
+        currentGroupRef.current?.id === currentGroupValue?.id &&
+        memberCacheRef.current === memberCache
       if (!currentGroupValue) {
         setCurrentRecognitionResults(new Map())
         return
@@ -123,6 +136,7 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
             currentGroupValue,
             memberCacheRef,
           )
+          if (!isCurrentRequest()) return
           const memberName =
             response.name ||
             response.memberName ||
@@ -143,6 +157,7 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
         nextRecognitionResults.set(trackId, response)
       }
 
+      if (!isCurrentRequest()) return
       setCurrentRecognitionResults((prev) => {
         if (areRecognitionMapsEqual(prev, nextRecognitionResults)) {
           return prev

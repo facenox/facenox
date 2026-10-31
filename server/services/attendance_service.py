@@ -524,6 +524,18 @@ class AttendanceService:
 
         # Get group settings for late threshold and check-out tracking
         group = await self.repo.get_group(member.group_id)
+        if not group or not group.is_active:
+            return AttendanceEventResponse(
+                id=None,
+                person_id=event_data.person_id,
+                group_id=member.group_id,
+                timestamp=current_time,
+                confidence=event_data.confidence,
+                location=event_data.location,
+                processed=False,
+                error="Attendance group is inactive or unavailable.",
+                time_health=time_health_payload,
+            )
 
         # Always fetch the effective rule at the current event time to support settings changes midway through the day
         session_rule = await self.repo.get_effective_group_rule(

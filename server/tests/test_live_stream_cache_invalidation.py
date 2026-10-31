@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 import numpy as np
 from unittest.mock import AsyncMock, patch
@@ -5,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 from services.live_stream_service import (
     LiveStreamService,
     LiveGroupContext,
+    LiveSessionConfig,
 )
 
 
@@ -70,3 +72,57 @@ async def test_live_stream_service_cache_invalidation_flow():
     # Clean up
     LiveStreamService.unregister_config(config)
     assert config not in LiveStreamService._active_configs
+
+
+@pytest.mark.parametrize(
+    "organization_id,invalidation_id",
+    [
+        (None, None),
+        ("org-loading", "org-loading"),
+        ("org-loading", None),
+    ],
+)
+async def test_invalidation_during_context_load_discards_the_stale_snapshot(
+    monkeypatch,
+    organization_id,
+    invalidation_id,
+):
+    service = LiveStreamService(organization_id)
+    config = LiveSessionConfig(organization_id=organization_id, active_group_id="g")
+    LiveStreamService.register_config(config)
+    started = asyncio.Event()
+    finish = asyncio.Event()
+    old = LiveGroupContext(
+        group_id="g",
+        group_exists=True,
+        group_matrix=np.ones((1, 512)),
+        person_index_map=["removed"],
+    )
+    new = LiveGroupContext(group_id="g", group_exists=True)
+
+    async def fetch(*_args):
+        started.set()
+        await finish.wait()
+        return old
+
+    monkeypatch.setattr(service, "_fetch_group_context", fetch)
+    pending = asyncio.create_task(service.ensure_group_context(config))
+    try:
+        await asyncio.wait_for(started.wait(), 5)
+        LiveStreamService.invalidate_all(invalidation_id)
+        finish.set()
+        result = await asyncio.wait_for(pending, 5)
+        assert not result.group_exists
+        assert config.is_dirty
+        assert config.group_context is not old
+        monkeypatch.setattr(
+            service, "_fetch_group_context", AsyncMock(return_value=new)
+        )
+        assert await service.ensure_group_context(config) is new
+        assert not config.is_dirty
+    finally:
+        finish.set()
+        if not pending.done():
+            pending.cancel()
+        await asyncio.gather(pending, return_exceptions=True)
+        LiveStreamService.unregister_config(config)

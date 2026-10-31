@@ -2,6 +2,8 @@ import asyncio
 import json
 from collections import defaultdict
 from unittest.mock import AsyncMock, Mock
+from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import cv2
 import numpy as np
@@ -325,6 +327,214 @@ def _enroll_metadata(enable_liveness_detection: bool = False) -> str:
             "enable_liveness_detection": enable_liveness_detection,
         }
     )
+
+
+@pytest.mark.parametrize("selection", ["all", "single", "already-loaded"])
+def test_deactivated_group_cannot_recognize_or_log_live_attendance(
+    biometrics_env,
+    monkeypatch,
+    selection,
+):
+    from services.live_stream_service import LiveStreamService, LiveSessionConfig
+
+    client = biometrics_env["client"]
+    headers = _headers("inactive-group-org")
+    group_id = _create_group(client, headers, "Disabled")
+    _create_group(client, headers, "Active One")
+    _create_group(client, headers, "Active Two")
+    _create_member(client, headers, group_id, "disabled-person", "Disabled Member")
+    enrolled = client.post(
+        f"/attendance/groups/{group_id}/persons/disabled-person/enroll-face",
+        headers=headers,
+        data={"metadata": _enroll_metadata()},
+        files={"image": ("face.jpg", _make_image_bytes(), "image/jpeg")},
+    )
+    assert enrolled.status_code == 200, enrolled.text
+    now = datetime.now(timezone.utc)
+    health = SimpleNamespace(
+        source="test",
+        current_time_utc=now,
+        current_time_local=now,
+        time_zone_name="UTC",
+        os_clock_drift_seconds=0,
+        os_clock_warning=None,
+        online_verification_status="offline",
+        online_reference_url=None,
+        online_checked_at=None,
+        online_reference_time=None,
+        online_drift_seconds=None,
+        warning_message=None,
+    )
+    monkeypatch.setattr(
+        "services.attendance_service.get_time_authority",
+        lambda: SimpleNamespace(get_time_health=AsyncMock(return_value=health)),
+    )
+
+    async def scan():
+        service = LiveStreamService("inactive-group-org")
+        config = LiveSessionConfig(
+            organization_id="inactive-group-org",
+            active_group_id="all" if selection != "single" else group_id,
+        )
+        if selection == "already-loaded":
+            context = await service.ensure_group_context(config)
+            assert "disabled-person" in context.allowed_person_ids
+            # Keep a pre-deactivation context to verify the event-time guard too.
+            from database.repository import AttendanceRepository
+            from database.session import AsyncSessionLocal
+
+            async with AsyncSessionLocal() as session:
+                repo = AttendanceRepository(session, "inactive-group-org")
+                await repo.update_group(group_id, {"is_active": False})
+                await session.commit()
+        else:
+            disabled = client.put(
+                f"/attendance/groups/{group_id}",
+                headers=headers,
+                json={"is_active": False},
+            )
+            assert disabled.status_code == 200, disabled.text
+
+        face = {
+            "bbox": {"x": 0, "y": 0, "width": 80, "height": 80},
+            "confidence": 0.99,
+            "track_id": 1,
+            "landmarks_5": [],
+        }
+        events = await service.process_live_recognition(
+            np.zeros((112, 112, 3), np.uint8),
+            [face],
+            config,
+        )
+        assert events == []
+        if selection != "already-loaded":
+            assert "disabled-person" not in config.group_context.allowed_person_ids
+            assert not face.get("recognition", {}).get("person_id")
+
+    asyncio.run(scan())
+    assert client.get("/attendance/records", headers=headers).json() == []
+    event = client.post(
+        "/attendance/events",
+        headers=headers,
+        json={"person_id": "disabled-person", "confidence": 0.99},
+    )
+    assert event.status_code == 200, event.text
+    assert event.json()["processed"] is False
+    assert event.json()["error"] == "Attendance group is inactive or unavailable."
+
+    metadata = dict(
+        json.loads(_enroll_metadata()),
+        group_id="all" if selection != "single" else group_id,
+    )
+    recognition = client.post(
+        "/face/recognize",
+        headers=headers,
+        data={"metadata": json.dumps(metadata)},
+        files={"image": ("face.jpg", _make_image_bytes(), "image/jpeg")},
+    )
+    assert recognition.status_code == 200, recognition.text
+    assert recognition.json()["person_id"] is None
+
+
+@pytest.mark.parametrize("stage", ["inference", "event"])
+def test_live_recognition_discards_work_invalidated_in_flight(
+    biometrics_env,
+    monkeypatch,
+    stage,
+):
+    from api.schemas import AttendanceEventResponse
+    from services.attendance_service import AttendanceService
+    from services.live_stream_service import LiveSessionConfig, LiveStreamService
+
+    client = biometrics_env["client"]
+    headers = _headers("inflight-org")
+    group_id = _create_group(client, headers, "Live")
+    _create_member(client, headers, group_id, "p", "Member")
+    enrolled = client.post(
+        f"/attendance/groups/{group_id}/persons/p/enroll-face",
+        headers=headers,
+        data={"metadata": _enroll_metadata()},
+        files={"image": ("face.jpg", _make_image_bytes(), "image/jpeg")},
+    )
+    assert enrolled.status_code == 200, enrolled.text
+    events_started = []
+
+    async def process_event(service, event, member, _settings):
+        events_started.append(event.person_id)
+        assert stage == "event", "Removed identity reached attendance processing"
+        timestamp = datetime.now(timezone.utc)
+        await service.repo.add_record(
+            {
+                "id": "pending-event",
+                "person_id": member.person_id,
+                "group_id": member.group_id,
+                "timestamp": timestamp,
+                "confidence": 0.99,
+            }
+        )
+        LiveStreamService.invalidate_all("inflight-org")
+        return AttendanceEventResponse(
+            id="pending-event",
+            person_id=member.person_id,
+            group_id=member.group_id,
+            timestamp=timestamp,
+            confidence=0.99,
+            location=None,
+            processed=True,
+            error=None,
+        )
+
+    monkeypatch.setattr(AttendanceService, "process_event", process_event)
+
+    async def scan():
+        service = LiveStreamService("inflight-org")
+        config = LiveSessionConfig(
+            organization_id="inflight-org", active_group_id=group_id
+        )
+        LiveStreamService.register_config(config)
+        started = asyncio.Event()
+        finish = asyncio.Event()
+
+        async def recognize(*_args, **_kwargs):
+            started.set()
+            await finish.wait()
+            return [{"success": True, "person_id": "p", "similarity": 0.99}]
+
+        monkeypatch.setattr(biometrics_env["recognizer"], "recognize_faces", recognize)
+        face = {
+            "bbox": {"x": 0, "y": 0, "width": 80, "height": 80},
+            "confidence": 0.99,
+            "track_id": 1,
+            "landmarks_5": [],
+        }
+        pending = asyncio.create_task(
+            service.process_live_recognition(
+                np.zeros((112, 112, 3), np.uint8),
+                [face],
+                config,
+            )
+        )
+        try:
+            await asyncio.wait_for(started.wait(), 5)
+            if stage == "inference":
+                removed = client.delete(
+                    f"/attendance/groups/{group_id}/persons/p/face-data",
+                    headers=headers,
+                )
+                assert removed.status_code == 200, removed.text
+            finish.set()
+            assert await asyncio.wait_for(pending, 5) == []
+            assert not face.get("recognition", {}).get("person_id")
+        finally:
+            finish.set()
+            if not pending.done():
+                pending.cancel()
+            await asyncio.gather(pending, return_exceptions=True)
+            LiveStreamService.unregister_config(config)
+
+    asyncio.run(scan())
+    assert events_started == ([] if stage == "inference" else ["p"])
+    assert client.get("/attendance/records", headers=headers).json() == []
 
 
 def test_bulk_enrollment_reuses_a_photo_for_multiple_faces(biometrics_env):

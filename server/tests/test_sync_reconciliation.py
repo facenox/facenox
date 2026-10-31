@@ -1,3 +1,5 @@
+import asyncio
+import base64
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 
@@ -70,6 +72,72 @@ def test_first_deleted_group_import_stays_deleted(sync_env):
     pull(sync_env, [group(is_active=False)])
     assert client.get("/attendance/groups", headers=headers).json() == []
     assert export(sync_env)["groups"][0]["is_active"] is False
+
+
+def test_synced_person_id_rename_exports_member_and_template_changes(sync_env):
+    client, factory, headers = sync_env
+    pull(sync_env, [group()], [member()])
+    raw_embedding = bytes(512 * 4)
+    response = client.post(
+        "/attendance/import-embedding",
+        headers=headers,
+        json={
+            "person_id": "p",
+            "embedding_bytes": base64.b64encode(raw_embedding).decode(),
+            "embedding_dimension": 512,
+            "sync_revision": 1,
+        },
+    )
+    assert response.status_code == 200 and response.json()["success"], response.text
+    before = export(sync_env)["members"][0]
+    assert before["sync_dirty"] is False
+    renamed = client.put(
+        "/face/person",
+        headers=headers,
+        json={"old_person_id": "p", "new_person_id": "renamed"},
+    )
+    assert renamed.status_code == 200, renamed.text
+    after = export(sync_env)["members"][0]
+    assert after["person_id"] == "renamed"
+    assert after["sync_dirty"] is True
+    assert after["version"] > before["version"]
+    face_export = client.post("/attendance/export-embeddings", headers=headers)
+    assert face_export.status_code == 200, face_export.text
+    faces = face_export.json()["embeddings"]
+    assert len(faces) == 1
+    assert faces[0]["person_id"] == "renamed"
+    assert base64.b64decode(faces[0]["embedding_bytes"]) == raw_embedding
+    assert faces[0]["version"] > 1
+
+    async def check():
+        async with factory() as session:
+            repo = FaceRepository(session, "org")
+            assert await repo.get_face("p") is None
+            assert (await repo.get_face("renamed")).sync_dirty is True
+
+    asyncio.run(check())
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("scan_behavior", "entry_only"),
+        ("min_checkout_delay_minutes", 45),
+    ],
+)
+def test_synced_group_setting_edit_is_marked_for_upload(sync_env, field, value):
+    client, _, headers = sync_env
+    pull(sync_env, [group()], [member()])
+    before = export(sync_env)["groups"][0]
+    assert before["sync_dirty"] is False
+    response = client.put(
+        "/attendance/groups/g", headers=headers, json={"settings": {field: value}}
+    )
+    assert response.status_code == 200, response.text
+    after = export(sync_env)["groups"][0]
+    assert after["settings"][field] == value
+    assert after["sync_dirty"] is True
+    assert after["version"] > before["version"]
 
 
 def test_pending_local_edit_survives_pull_without_acknowledgement(sync_env):

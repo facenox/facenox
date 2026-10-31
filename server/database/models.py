@@ -401,9 +401,19 @@ _SYNC_FIELDS = {
         "class_end_time",
         "attendance_mode",
         "track_checkout",
+        "min_checkout_delay_minutes",
+        "scan_behavior",
     ),
-    AttendanceMember: ("name", "group_id", "role", "email", "is_active", "is_deleted"),
-    Face: ("embedding", "is_deleted"),
+    AttendanceMember: (
+        "person_id",
+        "name",
+        "group_id",
+        "role",
+        "email",
+        "is_active",
+        "is_deleted",
+    ),
+    Face: ("person_id", "embedding", "is_deleted"),
 }
 
 

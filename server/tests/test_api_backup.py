@@ -7,6 +7,104 @@ from database.models import AttendanceGroup, AttendanceMember, Face, AttendanceS
 from core.cipher import encrypt_local_data, decrypt_local_data
 
 
+@pytest.mark.parametrize("existing", [False, True])
+@pytest.mark.parametrize("end_time,checkout_delay", [("17:00", 45), (None, 0)])
+async def test_backup_preserves_group_schedule_and_rule_fields(
+    async_session_factory,
+    monkeypatch,
+    tmp_path,
+    existing,
+    end_time,
+    checkout_delay,
+):
+    import core.lifespan
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+    from database.models import Base
+    from database.repository import AttendanceRepository
+    from api.routes.backup import export_backup, import_backup, BackupImportRequest
+
+    monkeypatch.setattr(core.lifespan, "face_recognizer", None)
+    async with async_session_factory() as source_session:
+        source = AttendanceRepository(source_session)
+        await source.create_group(
+            {
+                "id": "g",
+                "name": "Work",
+                "settings": {
+                    "attendance_mode": "work_hours",
+                    "class_start_time": "08:00",
+                    "class_end_time": end_time,
+                    "min_checkout_delay_minutes": checkout_delay,
+                    "scan_behavior": "entry_only",
+                },
+            }
+        )
+        await source_session.commit()
+        backup = await export_backup(password=None, repo=source)
+        assert backup.attendance.groups[0].settings.class_end_time == end_time
+        assert (
+            backup.attendance.groups[0].settings.min_checkout_delay_minutes
+            == checkout_delay
+        )
+        assert backup.attendance.group_rules
+
+    engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'restored.db'}")
+    try:
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+        factory = async_sessionmaker(engine, expire_on_commit=False)
+        async with factory() as session:
+            target = AttendanceRepository(session)
+            if existing:
+                await target.create_group(
+                    {
+                        "id": "g",
+                        "name": "Existing",
+                        "settings": {
+                            "class_end_time": "22:00",
+                            "min_checkout_delay_minutes": 90,
+                        },
+                    }
+                )
+                await session.commit()
+            payload = BackupImportRequest.model_validate(
+                {
+                    "version": backup.version,
+                    "exported_at": backup.exported_at,
+                    "attendance": {
+                        "data": backup.attendance.model_dump(),
+                        "overwrite_existing": True,
+                    },
+                    "biometrics": [],
+                }
+            )
+            result = await import_backup(payload=payload, repo=target)
+            assert result.success
+
+        async with factory() as session:
+            target = AttendanceRepository(session)
+            restored = await target.get_group("g")
+            expected = backup.attendance.groups[0].settings.model_dump()
+            for field in (
+                "attendance_mode",
+                "class_start_time",
+                "class_end_time",
+                "min_checkout_delay_minutes",
+                "scan_behavior",
+            ):
+                assert restored.settings[field] == expected[field]
+            rules = {rule.id: rule for rule in await target.get_group_rules("g")}
+            for rule in backup.attendance.group_rules:
+                assert rules[rule.id].class_end_time == rule.class_end_time
+                assert (
+                    rules[rule.id].min_checkout_delay_minutes
+                    == rule.min_checkout_delay_minutes
+                )
+                assert rules[rule.id].scan_behavior == rule.scan_behavior
+    finally:
+        await engine.dispose()
+
+
 @pytest.mark.asyncio
 async def test_backup_export_and_import_biometrics_roundtrip(
     async_session_factory, monkeypatch

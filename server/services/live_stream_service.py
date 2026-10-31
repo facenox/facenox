@@ -293,18 +293,27 @@ class LiveStreamService:
             )
 
             from sqlalchemy import select
-            from database.models import AttendanceMember
+            from database.models import AttendanceGroup, AttendanceMember
 
             if active_group_id and active_group_id.lower() == "all":
-                stmt = select(
-                    AttendanceMember.person_id,
-                    AttendanceMember.name,
-                    AttendanceMember.role,
-                ).where(
-                    AttendanceMember.is_deleted.is_(False),
-                    AttendanceMember.is_active.is_(True),
+                stmt = (
+                    select(
+                        AttendanceMember.person_id,
+                        AttendanceMember.name,
+                        AttendanceMember.role,
+                    )
+                    .join(
+                        AttendanceGroup, AttendanceMember.group_id == AttendanceGroup.id
+                    )
+                    .where(
+                        AttendanceMember.is_deleted.is_(False),
+                        AttendanceMember.is_active.is_(True),
+                        AttendanceGroup.is_deleted.is_(False),
+                        AttendanceGroup.is_active.is_(True),
+                    )
                 )
                 stmt = repo._apply_org_scope(stmt, AttendanceMember)
+                stmt = repo._apply_org_scope(stmt, AttendanceGroup)
                 res = await repo.session.execute(stmt)
                 rows = res.all()
 
@@ -319,7 +328,7 @@ class LiveStreamService:
                 }
             else:
                 group = await repo.get_group(active_group_id)
-                if group:
+                if group and group.is_active:
                     stmt = select(
                         AttendanceMember.person_id,
                         AttendanceMember.name,
@@ -387,9 +396,21 @@ class LiveStreamService:
             or is_version_stale
             or is_cold_matrix_retry
         ):
-            config.group_context = await self._fetch_group_context(
-                config.active_group_id, config.max_recognition_faces_per_frame
+            group_id = config.active_group_id
+            global_version = self.get_db_version()
+            context = await self._fetch_group_context(
+                group_id, config.max_recognition_faces_per_frame
             )
+            if (
+                config.active_group_id != group_id
+                or self.get_db_version(self.organization_id) != current_ver
+                or self.get_db_version() != global_version
+            ):
+                # A write or group switch raced this load. Skip this frame and
+                # reload next time instead of publishing its stale snapshot.
+                config.is_dirty = True
+                return LiveGroupContext()
+            config.group_context = context
             config.track_recognition_cache.clear()
             config.track_last_sampled_frame.clear()
             config.is_dirty = False
@@ -436,6 +457,18 @@ class LiveStreamService:
 
         if not face_recognizer:
             return []
+
+        context_version = config.loaded_version
+        global_version = self.get_db_version()
+
+        def context_is_current() -> bool:
+            return (
+                not config.is_dirty
+                and config.group_context is group_context
+                and config.active_group_id == group_context.group_id
+                and self.get_db_version(self.organization_id) == context_version
+                and self.get_db_version() == global_version
+            )
 
         recognition_candidates = sorted(
             (
@@ -486,6 +519,12 @@ class LiveStreamService:
             for face, res in zip(faces_to_infer, inferred_results):
                 new_results_map[id(face)] = res
 
+        if not context_is_current():
+            config.invalidate()
+            for face in recognition_candidates:
+                face.pop("recognition", None)
+            return []
+
         from core.lifespan import liveness_detector
 
         attendance_messages: list[Dict[str, Any]] = []
@@ -499,6 +538,8 @@ class LiveStreamService:
             )
 
             for face in recognition_candidates:
+                if not context_is_current():
+                    break
                 tid = face.get("track_id")
                 is_fresh = id(face) in new_results_map
 
@@ -578,6 +619,8 @@ class LiveStreamService:
 
                 try:
                     member = await repo.get_member(original_person_id)
+                    if not context_is_current():
+                        break
                     if not member:
                         continue
 
@@ -596,6 +639,9 @@ class LiveStreamService:
                         member,
                         settings,
                     )
+                    if not context_is_current():
+                        await session.rollback()
+                        break
                     if event_result.processed:
                         await session.commit()
                         config.attendance_cooldowns[cooldown_key] = now
@@ -613,4 +659,8 @@ class LiveStreamService:
                         exc,
                     )
 
+        if not context_is_current():
+            config.invalidate()
+            for face in recognition_candidates:
+                face.pop("recognition", None)
         return attendance_messages
