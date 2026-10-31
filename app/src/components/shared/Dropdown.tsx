@@ -96,14 +96,22 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
       }
     }, [isOpen, onOpenChange])
     const [menuPosition, setMenuPosition] = useState<{
-      top: number
+      top?: number
+      bottom?: number
       left: number
       width: number
       buttonRight: number
       opensUp: boolean
+      maxContentHeight: number
       parentLeft?: number
       parentWidth?: number
     } | null>(null)
+    const pinnedOpensUpRef = useRef<boolean | null>(null)
+    useEffect(() => {
+      if (!isOpen) {
+        pinnedOpensUpRef.current = null
+      }
+    }, [isOpen])
     const internalRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLElement>(null)
     const menuRef = useRef<HTMLDivElement>(null)
@@ -201,22 +209,30 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
       const measuredHeight = menuRef.current?.offsetHeight ?? estimatedHeight
       const spaceBelow = window.innerHeight - buttonRect.bottom
       const spaceAbove = buttonRect.top
-      const shouldOpenUp = spaceBelow < measuredHeight && spaceAbove > spaceBelow
+      let shouldOpenUp: boolean
+      if (pinnedOpensUpRef.current !== null) {
+        shouldOpenUp = pinnedOpensUpRef.current
+      } else {
+        shouldOpenUp = spaceBelow < measuredHeight && spaceAbove > spaceBelow
+        pinnedOpensUpRef.current = shouldOpenUp
+      }
+
       const viewportPadding = 8
       const gap = 4
+      const availableSpace = shouldOpenUp ? spaceAbove : spaceBelow
+      const maxContentHeight = Math.min(
+        maxHeight,
+        Math.max(80, availableSpace - gap - viewportPadding - (searchable ? 48 : 0)),
+      )
 
       setMenuPosition({
-        top:
-          shouldOpenUp ?
-            Math.max(viewportPadding, buttonRect.top - measuredHeight - gap)
-          : Math.min(
-              window.innerHeight - measuredHeight - viewportPadding,
-              buttonRect.bottom + gap,
-            ),
+        top: shouldOpenUp ? undefined : buttonRect.bottom + gap,
+        bottom: shouldOpenUp ? window.innerHeight - buttonRect.top + gap : undefined,
         left: buttonRect.left,
         width: buttonRect.width,
         buttonRight: buttonRect.right,
         opensUp: shouldOpenUp,
+        maxContentHeight,
         parentLeft: parentRect.left,
         parentWidth: parentRect.width,
       })
@@ -342,14 +358,30 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
               <>
                 <motion.div
                   ref={menuRef}
-                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                  layout="position"
+                  initial={{
+                    opacity: 0,
+                    scale: 0.96,
+                    y: menuPosition?.opensUp ? 4 : -4,
+                  }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                  exit={{
+                    opacity: 0,
+                    scale: 0.96,
+                    y: menuPosition?.opensUp ? 4 : -4,
+                  }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   className="fixed z-9999 overflow-hidden rounded-lg border border-white/10 bg-[#141518] shadow-2xl backdrop-blur-md"
                   onMouseDown={(e) => e.stopPropagation()}
                   style={{
-                    top: menuPosition ? `${menuPosition.top}px` : "-9999px",
+                    top:
+                      menuPosition ?
+                        menuPosition.top !== undefined ?
+                          `${menuPosition.top}px`
+                        : undefined
+                      : "-9999px",
+                    bottom:
+                      menuPosition?.bottom !== undefined ? `${menuPosition.bottom}px` : undefined,
                     left:
                       align === "left" || (!align && !menuWidth) ?
                         menuPosition ? `${menuPosition.left}px`
@@ -421,65 +453,80 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                     role={searchable ? "listbox" : undefined}
                     aria-label={searchable ? ariaLabel : undefined}
                     className="custom-scroll overflow-y-auto"
-                    style={{ maxHeight: `${maxHeight}px` }}>
-                    {visibleOptions.length === 0 ?
-                      <div className="px-3 py-2 text-center text-[11px] font-medium text-white/55">
-                        {emptyMessage}
-                      </div>
-                    : <>
-                        {showPlaceholderOption && allowClear && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onChange(null)
-                                setIsOpen(false)
-                              }}
-                              className={`w-full rounded-none px-3 py-1.5 text-left text-xs transition-colors ${
-                                !value ?
-                                  "bg-cyan-500/10 font-semibold text-cyan-400"
-                                : "text-white/70 hover:bg-white/5 hover:text-white"
-                              } ${optionClassName}`}>
-                              {placeholder}
-                            </button>
-                            {options.length > 0 && <div className="mx-2 h-px bg-white/5"></div>}
-                          </>
-                        )}
-
-                        {visibleOptions.map((option, idx) => (
-                          <div key={option.value !== "" ? String(option.value) : `empty-${idx}`}>
-                            <Tooltip
-                              content={typeof option.label === "string" ? option.label : undefined}
-                              offset={4}
-                              disabled={!shouldShowCustomTooltip(option.label)}
-                              className="!px-2.5 !py-1.5 text-center break-all">
+                    style={{ maxHeight: `${menuPosition?.maxContentHeight ?? maxHeight}px` }}>
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      {visibleOptions.length === 0 ?
+                        <motion.div
+                          key="empty"
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 4 }}
+                          transition={{ duration: 0.15, ease: "easeOut" }}
+                          className="px-3 py-2 text-center text-[11px] font-medium text-white/55">
+                          {emptyMessage}
+                        </motion.div>
+                      : <motion.div
+                          key="options-list"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.12, ease: "easeOut" }}>
+                          {showPlaceholderOption && allowClear && (
+                            <>
                               <button
                                 type="button"
-                                role={searchable ? "option" : undefined}
-                                aria-selected={searchable ? value === option.value : undefined}
-                                onClick={() => handleSelect(option.value)}
-                                disabled={option.disabled}
-                                className={`flex w-full items-center gap-2 truncate rounded-none px-3 py-1.5 text-left text-xs transition-colors ${
-                                  value === option.value ?
+                                onClick={() => {
+                                  onChange(null)
+                                  setIsOpen(false)
+                                }}
+                                className={`w-full rounded-none px-3 py-1.5 text-left text-xs transition-colors ${
+                                  !value ?
                                     "bg-cyan-500/10 font-semibold text-cyan-400"
-                                  : option.disabled ? "cursor-not-allowed text-white/55"
                                   : "text-white/70 hover:bg-white/5 hover:text-white"
                                 } ${optionClassName}`}>
-                                {option.icon && (
-                                  <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-xs opacity-75">
-                                    {option.icon}
-                                  </span>
-                                )}
-                                <span className="block flex-1 truncate">
-                                  {renderOption?.(option, value === option.value) ?? option.label}
-                                </span>
+                                {placeholder}
                               </button>
-                            </Tooltip>
-                            {option.dividerBelow && <div className="mx-2 my-1 h-px bg-white/5" />}
-                          </div>
-                        ))}
-                      </>
-                    }
+                              {options.length > 0 && <div className="mx-2 h-px bg-white/5"></div>}
+                            </>
+                          )}
+
+                          {visibleOptions.map((option, idx) => (
+                            <div key={option.value !== "" ? String(option.value) : `empty-${idx}`}>
+                              <Tooltip
+                                content={
+                                  typeof option.label === "string" ? option.label : undefined
+                                }
+                                offset={4}
+                                disabled={!shouldShowCustomTooltip(option.label)}
+                                className="!px-2.5 !py-1.5 text-center break-all">
+                                <button
+                                  type="button"
+                                  role={searchable ? "option" : undefined}
+                                  aria-selected={searchable ? value === option.value : undefined}
+                                  onClick={() => handleSelect(option.value)}
+                                  disabled={option.disabled}
+                                  className={`flex w-full items-center gap-2 truncate rounded-none px-3 py-1.5 text-left text-xs transition-colors ${
+                                    value === option.value ?
+                                      "bg-cyan-500/10 font-semibold text-cyan-400"
+                                    : option.disabled ? "cursor-not-allowed text-white/55"
+                                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                                  } ${optionClassName}`}>
+                                  {option.icon && (
+                                    <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-xs opacity-75">
+                                      {option.icon}
+                                    </span>
+                                  )}
+                                  <span className="block flex-1 truncate">
+                                    {renderOption?.(option, value === option.value) ?? option.label}
+                                  </span>
+                                </button>
+                              </Tooltip>
+                              {option.dividerBelow && <div className="mx-2 my-1 h-px bg-white/5" />}
+                            </div>
+                          ))}
+                        </motion.div>
+                      }
+                    </AnimatePresence>
                   </div>
                 </motion.div>
               </>

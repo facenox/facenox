@@ -8,7 +8,18 @@ interface AttendanceTimezonePickerProps {
   disabled?: boolean
 }
 
-function timeZoneDetails(timeZone: string) {
+interface TimeZoneDetail {
+  city: string
+  label: string
+}
+
+const timeZoneDetailsCache = new Map<string, TimeZoneDetail>()
+
+function timeZoneDetails(timeZone: string): TimeZoneDetail {
+  const cached = timeZoneDetailsCache.get(timeZone)
+  if (cached) return cached
+
+  let detail: TimeZoneDetail
   try {
     const zone = new Intl.DateTimeFormat("en", { timeZone }).resolvedOptions().timeZone
     const city = zone.split("/").at(-1)?.replaceAll("_", " ") ?? zone
@@ -19,19 +30,34 @@ function timeZoneDetails(timeZone: string) {
       .formatToParts(new Date())
       .find((part) => part.type === "timeZoneName")?.value
     const offset = offsetPart === "GMT" ? "UTC+00:00" : offsetPart?.replace(/^GMT/, "UTC")
-    return { city, label: offset ? `${city} (${offset})` : city }
+    detail = { city, label: offset ? `${city} (${offset})` : city }
   } catch {
     const city = timeZone.split("/").at(-1)?.replaceAll("_", " ") ?? timeZone
-    return { city, label: city }
+    detail = { city, label: city }
   }
+
+  timeZoneDetailsCache.set(timeZone, detail)
+  return detail
 }
 
-function supportedTimeZones(current: string) {
+let cachedBaseTimeZones: string[] | null = null
+
+function getBaseTimeZones(): string[] {
+  if (cachedBaseTimeZones) return cachedBaseTimeZones
   const supportedValuesOf = (
     Intl as typeof Intl & { supportedValuesOf?: (key: "timeZone") => string[] }
   ).supportedValuesOf
-  const zones = new Set([current, "UTC", ...(supportedValuesOf?.("timeZone") ?? [])])
-  return [current, ...[...zones].filter((zone) => zone !== current).sort()]
+  const zones = new Set(["UTC", ...(supportedValuesOf?.("timeZone") ?? [])])
+  cachedBaseTimeZones = [...zones].sort()
+  return cachedBaseTimeZones
+}
+
+function supportedTimeZones(current: string): string[] {
+  const base = getBaseTimeZones()
+  if (!current || !base.includes(current)) {
+    return current ? [current, ...base] : base
+  }
+  return [current, ...base.filter((zone) => zone !== current)]
 }
 
 export function AttendanceTimezonePicker({
@@ -57,22 +83,23 @@ export function AttendanceTimezonePicker({
       searchable
       searchPlaceholder="Search city or timezone..."
       searchAriaLabel="Search attendance timezones"
+      maxVisibleOptions={50}
       getOptionSearchText={(option) => {
         const timeZone = String(option.value)
-        const city = timeZone.split("/").at(-1)?.replaceAll("_", " ") ?? timeZone
-        return `${timeZone} ${timeZone.replaceAll("_", " ")} ${city}`
+        const details = timeZoneDetails(timeZone)
+        return `${timeZone} ${timeZone.replaceAll("_", " ")} ${details.city}`
       }}
-      renderOption={(option, selected) => {
+      renderOption={(option, isSelected) => {
         const timeZone = String(option.value)
         const details = timeZoneDetails(timeZone)
         return (
           <span className="block min-w-0 text-left">
             <span
-              className={`block truncate ${selected ? "text-cyan-300" : "text-white/85 group-hover:text-white"}`}>
+              className={`block truncate ${isSelected ? "text-cyan-300" : "text-white/85 group-hover:text-white"}`}>
               {details.label}
             </span>
             <span
-              className={`mt-0.5 block truncate text-[10px] ${selected ? "text-cyan-400/60" : "text-white/35 group-hover:text-white/55"}`}>
+              className={`mt-0.5 block truncate text-[10px] ${isSelected ? "text-cyan-400/60" : "text-white/35 group-hover:text-white/55"}`}>
               {timeZone}
             </span>
           </span>
