@@ -313,7 +313,6 @@ export class WebSocketService {
           max_recognition_faces_per_frame: config.maxRecognitionFacesPerFrame,
         }),
         ...(config.deviceId !== undefined && { device_id: config.deviceId }),
-        scan_behavior: "automatic",
       }),
     )
   }

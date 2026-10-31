@@ -105,8 +105,8 @@ describe("useBackendService live configuration", () => {
       enable_liveness_detection: false,
       max_recognition_faces_per_frame: 5,
       device_id: "test-device",
-      scan_behavior: "automatic",
     })
+    expect(socket.configs().every((config) => !("scan_behavior" in config))).toBe(true)
   })
 
   it("configures recognition before a slow device ID lookup finishes", async () => {

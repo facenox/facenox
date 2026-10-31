@@ -38,9 +38,12 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
 
   // Tracks when detectionInFlightRef was last set to true
   const inflightSinceRef = useRef<number>(0)
+  const requestIdRef = useRef(0)
+  const mountedRef = useRef(true)
 
   const processCurrentFrame = useCallback(async () => {
     if (
+      !mountedRef.current ||
       !webSocketServiceRef.current?.isWebSocketReady() ||
       !isScanningRef.current ||
       !isStreamingRef.current ||
@@ -51,16 +54,29 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
 
     // Watchdog: if a frame has been in-flight far too long, force-reset
     if (detectionInFlightRef.current) {
-      if (
-        inflightSinceRef.current > 0 &&
-        Date.now() - inflightSinceRef.current > WATCHDOG_TIMEOUT_MS
-      ) {
+      if (performance.now() - inflightSinceRef.current >= WATCHDOG_TIMEOUT_MS) {
         detectionInFlightRef.current = false
         inflightSinceRef.current = 0
         // Fall through to process next frame
       } else {
         return
       }
+    }
+
+    const session = trackingSessionRef.current
+    const requestId = ++requestIdRef.current
+    const isCurrentRequest = () =>
+      mountedRef.current &&
+      session === trackingSessionRef.current &&
+      requestId === requestIdRef.current &&
+      isScanningRef.current &&
+      isStreamingRef.current
+    const retry = () => {
+      if (!isCurrentRequest()) return
+      detectionInFlightRef.current = false
+      requestAnimationFrame(() => {
+        if (isCurrentRequest()) void processCurrentFrameRef.current?.()
+      })
     }
 
     frameCounterRef.current += 1
@@ -71,25 +87,30 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
     }
 
     try {
+      detectionInFlightRef.current = true
+      inflightSinceRef.current = performance.now()
       const frameData = await captureFrame()
+      if (!isCurrentRequest()) return
       if (!frameData) {
-        requestAnimationFrame(() => processCurrentFrameRef.current?.())
+        retry()
         return
       }
 
       lastDetectionFrameRef.current = frameData
       detectionInFlightRef.current = true
-      inflightSinceRef.current = Date.now()
+      inflightSinceRef.current = performance.now()
 
       webSocketServiceRef.current.sendDetectionRequest(frameData).catch((error) => {
+        if (!isCurrentRequest()) return
         detectionInFlightRef.current = false
         inflightSinceRef.current = 0
         console.error("Frame detection request failed:", error)
-        requestAnimationFrame(() => processCurrentFrameRef.current?.())
+        retry()
       })
     } catch (error) {
+      if (!isCurrentRequest()) return
       console.error("Frame capture failed:", error)
-      requestAnimationFrame(() => processCurrentFrameRef.current?.())
+      retry()
     }
   }, [
     captureFrame,
@@ -107,4 +128,24 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
   useEffect(() => {
     processCurrentFrameRef.current = processCurrentFrame
   }, [processCurrentFrame, processCurrentFrameRef])
+
+  useEffect(() => {
+    mountedRef.current = true
+    const timer = setInterval(() => {
+      if (
+        isScanningRef.current &&
+        isStreamingRef.current &&
+        detectionInFlightRef.current &&
+        performance.now() - inflightSinceRef.current >= WATCHDOG_TIMEOUT_MS
+      ) {
+        void processCurrentFrameRef.current?.()
+      }
+    }, 500)
+    return () => {
+      mountedRef.current = false
+      requestIdRef.current += 1
+      clearInterval(timer)
+      detectionInFlightRef.current = false
+    }
+  }, [isScanningRef, isStreamingRef, detectionInFlightRef, processCurrentFrameRef])
 }

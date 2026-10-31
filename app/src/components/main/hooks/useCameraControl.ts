@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import {
   cleanupStream,
   cleanupVideo,
@@ -78,13 +78,14 @@ export function useCameraControl({
   initializeWebSocket,
   getCameraDevices,
 }: CameraControlProps) {
+  const startupAttemptRef = useRef(0)
   const stopCamera = useCallback(
     (forceCleanup = false) => {
       const now = Date.now()
       const timeSinceLastStop = now - lastStopTimeRef.current
 
       if (!forceCleanup) {
-        if (isStoppingRef.current || !isStreamingRef.current) {
+        if (isStoppingRef.current || (!isStreamingRef.current && !isStartingRef.current)) {
           return
         }
 
@@ -94,6 +95,9 @@ export function useCameraControl({
       }
 
       isStoppingRef.current = true
+      startupAttemptRef.current += 1
+      isStartingRef.current = false
+      trackingSessionRef.current += 1
       lastStopTimeRef.current = now
       isScanningRef.current = false
       detectionInFlightRef.current = false
@@ -150,15 +154,28 @@ export function useCameraControl({
       isStreamingRef,
       isScanningRef,
       isStoppingRef,
+      isStartingRef,
+      trackingSessionRef,
       lastStopTimeRef,
       detectionInFlightRef,
     ],
+  )
+
+  useEffect(
+    () => () => {
+      if (isStartingRef.current || isStreamingRef.current || streamRef.current) stopCamera(true)
+    },
+    [stopCamera, isStartingRef, isStreamingRef, streamRef],
   )
 
   const startCamera = useCallback(async () => {
     let deviceIdToUse: string | undefined = undefined
     let availableDevices: MediaDeviceInfo[] = cameraDevices
     const hadExplicitSelection = Boolean(selectedCamera && selectedCamera.trim())
+    let attempt: number | undefined
+    let acquiredStream: MediaStream | null = null
+    const isCurrentAttempt = () =>
+      attempt === startupAttemptRef.current && isStartingRef.current && isStreamingRef.current
     try {
       const now = Date.now()
       const timeSinceLastStart = now - lastStartTimeRef.current
@@ -173,6 +190,7 @@ export function useCameraControl({
       }
 
       isStartingRef.current = true
+      attempt = ++startupAttemptRef.current
       lastStartTimeRef.current = now
       trackingSessionRef.current += 1
       detectionInFlightRef.current = false
@@ -186,6 +204,7 @@ export function useCameraControl({
         try {
           await initializeWebSocket()
         } catch (error) {
+          if (!isCurrentAttempt()) return
           console.error("Camera connection failed:", error)
           setError(
             "Facenox couldn't connect to the detection service. Restart the app and try again.",
@@ -200,15 +219,15 @@ export function useCameraControl({
       } else {
         webSocketServiceRef.current?.refreshActiveStream()
       }
+      if (!isCurrentAttempt()) return
 
       const freshDevices = await getCameraDevices()
+      if (!isCurrentAttempt()) return
       if (freshDevices && freshDevices.length > 0) {
         availableDevices = freshDevices
       }
 
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop())
-      }
+      cleanupStream(streamRef)
 
       deviceIdToUse = undefined
       if (selectedCamera && availableDevices.length > 0) {
@@ -242,17 +261,37 @@ export function useCameraControl({
 
       const constraints = buildCameraConstraints(deviceIdToUse)
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints)
+      let stream: MediaStream
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints)
+      } catch (error) {
+        if (!isCurrentAttempt()) return
+        const name = error instanceof Error ? error.name : ""
+        if (
+          hadExplicitSelection ||
+          !["OverconstrainedError", "ConstraintNotSatisfiedError"].includes(name)
+        ) {
+          throw error
+        }
+        stream = await navigator.mediaDevices.getUserMedia(buildCameraConstraints())
+      }
+      acquiredStream = stream
+      if (!isCurrentAttempt()) {
+        cleanupStream({ current: stream })
+        return
+      }
       streamRef.current = stream
 
       stream.getVideoTracks().forEach((track) => {
         track.onended = () => {
+          if (streamRef.current !== stream) return
           console.warn("[useCameraControl] Active video track ended unexpectedly.")
           setError("Active camera disconnected. Check connection or select another device.")
           stopCamera(true)
         }
       })
 
+      if (!videoRef.current) throw new Error("Camera preview is unavailable. Try again.")
       if (videoRef.current) {
         videoRef.current.srcObject = stream
 
@@ -266,7 +305,12 @@ export function useCameraControl({
 
             const deadline = performance.now() + 10_000
             const checkVideoReady = () => {
-              if (streamRef.current !== stream || !stream.active || videoRef.current !== video) {
+              if (
+                !isCurrentAttempt() ||
+                streamRef.current !== stream ||
+                !stream.active ||
+                videoRef.current !== video
+              ) {
                 reject(new Error("Camera startup was cancelled or the camera disconnected."))
               } else if (video.videoWidth > 0 && video.videoHeight > 0) {
                 resolve()
@@ -284,6 +328,7 @@ export function useCameraControl({
         }
 
         await waitForVideoReady()
+        if (!isCurrentAttempt()) return
         setIsVideoLoading(false)
         setCameraActive(true)
 
@@ -297,6 +342,7 @@ export function useCameraControl({
         }
       }
     } catch (err) {
+      if (attempt !== startupAttemptRef.current) return
       console.error("Error starting camera:", err)
 
       let errorMessage = "Unable to access camera. Ensure a camera is connected and try again."
@@ -336,43 +382,8 @@ export function useCameraControl({
           errorName === "OverconstrainedError" ||
           errorName === "ConstraintNotSatisfiedError"
         ) {
-          if (hadExplicitSelection) {
-            errorMessage =
-              "The selected camera could not be started. Select another camera or reconnect the device."
-          } else {
-            errorMessage = "Camera does not support requested settings. Trying default settings…"
-            try {
-              const fallbackConstraints = buildCameraConstraints()
-              const fallbackStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints)
-              streamRef.current = fallbackStream
-
-              fallbackStream.getVideoTracks().forEach((track) => {
-                track.onended = () => {
-                  console.warn("[useCameraControl] Fallback video track ended unexpectedly.")
-                  setError("Active camera disconnected. Check connection or select another device.")
-                  stopCamera(true)
-                }
-              })
-
-              if (videoRef.current) {
-                videoRef.current.srcObject = fallbackStream
-                await videoRef.current.play()
-                setIsVideoLoading(false)
-                setCameraActive(true)
-                isStreamingRef.current = true
-                setIsStreaming(true)
-                isScanningRef.current = true
-                backendServiceReadyRef.current = true
-                setError(null)
-                isStartingRef.current = false
-                return
-              }
-            } catch (fallbackErr) {
-              console.error("Fallback camera start also failed:", fallbackErr)
-              errorMessage =
-                "The camera could not be started. This usually happens if the hardware is busy or malfunctioning. Try re-plugging the camera."
-            }
-          }
+          errorMessage =
+            "The selected camera could not be started. Select another camera or reconnect the device."
         } else {
           errorMessage =
             err.message ||
@@ -380,6 +391,10 @@ export function useCameraControl({
         }
       }
 
+      if (streamRef.current === acquiredStream) {
+        cleanupStream(streamRef)
+        cleanupVideo(videoRef, true)
+      }
       setError(errorMessage)
       isStreamingRef.current = false
       isScanningRef.current = false
@@ -387,7 +402,7 @@ export function useCameraControl({
       setIsVideoLoading(false)
       setCameraActive(false)
     } finally {
-      isStartingRef.current = false
+      if (attempt === startupAttemptRef.current) isStartingRef.current = false
     }
   }, [
     selectedCamera,

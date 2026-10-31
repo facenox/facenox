@@ -279,18 +279,11 @@ export function useBackendService(options: UseBackendServiceOptions) {
           return
         }
 
-        if (data.frame_timestamp === undefined) {
-          return
+        // WebSocket messages arrive in order; wall-clock timestamps can move
+        // backward after a clock correction and must not stop the frame loop.
+        if (typeof data.frame_timestamp === "number" && Number.isFinite(data.frame_timestamp)) {
+          lastFrameTimestampRef.current = data.frame_timestamp
         }
-
-        const responseFrameTimestamp = data.frame_timestamp
-        const lastFrameTimestamp = lastFrameTimestampRef.current ?? 0
-
-        if (responseFrameTimestamp < lastFrameTimestamp) {
-          return
-        }
-
-        lastFrameTimestampRef.current = responseFrameTimestamp
 
         if (data.faces && Array.isArray(data.faces)) {
           if (data.suggested_skip !== undefined) {
@@ -298,6 +291,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
           }
 
           if (!data.model_used) {
+            requestAnimationFrame(() => processCurrentFrameRef.current?.())
             return
           }
 

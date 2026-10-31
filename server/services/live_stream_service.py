@@ -36,7 +36,7 @@ class LiveSessionConfig:
     max_recognition_faces_per_frame: int = 6
     client_id: Optional[str] = None
     device_id: Optional[str] = None
-    scan_behavior: str = "automatic"
+    scan_behavior: Optional[str] = None
     organization_id: Optional[str] = None
     group_context: LiveGroupContext = field(default_factory=LiveGroupContext)
     attendance_cooldowns: Dict[str, float] = field(default_factory=dict)
@@ -233,7 +233,7 @@ class LiveStreamService:
 
         if "scan_behavior" in message:
             behavior = message.get("scan_behavior")
-            if behavior in {"automatic", "entry_only", "exit_only"}:
+            if behavior is None or behavior in {"automatic", "entry_only", "exit_only"}:
                 config.scan_behavior = behavior
 
         if "group_id" in message:
