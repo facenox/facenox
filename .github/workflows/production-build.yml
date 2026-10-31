@@ -149,10 +149,10 @@ jobs:
           cd app
           pnpm install
 
-      - name: Test Native Storage Paths
+      - name: Test Native Storage Paths and Branding
         run: |
           cd app
-          pnpm exec vitest run src/electron/paths.test.ts src/electron/ipc/systemHandlers.test.ts
+          pnpm exec vitest run src/electron/paths.test.ts src/electron/ipc/systemHandlers.test.ts src/electron/appBranding.test.ts
 
       - name: Build App
         run: |

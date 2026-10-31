@@ -13,10 +13,10 @@ import { registerAllHandlers } from "./ipc/index.js"
 import { syncManager } from "./managers/BackgroundSyncManager.js"
 import { autoExportManager } from "./managers/AutoExportManager.js"
 import { getDataDirectory } from "./paths.js"
+import { configureAppIdentity } from "./appIdentity.js"
 
 const main_filename = fileURLToPath(import.meta.url)
 const main_dirname = path.dirname(main_filename)
-const FACENOX_APP_ID = "com.facenox.app"
 
 if (isDev()) {
   app.setName("Facenox-dev")
@@ -28,9 +28,7 @@ const sessionDataPath = path.join(app.getPath("userData"), "session")
 fs.mkdirSync(sessionDataPath, { recursive: true })
 app.setPath("sessionData", sessionDataPath)
 
-if (process.platform === "win32") {
-  app.setAppUserModelId(FACENOX_APP_ID)
-}
+configureAppIdentity()
 
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {

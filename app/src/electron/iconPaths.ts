@@ -8,6 +8,10 @@ function iconBaseDir() {
 export function getWindowIconPath() {
   const baseDir = iconBaseDir()
 
+  if (process.platform === "win32") {
+    return path.join(baseDir, "icons", "logo.ico")
+  }
+
   if (process.platform === "linux") {
     return path.join(baseDir, "icons", "logo-transparent.png")
   }

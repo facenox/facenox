@@ -59,6 +59,10 @@
       {
         "from": "../server/dist/server",
         "to": "server/server"
+      },
+      {
+        "from": "public/icons",
+        "to": "icons"
       }
     ],
     "icon": "./public/icons/logo.icns"
