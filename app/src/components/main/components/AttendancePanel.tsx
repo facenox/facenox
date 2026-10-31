@@ -42,7 +42,7 @@ interface AttendancePanelProps {
 }
 
 const sidebarActionButtonClassName =
-  "flex h-9 w-9 shrink-0 items-center justify-center border border-white/5 bg-white/5 text-white/45 transition-all duration-200 hover:bg-white/[0.08] hover:text-white focus:border-white/20 focus:text-white focus:outline-none"
+  "flex h-9 w-9 shrink-0 items-center justify-center border border-white/5 bg-white/5 text-white/65 transition-all duration-200 hover:bg-white/[0.08] hover:text-white focus:border-white/20 focus:text-white focus:outline-none active:scale-95"
 
 const ScrollCenteredEmptyState = memo(function ScrollCenteredEmptyState({
   children,
@@ -584,7 +584,7 @@ export const AttendancePanel = memo(function AttendancePanel({
                     </span>
                   }
                   menuWidth={120}
-                  buttonClassName={`h-9 w-full !border-white/5 !bg-white/5 group-focus-within/bar:!border-white/20 border border-l-0 rounded-l-none rounded-r-lg !px-0 text-white/45 transition-colors duration-200 hover:!bg-white/[0.08] hover:text-white focus:!border-white/20 focus:text-white focus:outline-none`}
+                  buttonClassName={`h-9 w-full !border-white/5 !bg-white/5 group-focus-within/bar:!border-white/20 border border-l-0 rounded-l-none rounded-r-lg !px-0 text-white/65 transition-colors duration-200 hover:!bg-white/[0.08] hover:text-white focus:!border-white/20 focus:text-white focus:outline-none`}
                   optionClassName="text-xs py-1.5"
                   showPlaceholderOption={false}
                   allowClear={false}

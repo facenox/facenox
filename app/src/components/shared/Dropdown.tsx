@@ -338,7 +338,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
             aria-label={ariaLabel}
             aria-haspopup={searchable ? "listbox" : "menu"}
             aria-expanded={isOpen && !disabled}
-            className={`dropdown-trigger flex min-w-0 cursor-pointer items-center ${
+            className={`dropdown-trigger group/dropdown flex min-w-0 cursor-pointer items-center ${
               fit ? "w-fit justify-start gap-2.5" : "justify-between"
             } ${fit ? "w-fit" : "w-full"} rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-left text-sm text-white transition-colors hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:cursor-not-allowed disabled:opacity-50 ${buttonClassName}`}>
             <AnimatePresence initial={false} mode="wait">
@@ -357,8 +357,10 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                 aria-hidden="true"
                 className={`${fit ? "" : "ms-3"} flex size-4 shrink-0 items-center justify-center`}>
                 <ChevronDown
-                  className={`size-3.5 text-white/65 transition-transform duration-200 ${
-                    isOpen ? "rotate-180" : ""
+                  className={`size-3.5 transition-all duration-200 ${
+                    isOpen ? "rotate-180 text-white" : (
+                      "text-white/65 group-hover/dropdown:text-white"
+                    )
                   } ${iconClassName}`}
                 />
               </span>
