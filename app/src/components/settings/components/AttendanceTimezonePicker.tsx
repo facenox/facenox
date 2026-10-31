@@ -87,7 +87,9 @@ export function AttendanceTimezonePicker({
       getOptionSearchText={(option) => {
         const timeZone = String(option.value)
         const details = timeZoneDetails(timeZone)
-        return `${timeZone} ${timeZone.replaceAll("_", " ")} ${details.city}`
+        const offset = details.label.match(/UTC([+-]\d{2}:\d{2})/)?.[1]
+        const offsetShort = offset ? offset.replace(/([+-])0?(\d+):00/, "$1$2") : ""
+        return `${timeZone} ${timeZone.replaceAll("_", " ")} ${details.city} ${offset ?? ""} ${offsetShort}`
       }}
       renderOption={(option, isSelected) => {
         const timeZone = String(option.value)

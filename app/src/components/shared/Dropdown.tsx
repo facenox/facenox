@@ -116,6 +116,20 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
     const buttonRef = useRef<HTMLElement>(null)
     const menuRef = useRef<HTMLDivElement>(null)
     const searchInputRef = useRef<HTMLInputElement>(null)
+    const [highlightedIndex, setHighlightedIndex] = useState<number>(-1)
+    const optionRefs = useRef<(HTMLButtonElement | null)[]>([])
+
+    useEffect(() => {
+      setHighlightedIndex(-1)
+    }, [isOpen, searchQuery])
+
+    useEffect(() => {
+      if (highlightedIndex >= 0 && optionRefs.current[highlightedIndex]) {
+        optionRefs.current[highlightedIndex]?.scrollIntoView({
+          block: "nearest",
+        })
+      }
+    }, [highlightedIndex])
 
     // Combine refs
     useEffect(() => {
@@ -303,7 +317,7 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
 
     return (
       <motion.div
-        layout={fit ? "size" : false}
+        layout={fit ? "size" : undefined}
         transition={{ layout: { duration: 0.22, ease: [0.16, 1, 0.3, 1] } }}
         className={`relative min-w-0 ${fit ? "w-fit" : ""} ${className}`}
         ref={internalRef}
@@ -436,11 +450,33 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                           value={searchQuery}
                           onChange={(event) => setSearchQuery(event.target.value)}
                           onKeyDown={(event) => {
-                            if (event.key !== "Enter") return
-                            const firstEnabled = visibleOptions.find((option) => !option.disabled)
-                            if (!firstEnabled) return
-                            event.preventDefault()
-                            handleSelect(firstEnabled.value)
+                            if (event.key === "ArrowDown") {
+                              event.preventDefault()
+                              setHighlightedIndex((prev) => {
+                                if (visibleOptions.length === 0) return -1
+                                for (let i = prev + 1; i < visibleOptions.length; i++) {
+                                  if (!visibleOptions[i].disabled) return i
+                                }
+                                return prev < 0 && !visibleOptions[0].disabled ? 0 : prev
+                              })
+                            } else if (event.key === "ArrowUp") {
+                              event.preventDefault()
+                              setHighlightedIndex((prev) => {
+                                if (visibleOptions.length === 0) return -1
+                                for (let i = prev - 1; i >= 0; i--) {
+                                  if (!visibleOptions[i].disabled) return i
+                                }
+                                return prev
+                              })
+                            } else if (event.key === "Enter") {
+                              const targetOption =
+                                highlightedIndex >= 0 && highlightedIndex < visibleOptions.length ?
+                                  visibleOptions[highlightedIndex]
+                                : visibleOptions.find((option) => !option.disabled)
+                              if (!targetOption || targetOption.disabled) return
+                              event.preventDefault()
+                              handleSelect(targetOption.value)
+                            }
                           }}
                           placeholder={searchPlaceholder}
                           aria-label={searchAriaLabel}
@@ -500,15 +536,20 @@ export const Dropdown = forwardRef<HTMLDivElement, DropdownProps<string | number
                                 disabled={!shouldShowCustomTooltip(option.label)}
                                 className="!px-2.5 !py-1.5 text-center break-all">
                                 <button
+                                  ref={(el) => {
+                                    optionRefs.current[idx] = el
+                                  }}
                                   type="button"
                                   role={searchable ? "option" : undefined}
                                   aria-selected={searchable ? value === option.value : undefined}
                                   onClick={() => handleSelect(option.value)}
+                                  onMouseEnter={() => !option.disabled && setHighlightedIndex(idx)}
                                   disabled={option.disabled}
                                   className={`flex w-full items-center gap-2 truncate rounded-none px-3 py-1.5 text-left text-xs transition-colors ${
                                     value === option.value ?
                                       "bg-cyan-500/10 font-semibold text-cyan-400"
                                     : option.disabled ? "cursor-not-allowed text-white/55"
+                                    : highlightedIndex === idx ? "bg-white/[0.08] text-white"
                                     : "text-white/70 hover:bg-white/5 hover:text-white"
                                   } ${optionClassName}`}>
                                   {option.icon && (
