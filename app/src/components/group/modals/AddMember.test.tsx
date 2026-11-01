@@ -29,6 +29,7 @@ vi.mock("@/components/group/sections/enrollment/hooks/useCamera", async () => {
       setSelectedCamera: vi.fn(),
       isStreaming: false,
       isVideoReady: false,
+      isRecovering: false,
       cameraError: null,
       startCamera: useCallback(async () => {}, []),
       stopCamera: useCallback(() => {}, []),

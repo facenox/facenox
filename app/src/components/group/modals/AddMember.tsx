@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from "react"
+import { useState, useRef, useEffect, useMemo, useCallback, useId } from "react"
 import { flushSync } from "react-dom"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertCircle, AlertTriangle, Camera, CheckCircle2, Image, Upload, X } from "lucide-react"
@@ -94,10 +94,20 @@ export function AddMember({
   const [faceInputMode, setFaceInputMode] = useState<"camera" | "upload">("camera")
   const [isProcessingFace, setIsProcessingFace] = useState(false)
   const [faceError, setFaceError] = useState<string | null>(null)
+  const faceRequestRef = useRef(0)
+  const faceHintId = useId()
   const [lastAddedSuccess, setLastAddedSuccess] = useState<string | null>(null)
   const lastAddedTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const { videoRef, isStreaming, isVideoReady, cameraError, startCamera, stopCamera } = useCamera()
+  const {
+    videoRef,
+    isStreaming,
+    isVideoReady,
+    isRecovering,
+    cameraError,
+    startCamera,
+    stopCamera,
+  } = useCamera()
   const [cameraVideo, setCameraVideo] = useState<HTMLVideoElement | null>(null)
   const attachCameraVideo = useCallback(
     (video: HTMLVideoElement | null) => {
@@ -108,12 +118,22 @@ export function AddMember({
   )
   const needsCamera =
     isOpen && !isBulkMode && isFaceSectionOpen && faceInputMode === "camera" && !capturedFace
+  const needsFacePhoto = isFaceSectionOpen && !capturedFace
+
+  const skipFaceEnrollment = useCallback(() => {
+    faceRequestRef.current += 1
+    stopCamera()
+    setIsProcessingFace(false)
+    setCapturedFace(null)
+    setFaceError(null)
+    setIsFaceSectionOpen(false)
+  }, [stopCamera])
 
   useEffect(() => {
     if (!isOpen) {
-      stopCamera()
+      skipFaceEnrollment()
     }
-  }, [isOpen, stopCamera])
+  }, [isOpen, skipFaceEnrollment])
 
   // Animated transitions may mount the preview after the section state changes.
   useEffect(() => {
@@ -133,6 +153,7 @@ export function AddMember({
 
   useEffect(() => {
     return () => {
+      faceRequestRef.current += 1
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
@@ -152,7 +173,7 @@ export function AddMember({
       clearTimeout(lastAddedTimerRef.current)
       lastAddedTimerRef.current = null
     }
-    stopCamera()
+    skipFaceEnrollment()
     setNewMemberName("")
     setNewMemberRole("")
     setBulkMembersText("")
@@ -161,9 +182,6 @@ export function AddMember({
     setIsBulkMode(false)
     setConfirmDuplicate(false)
     setError(null)
-    setCapturedFace(null)
-    setFaceError(null)
-    setIsFaceSectionOpen(false)
     setLastAddedSuccess(null)
   }
 
@@ -174,6 +192,7 @@ export function AddMember({
       return
     }
 
+    const requestId = ++faceRequestRef.current
     try {
       setIsProcessingFace(true)
       setFaceError(null)
@@ -196,6 +215,7 @@ export function AddMember({
         enableLiveness: false,
       })
 
+      if (requestId !== faceRequestRef.current) return
       const bestFace = validateAndGetBestFace(detection)
 
       setCapturedFace({
@@ -206,17 +226,19 @@ export function AddMember({
       })
       stopCamera()
     } catch (err) {
+      if (requestId !== faceRequestRef.current) return
       const msg =
         err instanceof Error ?
           err.message
         : "Could not detect a clear face. Try a front-facing photo with even lighting."
       setFaceError(msg)
     } finally {
-      setIsProcessingFace(false)
+      if (requestId === faceRequestRef.current) setIsProcessingFace(false)
     }
   }, [videoRef, stopCamera])
 
   const handleProcessUploadedFile = useCallback(async (file: File) => {
+    const requestId = ++faceRequestRef.current
     try {
       setIsProcessingFace(true)
       setFaceError(null)
@@ -228,12 +250,14 @@ export function AddMember({
         reader.readAsDataURL(file)
       })
 
+      if (requestId !== faceRequestRef.current) return
       const blob = dataUrlToBlob(dataUrl)
       const detection = await backendService.detectFaces(blob, {
         model_type: "face_detector",
         enableLiveness: false,
       })
 
+      if (requestId !== faceRequestRef.current) return
       const bestFace = validateAndGetBestFace(detection)
 
       setCapturedFace({
@@ -243,13 +267,14 @@ export function AddMember({
         confidence: bestFace.confidence,
       })
     } catch (err) {
+      if (requestId !== faceRequestRef.current) return
       const msg =
         err instanceof Error ?
           err.message
         : "Could not detect a clear face. Try a front-facing photo with even lighting."
       setFaceError(msg)
     } finally {
-      setIsProcessingFace(false)
+      if (requestId === faceRequestRef.current) setIsProcessingFace(false)
     }
   }, [])
 
@@ -299,7 +324,7 @@ export function AddMember({
   }, [newMemberName])
 
   const handleAddMember = async (addAnother = false) => {
-    if (singleSubmitInFlightRef.current) {
+    if (singleSubmitInFlightRef.current || isProcessingFace || needsFacePhoto) {
       return
     }
 
@@ -674,6 +699,7 @@ export function AddMember({
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
+                            disabled={loading}
                             onClick={() => {
                               setCapturedFace(null)
                               setFaceError(null)
@@ -685,11 +711,8 @@ export function AddMember({
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
-                              setCapturedFace(null)
-                              setFaceError(null)
-                              setIsFaceSectionOpen(false)
-                            }}
+                            disabled={loading}
+                            onClick={skipFaceEnrollment}
                             className="rounded px-2.5 py-1 text-[11px] font-medium text-red-400/80 transition-colors hover:bg-red-500/10 hover:text-red-300">
                             Remove
                           </button>
@@ -758,6 +781,7 @@ export function AddMember({
                             <div className="flex items-center rounded-lg border border-white/10 bg-white/[0.04] p-0.5">
                               <button
                                 type="button"
+                                disabled={isProcessingFace || loading}
                                 onClick={() => {
                                   if (faceInputMode !== "camera") {
                                     setFaceInputMode("camera")
@@ -774,6 +798,7 @@ export function AddMember({
                               </button>
                               <button
                                 type="button"
+                                disabled={isProcessingFace || loading}
                                 onClick={() => {
                                   if (faceInputMode !== "upload") {
                                     setFaceInputMode("upload")
@@ -791,17 +816,16 @@ export function AddMember({
                               </button>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsFaceSectionOpen(false)
-                                setFaceError(null)
-                                stopCamera()
-                              }}
-                              className="flex h-5 w-5 items-center justify-center rounded-md text-white/40 transition-all hover:bg-white/10 hover:text-white/80"
-                              aria-label="Dismiss face enrollment">
-                              <X className="size-3.5" />
-                            </button>
+                            <Tooltip content="Skip face enrollment">
+                              <button
+                                type="button"
+                                disabled={loading}
+                                onClick={skipFaceEnrollment}
+                                className="flex h-5 w-5 items-center justify-center rounded-md text-white/40 transition-all hover:bg-white/10 hover:text-white/80"
+                                aria-label="Dismiss face enrollment">
+                                <X className="size-3.5" />
+                              </button>
+                            </Tooltip>
                           </div>
                         </div>
 
@@ -854,7 +878,9 @@ export function AddMember({
                                       : <div className="flex flex-col items-center gap-2.5">
                                           <Spinner size="md" color="cyan" />
                                           <span className="text-xs font-medium text-white/60">
-                                            Connecting camera…
+                                            {isRecovering ?
+                                              "Resuming camera…"
+                                            : "Connecting camera…"}
                                           </span>
                                         </div>
                                       }
@@ -883,19 +909,30 @@ export function AddMember({
                                   {/* Center: Circular Shutter Trigger */}
                                   <div className="flex flex-1 justify-center">
                                     {isStreaming && isVideoReady && (
-                                      <button
-                                        type="button"
-                                        onClick={handleSnapPhoto}
-                                        disabled={isProcessingFace}
-                                        className="group flex h-11 w-11 items-center justify-center rounded-full bg-white/10 p-1 backdrop-blur-md transition-all hover:bg-white/20 active:scale-90 disabled:cursor-not-allowed disabled:opacity-40"
-                                        aria-label="Capture photo">
-                                        {isProcessingFace ?
-                                          <div className="flex h-full w-full items-center justify-center rounded-full bg-white/10">
-                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                                          </div>
-                                        : <div className="h-full w-full rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.35)] transition-transform group-active:scale-90" />
-                                        }
-                                      </button>
+                                      <Tooltip
+                                        content={
+                                          isProcessingFace ? "Checking photo…" : "Capture photo"
+                                        }>
+                                        <span className="inline-flex">
+                                          <button
+                                            type="button"
+                                            onClick={handleSnapPhoto}
+                                            disabled={isProcessingFace || loading}
+                                            className="group flex items-center justify-center rounded-full transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                                            aria-label="Capture photo">
+                                            <span
+                                              aria-hidden="true"
+                                              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 p-1 backdrop-blur-md transition-colors group-hover:bg-white/20">
+                                              {isProcessingFace ?
+                                                <span className="flex h-full w-full items-center justify-center rounded-full bg-white/10">
+                                                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                                                </span>
+                                              : <span className="h-full w-full rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.35)] transition-transform group-active:scale-90" />
+                                              }
+                                            </span>
+                                          </button>
+                                        </span>
+                                      </Tooltip>
                                     )}
                                   </div>
 
@@ -944,6 +981,21 @@ export function AddMember({
                               </motion.div>
                             }
                           </AnimatePresence>
+
+                          <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
+                            <p id={faceHintId} className="text-[11px] text-white/50">
+                              {isProcessingFace ?
+                                "Checking your photo before enrollment."
+                              : "Capture or upload a photo before adding this member."}
+                            </p>
+                            <button
+                              type="button"
+                              disabled={loading}
+                              onClick={skipFaceEnrollment}
+                              className="text-[11px] font-medium text-white/65 transition-colors hover:text-white disabled:opacity-40">
+                              Skip face enrollment
+                            </button>
+                          </div>
 
                           <AnimatePresence>
                             {faceError && (
@@ -1075,6 +1127,8 @@ export function AddMember({
                   Cancel
                 </button>
                 <button
+                  type="button"
+                  aria-describedby={!isBulkMode && needsFacePhoto ? faceHintId : undefined}
                   onClick={
                     isBulkMode ?
                       () => void handleBulkAddMembers()
@@ -1084,6 +1138,7 @@ export function AddMember({
                     loading ||
                     isProcessingBulk ||
                     (!isBulkMode && !newMemberName.trim()) ||
+                    (!isBulkMode && needsFacePhoto) ||
                     (isBulkMode && !bulkMembersText.trim()) ||
                     isProcessingFace
                   }
@@ -1097,9 +1152,13 @@ export function AddMember({
                       `Processing (${bulkProgress.current}/${bulkProgress.total})`
                     : "Processing…"
                   : confirmDuplicate && !isBulkMode ?
-                    "Add anyway"
+                    capturedFace ?
+                      "Add anyway & enroll face"
+                    : "Add anyway"
                   : isBulkMode ?
                     "Add members"
+                  : capturedFace ?
+                    "Add member & enroll face"
                   : "Add member"}
                 </button>
               </>

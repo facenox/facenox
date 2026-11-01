@@ -82,6 +82,8 @@ export function useCamera() {
   const [selectedCamera, setSelectedCameraState] = useState<string>("")
   const [isStreaming, setIsStreaming] = useState(false)
   const [isVideoReady, setIsVideoReady] = useState(false)
+  const [isRecovering, setIsRecovering] = useState(false)
+  const [cameraSession, setCameraSession] = useState(0)
   const [cameraError, setCameraError] = useState<string | null>(null)
 
   const isStartingRef = useRef(false)
@@ -154,6 +156,7 @@ export function useCamera() {
     if (!mountedRef.current) return
     setIsStreaming(false)
     setIsVideoReady(false)
+    setIsRecovering(false)
     setCameraError(null)
   }, [releaseCamera])
 
@@ -165,6 +168,7 @@ export function useCamera() {
 
       const attempt = new AbortController()
       cameraAttemptRef.current = attempt
+      setCameraSession((session) => session + 1)
       const isCurrentAttempt = () =>
         mountedRef.current && cameraAttemptRef.current === attempt && !attempt.signal.aborted
       try {
@@ -172,6 +176,7 @@ export function useCamera() {
         setCameraError(null)
         setIsStreaming(true)
         setIsVideoReady(false)
+        setIsRecovering(false)
 
         const videoDevices = await abortable(getCameraDevices(), attempt.signal)
         if (!isCurrentAttempt()) return
@@ -236,6 +241,7 @@ export function useCamera() {
             releaseCamera()
             setIsStreaming(false)
             setIsVideoReady(false)
+            setIsRecovering(false)
             setCameraError("Active camera disconnected. Ensure camera is connected and try again.")
           }
         })
@@ -273,6 +279,7 @@ export function useCamera() {
         setCameraError(errorMessage)
         setIsStreaming(false)
         setIsVideoReady(false)
+        setIsRecovering(false)
       } finally {
         // A canceled start must not unlock a newer attempt that is still pending.
         if (cameraAttemptRef.current === attempt) isStartingRef.current = false
@@ -282,24 +289,88 @@ export function useCamera() {
   )
 
   useEffect(() => {
-    if (!isStreaming || !isVideoReady) return
+    if (!isStreaming) return
 
     const video = videoRef.current
-    if (!video) return
+    const attempt = cameraAttemptRef.current
+    if (!video || !attempt) return
 
-    const interval = setInterval(() => {
-      // Ignore checks if video element is no longer in the DOM (e.g. unmounted)
-      if (!video.isConnected) return
+    let cancelled = false
+    let recovering = false
+    const isCurrentPreview = () =>
+      !cancelled &&
+      mountedRef.current &&
+      !attempt.signal.aborted &&
+      cameraAttemptRef.current === attempt &&
+      videoRef.current === video
 
-      const isHealthy = !!video.srcObject && video.videoWidth > 0 && !video.paused && !cameraError
+    const failPreview = (message: string) => {
+      if (!isCurrentPreview()) return
+      releaseCamera()
+      setIsStreaming(false)
+      setIsVideoReady(false)
+      setIsRecovering(false)
+      setCameraError(message)
+    }
 
-      if (!isHealthy) {
-        setIsVideoReady(false)
+    const checkPreview = () => {
+      if (!isCurrentPreview() || !video.isConnected || isStartingRef.current || recovering) return
+      const stream = streamRef.current
+      if (!stream) return
+      const tracks = stream.getVideoTracks()
+      if (
+        stream.active === false ||
+        tracks.length === 0 ||
+        tracks.some((track) => track.readyState === "ended")
+      ) {
+        failPreview("Active camera disconnected. Ensure camera is connected and try again.")
+        return
       }
-    }, 1000)
+      if (
+        video.srcObject === stream &&
+        video.videoWidth > 0 &&
+        video.videoHeight > 0 &&
+        !video.paused
+      ) {
+        setIsVideoReady(true)
+        return
+      }
 
-    return () => clearInterval(interval)
-  }, [isStreaming, isVideoReady, cameraError])
+      // Resume the existing stream. A temporary pause must not latch readiness off forever.
+      recovering = true
+      setIsRecovering(true)
+      setIsVideoReady(false)
+      if (video.srcObject !== stream) video.srcObject = stream
+      void waitForVideoReady(video, attempt.signal)
+        .then(() => {
+          if (!isCurrentPreview()) return
+          setIsVideoReady(true)
+          setIsRecovering(false)
+        })
+        .catch(() => {
+          failPreview("Camera preview stopped. Try again.")
+        })
+        .finally(() => {
+          recovering = false
+        })
+    }
+    const onError = () => {
+      if (!isStartingRef.current) failPreview("Camera preview stopped. Try again.")
+    }
+    const interval = setInterval(checkPreview, 1000)
+    video.addEventListener("pause", checkPreview)
+    video.addEventListener("emptied", checkPreview)
+    video.addEventListener("resize", checkPreview)
+    video.addEventListener("error", onError)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+      video.removeEventListener("pause", checkPreview)
+      video.removeEventListener("emptied", checkPreview)
+      video.removeEventListener("resize", checkPreview)
+      video.removeEventListener("error", onError)
+    }
+  }, [isStreaming, cameraSession, releaseCamera])
 
   return {
     videoRef,
@@ -308,6 +379,7 @@ export function useCamera() {
     setSelectedCamera,
     isStreaming,
     isVideoReady,
+    isRecovering,
     cameraError,
     startCamera,
     stopCamera,

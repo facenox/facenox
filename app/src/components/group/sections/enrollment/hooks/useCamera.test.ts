@@ -66,9 +66,163 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  document.querySelectorAll("video[data-camera-health-test]").forEach((video) => video.remove())
   vi.unstubAllGlobals()
   vi.useRealTimers()
 })
+
+it.each(["paused", "missing frames", "detached source"])(
+  "recovers the existing stream after a temporarily %s preview",
+  async (failure) => {
+    const { result, video, stream, getUserMedia } = setup()
+    video.dataset.cameraHealthTest = "true"
+    document.body.appendChild(video)
+    await act(async () => {
+      await result.current.startCamera()
+    })
+    if (failure === "paused") Object.defineProperty(video, "paused", { value: true })
+    else if (failure === "missing frames") {
+      Object.defineProperty(video, "videoWidth", { value: 0 })
+      Object.defineProperty(video, "videoHeight", { value: 0 })
+    } else video.srcObject = null
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000)
+    })
+    Object.defineProperty(video, "videoWidth", { value: 640 })
+    Object.defineProperty(video, "videoHeight", { value: 480 })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000)
+    })
+    expect(result.current.isVideoReady).toBe(true)
+    expect(result.current.isStreaming).toBe(true)
+    expect(result.current.isRecovering).toBe(false)
+    expect(result.current.cameraError).toBeNull()
+    expect(video.srcObject).toBe(stream)
+    expect(video.paused).toBe(false)
+    expect(getUserMedia).toHaveBeenCalledTimes(1)
+  },
+)
+
+it("monitors a replacement stream even when stop and start are batched", async () => {
+  const { result, video, getUserMedia } = setup()
+  video.dataset.cameraHealthTest = "true"
+  document.body.appendChild(video)
+  await act(async () => {
+    await result.current.startCamera()
+  })
+  const retry = makeStream()
+  getUserMedia.mockResolvedValueOnce(retry.stream)
+  await act(async () => {
+    result.current.stopCamera()
+    await result.current.startCamera()
+  })
+  Object.defineProperty(video, "paused", { value: true })
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(1000)
+  })
+  expect(video.srcObject).toBe(retry.stream)
+  expect(video.paused).toBe(false)
+  expect(result.current.isVideoReady).toBe(true)
+  expect(getUserMedia).toHaveBeenCalledTimes(2)
+  expect(video.play).toHaveBeenCalledTimes(3)
+})
+
+it.each(["rejected", "timed out"])(
+  "reports a %s playback recovery instead of staying unready",
+  async (failure) => {
+    const { result, video, track, getUserMedia } = setup()
+    video.dataset.cameraHealthTest = "true"
+    document.body.appendChild(video)
+    await act(async () => {
+      await result.current.startCamera()
+    })
+    Object.defineProperty(video, "paused", { value: true })
+    if (failure === "rejected")
+      vi.mocked(video.play).mockRejectedValueOnce(new Error("Playback failed"))
+    else vi.mocked(video.play).mockReturnValueOnce(new Promise<void>(() => {}))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000)
+    })
+    if (failure === "timed out") {
+      expect(result.current.isRecovering).toBe(true)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000)
+      })
+    }
+    expect(result.current.isVideoReady).toBe(false)
+    expect(result.current.isStreaming).toBe(false)
+    expect(result.current.isRecovering).toBe(false)
+    expect(result.current.cameraError).toBe("Camera preview stopped. Try again.")
+    expect(getUserMedia).toHaveBeenCalledTimes(1)
+    expect(track.stop).toHaveBeenCalledTimes(1)
+    expect(vi.getTimerCount()).toBe(0)
+  },
+)
+
+it.each(["stop", "unmount"])(
+  "cancels playback recovery on %s without affecting a later preview",
+  async (action) => {
+    const { result, video, track, getUserMedia, unmount } = setup()
+    video.dataset.cameraHealthTest = "true"
+    document.body.appendChild(video)
+    await act(async () => {
+      await result.current.startCamera()
+    })
+    const playback = deferred<void>()
+    Object.defineProperty(video, "paused", { value: true })
+    vi.mocked(video.play).mockReturnValueOnce(playback.promise)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000)
+    })
+    expect(result.current.isRecovering).toBe(true)
+    act(() => {
+      if (action === "stop") result.current.stopCamera()
+      else unmount()
+    })
+    expect(track.stop).toHaveBeenCalledTimes(1)
+    expect(vi.getTimerCount()).toBe(0)
+    const retry = makeStream()
+    if (action === "stop") {
+      getUserMedia.mockResolvedValueOnce(retry.stream)
+      await act(async () => {
+        await result.current.startCamera()
+      })
+    }
+    await act(async () => playback.resolve())
+    if (action === "stop") {
+      expect(result.current.isVideoReady).toBe(true)
+      expect(result.current.isRecovering).toBe(false)
+      expect(result.current.cameraError).toBeNull()
+      expect(video.srcObject).toBe(retry.stream)
+      expect(retry.track.stop).not.toHaveBeenCalled()
+    }
+  },
+)
+
+it.each(["ended track", "video error"])(
+  "surfaces a %s after the preview has started",
+  async (failure) => {
+    const { result, video, track, getUserMedia } = setup()
+    video.dataset.cameraHealthTest = "true"
+    document.body.appendChild(video)
+    await act(async () => {
+      await result.current.startCamera()
+    })
+    await act(async () => {
+      if (failure === "ended track") track.readyState = "ended"
+      else video.dispatchEvent(new Event("error"))
+      await vi.advanceTimersByTimeAsync(1000)
+    })
+    expect(result.current.isVideoReady).toBe(false)
+    expect(result.current.isStreaming).toBe(false)
+    expect(result.current.cameraError).toBe(
+      failure === "ended track" ?
+        "Active camera disconnected. Ensure camera is connected and try again."
+      : "Camera preview stopped. Try again.",
+    )
+    expect(getUserMedia).toHaveBeenCalledTimes(1)
+  },
+)
 
 it.each([false, true])(
   "starts and releases the enrollment camera (StrictMode: %s)",
