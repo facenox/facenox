@@ -347,6 +347,10 @@ async def remove_member(
 ):
     """Remove (deactivate) an attendance member"""
     try:
+        member = await repo.get_member(person_id)
+        if not member:
+            raise HTTPException(status_code=404, detail="Member not found")
+
         success = await repo.remove_member(person_id)
         if not success:
             raise HTTPException(status_code=404, detail="Member not found")
@@ -355,6 +359,7 @@ async def remove_member(
             action="MEMBER_DELETED",
             target_type="member",
             target_id=person_id,
+            details=f"Member '{member.name}' removed",
         )
 
         await repo.session.commit()

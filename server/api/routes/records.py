@@ -68,15 +68,17 @@ async def add_record(
             member.group_id, session_date, person_id=record_data.person_id
         )
         if record_data.is_manual:
+            group = await repo.get_group(member.group_id)
+            group_name = group.name if group else member.group_id
+            created_by = created_record.created_by or "desktop_admin"
+            timestamp_str = created_record.timestamp.strftime("%b %d, %Y %I:%M %p")
             await repo.add_audit_log(
                 action="MANUAL_ATTENDANCE_RECORDED",
                 target_type="attendance_record",
                 target_id=created_record.id,
                 details=(
-                    f"person_id={created_record.person_id}, "
-                    f"group_id={created_record.group_id}, "
-                    f"timestamp={created_record.timestamp.isoformat()}, "
-                    f"created_by={created_record.created_by or 'desktop_admin'}"
+                    f"Manual attendance recorded for '{member.name}' "
+                    f"in group {group_name} at {timestamp_str} by {created_by}"
                 ),
             )
 
@@ -165,16 +167,17 @@ async def void_record(
             voided_record.timestamp.strftime("%Y-%m-%d"),
             person_id=voided_record.person_id,
         )
+        voided_member = await repo.get_member(voided_record.person_id)
+        member_name = voided_member.name if voided_member else voided_record.person_id
+        voided_by = voided_record.voided_by or "desktop_admin"
+        record_type = "manual" if voided_record.is_manual else "auto"
         await repo.add_audit_log(
             action="ATTENDANCE_RECORD_VOIDED",
             target_type="attendance_record",
             target_id=voided_record.id,
             details=(
-                f"person_id={voided_record.person_id}, "
-                f"group_id={voided_record.group_id}, "
-                f"is_manual={voided_record.is_manual}, "
-                f"voided_by={voided_record.voided_by or 'desktop_admin'}, "
-                f"reason={payload.reason.strip()}"
+                f"{record_type.capitalize()} record for '{member_name}' voided "
+                f"by {voided_by}. Reason: {payload.reason.strip()}"
             ),
         )
 
@@ -387,15 +390,17 @@ async def update_session(
             if payload.late_minutes is not None:
                 session_obj.late_minutes = payload.late_minutes
 
+        session_member = await repo.get_member(person_id)
+        member_name = session_member.name if session_member else person_id
+        status_str = session_obj.status or "unknown"
+        notes_str = f" Notes: {session_obj.notes}" if session_obj.notes else ""
         await repo.add_audit_log(
             action="ATTENDANCE_SESSION_OVERRIDDEN",
             target_type="attendance_session",
             target_id=session_obj.id,
             details=(
-                f"person_id={person_id}, "
-                f"date={date}, "
-                f"status={session_obj.status}, "
-                f"notes={session_obj.notes}"
+                f"Session for '{member_name}' on {date} manually set to "
+                f"{status_str}.{notes_str}"
             ),
         )
 
