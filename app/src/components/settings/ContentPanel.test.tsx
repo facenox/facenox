@@ -336,6 +336,41 @@ describe("ContentPanel inline group name editing", () => {
     expect(screen.getByLabelText("Edit group name")).toBeInTheDocument()
   })
 
+  it.each(["hover", "focus"])(
+    "shows the custom CSV export tooltip on %s without a native title",
+    async (interaction) => {
+      const exportCSV = vi.fn()
+      render(
+        <ContentPanel
+          {...groupProps}
+          groupInitialSection="reports"
+          dropdownGroups={[groupProps.validInitialGroup]}
+          reportsExportHandlers={{ exportCSV }}
+        />,
+      )
+      const button = screen.getByRole("button", { name: "Export CSV" })
+      expect(button).not.toHaveAttribute("title")
+      if (interaction === "hover") fireEvent.mouseEnter(button)
+      else fireEvent.focus(button)
+
+      expect(await screen.findByRole("tooltip")).toHaveTextContent("Export CSV for this group")
+      fireEvent.click(button)
+      expect(exportCSV).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  it("keeps CSV export disabled until its handlers are ready", () => {
+    render(
+      <ContentPanel
+        {...groupProps}
+        groupInitialSection="reports"
+        dropdownGroups={[groupProps.validInitialGroup]}
+      />,
+    )
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Export CSV" })).not.toHaveAttribute("title")
+  })
+
   it("switches to inline input when pencil is clicked and cancels on Escape", async () => {
     render(<ContentPanel {...groupProps} />)
     fireEvent.click(screen.getByLabelText("Edit group name"))

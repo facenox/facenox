@@ -347,14 +347,16 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 </span>
               }
             />
-          : <button
-              onClick={() => reportsExportHandlers?.exportCSV()}
-              disabled={!reportsExportHandlers}
-              title="Export CSV for this group"
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white/80 transition-all duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40">
-              <FileSpreadsheet className="size-3" />
-              Export CSV
-            </button>
+          : <Tooltip content="Export CSV for this group" position="bottom">
+              <button
+                type="button"
+                onClick={() => reportsExportHandlers?.exportCSV()}
+                disabled={!reportsExportHandlers}
+                className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white/80 transition-all duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40">
+                <FileSpreadsheet aria-hidden="true" className="size-3" />
+                Export CSV
+              </button>
+            </Tooltip>
       }
 
       const isOverview = !groupInitialSection || groupInitialSection === "overview"
