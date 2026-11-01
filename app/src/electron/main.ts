@@ -77,7 +77,7 @@ app.whenReady().then(async () => {
         baseDir = path.join(main_dirname, "../../public")
       } else {
         const appPath = app.getAppPath()
-        baseDir = path.join(appPath, "dist-react")
+        baseDir = path.join(appPath, "out/renderer")
       }
 
       const resolvedBaseDir = path.resolve(baseDir)

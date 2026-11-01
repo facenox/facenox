@@ -100,7 +100,7 @@ class PersistentSettingsService {
     if (
       !merged.recognitionSoundUrl ||
       merged.recognitionSoundUrl.includes("Default.mp3") ||
-      merged.recognitionSoundUrl.endsWith(".mp3") ||
+      merged.recognitionSoundUrl.includes("Recognition_Success.mp3") ||
       merged.recognitionSoundUrl === "/assets/sounds/Recognition_Success.wav"
     ) {
       merged.recognitionSoundUrl = "./assets/sounds/Recognition_Success.wav"
