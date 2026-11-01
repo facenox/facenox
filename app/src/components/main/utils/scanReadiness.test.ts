@@ -40,3 +40,13 @@ it("blocks failed or unavailable data and missing cameras", () => {
   expect(getScanReadiness({ ...ready, currentGroup: null }, true).reason).toBe("no_selection")
   expect(getScanReadiness(ready, false).reason).toBe("no_camera")
 })
+
+it("returns group-specific or global enrollment tooltip depending on whether All Groups is selected", () => {
+  const noFaces = { ...ready, groupMembers: [] }
+  expect(getScanReadiness(noFaces, true).tooltip).toBe(
+    "Enroll at least one member in this group to start scanning",
+  )
+  expect(
+    getScanReadiness({ ...noFaces, currentGroup: { ...group, id: "all" } }, true).tooltip,
+  ).toBe("Enroll at least one member to start scanning")
+})

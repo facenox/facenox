@@ -135,6 +135,8 @@ export function Attendance({
       attendanceSettings.maxRecognitionFacesPerFrame
     : 5
 
+  const retentionPresets = [30, 60, 90, 180, 365] as const
+
   const cloudCeiling =
     (
       isPaired &&
@@ -334,112 +336,161 @@ export function Attendance({
           <div className="h-px w-full bg-white/8" />
 
           {/* Retention Policy (Local Kiosk Cache with Cloud Plan Constraint) */}
-          <div className="flex items-center gap-4 py-4">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <div className="text-sm font-medium text-white/90">Retention policy</div>
-                {isPaired &&
-                  (cloudCeiling ?
-                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                      <Cloud className="size-2.5" /> Cloud plan: {cloudCeiling}d window
-                    </span>
-                  : isCloudUnlimited ?
-                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                      <Cloud className="size-2.5" /> Cloud plan: Unlimited
-                    </span>
-                  : null)}
-                <InfoPopover
-                  title="Retention policy"
-                  description="Choose how many days of local attendance records to keep."
-                  details={[
-                    "Older records are removed when the local service starts. Member profiles, groups, and face templates are unchanged.",
-                    "Set this to 0 to turn off automatic cleanup.",
-                    ...(isPaired && cloudCeiling ?
-                      [
-                        `Cloud history is separate. Your plan provides access to ${cloudCeiling} days online.`,
-                      ]
-                    : []),
-                  ]}
-                  side="right"
-                />
-              </div>
-              <div className="relative mt-0.5 min-h-4">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`${cloudCeiling}-${isCloudUnlimited}-${effectiveDays}`}
-                    initial={{ opacity: 0, y: -2 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 2 }}
-                    transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                    className="text-xs text-white/65">
-                    {(() => {
-                      if (effectiveDays <= 0) {
-                        return "Automatic cleanup is off. Local attendance records are kept until you delete them."
-                      }
-
-                      const timeStr = `${effectiveDays} ${effectiveDays === 1 ? "day" : "days"}`
-
-                      return `Delete local attendance records older than ${timeStr} automatically. Member profiles and enrolled face data are unchanged.`
-                    })()}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </div>
-            <div className="ml-auto flex shrink-0 flex-col items-end">
-              <div className="flex items-center gap-2">
-                <div className="relative flex min-h-4 min-w-[36px] items-center justify-end">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-4 py-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="text-sm font-medium text-white/90">Retention policy</div>
+                  {isPaired &&
+                    (cloudCeiling ?
+                      <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                        <Cloud className="size-2.5" /> Cloud plan: {cloudCeiling}d window
+                      </span>
+                    : isCloudUnlimited ?
+                      <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                        <Cloud className="size-2.5" /> Cloud plan: Unlimited
+                      </span>
+                    : null)}
+                  <InfoPopover
+                    title="Retention policy"
+                    description="Choose how many days of local attendance records to keep."
+                    details={[
+                      "Older records are removed when the local service starts. Member profiles, groups, and face templates are unchanged.",
+                      "Turning this off preserves local attendance records until you delete them.",
+                      ...(isPaired && cloudCeiling ?
+                        [
+                          `Cloud history is separate. Your plan provides access to ${cloudCeiling} days online.`,
+                        ]
+                      : []),
+                    ]}
+                    side="right"
+                  />
+                </div>
+                <div className="relative min-h-4">
                   <AnimatePresence mode="wait">
-                    <motion.span
-                      key={effectiveDays <= 0 ? "cleanup-off" : "days"}
+                    <motion.div
+                      key={`${cloudCeiling}-${isCloudUnlimited}-${effectiveDays}`}
                       initial={{ opacity: 0, y: -2 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                      className="text-[11px] font-medium text-white/65">
-                      {effectiveDays <= 0 ? "No automatic cleanup" : "days"}
-                    </motion.span>
+                      className="text-xs font-normal text-white/65">
+                      {(() => {
+                        if (effectiveDays <= 0) {
+                          return "Automatic cleanup is off. Local attendance records are kept until you delete them."
+                        }
+
+                        const timeStr = `${effectiveDays} ${effectiveDays === 1 ? "day" : "days"}`
+
+                        return `Delete local attendance records older than ${timeStr} automatically. Member profiles and enrolled face data are unchanged.`
+                      })()}
+                    </motion.div>
                   </AnimatePresence>
                 </div>
-                <motion.div
-                  animate={isRetentionCapped ? { x: [-3, 3, -2, 2, 0] } : {}}
-                  transition={{ duration: 0.25 }}>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={retentionInput !== null ? retentionInput : String(effectiveDays)}
-                    onFocus={() => {
-                      setRetentionInput(String(effectiveDays))
-                    }}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\D/g, "")
-                      setRetentionInput(raw)
-                      if (raw !== "") {
-                        const num = parseInt(raw, 10)
-                        const maxLimit = 3650
-                        const clamped = Math.min(maxLimit, num)
-                        if (num > maxLimit) {
-                          triggerCappedNudge()
-                        }
-                        onDataRetentionChange(clamped)
-                      }
-                    }}
-                    onBlur={() => {
-                      const raw = retentionInput
-                      setRetentionInput(null)
-                      if (raw !== null) {
-                        const num = raw === "" ? 0 : parseInt(raw, 10)
-                        onDataRetentionChange(Math.min(3650, num))
-                      }
-                    }}
-                    className={`w-14 rounded-lg border bg-white/[0.04] px-2 py-1.5 text-center text-xs font-bold text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none ${
-                      isRetentionCapped ?
-                        "border-amber-400/60 shadow-[0_0_12px_rgba(251,191,36,0.25)]"
-                      : "border-white/10 focus:border-white/20"
-                    }`}
-                  />
-                </motion.div>
               </div>
+
+              <Switch
+                checked={effectiveDays > 0}
+                onChange={(checked) => {
+                  if (checked) {
+                    const defaultDays = cloudCeiling ? Math.min(90, cloudCeiling) : 90
+                    onDataRetentionChange(defaultDays)
+                  } else {
+                    onDataRetentionChange(0)
+                  }
+                }}
+                ariaLabel="Retention policy"
+              />
             </div>
+
+            <AnimatePresence>
+              {effectiveDays > 0 && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
+                  className="overflow-hidden">
+                  <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
+                    <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs text-white/65">Keep records for:</div>
+                    </div>
+
+                    <div className="ml-auto flex shrink-0 items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {retentionPresets.map((days) => (
+                          <button
+                            key={days}
+                            type="button"
+                            onClick={() => {
+                              setRetentionInput(null)
+                              onDataRetentionChange(days)
+                            }}
+                            className={`relative min-w-[28px] cursor-pointer px-1.5 py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
+                              effectiveDays === days ? "text-cyan-400" : (
+                                "text-white/40 hover:text-white/70"
+                              )
+                            }`}>
+                            {days}d
+                            {effectiveDays === days && (
+                              <motion.div
+                                layoutId="retentionUnderline"
+                                className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
+                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      <motion.div
+                        animate={isRetentionCapped ? { x: [-3, 3, -2, 2, 0] } : {}}
+                        transition={{ duration: 0.25 }}
+                        className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={retentionInput !== null ? retentionInput : String(effectiveDays)}
+                          onFocus={() => {
+                            setRetentionInput(String(effectiveDays))
+                          }}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, "")
+                            setRetentionInput(raw)
+                            if (raw !== "") {
+                              const num = parseInt(raw, 10)
+                              const maxLimit = 3650
+                              const clamped = Math.min(maxLimit, num)
+                              if (num > maxLimit) {
+                                triggerCappedNudge()
+                              }
+                              onDataRetentionChange(clamped)
+                            }
+                          }}
+                          onBlur={() => {
+                            const raw = retentionInput
+                            setRetentionInput(null)
+                            if (raw !== null) {
+                              const num = raw === "" ? 0 : parseInt(raw, 10)
+                              onDataRetentionChange(Math.min(3650, num))
+                            }
+                          }}
+                          aria-label="Custom retention days"
+                          className={`w-12 rounded-lg border bg-white/[0.04] px-1.5 py-1 text-center text-xs font-bold text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none ${
+                            isRetentionCapped ?
+                              "border-amber-400/60 shadow-[0_0_12px_rgba(251,191,36,0.25)]"
+                            : "border-white/10 focus:border-white/20"
+                          }`}
+                        />
+                        <span className="text-[11px] font-medium text-white/55">days</span>
+                      </motion.div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

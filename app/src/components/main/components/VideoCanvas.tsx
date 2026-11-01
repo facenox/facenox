@@ -215,8 +215,12 @@ export const VideoCanvas = memo(function VideoCanvas({
     dataError ? "Attendance data couldn't be loaded."
     : !isShellReady || isGroupDataLoading ? null
     : hasSelectedGroup ?
-      !hasMembers ? "Add and enroll at least one member to start scanning."
-      : !hasEnrolledFaces ? "Enroll at least one member to start scanning."
+      !hasMembers ?
+        isAllGroups ? "Add and enroll at least one member to start scanning."
+        : "Add and enroll at least one member in this group to start scanning."
+      : !hasEnrolledFaces ?
+        isAllGroups ? "Enroll at least one member to start scanning."
+        : "Enroll at least one member in this group to start scanning."
       : null
     : hasGroups ? "Select a group to start scanning."
     : "Create a group to start scanning."
