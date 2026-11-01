@@ -422,6 +422,12 @@ class AttendanceRepository:
 
         return results
 
+    async def get_member_by_id(self, member_id: str) -> Optional[AttendanceMember]:
+        query = select(AttendanceMember).where(AttendanceMember.id == member_id)
+        query = self._apply_org_scope(query, AttendanceMember)
+        result = await self.session.execute(query)
+        return result.scalars().first()
+
     async def get_member(self, person_id: str) -> Optional[AttendanceMember]:
         query = select(AttendanceMember).where(
             AttendanceMember.person_id == person_id,

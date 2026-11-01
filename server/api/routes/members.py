@@ -1,10 +1,13 @@
 import logging
 import inspect
+import json
+from uuid import NAMESPACE_URL, uuid5
+from sqlalchemy.exc import IntegrityError
 from typing import List, Optional, Set
 from fastapi import APIRouter, HTTPException, Depends
 
 from api.schemas import (
-    AttendanceMemberCreate,
+    AttendanceMemberCreateRequest,
     AttendanceMemberUpdate,
     AttendanceMemberResponse,
     BulkMemberCreate,
@@ -73,10 +76,39 @@ async def get_members(repo: AttendanceRepository = Depends(get_repository)):
 
 @router.post("", response_model=AttendanceMemberResponse)
 async def add_member(
-    member_data: AttendanceMemberCreate,
+    member_data: AttendanceMemberCreateRequest,
     repo: AttendanceRepository = Depends(get_repository),
 ):
     """Add a new attendance member with auto-generated person_id if not provided"""
+    request_member_id = (
+        uuid5(
+            NAMESPACE_URL,
+            "facenox:member-create:"
+            + json.dumps([repo.organization_id, member_data.creation_id]),
+        ).hex
+        if member_data.creation_id
+        else None
+    )
+
+    def replay_member(existing):
+        if (
+            existing.is_deleted
+            or not existing.is_active
+            or existing.group_id != member_data.group_id
+            or existing.name != member_data.name
+            or (existing.role or None) != (member_data.role or None)
+            or (existing.email or None) != (member_data.email or None)
+            or (
+                member_data.person_id is not None
+                and existing.person_id != member_data.person_id
+            )
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="This creation request was already used for a different or removed member.",
+            )
+        return existing
+
     try:
         # Check if group exists
         group = await repo.get_group(member_data.group_id)
@@ -84,7 +116,13 @@ async def add_member(
             raise HTTPException(status_code=404, detail="Group not found")
 
         # Prepare member data
-        db_member_data = member_data.model_dump()
+        db_member_data = member_data.model_dump(exclude={"creation_id"})
+        if request_member_id:
+            # The existing primary key makes replay durable without a new table.
+            existing = await repo.get_member_by_id(request_member_id)
+            if existing:
+                return replay_member(existing)
+            db_member_data["id"] = request_member_id
 
         if not member_data.person_id:
             service = AttendanceService(repo)
@@ -122,6 +160,16 @@ async def add_member(
 
         return added_member
 
+    except IntegrityError:
+        await repo.session.rollback()
+        if request_member_id:
+            existing = await repo.get_member_by_id(request_member_id)
+            if existing:
+                return replay_member(existing)
+        raise HTTPException(
+            status_code=409,
+            detail="Member could not be saved because of a conflicting update. Refresh and try again.",
+        )
     except HTTPException:
         raise
     except Exception as e:

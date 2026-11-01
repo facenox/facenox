@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback, useId } from "react"
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback, useId } from "react"
 import { flushSync } from "react-dom"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertCircle, AlertTriangle, Camera, CheckCircle2, Image, Upload, X } from "lucide-react"
@@ -66,11 +66,6 @@ export function AddMember({
   const initialMode = useGroupUIStore((state) => state.addMemberInitialMode)
   const [isBulkMode, setIsBulkMode] = useState(initialMode === "bulk")
 
-  useEffect(() => {
-    if (isOpen) {
-      setIsBulkMode(initialMode === "bulk")
-    }
-  }, [isOpen, initialMode])
   const [newMemberName, setNewMemberName] = useState("")
   const [newMemberRole, setNewMemberRole] = useState("")
   const [bulkMembersText, setBulkMembersText] = useState("")
@@ -85,6 +80,7 @@ export function AddMember({
     total: number
   } | null>(null)
   const [loading, setLoading] = useState(false)
+  const [savedMember, setSavedMember] = useState<AttendanceMember | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [confirmDuplicate, setConfirmDuplicate] = useState(false)
 
@@ -129,12 +125,6 @@ export function AddMember({
     setIsFaceSectionOpen(false)
   }, [stopCamera])
 
-  useEffect(() => {
-    if (!isOpen) {
-      skipFaceEnrollment()
-    }
-  }, [isOpen, skipFaceEnrollment])
-
   // Animated transitions may mount the preview after the section state changes.
   useEffect(() => {
     if (!needsCamera || !cameraVideo) {
@@ -149,6 +139,13 @@ export function AddMember({
   const nameInputRef = useRef<HTMLInputElement>(null)
   const singleSubmitInFlightRef = useRef(false)
   const bulkSubmitInFlightRef = useRef(false)
+  const formSessionRef = useRef(0)
+  const creationRequestRef = useRef<{
+    id: string
+    groupId: string
+    name: string
+    role?: string
+  } | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -164,7 +161,14 @@ export function AddMember({
     }
   }, [stopCamera])
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
+    formSessionRef.current += 1
+    singleSubmitInFlightRef.current = false
+    bulkSubmitInFlightRef.current = false
+    creationRequestRef.current = null
+    setLoading(false)
+    setIsProcessingBulk(false)
+    setSavedMember(null)
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
@@ -183,7 +187,15 @@ export function AddMember({
     setConfirmDuplicate(false)
     setError(null)
     setLastAddedSuccess(null)
-  }
+  }, [skipFaceEnrollment])
+
+  useLayoutEffect(() => {
+    resetForm()
+    if (isOpen) setIsBulkMode(initialMode === "bulk")
+    return () => {
+      formSessionRef.current += 1
+    }
+  }, [isOpen, group.id, initialMode, resetForm])
 
   const handleSnapPhoto = useCallback(async () => {
     const video = videoRef.current
@@ -307,10 +319,10 @@ export function AddMember({
   }
 
   const isDuplicate = useMemo(() => {
-    if (!newMemberName.trim()) return false
+    if (savedMember || !newMemberName.trim()) return false
     const normalizedName = newMemberName.trim().toLowerCase()
     return existingMembers.some((m) => m.name.toLowerCase() === normalizedName)
-  }, [newMemberName, existingMembers])
+  }, [newMemberName, existingMembers, savedMember])
 
   const typedCount = useMemo(() => {
     return bulkMembersText.split("\n").filter((line) => line.trim()).length
@@ -332,24 +344,60 @@ export function AddMember({
       return
     }
 
-    if (isDuplicate && !confirmDuplicate) {
+    if (!savedMember && isDuplicate && !confirmDuplicate) {
       setConfirmDuplicate(true)
       return
     }
 
+    const session = formSessionRef.current
+    const isCurrentForm = () => formSessionRef.current === session
     singleSubmitInFlightRef.current = true
     flushSync(() => {
       setLoading(true)
+      setError(null)
     })
 
     try {
       await waitForNextPaint()
-      const newMember = await attendanceManager.addMember(group.id, newMemberName.trim(), {
-        role: newMemberRole.trim() || undefined,
-      })
+      if (!isCurrentForm()) return
+      let newMember = savedMember
+      const wasCreated = !newMember
+      if (!newMember) {
+        const name = newMemberName.trim()
+        const role = newMemberRole.trim() || undefined
+        let request = creationRequestRef.current
+        if (
+          !request ||
+          request.groupId !== group.id ||
+          request.name !== name ||
+          request.role !== role
+        ) {
+          request = { id: crypto.randomUUID(), groupId: group.id, name, role }
+          creationRequestRef.current = request
+        }
+        newMember = await attendanceManager.addMember(group.id, name, {
+          role,
+          creationId: request.id,
+        })
+        if (!isCurrentForm()) return
+        setSavedMember(newMember)
+      }
+
+      const updateMemberStores = (member: AttendanceMember) => {
+        const replaceOrAppend = (members: AttendanceMember[]) =>
+          members.some((existing) => existing.id === member.id) ?
+            members.map((existing) => (existing.id === member.id ? member : existing))
+          : [...members, member]
+        useGroupStore.setState({ members: replaceOrAppend(useGroupStore.getState().members) })
+        useAttendanceStore.setState({
+          groupMembers: replaceOrAppend(useAttendanceStore.getState().groupMembers),
+        })
+      }
+      updateMemberStores(newMember)
 
       let faceEnrolled = false
       if (capturedFace) {
+        let enrollmentError: string | null = null
         try {
           const res = await attendanceManager.enrollFaceForGroupPerson(
             group.id,
@@ -358,27 +406,35 @@ export function AddMember({
             capturedFace.bbox,
             capturedFace.landmarks_5,
           )
+          if (!isCurrentForm()) return
           if (res.success) {
             faceEnrolled = true
-            newMember.has_face_data = true
-          }
+            newMember = { ...newMember, has_face_data: true }
+          } else
+            enrollmentError = res.error || res.message || "Face enrollment could not be completed."
         } catch (faceErr) {
-          console.warn("Face enrollment failed during member add:", faceErr)
+          if (!isCurrentForm()) return
+          enrollmentError =
+            faceErr instanceof Error ? faceErr.message : "Face enrollment could not be completed."
+        }
+        if (enrollmentError) {
+          setError(
+            `Member added, but face enrollment failed. ${enrollmentError} Retry enrollment or finish without a face.`,
+          )
+          if (wasCreated) onSuccess()
+          return
         }
       }
 
-      useGroupStore.setState({
-        members: [...useGroupStore.getState().members, newMember],
-      })
-      useAttendanceStore.setState({
-        groupMembers: [...useAttendanceStore.getState().groupMembers, newMember],
-      })
-
-      onSuccess()
+      updateMemberStores(newMember)
+      if (wasCreated || faceEnrolled) onSuccess()
+      if (!isCurrentForm()) return
 
       if (addAnother) {
         setNewMemberName("")
         setNewMemberRole("")
+        setSavedMember(null)
+        creationRequestRef.current = null
         setCapturedFace(null)
         setFaceError(null)
         setConfirmDuplicate(false)
@@ -394,6 +450,7 @@ export function AddMember({
         onClose()
       }
     } catch (err) {
+      if (!isCurrentForm()) return
       console.error("Error adding member:", err)
       const rawMessage = err instanceof Error ? err.message : ""
       try {
@@ -408,8 +465,10 @@ export function AddMember({
         setError(rawMessage || "Failed to add member")
       }
     } finally {
-      singleSubmitInFlightRef.current = false
-      setLoading(false)
+      if (isCurrentForm()) {
+        singleSubmitInFlightRef.current = false
+        setLoading(false)
+      }
     }
   }
 
@@ -422,6 +481,8 @@ export function AddMember({
       return
     }
 
+    const session = formSessionRef.current
+    const isCurrentForm = () => formSessionRef.current === session
     bulkSubmitInFlightRef.current = true
     flushSync(() => {
       setIsProcessingBulk(true)
@@ -430,6 +491,7 @@ export function AddMember({
 
     try {
       await waitForNextPaint()
+      if (!isCurrentForm()) return
       const lines = bulkMembersText.split("\n").filter((line: string) => line.trim())
       const total = lines.length
       setBulkProgress({ current: 0, total })
@@ -490,6 +552,7 @@ export function AddMember({
 
           setBulkProgress({ current: i, total: totalItems })
           const res = await attendanceManager.addMembersBulk(chunk, group.id)
+          if (!isCurrentForm()) return
 
           success += res.success_count
           failed += res.error_count
@@ -512,6 +575,7 @@ export function AddMember({
       }
 
       onSuccess()
+      if (!isCurrentForm()) return
 
       if (failed === 0) {
         resetForm()
@@ -520,6 +584,7 @@ export function AddMember({
         setBulkResults({ success, failed, errors })
       }
     } catch (err) {
+      if (!isCurrentForm()) return
       console.warn("Validation error on bulk add:", err)
       const rawMessage = err instanceof Error ? err.message : ""
       try {
@@ -534,8 +599,10 @@ export function AddMember({
         setError(rawMessage || "Failed to bulk add members")
       }
     } finally {
-      bulkSubmitInFlightRef.current = false
-      setIsProcessingBulk(false)
+      if (isCurrentForm()) {
+        bulkSubmitInFlightRef.current = false
+        setIsProcessingBulk(false)
+      }
     }
   }
 
@@ -565,6 +632,8 @@ export function AddMember({
         <div className="mb-4 flex items-end justify-between border-b border-white/5">
           <div className="flex gap-6">
             <button
+              type="button"
+              disabled={loading || Boolean(savedMember)}
               onClick={() => {
                 setIsBulkMode(false)
                 setBulkMembersText("")
@@ -583,6 +652,8 @@ export function AddMember({
               )}
             </button>
             <button
+              type="button"
+              disabled={loading || Boolean(savedMember)}
               onClick={() => {
                 setIsBulkMode(true)
                 setNewMemberName("")
@@ -645,6 +716,7 @@ export function AddMember({
                     <FormInput
                       ref={nameInputRef}
                       value={newMemberName}
+                      disabled={loading || Boolean(savedMember)}
                       onChange={(event) => setNewMemberName(event.target.value)}
                       placeholder="Name"
                       aria-label="Name"
@@ -666,6 +738,7 @@ export function AddMember({
                   <div className="flex flex-col sm:col-span-4">
                     <FormInput
                       value={newMemberRole}
+                      disabled={loading || Boolean(savedMember)}
                       onChange={(event) => setNewMemberRole(event.target.value)}
                       placeholder="Role (optional)"
                       aria-label="Role (optional)"
@@ -1123,8 +1196,9 @@ export function AddMember({
                     resetForm()
                     onClose()
                   }}
-                  className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
-                  Cancel
+                  disabled={Boolean(savedMember) && loading}
+                  className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-40">
+                  {savedMember ? "Finish without face" : "Cancel"}
                 </button>
                 <button
                   type="button"
@@ -1151,6 +1225,10 @@ export function AddMember({
                     bulkProgress ?
                       `Processing (${bulkProgress.current}/${bulkProgress.total})`
                     : "Processing…"
+                  : !isBulkMode && savedMember ?
+                    capturedFace ?
+                      "Retry face enrollment"
+                    : "Done"
                   : confirmDuplicate && !isBulkMode ?
                     capturedFace ?
                       "Add anyway & enroll face"

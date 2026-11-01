@@ -3,9 +3,14 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { AddMember } from "./AddMember"
 import { attendanceManager, backendService } from "@/services"
 import { createAttendanceGroup, createAttendanceMember } from "@/test/fixtures"
+import { useGroupStore } from "@/components/group/stores"
 
 vi.mock("@/services", () => ({
-  attendanceManager: { addMember: vi.fn(), enrollFaceForGroupPerson: vi.fn() },
+  attendanceManager: {
+    addMember: vi.fn(),
+    addMembersBulk: vi.fn(),
+    enrollFaceForGroupPerson: vi.fn(),
+  },
   backendService: { detectFaces: vi.fn() },
   persistentSettings: {
     getUIState: vi.fn(async () => ({})),
@@ -65,7 +70,7 @@ beforeEach(() => {
   vi.spyOn(HTMLMediaElement.prototype, "paused", "get").mockReturnValue(false)
   vi.mocked(backendService.detectFaces).mockResolvedValue(faceDetectionResult)
   vi.mocked(attendanceManager.addMember).mockResolvedValue(
-    createAttendanceMember({ name: "Alice" }),
+    createAttendanceMember({ name: "Alice", has_face_data: false }),
   )
   vi.mocked(attendanceManager.enrollFaceForGroupPerson).mockResolvedValue({ success: true })
 })
@@ -105,6 +110,191 @@ function setup() {
   const view = render(<AddMember {...props} />)
   return { ...view, props, track, stream, getUserMedia }
 }
+
+async function prepareFace() {
+  const view = setup()
+  fireEvent.change(screen.getByPlaceholderText("Name"), { target: { value: "Alice" } })
+  fireEvent.click(screen.getByRole("button", { name: "+ Enroll now" }))
+  await advance()
+  fireEvent.click(screen.getByRole("button", { name: "Capture photo" }))
+  await advance()
+  return view
+}
+
+it.each(["failure response", "exception"])(
+  "preserves the saved member after an enrollment %s and retries only the face",
+  async (failure) => {
+    const { props, rerender } = await prepareFace()
+    if (failure === "exception")
+      vi.mocked(attendanceManager.enrollFaceForGroupPerson).mockRejectedValueOnce(
+        new Error("Storage unavailable"),
+      )
+    else
+      vi.mocked(attendanceManager.enrollFaceForGroupPerson).mockResolvedValueOnce({
+        success: false,
+        error: "Storage unavailable",
+      })
+    fireEvent.click(screen.getByRole("button", { name: "Add member & enroll face" }))
+    await advance()
+    expect(screen.getByRole("alert")).toHaveTextContent("Member added, but face enrollment failed")
+    expect(screen.getByRole("alert")).toHaveTextContent("Storage unavailable")
+    expect(screen.getByText("Photo ready")).toBeVisible()
+    expect(screen.getByPlaceholderText("Name")).toBeDisabled()
+    expect(props.onClose).not.toHaveBeenCalled()
+    expect(props.onSuccess).toHaveBeenCalledTimes(1)
+    const member = await vi.mocked(attendanceManager.addMember).mock.results[0].value
+    rerender(<AddMember {...props} existingMembers={[member]} />)
+    fireEvent.click(screen.getByRole("button", { name: "Retry face enrollment" }))
+    await advance()
+    expect(attendanceManager.addMember).toHaveBeenCalledTimes(1)
+    expect(attendanceManager.enrollFaceForGroupPerson).toHaveBeenCalledTimes(2)
+    const calls = vi.mocked(attendanceManager.enrollFaceForGroupPerson).mock.calls
+    expect(calls[0][1]).toBe(calls[1][1])
+    const cached = useGroupStore.getState().members.filter((item) => item.id === member.id)
+    expect(cached).toHaveLength(1)
+    expect(cached[0].has_face_data).toBe(true)
+    expect(props.onClose).toHaveBeenCalledTimes(1)
+  },
+)
+
+it.each(["finish", "remove and done"])(
+  "can %s after a partial save without creating another member",
+  async (action) => {
+    const { props } = await prepareFace()
+    vi.mocked(attendanceManager.enrollFaceForGroupPerson).mockResolvedValueOnce({
+      success: false,
+      error: "Failed",
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Add member & enroll face" }))
+    await advance()
+    if (action === "finish")
+      fireEvent.click(screen.getByRole("button", { name: "Finish without face" }))
+    else {
+      fireEvent.click(screen.getByRole("button", { name: "Remove" }))
+      await advance()
+      fireEvent.click(screen.getByRole("button", { name: "Done" }))
+    }
+    await advance()
+    expect(attendanceManager.addMember).toHaveBeenCalledTimes(1)
+    expect(attendanceManager.enrollFaceForGroupPerson).toHaveBeenCalledTimes(1)
+    expect(props.onClose).toHaveBeenCalledTimes(1)
+  },
+)
+
+it("reuses the creation token when retrying an unresolved creation request", async () => {
+  await prepareFace()
+  vi.mocked(attendanceManager.addMember).mockRejectedValueOnce(new Error("Response lost"))
+  fireEvent.click(screen.getByRole("button", { name: "Add member & enroll face" }))
+  await advance()
+  expect(screen.getByRole("alert")).toHaveTextContent("Response lost")
+  fireEvent.click(screen.getByRole("button", { name: "Add member & enroll face" }))
+  await advance()
+  const calls = vi.mocked(attendanceManager.addMember).mock.calls
+  expect(calls).toHaveLength(2)
+  expect(calls[0][2]?.creationId).toEqual(expect.any(String))
+  expect(calls[0][2]?.creationId).toBe(calls[1][2]?.creationId)
+  expect(attendanceManager.enrollFaceForGroupPerson).toHaveBeenCalledTimes(1)
+})
+
+it.each(["success", "failure"])(
+  "ignores an old creation %s without clearing or unlocking a new save",
+  async (outcome) => {
+    const { props, rerender } = setup()
+    let resolveOld!: (value: ReturnType<typeof createAttendanceMember>) => void
+    let rejectOld!: (error: Error) => void
+    let resolveNew!: (value: ReturnType<typeof createAttendanceMember>) => void
+    vi.mocked(attendanceManager.addMember)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve, reject) => {
+            resolveOld = resolve
+            rejectOld = reject
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveNew = resolve
+          }),
+      )
+    fireEvent.change(screen.getByPlaceholderText("Name"), { target: { value: "Alice" } })
+    fireEvent.click(screen.getByRole("button", { name: "Add member" }))
+    await advance()
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
+    rerender(<AddMember {...props} isOpen={false} />)
+    rerender(<AddMember {...props} />)
+    fireEvent.change(screen.getByPlaceholderText("Name"), { target: { value: "Bob" } })
+    fireEvent.click(screen.getByRole("button", { name: "Add member" }))
+    await advance()
+    await act(async () => {
+      if (outcome === "success") resolveOld(createAttendanceMember({ name: "Alice" }))
+      else rejectOld(new Error("Old failure"))
+    })
+    await advance()
+    expect(screen.getByPlaceholderText("Name")).toHaveValue("Bob")
+    expect(screen.getByRole("button", { name: "Processing…" })).toBeDisabled()
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(props.onClose).toHaveBeenCalledTimes(1)
+    expect(props.onSuccess).not.toHaveBeenCalled()
+    fireEvent.keyDown(screen.getByPlaceholderText("Name"), { key: "Enter" })
+    expect(attendanceManager.addMember).toHaveBeenCalledTimes(2)
+    await act(async () =>
+      resolveNew(createAttendanceMember({ id: "bob", person_id: "bob", name: "Bob" })),
+    )
+    await advance()
+    expect(props.onClose).toHaveBeenCalledTimes(2)
+    expect(props.onSuccess).toHaveBeenCalledTimes(1)
+  },
+)
+
+it("ignores a late face-enrollment result after closing and reopening", async () => {
+  const { props, rerender } = await prepareFace()
+  let resolve!: (value: { success: boolean }) => void
+  vi.mocked(attendanceManager.enrollFaceForGroupPerson).mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done
+      }),
+  )
+  fireEvent.click(screen.getByRole("button", { name: "Add member & enroll face" }))
+  await advance()
+  rerender(<AddMember {...props} isOpen={false} />)
+  rerender(<AddMember {...props} />)
+  fireEvent.change(screen.getByPlaceholderText("Name"), { target: { value: "Bob" } })
+  await act(async () => resolve({ success: true }))
+  await advance()
+  expect(screen.getByPlaceholderText("Name")).toHaveValue("Bob")
+  expect(screen.getByRole("button", { name: "Add member" })).toBeEnabled()
+  expect(props.onClose).not.toHaveBeenCalled()
+  expect(props.onSuccess).not.toHaveBeenCalled()
+})
+
+it("ignores old bulk-save completion after reopening a single-member form", async () => {
+  const { props, rerender } = setup()
+  let resolve!: (value: Awaited<ReturnType<typeof attendanceManager.addMembersBulk>>) => void
+  vi.mocked(attendanceManager.addMembersBulk).mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done
+      }),
+  )
+  fireEvent.click(screen.getByRole("button", { name: "Multiple" }))
+  await advance()
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Alice" } })
+  fireEvent.click(screen.getByRole("button", { name: "Add members" }))
+  await advance()
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
+  rerender(<AddMember {...props} isOpen={false} />)
+  rerender(<AddMember {...props} />)
+  fireEvent.change(screen.getByPlaceholderText("Name"), { target: { value: "Bob" } })
+  await act(async () =>
+    resolve({ success_count: 1, error_count: 0, errors: [], members: [createAttendanceMember()] }),
+  )
+  await advance()
+  expect(screen.getByPlaceholderText("Name")).toHaveValue("Bob")
+  expect(screen.getByRole("button", { name: "Add member" })).toBeEnabled()
+  expect(props.onClose).toHaveBeenCalledTimes(1)
+})
 
 it("keeps the same camera while typing and resumes a paused preview without reconnecting", async () => {
   const { container, getUserMedia, track, stream } = setup()

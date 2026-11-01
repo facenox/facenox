@@ -109,6 +109,7 @@ describe("AddMember Modal", () => {
     await waitFor(() => {
       expect(attendanceManager.addMember).toHaveBeenCalledWith("group-1", "Juan Dela Cruz", {
         role: "Student",
+        creationId: expect.any(String),
       })
       expect(onSuccess).toHaveBeenCalled()
       expect(onClose).toHaveBeenCalled()

@@ -171,6 +171,15 @@ class AttendanceMemberCreate(BaseModel):
     email: Optional[str] = Field(None, max_length=255)
 
 
+class AttendanceMemberCreateRequest(AttendanceMemberCreate):
+    creation_id: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=100,
+        description="Stable token reused only when retrying the same member creation",
+    )
+
+
 class AttendanceMemberUpdate(BaseModel):
     group_id: Optional[str] = None
     name: Optional[str] = Field(None, min_length=1, max_length=100)

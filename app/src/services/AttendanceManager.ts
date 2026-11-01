@@ -107,6 +107,7 @@ export class AttendanceManager {
     name: string,
     options?: {
       personId?: string
+      creationId?: string
       role?: string
       email?: string
     },

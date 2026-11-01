@@ -31,6 +31,7 @@ export class MemberManager {
     name: string,
     options?: {
       personId?: string
+      creationId?: string
       role?: string
       email?: string
     },
@@ -41,8 +42,10 @@ export class MemberManager {
       role?: string
       email?: string
       person_id?: string
+      creation_id: string
     } = {
       group_id: groupId,
+      creation_id: options?.creationId ?? crypto.randomUUID(),
       name: name.replace(/[\t\r\n]+/g, " ").trim(),
       role: options?.role ? options.role.replace(/[\t\r\n]+/g, " ").trim() : undefined,
       email: options?.email ? options.email.trim() : undefined,
