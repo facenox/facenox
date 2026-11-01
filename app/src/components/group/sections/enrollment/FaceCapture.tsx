@@ -80,6 +80,13 @@ export function FaceCapture({
 
   const framesReady = frames.some((f) => f.status === "ready" || f.status === "enrolled")
   const isProcessing = frames.some((f) => f.status === "processing")
+  const visibleError = globalError || (source === "live" ? cameraError : null)
+
+  useEffect(() => {
+    if (source !== "live" || !selectedMemberId || showInfoModal || framesReady || successMessage) {
+      stopCamera()
+    }
+  }, [source, selectedMemberId, showInfoModal, framesReady, successMessage, stopCamera])
 
   // Trigger modal on member select if not already dismissed
   useEffect(() => {
@@ -98,6 +105,7 @@ export function FaceCapture({
       selectedMemberId &&
       !showInfoModal &&
       !isStreaming &&
+      !cameraError &&
       !framesReady &&
       !successMessage
     ) {
@@ -114,6 +122,7 @@ export function FaceCapture({
     selectedMemberId,
     showInfoModal,
     isStreaming,
+    cameraError,
     framesReady,
     successMessage,
     startCamera,
@@ -362,7 +371,7 @@ export function FaceCapture({
 
                 {/* Sleek, non-blocking glassmorphic warning toast inside single viewport */}
                 <AnimatePresence>
-                  {globalError && (
+                  {visibleError && (
                     <motion.div
                       role="alert"
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -371,14 +380,22 @@ export function FaceCapture({
                       transition={{ duration: 0.22, ease: "easeOut" }}
                       className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[85%] -translate-x-1/2 items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/85 px-4 py-2.5 text-center text-[11px] font-medium text-red-200">
                       <AlertCircle className="size-4 shrink-0 text-red-400" />
-                      <ErrorText message={globalError} />
-                      <button
-                        type="button"
-                        aria-label="Dismiss error"
-                        onClick={() => setGlobalError(null)}
-                        className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2">
-                        <X className="size-4" aria-hidden="true" />
-                      </button>
+                      <ErrorText message={visibleError} />
+                      {!globalError && cameraError ?
+                        <button
+                          type="button"
+                          onClick={() => void startCamera()}
+                          className="shrink-0 rounded px-2 py-1 text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2">
+                          Retry camera
+                        </button>
+                      : <button
+                          type="button"
+                          aria-label="Dismiss error"
+                          onClick={() => setGlobalError(null)}
+                          className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2">
+                          <X className="size-4" aria-hidden="true" />
+                        </button>
+                      }
                     </motion.div>
                   )}
                 </AnimatePresence>

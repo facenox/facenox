@@ -2,6 +2,78 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { persistentSettings } from "@/services"
 import { buildCameraConstraints } from "@/utils/cameraConstraints"
 
+const VIDEO_READY_TIMEOUT_MS = 10_000
+
+function stopStream(stream: MediaStream) {
+  stream.getTracks().forEach((track) => {
+    track.onended = null
+    track.stop()
+  })
+}
+
+// getUserMedia cannot be aborted. Settle cancellation now and release any late stream.
+function abortable<T>(
+  request: Promise<T>,
+  signal: AbortSignal,
+  releaseLate?: (value: T) => void,
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const onAbort = () => reject(signal.reason)
+    if (signal.aborted) onAbort()
+    else signal.addEventListener("abort", onAbort, { once: true })
+    request.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort)
+        if (signal.aborted) releaseLate?.(value)
+        else resolve(value)
+      },
+      (error) => {
+        signal.removeEventListener("abort", onAbort)
+        reject(error)
+      },
+    )
+  })
+}
+
+function waitForVideoReady(video: HTMLVideoElement, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let settled = false
+    let playing = false
+    const finish = (error?: unknown) => {
+      if (settled) return
+      settled = true
+      clearInterval(poll)
+      clearTimeout(timeout)
+      signal.removeEventListener("abort", onAbort)
+      if (error) reject(error)
+      else resolve()
+    }
+    const check = () => {
+      if (playing && video.videoWidth > 0 && video.videoHeight > 0 && !video.paused) finish()
+    }
+    const onAbort = () => finish(signal.reason)
+    const poll = setInterval(check, 16)
+    const timeout = setTimeout(() => {
+      const error = new Error("Camera preview did not become ready. Try again.")
+      error.name = "TimeoutError"
+      finish(error)
+    }, VIDEO_READY_TIMEOUT_MS)
+    if (signal.aborted) {
+      onAbort()
+      return
+    }
+    signal.addEventListener("abort", onAbort, { once: true })
+    try {
+      void video.play().then(() => {
+        playing = true
+        check()
+      }, finish)
+    } catch (error) {
+      finish(error)
+    }
+  })
+}
+
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -13,6 +85,32 @@ export function useCamera() {
   const [cameraError, setCameraError] = useState<string | null>(null)
 
   const isStartingRef = useRef(false)
+  const mountedRef = useRef(true)
+  const cameraAttemptRef = useRef<AbortController | null>(null)
+
+  const releaseCamera = useCallback(() => {
+    const attempt = cameraAttemptRef.current
+    cameraAttemptRef.current = null
+    isStartingRef.current = false
+    attempt?.abort()
+    if (streamRef.current) {
+      const stream = streamRef.current
+      streamRef.current = null
+      stopStream(stream)
+    }
+    if (videoRef.current) {
+      videoRef.current.pause()
+      videoRef.current.srcObject = null
+    }
+  }, [])
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      releaseCamera()
+    }
+  }, [releaseCamera])
 
   const setSelectedCamera = useCallback((deviceId: string) => {
     setSelectedCameraState(deviceId)
@@ -20,58 +118,63 @@ export function useCamera() {
   }, [])
 
   useEffect(() => {
-    persistentSettings.getUIState().then((uiState) => {
-      if (uiState.selectedCamera) {
-        setSelectedCameraState(uiState.selectedCamera)
-      }
-    })
+    let cancelled = false
+    persistentSettings
+      .getUIState()
+      .then((uiState) => {
+        if (!cancelled && uiState.selectedCamera) {
+          setSelectedCameraState(uiState.selectedCamera)
+        }
+      })
+      .catch(console.error)
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const getCameraDevices = useCallback(async () => {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices()
-      const videoDevices = devices.filter((device) => device.kind === "videoinput")
-      setCameraDevices(videoDevices)
-      return videoDevices
-    } catch {
-      setCameraError("Unable to detect cameras. Ensure a camera is connected.")
-      return []
-    }
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const videoDevices = devices.filter((device) => device.kind === "videoinput")
+    if (mountedRef.current) setCameraDevices(videoDevices)
+    return videoDevices
   }, [])
 
   useEffect(() => {
-    getCameraDevices()
+    let cancelled = false
+    void getCameraDevices().catch(() => {
+      if (!cancelled) setCameraError("Unable to detect cameras. Ensure a camera is connected.")
+    })
+    return () => {
+      cancelled = true
+    }
   }, [getCameraDevices])
 
   const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => {
-        track.onended = null
-        track.stop()
-      })
-      streamRef.current = null
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null
-    }
+    releaseCamera()
+    if (!mountedRef.current) return
     setIsStreaming(false)
     setIsVideoReady(false)
     setCameraError(null)
-  }, [])
+  }, [releaseCamera])
 
   const startCamera = useCallback(
     async (forcedDeviceId?: string) => {
-      if (isStartingRef.current) {
+      if (!mountedRef.current || isStartingRef.current || streamRef.current) {
         return
       }
 
+      const attempt = new AbortController()
+      cameraAttemptRef.current = attempt
+      const isCurrentAttempt = () =>
+        mountedRef.current && cameraAttemptRef.current === attempt && !attempt.signal.aborted
       try {
         isStartingRef.current = true
         setCameraError(null)
         setIsStreaming(true)
         setIsVideoReady(false)
 
-        const videoDevices = await getCameraDevices()
+        const videoDevices = await abortable(getCameraDevices(), attempt.signal)
+        if (!isCurrentAttempt()) return
 
         if (videoDevices.length === 0) {
           throw new Error("No camera detected. Ensure a camera is connected and try again.")
@@ -113,64 +216,39 @@ export function useCamera() {
 
         const constraints = buildCameraConstraints(deviceIdToUse)
 
-        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+        const video = videoRef.current
+        if (!video) throw new Error("Video element not available")
+        const stream = await abortable(
+          navigator.mediaDevices.getUserMedia(constraints),
+          attempt.signal,
+          stopStream,
+        )
+        if (!isCurrentAttempt()) {
+          stopStream(stream)
+          return
+        }
         streamRef.current = stream
 
         stream.getVideoTracks().forEach((track) => {
           track.onended = () => {
+            if (!isCurrentAttempt() || streamRef.current !== stream) return
             console.warn("[useCamera] Enrollment camera video track ended unexpectedly.")
+            releaseCamera()
+            setIsStreaming(false)
+            setIsVideoReady(false)
             setCameraError("Active camera disconnected. Ensure camera is connected and try again.")
-            stopCamera()
           }
         })
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-
-          // Wait for video to be actually ready/playing
-          const waitForVideoReady = () => {
-            return new Promise<void>((resolve) => {
-              const video = videoRef.current
-              if (!video) {
-                resolve()
-                return
-              }
-
-              const checkVideoReady = () => {
-                if (video.videoWidth > 0 && video.videoHeight > 0) {
-                  resolve()
-                } else {
-                  setTimeout(checkVideoReady, 16)
-                }
-              }
-
-              video
-                .play()
-                .then(() => {
-                  if (video.paused) {
-                    return video.play()
-                  }
-                })
-                .then(() => {
-                  checkVideoReady()
-                })
-                .catch((err) => {
-                  console.error("Video play() failed:", err)
-                  checkVideoReady()
-                })
-            })
-          }
-
-          await waitForVideoReady()
-
-          if (videoRef.current && videoRef.current.videoWidth > 0) {
-            setIsVideoReady(true)
-          }
-        } else {
-          throw new Error("Video element not available")
-        }
+        video.srcObject = stream
+        await waitForVideoReady(video, attempt.signal)
+        if (!isCurrentAttempt()) return
+        if (videoRef.current !== video) throw new Error("Video element no longer available")
+        setIsVideoReady(true)
       } catch (err) {
+        if (!isCurrentAttempt()) return
         console.error("Error starting camera:", err)
+        releaseCamera()
 
         let errorMessage = "Unable to access camera. Ensure a camera is connected and try again."
 
@@ -187,6 +265,8 @@ export function useCamera() {
             errorName === "ConstraintNotSatisfiedError"
           ) {
             errorMessage = "Unable to start camera with current settings."
+          } else if (errorName === "TimeoutError") {
+            errorMessage = "Camera preview did not become ready. Try again."
           }
         }
 
@@ -194,10 +274,11 @@ export function useCamera() {
         setIsStreaming(false)
         setIsVideoReady(false)
       } finally {
-        isStartingRef.current = false
+        // A canceled start must not unlock a newer attempt that is still pending.
+        if (cameraAttemptRef.current === attempt) isStartingRef.current = false
       }
     },
-    [selectedCamera, getCameraDevices, setSelectedCamera, stopCamera],
+    [selectedCamera, getCameraDevices, setSelectedCamera, releaseCamera],
   )
 
   useEffect(() => {
@@ -219,14 +300,6 @@ export function useCamera() {
 
     return () => clearInterval(interval)
   }, [isStreaming, isVideoReady, cameraError])
-
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop())
-      }
-    }
-  }, [])
 
   return {
     videoRef,
