@@ -263,8 +263,9 @@ export function Members({
 
   const confirmRemoveMember = async () => {
     if (!memberToDelete) return
-    await removeMember(memberToDelete)
+    const target = memberToDelete
     setMemberToDelete(null)
+    await removeMember(target)
   }
 
   const handleResetFace = useCallback(
@@ -648,15 +649,15 @@ export function Members({
               }
             </AnimatePresence>
           </div>
-
-          <DeleteMemberModal
-            isOpen={!!memberToDelete}
-            member={memberToDelete}
-            onClose={() => setMemberToDelete(null)}
-            onConfirm={confirmRemoveMember}
-          />
         </motion.div>
       }
+
+      <DeleteMemberModal
+        isOpen={!!memberToDelete}
+        member={memberToDelete}
+        onClose={() => setMemberToDelete(null)}
+        onConfirm={confirmRemoveMember}
+      />
 
       {/* OVERLAY CONTENT: Enrollment tasks */}
       <AnimatePresence>

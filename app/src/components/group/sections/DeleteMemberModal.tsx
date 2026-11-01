@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AlertTriangle } from "lucide-react"
 import type { AttendanceMember } from "@/types/recognition"
 import { Modal } from "@/components/common"
@@ -13,11 +13,13 @@ interface DeleteMemberModalProps {
 export function DeleteMemberModal({ isOpen, member, onClose, onConfirm }: DeleteMemberModalProps) {
   const [memberSnapshot, setMemberSnapshot] = useState<
     (AttendanceMember & { displayName?: string }) | null
-  >(null)
+  >(member)
 
-  if (member && member !== memberSnapshot) {
-    setMemberSnapshot(member)
-  }
+  useEffect(() => {
+    if (member) {
+      setMemberSnapshot(member)
+    }
+  }, [member])
 
   if (!memberSnapshot) return null
 
