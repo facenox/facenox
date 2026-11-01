@@ -36,6 +36,7 @@ import { CooldownOverlay } from "@/components/main/components/CooldownOverlay"
 import type { DetectionResult } from "@/components/main/types"
 import { soundEffects } from "@/services/SoundEffectsService"
 import { consumeClockWarning, type ClockWarningDetail } from "@/services/clockWarnings"
+import { getScanReadiness } from "@/components/main/utils/scanReadiness"
 
 let globalStopCamera: ((forceCleanup: boolean) => void) | null = null
 
@@ -94,6 +95,10 @@ export default function Main() {
     setAttendanceGroups,
     groupMembers,
     isShellReady,
+    isPanelLoading,
+    isPanelSwitchPending,
+    panelDataError,
+    shellBootstrapError,
     setShowGroupManagement,
     attendanceCooldownSeconds,
     enableSpoofDetection,
@@ -337,13 +342,23 @@ export default function Main() {
     }
   }, [attendanceGroups.length, isShellReady, setShowGroupManagement, setSidebarCollapsed])
 
+  const scanReadiness = getScanReadiness(useAttendanceStore.getState(), cameraDevices.length > 0)
+  const isGroupDataLoading = isPanelLoading || isPanelSwitchPending
+
   const startCameraGuarded = useCallback(() => {
-    if (!currentGroup) {
-      requestGroupSelection()
-      return
+    const readiness = getScanReadiness(
+      useAttendanceStore.getState(),
+      useCameraStore.getState().cameraDevices.length > 0,
+    )
+    if (!readiness.canStart) {
+      if (readiness.reason === "no_groups" || readiness.reason === "no_selection") {
+        requestGroupSelection()
+      }
+      return false
     }
-    startCamera()
-  }, [currentGroup, requestGroupSelection, startCamera])
+    void startCamera()
+    return true
+  }, [requestGroupSelection, startCamera])
 
   const syncUpdatedGroupLocally = useCallback(
     (updatedGroup: typeof currentGroup) => {
@@ -620,7 +635,7 @@ export default function Main() {
   const hasAutoStartedOnLaunchRef = useRef(false)
   useEffect(() => {
     if (
-      !isShellReady ||
+      !scanReadiness.canStart ||
       !isHydrated ||
       hasAutoStartedOnLaunchRef.current ||
       !quickSettings.autoStartScan
@@ -631,10 +646,15 @@ export default function Main() {
     if (!currentGroup) return
 
     if (!isStreamingRef.current) {
-      hasAutoStartedOnLaunchRef.current = true
-      startCameraGuarded()
+      if (startCameraGuarded()) hasAutoStartedOnLaunchRef.current = true
     }
-  }, [isShellReady, isHydrated, currentGroup, quickSettings.autoStartScan, startCameraGuarded])
+  }, [
+    scanReadiness.canStart,
+    isHydrated,
+    currentGroup,
+    quickSettings.autoStartScan,
+    startCameraGuarded,
+  ])
 
   const hasBlockingGroupModalOpen =
     showAddMemberModal || showEditMemberModal || showCreateGroupModal || showEditGroupModal
@@ -731,6 +751,8 @@ export default function Main() {
               isVideoLoading={isVideoLoading}
               isStreaming={isStreaming}
               isShellReady={isShellReady}
+              isGroupDataLoading={isGroupDataLoading}
+              dataError={shellBootstrapError || panelDataError}
               hasSelectedGroup={Boolean(currentGroup)}
               hasEnrolledFaces={hasEnrolledFaces}
               hasGroups={attendanceGroups.length > 0}
@@ -757,10 +779,7 @@ export default function Main() {
             isStreaming={isStreaming}
             startCamera={startCameraGuarded}
             stopCamera={stopCamera}
-            isShellReady={isShellReady}
-            hasGroups={attendanceGroups.length > 0}
-            hasSelectedGroup={Boolean(currentGroup)}
-            hasEnrolledFaces={hasEnrolledFaces}
+            readiness={scanReadiness}
           />
         </div>
 

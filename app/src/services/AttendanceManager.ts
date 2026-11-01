@@ -14,7 +14,7 @@ import type {
 
 import { HttpClient } from "./attendance/HttpClient"
 import { GroupManager } from "./attendance/GroupManager"
-import { MemberManager } from "./attendance/MemberManager"
+import { MemberManager, type BulkMemberCreationResponse } from "./attendance/MemberManager"
 import { RecordManager } from "./attendance/RecordManager"
 import { dispatchClockWarning } from "./clockWarnings"
 import { notifyDataChanged } from "../utils/syncNotifier"
@@ -79,8 +79,8 @@ export class AttendanceManager {
     return this.groupManager.createGroup(name, settings)
   }
 
-  async getGroups(): Promise<AttendanceGroup[]> {
-    return this.groupManager.getGroups()
+  async getGroups(options?: { throwOnError?: boolean }): Promise<AttendanceGroup[]> {
+    return this.groupManager.getGroups(options)
   }
 
   async getGroup(groupId: string): Promise<AttendanceGroup | undefined> {
@@ -121,14 +121,10 @@ export class AttendanceManager {
       role?: string
       email?: string
       personId?: string
+      creationId?: string
     }>,
     groupId: string,
-  ): Promise<{
-    success_count: number
-    error_count: number
-    errors: Array<{ person_id: string; error: string }>
-    members: AttendanceMember[]
-  }> {
+  ): Promise<BulkMemberCreationResponse> {
     return this.memberManager.addMembersBulk(members, groupId)
   }
 
@@ -148,8 +144,8 @@ export class AttendanceManager {
     return this.memberManager.updateMember(personId, updates)
   }
 
-  async getMembers(): Promise<AttendanceMember[]> {
-    return this.memberManager.getMembers()
+  async getMembers(options?: { throwOnError?: boolean }): Promise<AttendanceMember[]> {
+    return this.memberManager.getMembers(options)
   }
 
   async removeMember(personId: string): Promise<boolean> {
@@ -249,15 +245,18 @@ export class AttendanceManager {
     return this.recordManager.voidRecord(recordId, reason, voidedBy)
   }
 
-  async getRecords(filters?: {
-    group_id?: string
-    person_id?: string
-    start_date?: string
-    end_date?: string
-    limit?: number
-    include_voided?: boolean
-  }): Promise<AttendanceRecord[]> {
-    return this.recordManager.getRecords(filters)
+  async getRecords(
+    filters?: {
+      group_id?: string
+      person_id?: string
+      start_date?: string
+      end_date?: string
+      limit?: number
+      include_voided?: boolean
+    },
+    options?: { throwOnError?: boolean },
+  ): Promise<AttendanceRecord[]> {
+    return this.recordManager.getRecords(filters, options)
   }
 
   async getSessions(

@@ -11,6 +11,12 @@ import { useCamera } from "@/components/group/sections/enrollment/hooks/useCamer
 import { Tooltip, InfoPopover } from "@/components/shared"
 import { validateAndGetBestFace } from "@/utils/faceValidation"
 import { dataUrlToBlob } from "@/utils/dataUrl"
+import {
+  createBulkMemberCheckpoint,
+  reconcileBulkMemberRows,
+  checkpointBulkMemberResponse,
+  remainingBulkMemberText,
+} from "./utils/bulkMemberImport"
 
 /**
  * Properties for the AddMember component.
@@ -70,6 +76,9 @@ export function AddMember({
   const [newMemberRole, setNewMemberRole] = useState("")
   const [bulkMembersText, setBulkMembersText] = useState("")
   const [isProcessingBulk, setIsProcessingBulk] = useState(false)
+  const [bulkHasAttempted, setBulkHasAttempted] = useState(false)
+  const bulkCheckpointRef = useRef(createBulkMemberCheckpoint())
+  const bulkInputIncludesCompletedRef = useRef(false)
   const [bulkResults, setBulkResults] = useState<{
     success: number
     failed: number
@@ -168,6 +177,9 @@ export function AddMember({
     creationRequestRef.current = null
     setLoading(false)
     setIsProcessingBulk(false)
+    setBulkHasAttempted(false)
+    bulkCheckpointRef.current = createBulkMemberCheckpoint()
+    bulkInputIncludesCompletedRef.current = false
     setSavedMember(null)
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -309,11 +321,15 @@ export function AddMember({
   }, [isBulkMode])
 
   const handleFileUpload = async (file: File) => {
+    const session = formSessionRef.current
     try {
       const text = await file.text()
+      if (formSessionRef.current !== session || bulkSubmitInFlightRef.current) return
+      bulkInputIncludesCompletedRef.current = bulkCheckpointRef.current.completed.length > 0
       setBulkMembersText(text)
       setBulkResults(null)
     } catch {
+      if (formSessionRef.current !== session) return
       setError("Unable to read file. Select a valid TXT or CSV file.")
     }
   }
@@ -486,23 +502,24 @@ export function AddMember({
     bulkSubmitInFlightRef.current = true
     flushSync(() => {
       setIsProcessingBulk(true)
+      setBulkHasAttempted(true)
+      setError(null)
     })
     setBulkResults(null)
+    const checkpoint = bulkCheckpointRef.current
+    const previousSaved = checkpoint.completed.length
+    const errors: string[] = []
+    const invalidLines: string[] = []
 
     try {
       await waitForNextPaint()
       if (!isCurrentForm()) return
       const lines = bulkMembersText.split("\n").filter((line: string) => line.trim())
-      const total = lines.length
-      setBulkProgress({ current: 0, total })
-
       const membersToCreate: Array<{
         name: string
         role?: string
         email?: string
       }> = []
-      const errors: string[] = []
-      let failedPrecheck = 0
 
       for (const line of lines) {
         const delimiter =
@@ -528,7 +545,7 @@ export function AddMember({
         }
 
         if (!rawName) {
-          failedPrecheck++
+          invalidLines.push(line)
           errors.push(`Empty name in line: "${line}"`)
           continue
         }
@@ -539,65 +556,89 @@ export function AddMember({
         })
       }
 
-      let success = 0
-      let failed = failedPrecheck
+      const pending = reconcileBulkMemberRows(
+        checkpoint,
+        membersToCreate,
+        bulkInputIncludesCompletedRef.current,
+      )
+      const total = checkpoint.completed.length + pending.length + invalidLines.length
+      setBulkProgress({ current: checkpoint.completed.length, total })
 
-      if (membersToCreate.length > 0) {
+      if (pending.length > 0) {
         const chunkSize = 500
-        const totalItems = membersToCreate.length
-        setBulkProgress({ current: 0, total: totalItems })
+        const totalItems = pending.length
 
         for (let i = 0; i < totalItems; i += chunkSize) {
-          const chunk = membersToCreate.slice(i, i + chunkSize)
+          const chunk = pending.slice(i, i + chunkSize)
 
-          setBulkProgress({ current: i, total: totalItems })
           const res = await attendanceManager.addMembersBulk(chunk, group.id)
           if (!isCurrentForm()) return
 
-          success += res.success_count
-          failed += res.error_count
+          checkpointBulkMemberResponse(checkpoint, chunk, res)
+          setBulkProgress({ current: checkpoint.completed.length, total })
           if (res.errors && res.errors.length > 0) {
             res.errors.forEach((err) => {
               errors.push(`Failed: ${err.error}`)
             })
           }
           if (res.members && res.members.length > 0) {
-            useGroupStore.setState({
-              members: [...useGroupStore.getState().members, ...res.members],
-            })
+            const mergeMembers = (members: AttendanceMember[]) => {
+              const merged = new Map(members.map((member) => [member.id, member]))
+              for (const member of res.members)
+                merged.set(member.id, {
+                  ...merged.get(member.id),
+                  ...member,
+                  has_face_data: Boolean(
+                    merged.get(member.id)?.has_face_data || member.has_face_data,
+                  ),
+                })
+              return [...merged.values()]
+            }
+            useGroupStore.setState({ members: mergeMembers(useGroupStore.getState().members) })
             useAttendanceStore.setState({
-              groupMembers: [...useAttendanceStore.getState().groupMembers, ...res.members],
+              groupMembers: mergeMembers(useAttendanceStore.getState().groupMembers),
             })
           }
         }
-
-        setBulkProgress({ current: totalItems, total: totalItems })
       }
 
-      onSuccess()
+      if (checkpoint.completed.length > previousSaved) onSuccess()
       if (!isCurrentForm()) return
 
+      const success = checkpoint.completed.length
+      const failed = checkpoint.pending.length + invalidLines.length
       if (failed === 0) {
         resetForm()
         onClose()
       } else {
+        bulkInputIncludesCompletedRef.current = false
+        setBulkMembersText(remainingBulkMemberText(checkpoint, invalidLines))
+        if (errors.length === 0)
+          errors.push("Some entries were not confirmed. Retry the remaining entries.")
         setBulkResults({ success, failed, errors })
       }
     } catch (err) {
       if (!isCurrentForm()) return
       console.warn("Validation error on bulk add:", err)
       const rawMessage = err instanceof Error ? err.message : ""
+      let message = rawMessage || "Failed to bulk add members"
       try {
         const parsed = JSON.parse(rawMessage)
         if (Array.isArray(parsed)) {
           const msgs = [...new Set(parsed.map((e) => formatValidationError(e, parsed.length > 1)))]
-          setError(msgs.join(". "))
-        } else {
-          setError(rawMessage || "Failed to bulk add members")
+          message = msgs.join(". ")
         }
       } catch {
-        setError(rawMessage || "Failed to bulk add members")
+        // Keep non-JSON API errors unchanged.
       }
+      bulkInputIncludesCompletedRef.current = false
+      setBulkMembersText(remainingBulkMemberText(checkpoint, invalidLines))
+      setBulkResults({
+        success: checkpoint.completed.length,
+        failed: Math.max(1, checkpoint.pending.length + invalidLines.length),
+        errors: [...errors, message],
+      })
+      if (checkpoint.completed.length > previousSaved) onSuccess()
     } finally {
       if (isCurrentForm()) {
         bulkSubmitInFlightRef.current = false
@@ -633,10 +674,9 @@ export function AddMember({
           <div className="flex gap-6">
             <button
               type="button"
-              disabled={loading || Boolean(savedMember)}
+              disabled={loading || isProcessingBulk || Boolean(savedMember)}
               onClick={() => {
                 setIsBulkMode(false)
-                setBulkMembersText("")
                 setConfirmDuplicate(false)
               }}
               className={`relative rounded border-none bg-transparent pb-3 text-[12px] font-medium transition-colors outline-none focus-visible:text-white focus-visible:ring-2 focus-visible:ring-cyan-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none ${
@@ -653,7 +693,7 @@ export function AddMember({
             </button>
             <button
               type="button"
-              disabled={loading || Boolean(savedMember)}
+              disabled={loading || isProcessingBulk || Boolean(savedMember)}
               onClick={() => {
                 setIsBulkMode(true)
                 setNewMemberName("")
@@ -1098,6 +1138,7 @@ export function AddMember({
                 className="space-y-4">
                 <div>
                   <textarea
+                    disabled={isProcessingBulk}
                     value={bulkMembersText}
                     onChange={(event) => {
                       setBulkMembersText(event.target.value)
@@ -1108,16 +1149,25 @@ export function AddMember({
                     className="custom-scroll min-h-[132px] w-full resize-none rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 font-mono text-sm shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none placeholder:font-sans placeholder:text-sm placeholder:font-normal placeholder:text-white/35 focus:border-white/25 focus:bg-white/[0.06]"
                     placeholder="Enter one member per line"
                   />
+                  {bulkProgress && bulkProgress.current > 0 && (
+                    <p role="status" className="mt-2 text-[11px] text-cyan-300/80">
+                      {bulkProgress.current} already added. Only remaining entries will be
+                      submitted.
+                    </p>
+                  )}
                   <div className="mt-2 flex items-center justify-between">
                     <div className="text-[11px] text-white/55">
                       Format: <span className="font-mono text-white/65">Name, Role</span>
                     </div>
                     <label className="group flex cursor-pointer items-center gap-1.5 text-xs font-medium text-cyan-400/80 transition-colors hover:text-cyan-400">
                       <Upload className="size-3.5 transition-transform group-hover:-translate-y-0.5" />
-                      Import CSV or TXT
+                      {bulkProgress && bulkProgress.current > 0 ?
+                        "Reimport original CSV or TXT"
+                      : "Import CSV or TXT"}
                       <input
                         type="file"
                         accept=".txt,.csv"
+                        disabled={isProcessingBulk}
                         className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0]
@@ -1180,67 +1230,55 @@ export function AddMember({
         {/* Action Buttons */}
         {!(isBulkMode && bulkResults && bulkResults.failed === 0) && (
           <div className="mt-6 flex justify-end gap-3">
-            {isBulkMode && bulkResults ?
-              <button
-                onClick={() => {
-                  resetForm()
-                  onClose()
-                }}
-                className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
-                Close
-              </button>
-            : <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetForm()
-                    onClose()
-                  }}
-                  disabled={Boolean(savedMember) && loading}
-                  className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-40">
-                  {savedMember ? "Finish without face" : "Cancel"}
-                </button>
-                <button
-                  type="button"
-                  aria-describedby={!isBulkMode && needsFacePhoto ? faceHintId : undefined}
-                  onClick={
-                    isBulkMode ?
-                      () => void handleBulkAddMembers()
-                    : () => void handleAddMember(false)
-                  }
-                  disabled={
-                    loading ||
-                    isProcessingBulk ||
-                    (!isBulkMode && !newMemberName.trim()) ||
-                    (!isBulkMode && needsFacePhoto) ||
-                    (isBulkMode && !bulkMembersText.trim()) ||
-                    isProcessingFace
-                  }
-                  className={`min-w-[120px] rounded-lg px-6 py-2 text-[11px] font-bold tracking-wider transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-30 ${
-                    confirmDuplicate && !isBulkMode ?
-                      "bg-gradient-to-b from-amber-400 to-amber-500 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] hover:from-amber-300 hover:to-amber-400 focus-visible:ring-amber-400"
-                    : "bg-gradient-to-b from-cyan-400 to-cyan-500 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-cyan-400"
-                  }`}>
-                  {loading || isProcessingBulk ?
-                    bulkProgress ?
-                      `Processing (${bulkProgress.current}/${bulkProgress.total})`
-                    : "Processing…"
-                  : !isBulkMode && savedMember ?
-                    capturedFace ?
-                      "Retry face enrollment"
-                    : "Done"
-                  : confirmDuplicate && !isBulkMode ?
-                    capturedFace ?
-                      "Add anyway & enroll face"
-                    : "Add anyway"
-                  : isBulkMode ?
-                    "Add members"
-                  : capturedFace ?
-                    "Add member & enroll face"
-                  : "Add member"}
-                </button>
-              </>
-            }
+            <button
+              type="button"
+              onClick={() => {
+                resetForm()
+                onClose()
+              }}
+              disabled={Boolean(savedMember) && loading}
+              className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-40">
+              {savedMember ? "Finish without face" : "Cancel"}
+            </button>
+            <button
+              type="button"
+              aria-describedby={!isBulkMode && needsFacePhoto ? faceHintId : undefined}
+              onClick={
+                isBulkMode ? () => void handleBulkAddMembers() : () => void handleAddMember(false)
+              }
+              disabled={
+                loading ||
+                isProcessingBulk ||
+                (!isBulkMode && !newMemberName.trim()) ||
+                (!isBulkMode && needsFacePhoto) ||
+                (isBulkMode && !bulkMembersText.trim()) ||
+                isProcessingFace
+              }
+              className={`min-w-[120px] rounded-lg px-6 py-2 text-[11px] font-bold tracking-wider transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-30 ${
+                confirmDuplicate && !isBulkMode ?
+                  "bg-gradient-to-b from-amber-400 to-amber-500 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] hover:from-amber-300 hover:to-amber-400 focus-visible:ring-amber-400"
+                : "bg-gradient-to-b from-cyan-400 to-cyan-500 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-cyan-400"
+              }`}>
+              {loading || isProcessingBulk ?
+                bulkProgress ?
+                  `Processing (${bulkProgress.current}/${bulkProgress.total})`
+                : "Processing…"
+              : !isBulkMode && savedMember ?
+                capturedFace ?
+                  "Retry face enrollment"
+                : "Done"
+              : confirmDuplicate && !isBulkMode ?
+                capturedFace ?
+                  "Add anyway & enroll face"
+                : "Add anyway"
+              : isBulkMode ?
+                bulkHasAttempted ?
+                  "Retry remaining entries"
+                : "Add members"
+              : capturedFace ?
+                "Add member & enroll face"
+              : "Add member"}
+            </button>
           </div>
         )}
       </div>

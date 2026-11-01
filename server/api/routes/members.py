@@ -1,7 +1,5 @@
 import logging
 import inspect
-import json
-from uuid import NAMESPACE_URL, uuid5
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional, Set
 from fastapi import APIRouter, HTTPException, Depends
@@ -18,6 +16,11 @@ from api.schemas import (
 from api.deps import get_repository
 from database.repository import AttendanceRepository
 from services.attendance_service import AttendanceService
+from member_creation import (
+    member_creation_id,
+    matches_member_creation,
+    CREATION_CONFLICT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -80,32 +83,15 @@ async def add_member(
     repo: AttendanceRepository = Depends(get_repository),
 ):
     """Add a new attendance member with auto-generated person_id if not provided"""
-    request_member_id = (
-        uuid5(
-            NAMESPACE_URL,
-            "facenox:member-create:"
-            + json.dumps([repo.organization_id, member_data.creation_id]),
-        ).hex
-        if member_data.creation_id
-        else None
+    request_member_id = member_creation_id(
+        repo.organization_id, member_data.creation_id
     )
 
     def replay_member(existing):
-        if (
-            existing.is_deleted
-            or not existing.is_active
-            or existing.group_id != member_data.group_id
-            or existing.name != member_data.name
-            or (existing.role or None) != (member_data.role or None)
-            or (existing.email or None) != (member_data.email or None)
-            or (
-                member_data.person_id is not None
-                and existing.person_id != member_data.person_id
-            )
-        ):
+        if not matches_member_creation(existing, member_data.model_dump()):
             raise HTTPException(
                 status_code=409,
-                detail="This creation request was already used for a different or removed member.",
+                detail=CREATION_CONFLICT,
             )
         return existing
 
@@ -191,52 +177,69 @@ async def add_members_bulk(
             if not group:
                 raise HTTPException(status_code=404, detail=f"Group {gid} not found")
 
-        # Prepare list and insert in a single transaction
-        members_list = [m.model_dump() for m in bulk_data.members]
-        bulk_results = await repo.add_members_bulk(members_list)
-
-        success_count = 0
-        error_count = 0
-        errors = []
-        successful_members = []
-
-        for res in bulk_results:
-            if res.get("success", False):
-                success_count += 1
-                member = res["member"]
-                await repo.add_audit_log(
-                    action="MEMBER_CREATED",
-                    target_type="member",
-                    target_id=member.person_id,
-                    details=f"Bulk add: Member '{member.name}' added to group {member.group_id}",
+        async def persist_batch():
+            # Rebuild dictionaries after rollback; the repository assigns missing IDs.
+            bulk_results = await repo.add_members_bulk(
+                [m.model_dump() for m in bulk_data.members]
+            )
+            errors = []
+            successful_members = []
+            outcomes = []
+            changed = False
+            for request, res in zip(bulk_data.members, bulk_results):
+                success = bool(res.get("success", False))
+                error = (
+                    None
+                    if success
+                    else res.get("error", "Failed to add member to database")
                 )
-                successful_members.append(member)
-            else:
-                error_count += 1
-                errors.append(
+                outcomes.append(
                     {
-                        "person_id": res.get("person_id", "unknown"),
-                        "error": res.get("error", "Failed to add member to database"),
+                        "creation_id": request.creation_id,
+                        "person_id": res.get("person_id"),
+                        "success": success,
+                        "error": error,
                     }
                 )
+                if success:
+                    member = res["member"]
+                    if not res.get("replayed"):
+                        changed = True
+                        await repo.add_audit_log(
+                            action="MEMBER_CREATED",
+                            target_type="member",
+                            target_id=member.person_id,
+                            details=f"Bulk add: Member '{member.name}' added to group {member.group_id}",
+                        )
+                    successful_members.append(member)
+                else:
+                    errors.append(
+                        {"person_id": res.get("person_id") or "unknown", "error": error}
+                    )
+            await repo.session.commit()
+            if changed:
+                from services.live_stream_service import LiveStreamService
 
-        await repo.session.commit()
+                LiveStreamService.invalidate_all(repo.organization_id)
+            refreshed = set()
+            for member in successful_members:
+                if member.id not in refreshed:
+                    await repo.session.refresh(member)
+                    refreshed.add(member.id)
+            return BulkMemberResponse(
+                success_count=len(successful_members),
+                error_count=len(errors),
+                errors=errors,
+                members=successful_members,
+                results=outcomes,
+            )
 
-        if success_count > 0:
-            from services.live_stream_service import LiveStreamService
-
-            LiveStreamService.invalidate_all(repo.organization_id)
-
-        # Refresh successful members
-        for member in successful_members:
-            await repo.session.refresh(member)
-
-        return BulkMemberResponse(
-            success_count=success_count,
-            error_count=error_count,
-            errors=errors,
-            members=successful_members,
-        )
+        try:
+            return await persist_batch()
+        except IntegrityError:
+            # A concurrent request may have committed some overlapping creation tokens.
+            await repo.session.rollback()
+            return await persist_batch()
 
     except HTTPException:
         raise

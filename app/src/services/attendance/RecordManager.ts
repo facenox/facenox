@@ -268,14 +268,17 @@ export class RecordManager {
     }
   }
 
-  async getRecords(filters?: {
-    group_id?: string
-    person_id?: string
-    start_date?: string
-    end_date?: string
-    limit?: number
-    include_voided?: boolean
-  }): Promise<AttendanceRecord[]> {
+  async getRecords(
+    filters?: {
+      group_id?: string
+      person_id?: string
+      start_date?: string
+      end_date?: string
+      limit?: number
+      include_voided?: boolean
+    },
+    options?: { throwOnError?: boolean },
+  ): Promise<AttendanceRecord[]> {
     try {
       const params: Record<string, string> = {}
       if (filters?.group_id) params.group_id = filters.group_id
@@ -296,6 +299,7 @@ export class RecordManager {
       }))
     } catch (error) {
       console.error("Error getting records:", error)
+      if (options?.throwOnError) throw error
       return []
     }
   }

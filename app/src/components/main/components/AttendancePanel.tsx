@@ -312,6 +312,9 @@ export const AttendancePanel = memo(function AttendancePanel({
     isShellReady,
     isPanelLoading,
     isPanelSwitchPending,
+    isPanelRefreshing,
+    panelDataError,
+    shellBootstrapError,
     setShowGroupManagement,
     attendanceTimezone,
   } = useAttendanceStore()
@@ -439,6 +442,15 @@ export const AttendancePanel = memo(function AttendancePanel({
   }, [recordScope, searchQuery])
 
   if (!isShellReady) {
+    if (shellBootstrapError) {
+      return (
+        <div
+          role="alert"
+          className="flex flex-1 items-center justify-center px-6 text-center text-xs text-white/65">
+          {shellBootstrapError}
+        </div>
+      )
+    }
     return (
       <div className="flex flex-1 flex-col overflow-hidden">
         <SidebarTopSkeleton />
@@ -502,6 +514,7 @@ export const AttendancePanel = memo(function AttendancePanel({
             </Tooltip>
             <Tooltip content="Members" position="top">
               <button
+                disabled={isPanelLoading || isPanelSwitchPending || Boolean(panelDataError)}
                 onClick={() => setShowManualEntry(true)}
                 className={`${sidebarActionButtonClassName} rounded-l-none rounded-r-lg`}
                 aria-label="Members">
@@ -511,37 +524,59 @@ export const AttendancePanel = memo(function AttendancePanel({
           </div>
 
           {/* Biometric Enrollment Handoff Banner */}
-          {currentGroup && hasAnyEnrolledMember && unenrolledMembersCount > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3 py-1.5 text-xs">
-              <div className="flex min-w-0 items-center">
-                <span className="truncate text-[11.5px] font-medium text-amber-300/90">
-                  {unenrolledMembersCount} member
-                  {unenrolledMembersCount === 1 ? " needs" : "s need"} face enrollment
-                </span>
-              </div>
+          {currentGroup &&
+            !isPanelLoading &&
+            !isPanelSwitchPending &&
+            !panelDataError &&
+            hasAnyEnrolledMember &&
+            unenrolledMembersCount > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3 py-1.5 text-xs">
+                <div className="flex min-w-0 items-center">
+                  <span className="truncate text-[11.5px] font-medium text-amber-300/90">
+                    {unenrolledMembersCount} member
+                    {unenrolledMembersCount === 1 ? " needs" : "s need"} face enrollment
+                  </span>
+                </div>
+                <button
+                  onClick={handleOpenSettingsForEnrollment}
+                  className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/15 px-2.5 py-0.5 text-[10.5px] font-bold tracking-wider text-amber-300 uppercase transition-all duration-150 hover:border-amber-500/50 hover:bg-amber-500/25 active:scale-95">
+                  Enroll
+                </button>
+              </motion.div>
+            )}
+        </div>
+      : !panelDataError && (
+          <div className="flex min-h-0 flex-1 items-center justify-center">
+            <div className="flex flex-col items-center justify-center space-y-3">
+              <div className="text-center text-xs text-white/55">No groups created</div>
               <button
-                onClick={handleOpenSettingsForEnrollment}
-                className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/15 px-2.5 py-0.5 text-[10.5px] font-bold tracking-wider text-amber-300 uppercase transition-all duration-150 hover:border-amber-500/50 hover:bg-amber-500/25 active:scale-95">
-                Enroll
+                onClick={() => setShowGroupManagement(true)}
+                className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
+                <Plus className="size-3.5" />
+                Create group
               </button>
-            </motion.div>
-          )}
-        </div>
-      : <div className="flex min-h-0 flex-1 items-center justify-center">
-          <div className="flex flex-col items-center justify-center space-y-3">
-            <div className="text-center text-xs text-white/55">No groups created</div>
-            <button
-              onClick={() => setShowGroupManagement(true)}
-              className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
-              <Plus className="size-3.5" />
-              Create group
-            </button>
+            </div>
           </div>
-        </div>
+        )
       }
+
+      {panelDataError && (
+        <div
+          role="alert"
+          className="mx-2 mt-2 flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-200/90">
+          <span>{panelDataError}</span>
+          <button
+            type="button"
+            disabled={isPanelRefreshing}
+            onClick={() => void refreshAttendanceData()}
+            className="shrink-0 rounded px-2 py-1 font-semibold hover:bg-white/5 disabled:opacity-40">
+            Retry
+          </button>
+        </div>
+      )}
 
       {!isPanelLoading && !isPanelSwitchPending && recentAttendance.length > 0 && (
         <div className="shrink-0 px-2 pb-1.5">
@@ -596,6 +631,7 @@ export const AttendancePanel = memo(function AttendancePanel({
       )}
 
       {attendanceGroups.length > 0 &&
+        !(panelDataError && recentAttendance.length === 0) &&
         (isPanelLoading ? <AttendanceListSkeleton showSearch={Boolean(currentGroup)} />
         : isPanelSwitchPending ? <div className="flex min-h-0 flex-1" />
         : <div

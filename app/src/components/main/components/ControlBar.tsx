@@ -1,5 +1,6 @@
 import { Dropdown, Tooltip } from "@/components/shared"
 import { formatCameraDevices } from "@/utils/cameraConstraints"
+import type { ScanReadiness } from "@/components/main/utils/scanReadiness"
 
 interface ControlBarProps {
   cameraDevices: MediaDeviceInfo[]
@@ -8,10 +9,7 @@ interface ControlBarProps {
   isStreaming: boolean
   startCamera: () => void
   stopCamera: (forceCleanup?: boolean) => void
-  isShellReady: boolean
-  hasGroups: boolean
-  hasSelectedGroup: boolean
-  hasEnrolledFaces: boolean
+  readiness: ScanReadiness
 }
 
 export function ControlBar({
@@ -21,13 +19,8 @@ export function ControlBar({
   isStreaming,
   startCamera,
   stopCamera,
-  isShellReady,
-  hasGroups,
-  hasSelectedGroup,
-  hasEnrolledFaces,
+  readiness,
 }: ControlBarProps) {
-  const hasCameraDevices = cameraDevices.length > 0
-
   const handlePrimaryAction = () => {
     if (isStreaming) {
       stopCamera()
@@ -47,52 +40,12 @@ export function ControlBar({
       }
     }
 
-    if (!isShellReady) {
+    if (!readiness.canStart) {
       return {
-        label: "Preparing…",
+        label: readiness.reason === "loading" ? "Preparing…" : "Start scan",
         className:
           "bg-[#141518] border border-white/10 text-white/50 hover:bg-[#141518] hover:text-white/50",
-        tooltip: "Loading groups and settings",
-        enabled: false,
-      }
-    }
-
-    if (!hasGroups) {
-      return {
-        label: "Start scan",
-        className:
-          "bg-[#141518] border border-white/10 text-white/50 hover:bg-[#141518] hover:text-white/50",
-        tooltip: "Create a group to start scanning",
-        enabled: false,
-      }
-    }
-
-    if (!hasSelectedGroup) {
-      return {
-        label: "Start scan",
-        className:
-          "bg-[#141518] border border-white/10 text-white/50 hover:bg-[#141518] hover:text-white/50",
-        tooltip: "Select a group to start scanning",
-        enabled: false,
-      }
-    }
-
-    if (!hasEnrolledFaces) {
-      return {
-        label: "Start scan",
-        className:
-          "bg-[#141518] border border-white/10 text-white/40 hover:bg-[#141518] hover:text-white/40",
-        tooltip: "Enroll at least one member to start scanning",
-        enabled: false,
-      }
-    }
-
-    if (!hasCameraDevices) {
-      return {
-        label: "Start scan",
-        className:
-          "bg-[#141518] border border-white/10 text-white/40 hover:bg-[#141518] hover:text-white/40",
-        tooltip: "No camera detected",
+        tooltip: readiness.tooltip,
         enabled: false,
       }
     }

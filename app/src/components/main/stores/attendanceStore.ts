@@ -22,6 +22,7 @@ interface AttendanceState {
   isPanelLoading: boolean
   isPanelRefreshing: boolean
   isPanelSwitchPending: boolean
+  panelDataError: string | null
 
   systemStats: SettingsOverview
   timeHealth: AttendanceTimeHealth | null
@@ -79,6 +80,7 @@ export const useAttendanceStore = create<AttendanceState>()(
     isPanelLoading: false,
     isPanelRefreshing: false,
     isPanelSwitchPending: false,
+    panelDataError: null,
 
     systemStats: {
       totalPersons: null,
@@ -101,7 +103,19 @@ export const useAttendanceStore = create<AttendanceState>()(
     dataRetentionDays: 0,
 
     setCurrentGroup: (group) => {
-      set({ currentGroup: group })
+      set((state) => ({
+        currentGroup: group,
+        ...(state.currentGroup?.id !== group?.id ?
+          {
+            groupMembers: [],
+            recentAttendance: [],
+            isPanelLoading: Boolean(group),
+            isPanelRefreshing: false,
+            isPanelSwitchPending: false,
+            panelDataError: null,
+          }
+        : {}),
+      }))
       persistentSettings
         .setUIState({
           selectedGroupId: group?.id || null,

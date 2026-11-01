@@ -18,6 +18,8 @@ interface VideoCanvasProps {
   isVideoLoading: boolean
   isStreaming: boolean
   isShellReady: boolean
+  isGroupDataLoading?: boolean
+  dataError?: string | null
   hasSelectedGroup: boolean
   hasEnrolledFaces: boolean
   hasGroups?: boolean
@@ -38,6 +40,8 @@ export const VideoCanvas = memo(function VideoCanvas({
   isVideoLoading,
   isStreaming,
   isShellReady,
+  isGroupDataLoading = false,
+  dataError = null,
   hasSelectedGroup,
   hasEnrolledFaces,
   hasGroups = false,
@@ -208,7 +212,8 @@ export const VideoCanvas = memo(function VideoCanvas({
     : null
 
   const emptyStateText =
-    !isShellReady ? "Loading groups and settings…"
+    dataError ? "Attendance data couldn't be loaded."
+    : !isShellReady || isGroupDataLoading ? null
     : hasSelectedGroup ?
       !hasMembers ? "Add and enroll at least one member to start scanning."
       : !hasEnrolledFaces ? "Enroll at least one member to start scanning."

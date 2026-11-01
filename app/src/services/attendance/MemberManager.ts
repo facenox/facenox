@@ -4,6 +4,19 @@ import { dataUrlToBlob } from "@/utils/dataUrl"
 import { notifyDataChanged } from "@/utils/syncNotifier"
 import { webSocketService } from "@/services/WebSocketService"
 
+export interface BulkMemberCreationResponse {
+  success_count: number
+  error_count: number
+  errors: Array<{ person_id: string; error: string }>
+  members: AttendanceMember[]
+  results?: Array<{
+    creation_id?: string | null
+    person_id?: string | null
+    success: boolean
+    error?: string | null
+  }>
+}
+
 export class MemberManager {
   private httpClient: HttpClient
   private apiEndpoints: Record<string, string>
@@ -13,7 +26,7 @@ export class MemberManager {
     this.apiEndpoints = apiEndpoints
   }
 
-  async getMembers(): Promise<AttendanceMember[]> {
+  async getMembers(options?: { throwOnError?: boolean }): Promise<AttendanceMember[]> {
     try {
       const members = await this.httpClient.get<AttendanceMember[]>(this.apiEndpoints.members)
       return members.map((member) => ({
@@ -22,6 +35,7 @@ export class MemberManager {
       }))
     } catch (error) {
       console.error("Error getting members:", error)
+      if (options?.throwOnError) throw error
       return []
     }
   }
@@ -72,17 +86,14 @@ export class MemberManager {
       role?: string
       email?: string
       personId?: string
+      creationId?: string
     }>,
     groupId: string,
-  ): Promise<{
-    success_count: number
-    error_count: number
-    errors: Array<{ person_id: string; error: string }>
-    members: AttendanceMember[]
-  }> {
+  ): Promise<BulkMemberCreationResponse> {
     const payload = {
       members: members.map((m) => ({
         group_id: groupId,
+        creation_id: m.creationId ?? crypto.randomUUID(),
         name: m.name.replace(/[\t\r\n]+/g, " ").trim(),
         role: m.role ? m.role.replace(/[\t\r\n]+/g, " ").trim() : undefined,
         email: m.email ? m.email.trim() : undefined,
@@ -90,12 +101,10 @@ export class MemberManager {
       })),
     }
 
-    const res = await this.httpClient.post<{
-      success_count: number
-      error_count: number
-      errors: Array<{ person_id: string; error: string }>
-      members: AttendanceMember[]
-    }>(`${this.apiEndpoints.members}/bulk`, payload)
+    const res = await this.httpClient.post<BulkMemberCreationResponse>(
+      `${this.apiEndpoints.members}/bulk`,
+      payload,
+    )
 
     notifyDataChanged()
 

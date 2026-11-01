@@ -456,11 +456,20 @@ class DatabaseStatsResponse(BaseModel):
 
 # Bulk Operations Models
 class BulkMemberCreate(BaseModel):
-    members: List[AttendanceMemberCreate] = Field(..., min_length=1, max_length=1000)
+    members: List[AttendanceMemberCreateRequest] = Field(
+        ..., min_length=1, max_length=1000
+    )
 
 
 class BulkMemberDeleteRequest(BaseModel):
     person_ids: List[str] = Field(..., min_length=1, max_length=1000)
+
+
+class BulkMemberCreationResult(BaseModel):
+    creation_id: Optional[str] = None
+    person_id: Optional[str] = None
+    success: bool
+    error: Optional[str] = None
 
 
 class BulkMemberResponse(BaseModel):
@@ -468,6 +477,7 @@ class BulkMemberResponse(BaseModel):
     error_count: int
     errors: List[Dict[str, str]] = []
     members: List[AttendanceMemberResponse] = []
+    results: List[BulkMemberCreationResult] = Field(default_factory=list)
 
 
 class ExportDataResponse(BaseModel):

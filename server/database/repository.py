@@ -4,6 +4,11 @@ import logging
 from sqlalchemy import select, desc, func, update, delete, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 import ulid
+from member_creation import (
+    member_creation_id,
+    matches_member_creation,
+    CREATION_CONFLICT,
+)
 
 from database.models import (
     AttendanceGroup,
@@ -354,6 +359,21 @@ class AttendanceRepository:
         person_ids = [m["person_id"] for m in members_data if m.get("person_id")]
 
         existing_members_map = {}
+        creation_ids = [
+            member_creation_id(self.organization_id, row["creation_id"])
+            for row in members_data
+            if row.get("creation_id")
+        ]
+        existing_creations = {}
+        for start in range(0, len(creation_ids), 500):
+            query = select(AttendanceMember).where(
+                AttendanceMember.id.in_(creation_ids[start : start + 500])
+            )
+            query = self._apply_org_scope(query, AttendanceMember)
+            result = await self.session.execute(query)
+            existing_creations.update(
+                {member.id: member for member in result.scalars().all()}
+            )
         if person_ids:
             chunk_size = 500
             for i in range(0, len(person_ids), chunk_size):
@@ -368,6 +388,31 @@ class AttendanceRepository:
 
         results = []
         for m_data in members_data:
+            creation_id = member_creation_id(
+                self.organization_id, m_data.get("creation_id")
+            )
+            if creation_id:
+                existing_creation = existing_creations.get(creation_id)
+                if existing_creation:
+                    if matches_member_creation(existing_creation, m_data):
+                        results.append(
+                            {
+                                "member": existing_creation,
+                                "person_id": existing_creation.person_id,
+                                "success": True,
+                                "replayed": True,
+                            }
+                        )
+                    else:
+                        results.append(
+                            {
+                                "person_id": m_data.get("person_id"),
+                                "success": False,
+                                "error": CREATION_CONFLICT,
+                            }
+                        )
+                    continue
+                m_data["id"] = creation_id
             person_id = m_data.get("person_id")
 
             if not person_id:
@@ -376,7 +421,9 @@ class AttendanceRepository:
 
             existing_member = existing_members_map.get(person_id)
             if existing_member:
-                if existing_member.is_deleted or not existing_member.is_active:
+                if not creation_id and (
+                    existing_member.is_deleted or not existing_member.is_active
+                ):
                     existing_member.group_id = m_data["group_id"]
                     existing_member.name = m_data["name"]
                     existing_member.role = m_data.get("role")
@@ -416,6 +463,8 @@ class AttendanceRepository:
                 )
                 self.session.add(new_member)
                 existing_members_map[person_id] = new_member
+                if creation_id:
+                    existing_creations[creation_id] = new_member
                 results.append(
                     {"member": new_member, "person_id": person_id, "success": True}
                 )

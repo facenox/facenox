@@ -66,7 +66,7 @@ export class GroupManager {
     }
   }
 
-  async getGroups(): Promise<AttendanceGroup[]> {
+  async getGroups(options?: { throwOnError?: boolean }): Promise<AttendanceGroup[]> {
     try {
       const groups = await this.httpClient.get<AttendanceGroup[]>(this.apiEndpoints.groups, {
         active_only: "true",
@@ -77,6 +77,7 @@ export class GroupManager {
       }))
     } catch (error) {
       console.error("Error getting groups:", error)
+      if (options?.throwOnError) throw error
       return []
     }
   }

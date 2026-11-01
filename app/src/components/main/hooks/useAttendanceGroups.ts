@@ -9,6 +9,7 @@ import { getAttendanceDateString } from "@/utils/attendanceTime"
 const PANEL_SWITCH_SKELETON_DELAY_MS = 120
 const MODAL_EXIT_DURATION_MS = 260
 let panelDataRequestId = 0
+const PANEL_DATA_ERROR = "Unable to load attendance data. Try again."
 
 interface PanelDataCacheEntry {
   members: AttendanceMember[]
@@ -48,7 +49,7 @@ const resolveSelectedGroup = (
 export async function bootstrapShellData(): Promise<void> {
   const [settings, groups, uiState, faceStats, attendanceStats, timeHealth] = await Promise.all([
     attendanceManager.getSettings(),
-    attendanceManager.getGroups(),
+    attendanceManager.getGroups({ throwOnError: true }),
     persistentSettings.getUIState(),
     backendService.getDatabaseStats().catch(() => ({ total_persons: 0 })),
     attendanceManager.getAttendanceStats().catch(() => ({ total_members: 0 })),
@@ -69,6 +70,7 @@ export async function bootstrapShellData(): Promise<void> {
     isPanelLoading: Boolean(resolvedGroup),
     isPanelRefreshing: false,
     isPanelSwitchPending: false,
+    panelDataError: null,
     systemStats: {
       totalPersons: faceStats.total_persons,
       totalMembers: attendanceStats.total_members,
@@ -110,7 +112,6 @@ async function loadSelectedGroupData(
   const preserveExisting = options.preserveExisting ?? false
   const delaySkeleton = options.delaySkeleton ?? false
   const onResolvedData = options.onResolvedData
-  let hasShownLoading = false
   let skeletonDelayTimer: ReturnType<typeof setTimeout> | null = null
 
   if (preserveExisting) {
@@ -118,18 +119,19 @@ async function loadSelectedGroupData(
       isPanelLoading: false,
       isPanelRefreshing: true,
       isPanelSwitchPending: false,
+      panelDataError: null,
     })
   } else if (delaySkeleton) {
     useAttendanceStore.setState({
       isPanelLoading: false,
       isPanelRefreshing: false,
       isPanelSwitchPending: true,
+      panelDataError: null,
     })
 
     skeletonDelayTimer = setTimeout(() => {
       if (!isCurrentRequest()) return
 
-      hasShownLoading = true
       useAttendanceStore.setState({
         isPanelLoading: true,
         isPanelRefreshing: false,
@@ -143,6 +145,7 @@ async function loadSelectedGroupData(
       isPanelLoading: true,
       isPanelRefreshing: false,
       isPanelSwitchPending: false,
+      panelDataError: null,
       groupMembers: [],
       recentAttendance: [],
     })
@@ -151,12 +154,12 @@ async function loadSelectedGroupData(
   try {
     const [members, records] = await Promise.all([
       groupId === ALL_GROUPS_ID ?
-        attendanceManager.getMembers()
-      : attendanceManager.getGroupMembers(groupId),
-      attendanceManager.getRecords({
-        group_id: groupId === ALL_GROUPS_ID ? undefined : groupId,
-        limit: 100,
-      }),
+        attendanceManager.getMembers({ throwOnError: true })
+      : attendanceManager.getGroupMembers(groupId, { throwOnError: true }),
+      attendanceManager.getRecords(
+        { group_id: groupId === ALL_GROUPS_ID ? undefined : groupId, limit: 100 },
+        { throwOnError: true },
+      ),
     ])
 
     if (skeletonDelayTimer) clearTimeout(skeletonDelayTimer)
@@ -185,6 +188,7 @@ async function loadSelectedGroupData(
       isPanelLoading: false,
       isPanelRefreshing: false,
       isPanelSwitchPending: false,
+      panelDataError: null,
     })
   } catch (error) {
     if (skeletonDelayTimer) {
@@ -196,12 +200,7 @@ async function loadSelectedGroupData(
         isPanelLoading: false,
         isPanelRefreshing: false,
         isPanelSwitchPending: false,
-        ...(hasShownLoading ?
-          {}
-        : {
-            groupMembers: [],
-            recentAttendance: [],
-          }),
+        panelDataError: PANEL_DATA_ERROR,
       })
     }
     throw error
@@ -232,6 +231,7 @@ export function useAttendanceGroups() {
   const hasInitializedPanelDataRef = useRef(false)
   const memberCacheRef = useRef<Map<string, AttendanceMember | null>>(new Map())
   const panelDataCacheRef = useRef<Map<string, PanelDataCacheEntry>>(new Map())
+  const refreshRequestRef = useRef(0)
   const loadAttendanceDataRef = useRef<() => Promise<void>>(async () => {})
 
   useEffect(() => {
@@ -267,29 +267,34 @@ export function useAttendanceGroups() {
       isPanelLoading: false,
       isPanelRefreshing: true,
       isPanelSwitchPending: false,
+      panelDataError: null,
     })
 
     return true
   }, [])
 
   const refreshAttendanceData = useCallback(async () => {
+    const requestId = ++refreshRequestRef.current
+    const refreshGroupId = useAttendanceStore.getState().currentGroup?.id
+    let panelRequestStarted = false
+    useAttendanceStore.setState({ isPanelRefreshing: true })
     try {
-      panelDataCacheRef.current.clear()
       const currentGroupValue =
         useAttendanceStore.getState().currentGroup ??
         useGroupStore.getState().selectedGroup ??
         currentGroupRef.current
-      const groups = await attendanceManager.getGroups()
-      setAttendanceGroups(groups)
+      const groups = await attendanceManager.getGroups({ throwOnError: true })
+      if (requestId !== refreshRequestRef.current) return
 
       const latestGroup =
         useAttendanceStore.getState().currentGroup ??
         useGroupStore.getState().selectedGroup ??
         currentGroupRef.current
       if (latestGroup?.id !== currentGroupValue?.id) return
+      setAttendanceGroups(groups)
 
       let resolvedGroup: AttendanceGroup | null = null
-      if (currentGroupValue?.id === ALL_GROUPS_ID) {
+      if (currentGroupValue?.id === ALL_GROUPS_ID && groups.length > 0) {
         resolvedGroup = createAllGroupsVirtualGroup(groups.length)
       } else if (currentGroupValue) {
         resolvedGroup = groups.find((group) => group.id === currentGroupValue.id) ?? null
@@ -299,6 +304,7 @@ export function useAttendanceGroups() {
       }
 
       if (!resolvedGroup) {
+        panelDataCacheRef.current.clear()
         setCurrentGroupWithCache(null)
         useAttendanceStore.setState({
           groupMembers: [],
@@ -306,27 +312,48 @@ export function useAttendanceGroups() {
           isPanelLoading: false,
           isPanelRefreshing: false,
           isPanelSwitchPending: false,
+          panelDataError: null,
         })
         return
       }
 
+      // Keep the current group's last confirmed snapshot across a failed refresh.
+      const cachedData = panelDataCacheRef.current.get(resolvedGroup.id)
+      panelDataCacheRef.current.clear()
+      if (cachedData) panelDataCacheRef.current.set(resolvedGroup.id, cachedData)
+      let usedCachedData = false
       if (currentGroupValue?.id !== resolvedGroup.id) {
         setCurrentGroupWithCache(resolvedGroup)
-        applyCachedPanelData(resolvedGroup.id)
+        usedCachedData = applyCachedPanelData(resolvedGroup.id)
       } else {
         useAttendanceStore.setState({ currentGroup: resolvedGroup })
         currentGroupRef.current = resolvedGroup
       }
 
       const shouldPreserveExisting =
-        currentGroupValue?.id === resolvedGroup.id && !useAttendanceStore.getState().isPanelLoading
+        (usedCachedData || (currentGroupValue?.id === resolvedGroup.id && Boolean(cachedData))) &&
+        !useAttendanceStore.getState().isPanelLoading
 
+      panelRequestStarted = true
       await loadSelectedGroupData(resolvedGroup.id, {
         preserveExisting: shouldPreserveExisting,
         onResolvedData: (members, records) => cachePanelData(resolvedGroup.id, members, records),
       })
     } catch (error) {
       console.error("Failed to refresh attendance data:", error)
+      // Panel loads own their errors and already reject stale responses by request ID.
+      if (
+        !panelRequestStarted &&
+        requestId === refreshRequestRef.current &&
+        useAttendanceStore.getState().currentGroup?.id === refreshGroupId
+      ) {
+        useAttendanceStore.setState({
+          isPanelLoading: false,
+          isPanelRefreshing: false,
+          isPanelSwitchPending: false,
+          panelDataError: PANEL_DATA_ERROR,
+        })
+      }
     }
   }, [applyCachedPanelData, cachePanelData, setAttendanceGroups, setCurrentGroupWithCache])
 
@@ -336,6 +363,7 @@ export function useAttendanceGroups() {
 
   const handleSelectGroup = useCallback(
     async (group: AttendanceGroup) => {
+      refreshRequestRef.current += 1
       setCurrentGroupWithCache(group)
 
       try {
@@ -361,7 +389,13 @@ export function useAttendanceGroups() {
       setNewGroupName("")
       setShowGroupManagement(false)
 
-      const groups = await attendanceManager.getGroups()
+      const groups = await attendanceManager.getGroups({ throwOnError: true }).catch((error) => {
+        console.error("Failed to refresh groups after creation:", error)
+        return [
+          ...useAttendanceStore.getState().attendanceGroups.filter((g) => g.id !== group.id),
+          group,
+        ]
+      })
       setAttendanceGroups(groups)
 
       if (group) {
@@ -438,6 +472,7 @@ export function useAttendanceGroups() {
       const { group } = customEvent.detail
 
       if (group === null) {
+        refreshRequestRef.current += 1
         setCurrentGroupWithCache(null)
         useAttendanceStore.setState({
           groupMembers: [],
@@ -445,15 +480,19 @@ export function useAttendanceGroups() {
           isPanelLoading: false,
           isPanelRefreshing: false,
           isPanelSwitchPending: false,
+          panelDataError: null,
         })
 
         attendanceManager
-          .getGroups()
+          .getGroups({ throwOnError: true })
           .then((groups) => {
             setAttendanceGroups(groups)
           })
           .catch((error) => {
             console.error("[useAttendanceGroups] Error refreshing groups:", error)
+            if (!useAttendanceStore.getState().currentGroup) {
+              useAttendanceStore.setState({ panelDataError: PANEL_DATA_ERROR })
+            }
           })
         return
       }
@@ -479,6 +518,7 @@ export function useAttendanceGroups() {
         isPanelLoading: false,
         isPanelRefreshing: false,
         isPanelSwitchPending: false,
+        panelDataError: null,
       })
       return
     }

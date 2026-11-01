@@ -37,7 +37,6 @@ export function MainModals({
     attendanceGroups,
     setAttendanceGroups,
     groupMembers,
-    setGroupMembers,
     showGroupManagement,
     setShowGroupManagement,
     showDeleteConfirmation,
@@ -75,25 +74,22 @@ export function MainModals({
       setCurrentGroup(updatedGroup)
       if (!updatedGroup) return
 
-      const exists = attendanceGroups.some((g) => g.id === updatedGroup.id)
-      setAttendanceGroups(
-        exists ?
-          attendanceGroups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g))
-        : [...attendanceGroups, updatedGroup],
-      )
+      // "All Groups" is a selection, not a persisted group.
+      if (updatedGroup.id !== "all") {
+        const exists = attendanceGroups.some((g) => g.id === updatedGroup.id)
+        setAttendanceGroups(
+          exists ?
+            attendanceGroups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g))
+          : [...attendanceGroups, updatedGroup],
+        )
+      }
       useGroupStore.getState().setSelectedGroup(updatedGroup)
 
-      if (updatedGroup.id && updatedGroup.id !== "all") {
-        attendanceManager
-          .getGroupMembers(updatedGroup.id)
-          .then((members) => {
-            setGroupMembers(members)
-            useGroupStore.getState().setMembers(members)
-          })
-          .catch(console.error)
+      if (updatedGroup.id) {
+        void loadAttendanceDataRef.current().catch(console.error)
       }
     },
-    [attendanceGroups, setAttendanceGroups, setCurrentGroup, setGroupMembers],
+    [attendanceGroups, setAttendanceGroups, setCurrentGroup, loadAttendanceDataRef],
   )
 
   return (
@@ -110,6 +106,7 @@ export function MainModals({
           setCurrentGroup(newGroup)
           useGroupStore.getState().setSelectedGroup(newGroup)
           setShowGroupManagement(false)
+          void loadAttendanceDataRef.current().catch(console.error)
         }}
       />
 

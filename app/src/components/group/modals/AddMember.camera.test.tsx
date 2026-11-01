@@ -111,6 +111,169 @@ function setup() {
   return { ...view, props, track, stream, getUserMedia }
 }
 
+async function setupBulk(text: string) {
+  const view = setup()
+  fireEvent.click(screen.getByRole("button", { name: "Multiple" }))
+  await advance()
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: text } })
+  return view
+}
+
+type ImportRow = Parameters<typeof attendanceManager.addMembersBulk>[0][number]
+function bulkSuccess(rows: ImportRow[]) {
+  return {
+    success_count: rows.length,
+    error_count: 0,
+    errors: [],
+    members: rows.map((row) =>
+      createAttendanceMember({
+        id: row.creationId!,
+        person_id: row.creationId!,
+        name: row.name,
+        role: row.role,
+        has_face_data: false,
+      }),
+    ),
+    results: rows.map((row) => ({
+      creation_id: row.creationId!,
+      person_id: row.creationId!,
+      success: true,
+    })),
+  }
+}
+
+it.each(["validation failure", "lost response"])(
+  "retries only the remaining row after a second-chunk %s",
+  async (failure) => {
+    const names = Array.from({ length: 500 }, (_, index) => `Bulk ${index}`)
+    const last = failure === "validation failure" ? "x".repeat(101) : "Last member"
+    const { props } = await setupBulk([...names, last].join("\n"))
+    const saved = new Map<string, ImportRow>()
+    let calls = 0
+    vi.mocked(attendanceManager.addMembersBulk).mockImplementation(async (rows) => {
+      calls++
+      if (calls === 2 && failure === "validation failure")
+        throw new Error("Name exceeds 100 characters")
+      for (const row of rows) saved.set(row.creationId!, row)
+      if (calls === 2) throw new Error("Response lost after commit")
+      return bulkSuccess(rows)
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Add members" }))
+    await advance()
+    expect(screen.getByRole("textbox")).toHaveValue(`${last}\t`)
+    expect(screen.getByRole("status")).toHaveTextContent("500 already added")
+    expect(props.onClose).not.toHaveBeenCalled()
+    const firstCalls = vi.mocked(attendanceManager.addMembersBulk).mock.calls
+    const lastKey = firstCalls[1][0][0].creationId
+    if (failure === "validation failure")
+      fireEvent.change(screen.getByRole("textbox"), { target: { value: "Corrected member" } })
+    fireEvent.click(screen.getByRole("button", { name: "Retry remaining entries" }))
+    await advance()
+    const requests = vi.mocked(attendanceManager.addMembersBulk).mock.calls.map((call) => call[0])
+    expect(requests.map((rows) => rows.length)).toEqual([500, 1, 1])
+    expect(requests[2][0].creationId).toBe(lastKey)
+    expect(saved.size).toBe(501)
+    expect(props.onClose).toHaveBeenCalledTimes(1)
+  },
+)
+
+it("keeps only failed rows after a partially successful batch", async () => {
+  const { props } = await setupBulk("Alice\nBob\nCarol")
+  let failedRow: ImportRow | undefined
+  vi.mocked(attendanceManager.addMembersBulk)
+    .mockImplementationOnce(async (rows) => {
+      failedRow = rows[1]
+      const success = bulkSuccess([rows[0], rows[2]])
+      return {
+        ...success,
+        error_count: 1,
+        errors: [{ person_id: "unknown", error: "Bob failed" }],
+        results: rows.map((row, index) => ({ creation_id: row.creationId!, success: index !== 1 })),
+      }
+    })
+    .mockImplementationOnce(async (rows) => bulkSuccess(rows))
+  fireEvent.click(screen.getByRole("button", { name: "Add members" }))
+  await advance()
+  expect(screen.getByRole("textbox")).toHaveValue("Bob\t")
+  fireEvent.click(screen.getByRole("button", { name: "Retry remaining entries" }))
+  await advance()
+  expect(vi.mocked(attendanceManager.addMembersBulk).mock.calls[1][0]).toEqual([failedRow])
+  expect(props.onClose).toHaveBeenCalledTimes(1)
+})
+
+it("does not resend completed rows when the corrected original CSV is reimported", async () => {
+  const { container, props } = await setupBulk("Alice\nBob")
+  vi.mocked(attendanceManager.addMembersBulk)
+    .mockImplementationOnce(async (rows) => ({
+      ...bulkSuccess([rows[0]]),
+      error_count: 1,
+      errors: [{ person_id: "unknown", error: "Bob failed" }],
+      results: rows.map((row, index) => ({ creation_id: row.creationId!, success: index === 0 })),
+    }))
+    .mockImplementationOnce(async (rows) => bulkSuccess(rows))
+  fireEvent.click(screen.getByRole("button", { name: "Add members" }))
+  await advance()
+  expect(screen.getByText("Reimport original CSV or TXT")).toBeVisible()
+  const file = new File([], "corrected.csv", { type: "text/csv" })
+  Object.defineProperty(file, "text", { value: async () => "Name,Role\nAlice,\nCorrected Bob," })
+  await act(async () => {
+    fireEvent.change(container.querySelector('input[accept=".txt,.csv"]')!, {
+      target: { files: [file] },
+    })
+  })
+  fireEvent.click(screen.getByRole("button", { name: "Retry remaining entries" }))
+  await advance()
+  const calls = vi.mocked(attendanceManager.addMembersBulk).mock.calls
+  expect(calls[1][0]).toHaveLength(1)
+  expect(calls[1][0][0].name).toBe("Corrected Bob")
+  expect(calls[1][0][0].creationId).toBe(calls[0][0][1].creationId)
+  expect(props.onClose).toHaveBeenCalledTimes(1)
+})
+
+it("preserves the remaining rows and their retry tokens when switching tabs", async () => {
+  await setupBulk("Alice\nBob")
+  vi.mocked(attendanceManager.addMembersBulk)
+    .mockImplementationOnce(async (rows) => ({
+      ...bulkSuccess([rows[0]]),
+      error_count: 1,
+      errors: [],
+      results: rows.map((row, index) => ({ creation_id: row.creationId!, success: index === 0 })),
+    }))
+    .mockImplementationOnce(async (rows) => bulkSuccess(rows))
+  fireEvent.click(screen.getByRole("button", { name: "Add members" }))
+  await advance()
+  fireEvent.click(screen.getByRole("button", { name: "Single" }))
+  await advance()
+  fireEvent.click(screen.getByRole("button", { name: "Multiple" }))
+  await advance()
+  expect(screen.getByRole("textbox")).toHaveValue("Bob\t")
+  fireEvent.click(screen.getByRole("button", { name: "Retry remaining entries" }))
+  await advance()
+  const calls = vi.mocked(attendanceManager.addMembersBulk).mock.calls
+  expect(calls[1][0]).toEqual([calls[0][0][1]])
+})
+
+it("allows a remaining row to be corrected to the same name as an already-added member", async () => {
+  await setupBulk("Alice\nBob")
+  vi.mocked(attendanceManager.addMembersBulk)
+    .mockImplementationOnce(async (rows) => ({
+      ...bulkSuccess([rows[0]]),
+      error_count: 1,
+      errors: [],
+      results: rows.map((row, index) => ({ creation_id: row.creationId!, success: index === 0 })),
+    }))
+    .mockImplementationOnce(async (rows) => bulkSuccess(rows))
+  fireEvent.click(screen.getByRole("button", { name: "Add members" }))
+  await advance()
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Alice" } })
+  fireEvent.click(screen.getByRole("button", { name: "Retry remaining entries" }))
+  await advance()
+  const calls = vi.mocked(attendanceManager.addMembersBulk).mock.calls
+  expect(calls[1][0]).toHaveLength(1)
+  expect(calls[1][0][0].name).toBe("Alice")
+  expect(calls[1][0][0].creationId).toBe(calls[0][0][1].creationId)
+})
+
 async function prepareFace() {
   const view = setup()
   fireEvent.change(screen.getByPlaceholderText("Name"), { target: { value: "Alice" } })
