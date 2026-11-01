@@ -133,11 +133,13 @@ async def remove_person(
         result = await face_recognizer.remove_person(person_id, repo.organization_id)
 
         if result["success"]:
+            member = await repo.get_member(person_id)
+            member_name = member.name if member else person_id
             await repo.add_audit_log(
                 action="FACE_DATA_REMOVED",
                 target_type="member",
                 target_id=person_id,
-                details="Individual face data removed",
+                details=f"Face data removed for '{member_name}'",
             )
             return {
                 "success": True,
