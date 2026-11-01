@@ -8,7 +8,7 @@ import {
   createAttendanceRecord,
 } from "@/test/fixtures"
 import { renderWithProviders } from "@/test/utils/renderWithProviders"
-import { attendanceDateTimeToDate, getAttendanceDateString } from "@/utils/attendanceTime"
+import { attendanceDateTimeToDate } from "@/utils/attendanceTime"
 
 vi.mock("@/components/shared", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
