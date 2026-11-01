@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { useCamera } from "@/components/group/sections/enrollment/hooks/useCamera"
 import { useFaceCapture } from "@/components/group/sections/enrollment/hooks/useFaceCapture"
-import { useDialog } from "@/components/shared"
+import { useDialog, Tooltip } from "@/components/shared"
 import { CameraFeed } from "@/components/group/sections/enrollment/components/CameraFeed"
 import { UploadArea } from "@/components/group/sections/enrollment/components/UploadArea"
 import { ResultView } from "@/components/group/sections/enrollment/components/ResultView"
@@ -405,29 +405,38 @@ export function FaceCapture({
               {!framesReady && (
                 <div className="flex w-full max-w-4xl items-center justify-between px-4">
                   <div className="w-32">
-                    <button
-                      onClick={() => setSource(source === "live" ? "upload" : "live")}
-                      className="group flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium text-white/65 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white"
-                      title={source === "live" ? "Switch to file upload" : "Switch to camera"}>
-                      {source === "live" ?
-                        <Image className="size-4" />
-                      : <Camera className="size-4" />}
-                      <span>{source === "live" ? "Upload" : "Camera"}</span>
-                    </button>
+                    <Tooltip
+                      content={source === "live" ? "Switch to file upload" : "Switch to camera"}>
+                      <button
+                        onClick={() => setSource(source === "live" ? "upload" : "live")}
+                        className="group flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium text-white/65 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white"
+                        aria-label={
+                          source === "live" ? "Switch to file upload" : "Switch to camera"
+                        }>
+                        {source === "live" ?
+                          <Image className="size-4" />
+                        : <Camera className="size-4" />}
+                        <span>{source === "live" ? "Upload" : "Camera"}</span>
+                      </button>
+                    </Tooltip>
                   </div>
 
                   <div className="flex flex-1 justify-center">
                     {source === "live" && isStreaming && (
-                      <button
-                        onClick={handleCaptureFromCamera}
-                        disabled={!isVideoReady || !!cameraError || isProcessing}
-                        className="group flex h-16 w-16 items-center justify-center rounded-full bg-white/10 p-1 transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
-                        title="Capture photo">
-                        {isProcessing ?
-                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                        : <div className="h-full w-full rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-transform group-active:scale-90" />
-                        }
-                      </button>
+                      <Tooltip content="Capture photo">
+                        <span className="inline-flex shrink-0">
+                          <button
+                            onClick={handleCaptureFromCamera}
+                            disabled={!isVideoReady || !!cameraError || isProcessing}
+                            className="group flex h-16 w-16 items-center justify-center rounded-full bg-white/10 p-1 transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                            aria-label="Capture photo">
+                            {isProcessing ?
+                              <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                            : <div className="h-full w-full rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-transform group-active:scale-90" />
+                            }
+                          </button>
+                        </span>
+                      </Tooltip>
                     )}
                   </div>
 

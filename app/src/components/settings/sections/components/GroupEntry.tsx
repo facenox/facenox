@@ -188,27 +188,39 @@ export function GroupEntry({
               <Pencil className="size-2.5" />
               <span>Edit</span>
             </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                if (isDeleteDisabled) return
-                onDeleteGroup(group.id)
-                onToggle(group.id)
-              }}
-              disabled={deletingGroup === group.id || deletingGroup === "all" || isDeleteDisabled}
-              title={
+            <Tooltip
+              content={
                 isDeleteDisabled ?
                   "Your organization has disabled group deletion on this computer."
                 : undefined
-              }
-              className="flex h-7 items-center justify-center gap-1.5 rounded-md border-0 bg-red-500/10 px-2.5 text-[10px] font-bold tracking-wider text-red-400 uppercase shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-25">
-              {deletingGroup === group.id ?
-                <Loader2 className="size-2.5 animate-spin" />
-              : isDeleteDisabled ?
-                <Lock className="size-2.5 text-amber-400/60" />
-              : <Trash2 className="size-2.5" />}
-              <span>Delete</span>
-            </button>
+              }>
+              <span
+                className="inline-flex shrink-0"
+                tabIndex={
+                  deletingGroup === group.id || deletingGroup === "all" || isDeleteDisabled ?
+                    0
+                  : undefined
+                }>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (isDeleteDisabled) return
+                    onDeleteGroup(group.id)
+                    onToggle(group.id)
+                  }}
+                  disabled={
+                    deletingGroup === group.id || deletingGroup === "all" || isDeleteDisabled
+                  }
+                  className="flex h-7 items-center justify-center gap-1.5 rounded-md border-0 bg-red-500/10 px-2.5 text-[10px] font-bold tracking-wider text-red-400 uppercase shadow-none transition-all hover:bg-red-500/20 active:scale-95 disabled:opacity-25">
+                  {deletingGroup === group.id ?
+                    <Loader2 className="size-2.5 animate-spin" />
+                  : isDeleteDisabled ?
+                    <Lock className="size-2.5 text-amber-400/60" />
+                  : <Trash2 className="size-2.5" />}
+                  <span>Delete</span>
+                </button>
+              </span>
+            </Tooltip>
           </div>
         }
         maxWidth="max-w-3xl">

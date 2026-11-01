@@ -850,26 +850,32 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         : "text-white/25 italic"
                       }`}
                     />
-                    <button
-                      type="button"
-                      disabled={!config.connected || !config.deviceId}
-                      onClick={() => {
-                        if (!config.deviceId) return
-                        void navigator.clipboard.writeText(config.deviceId)
-                        setCopiedId(true)
-                        setTimeout(() => setCopiedId(false), 2000)
-                      }}
-                      title={
+                    <Tooltip
+                      content={
                         !config.connected || !config.deviceId ?
                           "Device is not paired to Facenox Cloud"
                         : "Copy Device ID"
-                      }
-                      className="flex h-8.5 shrink-0 items-center gap-1.5 rounded border border-white/10 bg-white/[0.04] px-3 text-[11px] font-medium text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 hover:disabled:bg-white/[0.04] hover:disabled:text-white/70">
-                      {copiedId ?
-                        <Check className="size-3 text-emerald-400" />
-                      : <Copy className="size-3" />}
-                      {copiedId ? "Copied" : "Copy"}
-                    </button>
+                      }>
+                      <span
+                        className="inline-flex shrink-0"
+                        tabIndex={!config.connected || !config.deviceId ? 0 : undefined}>
+                        <button
+                          type="button"
+                          disabled={!config.connected || !config.deviceId}
+                          onClick={() => {
+                            if (!config.deviceId) return
+                            void navigator.clipboard.writeText(config.deviceId)
+                            setCopiedId(true)
+                            setTimeout(() => setCopiedId(false), 2000)
+                          }}
+                          className="flex h-8.5 shrink-0 items-center gap-1.5 rounded border border-white/10 bg-white/[0.04] px-3 text-[11px] font-medium text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 hover:disabled:bg-white/[0.04] hover:disabled:text-white/70">
+                          {copiedId ?
+                            <Check className="size-3 text-emerald-400" />
+                          : <Copy className="size-3" />}
+                          {copiedId ? "Copied" : "Copy"}
+                        </button>
+                      </span>
+                    </Tooltip>
                   </div>
                 </div>
                 <div className="space-y-4">

@@ -606,7 +606,6 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       type="button"
                       onClick={() => setIsDeleteModalOpen(true)}
                       disabled={isDeleteDisabled || isDeleting}
-                      title={isDeleteDisabled ? "Disabled by your organization" : undefined}
                       className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                       {isDeleting && <Loader2 className="size-3.5 animate-spin" />}
                       <span>Delete group</span>

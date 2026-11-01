@@ -509,13 +509,14 @@ export function Attendance({
                           {pinStep === "confirm" ? "Confirm PIN:" : "New PIN:"}
                         </div>
                         {pinStep === "confirm" && (
-                          <button
-                            type="button"
-                            onClick={handleCancelConfirm}
-                            className="text-[10px] text-white/40 underline transition-colors hover:text-white/70"
-                            title="Cancel and enter a different PIN">
-                            Change
-                          </button>
+                          <Tooltip content="Cancel and enter a different PIN">
+                            <button
+                              type="button"
+                              onClick={handleCancelConfirm}
+                              className="text-[10px] text-white/40 underline transition-colors hover:text-white/70">
+                              Change
+                            </button>
+                          </Tooltip>
                         )}
                       </div>
                       <div className="flex items-center gap-2">

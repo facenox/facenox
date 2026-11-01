@@ -36,9 +36,11 @@ describe("WindowBar", () => {
   it("wires the window action buttons to the Electron bridge", () => {
     render(<WindowBar />)
 
-    fireEvent.click(screen.getByTitle("Minimize"))
-    fireEvent.click(screen.getByTitle("Maximize"))
-    fireEvent.click(screen.getByTitle("Close"))
+    for (const name of ["Minimize", "Maximize", "Close"]) {
+      const button = screen.getByRole("button", { name })
+      expect(button).not.toHaveAttribute("title")
+      fireEvent.click(button)
+    }
 
     expect(bridge.minimize).toHaveBeenCalledTimes(1)
     expect(bridge.maximize).toHaveBeenCalledTimes(1)
@@ -62,19 +64,19 @@ describe("WindowBar", () => {
 
     const { unmount } = render(<WindowBar />)
 
-    expect(screen.getByTitle("Maximize")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Maximize" })).toBeInTheDocument()
 
     act(() => {
       handleMaximize?.()
     })
-    expect(screen.getByTitle("Restore")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument()
 
     act(() => {
       handleUnmaximize?.()
     })
-    expect(screen.getByTitle("Maximize")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Maximize" })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByTitle("Maximize"))
+    fireEvent.click(screen.getByRole("button", { name: "Maximize" }))
     expect(bridge.maximize).toHaveBeenCalledTimes(1)
 
     unmount()

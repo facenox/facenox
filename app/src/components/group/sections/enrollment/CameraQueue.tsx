@@ -1,3 +1,4 @@
+import { Tooltip } from "@/components/shared"
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -651,18 +652,24 @@ export function CameraQueue({
 
                   {/* Center: Circular Trigger */}
                   <div className="flex flex-1 justify-center">
-                    <button
-                      onClick={() => void capturePhoto()}
-                      disabled={!isVideoReady || isProcessing || !currentMember || !!cameraError}
-                      className="group flex h-16 w-16 items-center justify-center rounded-full bg-white/10 p-1 transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
-                      title="Capture photo">
-                      {isProcessing ?
-                        <div className="flex h-full w-full items-center justify-center rounded-full bg-white/10">
-                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                        </div>
-                      : <div className="h-full w-full rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-transform group-active:scale-90" />
-                      }
-                    </button>
+                    <Tooltip content="Capture photo">
+                      <span className="inline-flex shrink-0">
+                        <button
+                          onClick={() => void capturePhoto()}
+                          disabled={
+                            !isVideoReady || isProcessing || !currentMember || !!cameraError
+                          }
+                          className="group flex h-16 w-16 items-center justify-center rounded-full bg-white/10 p-1 transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                          aria-label="Capture photo">
+                          {isProcessing ?
+                            <div className="flex h-full w-full items-center justify-center rounded-full bg-white/10">
+                              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                            </div>
+                          : <div className="h-full w-full rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-transform group-active:scale-90" />
+                          }
+                        </button>
+                      </span>
+                    </Tooltip>
                   </div>
 
                   {/* Right: Controls & Shortcuts Cluster */}

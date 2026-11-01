@@ -36,7 +36,11 @@ vi.mock("@/components/main/stores", () => ({
 vi.mock("@/components/group/sections/enrollment/hooks/useFaceCapture", () => ({
   useFaceCapture: () => mocks.capture,
 }))
-vi.mock("@/components/shared", () => ({ useDialog: () => ({}), Dropdown: () => null }))
+vi.mock("@/components/shared", async () => ({
+  Tooltip: (await import("@/components/shared/Tooltip")).Tooltip,
+  useDialog: () => ({}),
+  Dropdown: () => null,
+}))
 vi.mock("@/components/common", () => ({
   Modal: ({ isOpen, children }: { isOpen: boolean; children: ReactNode }) =>
     isOpen ? children : null,
@@ -130,7 +134,7 @@ it.each(["permission", "disconnect"])(
     })
     expect(getUserMedia).toHaveBeenCalledTimes(2)
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
-    expect(screen.getByTitle("Capture photo")).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Capture photo" })).toBeEnabled()
   },
 )
 
@@ -148,7 +152,8 @@ it.each(["upload", "deselect"])(
       await vi.advanceTimersByTimeAsync(100)
     })
     expect(getUserMedia).toHaveBeenCalledTimes(1)
-    if (action === "upload") fireEvent.click(screen.getByTitle("Switch to file upload"))
+    if (action === "upload")
+      fireEvent.click(screen.getByRole("button", { name: "Switch to file upload" }))
     else fireEvent.keyDown(window, { key: "Escape" })
     await act(async () => {
       resolve(stream)
@@ -174,7 +179,7 @@ it("releases the camera when the captured photo replaces its preview", async () 
   await act(async () => {
     await vi.advanceTimersByTimeAsync(100)
   })
-  expect(screen.getByTitle("Capture photo")).toBeEnabled()
+  expect(screen.getByRole("button", { name: "Capture photo" })).toBeEnabled()
   mocks.capture.frames = [
     {
       id: "photo-1",
