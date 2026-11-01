@@ -50,17 +50,39 @@ class BiometricEntry(BaseModel):
     embedding_dim: int
 
 
+class BackupGroup(AttendanceGroupResponse):
+    is_deleted: bool = False
+
+
+class BackupGroupRule(AttendanceGroupRuleResponse):
+    is_deleted: bool = False
+
+
+class BackupMember(AttendanceMemberResponse):
+    is_deleted: bool = False
+
+
+class BackupAttendanceData(ExportDataResponse):
+    groups: List[BackupGroup]
+    group_rules: List[BackupGroupRule] = []
+    members: List[BackupMember]
+
+
+class BackupAttendanceImport(ImportDataRequest):
+    data: BackupAttendanceData
+
+
 class BackupExportResponse(BaseModel):
     version: int = 1
     exported_at: str
-    attendance: ExportDataResponse
+    attendance: BackupAttendanceData
     biometrics: List[BiometricEntry]
 
 
 class BackupImportRequest(BaseModel):
     version: int = 1
     exported_at: Optional[str] = None
-    attendance: ImportDataRequest
+    attendance: BackupAttendanceImport
     biometrics: List[BiometricEntry]
     password: Optional[str] = None  # Added password for decryption
 
@@ -112,11 +134,19 @@ async def export_backup(
     export_succeeded = False
     try:
         # Gather attendance data
-        groups_orm = await repo.get_groups(active_only=False)
+        groups_orm = (
+            (
+                await repo.session.execute(
+                    _scope_query(select(GroupModel), GroupModel, repo.organization_id)
+                )
+            )
+            .scalars()
+            .all()
+        )
         settings_orm = await repo.get_settings()
 
         members_query = _scope_query(
-            select(MemberModel).where(MemberModel.is_deleted.is_(False)),
+            select(MemberModel),
             MemberModel,
             repo.organization_id,
         )
@@ -149,17 +179,16 @@ async def export_backup(
         )
         sessions_orm = sessions_result.scalars().all()
 
-        attendance_data = ExportDataResponse(
+        attendance_data = BackupAttendanceData(
             groups=[
-                AttendanceGroupResponse.model_validate(g, from_attributes=True)
-                for g in groups_orm
+                BackupGroup.model_validate(g, from_attributes=True) for g in groups_orm
             ],
             group_rules=[
-                AttendanceGroupRuleResponse.model_validate(r, from_attributes=True)
+                BackupGroupRule.model_validate(r, from_attributes=True)
                 for r in group_rules_orm
             ],
             members=[
-                AttendanceMemberResponse.model_validate(m, from_attributes=True)
+                BackupMember.model_validate(m, from_attributes=True)
                 for m in members_orm
             ],
             records=[
@@ -240,10 +269,21 @@ async def import_backup(
         ) = 0
 
         for group in data.groups:
-            existing = await repo.get_group(group.id)
+            existing = (
+                (
+                    await repo.session.execute(
+                        _scope_query(
+                            select(GroupModel).where(GroupModel.id == group.id),
+                            GroupModel,
+                            repo.organization_id,
+                        )
+                    )
+                )
+                .scalars()
+                .first()
+            )
 
-            # If the group exists, isn't soft-deleted, and we're not overwriting, skip.
-            if existing and not existing.is_deleted and not overwrite:
+            if existing and not overwrite:
                 skipped += 1
                 continue
 
@@ -253,6 +293,7 @@ async def import_backup(
                     GroupModel(
                         id=group.id,
                         name=group.name,
+                        created_at=to_storage_local(group.created_at),
                         late_threshold_minutes=settings_dict.get(
                             "late_threshold_minutes"
                         ),
@@ -276,11 +317,12 @@ async def import_backup(
                         scan_behavior=settings_dict.get("scan_behavior", "automatic"),
                         organization_id=repo.organization_id,
                         is_active=group.is_active,
-                        is_deleted=False,
+                        is_deleted=group.is_deleted,
                     )
                 )
             else:
                 existing.name = group.name
+                existing.created_at = to_storage_local(group.created_at)
                 if group.settings:
                     settings_dict = group.settings.model_dump()
                     existing.late_threshold_minutes = settings_dict.get(
@@ -306,7 +348,7 @@ async def import_backup(
                         "scan_behavior", existing.scan_behavior
                     )
                 existing.is_active = group.is_active
-                existing.is_deleted = False
+                existing.is_deleted = group.is_deleted
             imported_groups += 1
 
         for rule in getattr(data, "group_rules", []):
@@ -334,7 +376,7 @@ async def import_backup(
                     min_checkout_delay_minutes=rule.min_checkout_delay_minutes,
                     scan_behavior=rule.scan_behavior,
                     organization_id=repo.organization_id,
-                    is_deleted=False,
+                    is_deleted=rule.is_deleted,
                 )
             )
 
@@ -359,18 +401,33 @@ async def import_backup(
                         name=member.name,
                         role=member.role,
                         email=member.email,
+                        joined_at=to_storage_local(member.joined_at),
                         is_active=member.is_active,
-                        is_deleted=False,
+                        is_deleted=member.is_deleted,
                         organization_id=repo.organization_id,
                     )
                 )
             else:
                 existing.name = member.name
+                existing.group_id = member.group_id
+                existing.joined_at = to_storage_local(member.joined_at)
                 existing.role = member.role
                 existing.email = member.email
                 existing.is_active = member.is_active
-                existing.is_deleted = False
+                existing.is_deleted = member.is_deleted
             imported_members += 1
+
+        await repo.session.flush()
+        restored_members = {
+            member.person_id: member
+            for member in (
+                await repo.session.execute(
+                    _scope_query(select(MemberModel), MemberModel, repo.organization_id)
+                )
+            )
+            .scalars()
+            .all()
+        }
 
         for record in data.records:
             existing_result = await repo.session.execute(
@@ -380,16 +437,13 @@ async def import_backup(
                 skipped += 1
                 continue
 
-            member = await repo.get_member(record.person_id)
-            if not member:
-                skipped += 1
-                continue
+            member = restored_members.get(record.person_id)
 
             await repo.session.merge(
                 RecordModel(
                     id=record.id,
                     person_id=record.person_id,
-                    member_id=member.id,
+                    member_id=member.id if member else None,
                     group_id=record.group_id,
                     **restore_fields(record, "timestamp"),
                     confidence=record.confidence,
@@ -413,16 +467,17 @@ async def import_backup(
             imported_records += 1
 
         for session in data.sessions:
-            member = await repo.get_member(session.person_id)
-            if not member:
+            existing_session = await repo.session.get(SessionModel, session.id)
+            if existing_session and not overwrite:
                 skipped += 1
                 continue
+            member = restored_members.get(session.person_id)
 
             await repo.session.merge(
                 SessionModel(
                     id=session.id,
                     person_id=session.person_id,
-                    member_id=member.id,
+                    member_id=member.id if member else None,
                     group_id=session.group_id,
                     applied_rule_id=session.applied_rule_id,
                     date=session.date,
@@ -454,11 +509,6 @@ async def import_backup(
                 skipped += 1
                 continue
 
-            raw_bytes = base64.b64decode(entry.embedding_b64, validate=True)
-            expected_size = entry.embedding_dim * np.dtype(np.float32).itemsize
-            if entry.embedding_dim <= 0 or len(raw_bytes) != expected_size:
-                raise ValueError("Backup biometric data has an invalid dimension")
-            encrypted_bytes = encrypt_local_data(raw_bytes)
             existing_face_result = await repo.session.execute(
                 select(FaceModel).where(
                     FaceModel.person_id == entry.person_id,
@@ -466,6 +516,14 @@ async def import_backup(
                 )
             )
             existing_face = existing_face_result.scalars().first()
+            if existing_face and not overwrite:
+                skipped += 1
+                continue
+            raw_bytes = base64.b64decode(entry.embedding_b64, validate=True)
+            expected_size = entry.embedding_dim * np.dtype(np.float32).itemsize
+            if entry.embedding_dim <= 0 or len(raw_bytes) != expected_size:
+                raise ValueError("Backup biometric data has an invalid dimension")
+            encrypted_bytes = encrypt_local_data(raw_bytes)
             if existing_face:
                 existing_face.embedding = encrypted_bytes
                 existing_face.embedding_dimension = entry.embedding_dim

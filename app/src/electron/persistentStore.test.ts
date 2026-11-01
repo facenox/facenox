@@ -1,8 +1,12 @@
 // @vitest-environment node
 import { beforeEach, expect, it, vi } from "vitest"
+import fs from "node:fs"
+import os from "node:os"
+import path from "node:path"
 
-const { disk, cryptoMock } = vi.hoisted(() => ({
+const { disk, cryptoMock, paths } = vi.hoisted(() => ({
   disk: {} as Record<string, unknown>,
+  paths: { dir: "" },
   cryptoMock: {
     isEncryptionAvailable: vi.fn(() => true),
     getSelectedStorageBackend: vi.fn(() => "gnome_libsecret"),
@@ -10,7 +14,7 @@ const { disk, cryptoMock } = vi.hoisted(() => ({
     decryptString: vi.fn((value: Buffer) => value.toString().replace(/^encrypted:/, "")),
   },
 }))
-vi.mock("electron", () => ({ safeStorage: cryptoMock }))
+vi.mock("electron", () => ({ safeStorage: cryptoMock, app: { getPath: () => paths.dir } }))
 vi.mock("./util.js", () => ({ default: () => false }))
 vi.mock("electron-store", () => ({
   default: class {
@@ -33,6 +37,7 @@ vi.mock("electron-store", () => ({
 }))
 import { persistentStore } from "./persistentStore"
 beforeEach(() => {
+  paths.dir = fs.mkdtempSync(path.join(os.tmpdir(), "facenox-store-test-"))
   for (const key of Object.keys(disk)) delete disk[key]
   cryptoMock.isEncryptionAvailable.mockReturnValue(true)
   cryptoMock.getSelectedStorageBackend.mockReturnValue("gnome_libsecret")

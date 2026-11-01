@@ -86,6 +86,9 @@ describe("AutoExportManager", () => {
 
     // Mock fetch for groups, members, and sessions
     global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/attendance/settings")) {
+        return Promise.resolve({ ok: true, json: async () => ({ attendance_timezone: "UTC" }) })
+      }
       if (url.includes("/attendance/groups/") && url.includes("/members")) {
         return Promise.resolve({
           ok: true,

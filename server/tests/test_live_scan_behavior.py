@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 
 from test_api_biometrics import (
+    biometrics_env as biometrics_env,
     _headers,
     _create_member,
     _enroll_metadata,

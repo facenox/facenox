@@ -72,26 +72,26 @@ function getStoreDir(): string {
 
 let cachedVaultKey: Buffer | null = null
 
-export function getVaultKey(): Buffer {
+export function getVaultKey(createIfMissing = true): Buffer {
   if (cachedVaultKey) return cachedVaultKey
   const dir = getStoreDir()
   const keyPath = path.join(dir, ".machine_key")
+  const readKey = () => {
+    const raw = fs.readFileSync(keyPath)
+    if (raw.length !== 32) throw new Error("The local vault key has an invalid length.")
+    cachedVaultKey = raw
+    return raw
+  }
   try {
-    if (fs.existsSync(keyPath)) {
-      const raw = fs.readFileSync(keyPath)
-      if (raw.length === 32) {
-        cachedVaultKey = raw
-        return raw
-      }
-    }
-  } catch {
-    // continue to create or fallback
+    return readKey()
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT" || !createIfMissing) throw error
   }
 
   const newKey = crypto.randomBytes(32)
   try {
     fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(keyPath, newKey, { mode: 0o600 })
+    fs.writeFileSync(keyPath, newKey, { mode: 0o600, flag: "wx", flush: true })
     try {
       fs.chmodSync(keyPath, 0o600)
     } catch {
@@ -99,9 +99,10 @@ export function getVaultKey(): Buffer {
     }
     cachedVaultKey = newKey
     return newKey
-  } catch {
-    cachedVaultKey = newKey
-    return newKey
+  } catch (error) {
+    // Another process may have created the shared vault key while we were reading.
+    if ((error as NodeJS.ErrnoException).code === "EEXIST") return readKey()
+    throw error
   }
 }
 
@@ -120,7 +121,7 @@ export function decryptWithVault(value: string): string {
   if (!ivB64 || !tagB64 || !dataB64) {
     throw new Error("Invalid vault credential format.")
   }
-  const key = getVaultKey()
+  const key = getVaultKey(false)
   const iv = Buffer.from(ivB64, "base64")
   const tag = Buffer.from(tagB64, "base64")
   const encrypted = Buffer.from(dataB64, "base64")
@@ -146,7 +147,6 @@ export const persistentStore: TypedStore<PersistentSettingsSchema> = {
   get(key) {
     const value = rawStore.get(key)
     if (!secretKeys.has(key) || typeof value !== "string" || !value) return value
-    requireSecretStorage()
     if (value.startsWith(protectedPrefix)) {
       try {
         return safeStorage.decryptString(Buffer.from(value.slice(protectedPrefix.length), "base64"))
@@ -163,6 +163,7 @@ export const persistentStore: TypedStore<PersistentSettingsSchema> = {
       return decryptWithVault(value)
     }
     // Migrate legacy plaintext credential when first accessed after app readiness.
+    requireSecretStorage()
     if (isSafeStorageUsable()) {
       rawStore.set(key, protectedPrefix + safeStorage.encryptString(value).toString("base64"))
     } else {

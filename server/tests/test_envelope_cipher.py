@@ -80,6 +80,8 @@ def test_disaster_recovery_via_master_recovery_key_on_foreign_machine(
         raise cipher.MachineKeyUnavailableError("No keyring on foreign machine.")
 
     monkeypatch.setattr(cipher, "_machine_key_linux_keyring", fail_keyring)
+    monkeypatch.setattr(cipher, "_machine_key_windows", fail_keyring)
+    monkeypatch.setattr(cipher, "_machine_key_macos_keyring", fail_keyring)
     monkeypatch.setattr(cipher, "_CACHED_MACHINE_KEY", None)
     monkeypatch.setattr(cipher, "_CACHED_MACHINE_PROVIDER", None)
     monkeypatch.setattr(cipher, "_CACHED_MACHINE_DATA_DIR", None)

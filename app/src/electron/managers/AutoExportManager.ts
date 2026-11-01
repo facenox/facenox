@@ -5,6 +5,7 @@ import { backendService } from "../backendService.js"
 import { persistentStore } from "../persistentStore.js"
 import { withLocalBackendHeaders } from "../localBackendScope.js"
 import { getDepartureStatus } from "../../shared/departureStatus.js"
+import { formatAttendanceTime } from "../../utils/attendanceTime.js"
 
 export interface AutoExportConfig {
   enabled: boolean
@@ -38,8 +39,11 @@ export interface SessionRecord {
   person_id: string
   group_id: string
   date: string
+  visit_number?: number
   check_in_time?: string | Date | null
   check_out_time?: string | Date | null
+  check_in_time_timezone?: string | null
+  check_out_time_timezone?: string | null
   total_hours?: number | null
   is_late?: boolean
   late_minutes?: number | null
@@ -73,14 +77,6 @@ function padZero(n: number, len = 2): string {
 
 function formatLocalDate(d: Date): string {
   return `${padZero(d.getMonth() + 1)}/${padZero(d.getDate())}/${d.getFullYear()}`
-}
-
-function formatTimeOnly(d: Date): string {
-  const hours = d.getHours()
-  const minutes = padZero(d.getMinutes())
-  const period = hours >= 12 ? "PM" : "AM"
-  const displayHours = hours % 12 || 12
-  return `${displayHours}:${minutes} ${period}`
 }
 
 function getTodayLocalDateString(): string {
@@ -206,17 +202,26 @@ export class AutoExportManager {
 
   private async fetchAndProcessAttendance(dateStr: string): Promise<ProcessedGroupData[]> {
     const backendUrl = backendService.getUrl()
-    if (!backendUrl) return []
+    if (!backendUrl) throw new Error("The local service is unavailable for automatic export.")
 
     // 1. Fetch active groups
     const groupsRes = await fetch(`${backendUrl}/attendance/groups`, {
       headers: authHeaders(),
       signal: AbortSignal.timeout(15000),
     })
-    if (!groupsRes.ok) return []
+    if (!groupsRes.ok) throw new Error(`Could not load groups (${groupsRes.status}).`)
 
     const allGroups = ((await groupsRes.json()) as GroupRecord[]) || []
     const activeGroups = allGroups.filter((g) => !g.is_deleted && g.is_active !== false)
+
+    const settingsRes = await fetch(`${backendUrl}/attendance/settings`, {
+      headers: authHeaders(),
+      signal: AbortSignal.timeout(15000),
+    })
+    if (!settingsRes.ok)
+      throw new Error(`Could not load attendance settings (${settingsRes.status}).`)
+    const settings = (await settingsRes.json()) as { attendance_timezone?: string | null }
+    const attendanceTimeZone = settings.attendance_timezone
 
     const processedList: ProcessedGroupData[] = []
 
@@ -227,7 +232,8 @@ export class AutoExportManager {
           headers: authHeaders(),
           signal: AbortSignal.timeout(15000),
         })
-        const members = membersRes.ok ? ((await membersRes.json()) as MemberRecord[]) || [] : []
+        if (!membersRes.ok) throw new Error(`Could not load members (${membersRes.status}).`)
+        const members = ((await membersRes.json()) as MemberRecord[]) || []
 
         // Fetch sessions for this group on target date
         const sessionsRes = await fetch(
@@ -237,16 +243,20 @@ export class AutoExportManager {
             signal: AbortSignal.timeout(15000),
           },
         )
-        const sessions = sessionsRes.ok ? ((await sessionsRes.json()) as SessionRecord[]) || [] : []
+        if (!sessionsRes.ok) throw new Error(`Could not load sessions (${sessionsRes.status}).`)
+        const sessions = ((await sessionsRes.json()) as SessionRecord[]) || []
 
-        const sessionMap = new Map<string, SessionRecord>()
+        const sessionMap = new Map<string, SessionRecord[]>()
         for (const s of sessions) {
-          sessionMap.set(s.person_id, s)
+          const visits = sessionMap.get(s.person_id) ?? []
+          visits.push(s)
+          sessionMap.set(s.person_id, visits)
         }
 
         const header = [
           "Name",
           "Date",
+          "Visit",
           "Status",
           "Time in",
           "Time out",
@@ -259,70 +269,88 @@ export class AutoExportManager {
         const rows: string[][] = []
 
         for (const member of members) {
-          const session = sessionMap.get(member.person_id)
-
-          let status = "Absent"
-          if (session) {
-            if (session.is_late) {
-              status = "Late"
-            } else if (session.status) {
-              status = session.status.charAt(0).toUpperCase() + session.status.slice(1)
-            } else {
-              status = "Present"
+          const visits = sessionMap.get(member.person_id) ?? []
+          visits.sort((a, b) => (a.visit_number ?? 1) - (b.visit_number ?? 1))
+          for (const session of visits.length ? visits : [undefined]) {
+            let status = "Absent"
+            if (session) {
+              if (session.is_late) {
+                status = "Late"
+              } else if (session.status) {
+                status = session.status.charAt(0).toUpperCase() + session.status.slice(1)
+              } else {
+                status = "Present"
+              }
             }
+
+            let timeIn = ""
+            if (session?.check_in_time) {
+              const d = new Date(session.check_in_time)
+              if (!isNaN(d.getTime())) {
+                timeIn = formatAttendanceTime(
+                  d,
+                  session.check_in_time_timezone || attendanceTimeZone,
+                )
+              }
+            }
+
+            let timeOut = ""
+            if (session?.check_out_time) {
+              const d = new Date(session.check_out_time)
+              if (!isNaN(d.getTime())) {
+                timeOut = formatAttendanceTime(
+                  d,
+                  session.check_out_time_timezone || attendanceTimeZone,
+                )
+              }
+            }
+
+            let totalHoursStr = ""
+            if (typeof session?.total_hours === "number") {
+              const hrs = Math.floor(session.total_hours)
+              const mins = Math.round((session.total_hours - hrs) * 60)
+              totalHoursStr =
+                `${hrs > 0 ? `${hrs}h ` : ""}${mins > 0 || hrs === 0 ? `${mins}m` : ""}`.trim()
+            }
+
+            const lateMinutesStr = session?.late_minutes ? String(session.late_minutes) : ""
+            const tracksTimeOut =
+              group.settings?.attendance_mode === "work_hours" ||
+              (!group.settings?.attendance_mode && group.settings?.track_checkout === true)
+            const departureStatus =
+              tracksTimeOut ?
+                getDepartureStatus(
+                  dateStr,
+                  session?.check_in_time ?? undefined,
+                  session?.check_out_time ?? undefined,
+                  group.settings?.class_end_time || "17:00",
+                  session?.check_out_time_timezone ||
+                    session?.check_in_time_timezone ||
+                    attendanceTimeZone,
+                )
+              : undefined
+            const notesStr = session?.notes || ""
+
+            rows.push([
+              member.name || "Member",
+              formatLocalDate(new Date(`${dateStr}T00:00:00`)),
+              group.settings?.attendance_mode === "visits" || visits.length > 1 ?
+                String(session?.visit_number ?? (session ? 1 : ""))
+              : "",
+              status,
+              timeIn,
+              timeOut,
+              departureStatus ? departureStatus[0].toUpperCase() + departureStatus.slice(1) : "",
+              totalHoursStr,
+              lateMinutesStr,
+              notesStr,
+            ])
           }
-
-          let timeIn = ""
-          if (session?.check_in_time) {
-            const d = new Date(session.check_in_time)
-            if (!isNaN(d.getTime())) timeIn = formatTimeOnly(d)
-          }
-
-          let timeOut = ""
-          if (session?.check_out_time) {
-            const d = new Date(session.check_out_time)
-            if (!isNaN(d.getTime())) timeOut = formatTimeOnly(d)
-          }
-
-          let totalHoursStr = ""
-          if (typeof session?.total_hours === "number") {
-            const hrs = Math.floor(session.total_hours)
-            const mins = Math.round((session.total_hours - hrs) * 60)
-            totalHoursStr =
-              `${hrs > 0 ? `${hrs}h ` : ""}${mins > 0 || hrs === 0 ? `${mins}m` : ""}`.trim()
-          }
-
-          const lateMinutesStr = session?.late_minutes ? String(session.late_minutes) : ""
-          const tracksTimeOut =
-            group.settings?.attendance_mode === "work_hours" ||
-            (!group.settings?.attendance_mode && group.settings?.track_checkout === true)
-          const departureStatus =
-            tracksTimeOut ?
-              getDepartureStatus(
-                dateStr,
-                session?.check_in_time ?? undefined,
-                session?.check_out_time ?? undefined,
-                group.settings?.class_end_time || "17:00",
-              )
-            : undefined
-          const notesStr = session?.notes || ""
-
-          rows.push([
-            member.name || "Member",
-            formatLocalDate(new Date(`${dateStr}T00:00:00`)),
-            status,
-            timeIn,
-            timeOut,
-            departureStatus ? departureStatus[0].toUpperCase() + departureStatus.slice(1) : "",
-            totalHoursStr,
-            lateMinutesStr,
-            notesStr,
-          ])
         }
 
         processedList.push({ group, header, rows })
       } catch (err) {
-        console.error(`[AutoExportManager] Error processing group ${group.name}:`, err)
+        throw new Error(`Could not export attendance for ${group.name}.`, { cause: err })
       }
     }
 
@@ -355,6 +383,7 @@ export class AutoExportManager {
         "Group",
         "Name",
         "Date",
+        "Visit",
         "Status",
         "Time in",
         "Time out",
@@ -412,6 +441,7 @@ ${row.map((cell) => `    <Cell><Data ss:Type="String">${escapeXml(cell)}</Data><
   <Table>
    <Column ss:Width="160"/>
    <Column ss:Width="95"/>
+   <Column ss:Width="60"/>
    <Column ss:Width="95"/>
    <Column ss:Width="90"/>
    <Column ss:Width="85"/>
