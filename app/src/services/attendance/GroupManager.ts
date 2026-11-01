@@ -118,7 +118,10 @@ export class GroupManager {
     }
   }
 
-  async getGroupMembers(groupId: string): Promise<AttendanceMember[]> {
+  async getGroupMembers(
+    groupId: string,
+    options?: { throwOnError?: boolean },
+  ): Promise<AttendanceMember[]> {
     try {
       const endpoint =
         groupId === "all" ?
@@ -149,6 +152,7 @@ export class GroupManager {
       }))
     } catch (error) {
       console.error("Error getting group members:", error)
+      if (options?.throwOnError) throw error
       return []
     }
   }

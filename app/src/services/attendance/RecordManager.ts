@@ -300,12 +300,15 @@ export class RecordManager {
     }
   }
 
-  async getSessions(filters?: {
-    group_id?: string
-    person_id?: string
-    start_date?: string
-    end_date?: string
-  }): Promise<AttendanceSession[]> {
+  async getSessions(
+    filters?: {
+      group_id?: string
+      person_id?: string
+      start_date?: string
+      end_date?: string
+    },
+    options?: { throwOnError?: boolean },
+  ): Promise<AttendanceSession[]> {
     try {
       const params: Record<string, string> = {}
       if (filters?.group_id) params.group_id = filters.group_id
@@ -324,6 +327,7 @@ export class RecordManager {
       }))
     } catch (error) {
       console.error("Error getting sessions:", error)
+      if (options?.throwOnError) throw error
       return []
     }
   }

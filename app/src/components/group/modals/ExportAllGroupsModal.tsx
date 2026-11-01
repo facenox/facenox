@@ -21,14 +21,22 @@ export function ExportAllGroupsModal({
 }: ExportAllGroupsModalProps) {
   const [selectedFormat, setSelectedFormat] = useState<ExportAllGroupsFormat>("excel")
   const [isExporting, setIsExporting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleClose = () => {
+    setError(null)
+    onClose()
+  }
 
   const handleExport = async () => {
+    setError(null)
     setIsExporting(true)
     try {
       await onExport(selectedFormat)
       onClose()
     } catch (err) {
       console.error("Export error:", err)
+      setError(err instanceof Error ? err.message : "Could not export the report. Try again.")
     } finally {
       setIsExporting(false)
     }
@@ -66,7 +74,7 @@ export function ExportAllGroupsModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={isExporting ? undefined : onClose}
+      onClose={isExporting ? undefined : handleClose}
       title={
         <div>
           <h3 className="text-xl font-semibold">Export all groups</h3>
@@ -123,10 +131,15 @@ export function ExportAllGroupsModal({
           })}
         </div>
 
+        {error && (
+          <p role="alert" className="text-xs text-red-400">
+            {error}
+          </p>
+        )}
         <div className="mt-6 flex justify-end gap-3 pt-2">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isExporting}
             className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none active:scale-[0.97] disabled:opacity-30">
             Cancel

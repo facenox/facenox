@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { screen, fireEvent, act } from "@testing-library/react"
+import { screen, fireEvent, act, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { Reports } from "@/components/group/sections/Reports"
 import { useGroupStore } from "@/components/group/stores"
@@ -114,6 +114,10 @@ function defaultViewsState() {
 
 describe("Reports", () => {
   beforeEach(() => {
+    mockExportReportToCSV.mockReturnValue({ success: true })
+    mockExportAllGroupsReportToCSV.mockResolvedValue({ success: true })
+    mockExportAllGroupsReportToExcel.mockResolvedValue({ success: true })
+    mockExportAllGroupsReportToIndividualCSVs.mockResolvedValue({ success: true })
     resetGroupStore()
     useAttendanceStore.setState({ attendanceTimezone: null })
     mockUseReportViews.mockReturnValue(defaultViewsState())
@@ -250,6 +254,39 @@ describe("Reports", () => {
       fireEvent.click(exportNowBtn)
     })
     expect(mockExportAllGroupsReportToExcel).toHaveBeenCalled()
+  })
+
+  it.each([
+    ["Multi-sheet Excel workbook", mockExportAllGroupsReportToExcel],
+    ["Individual CSV files per group", mockExportAllGroupsReportToIndividualCSVs],
+    ["Single combined CSV", mockExportAllGroupsReportToCSV],
+  ] as const)("keeps %s failures visible and allows retry", async (format, exporter) => {
+    exporter.mockResolvedValueOnce({ success: false, error: new Error("Offline") })
+    const members = [createAttendanceMember()]
+    useGroupStore.setState({ members, groups: [createAttendanceGroup()] })
+    mockUseReportData.mockReturnValue({
+      report: null,
+      sessions: [],
+      members,
+      loading: false,
+      error: null,
+      generateReport: vi.fn(),
+    })
+    const ready = vi.fn()
+    renderWithProviders(<Reports group={createAttendanceGroup()} onExportHandlersReady={ready} />)
+    act(() => {
+      ready.mock.calls.at(-1)![0].exportAllGroupsCSV()
+    })
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(format) }))
+    fireEvent.click(screen.getByRole("button", { name: /Export now/i }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not export the report")
+    expect(screen.getByRole("button", { name: /Export now/i })).toBeEnabled()
+    fireEvent.click(screen.getByRole("button", { name: /Export now/i }))
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /Export now/i })).not.toBeInTheDocument(),
+    )
+    expect(exporter).toHaveBeenCalledTimes(2)
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
   it("shows report errors above the content", () => {

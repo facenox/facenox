@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 import {
   exportReportToCSV,
   exportAllGroupsReportToCSV,
@@ -8,6 +8,8 @@ import {
 import { attendanceManager } from "@/services/AttendanceManager"
 import type { AttendanceGroup, AttendanceMember, AttendanceSession } from "@/types/recognition"
 import type { RowData } from "../types"
+import { formatAttendanceTime } from "@/utils/attendanceTime"
+import { HttpClient } from "@/services/attendance/HttpClient"
 
 describe("exportUtils", () => {
   beforeEach(() => {
@@ -279,5 +281,282 @@ describe("exportUtils", () => {
 
     appendSpy.mockRestore()
     removeSpy.mockRestore()
+  })
+})
+
+describe("report export regression coverage", () => {
+  const date = "2026-01-02"
+  let group: AttendanceGroup
+  let members: AttendanceMember[]
+  let visits: AttendanceSession[]
+  let downloads: Blob[]
+  const exporters = [
+    ["combined CSV", exportAllGroupsReportToCSV],
+    ["individual CSV", exportAllGroupsReportToIndividualCSVs],
+    ["Excel", exportAllGroupsReportToExcel],
+  ] as const
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-01-03T00:00:00Z"))
+    downloads = []
+    URL.createObjectURL = vi.fn((value) => {
+      downloads.push(value as Blob)
+      return "report-download"
+    })
+    URL.revokeObjectURL = vi.fn()
+    vi.spyOn(document.body, "appendChild").mockImplementation((node) => {
+      if (node instanceof HTMLAnchorElement) node.click = vi.fn()
+      return node
+    })
+    vi.spyOn(document.body, "removeChild").mockImplementation((node) => node)
+    group = {
+      id: "g",
+      name: "Visits",
+      created_at: new Date("2026-01-01T00:00:00Z"),
+      is_active: true,
+      settings: { attendance_mode: "visits" },
+    }
+    members = [
+      {
+        person_id: "p",
+        group_id: "g",
+        name: "Member",
+        joined_at: new Date("2026-01-01T00:00:00Z"),
+        is_active: true,
+      },
+    ]
+    visits = [
+      {
+        id: "v1",
+        person_id: "p",
+        member_id: "p",
+        group_id: "g",
+        date,
+        visit_number: 1,
+        check_in_time: new Date(`${date}T08:00:00Z`),
+        check_out_time: new Date(`${date}T09:00:00Z`),
+        total_hours: 1,
+        status: "present",
+        is_late: false,
+        late_minutes: 0,
+        notes: "First visit note",
+      },
+      {
+        id: "v2",
+        person_id: "p",
+        member_id: "p",
+        group_id: "g",
+        date,
+        visit_number: 2,
+        check_in_time: new Date(`${date}T10:00:00Z`),
+        check_out_time: new Date(`${date}T11:00:00Z`),
+        total_hours: 1,
+        status: "present",
+        is_late: true,
+        late_minutes: 30,
+        notes: 'Second, "quoted" visit note',
+      },
+    ]
+    vi.spyOn(attendanceManager, "getGroupMembers").mockImplementation(async () => members)
+    vi.spyOn(attendanceManager, "getSessions").mockImplementation(async () => visits)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  async function exportedRows(format: string) {
+    const text = await downloads[0].text()
+    let rows: string[][]
+    if (format === "Excel") {
+      const xml = new DOMParser().parseFromString(text, "application/xml")
+      expect(xml.getElementsByTagName("parsererror")).toHaveLength(0)
+      rows = [...xml.getElementsByTagName("Worksheet")[0].getElementsByTagName("Row")].map((row) =>
+        [...row.getElementsByTagName("Data")].map((cell) => cell.textContent || ""),
+      )
+    } else {
+      rows = text
+        .split("\n")
+        .map((line) =>
+          [...line.matchAll(/"((?:[^"]|"")*)"/g)].map((match) => match[1].replaceAll('""', '"')),
+        )
+    }
+    const [header, ...data] = rows
+    for (const row of data) expect(row).toHaveLength(header.length)
+    return data.map((row) => Object.fromEntries(header.map((label, i) => [label, row[i]])))
+  }
+
+  it.each(exporters)(
+    "preserves each visit's columns, notes and status in %s",
+    async (format, exporter) => {
+      expect((await exporter([group], date, date, "UTC")).success).toBe(true)
+      expect(downloads).toHaveLength(1)
+      const rows = await exportedRows(format)
+      expect(rows).toHaveLength(2)
+      expect(rows[0]).toMatchObject({
+        Visit: "1",
+        Status: "Present",
+        "Late (mins)": "",
+        Notes: "First visit note",
+      })
+      expect(rows[1]).toMatchObject({
+        Name: "Member",
+        Visit: "2",
+        Status: "Late",
+        "Time in": formatAttendanceTime(visits[1].check_in_time, "UTC"),
+        "Time out": formatAttendanceTime(visits[1].check_out_time, "UTC"),
+        Departure: "",
+        "Total hours": "1h",
+        "Late (mins)": "30",
+        Notes: 'Second, "quoted" visit note',
+      })
+    },
+  )
+
+  it.each(exporters)(
+    "does not copy an earlier late status to an on-time visit in %s",
+    async (format, exporter) => {
+      visits[0].is_late = true
+      visits[0].late_minutes = 15
+      visits[1].is_late = false
+      visits[1].late_minutes = 0
+      await exporter([group], date, date, "UTC")
+      const rows = await exportedRows(format)
+      expect(rows[0].Status).toBe("Late")
+      expect(rows[1]).toMatchObject({ Status: "Present", "Late (mins)": "" })
+    },
+  )
+
+  it("aligns mixed Attendance, Time in/out and Visits rows under one combined header", async () => {
+    const attendance = {
+      ...group,
+      id: "attendance",
+      name: "Attendance",
+      settings: { attendance_mode: "attendance" as const },
+    }
+    const work = {
+      ...group,
+      id: "work",
+      name: "Work",
+      settings: { attendance_mode: "work_hours" as const, class_end_time: "09:00" },
+    }
+    vi.mocked(attendanceManager.getSessions).mockImplementation(async (params) =>
+      params?.group_id === group.id ? visits : [{ ...visits[0], group_id: params!.group_id! }],
+    )
+    await exportAllGroupsReportToCSV([attendance, work, group], date, date, "UTC")
+    const rows = await exportedRows("combined CSV")
+    expect(rows).toHaveLength(4)
+    expect(rows[0]).toMatchObject({
+      Group: "Attendance",
+      Visit: "",
+      "Total hours": "1h",
+      Notes: "First visit note",
+    })
+    expect(rows[1]).toMatchObject({
+      Group: "Work",
+      Visit: "",
+      "Time out": formatAttendanceTime(visits[0].check_out_time, "UTC"),
+      "Total hours": "1h",
+      Notes: "First visit note",
+    })
+    expect(rows[3]).toMatchObject({
+      Group: "Visits",
+      Visit: "2",
+      "Late (mins)": "30",
+      Notes: 'Second, "quoted" visit note',
+    })
+  })
+
+  describe.each(exporters)("%s load failure handling", (_format, exporter) => {
+    it.each(["getSessions", "getGroupMembers"] as const)(
+      "propagates real service-layer %s failures instead of using an empty fallback",
+      async (method) => {
+        vi.mocked(attendanceManager[method]).mockRestore()
+        const error = new Error("HTTP request failed")
+        vi.spyOn(HttpClient.prototype, "get").mockRejectedValue(error)
+        const result = await exporter([group], date, date, "UTC")
+        expect(result).toEqual({ success: false, error })
+        expect(downloads).toEqual([])
+      },
+    )
+
+    it.each(["getSessions", "getGroupMembers"] as const)(
+      "does not download when %s fails",
+      async (method) => {
+        const error = new Error("Local service unavailable")
+        vi.mocked(attendanceManager[method]).mockRejectedValue(error)
+        const result = await exporter([group], date, date, "UTC")
+        expect(result).toEqual({ success: false, error })
+        expect(downloads).toEqual([])
+        expect(URL.createObjectURL).not.toHaveBeenCalled()
+      },
+    )
+
+    it("does not download partial results when a later group fails", async () => {
+      const other = { ...group, id: "other" }
+      vi.mocked(attendanceManager.getSessions).mockImplementation(async (params) => {
+        if (params?.group_id === "other") throw new Error("Other group unavailable")
+        return visits
+      })
+      expect((await exporter([group, other], date, date, "UTC")).success).toBe(false)
+      expect(downloads).toEqual([])
+    })
+
+    it("still reports a genuine missing session as Absent after a successful read", async () => {
+      visits = []
+      expect((await exporter([group], date, date, "UTC")).success).toBe(true)
+      expect((await exportedRows(_format))[0].Status).toBe("Absent")
+    })
+  })
+
+  it("preserves the existing non-export fallback for member and session reads", async () => {
+    vi.mocked(attendanceManager.getSessions).mockRestore()
+    vi.mocked(attendanceManager.getGroupMembers).mockRestore()
+    vi.spyOn(HttpClient.prototype, "get").mockRejectedValue(new Error("Offline"))
+    await expect(attendanceManager.getGroupMembers("g")).resolves.toEqual([])
+    await expect(attendanceManager.getSessions({ group_id: "g" })).resolves.toEqual([])
+  })
+
+  it.each([
+    [0, "0m"],
+    [59 / 60, "59m"],
+    [59.999 / 60, "1h"],
+    [1.5, "1h 30m"],
+    [8 + 3599 / 3600, "9h"],
+  ] as const)("normalizes %s hours in visible-column CSV to %s", async (hours, expected) => {
+    exportReportToCSV(
+      {
+        __all__: [
+          {
+            person_id: "p",
+            name: "Member",
+            date,
+            status: "present",
+            total_hours: hours,
+            is_late: false,
+            late_minutes: 0,
+            notes: "",
+            session: null,
+          },
+        ],
+      },
+      ["total_hours"],
+      [{ key: "total_hours", label: "Total hours" }],
+      "Group",
+      date,
+      date,
+      "UTC",
+    )
+    expect(await downloads[0].text()).toBe(`"Total hours"\n"${expected}"`)
+  })
+
+  it.each(exporters)("normalizes hours for each session in %s", async (format, exporter) => {
+    visits[0].total_hours = 0
+    visits[1].total_hours = 8 + 3599 / 3600
+    await exporter([group], date, date, "UTC")
+    const rows = await exportedRows(format)
+    expect(rows.map((row) => row["Total hours"])).toEqual(["0m", "9h"])
   })
 })

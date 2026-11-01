@@ -163,27 +163,18 @@ export function Reports({
   const handleExecuteExportAll = useCallback(
     async (format: ExportAllGroupsFormat) => {
       const allGroups = useGroupStore.getState().groups
-      if (format === "excel") {
-        await exportAllGroupsReportToExcel(
-          allGroups,
-          reportStartDate,
-          reportEndDate,
-          attendanceTimeZone,
-        )
-      } else if (format === "individual") {
-        await exportAllGroupsReportToIndividualCSVs(
-          allGroups,
-          reportStartDate,
-          reportEndDate,
-          attendanceTimeZone,
-        )
-      } else {
-        await exportAllGroupsReportToCSV(
-          allGroups,
-          reportStartDate,
-          reportEndDate,
-          attendanceTimeZone,
-        )
+      const exportReport =
+        format === "excel" ? exportAllGroupsReportToExcel
+        : format === "individual" ? exportAllGroupsReportToIndividualCSVs
+        : exportAllGroupsReportToCSV
+      const result = await exportReport(
+        allGroups,
+        reportStartDate,
+        reportEndDate,
+        attendanceTimeZone,
+      )
+      if (!result.success) {
+        throw new Error("Could not export the report. Check the local service and try again.")
       }
     },
     [reportStartDate, reportEndDate, attendanceTimeZone],

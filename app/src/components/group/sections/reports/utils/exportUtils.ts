@@ -1,7 +1,7 @@
 import type { RowData, ColumnKey } from "@/components/group/sections/reports/types"
-import { parseLocalDate, generateDateRange, createDisplayNameMap } from "@/utils"
+import { parseLocalDate, generateDateRange, createDisplayNameMap, formatDuration } from "@/utils"
 import { attendanceManager } from "@/services/AttendanceManager"
-import type { AttendanceGroup, AttendanceMember, AttendanceSession } from "@/types/recognition"
+import type { AttendanceGroup, AttendanceSession } from "@/types/recognition"
 import { getDepartureStatus } from "@/shared/departureStatus"
 import { formatAttendanceTime, getAttendanceDateString } from "@/utils/attendanceTime"
 
@@ -30,9 +30,7 @@ export function exportReportToCSV(
           const v = r[c.key]
 
           if (c.key === "total_hours" && typeof v === "number") {
-            const hrs = Math.floor(v)
-            const mins = Math.round((v - hrs) * 60)
-            return `${hrs > 0 ? `${hrs}h ` : ""}${mins > 0 || hrs === 0 ? `${mins}m` : ""}`.trim()
+            return formatDuration(Math.round(v * 60))
           }
 
           if (c.key === "date" && typeof v === "string") {
@@ -162,14 +160,15 @@ async function fetchAllGroupsProcessedData(
   const validGroups = groups.filter((g) => g.id !== "all")
   const groupDataPromises = validGroups.map(async (group) => {
     const [members, sessions] = await Promise.all([
-      attendanceManager.getGroupMembers(group.id).catch(() => [] as AttendanceMember[]),
-      attendanceManager
-        .getSessions({
+      attendanceManager.getGroupMembers(group.id, { throwOnError: true }),
+      attendanceManager.getSessions(
+        {
           group_id: group.id,
           start_date: startDate,
           end_date: endDate,
-        })
-        .catch(() => [] as AttendanceSession[]),
+        },
+        { throwOnError: true },
+      ),
     ])
     return { group, members, sessions }
   })
@@ -230,14 +229,14 @@ async function fetchAllGroupsProcessedData(
           let status: string
           if (shouldShowNoRecords) {
             status = "No Records"
-          } else if (!finalSession) {
+          } else if (!exportSession) {
             status = "Absent"
-          } else if (finalSession.is_late) {
+          } else if (exportSession.is_late) {
             status = "Late"
           } else {
             status =
-              finalSession.status ?
-                finalSession.status.charAt(0).toUpperCase() + finalSession.status.slice(1)
+              exportSession.status ?
+                exportSession.status.charAt(0).toUpperCase() + exportSession.status.slice(1)
               : "Present"
           }
 
@@ -271,10 +270,7 @@ async function fetchAllGroupsProcessedData(
 
           let totalHoursStr = ""
           if (typeof exportSession?.total_hours === "number") {
-            const hrs = Math.floor(exportSession.total_hours)
-            const mins = Math.round((exportSession.total_hours - hrs) * 60)
-            totalHoursStr =
-              `${hrs > 0 ? `${hrs}h ` : ""}${mins > 0 || hrs === 0 ? `${mins}m` : ""}`.trim()
+            totalHoursStr = formatDuration(Math.round(exportSession.total_hours * 60))
           }
 
           const lateMinutesStr =
@@ -494,13 +490,12 @@ export async function exportAllGroupsReportToCSV(
     ]
 
     const combinedRows: string[][] = []
-    for (const { group, rows } of processedGroups) {
+    for (const { group, header, rows } of processedGroups) {
+      const columnIndexes = combinedHeader.slice(1).map((label) => header.indexOf(label))
       for (const row of rows) {
         combinedRows.push([
           group.name,
-          ...(group.settings?.attendance_mode === "visits" ?
-            [row[0], row[1], row[2], row[3], row[4], "", row[5], row[6], row[7], row[8]]
-          : [row[0], row[1], "", row[2], row[3], row[4], row[5], row[6], row[7], row[8]]),
+          ...columnIndexes.map((index) => (index >= 0 ? row[index] : "")),
         ])
       }
     }

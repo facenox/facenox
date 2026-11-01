@@ -95,8 +95,11 @@ export class AttendanceManager {
     return this.groupManager.deleteGroup(groupId)
   }
 
-  async getGroupMembers(groupId: string): Promise<AttendanceMember[]> {
-    return this.groupManager.getGroupMembers(groupId)
+  async getGroupMembers(
+    groupId: string,
+    options?: { throwOnError?: boolean },
+  ): Promise<AttendanceMember[]> {
+    return this.groupManager.getGroupMembers(groupId, options)
   }
 
   async addMember(
@@ -256,13 +259,16 @@ export class AttendanceManager {
     return this.recordManager.getRecords(filters)
   }
 
-  async getSessions(filters?: {
-    group_id?: string
-    person_id?: string
-    start_date?: string
-    end_date?: string
-  }): Promise<AttendanceSession[]> {
-    return this.recordManager.getSessions(filters)
+  async getSessions(
+    filters?: {
+      group_id?: string
+      person_id?: string
+      start_date?: string
+      end_date?: string
+    },
+    options?: { throwOnError?: boolean },
+  ): Promise<AttendanceSession[]> {
+    return this.recordManager.getSessions(filters, options)
   }
 
   async getSettings(): Promise<AttendanceSettings> {
