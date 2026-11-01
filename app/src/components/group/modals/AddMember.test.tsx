@@ -19,19 +19,22 @@ vi.mock("@/services", () => ({
   },
 }))
 
-vi.mock("@/components/group/sections/enrollment/hooks/useCamera", () => ({
-  useCamera: () => ({
-    videoRef: { current: null },
-    cameraDevices: [],
-    selectedCamera: "",
-    setSelectedCamera: vi.fn(),
-    isStreaming: false,
-    isVideoReady: false,
-    cameraError: null,
-    startCamera: vi.fn().mockResolvedValue(undefined),
-    stopCamera: vi.fn(),
-  }),
-}))
+vi.mock("@/components/group/sections/enrollment/hooks/useCamera", async () => {
+  const { useRef, useCallback } = await import("react")
+  return {
+    useCamera: () => ({
+      videoRef: useRef<HTMLVideoElement | null>(null),
+      cameraDevices: [],
+      selectedCamera: "",
+      setSelectedCamera: vi.fn(),
+      isStreaming: false,
+      isVideoReady: false,
+      cameraError: null,
+      startCamera: useCallback(async () => {}, []),
+      stopCamera: useCallback(() => {}, []),
+    }),
+  }
+})
 
 const mockGroup: AttendanceGroup = {
   id: "group-1",

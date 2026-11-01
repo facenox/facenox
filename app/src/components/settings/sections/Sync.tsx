@@ -599,6 +599,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                             position="top">
                             <button
                               type="button"
+                              aria-label="Copy code"
                               onClick={() => {
                                 void navigator.clipboard.writeText(reversePairing.userCode)
                                 setCopiedPin(true)
@@ -613,6 +614,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                           <Tooltip content="Refresh code" position="top">
                             <button
                               type="button"
+                              aria-label="Refresh code"
                               onClick={() => void startReversePairing()}
                               disabled={isInitiating}
                               className="flex size-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70 disabled:opacity-40">

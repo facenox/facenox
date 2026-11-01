@@ -14,6 +14,7 @@ import {
 import { StatsCard, EmptyState } from "@/components/group/shared"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { Spinner } from "@/components/common"
+import { Tooltip } from "@/components/shared/Tooltip"
 
 interface OverviewProps {
   group: AttendanceGroup
@@ -363,11 +364,15 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                   className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-7 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/bar:border-white/20 placeholder:text-white/35 focus:bg-white/[0.08]"
                 />
                 {activitySearch && (
-                  <button
-                    onClick={() => setActivitySearch("")}
-                    className="absolute top-1/2 right-2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-sm text-white/55 hover:text-white">
-                    <X className="size-2.5" />
-                  </button>
+                  <Tooltip content="Clear search">
+                    <button
+                      type="button"
+                      aria-label="Clear search"
+                      onClick={() => setActivitySearch("")}
+                      className="absolute top-1/2 right-2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-sm text-white/55 hover:text-white">
+                      <X className="size-2.5" />
+                    </button>
+                  </Tooltip>
                 )}
               </div>
 

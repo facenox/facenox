@@ -427,6 +427,8 @@ export function ReportToolbar({
         <div className="relative" ref={optionsRef}>
           <Tooltip content="Options" position="bottom">
             <button
+              type="button"
+              aria-label="Report options"
               onClick={() => {
                 setShowOptions((open) => !open)
                 setDateDropdownOpen(false)

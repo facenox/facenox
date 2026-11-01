@@ -98,6 +98,16 @@ export function AddMember({
   const lastAddedTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const { videoRef, isStreaming, isVideoReady, cameraError, startCamera, stopCamera } = useCamera()
+  const [cameraVideo, setCameraVideo] = useState<HTMLVideoElement | null>(null)
+  const attachCameraVideo = useCallback(
+    (video: HTMLVideoElement | null) => {
+      videoRef.current = video
+      setCameraVideo(video)
+    },
+    [videoRef],
+  )
+  const needsCamera =
+    isOpen && !isBulkMode && isFaceSectionOpen && faceInputMode === "camera" && !capturedFace
 
   useEffect(() => {
     if (!isOpen) {
@@ -105,21 +115,16 @@ export function AddMember({
     }
   }, [isOpen, stopCamera])
 
-  // Auto-start camera when face section is opened in camera mode
+  // Animated transitions may mount the preview after the section state changes.
   useEffect(() => {
-    let active = true
-    if (isOpen && isFaceSectionOpen && faceInputMode === "camera" && !isStreaming) {
-      const timer = setTimeout(() => {
-        if (active) {
-          startCamera().catch(console.error)
-        }
-      }, 50)
-      return () => clearTimeout(timer)
+    if (!needsCamera || !cameraVideo) {
+      stopCamera()
+      return
     }
-    return () => {
-      active = false
-    }
-  }, [isOpen, isFaceSectionOpen, faceInputMode, isStreaming, startCamera])
+    if (isStreaming || cameraError) return
+    const timer = setTimeout(() => void startCamera().catch(console.error), 50)
+    return () => clearTimeout(timer)
+  }, [needsCamera, cameraVideo, isStreaming, cameraError, startCamera, stopCamera])
 
   const nameInputRef = useRef<HTMLInputElement>(null)
   const singleSubmitInFlightRef = useRef(false)
@@ -674,7 +679,6 @@ export function AddMember({
                               setFaceError(null)
                               setIsFaceSectionOpen(true)
                               setFaceInputMode("camera")
-                              startCamera().catch(console.error)
                             }}
                             className="rounded px-2.5 py-1 text-[11px] font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white">
                             Retake
@@ -720,7 +724,6 @@ export function AddMember({
                           onClick={() => {
                             setIsFaceSectionOpen(true)
                             setFaceInputMode("camera")
-                            startCamera().catch(console.error)
                           }}
                           className="text-[11px] font-medium text-cyan-400 transition-colors hover:text-cyan-300">
                           + Enroll now
@@ -759,9 +762,6 @@ export function AddMember({
                                   if (faceInputMode !== "camera") {
                                     setFaceInputMode("camera")
                                     setFaceError(null)
-                                    if (!isStreaming) {
-                                      startCamera().catch(console.error)
-                                    }
                                   }
                                 }}
                                 className={`flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-medium transition-all ${
@@ -816,7 +816,7 @@ export function AddMember({
                                 transition={{ duration: 0.18, ease: "easeOut" }}
                                 className="relative flex h-52 w-full flex-col items-center justify-between overflow-hidden rounded-xl border border-white/10 bg-black/60 p-2.5">
                                 <video
-                                  ref={videoRef}
+                                  ref={attachCameraVideo}
                                   className={`absolute inset-0 h-full w-full scale-x-[-1] object-cover transition-opacity duration-300 ${
                                     isStreaming && isVideoReady ? "opacity-100" : (
                                       "pointer-events-none opacity-0"
@@ -837,11 +837,19 @@ export function AddMember({
                                       transition={{ duration: 0.2 }}
                                       className="z-10 flex flex-col items-center justify-center gap-2 p-4 text-center">
                                       {cameraError ?
-                                        <div className="flex flex-col items-center gap-2">
+                                        <div
+                                          role="alert"
+                                          className="flex flex-col items-center gap-2">
                                           <AlertCircle className="size-5 text-red-400" />
                                           <span className="max-w-[240px] text-[11px] font-medium text-red-200/80">
                                             {cameraError}
                                           </span>
+                                          <button
+                                            type="button"
+                                            onClick={stopCamera}
+                                            className="rounded-md border border-white/15 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10">
+                                            Retry camera
+                                          </button>
                                         </div>
                                       : <div className="flex flex-col items-center gap-2.5">
                                           <Spinner size="md" color="cyan" />

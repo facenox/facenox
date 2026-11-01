@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { Tooltip } from "@/components/shared/Tooltip"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   AlertTriangle,
@@ -783,15 +784,17 @@ export function DataStorage({
                 placeholder="Enter password…"
                 className="w-full rounded-lg border border-white/10 bg-white/[0.04] py-2 pr-10 pl-3 text-xs text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none focus:border-white/25 focus:bg-white/[0.08]"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute top-1/2 right-3 -translate-y-1/2 border-none bg-transparent p-0 text-white/55 shadow-none transition-colors hover:text-white/65 focus:outline-none"
-                tabIndex={-1}>
-                {showPassword ?
-                  <EyeOff className="size-3 text-white/55" />
-                : <Eye className="size-3 text-white/55" />}
-              </button>
+              <Tooltip content={showPassword ? "Hide password" : "Show password"}>
+                <button
+                  type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 border-none bg-transparent p-0 text-white/55 shadow-none transition-colors hover:text-white/65 focus-visible:outline focus-visible:outline-white/50">
+                  {showPassword ?
+                    <EyeOff className="size-3 text-white/55" />
+                  : <Eye className="size-3 text-white/55" />}
+                </button>
+              </Tooltip>
             </div>
             {passwordModal.action === "export" && (
               <div className="flex items-start gap-1.5 pt-1 text-[11px] leading-tight text-amber-500/80">

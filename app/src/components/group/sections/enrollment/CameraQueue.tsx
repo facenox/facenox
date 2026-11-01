@@ -541,30 +541,42 @@ export function CameraQueue({
                     </AnimatePresence>
 
                     <div className="absolute inset-y-0 left-2 z-10 flex items-center">
-                      <button
-                        onClick={() => {
-                          if (currentIndex > 0) {
-                            setCurrentIndex((prev) => prev - 1)
-                            setError(null)
-                          }
-                        }}
-                        disabled={currentIndex === 0}
-                        className="rounded-full border border-white/5 bg-white/5 p-2 text-white/65 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
-                        <ChevronLeft className="size-4" />
-                      </button>
+                      <Tooltip content="Previous member">
+                        <span className="inline-flex">
+                          <button
+                            type="button"
+                            aria-label="Previous member"
+                            onClick={() => {
+                              if (currentIndex > 0) {
+                                setCurrentIndex((prev) => prev - 1)
+                                setError(null)
+                              }
+                            }}
+                            disabled={currentIndex === 0}
+                            className="rounded-full border border-white/5 bg-white/5 p-2 text-white/65 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
+                            <ChevronLeft className="size-4" />
+                          </button>
+                        </span>
+                      </Tooltip>
                     </div>
                     <div className="absolute inset-y-0 right-2 z-10 flex items-center">
-                      <button
-                        onClick={() => {
-                          if (currentIndex < memberQueue.length - 1) {
-                            setCurrentIndex((prev) => prev + 1)
-                            setError(null)
-                          }
-                        }}
-                        disabled={currentIndex >= memberQueue.length - 1}
-                        className="rounded-full border border-white/5 bg-white/5 p-2 text-white/65 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
-                        <ChevronRight className="size-4" />
-                      </button>
+                      <Tooltip content="Next member">
+                        <span className="inline-flex">
+                          <button
+                            type="button"
+                            aria-label="Next member"
+                            onClick={() => {
+                              if (currentIndex < memberQueue.length - 1) {
+                                setCurrentIndex((prev) => prev + 1)
+                                setError(null)
+                              }
+                            }}
+                            disabled={currentIndex >= memberQueue.length - 1}
+                            className="rounded-full border border-white/5 bg-white/5 p-2 text-white/65 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
+                            <ChevronRight className="size-4" />
+                          </button>
+                        </span>
+                      </Tooltip>
                     </div>
 
                     <AnimatePresence>

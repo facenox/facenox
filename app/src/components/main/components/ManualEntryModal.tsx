@@ -218,6 +218,8 @@ export const ManualEntryModal = ({
               {onAddMember && (
                 <Tooltip content="Add member" position="top">
                   <button
+                    type="button"
+                    aria-label="Add member"
                     onClick={() => {
                       handleClose()
                       onAddMember()

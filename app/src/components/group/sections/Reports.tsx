@@ -22,6 +22,7 @@ import { EmptyState } from "@/components/group/shared/EmptyState"
 import { EditSessionModal } from "@/components/group/sections/reports/components/EditSessionModal"
 import { attendanceManager } from "@/services/AttendanceManager"
 import { Spinner } from "@/components/common"
+import { Tooltip } from "@/components/shared/Tooltip"
 
 import type { ColumnKey, RowData } from "@/components/group/sections/reports/types"
 
@@ -358,12 +359,15 @@ export function Reports({
                 className="text-[12px] font-semibold text-white/60 transition-colors hover:text-white">
                 Undo
               </button>
-              <button
-                type="button"
-                onClick={() => setUndoToast(null)}
-                className="text-white/25 transition-colors hover:text-white/50">
-                <X className="size-3" />
-              </button>
+              <Tooltip content="Dismiss notification">
+                <button
+                  type="button"
+                  aria-label="Dismiss notification"
+                  onClick={() => setUndoToast(null)}
+                  className="text-white/25 transition-colors hover:text-white/50">
+                  <X className="size-3" />
+                </button>
+              </Tooltip>
             </div>
           </motion.div>
         )}

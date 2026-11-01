@@ -515,12 +515,15 @@ export function ReportTable({
                         ))}
                         {onEditRow && (
                           <td className="w-14 border-b border-white/5 px-3 py-3.5 text-right whitespace-nowrap">
-                            <button
-                              type="button"
-                              onClick={() => onEditRow(row)}
-                              className="p-1.5 text-white/20 opacity-0 transition-all group-hover:opacity-100 hover:text-white">
-                              <Pencil className="size-3" />
-                            </button>
+                            <Tooltip content="Edit record">
+                              <button
+                                type="button"
+                                aria-label="Edit record"
+                                onClick={() => onEditRow(row)}
+                                className="p-1.5 text-white/20 opacity-0 transition-all group-hover:opacity-100 hover:text-white focus-visible:opacity-100">
+                                <Pencil className="size-3" />
+                              </button>
+                            </Tooltip>
                           </td>
                         )}
                       </tr>
