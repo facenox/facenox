@@ -134,7 +134,7 @@ async def add_member(
                 if hasattr(added_member, "person_id")
                 else db_member_data.get("person_id")
             ),
-            details=f"Member '{added_member.name}' added to group {added_member.group_id}",
+            details=f"Member '{added_member.name}' added to group {group.name}",
         )
 
         await repo.session.commit()
@@ -172,10 +172,12 @@ async def add_members_bulk(
     try:
         # Check if groups exist
         group_ids = list(set(m.group_id for m in bulk_data.members))
+        groups_by_id = {}
         for gid in group_ids:
             group = await repo.get_group(gid)
             if not group:
                 raise HTTPException(status_code=404, detail=f"Group {gid} not found")
+            groups_by_id[gid] = group
 
         async def persist_batch():
             # Rebuild dictionaries after rollback; the repository assigns missing IDs.
@@ -209,7 +211,7 @@ async def add_members_bulk(
                             action="MEMBER_CREATED",
                             target_type="member",
                             target_id=member.person_id,
-                            details=f"Bulk add: Member '{member.name}' added to group {member.group_id}",
+                            details=f"Bulk add: Member '{member.name}' added to group {groups_by_id[member.group_id].name}",
                         )
                     successful_members.append(member)
                 else:
