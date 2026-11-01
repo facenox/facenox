@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import { syncPushSchema, type SyncPushPayload } from "../../shared/syncContract.js"
 
 export const MAX_SYNC_BYTES = 3 * 1024 * 1024
@@ -10,14 +11,60 @@ const limits = {
 } as const
 const kinds = ["groups", "members", "records", "sessions", "face_embeddings"] as const
 
+function remainingRows<T>(
+  rows: T[],
+  accepted: T[],
+  key: (row: T) => string,
+  fingerprint: (row: T) => string = (row) => JSON.stringify(row),
+): T[] {
+  const previous = new Map(accepted.map((row) => [key(row), fingerprint(row)]))
+  return rows.filter((row) => previous.get(key(row)) !== fingerprint(row))
+}
+
 /** Bound actual UTF-8 request bytes, not just row counts. Finish groups before
- * members and members before templates so dependencies never arrive out of order. */
+ * members and members before templates so dependencies never arrive out of order.
+ * Rebuilding a rejected batch omits unchanged rows from already accepted chunks. */
 export function buildSyncChunks(
   input: Omit<SyncPushPayload, "snapshot_id">,
   maxBytes = MAX_SYNC_BYTES,
+  acceptedChunks: readonly SyncPushPayload[] = [],
 ): SyncPushPayload[] {
   const normalized = syncPushSchema.parse({ ...input, snapshot_id: "validate" })
-  const source = normalized.attendance_export
+  const original = normalized.attendance_export
+  const source = {
+    ...original,
+    groups: remainingRows(
+      original.groups,
+      acceptedChunks.flatMap((c) => c.attendance_export.groups),
+      (row) => row.id,
+    ),
+    members: remainingRows(
+      original.members,
+      acceptedChunks.flatMap((c) => c.attendance_export.members),
+      (row) => row.person_id,
+    ),
+    records: remainingRows(
+      original.records,
+      acceptedChunks.flatMap((c) => c.attendance_export.records),
+      (row) => row.id,
+    ),
+    sessions: remainingRows(
+      original.sessions,
+      acceptedChunks.flatMap((c) => c.attendance_export.sessions),
+      (row) => row.id,
+    ),
+    face_embeddings: remainingRows(
+      original.face_embeddings ?? [],
+      acceptedChunks.flatMap((c) => c.attendance_export.face_embeddings ?? []),
+      (row) => row.person_id,
+      // Encryption generates a new nonce on each export. The local version, not
+      // randomized ciphertext, identifies whether an enrollment changed.
+      (row) => JSON.stringify({ ...row, embedding_encrypted: undefined }),
+    ),
+  }
+  // A corrected export can share the old timestamp. It must not reuse accepted
+  // snapshot IDs; retries keep their original IDs via the persisted pending batch.
+  const snapshotPrefix = `${input.device_id}:${input.exported_at}:${randomUUID()}`
   const chunks: SyncPushPayload[] = []
   const offsets = { groups: 0, members: 0, records: 0, sessions: 0, face_embeddings: 0 }
   let remaining = kinds.reduce((sum, kind) => sum + (source[kind]?.length ?? 0), 0)
@@ -25,7 +72,7 @@ export function buildSyncChunks(
     const chunk: SyncPushPayload = {
       ...normalized,
       // Reserve enough digits for final part numbers without quadratic re-encoding.
-      snapshot_id: `${input.device_id}:${input.exported_at}:part-${Number.MAX_SAFE_INTEGER}-of-${Number.MAX_SAFE_INTEGER}`,
+      snapshot_id: `${snapshotPrefix}:part-${Number.MAX_SAFE_INTEGER}-of-${Number.MAX_SAFE_INTEGER}`,
       attendance_export: {
         ...source,
         groups: [],
@@ -64,6 +111,6 @@ export function buildSyncChunks(
   } while (remaining > 0)
   return chunks.map((chunk, index) => ({
     ...chunk,
-    snapshot_id: `${input.device_id}:${input.exported_at}:part-${index + 1}-of-${chunks.length}`,
+    snapshot_id: `${snapshotPrefix}:part-${index + 1}-of-${chunks.length}`,
   }))
 }

@@ -175,6 +175,343 @@ describe("BackgroundSyncManager", () => {
     expect(mockStore["sync.pendingUpload"]).toBeNull()
   })
 
+  it("exports the corrected roster after a quota rejection without advancing its watermark", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    let activePeople = 151
+    let exports = 0
+    const submitted: SyncPushPayload[] = []
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input)
+      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
+      if (url.includes("/attendance/export")) {
+        exports++
+        return Response.json({
+          exported_at: "2026-10-02T00:00:00Z",
+          records: [],
+          sessions: [],
+          groups: [
+            {
+              id: "g",
+              name: "Work",
+              created_at: "2026-01-01T00:00:00Z",
+              is_active: true,
+              settings: {},
+            },
+          ],
+          members: Array.from({ length: 151 }, (_, i) => ({
+            person_id: `p${i}`,
+            group_id: "g",
+            name: `Member ${i}`,
+            joined_at: "2026-01-01T00:00:00Z",
+            is_active: i < activePeople,
+          })),
+        })
+      }
+      if (url.includes("/api/sync/push")) {
+        const payload = JSON.parse(String(init?.body)) as SyncPushPayload
+        submitted.push(payload)
+        return payload.attendance_export.members.filter((m) => m.is_active).length > 150 ?
+            Response.json(
+              { error: "Remove excess local members.", code: "PLAN_QUOTA_HARD_EXCEEDED" },
+              { status: 402 },
+            )
+          : Response.json({ ok: true, status: "accepted" })
+      }
+      if (url.includes("/api/sync/pull"))
+        return Response.json({ schema_version: 2, groups: [], members: [] })
+      if (url.includes("/attendance/import-metadata"))
+        return Response.json({ groups_count: 0, members_count: 0 })
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    expect((await new BackgroundSyncManager().performSync()).success).toBe(false)
+    expect(mockStore["sync.lastSyncedAt"]).toBeNull()
+    expect(mockStore["sync.pendingUpload"]).toMatchObject({ rejected: true, next: 0 })
+    activePeople = 149
+    // Recreate the manager to exercise recovery from the persisted rejected batch.
+    expect((await new BackgroundSyncManager().performSync()).success).toBe(true)
+    expect(exports).toBe(2)
+    expect(submitted[1].attendance_export.members.filter((m) => m.is_active)).toHaveLength(149)
+    expect(submitted[1].snapshot_id).not.toBe(submitted[0].snapshot_id)
+    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-10-02T00:00:00.000Z")
+    expect(mockStore["sync.pendingUpload"]).toBeNull()
+  })
+
+  it.each([400, 422])(
+    "refreshes a corrected export after HTTP %i rejects the snapshot",
+    async (status) => {
+      const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+      let corrected = false
+      let exports = 0
+      const submissions: SyncPushPayload[] = []
+      vi.mocked(fetch).mockImplementation(async (input, init) => {
+        const url = String(input)
+        if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
+        if (url.includes("/attendance/export")) {
+          exports++
+          return Response.json({
+            groups: [],
+            members: [],
+            sessions: [],
+            exported_at: "2026-10-02T00:00:00Z",
+            records: [
+              {
+                id: "r",
+                person_id: "p",
+                group_id: "g",
+                timestamp: "2026-10-01T08:00:00Z",
+                confidence: 1,
+                is_manual: true,
+                notes: corrected ? "corrected" : "rejected",
+              },
+            ],
+          })
+        }
+        if (url.includes("/api/sync/push")) {
+          const payload = JSON.parse(String(init?.body)) as SyncPushPayload
+          submissions.push(payload)
+          return payload.attendance_export.records[0].notes === "corrected" ?
+              Response.json({ ok: true })
+            : Response.json({ error: "Review the snapshot." }, { status })
+        }
+        if (url.includes("/api/sync/pull"))
+          return Response.json({ schema_version: 2, groups: [], members: [] })
+        if (url.includes("/attendance/import-metadata"))
+          return Response.json({ groups_count: 0, members_count: 0 })
+        throw new Error(`Unexpected request: ${url}`)
+      })
+      const manager = new BackgroundSyncManager()
+      expect((await manager.performSync()).success).toBe(false)
+      expect(mockStore["sync.lastSyncedAt"]).toBeNull()
+      corrected = true
+      expect((await manager.performSync()).success).toBe(true)
+      expect(exports).toBe(2)
+      expect(submissions[1].attendance_export.records[0].notes).toBe("corrected")
+    },
+  )
+
+  it.each([429, 503])("retains the original snapshot for retry after HTTP %i", async (status) => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    let exports = 0
+    const snapshots: string[] = []
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input)
+      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
+      if (url.includes("/attendance/export")) {
+        exports++
+        return Response.json({
+          groups: [],
+          members: [],
+          records: [],
+          sessions: [],
+          exported_at: "2026-10-02T00:00:00Z",
+        })
+      }
+      if (url.includes("/api/sync/push")) {
+        snapshots.push(JSON.parse(String(init?.body)).snapshot_id)
+        return snapshots.length === 1 ?
+            Response.json({ error: "Retry shortly." }, { status })
+          : Response.json({ ok: true })
+      }
+      if (url.includes("/api/sync/pull"))
+        return Response.json({ schema_version: 2, groups: [], members: [] })
+      if (url.includes("/attendance/import-metadata"))
+        return Response.json({ groups_count: 0, members_count: 0 })
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    const manager = new BackgroundSyncManager()
+    expect((await manager.performSync()).success).toBe(false)
+    expect(mockStore["sync.pendingUpload"]).not.toHaveProperty("rejected")
+    expect((await manager.performSync()).success).toBe(true)
+    expect(exports).toBe(1)
+    expect(snapshots[1]).toBe(snapshots[0])
+    manager.stop()
+  })
+
+  it("keeps accepted chunks and acknowledgements across rejection and a failed rebuild", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    mockStore["sync.lastSyncedAt"] = "2026-09-01T00:00:00Z"
+    let corrected = false
+    let failExport = false
+    let failPull = true
+    const exportUrls: string[] = []
+    const submissions: SyncPushPayload[] = []
+    const imports: Array<Record<string, unknown>> = []
+    const records = () =>
+      Array.from({ length: corrected ? 301 : 300 }, (_, i) => ({
+        id: `r${i}`,
+        person_id: "p",
+        group_id: "g",
+        confidence: 1,
+        is_manual: false,
+        timestamp: i === 299 && !corrected ? "2099-01-01T00:00:00Z" : "2026-10-01T08:00:00Z",
+        notes: i === 0 && corrected ? "new local correction" : null,
+      }))
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input)
+      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
+      if (url.includes("/attendance/export")) {
+        exportUrls.push(url)
+        if (failExport) return Response.json({ error: "Unavailable" }, { status: 503 })
+        return Response.json({
+          exported_at: "2026-10-02T00:00:00Z",
+          records: records(),
+          sessions: [],
+          groups: [
+            {
+              id: "g",
+              name: "Group",
+              created_at: "2026-01-01T00:00:00Z",
+              is_active: true,
+              settings: {},
+              version: 4,
+            },
+          ],
+          members: [
+            {
+              person_id: "p",
+              group_id: "g",
+              name: "Member",
+              joined_at: "2026-01-01T00:00:00Z",
+              is_active: true,
+              version: 5,
+            },
+          ],
+        })
+      }
+      if (url.includes("/api/sync/push")) {
+        const payload = JSON.parse(String(init?.body)) as SyncPushPayload
+        submissions.push(payload)
+        return payload.attendance_export.records.some((r) => r.timestamp.startsWith("2099")) ?
+            Response.json(
+              { error: "Review clock.", code: "CLOCK_REVIEW_REQUIRED" },
+              { status: 422 },
+            )
+          : Response.json({
+              ok: true,
+              accepted: { groups: { g: 2 }, members: { p: 3 }, faces: {} },
+            })
+      }
+      if (url.includes("/api/sync/pull"))
+        return failPull ?
+            Response.json({ error: "Offline" }, { status: 503 })
+          : Response.json({ schema_version: 2, groups: [], members: [] })
+      if (url.includes("/attendance/import-metadata")) {
+        imports.push(JSON.parse(String(init?.body)))
+        return Response.json({ groups_count: 0, members_count: 0 })
+      }
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    const manager = new BackgroundSyncManager()
+    expect((await manager.performSync()).success).toBe(false)
+    expect(mockStore["sync.pendingUpload"]).toMatchObject({ next: 1, rejected: true })
+    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-09-01T00:00:00Z")
+    corrected = true
+    failExport = true
+    expect((await manager.performSync()).success).toBe(false)
+    expect(mockStore["sync.pendingUpload"]).toMatchObject({ next: 1, rejected: true })
+    failExport = false
+    failPull = false
+    expect((await new BackgroundSyncManager().performSync()).success).toBe(true)
+    expect(exportUrls).toHaveLength(3)
+    expect(exportUrls.every((url) => url.includes("since=2026-09-01T00%3A00%3A00Z"))).toBe(true)
+    const replacement = submissions[2]
+    expect(replacement.snapshot_id).not.toBe(submissions[0].snapshot_id)
+    expect(replacement.snapshot_id).not.toBe(submissions[1].snapshot_id)
+    expect(replacement.attendance_export.groups).toEqual([])
+    expect(replacement.attendance_export.members).toEqual([])
+    expect(replacement.attendance_export.records).toHaveLength(52)
+    expect(replacement.attendance_export.records.find((r) => r.id === "r0")?.notes).toBe(
+      "new local correction",
+    )
+    expect(replacement.attendance_export.records.some((r) => r.id === "r1")).toBe(false)
+    expect(replacement.attendance_export.records.some((r) => r.id === "r300")).toBe(true)
+    expect(imports[0]).toMatchObject({
+      acknowledged_groups: { g: 4 },
+      acknowledged_members: { p: 5 },
+      accepted_groups: { g: 2 },
+      accepted_members: { p: 3 },
+    })
+    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-10-02T00:00:00.000Z")
+    expect(mockStore["sync.pendingUpload"]).toBeNull()
+  })
+
+  it.each(["push", "pull"])(
+    "cancels a stalled timezone-policy request during %s on disconnect",
+    async (source) => {
+      const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+      let reached!: () => void
+      const atPolicy = new Promise<void>((resolve) => {
+        reached = resolve
+      })
+      let policySignal: AbortSignal | null | undefined
+      vi.mocked(fetch).mockImplementation(async (input, init) => {
+        const url = String(input)
+        if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
+        if (url.includes("/attendance/export"))
+          return Response.json({
+            groups: [],
+            members: [],
+            records: [],
+            sessions: [],
+            exported_at: "2026-10-02T00:00:00Z",
+          })
+        if (url.includes("/api/sync/push"))
+          return Response.json({ ok: true, policy: { timezone: "Asia/Manila" } })
+        if (url.includes("/api/sync/pull"))
+          return Response.json({
+            schema_version: 2,
+            groups: [],
+            members: [],
+            policy: { timezone: "Asia/Manila" },
+          })
+        if (url.includes("/attendance/settings")) {
+          policySignal = init?.signal
+          reached()
+          if (!policySignal) throw new Error("Timezone policy must have a cancellation signal")
+          const signal = policySignal
+          return new Promise<Response>((_resolve, reject) => {
+            signal.addEventListener("abort", () => reject(signal.reason), { once: true })
+          })
+        }
+        throw new Error(`Unexpected request: ${url}`)
+      })
+      const manager = new BackgroundSyncManager()
+      const sync = manager.performSync(source === "pull")
+      await atPolicy
+      expect(policySignal).toBeInstanceOf(AbortSignal)
+      await manager.suspend()
+      expect(policySignal?.aborted).toBe(true)
+      expect((await sync).success).toBe(false)
+      expect((await manager.performSync()).message).toContain("paused for disconnect")
+      expect(mockStore["sync.lastSyncedAt"]).toBeNull()
+    },
+  )
+
+  it("times out a stalled timezone-policy request without a disconnect", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
+      const controller = new AbortController()
+      setTimeout(() => controller.abort(new DOMException("Timed out", "TimeoutError")), ms)
+      return controller.signal
+    })
+    vi.mocked(fetch).mockImplementation(async (_input, init) => {
+      const signal = init?.signal
+      if (!signal) throw new Error("Missing timeout signal")
+      return new Promise<Response>((_resolve, reject) => {
+        signal.addEventListener("abort", () => reject(signal.reason), { once: true })
+      })
+    })
+    const manager = new BackgroundSyncManager() as unknown as {
+      applyRemotePolicy(policy: { timezone: string }): Promise<void>
+    }
+    const result = expect(manager.applyRemotePolicy({ timezone: "Asia/Manila" })).rejects.toThrow(
+      "Timed out",
+    )
+    expect(timeout).toHaveBeenCalledWith(15000)
+    await vi.advanceTimersByTimeAsync(15000)
+    await result
+  })
+
   it("imports face tombstones without an encryption key", async () => {
     const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
     mockStore["sync.encryptionKey"] = ""

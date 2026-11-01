@@ -305,6 +305,7 @@ export class BackgroundSyncManager {
         method: "PUT",
         headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ attendance_timezone: policy.timezone }),
+        signal: this.requestSignal(15000),
       })
       if (!response.ok) throw new Error("Could not apply the location attendance timezone.")
     }
@@ -924,6 +925,7 @@ export class BackgroundSyncManager {
       chunks: SyncPushPayload[]
       next: number
       acknowledged: SyncAcknowledgements
+      rejected?: boolean
     }
     let pending = persistentStore.get("sync.pendingUpload") as PendingUpload | undefined
     if (
@@ -977,7 +979,8 @@ export class BackgroundSyncManager {
       }
       if (!pullOnly) {
         try {
-          if (!pending) {
+          if (!pending || pending.rejected) {
+            const acceptedChunks = pending?.chunks.slice(0, pending.next) ?? []
             const exportUrl = `${backendService.getUrl()}/attendance/export${lastSyncedAt ? `?since=${encodeURIComponent(lastSyncedAt)}` : ""}`
             const response = await fetch(exportUrl, {
               method: "POST",
@@ -1021,21 +1024,25 @@ export class BackgroundSyncManager {
             }
             const groups = attendance.groups.filter((g) => g.sync_dirty !== false)
             const members = attendance.members.filter((m) => m.sync_dirty !== false)
-            const chunks = buildSyncChunks({
-              schema_version: 2,
-              device_id: deviceId,
-              site_id: siteId,
-              app_version: getCurrentVersion(),
-              exported_at: exportedAt!,
-              attendance_export: { ...attendance, groups, members, face_embeddings: faces },
-            })
+            const chunks = buildSyncChunks(
+              {
+                schema_version: 2,
+                device_id: deviceId,
+                site_id: siteId,
+                app_version: getCurrentVersion(),
+                exported_at: exportedAt!,
+                attendance_export: { ...attendance, groups, members, face_embeddings: faces },
+              },
+              undefined,
+              acceptedChunks,
+            )
             pending = {
               deviceId,
               siteId,
               remoteBaseUrl,
               exportedAt: exportedAt!,
-              chunks,
-              next: 0,
+              chunks: [...acceptedChunks, ...chunks],
+              next: acceptedChunks.length,
               acknowledged,
             }
             persistentStore.set("sync.pendingUpload", pending)
@@ -1068,10 +1075,15 @@ export class BackgroundSyncManager {
               /* HTTP error can contain text. */
             }
             if (remote.status === 429) this.triggerDebouncedSync(result.retryAfterMs || 5000)
-            if (!remote.ok)
+            if (!remote.ok) {
+              if ([400, 402, 422].includes(remote.status)) {
+                pending.rejected = true
+                persistentStore.set("sync.pendingUpload", pending)
+              }
               throw new Error(
                 result.message || result.error || responseText || `HTTP ${remote.status}`,
               )
+            }
             for (const g of payload.attendance_export.groups) acknowledged.groups[g.id] = g.version
             for (const m of payload.attendance_export.members)
               acknowledged.members[m.person_id] = m.version

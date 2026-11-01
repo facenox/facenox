@@ -156,3 +156,110 @@ it("retains capture context through validation and chunk packing", () => {
   expect(chunk.attendance_export.records).toEqual(input.attendance_export.records)
   expect(chunk.attendance_export.sessions).toEqual(input.attendance_export.sessions)
 })
+
+it("uses fresh IDs for rebuilt exports even when their timestamps are identical", () => {
+  const input = payload()
+  const original = buildSyncChunks(input)
+  const rebuilt = buildSyncChunks(input)
+  expect(rebuilt[0].snapshot_id).not.toBe(original[0].snapshot_id)
+  expect(rebuilt[0].exported_at).toBe(original[0].exported_at)
+})
+
+it("omits unchanged accepted rows but includes corrections for every row kind", () => {
+  const input = payload()
+  input.attendance_export.groups = [
+    {
+      id: "g",
+      name: "Work",
+      created_at: input.exported_at,
+      is_active: true,
+      settings: {
+        attendance_mode: "attendance",
+        late_threshold_enabled: false,
+        track_checkout: false,
+        scan_behavior: "automatic",
+      },
+      sync_revision: 0,
+      version: 1,
+      sync_dirty: true,
+    },
+  ]
+  input.attendance_export.members = [
+    {
+      id: "p",
+      person_id: "p",
+      group_id: "g",
+      name: "Member",
+      joined_at: input.exported_at,
+      is_active: true,
+      sync_revision: 0,
+      version: 1,
+      sync_dirty: true,
+    },
+  ]
+  input.attendance_export.records = [
+    {
+      id: "r",
+      person_id: "p",
+      member_id: "p",
+      group_id: "g",
+      timestamp: input.exported_at,
+      confidence: 1,
+      is_manual: false,
+      is_voided: false,
+    },
+  ]
+  input.attendance_export.sessions = [
+    {
+      id: "s",
+      person_id: "p",
+      member_id: "p",
+      group_id: "g",
+      date: "2026-10-20",
+      visit_number: 1,
+      check_in_time: input.exported_at,
+      status: "present",
+      is_late: false,
+    },
+  ]
+  input.attendance_export.face_embeddings = [
+    {
+      person_id: "p",
+      embedding_encrypted: "old-ciphertext",
+      embedding_dimension: 512,
+      is_deleted: false,
+      sync_revision: 0,
+      version: 1,
+      sync_dirty: true,
+    },
+  ]
+  const accepted = buildSyncChunks(input)
+  const [unchanged] = buildSyncChunks(input, undefined, accepted)
+  for (const rows of [
+    unchanged.attendance_export.groups,
+    unchanged.attendance_export.members,
+    unchanged.attendance_export.records,
+    unchanged.attendance_export.sessions,
+    unchanged.attendance_export.face_embeddings,
+  ])
+    expect(rows).toEqual([])
+  input.attendance_export.face_embeddings[0].embedding_encrypted = "re-encrypted-same-version"
+  expect(buildSyncChunks(input, undefined, accepted)[0].attendance_export.face_embeddings).toEqual(
+    [],
+  )
+  input.attendance_export.groups[0].version++
+  input.attendance_export.members[0].version++
+  input.attendance_export.records[0].notes = "corrected"
+  input.attendance_export.sessions[0].notes = "corrected"
+  input.attendance_export.face_embeddings[0].embedding_encrypted = "new-ciphertext"
+  input.attendance_export.face_embeddings[0].version++
+  const [corrected] = buildSyncChunks(input, undefined, accepted)
+  for (const rows of [
+    corrected.attendance_export.groups,
+    corrected.attendance_export.members,
+    corrected.attendance_export.records,
+    corrected.attendance_export.sessions,
+    corrected.attendance_export.face_embeddings,
+  ])
+    expect(rows).toHaveLength(1)
+})
