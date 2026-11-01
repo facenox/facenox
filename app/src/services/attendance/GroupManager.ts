@@ -4,7 +4,7 @@ import type {
   AttendanceSettings,
   BulkDetectResponse,
   BulkEnrollResponse,
-} from "../../types/recognition"
+} from "@/types/recognition"
 import type { HttpClient } from "./HttpClient"
 import { notifyDataChanged } from "@/utils/syncNotifier"
 

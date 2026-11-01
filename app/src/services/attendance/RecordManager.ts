@@ -6,8 +6,8 @@ import type {
   AttendanceEvent,
   AttendanceGroup,
   AttendanceMember,
-} from "../../types/recognition"
-import { getLocalDateString, parseLocalDate, notifyDataChanged } from "../../utils/index"
+} from "@/types/recognition"
+import { getLocalDateString, parseLocalDate, notifyDataChanged } from "@/utils"
 import type { HttpClient } from "./HttpClient"
 import { ATTENDANCE_TIMEZONE_MISMATCH_WARNING_KEY } from "../clockWarnings"
 

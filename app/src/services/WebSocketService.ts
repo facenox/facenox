@@ -2,7 +2,7 @@ import type {
   WebSocketDetectionResponse,
   WebSocketConnectionMessage,
   WebSocketErrorMessage,
-} from "../components/main/types"
+} from "@/components/main/types"
 import { appendOrganizationId } from "./localBackendScope"
 
 export type WebSocketStatus = "disconnected" | "connecting" | "connected" | "error"

@@ -1,4 +1,4 @@
-import type { AttendanceMember } from "../../types/recognition"
+import type { AttendanceMember } from "@/types/recognition"
 import type { HttpClient } from "./HttpClient"
 import { dataUrlToBlob } from "@/utils/dataUrl"
 import { notifyDataChanged } from "@/utils/syncNotifier"

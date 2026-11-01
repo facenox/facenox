@@ -1,4 +1,4 @@
-import type { QuickSettings } from "../components/settings/types"
+import type { QuickSettings } from "@/components/settings/types"
 import { defaultSettings, type PersistentSettingsSchema } from "./persistentSettingsDefaults"
 
 class PersistentSettingsService {

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import { Attendance } from "./Attendance"
-import type { AttendanceSettings } from "../types"
+import type { AttendanceSettings } from "@/components/settings/types"
 
 describe("Attendance Retention Policy (Unified Constrained Control)", () => {
   const baseSettings: AttendanceSettings = {
