@@ -38,7 +38,7 @@ describe("WindowBar", () => {
 
     for (const name of ["Minimize", "Maximize", "Close"]) {
       const button = screen.getByRole("button", { name })
-      expect(button).not.toHaveAttribute("title")
+      expect(button).toHaveAttribute("title", name)
       fireEvent.click(button)
     }
 
@@ -70,11 +70,13 @@ describe("WindowBar", () => {
       handleMaximize?.()
     })
     expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Restore" })).toHaveAttribute("title", "Restore")
 
     act(() => {
       handleUnmaximize?.()
     })
     expect(screen.getByRole("button", { name: "Maximize" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Maximize" })).toHaveAttribute("title", "Maximize")
 
     fireEvent.click(screen.getByRole("button", { name: "Maximize" }))
     expect(bridge.maximize).toHaveBeenCalledTimes(1)

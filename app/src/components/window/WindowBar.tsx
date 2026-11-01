@@ -409,55 +409,52 @@ export default function WindowBar() {
             } as React.CSSProperties
           }>
           {/* Minimize */}
-          <Tooltip content="Minimize" position="bottom" offset={6}>
-            <button
-              onClick={handleMinimize}
-              aria-label="Minimize"
-              className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
-                isLinux ?
-                  "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-white/10"
-                : "h-full w-[46px] hover:bg-white/10"
-              }`}>
-              <span
-                className="h-full w-full bg-white/70 transition-colors group-hover:bg-white"
-                style={iconStyle("minimize")}
-              />
-            </button>
-          </Tooltip>
+          <button
+            onClick={handleMinimize}
+            title="Minimize"
+            aria-label="Minimize"
+            className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
+              isLinux ?
+                "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-white/10"
+              : "h-full w-[46px] hover:bg-white/10"
+            }`}>
+            <span
+              className="h-full w-full bg-white/70 transition-colors group-hover:bg-white"
+              style={iconStyle("minimize")}
+            />
+          </button>
 
           {/* Maximize / Restore */}
-          <Tooltip content={isMaximized ? "Restore" : "Maximize"} position="bottom" offset={6}>
-            <button
-              onClick={handleMaximize}
-              aria-label={isMaximized ? "Restore" : "Maximize"}
-              className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
-                isLinux ?
-                  "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-white/10"
-                : "h-full w-[46px] hover:bg-white/10"
-              }`}>
-              <span
-                className="h-full w-full bg-white/70 transition-colors group-hover:bg-white"
-                style={iconStyle(isMaximized ? "restore-down" : "maximize")}
-              />
-            </button>
-          </Tooltip>
+          <button
+            onClick={handleMaximize}
+            title={isMaximized ? "Restore" : "Maximize"}
+            aria-label={isMaximized ? "Restore" : "Maximize"}
+            className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
+              isLinux ?
+                "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-white/10"
+              : "h-full w-[46px] hover:bg-white/10"
+            }`}>
+            <span
+              className="h-full w-full bg-white/70 transition-colors group-hover:bg-white"
+              style={iconStyle(isMaximized ? "restore-down" : "maximize")}
+            />
+          </button>
 
           {/* Close */}
-          <Tooltip content="Close" position="bottom" offset={6}>
-            <button
-              onClick={handleClose}
-              aria-label="Close"
-              className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
-                isLinux ?
-                  "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-[#e81123]"
-                : "h-full w-[46px] hover:bg-[#e81123]"
-              }`}>
-              <span
-                className="h-full w-full bg-white/80 transition-colors group-hover:bg-white"
-                style={iconStyle("close")}
-              />
-            </button>
-          </Tooltip>
+          <button
+            onClick={handleClose}
+            title="Close"
+            aria-label="Close"
+            className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
+              isLinux ?
+                "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-[#e81123]"
+              : "h-full w-[46px] hover:bg-[#e81123]"
+            }`}>
+            <span
+              className="h-full w-full bg-white/80 transition-colors group-hover:bg-white"
+              style={iconStyle("close")}
+            />
+          </button>
         </div>
       )}
 
