@@ -36,17 +36,19 @@ export function getScanReadiness(state: ScanDataState, hasCameraDevices: boolean
     return { canStart: false, reason: "loading", tooltip: "Loading group members" }
   }
   const groupId = state.currentGroup.id
+  const isAllGroups = groupId === "all"
   const hasEnrolledFaces = state.groupMembers.some(
     (member) =>
-      member.is_active &&
-      member.has_face_data &&
-      (groupId === "all" || member.group_id === groupId),
+      member.is_active && member.has_face_data && (isAllGroups || member.group_id === groupId),
   )
   if (!hasEnrolledFaces) {
     return {
       canStart: false,
       reason: "no_faces",
-      tooltip: "Enroll at least one member to start scanning",
+      tooltip:
+        isAllGroups ?
+          "Enroll at least one member to start scanning"
+        : "Enroll at least one member in this group to start scanning",
     }
   }
   if (!hasCameraDevices) {

@@ -5,7 +5,7 @@ import type {
   SimilarityThresholdResponse,
   DatabaseStatsResponse,
   PersonInfo,
-} from "../types/recognition"
+} from "@/types/recognition"
 
 import { ElectronAdapter } from "./adapters/ElectronAdapter"
 import { withLocalBackendHeaders } from "./localBackendScope"

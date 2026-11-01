@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import { Attendance } from "./Attendance"
-import type { AttendanceSettings } from "../types"
+import type { AttendanceSettings } from "@/components/settings/types"
 
 describe("Attendance Retention Policy (Unified Constrained Control)", () => {
   const baseSettings: AttendanceSettings = {
@@ -86,23 +86,20 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     )
 
     // Local automatic cleanup remains disabled regardless of cloud plan
-    const input = screen.getByDisplayValue("0") as HTMLInputElement
-    expect(input).not.toBeDisabled()
-    expect(screen.getByText("No automatic cleanup")).toBeInTheDocument()
+    const switchEl = screen.getByRole("switch", { name: "Retention policy" })
+    expect(switchEl).toHaveAttribute("aria-checked", "false")
     expect(
       screen.getByText(
         "Automatic cleanup is off. Local attendance records are kept until you delete them.",
       ),
     ).toBeInTheDocument()
 
-    // Clearing input and blurring resets to 0 (no automatic cleanup)
-    fireEvent.focus(input)
-    fireEvent.change(input, { target: { value: "" } })
-    fireEvent.blur(input)
-    expect(onDataRetentionChange).toHaveBeenCalledWith(0)
+    // Turning on the switch activates cleanup with capped plan ceiling (30 days)
+    fireEvent.click(switchEl)
+    expect(onDataRetentionChange).toHaveBeenCalledWith(30)
   })
 
-  it("allows disabling automatic cleanup with an unlimited cloud plan", () => {
+  it("allows enabling and disabling automatic cleanup with an unlimited cloud plan", () => {
     const onDataRetentionChange = vi.fn()
     render(
       <Attendance
@@ -119,12 +116,11 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     )
 
     expect(screen.getByText(/Cloud plan: Unlimited/i)).toBeInTheDocument()
-    expect(screen.getByText("No automatic cleanup")).toBeInTheDocument()
+    const switchEl = screen.getByRole("switch", { name: "Retention policy" })
+    expect(switchEl).toHaveAttribute("aria-checked", "false")
 
-    const input = screen.getByDisplayValue("0") as HTMLInputElement
-    expect(input).not.toBeDisabled()
-
-    fireEvent.change(input, { target: { value: "90" } })
+    // Enabling sets default to 90 days
+    fireEvent.click(switchEl)
     expect(onDataRetentionChange).toHaveBeenCalledWith(90)
   })
 
@@ -152,8 +148,40 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
         "Automatic cleanup is off. Local attendance records are kept until you delete them.",
       ),
     ).toBeInTheDocument()
-    const input = screen.getByDisplayValue("0") as HTMLInputElement
-    expect(input).not.toBeDisabled()
+    const switchEl = screen.getByRole("switch", { name: "Retention policy" })
+    expect(switchEl).toHaveAttribute("aria-checked", "false")
+  })
+
+  it("allows toggling off retention policy and using presets when active", () => {
+    const onDataRetentionChange = vi.fn()
+    render(
+      <Attendance
+        attendanceSettings={{
+          ...baseSettings,
+          dataRetentionDays: 90,
+        }}
+        onSpoofDetectionToggle={vi.fn()}
+        onMaxRecognitionFacesChange={vi.fn()}
+        onDataRetentionChange={onDataRetentionChange}
+        isPaired={false}
+      />,
+    )
+
+    // Preset button 30d
+    const btn30 = screen.getByRole("button", { name: "30d" })
+    fireEvent.click(btn30)
+    expect(onDataRetentionChange).toHaveBeenCalledWith(30)
+
+    // Custom input
+    const input = screen.getByLabelText("Custom retention days") as HTMLInputElement
+    fireEvent.change(input, { target: { value: "45" } })
+    expect(onDataRetentionChange).toHaveBeenCalledWith(45)
+
+    // Toggling switch off
+    const switchEl = screen.getByRole("switch", { name: "Retention policy" })
+    expect(switchEl).toHaveAttribute("aria-checked", "true")
+    fireEvent.click(switchEl)
+    expect(onDataRetentionChange).toHaveBeenCalledWith(0)
   })
 })
 

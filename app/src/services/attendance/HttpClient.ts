@@ -1,4 +1,4 @@
-import { fetchWithRetry } from "../../utils/http"
+import { fetchWithRetry } from "@/utils/http"
 import { withLocalBackendHeaders } from "../localBackendScope"
 
 export class HttpClient {

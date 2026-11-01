@@ -1,13 +1,13 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import Main from "./index"
-import { useAttendanceBootstrap } from "./hooks/useAttendanceBootstrap"
-import { useAttendanceStore, useUIStore, useCameraStore } from "./stores"
+import { useAttendanceBootstrap } from "@/components/main/hooks/useAttendanceBootstrap"
+import { useAttendanceStore, useUIStore, useCameraStore } from "@/components/main/stores"
 import { useGroupStore } from "@/components/group/stores"
 import { GroupManager } from "@/services/attendance/GroupManager"
 import { MemberManager } from "@/services/attendance/MemberManager"
 import { RecordManager } from "@/services/attendance/RecordManager"
-import { AttendancePanel } from "./components/AttendancePanel"
+import { AttendancePanel } from "@/components/main/components/AttendancePanel"
 import { createAttendanceGroup, createAttendanceMember } from "@/test/fixtures"
 import type { HttpClient } from "@/services/attendance/HttpClient"
 import type { AttendanceMember } from "@/types/recognition"
@@ -166,13 +166,17 @@ it("does not show an empty-enrollment prompt while existing enrolled members are
   )
   expect(useAttendanceStore.getState().isShellReady).toBe(true)
   expect(useAttendanceStore.getState().isPanelLoading).toBe(true)
-  expect(screen.queryByText("Add and enroll at least one member to start scanning.")).toBeNull()
+  expect(
+    screen.queryByText("Add and enroll at least one member in this group to start scanning."),
+  ).toBeNull()
   expect(screen.getByRole("button", { name: "Preparing…" })).toBeDisabled()
   await act(async () => {
     pending.resolve([enrolledA])
     await pending.promise
   })
-  expect(screen.queryByText("Add and enroll at least one member to start scanning.")).toBeNull()
+  expect(
+    screen.queryByText("Add and enroll at least one member in this group to start scanning."),
+  ).toBeNull()
   expect(screen.getByRole("button", { name: "Start scan" })).toBeEnabled()
 })
 
@@ -209,14 +213,16 @@ it("clears the previous group's eligibility and enrollment banner immediately on
   await act(async () => {
     await vi.advanceTimersByTimeAsync(120)
   })
-  expect(screen.queryByText("Add and enroll at least one member to start scanning.")).toBeNull()
+  expect(
+    screen.queryByText("Add and enroll at least one member in this group to start scanning."),
+  ).toBeNull()
   expect(screen.getByRole("button", { name: "Preparing…" })).toBeDisabled()
   await act(async () => {
     pendingB.resolve([])
     await pendingB.promise
   })
   expect(
-    screen.getByText("Add and enroll at least one member to start scanning."),
+    screen.getByText("Add and enroll at least one member in this group to start scanning."),
   ).toBeInTheDocument()
   expect(screen.getByRole("button", { name: "Start scan" })).toBeDisabled()
 })
@@ -251,7 +257,9 @@ it.each(["selected group", "all groups"])(
     }
     render(<Startup />)
     await waitFor(() => expect(useAttendanceStore.getState().panelDataError).toBeTruthy())
-    expect(screen.queryByText("Add and enroll at least one member to start scanning.")).toBeNull()
+    expect(
+      screen.queryByText("Add and enroll at least one member in this group to start scanning."),
+    ).toBeNull()
     expect(screen.getByText("Attendance data couldn't be loaded.")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Start scan" })).toBeDisabled()
     expect(useAttendanceStore.getState().isShellReady).toBe(true)
@@ -326,7 +334,9 @@ it("retries an initial member-load failure without flashing an empty prompt", as
   manager.getGroupMembers.mockReturnValue(pending.promise)
   fireEvent.click(screen.getByRole("button", { name: "Retry" }))
   await waitFor(() => expect(screen.getByRole("button", { name: "Preparing…" })).toBeDisabled())
-  expect(screen.queryByText("Add and enroll at least one member to start scanning.")).toBeNull()
+  expect(
+    screen.queryByText("Add and enroll at least one member in this group to start scanning."),
+  ).toBeNull()
   await act(async () => {
     pending.resolve([enrolledA])
     await pending.promise
@@ -341,7 +351,9 @@ it("keeps Space blocked after confirming there are no enrolled members", async (
   ])
   render(<Startup />)
   await waitFor(() =>
-    expect(screen.getByText("Enroll at least one member to start scanning.")).toBeInTheDocument(),
+    expect(
+      screen.getByText("Enroll at least one member in this group to start scanning."),
+    ).toBeInTheDocument(),
   )
   fireEvent.keyDown(window, { code: "Space" })
   expect(startCamera).not.toHaveBeenCalled()
@@ -355,7 +367,7 @@ it("auto-start stays idle when a successful member load contains no enrolled fac
   render(<Startup />)
   await waitFor(() =>
     expect(
-      screen.getByText("Add and enroll at least one member to start scanning."),
+      screen.getByText("Add and enroll at least one member in this group to start scanning."),
     ).toBeInTheDocument(),
   )
   expect(startCamera).not.toHaveBeenCalled()
@@ -404,7 +416,9 @@ it("loads All Groups before enabling scanning without inserting the virtual grou
   render(<Startup />)
   await waitFor(() => expect(manager.getMembers).toHaveBeenCalledWith({ throwOnError: true }))
   expect(screen.getByRole("button", { name: "Preparing…" })).toBeDisabled()
-  expect(screen.queryByText("Add and enroll at least one member to start scanning.")).toBeNull()
+  expect(
+    screen.queryByText("Add and enroll at least one member in this group to start scanning."),
+  ).toBeNull()
   await act(async () => {
     pending.resolve([enrolledA])
     await pending.promise
@@ -428,8 +442,8 @@ it.each(["no members", "no enrolled members"])(
     render(<Startup />)
     const message =
       mode === "no members" ?
-        "Add and enroll at least one member to start scanning."
-      : "Enroll at least one member to start scanning."
+        "Add and enroll at least one member in this group to start scanning."
+      : "Enroll at least one member in this group to start scanning."
     await waitFor(() => expect(screen.getByText(message)).toBeInTheDocument())
     await waitFor(() => expect(useAttendanceStore.getState().isPanelLoading).toBe(false))
     expect(screen.getByText(message)).toBeInTheDocument()

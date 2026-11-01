@@ -122,6 +122,26 @@ describe("ContentPanel anti-spoof prompt", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    vi.spyOn(attendanceManager, "getGroupMembers").mockResolvedValue([])
+    vi.spyOn(attendanceManager, "getGroupStats").mockResolvedValue({
+      total_members: 0,
+      present_today: 0,
+      absent_today: 0,
+      late_today: 0,
+    })
+    vi.spyOn(attendanceManager, "getRecords").mockResolvedValue([])
+    vi.spyOn(attendanceManager, "generateReport").mockResolvedValue({
+      group_id: "group-1",
+      date_range: { start: new Date(), end: new Date() },
+      members: [],
+      summary: {
+        total_working_days: 0,
+        average_attendance_rate: 0,
+        most_punctual: "",
+        most_absent: "",
+      },
+    })
     useGroupUIStore.setState({ showCreateGroupModal: false })
     useUIStore.setState({
       antiSpoofDetectionInfoDismissed: false,
@@ -329,6 +349,30 @@ describe("ContentPanel inline group name editing", () => {
     dropdownGroups: [],
     groupSections: [{ id: "overview" as const, label: "Overview", icon: () => null }],
   }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    vi.spyOn(attendanceManager, "getGroupMembers").mockResolvedValue([])
+    vi.spyOn(attendanceManager, "getGroupStats").mockResolvedValue({
+      total_members: 0,
+      present_today: 0,
+      absent_today: 0,
+      late_today: 0,
+    })
+    vi.spyOn(attendanceManager, "getRecords").mockResolvedValue([])
+    vi.spyOn(attendanceManager, "generateReport").mockResolvedValue({
+      group_id: "group-1",
+      date_range: { start: new Date(), end: new Date() },
+      members: [],
+      summary: {
+        total_working_days: 0,
+        average_attendance_rate: 0,
+        most_punctual: "",
+        most_absent: "",
+      },
+    })
+  })
 
   it("renders the group name and a pencil edit icon in header", () => {
     render(<ContentPanel {...groupProps} />)

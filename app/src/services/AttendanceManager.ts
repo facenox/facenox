@@ -10,14 +10,14 @@ import type {
   AttendanceTimeHealth,
   BulkDetectResponse,
   BulkEnrollResponse,
-} from "../types/recognition"
+} from "@/types/recognition"
 
 import { HttpClient } from "./attendance/HttpClient"
 import { GroupManager } from "./attendance/GroupManager"
 import { MemberManager, type BulkMemberCreationResponse } from "./attendance/MemberManager"
 import { RecordManager } from "./attendance/RecordManager"
 import { dispatchClockWarning } from "./clockWarnings"
-import { notifyDataChanged } from "../utils/syncNotifier"
+import { notifyDataChanged } from "@/utils/syncNotifier"
 
 export interface DesktopAuditLog {
   timestamp: string | null

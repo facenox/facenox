@@ -241,7 +241,7 @@ async def export_backup(
                     "BACKUP_EXPORTED" if export_succeeded else "BACKUP_EXPORT_FAILED"
                 ),
                 target_type="backup",
-                details=f"exported_at={get_time_authority().current_time_utc().isoformat()}",
+                details=f"Backup exported at {get_time_authority().current_time_utc().strftime('%b %d, %Y %I:%M %p')} UTC",
             )
             await repo.session.commit()
         except Exception as audit_err:
@@ -572,8 +572,12 @@ async def import_backup(
                 ),
                 target_type="backup",
                 details=(
-                    f"overwrite={payload.attendance.overwrite_existing}, "
-                    f"imported_at={get_time_authority().current_time_utc().isoformat()}"
+                    f"Backup imported at {get_time_authority().current_time_utc().strftime('%b %d, %Y %I:%M %p')} UTC"
+                    + (
+                        ", existing records overwritten"
+                        if payload.attendance.overwrite_existing
+                        else ", existing records kept"
+                    )
                 ),
             )
             await repo.session.commit()

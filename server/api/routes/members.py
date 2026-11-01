@@ -124,8 +124,11 @@ async def add_member(
                     detail=f"Person ID '{member_data.person_id}' already exists.",
                 )
 
+        group_name = getattr(group, "name", member_data.group_id)
+
         added_member = await repo.add_member(db_member_data)
 
+        member_name = getattr(added_member, "name", member_data.name)
         await repo.add_audit_log(
             action="MEMBER_CREATED",
             target_type="member",
@@ -134,7 +137,7 @@ async def add_member(
                 if hasattr(added_member, "person_id")
                 else db_member_data.get("person_id")
             ),
-            details=f"Member '{added_member.name}' added to group {added_member.group_id}",
+            details=f"Member '{member_name}' added to group {group_name}",
         )
 
         await repo.session.commit()
@@ -172,10 +175,12 @@ async def add_members_bulk(
     try:
         # Check if groups exist
         group_ids = list(set(m.group_id for m in bulk_data.members))
+        group_names_by_id = {}
         for gid in group_ids:
             group = await repo.get_group(gid)
             if not group:
                 raise HTTPException(status_code=404, detail=f"Group {gid} not found")
+            group_names_by_id[gid] = getattr(group, "name", gid)
 
         async def persist_batch():
             # Rebuild dictionaries after rollback; the repository assigns missing IDs.
@@ -205,11 +210,15 @@ async def add_members_bulk(
                     member = res["member"]
                     if not res.get("replayed"):
                         changed = True
+                        member_name = getattr(member, "name", "")
+                        group_name = group_names_by_id.get(
+                            getattr(member, "group_id", ""), ""
+                        )
                         await repo.add_audit_log(
                             action="MEMBER_CREATED",
                             target_type="member",
                             target_id=member.person_id,
-                            details=f"Bulk add: Member '{member.name}' added to group {member.group_id}",
+                            details=f"Bulk add: Member '{member_name}' added to group {group_name}",
                         )
                     successful_members.append(member)
                 else:
@@ -345,6 +354,10 @@ async def remove_member(
 ):
     """Remove (deactivate) an attendance member"""
     try:
+        member = await repo.get_member(person_id)
+        if not member:
+            raise HTTPException(status_code=404, detail="Member not found")
+
         success = await repo.remove_member(person_id)
         if not success:
             raise HTTPException(status_code=404, detail="Member not found")
@@ -353,6 +366,7 @@ async def remove_member(
             action="MEMBER_DELETED",
             target_type="member",
             target_id=person_id,
+            details=f"Member '{member.name}' removed",
         )
 
         await repo.session.commit()

@@ -27,7 +27,7 @@ import { useGroupUIStore } from "@/components/group/stores"
 import { useUIStore } from "@/components/main/stores"
 import { attendanceManager } from "@/services"
 import { Tooltip, Dropdown } from "@/components/shared"
-import { isOfficialCloudUrl } from "../../services/syncDefaults"
+import { isOfficialCloudUrl } from "@/services/syncDefaults"
 import type {
   QuickSettings,
   AttendanceSettings,

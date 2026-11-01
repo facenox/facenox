@@ -22,7 +22,7 @@ import {
   DEFAULT_SYNC_INTERVAL_MINUTES,
   OFFICIAL_REMOTE_BASE_URL,
   isOfficialCloudUrl,
-} from "../../../services/syncDefaults"
+} from "@/services/syncDefaults"
 import { isOfflineError, parseSyncError } from "./syncErrorUtils.js"
 
 export type RemoteSyncConfig = {

@@ -8,7 +8,7 @@ import {
   createAttendanceRecord,
 } from "@/test/fixtures"
 import { renderWithProviders } from "@/test/utils/renderWithProviders"
-import { attendanceDateTimeToDate, getAttendanceDateString } from "@/utils/attendanceTime"
+import { attendanceDateTimeToDate } from "@/utils/attendanceTime"
 
 vi.mock("@/components/shared", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -155,7 +155,8 @@ describe("AttendancePanel", () => {
 
   it("shows captured attendance time after the computer timezone changes", () => {
     const group = createAttendanceGroup()
-    const attendanceDate = getAttendanceDateString(new Date(), "Asia/Manila")
+    const now = new Date()
+    const attendanceDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
     useAttendanceStore.setState({
       attendanceTimezone: "Asia/Manila",
       attendanceGroups: [group],
