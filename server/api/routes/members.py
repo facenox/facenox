@@ -211,7 +211,9 @@ async def add_members_bulk(
                     if not res.get("replayed"):
                         changed = True
                         member_name = getattr(member, "name", "")
-                        group_name = group_names_by_id.get(getattr(member, "group_id", ""), "")
+                        group_name = group_names_by_id.get(
+                            getattr(member, "group_id", ""), ""
+                        )
                         await repo.add_audit_log(
                             action="MEMBER_CREATED",
                             target_type="member",
