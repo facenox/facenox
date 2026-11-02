@@ -1,9 +1,39 @@
+import type { HTMLAttributes, ReactNode } from "react"
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { AddMember } from "./AddMember"
 import { attendanceManager, backendService } from "@/services"
 import { createAttendanceGroup, createAttendanceMember } from "@/test/fixtures"
 import { useGroupStore } from "@/components/group/stores"
+
+const animation = vi.hoisted(() => ({ holdPreviewMount: false }))
+
+// Motion captures requestAnimationFrame at module initialization, before this
+// suite installs fake timers. Keep these lifecycle tests off that real clock.
+// The gate below still exercises a preview mounted after enrollment opens.
+vi.mock("framer-motion", async () => {
+  const { forwardRef, isValidElement } = await import("react")
+  return {
+    AnimatePresence: ({ children }: { children: ReactNode }) =>
+      animation.holdPreviewMount && isValidElement(children) && children.key === "expanded" ?
+        null
+      : children,
+    motion: {
+      div: forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement> & Record<string, unknown>>(
+        function MotionDiv({ children, ...props }, ref) {
+          for (const key of ["initial", "animate", "exit", "transition", "layout", "layoutId"]) {
+            delete props[key]
+          }
+          return (
+            <div {...props} ref={ref}>
+              {children}
+            </div>
+          )
+        },
+      ),
+    },
+  }
+})
 
 vi.mock("@/services", () => ({
   attendanceManager: {
@@ -54,6 +84,7 @@ const faceDetectionResult = {
 } as Awaited<ReturnType<typeof backendService.detectFaces>>
 
 beforeEach(() => {
+  animation.holdPreviewMount = false
   vi.useFakeTimers()
   vi.spyOn(console, "error").mockImplementation(() => {})
   vi.spyOn(console, "warn").mockImplementation(() => {})
@@ -500,12 +531,19 @@ it("keeps the same camera while typing and resumes a paused preview without reco
   expect(track.stop).not.toHaveBeenCalled()
 })
 
-it("waits for the animated preview, stays stopped after capture, and restarts on Retake", async () => {
-  const { getUserMedia, track } = setup()
+it("waits for a delayed preview mount, stays stopped after capture, and restarts on Retake", async () => {
+  animation.holdPreviewMount = true
+  const { getUserMedia, track, container, props, rerender } = setup()
   fireEvent.change(screen.getByPlaceholderText("Name"), { target: { value: "Alice" } })
   await advance()
   expect(getUserMedia).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole("button", { name: "+ Enroll now" }))
+  await advance()
+  expect(container.querySelector("video")).toBeNull()
+  expect(getUserMedia).not.toHaveBeenCalled()
+  expect(console.error).not.toHaveBeenCalled()
+  animation.holdPreviewMount = false
+  rerender(<AddMember {...props} />)
   await advance()
   expect(getUserMedia).toHaveBeenCalledTimes(1)
   await act(async () => {
@@ -523,6 +561,20 @@ it("waits for the animated preview, stays stopped after capture, and restarts on
   expect(getUserMedia).toHaveBeenCalledTimes(2)
   expect(screen.getByRole("button", { name: "Capture photo" })).toBeEnabled()
   expect(screen.getByRole("button", { name: "Add member" })).toBeDisabled()
+  expect(console.error).not.toHaveBeenCalled()
+})
+
+it("does not request a camera when the modal closes before the delayed preview mounts", async () => {
+  animation.holdPreviewMount = true
+  const { getUserMedia, props, rerender } = setup()
+  fireEvent.click(screen.getByRole("button", { name: "+ Enroll now" }))
+  await advance()
+  expect(getUserMedia).not.toHaveBeenCalled()
+  rerender(<AddMember {...props} isOpen={false} />)
+  animation.holdPreviewMount = false
+  rerender(<AddMember {...props} isOpen={false} />)
+  await advance(5000)
+  expect(getUserMedia).not.toHaveBeenCalled()
   expect(console.error).not.toHaveBeenCalled()
 })
 
