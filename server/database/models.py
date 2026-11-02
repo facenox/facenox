@@ -244,6 +244,27 @@ class AttendanceSession(Base, SyncMixin):
     group: Mapped["AttendanceGroup"] = relationship(back_populates="sessions")
     applied_rule: Mapped[Optional["AttendanceGroupRule"]] = relationship()
 
+    @property
+    def applied_schedule(self):
+        # Only serialize an eagerly loaded, matching historical rule. Never
+        # substitute today's group settings or trigger async lazy loading.
+        rule = self.__dict__.get("applied_rule")
+        if (
+            rule is None
+            or rule.id != self.applied_rule_id
+            or rule.group_id != self.group_id
+            or rule.organization_id != self.organization_id
+        ):
+            return None
+        mode = rule.attendance_mode
+        if mode == "attendance" and rule.track_checkout:
+            mode = "work_hours"
+        return {
+            "class_start_time": rule.class_start_time,
+            "class_end_time": rule.class_end_time,
+            "attendance_mode": mode,
+        }
+
     __table_args__ = (
         Index("ix_session_group_id", "group_id"),
         Index("ix_session_person_id", "person_id"),

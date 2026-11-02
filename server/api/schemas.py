@@ -259,12 +259,19 @@ class AttendanceRecordVoidRequest(BaseModel):
 
 
 # Session Models
+class AppliedScheduleResponse(BaseModel):
+    class_start_time: str
+    class_end_time: Optional[str] = None
+    attendance_mode: str
+
+
 class AttendanceSessionResponse(CapturedAttendanceResponse):
     id: str
     person_id: str
     member_id: str
     group_id: str
     applied_rule_id: Optional[str] = None
+    applied_schedule: Optional[AppliedScheduleResponse] = None
     date: str  # YYYY-MM-DD format
     visit_number: int = 1
     check_in_time: Optional[datetime]

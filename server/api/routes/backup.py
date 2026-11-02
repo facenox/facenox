@@ -9,6 +9,7 @@ import ulid
 from fastapi import APIRouter, Body, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from api.deps import get_repository
 from database.repository import AttendanceRepository
@@ -172,7 +173,9 @@ async def export_backup(
         records_orm = records_result.scalars().all()
 
         sessions_query = _scope_query(
-            select(SessionModel), SessionModel, repo.organization_id
+            select(SessionModel).options(selectinload(SessionModel.applied_rule)),
+            SessionModel,
+            repo.organization_id,
         )
         sessions_result = await repo.session.execute(
             sessions_query.order_by(SessionModel.date.desc())

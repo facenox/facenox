@@ -2,7 +2,7 @@ import type { RowData, ColumnKey } from "@/components/group/sections/reports/typ
 import { parseLocalDate, generateDateRange, createDisplayNameMap, formatDuration } from "@/utils"
 import { attendanceManager } from "@/services/AttendanceManager"
 import type { AttendanceGroup, AttendanceSession } from "@/types/recognition"
-import { getDepartureStatus } from "@/shared/departureStatus"
+import { DEPARTURE_LABELS, getSessionDepartureStatus } from "@/shared/departureStatus"
 import { formatAttendanceTime, getAttendanceDateString } from "@/utils/attendanceTime"
 
 export function exportReportToCSV(
@@ -22,7 +22,8 @@ export function exportReportToCSV(
     const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, "_").trim()
 
     const cols = allColumns.filter((c) => visibleColumns.includes(c.key))
-    const header = cols.map((c) => c.label)
+    // CSV lateness remains numeric minutes, unlike the table's formatted duration.
+    const header = cols.map((c) => (c.key === "late_minutes" ? "Late (mins)" : c.label))
     const rows: string[][] = []
     Object.values(groupedRows).forEach((groupArr) => {
       groupArr.forEach((r) => {
@@ -31,6 +32,10 @@ export function exportReportToCSV(
 
           if (c.key === "total_hours" && typeof v === "number") {
             return formatDuration(Math.round(v * 60))
+          }
+
+          if (c.key === "departure_status") {
+            return r.departure_status ? DEPARTURE_LABELS[r.departure_status] : ""
           }
 
           if (c.key === "date" && typeof v === "string") {
@@ -275,18 +280,7 @@ async function fetchAllGroupsProcessedData(
 
           const lateMinutesStr =
             exportSession?.late_minutes ? String(exportSession.late_minutes) : ""
-          const departureStatus =
-            group.settings?.attendance_mode === "work_hours" ?
-              getDepartureStatus(
-                date,
-                exportSession?.check_in_time,
-                exportSession?.check_out_time,
-                group.settings.class_end_time || "17:00",
-                exportSession?.check_out_time_timezone ||
-                  exportSession?.check_in_time_timezone ||
-                  attendanceTimeZone,
-              )
-            : undefined
+          const departureStatus = getSessionDepartureStatus(exportSession, attendanceTimeZone)
           const notesStr = exportSession?.notes || ""
 
           rows.push([
@@ -298,7 +292,7 @@ async function fetchAllGroupsProcessedData(
             status,
             timeIn,
             timeOut,
-            departureStatus ? departureStatus[0].toUpperCase() + departureStatus.slice(1) : "",
+            departureStatus ? DEPARTURE_LABELS[departureStatus] : "",
             totalHoursStr,
             lateMinutesStr,
             notesStr,

@@ -16,6 +16,7 @@ import { parseLocalDate, formatDuration } from "@/utils"
 import { Tooltip, Dropdown } from "@/components/shared"
 import { EmptyState } from "@/components/group/shared"
 import { formatAttendanceTime } from "@/utils/attendanceTime"
+import { DEPARTURE_LABELS } from "@/shared/departureStatus"
 
 interface ReportTableProps {
   groupedRows: Record<string, RowData[]>
@@ -38,10 +39,10 @@ const COL_WIDTHS: Record<ColumnKey, string> = {
   status: "w-[100px] min-w-[100px]",
   check_in_time: "w-[120px] min-w-[120px]",
   check_out_time: "w-[120px] min-w-[120px]",
-  departure_status: "w-[110px] min-w-[110px]",
+  departure_status: "w-[170px] min-w-[170px]",
   visit_number: "w-[80px] min-w-[80px]",
   total_hours: "w-[100px] min-w-[100px]",
-  late_minutes: "w-[100px] min-w-[100px]",
+  late_minutes: "w-[120px] min-w-[120px]",
   is_late: "w-[100px] min-w-[100px]",
   notes: "w-[300px] min-w-[250px]",
 }
@@ -64,6 +65,10 @@ function alignClass(align?: string) {
   return "text-left"
 }
 
+function MissingValue() {
+  return <span className="font-normal text-white/35">-</span>
+}
+
 function CellContent({
   row,
   columnKey,
@@ -77,31 +82,27 @@ function CellContent({
 
   if (columnKey === "status") {
     const s = STATUS_STYLE[row.status] || STATUS_STYLE.no_records
-    return (
-      <div className={`inline-flex items-center text-[11px] font-semibold ${s.color}`}>
-        {s.label}
-      </div>
-    )
+    return <div className={`inline-flex items-center font-semibold ${s.color}`}>{s.label}</div>
   }
 
   if (columnKey === "is_late") {
     return row.is_late ?
-        <span className="text-[11px] font-semibold text-orange-400/80">Late</span>
-      : <span className="text-white/10">-</span>
+        <span className="font-semibold text-orange-400">Late</span>
+      : <MissingValue />
   }
 
   if (columnKey === "check_in_time") {
-    if (!row.check_in_time) return <span className="text-white/10">-</span>
+    if (!row.check_in_time) return <MissingValue />
     return (
       <div className="flex flex-col">
-        <span className="font-medium text-white/90">
+        <span className="tabular-nums">
           {formatAttendanceTime(
             row.check_in_time,
             row.session?.check_in_time_timezone || attendanceTimeZone,
           )}
         </span>
         {row.is_late && row.late_minutes > 0 && (
-          <span className="mt-0.5 text-[10px] font-semibold text-orange-500/75">
+          <span className="mt-0.5 text-[11px] text-orange-400/90 tabular-nums">
             {formatDuration(row.late_minutes)} late
           </span>
         )}
@@ -111,52 +112,47 @@ function CellContent({
 
   if (columnKey === "visit_number") {
     return row.visit_number ?
-        <span className="font-medium text-white/70">{row.visit_number}</span>
-      : <span className="text-white/10">-</span>
+        <span className="tabular-nums">{row.visit_number}</span>
+      : <MissingValue />
   }
 
   if (columnKey === "check_out_time") {
     return row.check_out_time ?
         <div className="flex flex-col">
-          <span className="font-medium text-white/90">
+          <span className="tabular-nums">
             {formatAttendanceTime(
               row.check_out_time,
               row.session?.check_out_time_timezone || attendanceTimeZone,
             )}
           </span>
         </div>
-      : <span className="text-white/10">-</span>
+      : <MissingValue />
   }
 
   if (columnKey === "departure_status") {
-    if (row.departure_status === "undertime") {
-      return <span className="font-medium text-orange-400/80">Undertime</span>
-    }
-    if (row.departure_status === "overtime") {
-      return <span className="font-medium text-cyan-400/80">Overtime</span>
-    }
-    return <span className="text-white/10">-</span>
+    if (!row.departure_status) return <MissingValue />
+    const color =
+      row.departure_status === "early" ? "text-orange-400/80"
+      : row.departure_status === "after_schedule" ? "text-cyan-400/80"
+      : "text-white/70"
+    return <span className={color}>{DEPARTURE_LABELS[row.departure_status]}</span>
   }
 
   if (columnKey === "total_hours") {
-    if (!row.total_hours) return <span className="text-white/10">-</span>
+    if (row.total_hours == null) return <MissingValue />
     const totalMins = Math.round(row.total_hours * 60)
-    return (
-      <span className="font-medium whitespace-nowrap text-cyan-400/80">
-        {formatDuration(totalMins)}
-      </span>
-    )
+    return <span className="whitespace-nowrap tabular-nums">{formatDuration(totalMins)}</span>
   }
 
   if (columnKey === "late_minutes") {
     return row.late_minutes > 0 ?
-        <span className="font-medium text-orange-400/80">{formatDuration(row.late_minutes)}</span>
-      : <span className="text-white/10">-</span>
+        <span className="text-orange-400/80 tabular-nums">{formatDuration(row.late_minutes)}</span>
+      : <MissingValue />
   }
 
   if (columnKey === "date") {
     return (
-      <span className="font-medium text-white/65">
+      <span className="text-white/70 tabular-nums">
         {parseLocalDate(row.date).toLocaleDateString(undefined, {
           month: "short",
           day: "numeric",
@@ -169,30 +165,30 @@ function CellContent({
   if (columnKey === "name") {
     return (
       <Tooltip content={val as string} position="top">
-        <span className="block truncate font-semibold text-white">{val as string}</span>
+        <span className="block truncate font-semibold text-white/90">{val as string}</span>
       </Tooltip>
     )
   }
 
   if (columnKey === "notes") {
-    if (!val) return <span className="text-white/10">-</span>
+    if (!val) return <MissingValue />
     const text = val as string
-    const hasDivider = text.includes(" — ")
-    if (hasDivider) {
-      const [reason, note] = text.split(" — ")
+    const divider = " — "
+    const dividerIndex = text.indexOf(divider)
+    if (dividerIndex >= 0) {
+      const reason = text.slice(0, dividerIndex)
+      const note = text.slice(dividerIndex + divider.length)
       return (
         <div className="flex max-w-[280px] flex-col gap-0.5 leading-tight">
-          <span className="text-[10px] font-bold tracking-wider text-cyan-400/80 uppercase">
+          <span className="text-[11px] font-medium tracking-wide text-white/55 uppercase">
             {reason}
           </span>
-          <span className="text-[12px] font-medium break-words whitespace-normal text-white/55">
-            {note}
-          </span>
+          <span className="font-normal break-words whitespace-normal text-white/70">{note}</span>
         </div>
       )
     }
     return (
-      <span className="max-w-[280px] text-[12px] leading-relaxed font-medium break-words whitespace-normal text-white/60">
+      <span className="block max-w-[280px] leading-relaxed font-normal break-words whitespace-normal text-white/70">
         {text}
       </span>
     )
@@ -450,25 +446,35 @@ export function ReportTable({
             transition={{ duration: 0.15, ease: "easeOut" }}
             className="flex flex-1 flex-col overflow-hidden">
             <div
-              className="custom-scroll hover-scrollbar reports-scroll w-full max-w-full flex-1 overflow-x-auto overflow-y-auto px-10 pb-10"
+              className="custom-scroll hover-scrollbar reports-scroll mx-10 min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-auto pb-10"
               style={{
                 maskImage:
                   "linear-gradient(to bottom, black calc(100% - 50px), transparent calc(100% - 10px), black calc(100% - 10px), black 100%)",
                 WebkitMaskImage:
                   "linear-gradient(to bottom, black calc(100% - 50px), transparent calc(100% - 10px), black calc(100% - 10px), black 100%)",
               }}>
-              <table className="w-full min-w-[900px] table-fixed border-separate border-spacing-0 text-left">
+              <table className="w-full min-w-[900px] table-fixed border-separate border-spacing-0 text-left text-[13px] leading-5 font-medium text-white/85">
                 <thead>
                   <tr>
                     {visibleColDefs.map((c) => (
                       <th
                         key={c.key}
-                        className={`sticky top-0 z-10 border-b border-white/6 bg-[#0f1011] px-4 py-3 text-[11px] font-medium text-white/55 ${alignClass(c.align)} ${COL_WIDTHS[c.key] || ""}`}>
-                        {c.label}
+                        className={`sticky top-0 border-b border-white/6 bg-[#0f1011] px-4 py-3 text-xs font-medium text-white/55 ${alignClass(c.align)} ${COL_WIDTHS[c.key] || ""} ${c.key === "name" ? "left-0 z-30 shadow-[1px_0_0_0_rgba(255,255,255,0.06)]" : "z-20"}`}>
+                        {c.key === "departure_status" ?
+                          <Tooltip content="Compares time-out with the session's recorded schedule at minute precision. This does not measure total hours worked.">
+                            <span tabIndex={0} className="cursor-help">
+                              {c.label}
+                            </span>
+                          </Tooltip>
+                        : c.label}
                       </th>
                     ))}
                     {onEditRow && (
-                      <th className="sticky top-0 z-10 w-14 border-b border-white/6 bg-[#0f1011]" />
+                      <th
+                        scope="col"
+                        className="sticky top-0 right-0 z-30 w-14 border-b border-white/6 bg-[#0f1011] shadow-[-1px_0_0_0_rgba(255,255,255,0.06)]">
+                        <span className="sr-only">Actions</span>
+                      </th>
                     )}
                   </tr>
                 </thead>
@@ -481,7 +487,7 @@ export function ReportTable({
                             colSpan={colCount}
                             className="border-b border-white/6 bg-white/[0.03] px-4 py-3">
                             <div className="flex items-center gap-3">
-                              <span className="text-xs font-bold tracking-wide text-cyan-100/90">
+                              <span className="text-xs font-semibold tracking-wide text-white/80">
                                 {item.label}
                               </span>
                               <span className="inline-flex items-center rounded-lg border border-white/6 bg-white/[0.04] px-1.5 py-0.5 text-[11px] font-medium text-white/55">
@@ -494,15 +500,28 @@ export function ReportTable({
                     }
 
                     const row = item.data
+                    const correctionDate = parseLocalDate(row.date).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                    const visitLabel =
+                      row.visit_number && row.visit_number > 1 ? `, visit ${row.visit_number}` : ""
+                    const correctionLabel = `Correct attendance for ${row.name} on ${correctionDate}${visitLabel}`
 
                     return (
                       <tr
                         key={item.key}
-                        className="group cursor-default transition-all duration-200 hover:bg-cyan-500/3">
+                        className="group cursor-default bg-[#0f1011] transition-colors duration-200 focus-within:bg-[#101719] hover:bg-[#101719]">
                         {visibleColDefs.map((c, cIdx) => (
                           <td
                             key={c.key}
-                            className={`border-b border-white/5 px-4 py-3.5 ${c.key !== "notes" && c.key !== "name" ? "whitespace-nowrap" : ""} ${alignClass(c.align)} ${COL_WIDTHS[c.key] || ""} ${cIdx === 0 ? "relative" : ""}`}>
+                            className={`border-b border-white/5 px-4 py-3.5 ${c.key !== "notes" && c.key !== "name" ? "whitespace-nowrap" : ""} ${alignClass(c.align)} ${COL_WIDTHS[c.key] || ""} ${
+                              c.key === "name" ?
+                                "sticky left-0 z-10 bg-inherit shadow-[1px_0_0_0_rgba(255,255,255,0.06)]"
+                              : cIdx === 0 ? "relative"
+                              : ""
+                            }`}>
                             {cIdx === 0 && (
                               <div className="absolute top-0 bottom-0 left-0 w-0.5 bg-cyan-500 opacity-0 transition-opacity group-hover:opacity-100" />
                             )}
@@ -514,14 +533,14 @@ export function ReportTable({
                           </td>
                         ))}
                         {onEditRow && (
-                          <td className="w-14 border-b border-white/5 px-3 py-3.5 text-right whitespace-nowrap">
-                            <Tooltip content="Edit record">
+                          <td className="sticky right-0 z-10 w-14 border-b border-white/5 bg-inherit px-3 py-3.5 text-center whitespace-nowrap shadow-[-1px_0_0_0_rgba(255,255,255,0.06)]">
+                            <Tooltip content="Correct attendance">
                               <button
                                 type="button"
-                                aria-label="Edit record"
+                                aria-label={correctionLabel}
                                 onClick={() => onEditRow(row)}
-                                className="p-1.5 text-white/20 opacity-0 transition-all group-hover:opacity-100 hover:text-white focus-visible:opacity-100">
-                                <Pencil className="size-3" />
+                                className="inline-flex size-8 items-center justify-center rounded-md text-white/55 transition-colors hover:bg-white/8 hover:text-white focus-visible:bg-white/8 focus-visible:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400">
+                                <Pencil className="size-3.5" aria-hidden="true" />
                               </button>
                             </Tooltip>
                           </td>

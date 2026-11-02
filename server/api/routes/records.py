@@ -407,7 +407,9 @@ async def update_session(
         await repo.session.commit()
         await repo.session.refresh(session_obj)
 
-        return session_obj
+        return await repo.get_session(
+            person_id, date, visit_number=payload.visit_number
+        )
 
     except HTTPException:
         raise

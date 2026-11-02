@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 import logging
 from sqlalchemy import select, desc, func, update, delete, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 import ulid
 from member_creation import (
     member_creation_id,
@@ -902,8 +903,12 @@ class AttendanceRepository:
     async def get_session(
         self, person_id: str, date: str, visit_number: Optional[int] = None
     ) -> Optional[AttendanceSession]:
-        query = select(AttendanceSession).where(
-            AttendanceSession.person_id == person_id, AttendanceSession.date == date
+        query = (
+            select(AttendanceSession)
+            .options(selectinload(AttendanceSession.applied_rule))
+            .where(
+                AttendanceSession.person_id == person_id, AttendanceSession.date == date
+            )
         )
         if visit_number is not None:
             query = query.where(AttendanceSession.visit_number == visit_number)
@@ -917,6 +922,7 @@ class AttendanceRepository:
     ) -> Optional[AttendanceSession]:
         query = (
             select(AttendanceSession)
+            .options(selectinload(AttendanceSession.applied_rule))
             .where(
                 AttendanceSession.person_id == person_id,
                 AttendanceSession.date == date,
@@ -933,7 +939,9 @@ class AttendanceRepository:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
     ) -> List[AttendanceSession]:
-        query = select(AttendanceSession)
+        query = select(AttendanceSession).options(
+            selectinload(AttendanceSession.applied_rule)
+        )
         query = self._apply_org_scope(query, AttendanceSession)
 
         if group_id and group_id.lower() != "all":

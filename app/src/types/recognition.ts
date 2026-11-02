@@ -185,6 +185,11 @@ export interface AttendanceSession {
   member_id: string
   group_id: string
   applied_rule_id?: string
+  applied_schedule?: {
+    class_start_time: string
+    class_end_time?: string | null
+    attendance_mode: "attendance" | "work_hours" | "visits"
+  } | null
   date: string
   check_in_time?: Date
   check_out_time?: Date

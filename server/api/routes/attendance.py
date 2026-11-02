@@ -126,7 +126,9 @@ async def export_attendance_data(
         )
         records_orm = records_result.scalars().all()
 
-        sessions_query = select(AttendanceSession)
+        sessions_query = select(AttendanceSession).options(
+            selectinload(AttendanceSession.applied_rule)
+        )
         sessions_query = repo._apply_org_scope(sessions_query, AttendanceSession)
         if since_dt:
             sessions_query = sessions_query.where(

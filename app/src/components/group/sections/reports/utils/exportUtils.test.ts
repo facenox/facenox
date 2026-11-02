@@ -75,6 +75,79 @@ describe("exportUtils", () => {
     removeSpy.mockRestore()
   })
 
+  it("keeps exported lateness numeric and explicitly labeled as minutes", async () => {
+    let exportedBlob: Blob | undefined
+    vi.mocked(global.URL.createObjectURL).mockImplementation((blob) => {
+      exportedBlob = blob as Blob
+      return "mock-url"
+    })
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+    const row: RowData = {
+      person_id: "p-late",
+      name: "Alice",
+      date: "2026-11-02",
+      status: "late",
+      is_late: true,
+      late_minutes: 90,
+      total_hours: 0,
+      notes: "Manual correction — Complete note — Extra detail",
+      session: null,
+    }
+    const result = exportReportToCSV(
+      { __all__: [row] },
+      ["late_minutes", "total_hours", "notes"],
+      [
+        { key: "late_minutes", label: "Late duration" },
+        { key: "total_hours", label: "Total hours" },
+        { key: "notes", label: "Notes" },
+      ],
+      "Group",
+      "2026-11-02",
+      "2026-11-02",
+    )
+    expect(result.success).toBe(true)
+    const csv = await exportedBlob?.text()
+    expect(csv).toContain('"Late (mins)","Total hours","Notes"')
+    expect(csv).toContain('"90","0m","Manual correction — Complete note — Extra detail"')
+  })
+
+  it.each([
+    ["early", "Left early"],
+    ["on_schedule", "On schedule"],
+    ["after_schedule", "Left after schedule"],
+  ] as const)(
+    "exports the displayed label for a %s departure in the current view",
+    async (departure_status, label) => {
+      let exportedBlob: Blob | undefined
+      vi.mocked(global.URL.createObjectURL).mockImplementation((blob) => {
+        exportedBlob = blob as Blob
+        return "mock-url"
+      })
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+      const row: RowData = {
+        person_id: "p",
+        name: "Alice",
+        date: "2026-11-02",
+        status: "present",
+        is_late: false,
+        late_minutes: 0,
+        departure_status,
+        notes: "",
+        session: null,
+      }
+      const result = exportReportToCSV(
+        { __all__: [row] },
+        ["departure_status"],
+        [{ key: "departure_status", label: "Departure" }],
+        "Group",
+        row.date,
+        row.date,
+      )
+      expect(result.success).toBe(true)
+      expect(await exportedBlob?.text()).toBe(`"Departure"\n"${label}"`)
+    },
+  )
+
   it("exports captured attendance time instead of browser-local time", async () => {
     let exportedBlob: Blob | undefined
     vi.mocked(global.URL.createObjectURL).mockImplementation((blob) => {
@@ -466,6 +539,49 @@ describe("report export regression coverage", () => {
       Visit: "2",
       "Late (mins)": "30",
       Notes: 'Second, "quoted" visit note',
+    })
+  })
+
+  describe.each(exporters)("%s historical departure labels", (format, exporter) => {
+    it.each([
+      ["08:59:59", "Left early"],
+      ["09:00:59", "On schedule"],
+      ["09:01:00", "Left after schedule"],
+    ])(
+      "exports a %s checkout as %s using the session's original schedule",
+      async (checkout, label) => {
+        group.settings = {
+          attendance_mode: "work_hours",
+          class_start_time: "07:00",
+          class_end_time: "17:00",
+        }
+        vi.mocked(attendanceManager.getSessions).mockResolvedValue([
+          {
+            ...visits[0],
+            check_out_time: new Date(`${date}T${checkout}Z`),
+            applied_schedule: {
+              class_start_time: "08:00",
+              class_end_time: "09:00",
+              attendance_mode: "work_hours",
+            },
+          },
+        ])
+        expect((await exporter([group], date, date, "UTC")).success).toBe(true)
+        expect((await exportedRows(format))[0].Departure).toBe(label)
+      },
+    )
+
+    it("does not invent a departure label when the historical schedule is unavailable", async () => {
+      group.settings = {
+        attendance_mode: "work_hours",
+        class_start_time: "08:00",
+        class_end_time: "17:00",
+      }
+      vi.mocked(attendanceManager.getSessions).mockResolvedValue([
+        { ...visits[0], applied_schedule: null },
+      ])
+      expect((await exporter([group], date, date, "UTC")).success).toBe(true)
+      expect((await exportedRows(format))[0].Departure).toBe("")
     })
   })
 

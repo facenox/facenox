@@ -13,7 +13,7 @@ import type {
   GroupByKey,
   ReportStatusFilter,
 } from "@/components/group/sections/reports/types"
-import { getDepartureStatus } from "@/shared/departureStatus"
+import { getSessionDepartureStatus } from "@/shared/departureStatus"
 
 export function useReportTransform(
   _group: AttendanceGroup,
@@ -111,18 +111,7 @@ export function useReportTransform(
           date: date,
           check_in_time: finalSession?.check_in_time,
           check_out_time: finalSession?.check_out_time,
-          departure_status:
-            attendanceMode === "work_hours" ?
-              getDepartureStatus(
-                date,
-                finalSession?.check_in_time,
-                finalSession?.check_out_time,
-                _group.settings?.class_end_time || "17:00",
-                finalSession?.check_out_time_timezone ||
-                  finalSession?.check_in_time_timezone ||
-                  attendanceTimeZone,
-              )
-            : undefined,
+          departure_status: getSessionDepartureStatus(finalSession, attendanceTimeZone),
           visit_number: finalSession?.visit_number || 1,
           total_hours: finalSession?.total_hours,
           status: status,
@@ -141,7 +130,6 @@ export function useReportTransform(
     displayNameMap,
     startDateStr,
     endDateStr,
-    _group.settings?.class_end_time,
     attendanceTimeZone,
   ])
 
@@ -249,7 +237,7 @@ const ALL_COLUMNS: readonly ReportColumn[] = [
   { key: "check_out_time", label: "Time out", align: "center" },
   { key: "departure_status", label: "Departure", align: "center" },
   { key: "total_hours", label: "Total hours", align: "center" },
-  { key: "late_minutes", label: "Late (mins)", align: "center" },
+  { key: "late_minutes", label: "Late duration", align: "center" },
   { key: "notes", label: "Notes", align: "left" },
 ] as const
 

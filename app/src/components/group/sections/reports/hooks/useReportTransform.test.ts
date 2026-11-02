@@ -155,5 +155,8 @@ describe("useReportTransform", () => {
 
     expect(result.current.daysTracked).toBe(12)
     expect(result.current.allColumns).toHaveLength(6)
+    expect(result.current.allColumns.find((column) => column.key === "late_minutes")?.label).toBe(
+      "Late duration",
+    )
   })
 })
