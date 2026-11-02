@@ -10,7 +10,6 @@ from api.deps import get_repository
 from database.repository import AttendanceRepository
 from services.attendance_service import AttendanceService
 from services.time_authority_service import get_time_authority
-from time_utils import local_day_bounds
 
 logger = logging.getLogger(__name__)
 
@@ -83,9 +82,10 @@ async def get_group_stats(
                     break
 
         if needs_recompute:
-            start_of_day, end_of_day = local_day_bounds(target_date)
-            records = await repo.get_records(
-                group_id=group_id, start_date=start_of_day, end_date=end_of_day
+            records = await service.records_for_attendance_date(
+                group_id,
+                target_date,
+                rule_history=rule_history,
             )
 
             sessions = service.compute_sessions_from_records(

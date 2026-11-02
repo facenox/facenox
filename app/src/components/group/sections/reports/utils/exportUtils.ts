@@ -192,10 +192,16 @@ async function fetchAllGroupsProcessedData(
       sessionsMap.set(key, [...(sessionsMap.get(key) || []), s])
     })
 
+    const includeVisitColumn =
+      group.settings?.attendance_mode === "visits" ||
+      sessions.some(
+        (session) =>
+          (session.visit_number || 1) > 1 || session.applied_schedule?.attendance_mode === "visits",
+      )
     const header = [
       "Name",
       "Date",
-      ...(group.settings?.attendance_mode === "visits" ? ["Visit"] : []),
+      ...(includeVisitColumn ? ["Visit"] : []),
       "Status",
       "Time in",
       "Time out",
@@ -228,12 +234,7 @@ async function fetchAllGroupsProcessedData(
 
         const sessionKey = `${member.person_id}_${date}`
         const sessionsForDate = shouldShowNoRecords ? [] : sessionsMap.get(sessionKey) || []
-        const finalSession = sessionsForDate[0] || null
-
-        const sessionsToExport =
-          group.settings?.attendance_mode === "visits" && sessionsForDate.length > 0 ?
-            sessionsForDate
-          : [finalSession]
+        const sessionsToExport = sessionsForDate.length > 0 ? sessionsForDate : [null]
 
         for (const sessionToExport of sessionsToExport) {
           const exportSession = sessionToExport
@@ -299,7 +300,7 @@ async function fetchAllGroupsProcessedData(
             cells: [
               name,
               formatDateOnly(parseLocalDate(date)),
-              ...(group.settings?.attendance_mode === "visits" ?
+              ...(includeVisitColumn ?
                 [exportSession ? String(exportSession.visit_number || 1) : ""]
               : []),
               status,

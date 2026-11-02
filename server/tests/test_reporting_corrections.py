@@ -289,6 +289,67 @@ def seed_captured_times(factory, start, end):
     asyncio.run(seed())
 
 
+def test_voiding_an_overnight_checkout_reopens_the_previous_days_session(
+    departure_data,
+):
+    from database.models import AttendanceMember
+    from database.repository import AttendanceRepository
+
+    client, factory, headers, group, member = departure_data
+
+    async def seed():
+        async with factory() as session:
+            target = await session.get(AttendanceSession, "departure-session")
+            rule = await session.get(AttendanceGroupRule, target.applied_rule_id)
+            rule.effective_from = datetime(2026, 1, 1)
+            rule.class_start_time, rule.class_end_time = "22:00", "06:00"
+            enrolled = await session.get(AttendanceMember, member["id"])
+            enrolled.joined_at = datetime(2026, 1, 1)
+            repo = AttendanceRepository(session)
+            for record_id, value, event_type in (
+                (
+                    "night-in",
+                    datetime(2026, 11, 1, 22, tzinfo=timezone.utc),
+                    "check_in",
+                ),
+                (
+                    "night-out",
+                    datetime(2026, 11, 2, 6, tzinfo=timezone.utc),
+                    "check_out",
+                ),
+            ):
+                await repo.add_record(
+                    {
+                        "id": record_id,
+                        "person_id": member["person_id"],
+                        "group_id": group["id"],
+                        "timestamp": value,
+                        "confidence": 1,
+                        "event_type": event_type,
+                    }
+                )
+            await session.commit()
+            await AttendanceService(repo).recompute_sessions_for_date(
+                group["id"], "2026-11-01"
+            )
+            await session.commit()
+
+    asyncio.run(seed())
+    response = client.get(endpoint(member), headers=headers)
+    assert response.status_code == 200, response.text
+    assert response.json()["check_out_time"] is not None
+    response = client.post(
+        "/attendance/records/night-out/void",
+        headers=headers,
+        json={"reason": "Erroneous overnight checkout"},
+    )
+    assert response.status_code == 200, response.text
+    response = client.get(endpoint(member), headers=headers)
+    assert response.status_code == 200, response.text
+    assert response.json()["check_out_time"] is None
+    assert response.json()["total_hours"] is None
+
+
 def test_notes_only_save_preserves_captured_instants_and_metadata(departure_data):
     client, factory, headers, _, member = departure_data
     zone = ZoneInfo("America/New_York")

@@ -10,7 +10,7 @@ import cv2
 from api.schemas import AttendanceEventResponse, AttendanceTimeHealthResponse
 from database.repository import AttendanceRepository
 from services.time_authority_service import get_time_authority
-from attendance_time import event_time, instant_for_sort
+from attendance_time import event_time, instant_for_sort, read_value
 from time_utils import (
     elapsed_seconds,
     ensure_local_aware,
@@ -403,35 +403,26 @@ class AttendanceService:
 
         session_map = {}
         for session in sessions:
-            pid = (
-                session.get("person_id")
-                if isinstance(session, dict)
-                else getattr(session, "person_id", None)
-            )
+            pid = read_value(session, "person_id")
             if pid:
-                session_map[pid] = session
+                session_map.setdefault(pid, []).append(session)
 
         for member in members:
             person_id = member.person_id
-            session = session_map.get(person_id)
-
-            if session:
-                status = (
-                    session.get("status")
-                    if isinstance(session, dict)
-                    else getattr(session, "status", None)
-                )
-                is_late = (
-                    session.get("is_late")
-                    if isinstance(session, dict)
-                    else getattr(session, "is_late", False)
-                )
-                if status == "present":
-                    present_today += 1
-                    if is_late:
-                        late_today += 1
-                else:
-                    absent_today += 1
+            visits = session_map.get(person_id, [])
+            present_visits = [
+                visit
+                for visit in visits
+                if read_value(visit, "status") in ("present", "late")
+            ]
+            if present_visits:
+                present_today += 1
+                if any(
+                    read_value(visit, "is_late")
+                    or read_value(visit, "status") == "late"
+                    for visit in present_visits
+                ):
+                    late_today += 1
             else:
                 absent_today += 1
 
@@ -441,6 +432,86 @@ class AttendanceService:
             "absent_today": absent_today,
             "late_today": late_today,
         }
+
+    @staticmethod
+    def _is_overnight_checkout(check_in, checkout, rule) -> bool:
+        """Only an explicit overnight work schedule can carry an open session."""
+        if not check_in or not rule or rule.get("attendance_mode") != "work_hours":
+            return False
+        try:
+            start = datetime.strptime(rule["class_start_time"], "%H:%M").time()
+            end = datetime.strptime(rule["class_end_time"], "%H:%M").time()
+        except (KeyError, TypeError, ValueError):
+            return False
+        check_in = ensure_local_aware(check_in)
+        checkout = ensure_local_aware(checkout).astimezone(check_in.tzinfo)
+        return (
+            end < start
+            and checkout.date() == check_in.date() + timedelta(days=1)
+            and checkout.time().replace(tzinfo=None) < start
+            and elapsed_seconds(check_in, checkout) >= 0
+        )
+
+    async def records_for_attendance_date(
+        self, group_id: str, target_date: str, *, person_id=None, rule_history=None
+    ) -> List[Any]:
+        """Keep a typed overnight checkout with its preceding day's arrival."""
+        day = datetime.strptime(target_date, "%Y-%m-%d")
+        start, _ = local_day_bounds((day - timedelta(days=1)).strftime("%Y-%m-%d"))
+        _, end = local_day_bounds((day + timedelta(days=1)).strftime("%Y-%m-%d"))
+        records = await self.repo.get_records(
+            group_id=group_id, person_id=person_id, start_date=start, end_date=end
+        )
+        if rule_history is None:
+            rule_history = await self.repo.get_group_rules(group_id)
+        pending = {}
+        result = []
+        for record in sorted(
+            records, key=lambda row: instant_for_sort(row, "timestamp")
+        ):
+            timestamp = event_time(record, "timestamp")
+            record_date = timestamp.strftime("%Y-%m-%d")
+            event_type = getattr(record, "event_type", None)
+            arrival = pending.get(record.person_id)
+            if event_type == "check_out":
+                if arrival and self._is_overnight_checkout(
+                    arrival[0], timestamp, arrival[1]
+                ):
+                    record_date = arrival[0].strftime("%Y-%m-%d")
+                pending.pop(record.person_id, None)
+            elif event_type == "check_in" or not arrival:
+                rule = self._select_effective_rule(
+                    rule_history,
+                    timestamp.replace(
+                        hour=23, minute=59, second=59, microsecond=999999
+                    ),
+                )
+                pending[record.person_id] = (
+                    timestamp,
+                    {
+                        "attendance_mode": getattr(rule, "attendance_mode", None),
+                        "class_start_time": getattr(rule, "class_start_time", None),
+                        "class_end_time": getattr(rule, "class_end_time", None),
+                    },
+                )
+            else:
+                pending.pop(record.person_id, None)
+            if record_date == target_date:
+                result.append(record)
+        return result
+
+    async def save_recomputed_sessions(self, sessions, existing_sessions):
+        """Replace derived visits without discarding any manual overrides."""
+        await self.repo.upsert_sessions(sessions)
+        expected = {(row["person_id"], row.get("visit_number", 1)) for row in sessions}
+        rebuilt_people = {row["person_id"] for row in sessions}
+        for old in existing_sessions:
+            if (
+                old.person_id in rebuilt_people
+                and not old.notes
+                and (old.person_id, old.visit_number or 1) not in expected
+            ):
+                await self.repo.session.delete(old)
 
     async def recompute_sessions_for_date(
         self,
@@ -469,12 +540,11 @@ class AttendanceService:
             end_date=target_date,
         )
         rule_history = await self.repo.get_group_rules(group_id)
-        start_of_day, end_of_day = local_day_bounds(target_date)
-        records = await self.repo.get_records(
-            group_id=group_id,
+        records = await self.records_for_attendance_date(
+            group_id,
+            target_date,
             person_id=person_id,
-            start_date=start_of_day,
-            end_date=end_of_day,
+            rule_history=rule_history,
         )
 
         session_dicts = self.compute_sessions_from_records(
@@ -498,7 +568,7 @@ class AttendanceService:
             rule_history=rule_history,
         )
 
-        await self.repo.upsert_sessions(session_dicts)
+        await self.save_recomputed_sessions(session_dicts, existing_sessions)
 
         return session_dicts
 
@@ -608,12 +678,45 @@ class AttendanceService:
             if attendance_mode == "visits"
             else self.repo.get_session(event_data.person_id, today_str)
         )
-        visit_number = 1
+        session_date = today_str
+        # A new calendar day must not turn an overnight departure into an arrival.
+        if scan_behavior != "entry_only" and (
+            not latest_session or not latest_session.check_in_time
+        ):
+            previous_date = (current_time - timedelta(days=1)).strftime("%Y-%m-%d")
+            previous = await self.repo.get_latest_session(
+                event_data.person_id, previous_date
+            )
+            schedule = previous.applied_schedule if previous else None
+            if (
+                previous
+                and previous.group_id == member.group_id
+                and not previous.check_out_time
+                and self._is_overnight_checkout(
+                    event_time(previous, "check_in_time"), current_time, schedule
+                )
+            ):
+                latest_session = previous
+                session_date = previous.date
+                attendance_mode = "work_hours"
+                track_checkout = True
+                normalized_rule = self._normalize_rule(
+                    previous.applied_rule,
+                    late_threshold_minutes=normalized_rule["late_threshold_minutes"],
+                    class_start_time=schedule["class_start_time"],
+                    late_threshold_enabled=normalized_rule["late_threshold_enabled"],
+                    track_checkout=True,
+                )
+        visit_number = (latest_session.visit_number or 1) if latest_session else 1
         existing_session = latest_session
         if (
             attendance_mode in ("work_hours", "visits")
             and scan_behavior == "exit_only"
-            and not existing_session
+            and (
+                not existing_session
+                or not existing_session.check_in_time
+                or existing_session.check_out_time
+            )
         ):
             return AttendanceEventResponse(
                 id=None,
@@ -787,13 +890,15 @@ class AttendanceService:
         is_late, late_minutes = self._calculate_late_status(
             check_in_time, normalized_rule
         )
+        if attendance_mode == "visits" and visit_number > 1:
+            is_late, late_minutes = False, None
 
         session_data = {
             "id": (existing_session.id if existing_session else self.generate_id()),
             "person_id": event_data.person_id,
             "group_id": member.group_id,
             "applied_rule_id": normalized_rule.get("id"),
-            "date": today_str,
+            "date": session_date,
             "visit_number": visit_number,
             "check_in_time": check_in_time,
             "check_out_time": check_out_time,

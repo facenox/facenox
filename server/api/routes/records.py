@@ -16,7 +16,7 @@ from api.deps import get_repository, get_face_detector, get_face_recognizer
 from database.repository import AttendanceRepository
 from services.attendance_service import AttendanceService
 from services.time_authority_service import get_time_authority
-from time_utils import local_day_bounds
+from time_utils import ensure_utc_aware
 from attendance_time import manual_event_time, event_time, normalize_session_times
 
 logger = logging.getLogger(__name__)
@@ -162,11 +162,28 @@ async def void_record(
             raise HTTPException(status_code=404, detail="Record not found")
 
         service = AttendanceService(repo)
-        await service.recompute_sessions_for_date(
-            voided_record.group_id,
-            voided_record.timestamp.strftime("%Y-%m-%d"),
+        record_time = event_time(voided_record, "timestamp")
+        record_date = record_time.strftime("%Y-%m-%d")
+        previous_date = (record_time - timedelta(days=1)).strftime("%Y-%m-%d")
+        affected_dates = {record_date}
+        # A checkout after midnight belongs to the prior day's overnight session.
+        candidates = await repo.get_sessions(
+            group_id=voided_record.group_id,
             person_id=voided_record.person_id,
+            start_date=previous_date,
+            end_date=record_date,
         )
+        for candidate in candidates:
+            for field in ("check_in_time", "check_out_time"):
+                value = event_time(candidate, field)
+                if value and ensure_utc_aware(value) == ensure_utc_aware(record_time):
+                    affected_dates.add(candidate.date)
+        for affected_date in sorted(affected_dates):
+            await service.recompute_sessions_for_date(
+                voided_record.group_id,
+                affected_date,
+                person_id=voided_record.person_id,
+            )
         voided_member = await repo.get_member(voided_record.person_id)
         member_name = voided_member.name if voided_member else voided_record.person_id
         voided_by = voided_record.voided_by or "desktop_admin"
@@ -253,13 +270,12 @@ async def get_sessions(
                     if rule_history is None:
                         rule_history = await repo.get_group_rules(group_id)
 
-                    day_start, day_end = local_day_bounds(date_str)
-
-                    records = await repo.get_records(
-                        group_id=group_id, start_date=day_start, end_date=day_end
-                    )
-
                     service = AttendanceService(repo)
+                    records = await service.records_for_attendance_date(
+                        group_id,
+                        date_str,
+                        rule_history=rule_history,
+                    )
                     day_sessions = service.compute_sessions_from_records(
                         records=records,
                         members=members,
@@ -281,7 +297,9 @@ async def get_sessions(
                         rule_history=rule_history,
                     )
 
-                    await repo.upsert_sessions(day_sessions)
+                    await service.save_recomputed_sessions(
+                        day_sessions, existing_day_sessions
+                    )
                     needs_commit = True
 
                 current_date += timedelta(days=1)
@@ -452,7 +470,13 @@ async def update_session(
                 or rule.organization_id != session_obj.organization_id
             ):
                 rule = None
-            if rule:
+            if (
+                rule
+                and rule.attendance_mode == "visits"
+                and session_obj.visit_number > 1
+            ):
+                session_obj.is_late, session_obj.late_minutes = False, None
+            elif rule:
                 session_obj.is_late, session_obj.late_minutes = (
                     AttendanceService._calculate_late_status(
                         check_in,

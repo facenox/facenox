@@ -487,6 +487,17 @@ describe("report export regression coverage", () => {
     },
   )
 
+  it.each(exporters)(
+    "keeps historical visits in %s after the group switches to Attendance",
+    async (format, exporter) => {
+      group = { ...group, settings: { attendance_mode: "attendance" } }
+      expect((await exporter([group], date, date, "UTC")).success).toBe(true)
+      const rows = await exportedRows(format)
+      expect(rows.map((row) => row.Visit)).toEqual(["1", "2"])
+      expect(rows.map((row) => row.Notes)).toEqual(visits.map((visit) => visit.notes))
+    },
+  )
+
   it("preserves the displayed group and row order when exporting the current view", async () => {
     const row: RowData = {
       person_id: "a",

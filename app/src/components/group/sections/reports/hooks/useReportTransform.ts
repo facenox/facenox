@@ -70,69 +70,39 @@ export function useReportTransform(
 
         const sessionKey = `${member.person_id}_${date}`
         const sessionsForDate = shouldShowNoRecords ? [] : sessionsMap.get(sessionKey) || []
-        const finalSession = sessionsForDate[0] || null
-
-        if (attendanceMode === "visits" && sessionsForDate.length > 0) {
-          for (const visitSession of sessionsForDate) {
-            rows.push({
-              person_id: member.person_id,
-              name: displayNameMap.get(member.person_id) || member.name || "Member",
-              date,
-              check_in_time: visitSession.check_in_time,
-              check_out_time: visitSession.check_out_time,
-              visit_number: visitSession.visit_number || 1,
-              total_hours: visitSession.total_hours,
-              status: visitSession.is_late ? "late" : (visitSession.status as ReportStatusFilter),
-              is_late: Boolean(visitSession.is_late),
-              late_minutes: visitSession.late_minutes || 0,
-              notes: visitSession.notes || "",
-              session: visitSession,
-            })
+        // Today's mode must not collapse visits recorded under an earlier rule.
+        for (const finalSession of sessionsForDate.length ? sessionsForDate : [null]) {
+          let status: ReportStatusFilter
+          if (shouldShowNoRecords) {
+            status = "no_records"
+          } else if (!finalSession) {
+            status = "absent"
+          } else if (finalSession.is_late) {
+            status = "late"
+          } else {
+            status = finalSession.status as ReportStatusFilter
           }
-          continue
+
+          rows.push({
+            person_id: member.person_id,
+            name: displayNameMap.get(member.person_id) || member.name || "Member",
+            date,
+            check_in_time: finalSession?.check_in_time,
+            check_out_time: finalSession?.check_out_time,
+            departure_status: getSessionDepartureStatus(finalSession, attendanceTimeZone),
+            visit_number: finalSession?.visit_number || 1,
+            total_hours: finalSession?.total_hours,
+            status,
+            is_late: Boolean(finalSession?.is_late),
+            late_minutes: finalSession?.late_minutes || 0,
+            notes: finalSession?.notes || "",
+            session: finalSession,
+          })
         }
-
-        let status: ReportStatusFilter
-        if (shouldShowNoRecords) {
-          status = "no_records"
-        } else if (!finalSession) {
-          status = "absent"
-        } else if (finalSession.is_late) {
-          status = "late"
-        } else {
-          status = finalSession.status as ReportStatusFilter
-        }
-
-        const isLate = Boolean(finalSession?.is_late)
-        const lateMinutes = finalSession?.late_minutes || 0
-
-        rows.push({
-          person_id: member.person_id,
-          name: displayNameMap.get(member.person_id) || member.name || "Member",
-          date: date,
-          check_in_time: finalSession?.check_in_time,
-          check_out_time: finalSession?.check_out_time,
-          departure_status: getSessionDepartureStatus(finalSession, attendanceTimeZone),
-          visit_number: finalSession?.visit_number || 1,
-          total_hours: finalSession?.total_hours,
-          status: status,
-          is_late: isLate,
-          late_minutes: lateMinutes,
-          notes: finalSession?.notes || "",
-          session: finalSession,
-        })
       }
     }
     return rows.sort(compareReportRows)
-  }, [
-    attendanceMode,
-    sessionsMap,
-    members,
-    displayNameMap,
-    startDateStr,
-    endDateStr,
-    attendanceTimeZone,
-  ])
+  }, [sessionsMap, members, displayNameMap, startDateStr, endDateStr, attendanceTimeZone])
 
   // 2. Filter rows based on status and search query
   const filteredRows = useMemo(() => {
@@ -194,18 +164,28 @@ export function useReportTransform(
   }, [report, startDateStr, endDateStr])
 
   const finalColumns = useMemo(() => {
-    if (attendanceMode === "attendance") {
-      return ALL_COLUMNS.filter(
-        (column) =>
-          column.key !== "check_out_time" &&
-          column.key !== "departure_status" &&
-          column.key !== "total_hours",
+    const hasVisits =
+      attendanceMode === "visits" ||
+      sessions.some(
+        (session) =>
+          (session.visit_number || 1) > 1 || session.applied_schedule?.attendance_mode === "visits",
       )
-    }
-    return attendanceMode === "visits" ?
-        ALL_COLUMNS.filter((column) => column.key !== "departure_status").concat(VISIT_COLUMN)
-      : ALL_COLUMNS
-  }, [attendanceMode])
+    const hasWorkHours =
+      attendanceMode === "work_hours" ||
+      sessions.some((session) => session.applied_schedule?.attendance_mode === "work_hours")
+    const hasDuration =
+      hasVisits ||
+      hasWorkHours ||
+      sessions.some(
+        (session) => Boolean(session.check_out_time) || typeof session.total_hours === "number",
+      )
+    const columns = ALL_COLUMNS.filter((column) => {
+      if (column.key === "departure_status") return hasWorkHours
+      if (column.key === "check_out_time" || column.key === "total_hours") return hasDuration
+      return true
+    })
+    return hasVisits ? columns.concat(VISIT_COLUMN) : columns
+  }, [attendanceMode, sessions])
 
   const unavailableColumns = useMemo(() => {
     const availableKeys = new Set(finalColumns.map((column) => column.key))

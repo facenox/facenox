@@ -282,6 +282,40 @@ describe("useReportTransform", () => {
     expect(recorded.map((session) => session.visit_number)).toEqual([3, 1, 2])
   })
 
+  it.each(["attendance", "work_hours"] as const)(
+    "keeps historical visits and their columns after switching to %s",
+    (attendance_mode) => {
+      const recorded = [1, 2].map((visit_number) =>
+        createAttendanceSession({
+          id: `old-visit-${visit_number}`,
+          person_id: "member-1",
+          date: "2026-04-02",
+          visit_number,
+          check_out_time: new Date("2026-04-02T09:00:00Z"),
+          applied_schedule: { attendance_mode: "visits", class_start_time: "08:00" },
+        }),
+      )
+      const { result } = renderHook(() =>
+        useReportTransform(
+          createAttendanceGroup({ settings: { attendance_mode } }),
+          [members[0]],
+          recorded,
+          null,
+          "2026-04-02",
+          "2026-04-02",
+          "none",
+          "all",
+          "",
+          "UTC",
+        ),
+      )
+      expect(result.current.filteredRows.map((row) => row.visit_number)).toEqual([1, 2])
+      expect(result.current.allColumns.map((column) => column.key)).toEqual(
+        expect.arrayContaining(["visit_number", "check_out_time", "total_hours"]),
+      )
+    },
+  )
+
   it("does not push absent members out of alphabetical order based on scan time", () => {
     const { result } = renderHook(() =>
       useReportTransform(
