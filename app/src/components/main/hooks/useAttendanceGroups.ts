@@ -232,6 +232,7 @@ export function useAttendanceGroups() {
   const memberCacheRef = useRef<Map<string, AttendanceMember | null>>(new Map())
   const panelDataCacheRef = useRef<Map<string, PanelDataCacheEntry>>(new Map())
   const refreshRequestRef = useRef(0)
+  const settingsRefreshRequestRef = useRef(0)
   const loadAttendanceDataRef = useRef<() => Promise<void>>(async () => {})
 
   useEffect(() => {
@@ -532,10 +533,25 @@ export function useAttendanceGroups() {
 
   useEffect(() => {
     if (!window.electronAPI?.sync?.onDataChanged) return
+    let active = true
+    const refreshSettings = async () => {
+      const requestId = ++settingsRefreshRequestRef.current
+      try {
+        const settings = await attendanceManager.getSettings({ forceRefresh: true })
+        if (!active || requestId !== settingsRefreshRequestRef.current) return
+        useAttendanceStore.setState({ attendanceTimezone: settings.attendance_timezone ?? null })
+      } catch (error) {
+        console.error("Failed to refresh attendance settings:", error)
+      }
+    }
     const cleanup = window.electronAPI.sync.onDataChanged(() => {
-      refreshAttendanceData()
+      void refreshSettings()
+      void refreshAttendanceData()
     })
-    return cleanup
+    return () => {
+      active = false
+      cleanup()
+    }
   }, [refreshAttendanceData])
 
   return {

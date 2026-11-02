@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react"
+import { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react"
 import { attendanceManager } from "@/services"
 import { getLocalDateString, parseLocalDate } from "@/utils"
 import type {
@@ -19,6 +19,21 @@ export function useReportData(
   const [members, setMembers] = useState<AttendanceMember[]>(initialMembers)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const queryKey = JSON.stringify([group.id, startDateStr, endDateStr])
+  const [settledQueryKey, setSettledQueryKey] = useState<string | null>(null)
+  const activeQueryRef = useRef(queryKey)
+  const requestIdRef = useRef(0)
+
+  // Invalidate older responses at commit, including the debounce before the next request.
+  useLayoutEffect(() => {
+    activeQueryRef.current = queryKey
+    requestIdRef.current += 1
+    setLoading(true)
+    setSettledQueryKey(null)
+    return () => {
+      requestIdRef.current += 1
+    }
+  }, [queryKey])
 
   const initialMembersRef = useRef(initialMembers)
   useEffect(() => {
@@ -50,71 +65,78 @@ export function useReportData(
   }, [])
 
   const generateReport = useCallback(async () => {
+    if (!isMountedRef.current || activeQueryRef.current !== queryKey) return
+    const requestId = ++requestIdRef.current
+    const isCurrentRequest = () =>
+      isMountedRef.current &&
+      requestId === requestIdRef.current &&
+      activeQueryRef.current === queryKey
     const startDate = parseLocalDate(startDateStr)
     const endDate = parseLocalDate(endDateStr)
 
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-      if (isMountedRef.current) {
+    if (
+      Number.isNaN(startDate.getTime()) ||
+      Number.isNaN(endDate.getTime()) ||
+      startDate.getFullYear() < 2000 ||
+      endDate.getFullYear() < 2000
+    ) {
+      if (isCurrentRequest()) {
         setError("Select a valid report date range.")
         setLoading(false)
+        setSettledQueryKey(queryKey)
       }
-      return
-    }
-
-    // Ignore incomplete intermediate year inputs while typing (e.g. typing "2" yields year 0002)
-    // Prevents lagging by not querying thousands of years from the database
-    if (startDate.getFullYear() < 2000 || endDate.getFullYear() < 2000) {
       return
     }
 
     if (startDate > endDate) {
-      if (isMountedRef.current) {
+      if (isCurrentRequest()) {
         setError("The start date must be on or before the end date.")
         setLoading(false)
+        setSettledQueryKey(queryKey)
       }
       return
     }
 
-    if (isMountedRef.current) {
-      setLoading(true)
-    }
+    setLoading(true)
     try {
-      if (isMountedRef.current) {
-        setError(null)
-      }
+      setError(null)
 
       const [generatedReport, loadedSessions, loadedMembers] = await Promise.all([
         attendanceManager.generateReport(group.id, startDate, endDate),
-        attendanceManager.getSessions({
-          group_id: group.id,
-          start_date: getLocalDateString(startDate),
-          end_date: getLocalDateString(endDate),
-        }),
+        attendanceManager.getSessions(
+          {
+            group_id: group.id,
+            start_date: getLocalDateString(startDate),
+            end_date: getLocalDateString(endDate),
+          },
+          { throwOnError: true },
+        ),
         initialMembersRef.current.length > 0 ?
           Promise.resolve(initialMembersRef.current)
-        : attendanceManager.getGroupMembers(group.id),
+        : attendanceManager.getGroupMembers(group.id, { throwOnError: true }),
       ])
-      if (!isMountedRef.current) return
+      if (!isCurrentRequest()) return
       setReport(generatedReport)
       setSessions(loadedSessions)
       setMembers(loadedMembers)
     } catch (err) {
-      if (!isMountedRef.current) return
+      if (!isCurrentRequest()) return
       console.error("Error generating report:", err)
       setError(err instanceof Error ? err.message : "Failed to generate report")
     } finally {
-      if (isMountedRef.current) {
+      if (isCurrentRequest()) {
         setLoading(false)
+        setSettledQueryKey(queryKey)
       }
     }
-  }, [group.id, startDateStr, endDateStr])
+  }, [group.id, startDateStr, endDateStr, queryKey])
 
   return {
-    report,
-    sessions,
+    report: settledQueryKey === queryKey ? report : null,
+    sessions: settledQueryKey === queryKey ? sessions : [],
     members,
-    loading,
-    error,
+    loading: loading || settledQueryKey !== queryKey,
+    error: settledQueryKey === queryKey ? error : null,
     generateReport,
   }
 }

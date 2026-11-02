@@ -76,6 +76,18 @@ describe("Groups directory", () => {
     fireEvent.click(remove)
     expect(mocks.remove).toHaveBeenCalledWith("alpha")
   })
+  it("transitions between results and no matches without replacing the search field", async () => {
+    render(<Groups groups={groups} onOpenGroup={vi.fn()} />)
+    const search = screen.getByRole("searchbox", { name: "Search groups" })
+    fireEvent.change(search, { target: { value: "no matching group" } })
+    expect(await screen.findByText("No matching groups.")).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByText("Alpha")).not.toBeInTheDocument())
+    fireEvent.change(search, { target: { value: "" } })
+    expect(await screen.findByRole("button", { name: "Open Alpha members" })).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByText("No matching groups.")).not.toBeInTheDocument())
+    expect(screen.getByRole("searchbox", { name: "Search groups" })).toBe(search)
+  })
+
   it("expands search on focus and retains its width while filtering", async () => {
     render(<Groups groups={groups} />)
     await waitFor(() => expect(screen.getByRole("button", { name: "Edit Alpha" })).toBeEnabled())

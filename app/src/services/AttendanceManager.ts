@@ -48,6 +48,7 @@ export class AttendanceManager {
   private recordManager: RecordManager
 
   private settings: AttendanceSettings | null = null
+  private settingsRequestId = 0
   private eventQueue: AttendanceEvent[] = []
 
   constructor() {
@@ -64,11 +65,14 @@ export class AttendanceManager {
     )
   }
 
-  private async loadSettings(): Promise<void> {
+  private async loadSettings(throwOnError = false): Promise<void> {
+    const requestId = ++this.settingsRequestId
     try {
-      this.settings = await this.httpClient.get<AttendanceSettings>(API_ENDPOINTS.settings)
+      const settings = await this.httpClient.get<AttendanceSettings>(API_ENDPOINTS.settings)
+      if (requestId === this.settingsRequestId) this.settings = settings
     } catch (error) {
       console.error("[AttendanceManager] Failed to load settings:", error)
+      if (throwOnError) throw error
     }
   }
 
@@ -271,8 +275,8 @@ export class AttendanceManager {
     return this.recordManager.getSessions(filters, options)
   }
 
-  async getSettings(): Promise<AttendanceSettings> {
-    if (!this.settings) await this.loadSettings()
+  async getSettings(options?: { forceRefresh?: boolean }): Promise<AttendanceSettings> {
+    if (!this.settings || options?.forceRefresh) await this.loadSettings(options?.forceRefresh)
     return { ...this.settings! }
   }
 
@@ -288,6 +292,7 @@ export class AttendanceManager {
         newSettings,
       )
       this.settings = updated
+      this.settingsRequestId += 1
       notifyDataChanged()
     } catch (error) {
       console.error("Error updating settings:", error)

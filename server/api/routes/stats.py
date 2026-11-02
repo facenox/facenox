@@ -141,17 +141,33 @@ async def get_database_stats(
         unsynced_sessions = None
         if last_synced_at:
             try:
-                from datetime import datetime
-                from sqlalchemy import select, func
+                from datetime import datetime, timezone
+                from sqlalchemy import select, func, or_, and_
                 from database.models import AttendanceRecord, AttendanceSession
+                from time_utils import to_storage_local
 
-                since_dt = datetime.fromisoformat(last_synced_at.replace("Z", "+00:00"))
+                cursor = datetime.fromisoformat(last_synced_at.replace("Z", "+00:00"))
+                if cursor.tzinfo is None:
+                    raise ValueError("Sync cursor requires an explicit offset.")
+                since_utc = cursor.astimezone(timezone.utc).replace(tzinfo=None)
+                since_local = to_storage_local(cursor)
+
+                def changed_after_snapshot(model):
+                    # Export overlaps its cursor for safe retries. Those already-uploaded
+                    # lookback rows are not new queued changes.
+                    return or_(
+                        model.modified_at_utc > since_utc,
+                        and_(
+                            model.modified_at_utc.is_(None),
+                            model.last_modified_at > since_local,
+                        ),
+                    )
 
                 unsynced_records = await repo.session.scalar(
                     repo._apply_org_scope(
                         select(func.count())
                         .select_from(AttendanceRecord)
-                        .where(AttendanceRecord.last_modified_at > since_dt),
+                        .where(changed_after_snapshot(AttendanceRecord)),
                         AttendanceRecord,
                     )
                 )
@@ -160,7 +176,7 @@ async def get_database_stats(
                     repo._apply_org_scope(
                         select(func.count())
                         .select_from(AttendanceSession)
-                        .where(AttendanceSession.last_modified_at > since_dt),
+                        .where(changed_after_snapshot(AttendanceSession)),
                         AttendanceSession,
                     )
                 )
