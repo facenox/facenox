@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from timezone_rules import attendance_timezone_context, equivalent_timezones
+from timezone_rules import _load_rules, attendance_timezone_context, equivalent_timezones
 
 
 NOW = datetime(2026, 11, 3, tzinfo=timezone.utc)
@@ -22,6 +22,18 @@ NOW = datetime(2026, 11, 3, tzinfo=timezone.utc)
 def test_equivalent_current_and_future_rules_ignore_names(first, second):
     assert equivalent_timezones(first, second, NOW)
     assert equivalent_timezones(second, first, NOW)
+
+
+def test_aliases_use_one_database_when_system_aliases_are_missing(tmp_path):
+    canonical = tmp_path / "America" / "New_York"
+    canonical.parent.mkdir()
+    canonical.write_bytes(b"A different system timezone database")
+    _load_rules.cache_clear()
+    try:
+        with patch("timezone_rules.TZPATH", (str(tmp_path),)):
+            assert equivalent_timezones("US/Eastern", "America/New_York", NOW)
+    finally:
+        _load_rules.cache_clear()
 
 
 @pytest.mark.parametrize(

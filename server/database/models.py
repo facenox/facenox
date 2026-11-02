@@ -373,7 +373,6 @@ class AttendanceSettings(Base, SyncMixin):
     session_policy_updated_at_utc: Mapped[Optional[datetime]] = mapped_column(
         DateTime,
         nullable=True,
-        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
     )
 
     # The unique partial index below covers organization lookups. Do not also

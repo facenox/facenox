@@ -112,6 +112,8 @@ def test_historical_schedule_survives_group_schedule_changes(departure_data, end
         "class_start_time": "08:00",
         "class_end_time": "17:00",
         "attendance_mode": "work_hours",
+        "scan_behavior": "automatic",
+        "min_checkout_delay_minutes": 15,
     }
     response = client.put(
         f"/attendance/groups/{group['id']}",

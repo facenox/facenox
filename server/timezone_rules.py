@@ -98,14 +98,19 @@ def _load_rules(key: str) -> tuple:
         or "\\" in key
     ):
         raise ValueError("Invalid timezone key")
-    for root in TZPATH:
-        candidate = Path(root).joinpath(key)
-        if candidate.is_file():
-            return _parse_rules(candidate.read_bytes())
+    # Use the pinned database consistently. Some Linux installations omit legacy
+    # aliases from TZPATH, otherwise mixing their bundled slim TZif files with
+    # system files containing explicit future transitions gives false mismatches.
     package = ".".join(["tzdata.zoneinfo", *key.split("/")[:-1]])
-    return _parse_rules(
-        resources.files(package).joinpath(key.split("/")[-1]).read_bytes()
-    )
+    try:
+        data = resources.files(package).joinpath(key.split("/")[-1]).read_bytes()
+    except (ImportError, FileNotFoundError):
+        for root in TZPATH:
+            candidate = Path(root).joinpath(key)
+            if candidate.is_file():
+                return _parse_rules(candidate.read_bytes())
+        raise
+    return _parse_rules(data)
 
 
 def equivalent_timezones(first: str, second: str, reference: datetime) -> bool:

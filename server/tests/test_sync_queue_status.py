@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -18,6 +18,7 @@ import pytest
     ],
 )
 @pytest.mark.parametrize("legacy", [False, True])
+@pytest.mark.parametrize("policy_replay", [False, True])
 def test_queue_counts_changes_after_the_snapshot_in_every_timezone(
     test_client,
     set_api_token,
@@ -28,10 +29,11 @@ def test_queue_counts_changes_after_the_snapshot_in_every_timezone(
     pending,
     exported,
     legacy,
+    policy_replay,
 ):
     import time_utils
-    from database.models import AttendanceSession, AttendanceRecord
-    from sqlalchemy import null
+    from database.models import AttendanceSession, AttendanceRecord, AttendanceSettings
+    from sqlalchemy import null, select
 
     monkeypatch.setattr(time_utils, "get_local_timezone", lambda: ZoneInfo(zone))
     client, factory = test_client
@@ -46,9 +48,19 @@ def test_queue_counts_changes_after_the_snapshot_in_every_timezone(
         json={"name": "Audit", "group_id": group["id"]},
     ).json()
     instant = datetime.fromisoformat(changed)
+    response = client.get("/attendance/settings", headers=headers)
+    assert response.status_code == 200, response.text
 
     async def seed():
         async with factory() as session:
+            settings = await session.scalar(select(AttendanceSettings))
+            assert settings.session_policy_updated_at_utc is None
+            if policy_replay:
+                settings.session_policy_updated_at_utc = (
+                    datetime.fromisoformat(cursor.replace("Z", "+00:00"))
+                    .astimezone(ZoneInfo("UTC"))
+                    .replace(tzinfo=None)
+                ) + timedelta(seconds=1)
             session.add(
                 AttendanceSession(
                     id="audit-session",
@@ -90,7 +102,7 @@ def test_queue_counts_changes_after_the_snapshot_in_every_timezone(
     )
     delta = client.post("/attendance/export", headers=headers, params={"since": cursor})
     assert stats.status_code == delta.status_code == 200, (stats.text, delta.text)
-    assert stats.json()["unsynced_sessions_count"] == pending
+    assert stats.json()["unsynced_sessions_count"] == (1 if policy_replay else pending)
     assert stats.json()["unsynced_records_count"] == pending
-    assert len(delta.json()["sessions"]) == exported
+    assert len(delta.json()["sessions"]) == (1 if policy_replay else exported)
     assert len(delta.json()["records"]) == exported
