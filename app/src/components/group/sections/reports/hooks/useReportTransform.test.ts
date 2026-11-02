@@ -159,4 +159,176 @@ describe("useReportTransform", () => {
       "Late duration",
     )
   })
+
+  it("uses newest dates then names A-Z regardless of the loaded member order", () => {
+    const people = ["Zed", "Alice", "Bob"].map((name) =>
+      createAttendanceMember({ person_id: name, name }),
+    )
+    Object.freeze(people)
+    const { result, rerender } = renderHook(
+      ({ loadedMembers }) =>
+        useReportTransform(
+          createAttendanceGroup(),
+          loadedMembers,
+          [],
+          null,
+          "2026-04-01",
+          "2026-04-02",
+          "none",
+          "all",
+          "",
+          "UTC",
+        ),
+      { initialProps: { loadedMembers: people } },
+    )
+    const expected = [
+      ["2026-04-02", "Alice"],
+      ["2026-04-02", "Bob"],
+      ["2026-04-02", "Zed"],
+      ["2026-04-01", "Alice"],
+      ["2026-04-01", "Bob"],
+      ["2026-04-01", "Zed"],
+    ]
+    expect(result.current.filteredRows.map((row) => [row.date, row.name])).toEqual(expected)
+    rerender({ loadedMembers: [...people].reverse() })
+    expect(result.current.groupedRows.__all__.map((row) => [row.date, row.name])).toEqual(expected)
+    expect(people.map((person) => person.name)).toEqual(["Zed", "Alice", "Bob"])
+  })
+
+  it("sorts date groups newest first and keeps names alphabetical within each date", () => {
+    const { result } = renderHook(() =>
+      useReportTransform(
+        createAttendanceGroup(),
+        [...members].reverse(),
+        [],
+        null,
+        "2026-04-01",
+        "2026-04-03",
+        "date",
+        "all",
+        "",
+        "UTC",
+      ),
+    )
+    expect(Object.keys(result.current.groupedRows)).toEqual([
+      "2026-04-03",
+      "2026-04-02",
+      "2026-04-01",
+    ])
+    for (const rows of Object.values(result.current.groupedRows)) {
+      expect(rows.map((row) => row.name)).toEqual(["Alice", "Bob"])
+    }
+  })
+
+  it("keeps person groups alphabetical even when their latest recorded dates differ", () => {
+    const people = ["Zed", "Alice"].map((name) => createAttendanceMember({ person_id: name, name }))
+    const recorded = [
+      createAttendanceSession({ id: "z-new", person_id: "Zed", date: "2026-04-02" }),
+      createAttendanceSession({ id: "z-old", person_id: "Zed", date: "2026-04-01" }),
+      createAttendanceSession({ id: "a-old", person_id: "Alice", date: "2026-04-01" }),
+    ]
+    const { result } = renderHook(() =>
+      useReportTransform(
+        createAttendanceGroup(),
+        people,
+        recorded,
+        null,
+        "2026-04-01",
+        "2026-04-02",
+        "person",
+        "present",
+        "",
+        "UTC",
+      ),
+    )
+    expect(Object.keys(result.current.groupedRows)).toEqual(["Alice", "Zed"])
+    expect(result.current.groupedRows.Zed.map((row) => row.date)).toEqual([
+      "2026-04-02",
+      "2026-04-01",
+    ])
+  })
+
+  it("sorts visits numerically without depending on the session response order", () => {
+    const person = createAttendanceMember({ person_id: "a", name: "Alice" })
+    const recorded = [3, 1, 2].map((visit_number) =>
+      createAttendanceSession({
+        id: `visit-${visit_number}`,
+        person_id: "a",
+        date: "2026-04-02",
+        visit_number,
+      }),
+    )
+    Object.freeze(recorded)
+    const { result } = renderHook(() =>
+      useReportTransform(
+        createAttendanceGroup({ settings: { attendance_mode: "visits" } }),
+        [person],
+        recorded,
+        null,
+        "2026-04-01",
+        "2026-04-02",
+        "none",
+        "all",
+        "",
+        "UTC",
+      ),
+    )
+    expect(result.current.filteredRows.map((row) => [row.date, row.visit_number])).toEqual([
+      ["2026-04-02", 1],
+      ["2026-04-02", 2],
+      ["2026-04-02", 3],
+      ["2026-04-01", 1],
+    ])
+    expect(recorded.map((session) => session.visit_number)).toEqual([3, 1, 2])
+  })
+
+  it("does not push absent members out of alphabetical order based on scan time", () => {
+    const { result } = renderHook(() =>
+      useReportTransform(
+        createAttendanceGroup(),
+        members,
+        [
+          createAttendanceSession({
+            person_id: "member-2",
+            date: "2026-04-03",
+            check_in_time: new Date("2026-04-03T18:00:00Z"),
+          }),
+        ],
+        null,
+        "2026-04-03",
+        "2026-04-03",
+        "none",
+        "all",
+        "",
+        "UTC",
+      ),
+    )
+    expect(result.current.filteredRows.map((row) => [row.name, row.status])).toEqual([
+      ["Alice", "absent"],
+      ["Bob", "present"],
+    ])
+  })
+
+  it("supports person names that match object prototype properties", () => {
+    const people = ["__proto__", "constructor"].map((name) =>
+      createAttendanceMember({ person_id: name, name }),
+    )
+    const { result } = renderHook(() =>
+      useReportTransform(
+        createAttendanceGroup(),
+        people,
+        [],
+        null,
+        "2026-04-01",
+        "2026-04-01",
+        "person",
+        "all",
+        "",
+        "UTC",
+      ),
+    )
+    expect(Object.hasOwn(result.current.groupedRows, "__proto__")).toBe(true)
+    expect(result.current.groupedRows.__proto__).toHaveLength(1)
+    expect(result.current.groupedRows.constructor).toHaveLength(1)
+  })
 })

@@ -296,6 +296,41 @@ it("does not add a correction column to a read-only report", () => {
   )
 })
 
+it("keeps separate visit rows and correction targets stable after filtering and reordering", async () => {
+  const user = userEvent.setup()
+  const onEditRow = vi.fn()
+  const errors = vi.spyOn(console, "error").mockImplementation(() => {})
+  const rows: RowData[] = [1, 2, 3].map((visit_number) => ({
+    person_id: "member",
+    name: "Alice",
+    date: "2026-11-02",
+    visit_number,
+    status: "present",
+    is_late: false,
+    late_minutes: 0,
+    notes: `Visit ${visit_number}`,
+    session: null,
+  }))
+  const table = (data: RowData[]) => (
+    <ReportTable
+      groupedRows={{ __all__: data }}
+      allColumns={columns}
+      visibleColumns={["name", "visit_number", "notes"]}
+      pageSize={25}
+      onPageSizeChange={vi.fn()}
+      onEditRow={onEditRow}
+    />
+  )
+  const { rerender } = render(table(rows))
+  rerender(table([rows[2], rows[0]]))
+  expect(screen.getAllByRole("row")).toHaveLength(3)
+  rerender(table([rows[1], rows[0], rows[2]]))
+  expect(screen.getAllByRole("row")).toHaveLength(4)
+  await user.click(screen.getByRole("button", { name: /, visit 2$/ }))
+  expect(onEditRow).toHaveBeenCalledExactlyOnceWith(rows[1])
+  expect(errors.mock.calls.flat().join(" ")).not.toMatch(/same key|unique.*key/i)
+})
+
 it("uses a shared 13px neutral body style and 12px headers across all columns", () => {
   const cell = renderRow()
   expect(screen.getByRole("table")).toHaveClass("text-[13px]", "font-medium", "text-white/85")

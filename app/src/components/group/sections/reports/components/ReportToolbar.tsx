@@ -522,6 +522,13 @@ export function ReportToolbar({
                     iconClassName="!text-[9px]"
                   />
                 </div>
+                <p className="px-2.5 pb-2.5 text-[10px] leading-4 text-white/45">
+                  {groupBy === "person" ?
+                    "Names A-Z, newest dates within each person."
+                  : "Newest dates first, names A-Z within each date."}
+                  {allColumns.some((column) => column.key === "visit_number") &&
+                    " Visits follow visit number."}
+                </p>
               </motion.div>
             )}
           </AnimatePresence>

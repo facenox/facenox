@@ -1,6 +1,6 @@
 // @vitest-environment node
 import fs from "node:fs/promises"
-import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AutoExportManager } from "./AutoExportManager"
 import type { AutoExportConfig, SessionRecord } from "./AutoExportManager"
 
@@ -30,6 +30,11 @@ vi.mock("electron", () => ({
 }))
 
 const member = { id: "m", person_id: "p", name: "Test Member", group_id: "g" }
+const exportFormats: AutoExportConfig["format"][] = [
+  "excel_workbook",
+  "individual_csvs",
+  "combined_csv",
+]
 function mockBackend(
   sessions: SessionRecord[],
   options: {
@@ -77,44 +82,41 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-it.each<AutoExportConfig["format"]>(["excel_workbook", "individual_csvs", "combined_csv"])(
-  "exports every visit in order in %s",
-  async (format) => {
-    mockBackend([
-      {
-        id: "s2",
-        person_id: "p",
-        group_id: "g",
-        date: "2026-01-02",
-        visit_number: 2,
-        status: "present",
-        notes: "SECOND VISIT",
-        total_hours: 3,
-      },
-      {
-        id: "s1",
-        person_id: "p",
-        group_id: "g",
-        date: "2026-01-02",
-        visit_number: 1,
-        status: "present",
-        notes: "FIRST VISIT",
-        total_hours: 2,
-      },
-    ])
-    const manager = new AutoExportManager()
-    manager.updateConfig({ format })
-    expect(await manager.triggerExport("2026-01-02")).toBe(true)
-    const output = String(vi.mocked(fs.writeFile).mock.calls[0][1])
-    expect(output).toContain("Visit")
-    expect(output).toContain("FIRST VISIT")
-    expect(output).toContain("SECOND VISIT")
-    expect(output).toContain("2h")
-    expect(output).toContain("3h")
-    expect(output.indexOf("FIRST VISIT")).toBeLessThan(output.indexOf("SECOND VISIT"))
-    expect(output.match(/Test Member/g)).toHaveLength(2)
-  },
-)
+it.each(exportFormats)("exports every visit in order in %s", async (format) => {
+  mockBackend([
+    {
+      id: "s2",
+      person_id: "p",
+      group_id: "g",
+      date: "2026-01-02",
+      visit_number: 2,
+      status: "present",
+      notes: "SECOND VISIT",
+      total_hours: 3,
+    },
+    {
+      id: "s1",
+      person_id: "p",
+      group_id: "g",
+      date: "2026-01-02",
+      visit_number: 1,
+      status: "present",
+      notes: "FIRST VISIT",
+      total_hours: 2,
+    },
+  ])
+  const manager = new AutoExportManager()
+  manager.updateConfig({ format })
+  expect(await manager.triggerExport("2026-01-02")).toBe(true)
+  const output = String(vi.mocked(fs.writeFile).mock.calls[0][1])
+  expect(output).toContain("Visit")
+  expect(output).toContain("FIRST VISIT")
+  expect(output).toContain("SECOND VISIT")
+  expect(output).toContain("2h")
+  expect(output).toContain("3h")
+  expect(output.indexOf("FIRST VISIT")).toBeLessThan(output.indexOf("SECOND VISIT"))
+  expect(output.match(/Test Member/g)).toHaveLength(2)
+})
 
 it.each(["/attendance/groups", "/attendance/settings", "/members", "/attendance/sessions"])(
   "does not write or mark the day complete after a failed %s fetch and allows retry",
@@ -152,6 +154,11 @@ it.each([false, true])(
           status: "present",
           check_in_time: "2026-01-02T13:00:00Z",
           check_out_time: "2026-01-02T23:00:00Z",
+          applied_schedule: {
+            class_start_time: "08:00",
+            class_end_time: "17:00",
+            attendance_mode: "work_hours",
+          },
           ...(captured ?
             {
               check_in_time_timezone: "America/New_York",
@@ -173,6 +180,113 @@ it.each([false, true])(
       })
     expect(xml).toContain(time("2026-01-02T13:00:00Z"))
     expect(xml).toContain(time("2026-01-02T23:00:00Z"))
-    expect(xml).toContain("Overtime")
+    expect(xml).toContain("Left after schedule")
+    expect(xml).not.toContain("After_schedule")
   },
 )
+
+describe.each(exportFormats)("%s departure consistency", (format) => {
+  const session: SessionRecord = {
+    id: "s",
+    person_id: "p",
+    group_id: "g",
+    date: "2026-01-02",
+    status: "present",
+    check_in_time: "2026-01-02T08:00:00Z",
+    check_out_time: "2026-01-02T16:00:00Z",
+    applied_schedule: {
+      class_start_time: "08:00",
+      class_end_time: "16:00",
+      attendance_mode: "work_hours",
+    },
+  }
+
+  async function exportRow(overrides: Partial<SessionRecord> = {}, mode = "work_hours") {
+    // Today's group ends at 17:00, but this session's saved schedule ends at 16:00.
+    mockBackend([{ ...session, ...overrides }], { mode, timezone: "UTC" })
+    const manager = new AutoExportManager()
+    manager.updateConfig({ format })
+    expect(await manager.triggerExport(session.date)).toBe(true)
+    const output = String(vi.mocked(fs.writeFile).mock.calls[0][1])
+    const rows =
+      format === "excel_workbook" ?
+        [...output.matchAll(/<Row(?:\s[^>]*)?>([\s\S]*?)<\/Row>/g)].map((row) =>
+          [...row[1].matchAll(/<Data[^>]*>([\s\S]*?)<\/Data>/g)].map((cell) => cell[1]),
+        )
+      : output
+          .split("\n")
+          .map((line) =>
+            [...line.matchAll(/"((?:[^"]|"")*)"/g)].map((cell) => cell[1].replaceAll('""', '"')),
+          )
+    const [header, cells] = rows
+    expect(cells).toHaveLength(header.length)
+    expect(output).not.toMatch(/After_schedule|On_schedule|Undertime|Overtime/)
+    return Object.fromEntries(header.map((label, index) => [label, cells[index]]))
+  }
+
+  it.each([
+    ["15:59:59", "Left early"],
+    ["16:00:00", "On schedule"],
+    ["16:00:59", "On schedule"],
+    ["16:01:00", "Left after schedule"],
+  ])(
+    "exports %s as %s using the recorded schedule at minute precision",
+    async (checkout, label) => {
+      const row = await exportRow({ check_out_time: `2026-01-02T${checkout}Z` })
+      expect(row.Departure).toBe(label)
+    },
+  )
+
+  it("does not guess a historical schedule from the current group's settings", async () => {
+    expect((await exportRow({ applied_schedule: null })).Departure).toBe("")
+  })
+
+  it("leaves an unfinished session's departure blank", async () => {
+    expect((await exportRow({ check_out_time: null })).Departure).toBe("")
+  })
+
+  it.each(["attendance", "visits"] as const)(
+    "does not infer a departure from a historical %s session",
+    async (attendance_mode) => {
+      const row = await exportRow({
+        applied_schedule: { ...session.applied_schedule!, attendance_mode },
+      })
+      expect(row.Departure).toBe("")
+    },
+  )
+
+  it("preserves a historical work-hours departure after the group's mode changes", async () => {
+    expect((await exportRow({}, "attendance")).Departure).toBe("On schedule")
+  })
+
+  it("uses the explicit overnight schedule instead of treating the checkout as early", async () => {
+    const row = await exportRow({
+      check_in_time: "2026-01-02T22:00:00Z",
+      check_out_time: "2026-01-03T06:00:30Z",
+      applied_schedule: {
+        class_start_time: "22:00",
+        class_end_time: "06:00",
+        attendance_mode: "work_hours",
+      },
+    })
+    expect(row.Departure).toBe("On schedule")
+  })
+
+  it("does not treat a daytime late arrival as an overnight shift", async () => {
+    const row = await exportRow({
+      check_in_time: "2026-01-02T18:00:00Z",
+      check_out_time: "2026-01-02T19:00:00Z",
+    })
+    expect(row.Departure).toBe("Left after schedule")
+  })
+
+  it("anchors the recorded schedule to the clock-in timezone", async () => {
+    const row = await exportRow({
+      check_in_time: "2026-01-02T13:00:00Z",
+      check_out_time: "2026-01-02T21:00:45Z",
+      check_in_time_timezone: "America/New_York",
+      check_out_time_timezone: "UTC",
+    })
+    expect(row.Departure).toBe("On schedule")
+  })
+})

@@ -4,7 +4,11 @@ import fs from "node:fs/promises"
 import { backendService } from "../backendService.js"
 import { persistentStore } from "../persistentStore.js"
 import { withLocalBackendHeaders } from "../localBackendScope.js"
-import { getDepartureStatus } from "../../shared/departureStatus.js"
+import {
+  DEPARTURE_LABELS,
+  getSessionDepartureStatus,
+  type DepartureSession,
+} from "../../shared/departureStatus.js"
 import { formatAttendanceTime } from "../../utils/attendanceTime.js"
 
 export interface AutoExportConfig {
@@ -34,16 +38,11 @@ export interface MemberRecord {
   group_id: string
 }
 
-export interface SessionRecord {
+export interface SessionRecord extends DepartureSession {
   id: string
   person_id: string
   group_id: string
-  date: string
   visit_number?: number
-  check_in_time?: string | Date | null
-  check_out_time?: string | Date | null
-  check_in_time_timezone?: string | null
-  check_out_time_timezone?: string | null
   total_hours?: number | null
   is_late?: boolean
   late_minutes?: number | null
@@ -314,21 +313,7 @@ export class AutoExportManager {
             }
 
             const lateMinutesStr = session?.late_minutes ? String(session.late_minutes) : ""
-            const tracksTimeOut =
-              group.settings?.attendance_mode === "work_hours" ||
-              (!group.settings?.attendance_mode && group.settings?.track_checkout === true)
-            const departureStatus =
-              tracksTimeOut ?
-                getDepartureStatus(
-                  dateStr,
-                  session?.check_in_time ?? undefined,
-                  session?.check_out_time ?? undefined,
-                  group.settings?.class_end_time || "17:00",
-                  session?.check_out_time_timezone ||
-                    session?.check_in_time_timezone ||
-                    attendanceTimeZone,
-                )
-              : undefined
+            const departureStatus = getSessionDepartureStatus(session, attendanceTimeZone)
             const notesStr = session?.notes || ""
 
             rows.push([
@@ -340,7 +325,7 @@ export class AutoExportManager {
               status,
               timeIn,
               timeOut,
-              departureStatus ? departureStatus[0].toUpperCase() + departureStatus.slice(1) : "",
+              departureStatus ? DEPARTURE_LABELS[departureStatus] : "",
               totalHoursStr,
               lateMinutesStr,
               notesStr,

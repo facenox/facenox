@@ -462,6 +462,66 @@ describe("report export regression coverage", () => {
   }
 
   it.each(exporters)(
+    "uses newest dates, names A-Z and numeric visits in %s",
+    async (format, exporter) => {
+      members = [
+        { ...members[0], person_id: "z", name: "Zed" },
+        { ...members[0], person_id: "a", name: "Alice" },
+      ]
+      visits = [
+        { ...visits[1], id: "a2", person_id: "a", visit_number: 2 },
+        { ...visits[0], id: "z1", person_id: "z" },
+        { ...visits[0], id: "a-old", person_id: "a", date: "2026-01-01" },
+        { ...visits[0], id: "a1", person_id: "a" },
+      ]
+      expect((await exporter([group], "2026-01-01", date, "UTC")).success).toBe(true)
+      expect((await exportedRows(format)).map((row) => [row.Date, row.Name, row.Visit])).toEqual([
+        ["01/02/2026", "Alice", "1"],
+        ["01/02/2026", "Alice", "2"],
+        ["01/02/2026", "Zed", "1"],
+        ["01/01/2026", "Alice", "1"],
+        ["01/01/2026", "Zed", ""],
+      ])
+      expect(members.map((member) => member.name)).toEqual(["Zed", "Alice"])
+      expect(visits.map((session) => session.id)).toEqual(["a2", "z1", "a-old", "a1"])
+    },
+  )
+
+  it("preserves the displayed group and row order when exporting the current view", async () => {
+    const row: RowData = {
+      person_id: "a",
+      name: "Alice",
+      date,
+      status: "absent",
+      is_late: false,
+      late_minutes: 0,
+      notes: "",
+      session: null,
+    }
+    const result = exportReportToCSV(
+      {
+        Alice: [row, { ...row, date: "2026-01-01" }],
+        Zed: [{ ...row, person_id: "z", name: "Zed" }],
+      },
+      ["name", "date"],
+      [
+        { key: "name", label: "Name" },
+        { key: "date", label: "Date" },
+      ],
+      "Group",
+      "2026-01-01",
+      date,
+      "UTC",
+    )
+    expect(result.success).toBe(true)
+    expect((await exportedRows("current CSV")).map((row) => [row.Name, row.Date])).toEqual([
+      ["Alice", "01/02/2026"],
+      ["Alice", "01/01/2026"],
+      ["Zed", "01/02/2026"],
+    ])
+  })
+
+  it.each(exporters)(
     "preserves each visit's columns, notes and status in %s",
     async (format, exporter) => {
       expect((await exporter([group], date, date, "UTC")).success).toBe(true)

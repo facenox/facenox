@@ -14,6 +14,7 @@ import type {
   ReportStatusFilter,
 } from "@/components/group/sections/reports/types"
 import { getSessionDepartureStatus } from "@/shared/departureStatus"
+import { compareReportNames, compareReportRows } from "../utils/reportOrdering"
 
 export function useReportTransform(
   _group: AttendanceGroup,
@@ -122,7 +123,7 @@ export function useReportTransform(
         })
       }
     }
-    return rows
+    return rows.sort(compareReportRows)
   }, [
     attendanceMode,
     sessionsMap,
@@ -167,13 +168,18 @@ export function useReportTransform(
   // 3. Group rows
   const groupedRows = useMemo(() => {
     if (groupBy === "none") return { __all__: filteredRows } as Record<string, typeof filteredRows>
-    const groups: Record<string, typeof filteredRows> = {}
+    const groups = new Map<string, typeof filteredRows>()
     for (const r of filteredRows) {
       const key = groupBy === "person" ? `${r.name}` : r.date
-      if (!groups[key]) groups[key] = []
-      groups[key].push(r)
+      const rows = groups.get(key)
+      if (rows) rows.push(r)
+      else groups.set(key, [r])
     }
-    return groups
+    return Object.fromEntries(
+      [...groups].sort(([a], [b]) =>
+        groupBy === "person" ? compareReportNames(a, b) : b.localeCompare(a),
+      ),
+    )
   }, [filteredRows, groupBy])
 
   const daysTracked = useMemo(() => {

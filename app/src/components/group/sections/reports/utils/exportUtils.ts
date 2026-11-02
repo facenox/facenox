@@ -4,6 +4,7 @@ import { attendanceManager } from "@/services/AttendanceManager"
 import type { AttendanceGroup, AttendanceSession } from "@/types/recognition"
 import { DEPARTURE_LABELS, getSessionDepartureStatus } from "@/shared/departureStatus"
 import { formatAttendanceTime, getAttendanceDateString } from "@/utils/attendanceTime"
+import { compareReportRows } from "./reportOrdering"
 
 export function exportReportToCSV(
   groupedRows: Record<string, RowData[]>,
@@ -203,7 +204,13 @@ async function fetchAllGroupsProcessedData(
       "Late (mins)",
       "Notes",
     ]
-    const rows: string[][] = []
+    const orderedRows: {
+      date: string
+      name: string
+      person_id: string
+      visit_number: number
+      cells: string[]
+    }[] = []
 
     for (const member of members) {
       let memberJoinedStr: string | null = null
@@ -283,25 +290,36 @@ async function fetchAllGroupsProcessedData(
           const departureStatus = getSessionDepartureStatus(exportSession, attendanceTimeZone)
           const notesStr = exportSession?.notes || ""
 
-          rows.push([
-            displayNameMap.get(member.person_id) || member.name || "Member",
-            formatDateOnly(parseLocalDate(date)),
-            ...(group.settings?.attendance_mode === "visits" ?
-              [exportSession ? String(exportSession.visit_number || 1) : ""]
-            : []),
-            status,
-            timeIn,
-            timeOut,
-            departureStatus ? DEPARTURE_LABELS[departureStatus] : "",
-            totalHoursStr,
-            lateMinutesStr,
-            notesStr,
-          ])
+          const name = displayNameMap.get(member.person_id) || member.name || "Member"
+          orderedRows.push({
+            date,
+            name,
+            person_id: member.person_id,
+            visit_number: exportSession?.visit_number || 1,
+            cells: [
+              name,
+              formatDateOnly(parseLocalDate(date)),
+              ...(group.settings?.attendance_mode === "visits" ?
+                [exportSession ? String(exportSession.visit_number || 1) : ""]
+              : []),
+              status,
+              timeIn,
+              timeOut,
+              departureStatus ? DEPARTURE_LABELS[departureStatus] : "",
+              totalHoursStr,
+              lateMinutesStr,
+              notesStr,
+            ],
+          })
         }
       }
     }
 
-    processedGroups.push({ group, header, rows })
+    processedGroups.push({
+      group,
+      header,
+      rows: orderedRows.sort(compareReportRows).map((row) => row.cells),
+    })
   }
 
   return processedGroups

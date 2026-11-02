@@ -447,7 +447,11 @@ export function ReportTable({
         result.push({ kind: "group", label: groupInfo, count: rows.length })
       }
       for (const row of rows) {
-        result.push({ kind: "row", data: row, key: `${row.person_id}_${row.date}` })
+        result.push({
+          kind: "row",
+          data: row,
+          key: `row:${row.session?.id || `${row.person_id}_${row.date}_${row.visit_number || 1}`}`,
+        })
       }
     }
     return result
@@ -525,7 +529,7 @@ export function ReportTable({
                   {pageItems.map((item) => {
                     if (item.kind === "group") {
                       return (
-                        <tr key={item.label}>
+                        <tr key={`group:${item.label}`}>
                           <td
                             colSpan={colCount}
                             className="border-b border-white/6 bg-white/[0.03] px-4 py-3">

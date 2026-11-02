@@ -9,6 +9,16 @@ export const DEPARTURE_LABELS: Record<DepartureStatus, string> = {
   after_schedule: "Left after schedule",
 }
 
+// Both API exports (serialized instants) and report rows (Date objects) use
+// the same historical schedule calculation.
+export type DepartureSession = Pick<
+  AttendanceSession,
+  "date" | "applied_schedule" | "check_in_time_timezone" | "check_out_time_timezone"
+> & {
+  check_in_time?: Date | string | null
+  check_out_time?: Date | string | null
+}
+
 function timeMinutes(value: string | null | undefined): number | undefined {
   if (!value || !/^\d{2}:\d{2}$/.test(value)) return undefined
   const [hours, minutes] = value.split(":").map(Number)
@@ -66,7 +76,7 @@ export function getDepartureStatus(
 }
 
 export function getSessionDepartureStatus(
-  session: AttendanceSession | null | undefined,
+  session: DepartureSession | null | undefined,
   attendanceTimeZone?: string | null,
 ): DepartureStatus | undefined {
   const schedule = session?.applied_schedule
@@ -74,8 +84,8 @@ export function getSessionDepartureStatus(
   if (timeMinutes(schedule.class_start_time) === undefined) return undefined
   return getDepartureStatus(
     session.date,
-    session.check_in_time,
-    session.check_out_time,
+    session.check_in_time ?? undefined,
+    session.check_out_time ?? undefined,
     schedule.class_end_time,
     session.check_in_time_timezone || session.check_out_time_timezone || attendanceTimeZone,
     schedule.class_start_time,
