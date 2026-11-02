@@ -80,11 +80,61 @@ describe("Groups directory", () => {
     render(<Groups groups={groups} onOpenGroup={vi.fn()} />)
     const search = screen.getByRole("searchbox", { name: "Search groups" })
     fireEvent.change(search, { target: { value: "no matching group" } })
-    expect(await screen.findByText("No matching groups.")).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "No results found" })).toBeInTheDocument()
+    expect(screen.getByText('No groups matched "no matching group".')).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByText("Alpha")).not.toBeInTheDocument())
     fireEvent.change(search, { target: { value: "" } })
     expect(await screen.findByRole("button", { name: "Open Alpha members" })).toBeInTheDocument()
-    await waitFor(() => expect(screen.queryByText("No matching groups.")).not.toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: "No results found" })).not.toBeInTheDocument(),
+    )
+    expect(screen.getByRole("searchbox", { name: "Search groups" })).toBe(search)
+  })
+
+  it("uses the shared centered empty state inside the remaining results area", async () => {
+    render(<Groups groups={groups} />)
+    const search = screen.getByRole("searchbox", { name: "Search groups" })
+    fireEvent.change(search, { target: { value: "  unknown  " } })
+    const heading = await screen.findByRole("heading", { name: "No results found" })
+    expect(screen.getByText('No groups matched "unknown".')).toHaveClass("text-xs", "text-white/55")
+    const emptyState = heading.parentElement?.parentElement
+    expect(emptyState).toHaveClass("flex-1", "items-center", "justify-center", "min-h-[300px]")
+    expect(heading).toHaveClass("text-sm", "font-semibold", "text-white/90")
+    expect(emptyState?.querySelector(".lucide-ghost")).toHaveClass("size-8")
+    const results = emptyState?.parentElement
+    expect(results).toHaveClass("flex-1", "min-h-0", "overflow-y-auto")
+    expect(results).not.toContainElement(search)
+    expect(screen.queryByRole("heading", { name: "No groups yet" })).not.toBeInTheDocument()
+  })
+
+  it("shows first-use guidance with the Groups icon when there are no groups", async () => {
+    render(<Groups groups={[]} />)
+    const heading = screen.getByRole("heading", { name: "No groups yet" })
+    expect(await screen.findByText("Create a group to get started.")).toBeInTheDocument()
+    expect(heading.parentElement?.parentElement?.querySelector(".lucide-layers")).toHaveClass(
+      "size-8",
+    )
+    expect(screen.queryByRole("heading", { name: "No results found" })).not.toBeInTheDocument()
+    expect(screen.getByRole("searchbox", { name: "Search groups" })).toBeInTheDocument()
+  })
+
+  it("does not suggest an unavailable create action when organization policy blocks management", async () => {
+    mocks.getConfig.mockResolvedValue({ connected: true, allowKioskDirectoryManagement: false })
+    render(<Groups groups={[]} />)
+    expect(await screen.findByText(/Group editing is unavailable/)).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "No groups yet" })).toBeInTheDocument()
+    expect(screen.getByText("No groups are available to browse.")).toBeInTheDocument()
+    expect(screen.queryByText("Create a group to get started.")).not.toBeInTheDocument()
+  })
+
+  it("clears an unmatched search with Escape without losing the search field", async () => {
+    render(<Groups groups={groups} onOpenGroup={vi.fn()} />)
+    const search = screen.getByRole("searchbox", { name: "Search groups" })
+    fireEvent.change(search, { target: { value: "unknown" } })
+    await screen.findByRole("heading", { name: "No results found" })
+    fireEvent.keyDown(search, { key: "Escape" })
+    expect(search).toHaveValue("")
+    expect(await screen.findByRole("button", { name: "Open Alpha members" })).toBeInTheDocument()
     expect(screen.getByRole("searchbox", { name: "Search groups" })).toBe(search)
   })
 

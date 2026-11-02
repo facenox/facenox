@@ -44,6 +44,7 @@ MockAnimatePresence.displayName = "AnimatePresence"
 
 vi.mock("framer-motion", () => ({
   AnimatePresence: MockAnimatePresence,
+  useReducedMotion: () => false,
   motion: new Proxy(
     {},
     {

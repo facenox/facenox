@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { Pencil, Search, Trash2 } from "lucide-react"
+import { Ghost, Layers, Pencil, Search, Trash2 } from "lucide-react"
 import type { AttendanceGroup } from "@/types/recognition"
 import { Tooltip, useDialog } from "@/components/shared"
 import { EditGroup } from "@/components/group/modals/EditGroup"
+import { EmptyState } from "@/components/group/shared/EmptyState"
 import { useDatabaseManagement } from "./hooks/useDatabaseManagement"
 
 export function Groups({
@@ -66,8 +67,8 @@ export function Groups({
   const actionClass =
     "flex h-7 w-7 items-center justify-center rounded-lg border-0 bg-transparent text-white/45 shadow-none transition-all duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-cyan-400 active:scale-95 disabled:opacity-40"
   return (
-    <div className="w-full space-y-4 px-10 pt-8 pb-20">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden px-10 pt-8 pb-10">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div
           className={`group/bar relative w-full transition-all duration-300 ease-out motion-reduce:transition-none ${searchFocused || query.trim() ? "max-w-[190px]" : "max-w-[170px]"}`}>
           <Search
@@ -97,77 +98,87 @@ export function Groups({
         </div>
       </div>
       {groups.length > 0 && filtered.length > 0 && (
-        <div className="text-xs text-white/55">
+        <div className="mt-4 shrink-0 text-xs text-white/55">
           {filtered.length !== groups.length ?
             `${filtered.length} of ${groups.length} group${groups.length !== 1 ? "s" : ""}`
           : `${groups.length} group${groups.length !== 1 ? "s" : ""}`}
         </div>
       )}
       {canManage === false && (
-        <p className="text-xs text-white/55">
+        <p className="mt-4 shrink-0 text-xs text-white/55">
           Group editing is unavailable. Check Cloud sync for organization policy and connection
           details.
         </p>
       )}
-      <AnimatePresence mode="wait" initial={false}>
-        {filtered.length > 0 ?
-          <motion.div
-            key="group-results"
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: reduceMotion ? 0 : -6 }}
-            transition={{ duration: reduceMotion ? 0 : 0.2 }}
-            className="divide-y divide-white/5">
-            {filtered.map((group) => (
-              <div
-                key={group.id}
-                className="group/row flex w-full items-center justify-between gap-4 border-b border-l-2 border-b-white/[0.03] border-l-transparent px-6 py-2.5 transition-all duration-200 hover:border-l-cyan-400/70 hover:bg-white/[0.02]">
-                <button
-                  aria-label={`Open ${group.name} members`}
-                  className="min-w-0 flex-1 text-left text-white/85 transition-colors hover:text-white"
-                  onClick={() => onOpenGroup?.(group)}
-                  disabled={!onOpenGroup}>
-                  <span className="block truncate text-[13px] font-semibold text-white/90">
-                    {group.name}
-                  </span>
-                </button>
-                <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-200 group-focus-within/row:opacity-100 group-hover/row:opacity-100">
-                  <Tooltip content="Edit group">
-                    <button
-                      aria-label={`Edit ${group.name}`}
-                      className={actionClass}
-                      disabled={!canManage}
-                      onClick={() => {
-                        setEditing(group)
-                        setEditOpen(true)
-                      }}>
-                      <Pencil aria-hidden="true" className="size-3.5" />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content="Delete group">
-                    <button
-                      aria-label={`Delete ${group.name}`}
-                      className={`${actionClass} hover:bg-red-500/10 hover:!text-red-400`}
-                      disabled={!canManage || deletingGroup === group.id}
-                      onClick={() => handleDeleteGroup(group.id)}>
-                      <Trash2 aria-hidden="true" className="size-3.5" />
-                    </button>
-                  </Tooltip>
+      <div className="custom-scroll hover-scrollbar mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <AnimatePresence mode="wait" initial={false}>
+          {filtered.length > 0 ?
+            <motion.div
+              key="group-results"
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: reduceMotion ? 0 : -6 }}
+              transition={{ duration: reduceMotion ? 0 : 0.2 }}
+              className="shrink-0 divide-y divide-white/5">
+              {filtered.map((group) => (
+                <div
+                  key={group.id}
+                  className="group/row flex w-full items-center justify-between gap-4 border-b border-l-2 border-b-white/[0.03] border-l-transparent px-6 py-2.5 transition-all duration-200 hover:border-l-cyan-400/70 hover:bg-white/[0.02]">
+                  <button
+                    aria-label={`Open ${group.name} members`}
+                    className="min-w-0 flex-1 text-left text-white/85 transition-colors hover:text-white"
+                    onClick={() => onOpenGroup?.(group)}
+                    disabled={!onOpenGroup}>
+                    <span className="block truncate text-[13px] font-semibold text-white/90">
+                      {group.name}
+                    </span>
+                  </button>
+                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-200 group-focus-within/row:opacity-100 group-hover/row:opacity-100">
+                    <Tooltip content="Edit group">
+                      <button
+                        aria-label={`Edit ${group.name}`}
+                        className={actionClass}
+                        disabled={!canManage}
+                        onClick={() => {
+                          setEditing(group)
+                          setEditOpen(true)
+                        }}>
+                        <Pencil aria-hidden="true" className="size-3.5" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Delete group">
+                      <button
+                        aria-label={`Delete ${group.name}`}
+                        className={`${actionClass} hover:bg-red-500/10 hover:!text-red-400`}
+                        disabled={!canManage || deletingGroup === group.id}
+                        onClick={() => handleDeleteGroup(group.id)}>
+                        <Trash2 aria-hidden="true" className="size-3.5" />
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </motion.div>
-        : <motion.p
-            key="empty-groups"
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: reduceMotion ? 0 : -6 }}
-            transition={{ duration: reduceMotion ? 0 : 0.2 }}
-            className="py-12 text-center text-sm text-white/55">
-            {query.trim() ? "No matching groups." : "No groups yet. Create a group to get started."}
-          </motion.p>
-        }
-      </AnimatePresence>
+              ))}
+            </motion.div>
+          : <EmptyState
+              key="empty-groups"
+              className="min-h-[300px]"
+              reducedMotion={!!reduceMotion}
+              title={query.trim() ? "No results found" : "No groups yet"}
+              description={
+                query.trim() ? `No groups matched "${query.trim()}".`
+                : canManage === true ?
+                  "Create a group to get started."
+                : "No groups are available to browse."
+              }
+              icon={
+                query.trim() ?
+                  <Ghost aria-hidden="true" className="size-8" />
+                : <Layers aria-hidden="true" className="size-8" />
+              }
+            />
+          }
+        </AnimatePresence>
+      </div>
       {editing && (
         <EditGroup
           isOpen={editOpen}

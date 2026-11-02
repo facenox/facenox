@@ -162,6 +162,7 @@ interface TooltipChildWrapperProps {
   onFocus: (e: React.FocusEvent) => void
   onBlur: (e: React.FocusEvent) => void
   onClick: (e: React.MouseEvent) => void
+  onKeyDown: (e: React.KeyboardEvent) => void
 }
 
 function TooltipChildWrapper({
@@ -171,6 +172,7 @@ function TooltipChildWrapper({
   onFocus,
   onBlur,
   onClick,
+  onKeyDown,
   ref,
   ...props
 }: TooltipChildWrapperProps & { ref?: React.Ref<HTMLElement> }) {
@@ -186,6 +188,7 @@ function TooltipChildWrapper({
     onFocus,
     onBlur,
     onClick,
+    onKeyDown,
   })
 }
 TooltipChildWrapper.displayName = "TooltipChildWrapper"
@@ -341,6 +344,14 @@ export function Tooltip({
     if (childProps.onClick) childProps.onClick(e as never)
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape" && (visible || timerRef.current !== null)) {
+      hide()
+      e.stopPropagation()
+    }
+    if (childProps.onKeyDown) childProps.onKeyDown(e as never)
+  }
+
   return (
     <>
       <TooltipChildWrapper
@@ -351,6 +362,7 @@ export function Tooltip({
         onFocus={handleFocus}
         onBlur={handleBlur}
         onClick={handleClick}
+        onKeyDown={handleKeyDown}
       />
       {createPortal(
         <AnimatePresence>

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   AlertTriangle,
@@ -67,6 +67,53 @@ function alignClass(align?: string) {
 
 function MissingValue() {
   return <span className="font-normal text-white/35">-</span>
+}
+
+function ReportName({ name }: { name: string }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [isTruncated, setIsTruncated] = useState(false)
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const measure = () => {
+      const text = container.firstElementChild as HTMLElement | null
+      setIsTruncated(!!text && text.scrollWidth - text.clientWidth > 1)
+    }
+
+    measure()
+    // Observe a stable container because the tooltip mounts only for overflow.
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : undefined
+    const fonts = document.fonts
+    observer?.observe(container)
+    if (!observer) window.addEventListener("resize", measure)
+    fonts?.addEventListener("loadingdone", measure)
+
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener("resize", measure)
+      fonts?.removeEventListener("loadingdone", measure)
+    }
+  }, [name])
+
+  const text = (
+    <span
+      tabIndex={isTruncated ? 0 : undefined}
+      className="block truncate font-semibold text-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400">
+      {name}
+    </span>
+  )
+
+  return (
+    <div ref={containerRef} className="min-w-0">
+      {isTruncated ?
+        <Tooltip content={name} position="top" onlyWhenTruncated>
+          {text}
+        </Tooltip>
+      : text}
+    </div>
+  )
 }
 
 function CellContent({
@@ -163,11 +210,7 @@ function CellContent({
   }
 
   if (columnKey === "name") {
-    return (
-      <Tooltip content={val as string} position="top">
-        <span className="block truncate font-semibold text-white/90">{val as string}</span>
-      </Tooltip>
-    )
+    return <ReportName name={val as string} />
   }
 
   if (columnKey === "notes") {

@@ -1,6 +1,6 @@
-import { render, screen, within } from "@testing-library/react"
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ReportTable } from "./ReportTable"
 import type { ColumnKey, RowData } from "../types"
 
@@ -56,6 +56,164 @@ function renderRow(
   const cells = within(rows[rows.length - 1]).getAllByRole("cell")
   return (key: ColumnKey) => cells[visibleColDefs.findIndex((c) => c.key === key)]
 }
+
+describe("report Name tooltips", () => {
+  let availableWidth: number
+  let textWidth: number
+  let resizeCallbacks: (() => void)[]
+  const observe = vi.fn()
+  const disconnect = vi.fn()
+  const longName = "Alexandria Gabrielle Montgomery Fernandez"
+
+  beforeEach(() => {
+    availableWidth = 200
+    textWidth = 60
+    resizeCallbacks = []
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return this.matches("span.truncate") ? availableWidth : 0
+    })
+    vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return this.matches("span.truncate") ? textWidth : 0
+    })
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: () => void) {
+          resizeCallbacks.push(callback)
+        }
+        observe = observe
+        disconnect = disconnect
+      },
+    )
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it.each(["a", "aaa", "Name..."])(
+    "does not show a tooltip or add a tab stop for the fully visible name %s",
+    async (name) => {
+      const user = userEvent.setup()
+      renderRow({ name })
+      const text = screen.getByText(name)
+      expect(text).not.toHaveAttribute("tabindex")
+      expect(text).not.toHaveAttribute("title")
+      await user.hover(text)
+      await act(() => new Promise<void>((resolve) => setTimeout(resolve, 250)))
+      expect(screen.queryByRole("tooltip")).toBeNull()
+    },
+  )
+
+  it("shows the complete name on hover only when its rendered text overflows", async () => {
+    const user = userEvent.setup()
+    textWidth = 400
+    renderRow({ name: longName })
+    const text = screen.getByText(longName)
+    expect(text).toHaveAttribute("tabindex", "0")
+    await user.hover(text)
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(longName)
+  })
+
+  it("reveals a truncated name by keyboard and dismisses it without losing focus", async () => {
+    const user = userEvent.setup()
+    textWidth = 400
+    renderRow({ name: longName }, "__all__", { visibleColumns: ["name", "date"] })
+    const text = screen.getByText(longName)
+    await user.tab()
+    expect(text).toHaveFocus()
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(longName)
+    await user.keyboard("{Escape}")
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull())
+    expect(text).toHaveFocus()
+  })
+
+  it("updates after resizing and removes a tooltip once the full name fits", async () => {
+    const user = userEvent.setup()
+    textWidth = 400
+    renderRow({ name: longName })
+    await user.hover(screen.getByText(longName))
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(longName)
+
+    availableWidth = 450
+    act(() => resizeCallbacks.forEach((callback) => callback()))
+    expect(screen.getByText(longName)).not.toHaveAttribute("tabindex")
+    expect(screen.queryByRole("tooltip")).toBeNull()
+
+    availableWidth = 150
+    act(() => resizeCallbacks.forEach((callback) => callback()))
+    expect(screen.getByText(longName)).toHaveAttribute("tabindex", "0")
+    await user.hover(screen.getByText(longName))
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(longName)
+    expect(observe).toHaveBeenCalledTimes(1)
+  })
+
+  it("disconnects the name width observer when the row unmounts", () => {
+    renderRow()
+    cleanup()
+    expect(disconnect).toHaveBeenCalledTimes(1)
+  })
+
+  it("remeasures when the same member's displayed name changes", async () => {
+    const user = userEvent.setup()
+    textWidth = 400
+    const table = (name: string) => (
+      <ReportTable
+        groupedRows={{
+          __all__: [
+            {
+              person_id: "report-member",
+              name,
+              date: "2026-11-02",
+              status: "present",
+              is_late: false,
+              late_minutes: 0,
+              notes: "",
+              session: null,
+            },
+          ],
+        }}
+        visibleColumns={["name"]}
+        allColumns={columns}
+        pageSize={25}
+        onPageSizeChange={vi.fn()}
+      />
+    )
+    const { rerender } = render(table(longName))
+    await user.hover(screen.getByText(longName))
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(longName)
+
+    textWidth = 60
+    rerender(table("a"))
+    expect(screen.getByText("a")).not.toHaveAttribute("tabindex")
+    expect(screen.queryByRole("tooltip")).toBeNull()
+  })
+
+  it("remeasures after fonts finish loading and cleans up its listener", () => {
+    const originalFonts = Object.getOwnPropertyDescriptor(document, "fonts")
+    const fonts = new EventTarget()
+    const removeListener = vi.spyOn(fonts, "removeEventListener")
+    Object.defineProperty(document, "fonts", { configurable: true, value: fonts })
+    try {
+      renderRow({ name: longName })
+      expect(screen.getByText(longName)).not.toHaveAttribute("tabindex")
+      textWidth = 400
+      act(() => {
+        fonts.dispatchEvent(new Event("loadingdone"))
+      })
+      expect(screen.getByText(longName)).toHaveAttribute("tabindex", "0")
+      cleanup()
+      expect(removeListener).toHaveBeenCalledWith("loadingdone", expect.any(Function))
+    } finally {
+      if (originalFonts) Object.defineProperty(document, "fonts", originalFonts)
+      else Reflect.deleteProperty(document, "fonts")
+    }
+  })
+})
 
 it.each([true, false])(
   "keeps side spacing outside the scroll viewport when editable is %s",

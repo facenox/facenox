@@ -13,6 +13,7 @@ interface EmptyStateProps {
   }
   children?: React.ReactNode
   className?: string
+  reducedMotion?: boolean
 }
 
 export function EmptyState({
@@ -22,13 +23,14 @@ export function EmptyState({
   action,
   children,
   className = "",
+  reducedMotion = false,
 }: EmptyStateProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: reducedMotion ? 0 : 6 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      exit={{ opacity: 0, y: reducedMotion ? 0 : -6 }}
+      transition={{ duration: reducedMotion ? 0 : 0.2, ease: [0.16, 1, 0.3, 1] }}
       className={`flex h-full min-h-0 w-full max-w-full flex-1 flex-col items-center justify-center p-8 px-6 text-center ${className}`}>
       <div className="text-white/35">{icon || <Users className="size-8" />}</div>
 

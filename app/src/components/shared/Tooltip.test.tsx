@@ -83,4 +83,39 @@ describe("Tooltip", () => {
       expect(screen.getByText("Keyboard info")).toBeInTheDocument()
     })
   })
+
+  it("dismisses on Escape without moving focus or triggering a parent Escape action", async () => {
+    const parentKeyDown = vi.fn()
+    const childKeyDown = vi.fn()
+    render(
+      <div onKeyDown={parentKeyDown}>
+        <Tooltip content="Keyboard info" delay={0}>
+          <button type="button" onKeyDown={childKeyDown}>
+            Focusable
+          </button>
+        </Tooltip>
+      </div>,
+    )
+    const button = screen.getByRole("button", { name: "Focusable" })
+    button.focus()
+    await screen.findByRole("tooltip")
+    fireEvent.keyDown(button, { key: "Escape" })
+    expect(screen.queryByRole("tooltip")).toBeNull()
+    expect(button).toHaveFocus()
+    expect(parentKeyDown).not.toHaveBeenCalled()
+    expect(childKeyDown).toHaveBeenCalledOnce()
+  })
+
+  it("preserves the child's keyboard handler when no tooltip is open", () => {
+    const onKeyDown = vi.fn()
+    render(
+      <Tooltip content="Keyboard info">
+        <button type="button" onKeyDown={onKeyDown}>
+          Focusable
+        </button>
+      </Tooltip>,
+    )
+    fireEvent.keyDown(screen.getByRole("button", { name: "Focusable" }), { key: "ArrowDown" })
+    expect(onKeyDown).toHaveBeenCalledOnce()
+  })
 })
