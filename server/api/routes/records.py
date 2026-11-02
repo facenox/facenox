@@ -492,6 +492,8 @@ async def update_session(
                 session_obj.is_late = False
                 session_obj.late_minutes = None
 
+        # A correction remains authoritative even without a reason/note.
+        session_obj.is_manual_override = True
         session_member = await repo.get_member(person_id)
         member_name = session_member.name if session_member else person_id
         status_str = session_obj.status or "unknown"

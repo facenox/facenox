@@ -143,7 +143,11 @@ async def get_database_stats(
             try:
                 from datetime import datetime, timezone
                 from sqlalchemy import select, func, or_, and_
-                from database.models import AttendanceRecord, AttendanceSession, AttendanceSessionDeletion
+                from database.models import (
+                    AttendanceRecord,
+                    AttendanceSession,
+                    AttendanceSessionDeletion,
+                )
                 from time_utils import to_storage_local
 
                 cursor = datetime.fromisoformat(last_synced_at.replace("Z", "+00:00"))
@@ -176,15 +180,28 @@ async def get_database_stats(
                     repo._apply_org_scope(
                         select(func.count())
                         .select_from(AttendanceSession)
-                        .where(changed_after_snapshot(AttendanceSession)),
+                        .where(
+                            or_(
+                                changed_after_snapshot(AttendanceSession),
+                                AttendanceSession.provenance_updated_at_utc > since_utc,
+                            )
+                        ),
                         AttendanceSession,
                     )
                 )
-                unsynced_sessions += await repo.session.scalar(repo._apply_org_scope(
-                    select(func.count()).select_from(AttendanceSessionDeletion).where(
-                        AttendanceSessionDeletion.deleted_at_utc > since_utc,
-                    ), AttendanceSessionDeletion,
-                )) or 0
+                unsynced_sessions += (
+                    await repo.session.scalar(
+                        repo._apply_org_scope(
+                            select(func.count())
+                            .select_from(AttendanceSessionDeletion)
+                            .where(
+                                AttendanceSessionDeletion.deleted_at_utc > since_utc,
+                            ),
+                            AttendanceSessionDeletion,
+                        )
+                    )
+                    or 0
+                )
             except Exception as se:
                 logger.warning(f"Failed to calculate unsynced stats: {se}")
         else:
@@ -193,9 +210,15 @@ async def get_database_stats(
             from sqlalchemy import select, func
             from database.models import AttendanceSessionDeletion
 
-            unsynced_sessions += await repo.session.scalar(repo._apply_org_scope(
-                select(func.count()).select_from(AttendanceSessionDeletion), AttendanceSessionDeletion,
-            )) or 0
+            unsynced_sessions += (
+                await repo.session.scalar(
+                    repo._apply_org_scope(
+                        select(func.count()).select_from(AttendanceSessionDeletion),
+                        AttendanceSessionDeletion,
+                    )
+                )
+                or 0
+            )
 
         stats["unsynced_records_count"] = unsynced_records
         stats["unsynced_sessions_count"] = unsynced_sessions

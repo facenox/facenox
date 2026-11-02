@@ -7,12 +7,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from api.routes.backup import BackupImportRequest, export_backup, import_backup
+from api.schemas import AttendanceSessionDeletionResponse
 from core.cipher import decrypt_local_data, encrypt_local_data
 from database.models import (
     AttendanceGroup,
     AttendanceMember,
     AttendanceRecord,
     AttendanceSession,
+    AttendanceSessionDeletion,
     Base,
 )
 from database.repository import AttendanceRepository, FaceRepository
@@ -66,7 +68,9 @@ async def seed(factory):
 
 
 @pytest.mark.asyncio
-async def test_backup_preserves_retirements_and_recovers_old_attendance_under_a_fresh_id(async_session_factory):
+async def test_backup_preserves_retirements_and_recovers_old_attendance_under_a_fresh_id(
+    async_session_factory,
+):
     from database.models import AttendanceSessionDeletion
 
     await seed(async_session_factory)
@@ -84,6 +88,104 @@ async def test_backup_preserves_retirements_and_recovers_old_attendance_under_a_
         assert restored.id != "s"
         assert restored.notes == "backup version"
         assert await session.get(AttendanceSessionDeletion, "s") is not None
+
+
+@pytest.mark.parametrize("overwrite", [False, True])
+async def test_restore_deletions_respect_keep_existing(
+    async_session_factory, overwrite
+):
+    await seed(async_session_factory)
+    async with async_session_factory() as session:
+        repo = AttendanceRepository(session)
+        backup = await export_backup(password=None, repo=repo)
+        request = restore_request(backup, overwrite)
+        request.attendance.data.sessions = []
+        request.attendance.data.deleted_sessions = [
+            AttendanceSessionDeletionResponse(
+                id="s", person_id="p", group_id="g", date="2026-01-02"
+            )
+        ]
+        assert (await import_backup(request, repo)).success
+    async with async_session_factory() as session:
+        assert (await session.get(AttendanceSession, "s") is None) is overwrite
+        assert (
+            await session.get(AttendanceSessionDeletion, "s") is not None
+        ) is overwrite
+
+
+@pytest.mark.parametrize("overwrite", [False, True])
+async def test_restore_resolves_same_attendance_slot_with_different_id(
+    async_session_factory, overwrite
+):
+    await seed(async_session_factory)
+    async with async_session_factory() as session:
+        repo = AttendanceRepository(session)
+        backup = await export_backup(password=None, repo=repo)
+        request = restore_request(backup, overwrite)
+        request.attendance.data.sessions[0].id = "other-device-id"
+        (await repo.get_session("p", "2026-01-02")).notes = "local correction"
+        await session.commit()
+        assert (await import_backup(request, repo)).success
+    async with async_session_factory() as session:
+        rows = list((await session.execute(select(AttendanceSession))).scalars())
+        assert len(rows) == 1
+        assert rows[0].id == "s"
+        assert rows[0].notes == ("backup version" if overwrite else "local correction")
+
+
+async def test_backup_roundtrip_retains_a_noteless_manual_override(
+    async_session_factory,
+):
+    await seed(async_session_factory)
+    async with async_session_factory() as session:
+        repo = AttendanceRepository(session)
+        original = await repo.get_session("p", "2026-01-02")
+        original.is_manual_override = True
+        original.notes = None
+        await session.commit()
+        backup = await export_backup(password=None, repo=repo)
+        original.is_manual_override = False
+        await session.commit()
+        assert (await import_backup(restore_request(backup), repo)).success
+    async with async_session_factory() as session:
+        restored = await AttendanceRepository(session).get_session("p", "2026-01-02")
+        assert restored.is_manual_override is True
+        assert restored.notes is None
+
+
+async def test_deletion_scope_follows_pair_unpair_and_repair(async_session_factory):
+    async with async_session_factory() as session:
+        session.add_all(
+            [
+                AttendanceSessionDeletion(
+                    id="local", person_id="p", group_id="g", date="2026-01-02"
+                ),
+                AttendanceSessionDeletion(
+                    id="other",
+                    organization_id="other-org",
+                    person_id="p",
+                    group_id="g",
+                    date="2026-01-02",
+                ),
+            ]
+        )
+        await session.commit()
+        repo = AttendanceRepository(session)
+        assert (await repo.assign_organization_id("org"))["deleted_sessions"] == 1
+        assert (
+            await session.get(AttendanceSessionDeletion, "local")
+        ).organization_id == "org"
+        assert (await repo.unassign_organization_id("org"))["deleted_sessions"] == 1
+        assert (
+            await session.get(AttendanceSessionDeletion, "local")
+        ).organization_id is None
+        assert (
+            await session.get(AttendanceSessionDeletion, "other")
+        ).organization_id == "other-org"
+        assert (await repo.assign_organization_id("new-org"))["deleted_sessions"] == 1
+        assert (
+            await session.get(AttendanceSessionDeletion, "local")
+        ).organization_id == "new-org"
 
 
 @pytest.mark.parametrize("overwrite", [False, True])

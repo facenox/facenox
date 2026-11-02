@@ -199,6 +199,12 @@ class AttendanceSession(Base, SyncMixin):
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     person_id: Mapped[str] = mapped_column(String, nullable=False)
+    is_manual_override: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
+    provenance_updated_at_utc: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
     member_id: Mapped[Optional[str]] = mapped_column(
         String, ForeignKey("attendance_members.id"), nullable=True
     )
@@ -288,12 +294,16 @@ class AttendanceSessionDeletion(Base):
     __tablename__ = "attendance_session_deletions"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
-    organization_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String, nullable=True, index=True
+    )
     person_id: Mapped[str] = mapped_column(String, nullable=False)
     group_id: Mapped[str] = mapped_column(String, nullable=False)
     date: Mapped[str] = mapped_column(String, nullable=False)
     deleted_at_utc: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, index=True,
+        DateTime,
+        nullable=False,
+        index=True,
         default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
         server_default=func.current_timestamp(),
     )

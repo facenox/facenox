@@ -78,6 +78,15 @@ export const attendanceRecordSchema = z.object({
 
 export const attendanceSessionSchema = z.object({
   id: z.string().min(1),
+  is_manual_override: z.boolean().optional(),
+  applied_schedule: z
+    .object({
+      class_start_time: z.string(),
+      class_end_time: z.string().nullable().optional(),
+      attendance_mode: z.enum(["attendance", "work_hours", "visits"]),
+    })
+    .nullable()
+    .optional(),
   person_id: z.string().min(1),
   member_id: z.string().min(1),
   group_id: z.string().min(1),
@@ -123,12 +132,16 @@ export const attendanceExportSchema = z.object({
   members: z.array(attendanceMemberSchema),
   records: z.array(attendanceRecordSchema),
   sessions: z.array(attendanceSessionSchema),
-  deleted_sessions: z.array(z.object({
-    id: z.string().min(1),
-    person_id: z.string().min(1),
-    group_id: z.string().min(1),
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  })).optional(),
+  deleted_sessions: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        person_id: z.string().min(1),
+        group_id: z.string().min(1),
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      }),
+    )
+    .optional(),
   settings: attendanceSettingsSchema,
   face_embeddings: z.array(faceEmbeddingSchema).optional(),
   exported_at: z.string().datetime(),

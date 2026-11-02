@@ -30,18 +30,49 @@ function payload(): Omit<SyncPushPayload, "snapshot_id"> {
     }),
   }
 }
+it("retains historical attendance mode and noteless override metadata through parsing and chunking", () => {
+  const input = payload()
+  const row = {
+    id: "s",
+    person_id: "p",
+    member_id: "m",
+    group_id: "g",
+    date: "2026-10-20",
+    visit_number: 1,
+    status: "present" as const,
+    is_late: false,
+    is_manual_override: true,
+    notes: null,
+    check_in_time: "2026-10-20T09:00:00Z",
+    check_out_time: null,
+    applied_schedule: { class_start_time: "08:00", attendance_mode: "visits" as const },
+  }
+  input.attendance_export = attendanceExportSchema.parse({
+    ...input.attendance_export,
+    sessions: [row],
+  })
+  const chunks = buildSyncChunks(input)
+  expect(chunks.flatMap((chunk) => chunk.attendance_export.sessions)).toEqual([row])
+})
 it("chunks retirement markers and excludes markers from already accepted chunks", () => {
   const input = payload()
   input.attendance_export.deleted_sessions = Array.from({ length: 501 }, (_, i) => ({
-    id: `retired-${i}`, person_id: "p", group_id: "g", date: "2026-10-20",
+    id: `retired-${i}`,
+    person_id: "p",
+    group_id: "g",
+    date: "2026-10-20",
   }))
   const chunks = buildSyncChunks(input)
-  expect(chunks.map((chunk) => chunk.attendance_export.deleted_sessions?.length)).toEqual([250, 250, 1])
-  expect(chunks.flatMap((chunk) => chunk.attendance_export.deleted_sessions ?? []))
-    .toEqual(input.attendance_export.deleted_sessions)
+  expect(chunks.map((chunk) => chunk.attendance_export.deleted_sessions?.length)).toEqual([
+    250, 250, 1,
+  ])
+  expect(chunks.flatMap((chunk) => chunk.attendance_export.deleted_sessions ?? [])).toEqual(
+    input.attendance_export.deleted_sessions,
+  )
   const retry = buildSyncChunks(input, undefined, [chunks[0]])
-  expect(retry.flatMap((chunk) => chunk.attendance_export.deleted_sessions ?? []))
-    .toEqual(input.attendance_export.deleted_sessions.slice(250))
+  expect(retry.flatMap((chunk) => chunk.attendance_export.deleted_sessions ?? [])).toEqual(
+    input.attendance_export.deleted_sessions.slice(250),
+  )
 })
 
 it("keeps every UTF-8 request within the byte limit without losing or reordering rows", () => {

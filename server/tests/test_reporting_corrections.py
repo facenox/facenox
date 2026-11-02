@@ -26,18 +26,27 @@ def test_retired_sessions_are_exported_as_durable_delta_deletions(departure_data
             target = await session.get(AttendanceSession, "departure-session")
             await AttendanceRepository(session).retire_session(target)
             await session.flush()
-            tombstone = await session.get(AttendanceSessionDeletion, "departure-session")
+            tombstone = await session.get(
+                AttendanceSessionDeletion, "departure-session"
+            )
             tombstone.deleted_at_utc = datetime(2026, 11, 3, 1)
             await session.commit()
 
     asyncio.run(retire())
     for since, expected in (("2026-11-03T00:00:00Z", 1), ("2026-11-03T02:00:00Z", 0)):
-        response = client.post("/attendance/export", params={"since": since}, headers=headers)
+        response = client.post(
+            "/attendance/export", params={"since": since}, headers=headers
+        )
         assert response.status_code == 200, response.text
         assert len(response.json()["deleted_sessions"]) == expected
-        assert all(row["id"] != "departure-session" for row in response.json()["sessions"])
+        assert all(
+            row["id"] != "departure-session" for row in response.json()["sessions"]
+        )
         if expected:
-            assert response.json()["deleted_sessions"][0]["person_id"] == member["person_id"]
+            assert (
+                response.json()["deleted_sessions"][0]["person_id"]
+                == member["person_id"]
+            )
 
 
 def test_marking_absent_clears_attendance_times(departure_data):
@@ -57,6 +66,23 @@ def test_marking_absent_clears_attendance_times(departure_data):
     assert body["check_in_time"] is None
     assert body["check_out_time"] is None
     assert body["total_hours"] is None
+    assert body["is_manual_override"] is True
+
+
+def test_correction_without_notes_is_exported_as_an_override(departure_data):
+    client, _, headers, _, member = departure_data
+    response = client.put(
+        endpoint(member), headers=headers, json={"check_out_time": None}
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["is_manual_override"] is True
+    exported = client.post("/attendance/export", headers=headers)
+    assert exported.status_code == 200, exported.text
+    corrected = next(
+        row for row in exported.json()["sessions"] if row["id"] == "departure-session"
+    )
+    assert corrected["is_manual_override"] is True
+    assert corrected["check_out_time"] is None
 
 
 def test_clearing_timeout_with_explicit_null_is_supported(departure_data):

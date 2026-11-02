@@ -135,6 +135,7 @@ async def export_attendance_data(
         if since_dt:
             sessions_query = sessions_query.where(
                 or_(
+                    AttendanceSession.provenance_updated_at_utc >= since_utc,
                     AttendanceSession.modified_at_utc >= since_utc,
                     and_(
                         AttendanceSession.modified_at_utc.is_(None),
@@ -147,7 +148,8 @@ async def export_attendance_data(
         )
         sessions_orm = sessions_result.scalars().all()
         deletions_query = repo._apply_org_scope(
-            select(AttendanceSessionDeletion), AttendanceSessionDeletion,
+            select(AttendanceSessionDeletion),
+            AttendanceSessionDeletion,
         )
         if since_utc is not None:
             deletions_query = deletions_query.where(
@@ -187,7 +189,9 @@ async def export_attendance_data(
                 for s in sessions_orm
             ],
             deleted_sessions=[
-                AttendanceSessionDeletionResponse.model_validate(row, from_attributes=True)
+                AttendanceSessionDeletionResponse.model_validate(
+                    row, from_attributes=True
+                )
                 for row in deletions_orm
             ],
             settings=AttendanceSettingsResponse.model_validate(

@@ -183,9 +183,19 @@ async def export_backup(
             sessions_query.order_by(SessionModel.date.desc())
         )
         sessions_orm = sessions_result.scalars().all()
-        deletions_orm = (await repo.session.execute(_scope_query(
-            select(SessionDeletionModel), SessionDeletionModel, repo.organization_id,
-        ))).scalars().all()
+        deletions_orm = (
+            (
+                await repo.session.execute(
+                    _scope_query(
+                        select(SessionDeletionModel),
+                        SessionDeletionModel,
+                        repo.organization_id,
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
 
         attendance_data = BackupAttendanceData(
             groups=[
@@ -208,7 +218,9 @@ async def export_backup(
                 for s in sessions_orm
             ],
             deleted_sessions=[
-                AttendanceSessionDeletionResponse.model_validate(row, from_attributes=True)
+                AttendanceSessionDeletionResponse.model_validate(
+                    row, from_attributes=True
+                )
                 for row in deletions_orm
             ],
             settings=AttendanceSettingsResponse.model_validate(
@@ -480,28 +492,66 @@ async def import_backup(
 
         for deleted in data.deleted_sessions:
             existing = await repo.session.get(SessionModel, deleted.id)
-            if existing and existing.organization_id == repo.organization_id:
+            if existing:
+                # Merge-only restore must not delete attendance that it promises
+                # to keep, or queue a tombstone for that still-active session.
+                if existing.organization_id != repo.organization_id or not overwrite:
+                    skipped += 1
+                    continue
                 await repo.retire_session(existing)
             elif not await repo.session.get(SessionDeletionModel, deleted.id):
-                repo.session.add(SessionDeletionModel(
-                    id=deleted.id, organization_id=repo.organization_id,
-                    person_id=deleted.person_id, group_id=deleted.group_id, date=deleted.date,
-                ))
+                repo.session.add(
+                    SessionDeletionModel(
+                        id=deleted.id,
+                        organization_id=repo.organization_id,
+                        person_id=deleted.person_id,
+                        group_id=deleted.group_id,
+                        date=deleted.date,
+                    )
+                )
         await repo.session.flush()
 
         for session in data.sessions:
-            # Recovery remains possible, but a retired Cloud ID is immutable.
-            restored_session_id = session.id
-            if await repo.session.get(SessionDeletionModel, session.id):
-                current = await repo.get_session(
-                    session.person_id, session.date, visit_number=session.visit_number,
+            member = restored_members.get(session.person_id)
+            # Device-specific IDs can differ for the same local attendance slot.
+            # Resolve the unique key first and retain its ID when overwriting.
+            slot_query = select(SessionModel).where(
+                SessionModel.date == session.date,
+                SessionModel.visit_number == session.visit_number,
+            )
+            if member:
+                slot_query = slot_query.where(SessionModel.member_id == member.id)
+            else:
+                slot_query = slot_query.where(
+                    SessionModel.person_id == session.person_id
                 )
-                restored_session_id = current.id if current else ulid.ulid()
-            existing_session = await repo.session.get(SessionModel, restored_session_id)
+            current = (
+                (
+                    await repo.session.execute(
+                        _scope_query(slot_query, SessionModel, repo.organization_id)
+                    )
+                )
+                .scalars()
+                .first()
+            )
+            by_id = await repo.session.get(SessionModel, session.id)
+            existing_session = current or (
+                by_id
+                if by_id and by_id.organization_id == repo.organization_id
+                else None
+            )
             if existing_session and not overwrite:
                 skipped += 1
                 continue
-            member = restored_members.get(session.person_id)
+            restored_session_id = (
+                existing_session.id if existing_session else session.id
+            )
+            # Recovery remains possible, but retired IDs and another org's IDs
+            # must not be reused by a newly restored active session.
+            if not existing_session and (
+                by_id or await repo.session.get(SessionDeletionModel, session.id)
+            ):
+                restored_session_id = ulid.ulid()
 
             await repo.session.merge(
                 SessionModel(
@@ -519,6 +569,7 @@ async def import_backup(
                     is_late=session.is_late,
                     late_minutes=session.late_minutes,
                     notes=session.notes,
+                    is_manual_override=session.is_manual_override,
                     organization_id=repo.organization_id,
                 )
             )

@@ -187,22 +187,29 @@ describe("BackgroundSyncManager", () => {
       if (url.includes("/attendance/export")) {
         exports++
         return Response.json({
-          groups: [], members: [], records: [], sessions: [],
+          groups: [],
+          members: [],
+          records: [],
+          sessions: [],
           deleted_sessions: [{ id: "retired", person_id: "p", group_id: "g", date: "2026-10-01" }],
           exported_at: "2026-10-02T00:00:00Z",
         })
       }
       if (url.includes("/api/sync/push")) {
         if (init?.method === "GET") {
-          return supported ? Response.json({ capabilities: { session_deletions: true } })
+          return supported ?
+              Response.json({ capabilities: { session_deletions: true } })
             : new Response("Method Not Allowed", { status: 405 })
         }
         pushed.push(JSON.parse(String(init?.body)) as SyncPushPayload)
-        return Response.json({ ok: true, status: "accepted",
+        return Response.json({
+          ok: true,
+          status: "accepted",
           ...(confirmsDeletion ? { deleted_session_ids: ["retired"] } : {}),
         })
       }
-      if (url.includes("/api/sync/pull")) return Response.json({ schema_version: 2, groups: [], members: [] })
+      if (url.includes("/api/sync/pull"))
+        return Response.json({ schema_version: 2, groups: [], members: [] })
       return Response.json({ groups_count: 0, members_count: 0 })
     })
     expect((await new BackgroundSyncManager().performSync()).success).toBe(false)

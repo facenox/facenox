@@ -16,7 +16,7 @@ from database import migrate
 
 
 SOURCE_REVISION = "e3b4c5d6e7f8"
-HEAD_REVISION = "o0p1q2r3s4t5"
+HEAD_REVISION = "q2r3s4t5u6v7"
 AUTH_KEY = hashlib.sha256(b"facenox-generation-tests").digest()
 
 
@@ -73,6 +73,70 @@ def _run(data_dir: Path, **kwargs) -> migrate.MigrationResult:
         authentication_key=AUTH_KEY,
         **kwargs,
     )
+
+
+def test_override_migration_uses_saved_reasons_and_scoped_audit_evidence(tmp_path):
+    data_dir = tmp_path / "override-data"
+    database = _make_beta15_fixture(data_dir)
+    migrate._upgrade_database_to_revision(database, "p1q2r3s4t5u6")
+    with closing(sqlite3.connect(database)) as connection:
+        for number, (session_id, note) in enumerate(
+            (
+                ("reason", "Approved arrival"),
+                ("audit", None),
+                ("automatic", None),
+                ("foreign-audit", None),
+            ),
+            start=1,
+        ):
+            connection.execute(
+                """
+                INSERT INTO attendance_sessions
+                    (id,person_id,member_id,group_id,date,visit_number,status,is_late,
+                     version,is_deleted,notes,check_in_time)
+                VALUES (?,'person-1','member-1','group-1',?,1,'present',0,1,0,?,
+                        '2026-01-02 09:00:00')
+            """,
+                (session_id, f"2026-01-{number:02d}", note),
+            )
+        for session_id, organization_id in (
+            ("audit", None),
+            ("foreign-audit", "other-org"),
+        ):
+            connection.execute(
+                """
+                INSERT INTO audit_logs (id,action,target_type,target_id,organization_id)
+                VALUES (?,'ATTENDANCE_SESSION_OVERRIDDEN','attendance_session',?,?)
+            """,
+                (f"log-{session_id}", session_id, organization_id),
+            )
+        connection.commit()
+        original = connection.execute(
+            "SELECT id,last_modified_at,modified_at_utc FROM attendance_sessions ORDER BY id"
+        ).fetchall()
+        update_trigger = connection.execute(
+            "SELECT sql FROM sqlite_master WHERE type='trigger' AND name='attendance_sessions_utc_update'"
+        ).fetchone()
+    result = _run(data_dir)
+    with closing(sqlite3.connect(result.active_database)) as connection:
+        assert (
+            connection.execute(
+                "SELECT id,last_modified_at,modified_at_utc FROM attendance_sessions ORDER BY id"
+            ).fetchall()
+            == original
+        )
+        assert (
+            connection.execute(
+                "SELECT sql FROM sqlite_master WHERE type='trigger' AND name='attendance_sessions_utc_update'"
+            ).fetchone()
+            == update_trigger
+        )
+        assert dict(
+            connection.execute("SELECT id,is_manual_override FROM attendance_sessions")
+        ) == {"reason": 1, "audit": 1, "automatic": 0, "foreign-audit": 0}
+        assert connection.execute(
+            "SELECT DISTINCT check_in_time FROM attendance_sessions"
+        ).fetchall() == [("2026-01-02 09:00:00",)]
 
 
 def _pointer(data_dir: Path) -> generations.GenerationPointer:

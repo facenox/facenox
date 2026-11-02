@@ -181,6 +181,7 @@ export interface AttendanceRecord {
 
 export interface AttendanceSession {
   id: string
+  is_manual_override?: boolean
   person_id: string
   member_id: string
   group_id: string

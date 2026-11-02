@@ -267,6 +267,7 @@ class AppliedScheduleResponse(BaseModel):
 
 class AttendanceSessionResponse(CapturedAttendanceResponse):
     id: str
+    is_manual_override: bool = False
     person_id: str
     member_id: str
     group_id: str
@@ -502,7 +503,9 @@ class ExportDataResponse(BaseModel):
     members: List[AttendanceMemberResponse]
     records: List[AttendanceRecordResponse]
     sessions: List[AttendanceSessionResponse]
-    deleted_sessions: List[AttendanceSessionDeletionResponse] = Field(default_factory=list)
+    deleted_sessions: List[AttendanceSessionDeletionResponse] = Field(
+        default_factory=list
+    )
     settings: AttendanceSettingsResponse
     exported_at: datetime
 

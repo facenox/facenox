@@ -17,13 +17,23 @@ def upgrade():
         sa.Column("person_id", sa.String(), nullable=False),
         sa.Column("group_id", sa.String(), nullable=False),
         sa.Column("date", sa.String(), nullable=False),
-        sa.Column("deleted_at_utc", sa.DateTime(), nullable=False,
-                  server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column(
+            "deleted_at_utc",
+            sa.DateTime(),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
     )
-    op.create_index("ix_attendance_session_deletions_organization_id",
-                    "attendance_session_deletions", ["organization_id"])
-    op.create_index("ix_attendance_session_deletions_deleted_at_utc",
-                    "attendance_session_deletions", ["deleted_at_utc"])
+    op.create_index(
+        "ix_attendance_session_deletions_organization_id",
+        "attendance_session_deletions",
+        ["organization_id"],
+    )
+    op.create_index(
+        "ix_attendance_session_deletions_deleted_at_utc",
+        "attendance_session_deletions",
+        ["deleted_at_utc"],
+    )
 
 
 def downgrade():

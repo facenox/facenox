@@ -229,7 +229,7 @@ class AttendanceService:
             manual_visits = {
                 number: session
                 for number, session in existing_visits.items()
-                if session.notes
+                if session.notes or getattr(session, "is_manual_override", False)
             }
             # Overrides belong to a specific visit, not the entire person/day.
             for visit_number, existing_session in sorted(manual_visits.items()):
@@ -250,6 +250,7 @@ class AttendanceService:
                         "is_late": existing_session.is_late,
                         "late_minutes": existing_session.late_minutes,
                         "notes": existing_session.notes,
+                        "is_manual_override": True,
                     }
                 )
 
@@ -509,6 +510,7 @@ class AttendanceService:
             if (
                 old.person_id in rebuilt_people
                 and not old.notes
+                and not getattr(old, "is_manual_override", False)
                 and (old.person_id, old.visit_number or 1) not in expected
             ):
                 await self.repo.retire_session(old)

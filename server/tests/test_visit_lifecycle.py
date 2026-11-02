@@ -143,20 +143,28 @@ async def test_voiding_the_last_arrival_removes_its_derived_visit(
             from database.models import AttendanceSessionDeletion
             from sqlalchemy import select
 
-            deleted = (await reader.execute(select(AttendanceSessionDeletion))).scalars().all()
+            deleted = (
+                (await reader.execute(select(AttendanceSessionDeletion)))
+                .scalars()
+                .all()
+            )
             assert len(deleted) == 1
             assert deleted[0].person_id == "p"
             assert deleted[0].date == "2026-11-01"
 
 
 @pytest.mark.asyncio
-async def test_rebuild_keeps_a_manually_corrected_later_visit(async_session_factory):
+@pytest.mark.parametrize("with_note", [False, True])
+async def test_rebuild_keeps_a_manually_corrected_later_visit(
+    async_session_factory, with_note
+):
     async with async_session_factory() as session:
         repo, service, member, settings = await create_flow(session)
         for time in ("08:00", "09:00", "14:00"):
             await scan(service, member, settings, f"2026-11-01T{time}:00")
         corrected = await repo.get_session("p", "2026-11-01", visit_number=2)
-        corrected.notes = "Approved manual arrival"
+        corrected.notes = "Approved manual arrival" if with_note else None
+        corrected.is_manual_override = not with_note
         records = await repo.get_records(person_id="p")
         await repo.void_record(
             records[0].id, voided_by="test", void_reason="Wrong scan"
@@ -166,7 +174,8 @@ async def test_rebuild_keeps_a_manually_corrected_later_visit(async_session_fact
         async with async_session_factory() as reader:
             visits = await AttendanceRepository(reader).get_sessions(person_id="p")
             assert [visit.visit_number for visit in visits] == [1, 2]
-            assert visits[1].notes == "Approved manual arrival"
+            assert visits[1].notes == ("Approved manual arrival" if with_note else None)
+            assert visits[1].is_manual_override is True
             assert visits[1].check_in_time.hour == 14
 
 
