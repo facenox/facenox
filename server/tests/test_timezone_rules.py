@@ -3,7 +3,11 @@ from unittest.mock import patch
 
 import pytest
 
-from timezone_rules import _load_rules, attendance_timezone_context, equivalent_timezones
+from timezone_rules import (
+    _load_rules,
+    attendance_timezone_context,
+    equivalent_timezones,
+)
 
 
 NOW = datetime(2026, 11, 3, tzinfo=timezone.utc)
