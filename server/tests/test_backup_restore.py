@@ -65,6 +65,27 @@ async def seed(factory):
         await session.commit()
 
 
+@pytest.mark.asyncio
+async def test_backup_preserves_retirements_and_recovers_old_attendance_under_a_fresh_id(async_session_factory):
+    from database.models import AttendanceSessionDeletion
+
+    await seed(async_session_factory)
+    async with async_session_factory() as session:
+        repo = AttendanceRepository(session)
+        original = await export_backup(password=None, repo=repo)
+        await repo.retire_session(await repo.get_session("p", "2026-01-02"))
+        await session.commit()
+        retired_backup = await export_backup(password=None, repo=repo)
+        assert [row.id for row in retired_backup.attendance.deleted_sessions] == ["s"]
+        assert not retired_backup.attendance.sessions
+        assert (await import_backup(restore_request(original), repo)).success
+    async with async_session_factory() as session:
+        restored = await AttendanceRepository(session).get_session("p", "2026-01-02")
+        assert restored.id != "s"
+        assert restored.notes == "backup version"
+        assert await session.get(AttendanceSessionDeletion, "s") is not None
+
+
 @pytest.mark.parametrize("overwrite", [False, True])
 async def test_restore_respects_overwrite_for_sessions_and_reenrollment(
     async_session_factory, overwrite

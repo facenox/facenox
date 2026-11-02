@@ -14,6 +14,7 @@ from api.schemas import (
     AttendanceMemberResponse,
     AttendanceRecordResponse,
     AttendanceSessionResponse,
+    AttendanceSessionDeletionResponse,
     AttendanceSettingsResponse,
     ExportDataResponse,
 )
@@ -24,6 +25,7 @@ from database.models import (
     AttendanceMember,
     AttendanceRecord,
     AttendanceSession,
+    AttendanceSessionDeletion,
 )
 from database.repository import AttendanceRepository, FaceRepository
 from time_utils import to_storage_local
@@ -144,6 +146,14 @@ async def export_attendance_data(
             sessions_query.order_by(AttendanceSession.date.desc())
         )
         sessions_orm = sessions_result.scalars().all()
+        deletions_query = repo._apply_org_scope(
+            select(AttendanceSessionDeletion), AttendanceSessionDeletion,
+        )
+        if since_utc is not None:
+            deletions_query = deletions_query.where(
+                AttendanceSessionDeletion.deleted_at_utc >= since_utc,
+            )
+        deletions_orm = (await repo.session.execute(deletions_query)).scalars().all()
 
         serialized_groups = []
         for g in groups_orm:
@@ -175,6 +185,10 @@ async def export_attendance_data(
             sessions=[
                 AttendanceSessionResponse.model_validate(s, from_attributes=True)
                 for s in sessions_orm
+            ],
+            deleted_sessions=[
+                AttendanceSessionDeletionResponse.model_validate(row, from_attributes=True)
+                for row in deletions_orm
             ],
             settings=AttendanceSettingsResponse.model_validate(
                 settings_orm, from_attributes=True

@@ -123,6 +123,12 @@ export const attendanceExportSchema = z.object({
   members: z.array(attendanceMemberSchema),
   records: z.array(attendanceRecordSchema),
   sessions: z.array(attendanceSessionSchema),
+  deleted_sessions: z.array(z.object({
+    id: z.string().min(1),
+    person_id: z.string().min(1),
+    group_id: z.string().min(1),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })).optional(),
   settings: attendanceSettingsSchema,
   face_embeddings: z.array(faceEmbeddingSchema).optional(),
   exported_at: z.string().datetime(),

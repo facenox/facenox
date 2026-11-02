@@ -43,6 +43,7 @@ CRITICAL_DATA_TABLES = (
     "attendance_members",
     "attendance_records",
     "attendance_sessions",
+    "attendance_session_deletions",
     "attendance_group_rules",
     "faces",
     "audit_logs",

@@ -1048,6 +1048,19 @@ export class BackgroundSyncManager {
             persistentStore.set("sync.pendingUpload", pending)
           }
           exportedAt = pending.exportedAt
+          if (pending.chunks.slice(pending.next).some(
+            (chunk) => (chunk.attendance_export.deleted_sessions?.length ?? 0) > 0,
+          )) {
+            const capabilities = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/push`, {
+              method: "GET",
+              headers: { Authorization: `Bearer ${deviceToken}` },
+              signal: this.requestSignal(30000),
+            })
+            const supported = capabilities.ok ? await capabilities.json() : null
+            if (supported?.capabilities?.session_deletions !== true) {
+              throw new Error("Update Facenox Cloud before syncing removed attendance visits. Deletions remain queued.")
+            }
+          }
           for (let i = pending.next; i < pending.chunks.length; i++) {
             const payload = pending.chunks[i]
             const remote = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/push`, {
@@ -1066,6 +1079,7 @@ export class BackgroundSyncManager {
               error?: string
               retryAfterMs?: number
               conflicts?: number
+              deleted_session_ids?: string[]
               accepted?: SyncAcknowledgements["accepted"]
               policy?: Record<string, unknown>
             } = {}
@@ -1083,6 +1097,10 @@ export class BackgroundSyncManager {
               throw new Error(
                 result.message || result.error || responseText || `HTTP ${remote.status}`,
               )
+            }
+            const retiredIds = new Set(result.deleted_session_ids ?? [])
+            if ((payload.attendance_export.deleted_sessions ?? []).some((row) => !retiredIds.has(row.id))) {
+              throw new Error("Cloud did not confirm removed attendance visits. Deletions remain queued.")
             }
             for (const g of payload.attendance_export.groups) acknowledged.groups[g.id] = g.version
             for (const m of payload.attendance_export.members)

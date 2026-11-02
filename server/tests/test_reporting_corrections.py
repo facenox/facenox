@@ -15,6 +15,31 @@ def endpoint(member):
     return f"/attendance/sessions/{member['person_id']}/2026-11-01"
 
 
+def test_retired_sessions_are_exported_as_durable_delta_deletions(departure_data):
+    from database.models import AttendanceSessionDeletion
+    from database.repository import AttendanceRepository
+
+    client, factory, headers, _, member = departure_data
+
+    async def retire():
+        async with factory() as session:
+            target = await session.get(AttendanceSession, "departure-session")
+            await AttendanceRepository(session).retire_session(target)
+            await session.flush()
+            tombstone = await session.get(AttendanceSessionDeletion, "departure-session")
+            tombstone.deleted_at_utc = datetime(2026, 11, 3, 1)
+            await session.commit()
+
+    asyncio.run(retire())
+    for since, expected in (("2026-11-03T00:00:00Z", 1), ("2026-11-03T02:00:00Z", 0)):
+        response = client.post("/attendance/export", params={"since": since}, headers=headers)
+        assert response.status_code == 200, response.text
+        assert len(response.json()["deleted_sessions"]) == expected
+        assert all(row["id"] != "departure-session" for row in response.json()["sessions"])
+        if expected:
+            assert response.json()["deleted_sessions"][0]["person_id"] == member["person_id"]
+
+
 def test_marking_absent_clears_attendance_times(departure_data):
     client, _, headers, _, member = departure_data
     response = client.put(

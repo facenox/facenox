@@ -511,7 +511,7 @@ class AttendanceService:
                 and not old.notes
                 and (old.person_id, old.visit_number or 1) not in expected
             ):
-                await self.repo.session.delete(old)
+                await self.repo.retire_session(old)
 
     async def recompute_sessions_for_date(
         self,

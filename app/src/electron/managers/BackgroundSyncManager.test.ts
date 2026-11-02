@@ -175,6 +175,53 @@ describe("BackgroundSyncManager", () => {
     expect(mockStore["sync.pendingUpload"]).toBeNull()
   })
 
+  it("keeps retirements queued for an older Cloud and resumes after capability support appears", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    let supported = false
+    let confirmsDeletion = false
+    let exports = 0
+    const pushed: SyncPushPayload[] = []
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input)
+      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
+      if (url.includes("/attendance/export")) {
+        exports++
+        return Response.json({
+          groups: [], members: [], records: [], sessions: [],
+          deleted_sessions: [{ id: "retired", person_id: "p", group_id: "g", date: "2026-10-01" }],
+          exported_at: "2026-10-02T00:00:00Z",
+        })
+      }
+      if (url.includes("/api/sync/push")) {
+        if (init?.method === "GET") {
+          return supported ? Response.json({ capabilities: { session_deletions: true } })
+            : new Response("Method Not Allowed", { status: 405 })
+        }
+        pushed.push(JSON.parse(String(init?.body)) as SyncPushPayload)
+        return Response.json({ ok: true, status: "accepted",
+          ...(confirmsDeletion ? { deleted_session_ids: ["retired"] } : {}),
+        })
+      }
+      if (url.includes("/api/sync/pull")) return Response.json({ schema_version: 2, groups: [], members: [] })
+      return Response.json({ groups_count: 0, members_count: 0 })
+    })
+    expect((await new BackgroundSyncManager().performSync()).success).toBe(false)
+    expect(pushed).toHaveLength(0)
+    expect(mockStore["sync.lastSyncedAt"]).toBeNull()
+    expect(mockStore["sync.pendingUpload"]).toMatchObject({ next: 0 })
+    supported = true
+    expect((await new BackgroundSyncManager().performSync()).success).toBe(false)
+    expect(mockStore["sync.lastSyncedAt"]).toBeNull()
+    expect(mockStore["sync.pendingUpload"]).toMatchObject({ next: 0 })
+    confirmsDeletion = true
+    expect((await new BackgroundSyncManager().performSync()).success).toBe(true)
+    expect(exports).toBe(1)
+    expect(pushed[0].attendance_export.deleted_sessions?.[0].id).toBe("retired")
+    expect(pushed[1].snapshot_id).toBe(pushed[0].snapshot_id)
+    expect(mockStore["sync.pendingUpload"]).toBeNull()
+    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-10-02T00:00:00.000Z")
+  })
+
   it("exports the corrected roster after a quota rejection without advancing its watermark", async () => {
     const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
     let activePeople = 151

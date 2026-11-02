@@ -17,6 +17,7 @@ from database.models import (
     AttendanceMember,
     AttendanceRecord,
     AttendanceSession,
+    AttendanceSessionDeletion,
     AttendanceSettings,
     AuditLog,
     Face,
@@ -754,6 +755,15 @@ class AttendanceRepository:
         return record
 
     # Session Methods
+    async def retire_session(self, session_obj: AttendanceSession) -> None:
+        if not await self.session.get(AttendanceSessionDeletion, session_obj.id):
+            self.session.add(AttendanceSessionDeletion(
+                id=session_obj.id, organization_id=self.organization_id,
+                person_id=session_obj.person_id, group_id=session_obj.group_id,
+                date=session_obj.date,
+            ))
+        await self.session.delete(session_obj)
+
     async def upsert_session(self, session_data: Dict[str, Any]) -> AttendanceSession:
         session_data = normalize_session_times(session_data)
         member = await self.get_member(session_data["person_id"])

@@ -30,6 +30,20 @@ function payload(): Omit<SyncPushPayload, "snapshot_id"> {
     }),
   }
 }
+it("chunks retirement markers and excludes markers from already accepted chunks", () => {
+  const input = payload()
+  input.attendance_export.deleted_sessions = Array.from({ length: 501 }, (_, i) => ({
+    id: `retired-${i}`, person_id: "p", group_id: "g", date: "2026-10-20",
+  }))
+  const chunks = buildSyncChunks(input)
+  expect(chunks.map((chunk) => chunk.attendance_export.deleted_sessions?.length)).toEqual([250, 250, 1])
+  expect(chunks.flatMap((chunk) => chunk.attendance_export.deleted_sessions ?? []))
+    .toEqual(input.attendance_export.deleted_sessions)
+  const retry = buildSyncChunks(input, undefined, [chunks[0]])
+  expect(retry.flatMap((chunk) => chunk.attendance_export.deleted_sessions ?? []))
+    .toEqual(input.attendance_export.deleted_sessions.slice(250))
+})
+
 it("keeps every UTF-8 request within the byte limit without losing or reordering rows", () => {
   const input = payload()
   input.attendance_export.members = Array.from({ length: 20 }, (_, index) => ({

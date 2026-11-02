@@ -7,9 +7,10 @@ const limits = {
   members: 500,
   records: 250,
   sessions: 250,
+  deleted_sessions: 250,
   face_embeddings: 100,
 } as const
-const kinds = ["groups", "members", "records", "sessions", "face_embeddings"] as const
+const kinds = ["groups", "members", "records", "sessions", "deleted_sessions", "face_embeddings"] as const
 
 function remainingRows<T>(
   rows: T[],
@@ -53,6 +54,11 @@ export function buildSyncChunks(
       acceptedChunks.flatMap((c) => c.attendance_export.sessions),
       (row) => row.id,
     ),
+    deleted_sessions: remainingRows(
+      original.deleted_sessions ?? [],
+      acceptedChunks.flatMap((c) => c.attendance_export.deleted_sessions ?? []),
+      (row) => row.id,
+    ),
     face_embeddings: remainingRows(
       original.face_embeddings ?? [],
       acceptedChunks.flatMap((c) => c.attendance_export.face_embeddings ?? []),
@@ -66,7 +72,7 @@ export function buildSyncChunks(
   // snapshot IDs; retries keep their original IDs via the persisted pending batch.
   const snapshotPrefix = `${input.device_id}:${input.exported_at}:${randomUUID()}`
   const chunks: SyncPushPayload[] = []
-  const offsets = { groups: 0, members: 0, records: 0, sessions: 0, face_embeddings: 0 }
+  const offsets = { groups: 0, members: 0, records: 0, sessions: 0, deleted_sessions: 0, face_embeddings: 0 }
   let remaining = kinds.reduce((sum, kind) => sum + (source[kind]?.length ?? 0), 0)
   do {
     const chunk: SyncPushPayload = {
@@ -79,6 +85,7 @@ export function buildSyncChunks(
         members: [],
         records: [],
         sessions: [],
+        deleted_sessions: [],
         face_embeddings: [],
       },
     }

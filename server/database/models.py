@@ -282,6 +282,23 @@ class AttendanceSession(Base, SyncMixin):
     )
 
 
+class AttendanceSessionDeletion(Base):
+    """Durable sync tombstone for a retired derived session ID."""
+
+    __tablename__ = "attendance_session_deletions"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    organization_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    person_id: Mapped[str] = mapped_column(String, nullable=False)
+    group_id: Mapped[str] = mapped_column(String, nullable=False)
+    date: Mapped[str] = mapped_column(String, nullable=False)
+    deleted_at_utc: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, index=True,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        server_default=func.current_timestamp(),
+    )
+
+
 class AttendanceGroupRule(Base, SyncMixin):
     __tablename__ = "attendance_group_rules"
 

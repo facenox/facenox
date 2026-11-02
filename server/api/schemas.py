@@ -487,12 +487,22 @@ class BulkMemberResponse(BaseModel):
     results: List[BulkMemberCreationResult] = Field(default_factory=list)
 
 
+class AttendanceSessionDeletionResponse(BaseModel):
+    id: str
+    person_id: str
+    group_id: str
+    date: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ExportDataResponse(BaseModel):
     groups: List[AttendanceGroupResponse]
     group_rules: List[AttendanceGroupRuleResponse] = []
     members: List[AttendanceMemberResponse]
     records: List[AttendanceRecordResponse]
     sessions: List[AttendanceSessionResponse]
+    deleted_sessions: List[AttendanceSessionDeletionResponse] = Field(default_factory=list)
     settings: AttendanceSettingsResponse
     exported_at: datetime
 

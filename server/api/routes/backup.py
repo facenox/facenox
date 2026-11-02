@@ -19,6 +19,7 @@ from database.models import (
     AttendanceMember as MemberModel,
     AttendanceRecord as RecordModel,
     AttendanceSession as SessionModel,
+    AttendanceSessionDeletion as SessionDeletionModel,
     Face as FaceModel,
 )
 from api.schemas import (
@@ -27,6 +28,7 @@ from api.schemas import (
     AttendanceMemberResponse,
     AttendanceRecordResponse,
     AttendanceSessionResponse,
+    AttendanceSessionDeletionResponse,
     AttendanceSettingsResponse,
     ExportDataResponse,
     ImportDataRequest,
@@ -181,6 +183,9 @@ async def export_backup(
             sessions_query.order_by(SessionModel.date.desc())
         )
         sessions_orm = sessions_result.scalars().all()
+        deletions_orm = (await repo.session.execute(_scope_query(
+            select(SessionDeletionModel), SessionDeletionModel, repo.organization_id,
+        ))).scalars().all()
 
         attendance_data = BackupAttendanceData(
             groups=[
@@ -201,6 +206,10 @@ async def export_backup(
             sessions=[
                 AttendanceSessionResponse.model_validate(s, from_attributes=True)
                 for s in sessions_orm
+            ],
+            deleted_sessions=[
+                AttendanceSessionDeletionResponse.model_validate(row, from_attributes=True)
+                for row in deletions_orm
             ],
             settings=AttendanceSettingsResponse.model_validate(
                 settings_orm, from_attributes=True
@@ -469,8 +478,26 @@ async def import_backup(
             )
             imported_records += 1
 
+        for deleted in data.deleted_sessions:
+            existing = await repo.session.get(SessionModel, deleted.id)
+            if existing and existing.organization_id == repo.organization_id:
+                await repo.retire_session(existing)
+            elif not await repo.session.get(SessionDeletionModel, deleted.id):
+                repo.session.add(SessionDeletionModel(
+                    id=deleted.id, organization_id=repo.organization_id,
+                    person_id=deleted.person_id, group_id=deleted.group_id, date=deleted.date,
+                ))
+        await repo.session.flush()
+
         for session in data.sessions:
-            existing_session = await repo.session.get(SessionModel, session.id)
+            # Recovery remains possible, but a retired Cloud ID is immutable.
+            restored_session_id = session.id
+            if await repo.session.get(SessionDeletionModel, session.id):
+                current = await repo.get_session(
+                    session.person_id, session.date, visit_number=session.visit_number,
+                )
+                restored_session_id = current.id if current else ulid.ulid()
+            existing_session = await repo.session.get(SessionModel, restored_session_id)
             if existing_session and not overwrite:
                 skipped += 1
                 continue
@@ -478,7 +505,7 @@ async def import_backup(
 
             await repo.session.merge(
                 SessionModel(
-                    id=session.id,
+                    id=restored_session_id,
                     person_id=session.person_id,
                     member_id=member.id if member else None,
                     group_id=session.group_id,

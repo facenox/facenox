@@ -140,6 +140,13 @@ async def test_voiding_the_last_arrival_removes_its_derived_visit(
             visits = await AttendanceRepository(reader).get_sessions(person_id="p")
             assert [visit.visit_number for visit in visits] == [1]
             assert visits[0].check_out_time.hour == 9
+            from database.models import AttendanceSessionDeletion
+            from sqlalchemy import select
+
+            deleted = (await reader.execute(select(AttendanceSessionDeletion))).scalars().all()
+            assert len(deleted) == 1
+            assert deleted[0].person_id == "p"
+            assert deleted[0].date == "2026-11-01"
 
 
 @pytest.mark.asyncio
