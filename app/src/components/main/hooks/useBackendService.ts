@@ -19,10 +19,7 @@ import {
 } from "@/components/main/stores"
 import { notifyDataChanged } from "@/utils/syncNotifier"
 import { persistentSettings } from "@/services"
-import {
-  ATTENDANCE_TIMEZONE_MISMATCH_WARNING_KEY,
-  dispatchClockWarning,
-} from "@/services/clockWarnings"
+import { clockWarningFromHealth, dispatchClockWarning } from "@/services/clockWarnings"
 
 interface UseBackendServiceOptions {
   webSocketServiceRef: React.RefObject<WebSocketService | null>
@@ -204,14 +201,8 @@ export function useBackendService(options: UseBackendServiceOptions) {
       ) => {
         const { currentGroup } = useAttendanceStore.getState()
         const payload = data.data ?? data
-        if (payload.time_health?.warning_message) {
-          dispatchClockWarning(
-            payload.time_health.warning_message,
-            payload.time_health.timezone_mismatch ?
-              ATTENDANCE_TIMEZONE_MISMATCH_WARNING_KEY
-            : undefined,
-          )
-        }
+        const warning = clockWarningFromHealth(payload.time_health)
+        if (warning?.message) dispatchClockWarning(warning.message, warning.dedupeKey)
 
         const isAllGroups = currentGroup?.id === ALL_GROUPS_ID || currentGroup?.id === "all"
         if (currentGroup && (payload.group_id === currentGroup.id || isAllGroups)) {

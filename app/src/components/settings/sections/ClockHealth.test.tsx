@@ -45,7 +45,92 @@ describe("ClockHealth status", () => {
     )
 
     expect(screen.getByRole("button", { name: "Attendance timezone" })).toBeDisabled()
-    expect(screen.getByText("Managed by Facenox Cloud.")).toBeInTheDocument()
+    expect(screen.getByText("Managed by your Cloud location.")).toBeInTheDocument()
+  })
+
+  it("labels and formats the device clock using the backend zone, independently of attendance", () => {
+    render(
+      <ClockHealth
+        timeHealthState={{
+          timeHealth: {
+            ...healthyClock,
+            time_zone_name: "Asia/Singapore",
+            device_time_zone_name: "Asia/Singapore",
+            attendance_time_zone_name: "Asia/Manila",
+          },
+          loading: false,
+        }}
+        onRefreshTimeHealth={vi.fn()}
+        attendanceTimeZone="Asia/Manila"
+      />,
+    )
+    expect(screen.getByText(/\/ Asia\/Singapore \(UTC\+08:00\)/)).toBeInTheDocument()
+    expect(screen.queryByText(/\/ Asia\/Manila \(UTC\+08:00\)/)).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Attendance timezone" })).toHaveTextContent("Manila")
+  })
+
+  it("uses the backend zone for both the time and offset, not just its label", () => {
+    render(
+      <ClockHealth
+        timeHealthState={{
+          timeHealth: {
+            ...healthyClock,
+            time_zone_name: "America/New_York",
+            device_time_zone_name: "America/New_York",
+          },
+          loading: false,
+        }}
+        onRefreshTimeHealth={vi.fn()}
+        attendanceTimeZone="Asia/Manila"
+      />,
+    )
+    const time = new Date(healthyClock.current_time_utc).toLocaleString([], {
+      timeZone: "America/New_York",
+      hour: "numeric",
+      minute: "2-digit",
+      month: "short",
+      day: "numeric",
+    })
+    expect(screen.getByText(`${time} / America/New_York (UTC-04:00)`)).toBeInTheDocument()
+  })
+
+  it("shows timezone advice separately from a successful network clock check", () => {
+    const message = "Device America/Phoenix and attendance America/Denver have different DST rules."
+    const { rerender } = render(
+      <ClockHealth
+        timeHealthState={{
+          timeHealth: {
+            ...healthyClock,
+            timezone_mismatch: true,
+            attendance_time_zone_name: "America/Denver",
+            timezone_warning_message: message,
+          },
+          loading: false,
+        }}
+        onRefreshTimeHealth={vi.fn()}
+        attendanceTimeZone="America/Denver"
+      />,
+    )
+    expect(screen.getByText(message)).toBeInTheDocument()
+    expect(screen.getByLabelText("Network-time check passed")).toBeInTheDocument()
+    expect(screen.queryByLabelText("Clock warning")).not.toBeInTheDocument()
+    // An old response must not warn about a timezone the user has since changed.
+    rerender(
+      <ClockHealth
+        timeHealthState={{
+          timeHealth: {
+            ...healthyClock,
+            timezone_mismatch: true,
+            attendance_time_zone_name: "America/Denver",
+            timezone_warning_message: message,
+          },
+          loading: false,
+        }}
+        onRefreshTimeHealth={vi.fn()}
+        attendanceTimeZone="Asia/Manila"
+      />,
+    )
+    expect(screen.queryByText(message)).not.toBeInTheDocument()
   })
 
   it.each(["warning_message", "os_clock_warning"] as const)(

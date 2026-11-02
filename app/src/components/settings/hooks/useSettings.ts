@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { backendService, attendanceManager, persistentSettings } from "@/services"
 import { notifyDataChanged } from "@/utils/syncNotifier"
 import { useDialog } from "@/components/shared"
@@ -20,6 +20,7 @@ interface UseSettingsProps {
   onGroupSelect?: (group: AttendanceGroup) => void
   onGroupsChanged?: () => void
   quickSettings: QuickSettings
+  attendanceSettings?: AttendanceSettings
 }
 
 /**
@@ -39,6 +40,7 @@ export const useSettings = ({
   onGroupSelect,
   onGroupsChanged,
   quickSettings,
+  attendanceSettings,
 }: UseSettingsProps) => {
   const dialog = useDialog()
   const uiStore = useUIStore()
@@ -80,16 +82,28 @@ export const useSettings = ({
 
   const systemData = useAttendanceStore((state) => state.systemStats)
   const timeHealth = useAttendanceStore((state) => state.timeHealth)
-  const isStatsLoading = useAttendanceStore((state) => state.isStatsLoading)
+  const attendanceTimezone = useAttendanceStore((state) => state.attendanceTimezone)
+  const [isTimeHealthLoading, setIsTimeHealthLoading] = useState(false)
+  const timeHealthRequest = useRef(0)
+  const timeHealthMounted = useRef(true)
+  const onlineTimeRequest = useRef<number | null>(null)
+  useEffect(() => {
+    timeHealthMounted.current = true
+    return () => {
+      timeHealthMounted.current = false
+      timeHealthRequest.current += 1
+      onlineTimeRequest.current = null
+    }
+  }, [])
   const [timeHealthError, setTimeHealthError] = useState<string | null>(null)
 
   const timeHealthState = useMemo(
     () => ({
       timeHealth,
-      loading: isStatsLoading,
+      loading: isTimeHealthLoading,
       error: timeHealthError,
     }),
-    [timeHealth, isStatsLoading, timeHealthError],
+    [timeHealth, isTimeHealthLoading, timeHealthError],
   )
 
   const [isLoading, setIsLoading] = useState(false)
@@ -120,27 +134,23 @@ export const useSettings = ({
     onAudioSettingsChange(updates)
   }
 
-  const updateAttendanceSetting = (updates: Partial<AttendanceSettings>) => {
-    onAttendanceSettingsChange(updates)
+  const updateAttendanceSetting = async (updates: Partial<AttendanceSettings>) => {
+    await onAttendanceSettingsChange(updates)
+    if (updates.attendanceTimezone) await refreshTimeHealth(false)
   }
 
   const loadSystemData = useCallback(async () => {
     try {
       useAttendanceStore.getState().setStatsLoading(true)
-      const [faceStats, attendanceStats, timeHealthData] = await Promise.all([
+      const [faceStats, attendanceStats] = await Promise.all([
         backendService.getDatabaseStats(),
         attendanceManager.getAttendanceStats(),
-        attendanceManager.getTimeHealth().catch(() => null),
       ])
       useAttendanceStore.getState().setSystemStats({
         totalPersons: faceStats.total_persons,
         totalMembers: attendanceStats.total_members,
         lastUpdated: new Date().toISOString(),
       })
-      useAttendanceStore.getState().setTimeHealth(timeHealthData)
-      setTimeHealthError(
-        timeHealthData ? null : "Clock status could not be loaded. Select Check now to try again.",
-      )
     } catch (error) {
       console.error("Failed to load system data:", error)
     } finally {
@@ -148,19 +158,42 @@ export const useSettings = ({
     }
   }, [])
 
-  const verifyTimeOnline = useCallback(async () => {
+  const refreshTimeHealth = useCallback(async (online: boolean) => {
+    if (!timeHealthMounted.current || (!online && onlineTimeRequest.current !== null)) return
+    const request = ++timeHealthRequest.current
+    if (online) onlineTimeRequest.current = request
     try {
       setTimeHealthError(null)
-      useAttendanceStore.getState().setStatsLoading(true)
-      const timeHealthData = await attendanceManager.getTimeHealth(true)
+      setIsTimeHealthLoading(online || !useAttendanceStore.getState().timeHealth)
+      const timeHealthData = await attendanceManager.getTimeHealth(online)
+      if (request !== timeHealthRequest.current) return
       useAttendanceStore.getState().setTimeHealth(timeHealthData)
     } catch (error) {
-      console.error("Failed to verify system time:", error)
+      if (request !== timeHealthRequest.current) return
+      console.error("Failed to refresh system time:", error)
       setTimeHealthError("Clock check failed. Check your connection and try again.")
     } finally {
-      useAttendanceStore.getState().setStatsLoading(false)
+      if (request === timeHealthRequest.current) setIsTimeHealthLoading(false)
+      if (onlineTimeRequest.current === request) onlineTimeRequest.current = null
     }
   }, [])
+
+  const verifyTimeOnline = useCallback(() => refreshTimeHealth(true), [refreshTimeHealth])
+
+  useEffect(() => {
+    if (activeSection !== "attendance") return
+    void refreshTimeHealth(false)
+    const interval = setInterval(() => void refreshTimeHealth(false), 10_000)
+    const unsubscribe = window.electronAPI?.sync?.onDataChanged?.(() => {
+      void refreshTimeHealth(false)
+    })
+    return () => {
+      clearInterval(interval)
+      unsubscribe?.()
+      timeHealthRequest.current += 1
+      onlineTimeRequest.current = null
+    }
+  }, [activeSection, attendanceTimezone, attendanceSettings?.attendanceTimezone, refreshTimeHealth])
 
   useEffect(() => {
     // Only fetch if data is null or extremely old

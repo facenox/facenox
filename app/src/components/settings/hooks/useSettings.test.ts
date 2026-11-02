@@ -136,8 +136,8 @@ describe("useSettings", () => {
     vi.useRealTimers()
   })
 
-  it("loads system and time-health data after the deferred startup timer", async () => {
-    const { result } = renderHook(() => useSettings(createProps()))
+  it("loads fresh time health when General opens even when other settings use cached data", async () => {
+    const { result } = renderHook(() => useSettings(createProps({ initialSection: "attendance" })))
 
     expect(result.current.systemData.totalPersons).toBeNull()
     expect(result.current.timeHealthState.loading).toBe(true)
@@ -148,7 +148,51 @@ describe("useSettings", () => {
     expect(result.current.systemData.totalMembers).toBe(7)
     expect(result.current.timeHealthState.timeHealth?.source).toBe("system")
     expect(result.current.timeHealthState.loading).toBe(false)
-    expect(mockAttendanceManager.getTimeHealth).toHaveBeenCalledWith()
+    expect(mockAttendanceManager.getTimeHealth).toHaveBeenCalledWith(false)
+  })
+
+  it("refreshes local diagnostics after a policy timezone change without contacting network time", async () => {
+    useAttendanceStore.setState({ attendanceTimezone: "Asia/Manila" })
+    const { unmount } = renderHook(() => useSettings(createProps({ initialSection: "attendance" })))
+    await flushInitialLoad()
+    mockAttendanceManager.getTimeHealth.mockClear().mockResolvedValue({
+      source: "updated",
+      attendance_time_zone_name: "Pacific/Chatham",
+    })
+    await act(async () => {
+      useAttendanceStore.setState({ attendanceTimezone: "Pacific/Chatham" })
+    })
+    expect(mockAttendanceManager.getTimeHealth).toHaveBeenCalledWith(false)
+    expect(useAttendanceStore.getState().timeHealth?.attendance_time_zone_name).toBe(
+      "Pacific/Chatham",
+    )
+    unmount()
+  })
+
+  it("ignores an earlier timezone response after a later policy refresh", async () => {
+    let finishOld!: (value: unknown) => void
+    mockAttendanceManager.getTimeHealth.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishOld = resolve
+      }),
+    )
+    useAttendanceStore.setState({ attendanceTimezone: "Asia/Manila" })
+    const { unmount } = renderHook(() => useSettings(createProps({ initialSection: "attendance" })))
+    await flushInitialLoad()
+    mockAttendanceManager.getTimeHealth.mockResolvedValue({
+      source: "new",
+      attendance_time_zone_name: "America/St_Johns",
+    })
+    await act(async () => {
+      useAttendanceStore.setState({ attendanceTimezone: "America/St_Johns" })
+    })
+    await act(async () => {
+      finishOld({ source: "old", attendance_time_zone_name: "Asia/Manila" })
+    })
+    expect(useAttendanceStore.getState().timeHealth?.attendance_time_zone_name).toBe(
+      "America/St_Johns",
+    )
+    unmount()
   })
 
   it("only requests online time verification after an explicit action", async () => {

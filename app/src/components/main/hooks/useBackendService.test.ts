@@ -194,4 +194,45 @@ describe("useBackendService live configuration", () => {
     const socket = await openSocket()
     expect(socket.configs()[0]).toMatchObject({ group_id: "saved-group" })
   })
+
+  it("dispatches timezone advice and prioritizes actual clock warnings on attendance events", async () => {
+    useAttendanceStore.setState({ currentGroup: null })
+    const listener = vi.fn()
+    window.addEventListener("facenox:clock-warning", listener)
+    try {
+      renderHook(() => useBackendService(options))
+      const socket = await openSocket()
+      const health = {
+        timezone_mismatch: true,
+        device_time_zone_name: "America/Phoenix",
+        attendance_time_zone_name: "America/Denver",
+        timezone_warning_message: "Different DST rules.",
+      }
+      const send = (time_health: typeof health & { warning_message?: string }) =>
+        act(() => {
+          socket.onmessage?.(
+            new MessageEvent("message", {
+              data: JSON.stringify({
+                type: "attendance_event",
+                person_id: "p",
+                group_id: "unselected-group",
+                time_health,
+              }),
+            }),
+          )
+        })
+      send(health)
+      expect(listener.mock.calls[0][0].detail).toEqual({
+        message: "Different DST rules.",
+        dedupeKey: "attendance-timezone-mismatch:America/Phoenix:America/Denver",
+      })
+      send({ ...health, warning_message: "Clock moved backwards." })
+      expect(listener.mock.calls[1][0].detail).toEqual({
+        message: "Clock moved backwards.",
+        dedupeKey: undefined,
+      })
+    } finally {
+      window.removeEventListener("facenox:clock-warning", listener)
+    }
+  })
 })

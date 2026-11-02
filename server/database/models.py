@@ -119,6 +119,11 @@ class AttendanceMember(Base, SyncMixin, DirectorySyncState):
     joined_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.current_timestamp()
     )
+    joined_at_utc: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    joined_at_timezone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    joined_at_offset_seconds: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     group: Mapped["AttendanceGroup"] = relationship(back_populates="members")
@@ -269,6 +274,10 @@ class AttendanceSession(Base, SyncMixin):
             "class_start_time": rule.class_start_time,
             "class_end_time": rule.class_end_time,
             "attendance_mode": mode,
+            "scan_behavior": rule.scan_behavior or "automatic",
+            "min_checkout_delay_minutes": rule.min_checkout_delay_minutes
+            if rule.min_checkout_delay_minutes is not None
+            else 15,
         }
 
     __table_args__ = (
@@ -317,6 +326,15 @@ class AttendanceGroupRule(Base, SyncMixin):
         String, ForeignKey("attendance_groups.id"), nullable=False
     )
     effective_from: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    effective_from_utc: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
+    effective_from_timezone: Mapped[Optional[str]] = mapped_column(
+        String, nullable=True
+    )
+    effective_from_offset_seconds: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
     late_threshold_minutes: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True
     )
@@ -352,6 +370,11 @@ class AttendanceGroupRule(Base, SyncMixin):
 
 class AttendanceSettings(Base, SyncMixin):
     __tablename__ = "attendance_settings"
+    session_policy_updated_at_utc: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+    )
 
     # The unique partial index below covers organization lookups. Do not also
     # create the mixin's redundant non-unique organization index.

@@ -1,13 +1,34 @@
 from __future__ import annotations
 
 from datetime import datetime, time, timezone
-from tzlocal import get_localzone
+import os
+import threading
+import time as clock
+from tzlocal import get_localzone, reload_localzone
+
+_zone_lock = threading.RLock()
+_zone_checked_at = float("-inf")
+_zone_environment = object()
+
+
+def refresh_local_timezone():
+    """Read the OS again; tzlocal's default getter otherwise caches forever."""
+    global _zone_checked_at, _zone_environment
+    with _zone_lock:
+        zone = reload_localzone()
+        _zone_checked_at = clock.monotonic()
+        _zone_environment = os.environ.get("TZ")
+        return zone
 
 
 def get_local_timezone():
     # Keep historical DST rules, not a snapshot of today's UTC offset.
     # tzdata supplies the IANA rules on Windows and frozen distributions.
-    return get_localzone()
+    with _zone_lock:
+        elapsed = clock.monotonic() - _zone_checked_at
+        if _zone_environment != os.environ.get("TZ") or elapsed < 0 or elapsed >= 5:
+            return refresh_local_timezone()
+        return get_localzone()
 
 
 def authoritative_local_now() -> datetime:

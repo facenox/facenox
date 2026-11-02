@@ -11,6 +11,32 @@ import time_utils
 
 
 class TimezoneTests(unittest.TestCase):
+    def test_local_timezone_refreshes_after_os_change_and_on_explicit_check(self):
+        state = {"now": 100.0, "zone": ZoneInfo("UTC"), "cached": ZoneInfo("UTC")}
+
+        def reload():
+            state["cached"] = state["zone"]
+            return state["cached"]
+
+        with (
+            patch(
+                "time_utils.clock",
+                type("Clock", (), {"monotonic": staticmethod(lambda: state["now"])})(),
+            ),
+            patch("time_utils.reload_localzone", side_effect=reload),
+            patch("time_utils.get_localzone", side_effect=lambda: state["cached"]),
+            patch("time_utils._zone_checked_at", float("-inf")),
+            patch("time_utils._zone_environment", object()),
+        ):
+            self.assertEqual(str(time_utils.get_local_timezone()), "UTC")
+            state["zone"] = ZoneInfo("Pacific/Chatham")
+            state["now"] += 6
+            self.assertEqual(str(time_utils.get_local_timezone()), "Pacific/Chatham")
+            state["zone"] = ZoneInfo("America/St_Johns")
+            self.assertEqual(
+                str(time_utils.refresh_local_timezone()), "America/St_Johns"
+            )
+
     def test_day_bounds_include_the_final_fractional_second(self):
         start, end = time_utils.local_day_bounds("2026-10-20")
         self.assertEqual(start, datetime(2026, 10, 20))

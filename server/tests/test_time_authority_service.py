@@ -1,10 +1,49 @@
 import time
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+from zoneinfo import ZoneInfo
 
 import pytest
 
 from api.schemas import AttendanceEventResponse
-from services.time_authority_service import TimeAuthorityService
+from services.time_authority_service import TimeAuthorityService, TimeHealthSnapshot
+
+
+@pytest.mark.asyncio
+async def test_clock_settings_exposes_both_zones_without_relabeling_or_online_lookup(
+    monkeypatch,
+):
+    from api.routes.config import get_time_health
+
+    instant = datetime(2026, 11, 3, 2, tzinfo=timezone.utc)
+    snapshot = TimeHealthSnapshot(
+        source="test",
+        current_time_utc=instant,
+        current_time_local=instant.astimezone(ZoneInfo("Asia/Singapore")),
+        time_zone_name="Asia/Singapore",
+        os_clock_drift_seconds=0,
+        os_clock_warning=None,
+        online_verification_status="not_checked",
+        online_reference_url=None,
+        online_checked_at=None,
+        online_reference_time=None,
+        online_drift_seconds=None,
+        warning_message=None,
+    )
+    authority = SimpleNamespace(get_time_health=AsyncMock(return_value=snapshot))
+    settings = SimpleNamespace(attendance_timezone="Asia/Manila")
+    repo = SimpleNamespace(get_settings=AsyncMock(return_value=settings))
+    monkeypatch.setattr("api.routes.config.get_time_authority", lambda: authority)
+    payload = await get_time_health(verify_online=False, repo=repo)
+    authority.get_time_health.assert_awaited_once_with(verify_online=False)
+    assert payload["time_zone_name"] == "Asia/Singapore"
+    assert payload["device_time_zone_name"] == "Asia/Singapore"
+    assert payload["attendance_time_zone_name"] == "Asia/Manila"
+    assert payload["current_time_local"] == snapshot.current_time_local
+    assert payload["timezone_mismatch"] is False
+    assert payload["warning_message"] is None
+    assert settings.attendance_timezone == "Asia/Manila"
 
 
 @pytest.mark.asyncio

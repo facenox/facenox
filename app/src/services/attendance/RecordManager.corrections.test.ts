@@ -57,3 +57,28 @@ it("serializes edited instants without dropping an explicit checkout clear", asy
     check_out_time: null,
   })
 })
+
+it("emits the same timezone advisory for HTTP attendance as the live WebSocket path", async () => {
+  const emitWarning = vi.fn()
+  const post = vi.fn().mockResolvedValue({
+    timestamp: "2026-11-03T02:00:00Z",
+    time_health: {
+      timezone_mismatch: true,
+      device_time_zone_name: "America/Phoenix",
+      attendance_time_zone_name: "America/Denver",
+      timezone_warning_message: "Different DST rules.",
+    },
+  })
+  const manager = new RecordManager(
+    { post } as unknown as HttpClient,
+    { events: "/events" },
+    (date) => date.toISOString(),
+    vi.fn(),
+    emitWarning,
+  )
+  await manager.processAttendanceEvent("p", 1)
+  expect(emitWarning).toHaveBeenCalledWith(
+    "Different DST rules.",
+    "attendance-timezone-mismatch:America/Phoenix:America/Denver",
+  )
+})

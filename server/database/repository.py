@@ -22,7 +22,13 @@ from database.models import (
     AuditLog,
     Face,
 )
-from time_utils import get_local_timezone, local_now, to_storage_local, ensure_utc_aware
+from time_utils import (
+    get_local_timezone,
+    local_now,
+    to_storage_local,
+    ensure_utc_aware,
+    ensure_local_aware,
+)
 from attendance_time import capture_fields, event_time, normalize_session_times
 
 logger = logging.getLogger(__name__)
@@ -89,7 +95,9 @@ class AttendanceRepository:
         return {
             "id": ulid.ulid(),
             "group_id": group_id,
-            "effective_from": effective_from or to_storage_local(local_now()),
+            **capture_fields(
+                "effective_from", ensure_local_aware(effective_from or local_now())
+            ),
             "late_threshold_minutes": settings.get("late_threshold_minutes"),
             "late_threshold_enabled": settings.get("late_threshold_enabled") or False,
             "class_start_time": settings.get("class_start_time")
@@ -162,7 +170,7 @@ class AttendanceRepository:
                     "min_checkout_delay_minutes": group.min_checkout_delay_minutes,
                     "scan_behavior": group.scan_behavior,
                 },
-                effective_from=to_storage_local(local_now()),
+                effective_from=local_now(),
             )
         )
         return group
@@ -186,6 +194,16 @@ class AttendanceRepository:
         return result.scalars().first()
 
     async def add_group_rule(self, rule_data: Dict[str, Any]) -> AttendanceGroupRule:
+        rule_data = dict(rule_data)
+        if (
+            rule_data.get("effective_from") is not None
+            and "effective_from_utc" not in rule_data
+        ):
+            rule_data.update(
+                capture_fields(
+                    "effective_from", ensure_local_aware(rule_data["effective_from"])
+                )
+            )
         rule = AttendanceGroupRule(**rule_data)
         self.session.add(rule)
         return rule
@@ -205,37 +223,26 @@ class AttendanceRepository:
             AttendanceGroupRule.effective_from.asc(), AttendanceGroupRule.id.asc()
         )
         result = await self.session.execute(query)
-        return result.scalars().all()
+        rules = list(result.scalars().all())
+        return sorted(
+            rules,
+            key=lambda rule: (
+                ensure_utc_aware(event_time(rule, "effective_from")),
+                rule.id,
+            ),
+        )
 
     async def get_effective_group_rule(
         self, group_id: str, effective_at: datetime
     ) -> Optional[AttendanceGroupRule]:
-        query = (
-            select(AttendanceGroupRule)
-            .where(
-                AttendanceGroupRule.group_id == group_id,
-                AttendanceGroupRule.effective_from <= effective_at,
-            )
-            .order_by(
-                desc(AttendanceGroupRule.effective_from),
-                desc(AttendanceGroupRule.id),
-            )
-        )
-        query = self._apply_org_scope(query, AttendanceGroupRule)
-        result = await self.session.execute(query)
-        rule = result.scalars().first()
-        if rule:
-            return rule
-
-        fallback_query = select(AttendanceGroupRule).where(
-            AttendanceGroupRule.group_id == group_id
-        )
-        fallback_query = self._apply_org_scope(fallback_query, AttendanceGroupRule)
-        fallback_query = fallback_query.order_by(
-            AttendanceGroupRule.effective_from.asc(), AttendanceGroupRule.id.asc()
-        )
-        fallback_result = await self.session.execute(fallback_query)
-        return fallback_result.scalars().first()
+        rules = await self.get_group_rules(group_id)
+        instant = ensure_utc_aware(effective_at)
+        eligible = [
+            rule
+            for rule in rules
+            if ensure_utc_aware(event_time(rule, "effective_from")) <= instant
+        ]
+        return eligible[-1] if eligible else (rules[0] if rules else None)
 
     async def update_group(
         self, group_id: str, updates: Dict[str, Any]
@@ -344,7 +351,10 @@ class AttendanceRepository:
                 name=member_data["name"],
                 role=member_data.get("role"),
                 email=member_data.get("email"),
-                joined_at=to_storage_local(member_data.get("joined_at") or local_now()),
+                **capture_fields(
+                    "joined_at",
+                    ensure_local_aware(member_data.get("joined_at") or local_now()),
+                ),
                 last_modified_at=to_storage_local(local_now()),
                 is_active=True,
                 is_deleted=False,
@@ -456,7 +466,10 @@ class AttendanceRepository:
                     name=m_data["name"],
                     role=m_data.get("role"),
                     email=m_data.get("email"),
-                    joined_at=to_storage_local(m_data.get("joined_at") or local_now()),
+                    **capture_fields(
+                        "joined_at",
+                        ensure_local_aware(m_data.get("joined_at") or local_now()),
+                    ),
                     last_modified_at=to_storage_local(local_now()),
                     is_active=True,
                     is_deleted=False,

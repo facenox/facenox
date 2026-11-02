@@ -3,6 +3,37 @@ import { InfoPopover } from "@/components/shared"
 import { AttendanceTimezonePicker } from "@/components/settings/components/AttendanceTimezonePicker"
 import type { TimeHealthOverview } from "@/components/settings/types"
 
+function formatDeviceClock(health: TimeHealthOverview["timeHealth"]) {
+  const zone = health?.device_time_zone_name?.trim() || health?.time_zone_name?.trim()
+  const value = health?.current_time_utc || health?.current_time_local
+  if (!zone || !value) return { time: null, zone: zone || "Device timezone unavailable" }
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return { time: null, zone }
+  try {
+    const offset = new Intl.DateTimeFormat("en-US", {
+      timeZone: zone,
+      timeZoneName: "longOffset",
+    })
+      .formatToParts(date)
+      .find((part) => part.type === "timeZoneName")?.value
+    const utcOffset = offset === "GMT" ? "UTC+00:00" : offset?.replace(/^GMT/, "UTC")
+    return {
+      time: date.toLocaleString([], {
+        timeZone: zone,
+        hour: "numeric",
+        minute: "2-digit",
+        month: "short",
+        day: "numeric",
+      }),
+      zone: utcOffset ? `${zone} (${utcOffset})` : zone,
+    }
+  } catch {
+    // An unsupported backend identifier must not be relabeled with the
+    // renderer's zone. It is a different runtime and can report another name.
+    return { time: null, zone }
+  }
+}
+
 export function ClockHealth({
   timeHealthState,
   onRefreshTimeHealth,
@@ -16,38 +47,6 @@ export function ClockHealth({
   onAttendanceTimezoneChange?: (timeZone: string) => void
   isPaired?: boolean
 }) {
-  const getFriendlyTimeZoneLabel = (): string => {
-    const health = timeHealthState.timeHealth
-    if (!health?.current_time_local) {
-      return "Local Time"
-    }
-
-    const localDate = new Date(health.current_time_local)
-    const offsetMinutes = -localDate.getTimezoneOffset()
-    const offsetSign = offsetMinutes >= 0 ? "+" : "-"
-    const absoluteOffset = Math.abs(offsetMinutes)
-    const offsetHours = String(Math.floor(absoluteOffset / 60)).padStart(2, "0")
-    const offsetRemainderMinutes = String(absoluteOffset % 60).padStart(2, "0")
-    const utcOffsetLabel = `UTC${offsetSign}${offsetHours}:${offsetRemainderMinutes}`
-
-    let ianaLabel: string | null
-    try {
-      ianaLabel = Intl.DateTimeFormat().resolvedOptions().timeZone || null
-    } catch {
-      ianaLabel = null
-    }
-
-    if (ianaLabel) {
-      return `${ianaLabel} (${utcOffsetLabel})`
-    }
-
-    if (health.time_zone_name?.trim()) {
-      return `${health.time_zone_name.trim()} (${utcOffsetLabel})`
-    }
-
-    return utcOffsetLabel
-  }
-
   const timeHealth = timeHealthState.timeHealth
   const timeHealthStatus = timeHealth?.online_verification_status ?? "unavailable"
   const clockWarning = timeHealth?.warning_message?.trim() || timeHealth?.os_clock_warning?.trim()
@@ -55,15 +54,10 @@ export function ClockHealth({
   const hasClockError = Boolean(timeHealthState.error)
   const resolvedAttendanceTimeZone =
     attendanceTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
-
-  const formattedLocalTime =
-    timeHealth?.current_time_local ?
-      new Date(timeHealth.current_time_local).toLocaleString([], {
-        hour: "numeric",
-        minute: "2-digit",
-        month: "short",
-        day: "numeric",
-      })
+  const deviceClock = formatDeviceClock(timeHealth)
+  const timezoneWarning =
+    timeHealth?.attendance_time_zone_name === resolvedAttendanceTimeZone ?
+      timeHealth.timezone_warning_message?.trim()
     : null
   const timeHealthDetails =
     clockWarning ? clockWarning
@@ -97,15 +91,21 @@ export function ClockHealth({
                 details={[
                   "Reports, exports, and manual corrections use this timezone.",
                   isPaired ?
-                    "This setting is managed by your organization in Facenox Cloud."
+                    "Your Cloud location manages this setting. Change it in Facenox Cloud under Manage > Locations."
                   : "Change this only when the attendance location moves to another timezone.",
                 ]}
                 side="right"
               />
             </div>
             <div className="text-xs font-normal text-white/65">
-              {isPaired ? "Managed by Facenox Cloud." : "Pinned to this attendance location."}
+              {isPaired ? "Managed by your Cloud location." : "Pinned to this attendance location."}
             </div>
+            {timezoneWarning && (
+              <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-400/90">
+                <AlertTriangle aria-hidden="true" className="mt-0.5 size-3 shrink-0" />
+                {timezoneWarning}
+              </p>
+            )}
           </div>
           <AttendanceTimezonePicker
             value={resolvedAttendanceTimeZone}
@@ -156,7 +156,7 @@ export function ClockHealth({
                 {timeHealthState.loading ?
                   "Checking…"
                 : timeHealth ?
-                  `${formattedLocalTime ?? "Unavailable"} / ${getFriendlyTimeZoneLabel()}`
+                  `${deviceClock.time ?? "Unavailable"} / ${deviceClock.zone}`
                 : "Clock health unavailable."}
               </span>
             </div>

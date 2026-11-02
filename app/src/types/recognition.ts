@@ -190,6 +190,8 @@ export interface AttendanceSession {
     class_start_time: string
     class_end_time?: string | null
     attendance_mode: "attendance" | "work_hours" | "visits"
+    scan_behavior?: "automatic" | "entry_only" | "exit_only" | null
+    min_checkout_delay_minutes?: number | null
   } | null
   date: string
   check_in_time?: Date
@@ -261,6 +263,9 @@ export interface AttendanceTimeHealth {
   online_drift_seconds?: number
   warning_message?: string
   timezone_mismatch?: boolean
+  device_time_zone_name?: string | null
+  attendance_time_zone_name?: string | null
+  timezone_warning_message?: string | null
 }
 
 export interface AttendanceEvent {

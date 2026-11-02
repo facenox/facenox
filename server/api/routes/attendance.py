@@ -132,7 +132,12 @@ async def export_attendance_data(
             selectinload(AttendanceSession.applied_rule)
         )
         sessions_query = repo._apply_org_scope(sessions_query, AttendanceSession)
-        if since_dt:
+        replay_policy = (
+            since_utc is not None
+            and settings_orm.session_policy_updated_at_utc is not None
+            and settings_orm.session_policy_updated_at_utc >= since_utc
+        )
+        if since_dt and not replay_policy:
             sessions_query = sessions_query.where(
                 or_(
                     AttendanceSession.provenance_updated_at_utc >= since_utc,

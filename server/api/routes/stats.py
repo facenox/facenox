@@ -107,6 +107,7 @@ async def get_group_stats(
                 ),
                 scan_behavior=getattr(group, "scan_behavior", "automatic"),
                 rule_history=rule_history,
+                attendance_timezone=settings.attendance_timezone,
             )
 
         stats = service.calculate_group_stats(members, sessions)
@@ -135,6 +136,7 @@ async def get_database_stats(
     """
     try:
         stats = await repo.get_stats()
+        settings = await repo.get_settings()
 
         # Calculate unsynced counts if last_synced_at is provided
         unsynced_records = None
@@ -184,6 +186,8 @@ async def get_database_stats(
                             or_(
                                 changed_after_snapshot(AttendanceSession),
                                 AttendanceSession.provenance_updated_at_utc > since_utc,
+                                settings.session_policy_updated_at_utc is not None
+                                and settings.session_policy_updated_at_utc > since_utc,
                             )
                         ),
                         AttendanceSession,

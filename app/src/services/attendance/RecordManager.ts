@@ -9,7 +9,7 @@ import type {
 } from "@/types/recognition"
 import { getLocalDateString, parseLocalDate, notifyDataChanged } from "@/utils"
 import type { HttpClient } from "./HttpClient"
-import { ATTENDANCE_TIMEZONE_MISMATCH_WARNING_KEY } from "../clockWarnings"
+import { clockWarningFromHealth } from "../clockWarnings"
 
 export class RecordManager {
   private httpClient: HttpClient
@@ -58,14 +58,8 @@ export class RecordManager {
       }
 
       const event = await this.httpClient.post<AttendanceEvent>(this.apiEndpoints.events, eventData)
-      if (event.time_health?.warning_message) {
-        this.emitClockWarning(
-          event.time_health.warning_message,
-          event.time_health.timezone_mismatch ?
-            ATTENDANCE_TIMEZONE_MISMATCH_WARNING_KEY
-          : undefined,
-        )
-      }
+      const warning = clockWarningFromHealth(event.time_health)
+      if (warning?.message) this.emitClockWarning(warning.message, warning.dedupeKey)
       this.triggerSync()
 
       return {

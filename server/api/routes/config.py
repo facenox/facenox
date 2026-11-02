@@ -14,6 +14,8 @@ from api.schemas import (
 from api.deps import get_repository
 from database.repository import AttendanceRepository
 from services.time_authority_service import get_time_authority
+from timezone_rules import attendance_timezone_context
+from time_utils import refresh_local_timezone
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +37,23 @@ async def get_settings(repo: AttendanceRepository = Depends(get_repository)):
 
 
 @router.get("/time-health", response_model=AttendanceTimeHealthResponse)
-async def get_time_health(verify_online: bool = False):
+async def get_time_health(
+    verify_online: bool = False,
+    repo: AttendanceRepository = Depends(get_repository),
+):
     """Return backend time authority health and drift diagnostics."""
     try:
-        return await get_time_authority().get_time_health(verify_online=verify_online)
+        refresh_local_timezone()
+        health = await get_time_authority().get_time_health(verify_online=verify_online)
+        settings = await repo.get_settings()
+        return {
+            **health.__dict__,
+            **attendance_timezone_context(
+                str(health.time_zone_name or ""),
+                settings.attendance_timezone,
+                health.current_time_utc,
+            ),
+        }
     except Exception as e:
         logger.error(f"Error getting time health: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

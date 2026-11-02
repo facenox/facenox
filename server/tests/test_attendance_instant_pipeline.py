@@ -88,8 +88,17 @@ class AttendancePipelineTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertTrue(check_in_response.processed)
         self.assertEqual(
-            check_in_response.time_health.warning_message,
-            "Your device timezone doesn't match the configured attendance timezone.",
+            check_in_response.time_health.timezone_warning_message,
+            "Your device timezone (Asia/Manila) differs from the attendance timezone "
+            "(America/New_York). Attendance uses America/New_York.",
+        )
+        self.assertIsNone(check_in_response.time_health.warning_message)
+        self.assertEqual(check_in_response.time_health.time_zone_name, "Asia/Manila")
+        self.assertEqual(
+            check_in_response.time_health.device_time_zone_name, "Asia/Manila"
+        )
+        self.assertEqual(
+            check_in_response.time_health.attendance_time_zone_name, "America/New_York"
         )
         self.assertTrue(check_in_response.time_health.timezone_mismatch)
         await self.session.commit()
@@ -166,6 +175,67 @@ class AttendancePipelineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertFalse(response.time_health.timezone_mismatch)
         self.assertIsNone(response.time_health.warning_message)
+
+    async def test_windows_mapping_does_not_warn_or_change_attendance_zone(self):
+        from api.schemas import AttendanceEventCreate
+
+        instant = datetime(2026, 11, 3, 2, tzinfo=timezone.utc)
+        self.settings.attendance_timezone = "Asia/Manila"
+        self.service.time_authority = SimpleNamespace(
+            get_time_health=AsyncMock(
+                return_value=self.health(instant, device_zone="Asia/Singapore")
+            )
+        )
+        response = await self.service.process_event(
+            AttendanceEventCreate(person_id="p", confidence=1),
+            self.member,
+            self.settings,
+        )
+        self.assertFalse(response.time_health.timezone_mismatch)
+        self.assertIsNone(response.time_health.timezone_warning_message)
+        self.assertEqual(response.time_health.time_zone_name, "Asia/Singapore")
+        self.assertEqual(response.time_health.attendance_time_zone_name, "Asia/Manila")
+        self.assertEqual(self.settings.attendance_timezone, "Asia/Manila")
+
+    async def test_timezone_advice_does_not_replace_a_real_clock_warning(self):
+        from api.schemas import AttendanceEventCreate
+
+        health = self.health(datetime(2026, 11, 3, 2, tzinfo=timezone.utc))
+        health.warning_message = "Clock is earlier than recorded attendance."
+        self.service.time_authority = SimpleNamespace(
+            get_time_health=AsyncMock(return_value=health)
+        )
+        response = await self.service.process_event(
+            AttendanceEventCreate(person_id="p", confidence=1),
+            self.member,
+            self.settings,
+        )
+        self.assertTrue(response.time_health.timezone_mismatch)
+        self.assertEqual(response.time_health.warning_message, health.warning_message)
+        self.assertIn("Asia/Manila", response.time_health.timezone_warning_message)
+
+    async def test_notification_broadcast_keeps_timezone_only_advice(self):
+        import asyncio
+        from api.schemas import AttendanceEventCreate
+
+        self.service.ws_manager = SimpleNamespace(broadcast=AsyncMock())
+        self.service.time_authority = SimpleNamespace(
+            get_time_health=AsyncMock(
+                return_value=self.health(datetime(2026, 11, 3, 2, tzinfo=timezone.utc))
+            )
+        )
+        response = await self.service.process_event(
+            AttendanceEventCreate(person_id="p", confidence=1),
+            self.member,
+            self.settings,
+        )
+        self.assertTrue(response.processed)
+        await asyncio.sleep(0)
+        payload = self.service.ws_manager.broadcast.call_args.args[0]["data"][
+            "time_health"
+        ]
+        self.assertIsNone(payload["warning_message"])
+        self.assertIn("Asia/Manila", payload["timezone_warning_message"])
 
     async def test_api_backup_metadata_and_manual_session_upsert(self):
         from api.schemas import AttendanceRecordResponse

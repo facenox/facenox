@@ -390,7 +390,7 @@ async def import_backup(
                 GroupRuleModel(
                     id=rule.id,
                     group_id=rule.group_id,
-                    effective_from=to_storage_local(rule.effective_from),
+                    **restore_fields(rule, "effective_from"),
                     late_threshold_minutes=rule.late_threshold_minutes,
                     late_threshold_enabled=rule.late_threshold_enabled,
                     class_start_time=rule.class_start_time,
@@ -425,7 +425,7 @@ async def import_backup(
                         name=member.name,
                         role=member.role,
                         email=member.email,
-                        joined_at=to_storage_local(member.joined_at),
+                        **restore_fields(member, "joined_at"),
                         is_active=member.is_active,
                         is_deleted=member.is_deleted,
                         organization_id=repo.organization_id,
@@ -434,7 +434,8 @@ async def import_backup(
             else:
                 existing.name = member.name
                 existing.group_id = member.group_id
-                existing.joined_at = to_storage_local(member.joined_at)
+                for field, value in restore_fields(member, "joined_at").items():
+                    setattr(existing, field, value)
                 existing.role = member.role
                 existing.email = member.email
                 existing.is_active = member.is_active

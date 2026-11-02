@@ -105,6 +105,10 @@ export interface AttendanceEvent {
   time_health?: {
     warning_message?: string
     timezone_mismatch?: boolean
+    device_time_zone_name?: string | null
+    attendance_time_zone_name?: string | null
+    timezone_warning_message?: string | null
+    os_clock_warning?: string | null
     online_verification_status?: string
     online_drift_seconds?: number
   }

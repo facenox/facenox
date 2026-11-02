@@ -25,7 +25,13 @@ class CapturedAttendanceResponse(BaseModel):
                 if hasattr(value, name)
             }
         )
-        for field in ("timestamp", "check_in_time", "check_out_time"):
+        for field in (
+            "timestamp",
+            "check_in_time",
+            "check_out_time",
+            "joined_at",
+            "effective_from",
+        ):
             if field in cls.model_fields:
                 captured = event_time(value, field)
                 if captured is not None:
@@ -136,10 +142,12 @@ class AttendanceGroupResponse(BaseModel):
         return _normalize_api_datetime(value)
 
 
-class AttendanceGroupRuleResponse(BaseModel):
+class AttendanceGroupRuleResponse(CapturedAttendanceResponse):
     id: str
     group_id: str
     effective_from: datetime
+    effective_from_timezone: Optional[str] = None
+    effective_from_offset_seconds: Optional[int] = None
     late_threshold_minutes: Optional[int]
     late_threshold_enabled: bool
     class_start_time: str
@@ -188,7 +196,7 @@ class AttendanceMemberUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
-class AttendanceMemberResponse(BaseModel):
+class AttendanceMemberResponse(CapturedAttendanceResponse):
     sync_revision: int = 0
     sync_dirty: bool = True
     version: int = 1
@@ -199,6 +207,8 @@ class AttendanceMemberResponse(BaseModel):
     role: Optional[str]
     email: Optional[str]
     joined_at: datetime
+    joined_at_timezone: Optional[str] = None
+    joined_at_offset_seconds: Optional[int] = None
     is_active: bool
     has_face_data: bool = False
     remote_id: Optional[str] = None
@@ -263,6 +273,8 @@ class AppliedScheduleResponse(BaseModel):
     class_start_time: str
     class_end_time: Optional[str] = None
     attendance_mode: str
+    scan_behavior: Optional[str] = None
+    min_checkout_delay_minutes: Optional[int] = None
 
 
 class AttendanceSessionResponse(CapturedAttendanceResponse):
@@ -310,6 +322,9 @@ class AttendanceTimeHealthResponse(BaseModel):
     online_drift_seconds: Optional[float]
     warning_message: Optional[str]
     timezone_mismatch: bool = False
+    device_time_zone_name: Optional[str] = None
+    attendance_time_zone_name: Optional[str] = None
+    timezone_warning_message: Optional[str] = None
 
     @field_validator(
         "current_time_utc",

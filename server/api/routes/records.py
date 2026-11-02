@@ -230,6 +230,7 @@ async def get_sessions(
 
         # Recompute sessions from records only if missing or out of sync
         if group_id and start_date:
+            settings = await repo.get_settings()
             group = await repo.get_group(group_id)
             if not group:
                 raise HTTPException(status_code=404, detail="Group not found")
@@ -295,6 +296,7 @@ async def get_sessions(
                         ),
                         scan_behavior=getattr(group, "scan_behavior", "automatic"),
                         rule_history=rule_history,
+                        attendance_timezone=settings.attendance_timezone,
                     )
 
                     await service.save_recomputed_sessions(
@@ -458,11 +460,11 @@ async def update_session(
                 # Absent placeholders also have no applied rule until an arrival
                 # is supplied. Resolve only history that existed at that time.
                 candidate = await repo.get_effective_group_rule(
-                    session_obj.group_id, check_in.replace(tzinfo=None)
+                    session_obj.group_id, check_in
                 )
-                if candidate and candidate.effective_from <= check_in.replace(
-                    tzinfo=None
-                ):
+                if candidate and ensure_utc_aware(
+                    event_time(candidate, "effective_from")
+                ) <= ensure_utc_aware(check_in):
                     rule = candidate
                     session_obj.applied_rule_id = rule.id
             if rule and (

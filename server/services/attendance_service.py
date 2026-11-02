@@ -10,10 +10,12 @@ import cv2
 from api.schemas import AttendanceEventResponse, AttendanceTimeHealthResponse
 from database.repository import AttendanceRepository
 from services.time_authority_service import get_time_authority
+from timezone_rules import attendance_timezone_context
 from attendance_time import event_time, instant_for_sort, read_value
 from time_utils import (
     elapsed_seconds,
     ensure_local_aware,
+    ensure_utc_aware,
     local_day_bounds,
     local_now,
     to_api_utc,
@@ -135,17 +137,25 @@ class AttendanceService:
             return None
 
         selected_rule = None
-        for rule in rule_history:
-            rule_effective_from = getattr(rule, "effective_from", None)
-            if (
-                rule_effective_from is None
-                or rule_effective_from <= effective_at.replace(tzinfo=None)
-            ):
+        ordered = sorted(
+            rule_history,
+            key=lambda rule: (
+                ensure_utc_aware(event_time(rule, "effective_from"))
+                if getattr(rule, "effective_from", None)
+                else datetime.min.replace(tzinfo=timezone.utc),
+                getattr(rule, "id", ""),
+            ),
+        )
+        for rule in ordered:
+            rule_effective_from = event_time(rule, "effective_from")
+            if rule_effective_from is None or ensure_utc_aware(
+                rule_effective_from
+            ) <= ensure_utc_aware(effective_at):
                 selected_rule = rule
             else:
                 break
 
-        return selected_rule or rule_history[0]
+        return selected_rule or ordered[0]
 
     @staticmethod
     def _calculate_late_status(
@@ -200,6 +210,7 @@ class AttendanceService:
         attendance_mode: Optional[str] = None,
         scan_behavior: str = "automatic",
         rule_history: Optional[List[Any]] = None,
+        attendance_timezone: Optional[str] = None,
     ) -> List[dict]:
         """Compute attendance sessions from records using effective-dated group rules."""
         sessions = []
@@ -254,23 +265,39 @@ class AttendanceService:
                     }
                 )
 
-            # Check if member was enrolled on or before target_date
+            person_records = records_by_person.get(person_id, [])
+            capture_zone = (
+                event_time(person_records[0], "timestamp").tzinfo
+                if person_records
+                else None
+            )
+            calendar_zone = capture_zone or (
+                ZoneInfo(attendance_timezone) if attendance_timezone else None
+            )
+            # Enrollment instants and target dates must share the same calendar.
             if target_date_obj is not None and member.joined_at:
                 try:
-                    joined_at = member.joined_at
-                    # joined_at is datetime in SQLAlchemy model
+                    joined_at = ensure_utc_aware(event_time(member, "joined_at"))
+                    joined_at = (
+                        joined_at.astimezone(calendar_zone)
+                        if calendar_zone
+                        else ensure_local_aware(joined_at)
+                    )
                     joined_at_obj = joined_at.date()
 
                     if joined_at_obj and target_date_obj < joined_at_obj:
                         continue
 
-                    today = local_now().date()
+                    now = local_now()
+                    today = (
+                        now.astimezone(calendar_zone).date()
+                        if calendar_zone
+                        else now.date()
+                    )
                     if joined_at_obj and joined_at_obj > today:
                         continue
                 except (ValueError, TypeError, AttributeError) as e:
                     logger.debug(f"Error comparing dates for member {person_id}: {e}")
-
-            person_records = records_by_person.get(person_id, [])
 
             if not person_records:
                 if manual_visits:
@@ -568,6 +595,7 @@ class AttendanceService:
             ),
             scan_behavior=getattr(group, "scan_behavior", "automatic"),
             rule_history=rule_history,
+            attendance_timezone=(await self.repo.get_settings()).attendance_timezone,
         )
 
         await self.save_recomputed_sessions(session_dicts, existing_sessions)
@@ -586,19 +614,17 @@ class AttendanceService:
         ).model_dump(mode="json")
         current_time = time_health.current_time_local
         attendance_zone = getattr(settings, "attendance_timezone", None)
+        time_health_payload.update(
+            attendance_timezone_context(
+                str(time_health.time_zone_name or ""),
+                attendance_zone,
+                time_health.current_time_utc,
+            )
+        )
         if attendance_zone:
-            device_zone = str(time_health.time_zone_name or "").strip()
             current_time = time_health.current_time_utc.astimezone(
                 ZoneInfo(attendance_zone)
             )
-            time_health_payload["current_time_local"] = current_time.isoformat()
-            time_health_payload["time_zone_name"] = attendance_zone
-            if device_zone and device_zone != attendance_zone:
-                time_health_payload["timezone_mismatch"] = True
-                warning = "Your device timezone doesn't match the configured attendance timezone."
-                time_health_payload["warning_message"] = " ".join(
-                    filter(None, [time_health_payload.get("warning_message"), warning])
-                )
         window_seconds = cooldown_seconds
 
         recent_records = await self.repo.get_recent_records_by_instant(
@@ -627,7 +653,7 @@ class AttendanceService:
 
         # Always fetch the effective rule at the current event time to support settings changes midway through the day
         session_rule = await self.repo.get_effective_group_rule(
-            member.group_id, current_time.replace(tzinfo=None)
+            member.group_id, current_time
         )
 
         normalized_rule = self._normalize_rule(
@@ -936,6 +962,7 @@ class AttendanceService:
                     "time_health": (
                         time_health_payload
                         if time_health_payload.get("warning_message")
+                        or time_health_payload.get("timezone_warning_message")
                         else None
                     ),
                     "member": {
