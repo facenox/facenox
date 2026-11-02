@@ -344,9 +344,8 @@ export function Reports({
                           "absent"
                         : (orig.status as "present" | "absent"),
                       notes: orig.notes || "Reverted by admin",
-                      check_in_time: orig.check_in_time ? new Date(orig.check_in_time) : undefined,
-                      check_out_time:
-                        orig.check_out_time ? new Date(orig.check_out_time) : undefined,
+                      check_in_time: orig.check_in_time ? new Date(orig.check_in_time) : null,
+                      check_out_time: orig.check_out_time ? new Date(orig.check_out_time) : null,
                       is_late: orig.is_late,
                       late_minutes: orig.late_minutes,
                       visit_number: orig.visit_number,

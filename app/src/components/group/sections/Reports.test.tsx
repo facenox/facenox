@@ -4,8 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { Reports } from "@/components/group/sections/Reports"
 import { useGroupStore } from "@/components/group/stores"
 import { useAttendanceStore } from "@/components/main/stores"
-import { createAttendanceGroup, createAttendanceMember } from "@/test/fixtures"
+import {
+  createAttendanceGroup,
+  createAttendanceMember,
+  createAttendanceSession,
+} from "@/test/fixtures"
 import { renderWithProviders } from "@/test/utils/renderWithProviders"
+import { attendanceManager } from "@/services/AttendanceManager"
+import type { RowData } from "./reports/types"
 
 const mockUseReportData = vi.fn()
 const mockUseReportViews = vi.fn()
@@ -20,6 +26,12 @@ vi.mock("framer-motion", () => ({
   motion: {
     div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
       <div {...props}>{children}</div>
+    ),
+    span: ({ children, ...props }: React.HTMLAttributes<HTMLSpanElement>) => (
+      <span {...props}>{children}</span>
+    ),
+    button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+      <button {...props}>{children}</button>
     ),
   },
 }))
@@ -75,15 +87,22 @@ vi.mock("@/components/group/sections/reports/components/ReportTable", () => ({
     groupedRows,
     error,
     attendanceTimeZone,
+    onEditRow,
   }: {
-    groupedRows: Record<string, unknown[]>
+    groupedRows: Record<string, RowData[]>
     error?: string | null
     attendanceTimeZone?: string | null
+    onEditRow?: (row: RowData) => void
   }) => (
     <div>
       {error && <div>{error}</div>}
       <div>Mock Report Table ({Object.keys(groupedRows).length})</div>
       <div data-testid="report-timezone">{attendanceTimeZone}</div>
+      {onEditRow && groupedRows.__all__?.[0] && (
+        <button type="button" onClick={() => onEditRow(groupedRows.__all__[0])}>
+          Correct attendance
+        </button>
+      )}
     </div>
   ),
 }))
@@ -179,6 +198,55 @@ describe("Reports", () => {
 
     expect(screen.getByText("Mock Report Table (1)")).toBeInTheDocument()
   })
+
+  it.each(["absent", "present"] as const)(
+    "sends explicit clears when undoing a correction to an originally %s session",
+    async (status) => {
+      const row: RowData = {
+        person_id: "member-1",
+        name: "Alice",
+        date: "2026-11-01",
+        status,
+        check_in_time: status === "present" ? new Date("2026-11-01T08:00:00Z") : undefined,
+        is_late: false,
+        late_minutes: 0,
+        visit_number: 2,
+        notes: "Reviewed",
+      }
+      const update = vi
+        .spyOn(attendanceManager, "updateSession")
+        .mockResolvedValue(createAttendanceSession())
+      mockUseReportData.mockReturnValue({
+        members: [createAttendanceMember()],
+        sessions: [],
+        report: null,
+        loading: false,
+        error: null,
+        attendanceTimeZone: "UTC",
+        generateReport: vi.fn(),
+      })
+      mockUseReportTransform.mockReturnValue({
+        groupedRows: { __all__: [row] },
+        daysTracked: 1,
+        allColumns: [],
+      })
+      renderWithProviders(<Reports group={createAttendanceGroup()} />)
+      fireEvent.click(screen.getByRole("button", { name: "Correct attendance" }))
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+      fireEvent.click(await screen.findByRole("button", { name: "Undo" }))
+      await waitFor(() => expect(update).toHaveBeenCalledTimes(2))
+      expect(update.mock.calls[1]).toEqual([
+        row.person_id,
+        row.date,
+        expect.objectContaining({
+          status,
+          check_in_time: row.check_in_time ?? null,
+          check_out_time: null,
+          visit_number: 2,
+        }),
+      ])
+    },
+  )
 
   it("applies attendance timezone changes without remounting the report", () => {
     const members = [createAttendanceMember({ person_id: "member-1", name: "Alice" })]

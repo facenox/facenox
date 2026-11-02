@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { AlertTriangle, ChevronDown, Clock, Loader2, Lock } from "lucide-react"
 import { Dropdown, InfoPopover, Switch } from "@/components/shared"
 import { AttendanceModeInfoPopover } from "@/components/group/shared"
 import { attendanceManager } from "@/services"
 import { useGroupStore } from "@/components/group/stores"
-import { useCloudSyncStatus } from "@/components/common"
+import { ErrorMessage, useCloudSyncStatus } from "@/components/common"
 import { DeleteConfirmationModal } from "@/components/main/components/DeleteConfirmationModal"
 import type { AttendanceGroup, AttendanceMode } from "@/types/recognition"
 
@@ -60,6 +60,38 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
   )
   const showsLateTracking = true
   const showsDepartureRules = attendanceMode === "work_hours"
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const currentGroupIdRef = useRef(group.id)
+  useEffect(() => {
+    currentGroupIdRef.current = group.id
+  }, [group.id])
+  const mountedRef = useRef(false)
+  const saveContextRef = useRef({
+    groupId: group.id,
+    confirmed: group,
+    revision: 0,
+    pending: null as Promise<void> | null,
+  })
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+
+  const applySettings = useCallback((savedGroup: AttendanceGroup) => {
+    setLateThresholdEnabled(Boolean(savedGroup.settings?.late_threshold_enabled))
+    setClassStartTime(savedGroup.settings?.class_start_time || "08:00")
+    setClassEndTime(savedGroup.settings?.class_end_time || "17:00")
+    setLateThresholdMinutes(savedGroup.settings?.late_threshold_minutes ?? 15)
+    setTrackCheckout(Boolean(savedGroup.settings?.track_checkout))
+    setMinCheckoutDelayMinutes(savedGroup.settings?.min_checkout_delay_minutes ?? 15)
+    setAttendanceMode(
+      savedGroup.settings?.attendance_mode ??
+        (savedGroup.settings?.track_checkout ? "work_hours" : "attendance"),
+    )
+  }, [])
 
   const handleDeleteGroup = async () => {
     if (isDeleteDisabled || isDeleting) return
@@ -76,35 +108,55 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
   }
 
   useEffect(() => {
-    setLateThresholdEnabled(Boolean(group.settings?.late_threshold_enabled))
-    setClassStartTime(group.settings?.class_start_time || "08:00")
-    setClassEndTime(group.settings?.class_end_time || "17:00")
-    setLateThresholdMinutes(group.settings?.late_threshold_minutes ?? 15)
-    setTrackCheckout(Boolean(group.settings?.track_checkout))
-    setMinCheckoutDelayMinutes(group.settings?.min_checkout_delay_minutes ?? 15)
-    setAttendanceMode(
-      group.settings?.attendance_mode ??
-        (group.settings?.track_checkout ? "work_hours" : "attendance"),
-    )
-  }, [group])
+    if (saveContextRef.current.groupId !== group.id) {
+      saveContextRef.current = { groupId: group.id, confirmed: group, revision: 0, pending: null }
+      setSaveError(null)
+    }
+    if (!saveContextRef.current.pending) {
+      saveContextRef.current.confirmed = group
+      applySettings(group)
+    }
+  }, [group, applySettings])
 
   const saveSettings = useCallback(
-    async (newSettings: NonNullable<AttendanceGroup["settings"]>) => {
-      try {
-        const updatedGroup: AttendanceGroup = {
-          ...group,
-          settings: newSettings,
+    (newSettings: NonNullable<AttendanceGroup["settings"]>) => {
+      const context = saveContextRef.current
+      const revision = ++context.revision
+      setSaveError(null)
+      const isCurrent = () =>
+        mountedRef.current &&
+        currentGroupIdRef.current === context.groupId &&
+        saveContextRef.current === context &&
+        context.revision === revision
+      const persist = async () => {
+        try {
+          const saved = await attendanceManager.updateGroup(context.groupId, {
+            settings: newSettings,
+          })
+          if (saved === false) throw new Error("Group rules were not saved.")
+          context.confirmed = { ...context.confirmed, settings: newSettings }
+          if (isCurrent()) {
+            setSelectedGroup(context.confirmed)
+            onGroupsChanged?.(context.confirmed)
+          }
+        } catch (err) {
+          console.error("Failed to save group settings:", err)
+          if (isCurrent()) {
+            applySettings(context.confirmed)
+            setSelectedGroup(context.confirmed)
+            onGroupsChanged?.(context.confirmed)
+            setSaveError("Could not save group rules. Last saved settings restored. Try again.")
+          }
         }
-        await attendanceManager.updateGroup(group.id, {
-          settings: newSettings,
-        })
-        setSelectedGroup(updatedGroup)
-        onGroupsChanged?.(updatedGroup)
-      } catch (err) {
-        console.error("Failed to save group settings:", err)
       }
+      // Serialize writes, not just responses, so an older request cannot win in the database.
+      const pending = (context.pending ? context.pending.then(persist) : persist()).finally(() => {
+        if (context.pending === pending) context.pending = null
+      })
+      context.pending = pending
+      return pending
     },
-    [group, onGroupsChanged, setSelectedGroup],
+    [onGroupsChanged, setSelectedGroup, applySettings],
   )
 
   const handleLateToggle = (enabled: boolean) => {
@@ -196,6 +248,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
   return (
     <div className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
       <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
+        {saveError && <ErrorMessage message={saveError} />}
         <div className="overflow-hidden">
           <div className="pt-6 pb-2">
             <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">

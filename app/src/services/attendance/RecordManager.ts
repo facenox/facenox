@@ -347,8 +347,8 @@ export class RecordManager {
     updates: {
       status?: string
       notes?: string
-      check_in_time?: Date
-      check_out_time?: Date
+      check_in_time?: Date | null
+      check_out_time?: Date | null
       is_late?: boolean
       late_minutes?: number
       visit_number?: number

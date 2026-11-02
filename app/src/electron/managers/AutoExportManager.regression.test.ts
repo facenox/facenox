@@ -245,6 +245,15 @@ describe.each(exportFormats)("%s departure consistency", (format) => {
     expect((await exportRow({ check_out_time: null })).Departure).toBe("")
   })
 
+  it.each([
+    [8 + 59.9 / 60, "9h"],
+    [59.9 / 60, "1h"],
+    [8.5, "8h 30m"],
+    [1 / 60, "1m"],
+  ])("rounds %s hours once before formatting as %s", async (total_hours, duration) => {
+    expect((await exportRow({ total_hours }))["Total hours"]).toBe(duration)
+  })
+
   it.each(["attendance", "visits"] as const)(
     "does not infer a departure from a historical %s session",
     async (attendance_mode) => {

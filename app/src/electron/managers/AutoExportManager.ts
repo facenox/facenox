@@ -10,6 +10,7 @@ import {
   type DepartureSession,
 } from "../../shared/departureStatus.js"
 import { formatAttendanceTime } from "../../utils/attendanceTime.js"
+import { formatDuration } from "../../utils/dateUtils.js"
 
 export interface AutoExportConfig {
   enabled: boolean
@@ -306,10 +307,7 @@ export class AutoExportManager {
 
             let totalHoursStr = ""
             if (typeof session?.total_hours === "number") {
-              const hrs = Math.floor(session.total_hours)
-              const mins = Math.round((session.total_hours - hrs) * 60)
-              totalHoursStr =
-                `${hrs > 0 ? `${hrs}h ` : ""}${mins > 0 || hrs === 0 ? `${mins}m` : ""}`.trim()
+              totalHoursStr = formatDuration(Math.round(session.total_hours * 60))
             }
 
             const lateMinutesStr = session?.late_minutes ? String(session.late_minutes) : ""

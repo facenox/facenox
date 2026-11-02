@@ -10,6 +10,8 @@ import {
   attendanceDateTimeToDate,
   formatAttendanceTime,
   formatAttendanceTimeInput,
+  getAttendanceDateString,
+  addAttendanceDays,
 } from "@/utils/attendanceTime"
 
 const REASON_PRESETS = [
@@ -59,8 +61,6 @@ export function EditSessionModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const trackCheckout = group?.settings?.track_checkout ?? false
-
   useEffect(() => {
     if (!row) return
     const initialStatus = row.status === "absent" ? "absent" : "present"
@@ -106,7 +106,9 @@ export function EditSessionModal({
       setCheckOutTime(
         formatAttendanceTimeInput(
           row.check_out_time,
-          row.session?.check_out_time_timezone || attendanceTimeZone,
+          row.session?.check_out_time_timezone ||
+            row.session?.check_in_time_timezone ||
+            attendanceTimeZone,
         ),
       )
     } else {
@@ -144,35 +146,59 @@ export function EditSessionModal({
       setError("Time in is required when marking as present.")
       return
     }
-    if (trackCheckout && status === "present" && !checkOutTime) {
-      setError("Enter a time out. Time in & time out is enabled for this group.")
-      return
-    }
-
     setIsSubmitting(true)
     setError(null)
 
     try {
-      let finalCheckIn: Date | undefined
-      let finalCheckOut: Date | undefined
-
-      if (status === "present") {
-        finalCheckIn = attendanceDateTimeToDate(row.date, checkInTime, attendanceTimeZone)
-
-        if (checkOutTime) {
-          finalCheckOut = attendanceDateTimeToDate(row.date, checkOutTime, attendanceTimeZone)
-        }
-      }
-
-      await attendanceManager.updateSession(row.person_id, row.date, {
+      const updates: Parameters<typeof attendanceManager.updateSession>[2] = {
         status,
         notes: resolvedNote(),
-        check_in_time: finalCheckIn,
-        check_out_time: finalCheckOut,
-        is_late: status === "present" ? (row.is_late ?? false) : false,
-        late_minutes: status === "present" ? (row.late_minutes ?? 0) : 0,
         visit_number: row.visit_number,
-      })
+      }
+      if (status === "absent") {
+        updates.check_in_time = null
+        updates.check_out_time = null
+      } else {
+        const inZone = row.session?.check_in_time_timezone || attendanceTimeZone
+        const outZone = row.session?.check_out_time_timezone || inZone
+        const originalIn = formatAttendanceTimeInput(row.check_in_time, inZone)
+        const originalOut = formatAttendanceTimeInput(row.check_out_time, outZone)
+        // Unchanged fields are omitted to preserve seconds, DST fold and capture metadata.
+        const finalCheckIn =
+          row.check_in_time && checkInTime === originalIn ?
+            row.check_in_time
+          : attendanceDateTimeToDate(
+              row.check_in_time ? getAttendanceDateString(row.check_in_time, inZone) : row.date,
+              checkInTime,
+              inZone,
+            )
+        if (!row.check_in_time || checkInTime !== originalIn) {
+          updates.check_in_time = finalCheckIn
+        }
+        if (!checkOutTime) {
+          if (row.check_out_time) updates.check_out_time = null
+        } else if (!row.check_out_time || checkOutTime !== originalOut) {
+          let outDate =
+            row.check_out_time ?
+              getAttendanceDateString(row.check_out_time, outZone)
+            : getAttendanceDateString(finalCheckIn, outZone)
+          let finalCheckOut = attendanceDateTimeToDate(outDate, checkOutTime, outZone)
+          const schedule = row.session?.applied_schedule || group?.settings
+          if (
+            !row.check_out_time &&
+            finalCheckOut < finalCheckIn &&
+            schedule?.class_start_time &&
+            schedule.class_end_time &&
+            schedule.class_end_time < schedule.class_start_time
+          ) {
+            outDate = addAttendanceDays(outDate, 1)
+            finalCheckOut = attendanceDateTimeToDate(outDate, checkOutTime, outZone)
+          }
+          updates.check_out_time = finalCheckOut
+        }
+      }
+      // Lateness is recalculated server-side from the recorded rule when time-in changes.
+      await attendanceManager.updateSession(row.person_id, row.date, updates)
 
       onSuccess(
         `${row.name}'s attendance corrected for ${parseLocalDate(row.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}.`,
@@ -255,7 +281,9 @@ export function EditSessionModal({
                 <p className="text-sm font-semibold text-white/70">
                   {formatAttendanceTime(
                     rowSnapshot.check_out_time,
-                    rowSnapshot.session?.check_out_time_timezone || attendanceTimeZone,
+                    rowSnapshot.session?.check_out_time_timezone ||
+                      rowSnapshot.session?.check_in_time_timezone ||
+                      attendanceTimeZone,
                   )}
                 </p>
               </div>
@@ -315,8 +343,8 @@ export function EditSessionModal({
                   label: "Time out",
                   value: checkOutTime,
                   onChange: setCheckOutTime,
-                  required: trackCheckout,
-                  hint: trackCheckout ? "Required for this group" : "Optional",
+                  required: false,
+                  hint: "Leave blank if not checked out.",
                 },
               ].map(({ label, value, onChange, required, hint }) => (
                 <div key={label} className="flex-1 space-y-1.5">
@@ -331,12 +359,7 @@ export function EditSessionModal({
                     onChange={(e) => onChange(e.target.value)}
                     className="h-9 w-full rounded-lg border border-white/8 bg-white/[0.04] px-3 text-[12px] font-medium text-white transition-colors outline-none focus:border-white/20 focus:bg-white/[0.06]"
                   />
-                  {hint && (
-                    <p
-                      className={`text-[10px] ${trackCheckout && label === "Time out" ? "text-amber-400/60" : "text-white/20"}`}>
-                      {hint}
-                    </p>
-                  )}
+                  {hint && <p className="text-[10px] text-white/40">{hint}</p>}
                 </div>
               ))}
             </div>

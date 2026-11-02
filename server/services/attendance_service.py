@@ -207,7 +207,8 @@ class AttendanceService:
         existing_sessions_map = {}
         if existing_sessions:
             for session in existing_sessions:
-                existing_sessions_map[session.person_id] = session
+                visits = existing_sessions_map.setdefault(session.person_id, {})
+                visits[getattr(session, "visit_number", 1) or 1] = session
 
         records_by_person = {}
         for record in records:
@@ -224,9 +225,14 @@ class AttendanceService:
         for member in members:
             person_id = member.person_id
 
-            # Check if this session was manually overridden (has non-empty notes)
-            existing_session = existing_sessions_map.get(person_id)
-            if existing_session and existing_session.notes:
+            existing_visits = existing_sessions_map.get(person_id, {})
+            manual_visits = {
+                number: session
+                for number, session in existing_visits.items()
+                if session.notes
+            }
+            # Overrides belong to a specific visit, not the entire person/day.
+            for visit_number, existing_session in sorted(manual_visits.items()):
                 sessions.append(
                     {
                         "id": existing_session.id,
@@ -234,6 +240,7 @@ class AttendanceService:
                         "group_id": existing_session.group_id,
                         "applied_rule_id": existing_session.applied_rule_id,
                         "date": target_date,
+                        "visit_number": visit_number,
                         "check_in_time": event_time(existing_session, "check_in_time"),
                         "check_out_time": event_time(
                             existing_session, "check_out_time"
@@ -245,7 +252,6 @@ class AttendanceService:
                         "notes": existing_session.notes,
                     }
                 )
-                continue
 
             # Check if member was enrolled on or before target_date
             if target_date_obj is not None and member.joined_at:
@@ -266,7 +272,9 @@ class AttendanceService:
             person_records = records_by_person.get(person_id, [])
 
             if not person_records:
-                existing_session = existing_sessions_map.get(person_id)
+                if manual_visits:
+                    continue
+                existing_session = existing_visits.get(1)
                 sessions.append(
                     {
                         "id": (
@@ -313,6 +321,10 @@ class AttendanceService:
 
             if normalized_rule.get("attendance_mode") == "visits":
                 for index in range(0, len(person_records), 2):
+                    visit_number = index // 2 + 1
+                    if visit_number in manual_visits:
+                        continue
+                    existing_session = existing_visits.get(visit_number)
                     visit_in = event_time(person_records[index], "timestamp")
                     visit_out = (
                         event_time(person_records[index + 1], "timestamp")
@@ -321,12 +333,14 @@ class AttendanceService:
                     )
                     sessions.append(
                         {
-                            "id": self.generate_id(),
+                            "id": existing_session.id
+                            if existing_session
+                            else self.generate_id(),
                             "person_id": person_id,
                             "group_id": member.group_id,
                             "applied_rule_id": normalized_rule.get("id"),
                             "date": target_date,
-                            "visit_number": index // 2 + 1,
+                            "visit_number": visit_number,
                             "check_in_time": visit_in,
                             "check_out_time": visit_out,
                             "total_hours": (
@@ -342,7 +356,9 @@ class AttendanceService:
                     )
                 continue
 
-            existing_session = existing_sessions_map.get(person_id)
+            if 1 in manual_visits:
+                continue
+            existing_session = existing_visits.get(1)
             should_track_checkout = (
                 normalized_rule.get("attendance_mode") != "attendance"
             )

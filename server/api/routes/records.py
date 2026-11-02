@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time, timezone
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel
@@ -224,11 +224,22 @@ async def get_sessions(
             end_date_to_use = end_date or start_date
             start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
             end_datetime = datetime.strptime(end_date_to_use, "%Y-%m-%d")
+            # Rebuilding a group needs every member's existing overrides, even
+            # when the response is filtered to a single person.
+            computation_sessions = (
+                await repo.get_sessions(
+                    group_id=group_id, start_date=start_date, end_date=end_date_to_use
+                )
+                if person_id
+                else sessions
+            )
 
             current_date = start_datetime
             while current_date <= end_datetime:
                 date_str = current_date.strftime("%Y-%m-%d")
-                existing_day_sessions = [s for s in sessions if s.date == date_str]
+                existing_day_sessions = [
+                    s for s in computation_sessions if s.date == date_str
+                ]
 
                 if members is None:
                     members = await repo.get_group_members(group_id)
@@ -279,6 +290,7 @@ async def get_sessions(
                 await repo.session.commit()
                 sessions = await repo.get_sessions(
                     group_id=group_id,
+                    person_id=person_id,
                     start_date=start_date,
                     end_date=end_date_to_use,
                 )
@@ -335,18 +347,30 @@ async def update_session(
         import ulid
 
         settings = await repo.get_settings()
-        for field in ("check_in_time", "check_out_time"):
-            value = getattr(payload, field)
-            if value is not None:
-                setattr(
-                    payload,
-                    field,
-                    manual_event_time(value, settings.attendance_timezone),
-                )
-
         session_obj = await repo.get_session(
             person_id, date, visit_number=payload.visit_number
         )
+        old_check_in = event_time(session_obj, "check_in_time") if session_obj else None
+        provided = payload.model_fields_set
+        for field in ("check_in_time", "check_out_time"):
+            value = getattr(payload, field)
+            if value is not None:
+                # An existing session retains the location in which it was captured.
+                captured_zone = getattr(session_obj, f"{field}_timezone", None)
+                if not captured_zone and session_obj:
+                    captured_zone = session_obj.check_in_time_timezone
+                setattr(
+                    payload,
+                    field,
+                    manual_event_time(
+                        value, captured_zone or settings.attendance_timezone
+                    ),
+                )
+
+        clearing_absence = payload.status == "absent"
+        if clearing_absence:
+            payload.check_in_time = None
+            payload.check_out_time = None
         if not session_obj:
             # If session doesn't exist (e.g. member was absent), create an override session!
             member = await repo.get_member(person_id)
@@ -363,8 +387,8 @@ async def update_session(
                 "check_out_time": payload.check_out_time,
                 "total_hours": None,
                 "status": payload.status or "absent",
-                "is_late": payload.is_late or False,
-                "late_minutes": payload.late_minutes,
+                "is_late": False if clearing_absence else payload.is_late or False,
+                "late_minutes": None if clearing_absence else payload.late_minutes,
                 "notes": payload.notes,
             }
             session_obj = await repo.upsert_session(session_data)
@@ -374,13 +398,22 @@ async def update_session(
                 session_obj.status = payload.status
             if payload.notes is not None:
                 session_obj.notes = payload.notes
-            if payload.check_in_time is not None or payload.check_out_time is not None:
+            if clearing_absence or provided.intersection(
+                {"check_in_time", "check_out_time"}
+            ):
                 times = normalize_session_times(
                     {
-                        "check_in_time": payload.check_in_time
-                        or event_time(session_obj, "check_in_time"),
-                        "check_out_time": payload.check_out_time
-                        or event_time(session_obj, "check_out_time"),
+                        "check_in_time": (
+                            payload.check_in_time
+                            if clearing_absence or "check_in_time" in provided
+                            else event_time(session_obj, "check_in_time")
+                        ),
+                        "check_out_time": (
+                            payload.check_out_time
+                            if clearing_absence or "check_out_time" in provided
+                            else event_time(session_obj, "check_out_time")
+                        ),
+                        "total_hours": None,
                     }
                 )
                 for key, value in times.items():
@@ -389,6 +422,51 @@ async def update_session(
                 session_obj.is_late = payload.is_late
             if payload.late_minutes is not None:
                 session_obj.late_minutes = payload.late_minutes
+
+        check_in = event_time(session_obj, "check_in_time")
+        if session_obj.status == "absent" or check_in is None:
+            session_obj.is_late = False
+            session_obj.late_minutes = None
+        elif (
+            old_check_in.astimezone(timezone.utc)
+            if old_check_in and old_check_in.tzinfo
+            else old_check_in
+        ) != (check_in.astimezone(timezone.utc) if check_in.tzinfo else check_in):
+            # Time edits must not carry a stale late flag supplied by the client.
+            rule = None
+            if session_obj.applied_rule_id:
+                rule = await repo.get_group_rule(session_obj.applied_rule_id)
+            elif old_check_in is None:
+                # Absent placeholders also have no applied rule until an arrival
+                # is supplied. Resolve only history that existed at that time.
+                candidate = await repo.get_effective_group_rule(
+                    session_obj.group_id, check_in.replace(tzinfo=None)
+                )
+                if candidate and candidate.effective_from <= check_in.replace(
+                    tzinfo=None
+                ):
+                    rule = candidate
+                    session_obj.applied_rule_id = rule.id
+            if rule and (
+                rule.group_id != session_obj.group_id
+                or rule.organization_id != session_obj.organization_id
+            ):
+                rule = None
+            if rule:
+                session_obj.is_late, session_obj.late_minutes = (
+                    AttendanceService._calculate_late_status(
+                        check_in,
+                        {
+                            "class_start_time": rule.class_start_time,
+                            "late_threshold_enabled": rule.late_threshold_enabled,
+                            "late_threshold_minutes": rule.late_threshold_minutes,
+                        },
+                    )
+                )
+            else:
+                # Missing historical rules cannot be replaced by today's settings.
+                session_obj.is_late = False
+                session_obj.late_minutes = None
 
         session_member = await repo.get_member(person_id)
         member_name = session_member.name if session_member else person_id
