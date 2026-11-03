@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { screen, fireEvent, render } from "@testing-library/react"
+import { screen, fireEvent, render, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { GroupSettings } from "./GroupSettings"
 import { attendanceManager } from "@/services"
@@ -178,6 +178,7 @@ describe("GroupSettings Component (Two-Tiered Group Scope)", () => {
     expect(screen.getByText("Delete this group")).toBeInTheDocument()
     const openDeleteBtn = screen.getByRole("button", { name: /delete group/i })
     expect(openDeleteBtn).toBeInTheDocument()
+    await waitFor(() => expect(openDeleteBtn).toBeEnabled())
 
     // Open confirmation modal
     fireEvent.click(openDeleteBtn)

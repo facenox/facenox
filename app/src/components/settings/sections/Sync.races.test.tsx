@@ -77,7 +77,7 @@ describe("Cloud pairing state boundaries", () => {
     })
     expect(screen.queryByText("OLD-CODE")).not.toBeInTheDocument()
     expect(
-      screen.getByText("Save configuration to generate a device code for this server."),
+      await screen.findByText("Save configuration to generate a device code for this server."),
     ).toBeInTheDocument()
     expect(api.initiateReversePairing).toHaveBeenCalledTimes(1)
     expect(api.pollDeviceAuthorization).not.toHaveBeenCalled()
