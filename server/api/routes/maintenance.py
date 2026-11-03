@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends, Header
-from sqlalchemy import select, text
+from sqlalchemy import select, text, update
 
 from api.schemas import (
     SuccessResponse,
@@ -11,7 +11,7 @@ from api.schemas import (
 )
 from api.deps import get_repository
 from database.repository import AttendanceRepository
-from database.models import AttendanceGroup, AttendanceMember, Face
+from database.models import AttendanceGroup, AttendanceMember, AttendanceSettings, Face
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +104,12 @@ async def unpair_local_database(
         await repo.unassign_organization_id(
             org_id=x_facenox_organization or repo.organization_id
         )
+        await repo.session.execute(
+            update(AttendanceSettings)
+            .where(AttendanceSettings.organization_id.is_(None))
+            .values(cloud_force_liveness=False)
+        )
+        await repo.session.commit()
 
         await repo.add_audit_log(
             action="DEVICE_MANUALLY_UNPAIRED",

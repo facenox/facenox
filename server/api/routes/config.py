@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel
 
 from api.schemas import (
     AttendanceSettingsUpdate,
@@ -20,6 +21,31 @@ from time_utils import refresh_local_timezone
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/settings", tags=["settings"])
+
+
+class CloudLivenessPolicyUpdate(BaseModel):
+    force_liveness_detection: bool
+
+
+@router.put("/cloud-liveness", response_model=AttendanceSettingsResponse)
+async def apply_cloud_liveness_policy(
+    policy: CloudLivenessPolicyUpdate,
+    repo: AttendanceRepository = Depends(get_repository),
+):
+    settings = await repo.get_settings()
+    changed = bool(settings.cloud_force_liveness) != policy.force_liveness_detection
+    settings.cloud_force_liveness = policy.force_liveness_detection
+    await repo.session.commit()
+    await repo.session.refresh(settings)
+    from services.live_stream_service import LiveStreamService
+
+    LiveStreamService.apply_liveness_policy(
+        repo.organization_id,
+        settings.cloud_force_liveness,
+        settings.enable_liveness_detection,
+        invalidate=changed,
+    )
+    return settings
 
 
 @router.get("", response_model=AttendanceSettingsResponse)
@@ -94,7 +120,11 @@ async def update_settings(
 
         from services.live_stream_service import LiveStreamService
 
-        LiveStreamService.invalidate_all(repo.organization_id)
+        LiveStreamService.apply_liveness_policy(
+            repo.organization_id,
+            updated_settings.cloud_force_liveness,
+            updated_settings.enable_liveness_detection,
+        )
 
         return updated_settings
 

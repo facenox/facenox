@@ -70,8 +70,28 @@ function getRemoteSyncStatus() {
   const lastSyncStatus = ((persistentStore.get("sync.lastSyncStatus") as
     "idle" | "success" | "error" | undefined) ?? "idle") as "idle" | "success" | "error"
   const lastSyncMessage = (persistentStore.get("sync.lastSyncMessage") as string | null) || null
+  const paired = Boolean(organizationId && siteId && deviceId)
+  const forceLiveness = persistentStore.get("sync.policy.forceLiveness")
 
   return {
+    credentialError,
+    forceLiveness: paired && forceLiveness === true,
+    policyReady: !paired || typeof forceLiveness === "boolean",
+    policyOverrides:
+      paired ?
+        {
+          trackCheckout: persistentStore.get("sync.policy.trackCheckout") as boolean | undefined,
+          lateThresholdEnabled: persistentStore.get("sync.policy.lateThresholdEnabled") as
+            boolean | undefined,
+          lateThresholdMinutes: persistentStore.get("sync.policy.lateThresholdMinutes") as
+            number | undefined,
+          attendanceCooldownSeconds: persistentStore.get(
+            "sync.policy.attendanceCooldownSeconds",
+          ) as number | undefined,
+          dataRetentionDays: persistentStore.get("sync.policy.dataRetentionDays") as
+            number | undefined,
+        }
+      : {},
     enabled,
     remoteBaseUrl,
     organizationId,
@@ -284,8 +304,8 @@ export function registerSyncHandlers() {
     syncManager.triggerDebouncedSync()
   })
 
-  ipcMain.handle("sync:get-config", async () => {
-    return await getExtendedSyncStatus()
+  ipcMain.handle("sync:get-config", async (_event, options?: { includeCounts?: boolean }) => {
+    return options?.includeCounts === false ? getRemoteSyncStatus() : await getExtendedSyncStatus()
   })
 
   ipcMain.handle("sync:update-config", async (_event, updates: Record<string, unknown> = {}) => {
@@ -474,6 +494,9 @@ export function registerSyncHandlers() {
       const deviceName = (input.deviceName || "").trim() || "Facenox Desktop"
 
       try {
+        if (getRemoteSyncStatus().connected) {
+          return { success: false, error: "This device is already connected to Cloud." }
+        }
         requireSecretStorage()
         const response = await fetch(`${remoteBaseUrl}/api/device/code`, {
           method: "POST",

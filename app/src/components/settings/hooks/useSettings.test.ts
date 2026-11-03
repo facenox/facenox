@@ -4,6 +4,7 @@ import { useSettings } from "@/components/settings/hooks/useSettings"
 import { useGroupUIStore } from "@/components/group/stores"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { createAttendanceGroup, createAttendanceMember } from "@/test/fixtures"
+import { createSyncConfig, getElectronAPIMock } from "@/test/mocks/electron"
 
 const {
   mockBackendService,
@@ -134,6 +135,30 @@ describe("useSettings", () => {
 
   afterEach(() => {
     vi.useRealTimers()
+  })
+
+  it("does not expose editable policy controls while the shared snapshot is loading", async () => {
+    let finish!: (value: ReturnType<typeof createSyncConfig>) => void
+    getElectronAPIMock().sync.getConfig.mockReturnValue(
+      new Promise<ReturnType<typeof createSyncConfig>>((resolve) => {
+        finish = resolve
+      }),
+    )
+    const { result } = renderHook(() => useSettings(createProps()))
+    expect(result.current.cloudPolicyReady).toBe(false)
+    await act(async () => {
+      finish(
+        createSyncConfig({
+          connected: true,
+          forceLiveness: true,
+          policyReady: true,
+          policyOverrides: { dataRetentionDays: 30 },
+        }),
+      )
+    })
+    expect(result.current.cloudPolicyReady).toBe(true)
+    expect(result.current.forceLiveness).toBe(true)
+    expect(result.current.policyOverrides.dataRetentionDays).toBe(30)
   })
 
   it("loads fresh time health when General opens even when other settings use cached data", async () => {

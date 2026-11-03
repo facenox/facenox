@@ -155,7 +155,17 @@ export const useAttendanceStore = create<AttendanceState>()(
     },
     setEnableSpoofDetection: (enabled) => {
       set({ enableSpoofDetection: enabled })
-      attendanceManager.updateSettings({ enable_liveness_detection: enabled }).catch(console.error)
+      attendanceManager
+        .updateSettings({ enable_liveness_detection: enabled })
+        .then(() => attendanceManager.getSettings())
+        .then((settings) =>
+          set({
+            enableSpoofDetection: Boolean(
+              settings.enable_liveness_detection || settings.cloud_force_liveness,
+            ),
+          }),
+        )
+        .catch(console.error)
     },
     setMaxRecognitionFacesPerFrame: (count) => {
       set({ maxRecognitionFacesPerFrame: count })

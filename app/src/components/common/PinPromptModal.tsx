@@ -14,7 +14,7 @@ export function PinPromptModal() {
   const pinLockoutUntil = useUIStore((state) => state.pinLockoutUntil)
   const pinFailedAttempts = useUIStore((state) => state.pinFailedAttempts)
 
-  const { isPaired } = useCloudSyncStatus()
+  const { isReady, isPaired } = useCloudSyncStatus()
 
   const [pin, setPin] = useState("")
   const [error, setError] = useState(false)
@@ -253,6 +253,8 @@ export function PinPromptModal() {
                         className="text-center text-[11px] font-medium text-rose-400">
                         Invalid recovery key.
                       </motion.span>
+                    : !isReady ?
+                      null
                     : isPaired ?
                       <motion.span
                         key="paired-hint"

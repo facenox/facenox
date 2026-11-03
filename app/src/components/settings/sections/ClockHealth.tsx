@@ -2,6 +2,7 @@ import { AlertTriangle, Loader2, Check, HelpCircle, RotateCw } from "lucide-reac
 import { InfoPopover } from "@/components/shared"
 import { AttendanceTimezonePicker } from "@/components/settings/components/AttendanceTimezonePicker"
 import type { TimeHealthOverview } from "@/components/settings/types"
+import { refreshCloudSyncConfig, type CloudConfigStatus } from "@/services/cloudSyncState"
 
 function formatDeviceClock(health: TimeHealthOverview["timeHealth"]) {
   const zone = health?.device_time_zone_name?.trim() || health?.time_zone_name?.trim()
@@ -40,12 +41,14 @@ export function ClockHealth({
   attendanceTimeZone,
   onAttendanceTimezoneChange,
   isPaired = false,
+  cloudConfigStatus = "ready",
 }: {
   timeHealthState: TimeHealthOverview
   onRefreshTimeHealth: () => void
   attendanceTimeZone?: string | null
   onAttendanceTimezoneChange?: (timeZone: string) => void
   isPaired?: boolean
+  cloudConfigStatus?: CloudConfigStatus
 }) {
   const timeHealth = timeHealthState.timeHealth
   const timeHealthStatus = timeHealth?.online_verification_status ?? "unavailable"
@@ -90,7 +93,9 @@ export function ClockHealth({
                 description="Keeps attendance times consistent when this computer's timezone changes."
                 details={[
                   "Reports, exports, and manual corrections use this timezone.",
-                  isPaired ?
+                  cloudConfigStatus !== "ready" ?
+                    "Cloud management status must load before this setting can be changed."
+                  : isPaired ?
                     "Your Cloud location manages this setting. Change it in Facenox Cloud under Manage > Locations."
                   : "Change this only when the attendance location moves to another timezone.",
                 ]}
@@ -98,8 +103,22 @@ export function ClockHealth({
               />
             </div>
             <div className="text-xs font-normal text-white/65">
-              {isPaired ? "Managed by your Cloud location." : "Pinned to this attendance location."}
+              {cloudConfigStatus === "loading" ?
+                "Loading attendance location…"
+              : cloudConfigStatus === "error" ?
+                "Cloud management status unavailable."
+              : isPaired ?
+                "Managed by your Cloud location."
+              : "Pinned to this attendance location."}
             </div>
+            {cloudConfigStatus === "error" && (
+              <button
+                type="button"
+                onClick={() => void refreshCloudSyncConfig()}
+                className="mt-1 text-xs text-cyan-400">
+                Retry connection status
+              </button>
+            )}
             {timezoneWarning && (
               <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-400/90">
                 <AlertTriangle aria-hidden="true" className="mt-0.5 size-3 shrink-0" />
@@ -109,7 +128,7 @@ export function ClockHealth({
           </div>
           <AttendanceTimezonePicker
             value={resolvedAttendanceTimeZone}
-            disabled={isPaired}
+            disabled={cloudConfigStatus !== "ready" || isPaired}
             onChange={(timeZone) => onAttendanceTimezoneChange?.(timeZone)}
           />
         </div>

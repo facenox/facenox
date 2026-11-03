@@ -410,6 +410,7 @@ class AttendanceSettingsUpdate(BaseModel):
 
 
 class AttendanceSettingsResponse(BaseModel):
+    cloud_force_liveness: bool = False
     attendance_timezone: Optional[str] = None
     late_threshold_minutes: int
     enable_location_tracking: bool

@@ -18,7 +18,8 @@ import { CreateGroup } from "@/components/group/modals/CreateGroup"
 import { ClockHealth } from "@/components/settings/sections/ClockHealth"
 import { Attendance } from "@/components/settings/sections/Attendance"
 import { About } from "@/components/settings/sections/About"
-import { Sync, type RemoteSyncConfig } from "@/components/settings/sections/Sync"
+import { Sync } from "@/components/settings/sections/Sync"
+import { useCloudSyncConfig } from "@/services/cloudSyncState"
 import { AntiSpoofDetectionModal } from "@/components/settings/AntiSpoofDetectionModal"
 import { AuditLogExportModal } from "@/components/settings/AuditLogExportModal"
 import { GroupPanel, type GroupSection } from "@/components/group"
@@ -210,39 +211,16 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   const [isAntiSpoofModalOpen, setIsAntiSpoofModalOpen] = useState(false)
   const [dontShowAntiSpoofInfoAgain, setDontShowAntiSpoofInfoAgain] = useState(false)
   const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false)
-  const [isPaired, setIsPaired] = useState(false)
-  const [canManageGroups, setCanManageGroups] = useState(false)
+  const { config: syncConfig, status: cloudConfigStatus } = useCloudSyncConfig()
+  const isPaired = Boolean(syncConfig?.connected)
+  const canManageGroups =
+    cloudConfigStatus === "ready" &&
+    syncConfig?.policyReady !== false &&
+    Boolean(syncConfig) &&
+    (!syncConfig?.connected || syncConfig.allowKioskDirectoryManagement !== false)
   const showCreateGroupModal = useGroupUIStore((state) => state.showCreateGroupModal)
   const openCreateGroup = useGroupUIStore((state) => state.openCreateGroup)
   const closeCreateGroup = useGroupUIStore((state) => state.closeCreateGroup)
-  const [syncConfig, setSyncConfig] = useState<RemoteSyncConfig | null>(null)
-
-  useEffect(() => {
-    if (!window.electronAPI?.sync) return
-
-    const fetchConfig = () => {
-      window.electronAPI.sync
-        .getConfig()
-        .then((c) => setIsPaired(c.connected))
-        .catch(console.error)
-    }
-
-    fetchConfig()
-
-    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
-      fetchConfig()
-    })
-
-    return unsubscribe
-  }, [])
-
-  useEffect(() => {
-    if (activeSection === "remote-sync") {
-      window.electronAPI.sync.getConfig().then((cfg) => {
-        setSyncConfig(cfg as RemoteSyncConfig)
-      })
-    }
-  }, [activeSection])
 
   /** Audit log export — owned here so the page header can surface the action. */
   const handleExportAuditLog = useCallback(
@@ -394,7 +372,9 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             <Download className="size-3" />
             Audit log
           </button>
-        : activeSection === "remote-sync" && syncConfig?.connected ?
+        : (
+          activeSection === "remote-sync" && cloudConfigStatus === "ready" && syncConfig?.connected
+        ) ?
           (() => {
             const isQuota =
               syncConfig.lastSyncMessage?.includes("Plan limit exceeded") ||
@@ -449,6 +429,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     reportsExportHandlers,
     setGroupInitialSection,
     syncConfig,
+    cloudConfigStatus,
     canManageGroups,
     openCreateGroup,
     onCreateGroup,
@@ -704,6 +685,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                     updateAttendanceSetting({ attendanceTimezone: timeZone })
                   }
                   isPaired={isPaired}
+                  cloudConfigStatus={cloudConfigStatus}
                 />
               </motion.div>
             )}
@@ -716,7 +698,6 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 <Groups
                   groups={groups}
                   onOpenGroup={onOpenGroup}
-                  onManagementChange={setCanManageGroups}
                   onGroupsChanged={() => {
                     loadSystemData()
                     onGroupsChanged?.()
@@ -749,10 +730,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 key="remote-sync"
                 {...motionProps}
                 className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
-                <Sync
-                  onNavigateToDB={() => setActiveSection("database")}
-                  onStatusChange={setSyncConfig}
-                />
+                <Sync onNavigateToDB={() => setActiveSection("database")} />
               </motion.div>
             )}
 

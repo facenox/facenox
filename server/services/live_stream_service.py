@@ -32,6 +32,8 @@ class LiveGroupContext:
 @dataclass(eq=False)
 class LiveSessionConfig:
     enable_liveness_detection: bool = False
+    requested_liveness_detection: bool = False
+    force_liveness_detection: bool = False
     active_group_id: Optional[str] = None
     max_recognition_faces_per_frame: int = 6
     client_id: Optional[str] = None
@@ -104,6 +106,33 @@ class LiveStreamService:
     def _extract_face_area(face: Dict[str, Any]) -> float:
         bbox = face.get("bbox") or {}
         return float(bbox.get("width", 0) * bbox.get("height", 0))
+
+    @classmethod
+    def apply_liveness_policy(
+        cls,
+        organization_id: Optional[str],
+        forced: bool,
+        preferred: bool,
+        *,
+        invalidate: bool = True,
+    ) -> None:
+        configs = [
+            config
+            for config in cls._active_configs
+            if config.organization_id == organization_id
+        ]
+        changed = any(
+            config.force_liveness_detection != bool(forced)
+            or config.requested_liveness_detection != bool(preferred)
+            or config.enable_liveness_detection != bool(forced or preferred)
+            for config in configs
+        )
+        for config in configs:
+            config.force_liveness_detection = bool(forced)
+            config.requested_liveness_detection = bool(preferred)
+            config.enable_liveness_detection = bool(forced or preferred)
+        if invalidate or changed:
+            cls.invalidate_all(organization_id)
 
     @staticmethod
     def _has_live_recognition_basics(face: Dict[str, Any]) -> bool:
@@ -197,21 +226,39 @@ class LiveStreamService:
         self.register_config(config)
 
         try:
-            async with AsyncSessionLocal() as session:
-                repo = AttendanceRepository(
-                    session, organization_id=self.organization_id
-                )
-                settings = await repo.get_settings()
-                config.enable_liveness_detection = settings.enable_liveness_detection
-                config.max_recognition_faces_per_frame = (
-                    settings.max_recognition_faces_per_frame
-                    if settings.max_recognition_faces_per_frame is not None
-                    else 6
-                )
-                config.group_context.max_recognition_faces_per_frame = (
-                    config.max_recognition_faces_per_frame
-                )
+            while True:
+                version = self.get_db_version(self.organization_id)
+                async with AsyncSessionLocal() as session:
+                    repo = AttendanceRepository(
+                        session, organization_id=self.organization_id
+                    )
+                    settings = await repo.get_settings()
+                    if version != self.get_db_version(self.organization_id):
+                        continue
+                    config.requested_liveness_detection = (
+                        settings.enable_liveness_detection
+                    )
+                    config.force_liveness_detection = bool(
+                        getattr(settings, "cloud_force_liveness", False)
+                    )
+                    config.enable_liveness_detection = bool(
+                        config.requested_liveness_detection
+                        or config.force_liveness_detection
+                    )
+                    config.max_recognition_faces_per_frame = (
+                        settings.max_recognition_faces_per_frame
+                        if settings.max_recognition_faces_per_frame is not None
+                        else 6
+                    )
+                    config.group_context.max_recognition_faces_per_frame = (
+                        config.max_recognition_faces_per_frame
+                    )
+                    config.loaded_version = version
+                    break
         except Exception as exc:
+            # An unreadable settings row must not disable a cached Cloud requirement.
+            config.force_liveness_detection = True
+            config.enable_liveness_detection = True
             logger.warning(
                 "[LiveStreamService] Failed to load initial stream config: %s", exc
             )
@@ -221,8 +268,11 @@ class LiveStreamService:
         self, config: LiveSessionConfig, message: Dict[str, Any]
     ) -> None:
         if "enable_liveness_detection" in message:
-            config.enable_liveness_detection = message.get(
-                "enable_liveness_detection", True
+            config.requested_liveness_detection = bool(
+                message.get("enable_liveness_detection", True)
+            )
+            config.enable_liveness_detection = bool(
+                config.requested_liveness_detection or config.force_liveness_detection
             )
 
         if "client_id" in message:

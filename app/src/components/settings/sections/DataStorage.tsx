@@ -27,6 +27,7 @@ import { DatabaseStats } from "@/components/settings/sections/components/Databas
 import { useDialog, Switch } from "@/components/shared"
 import { Modal } from "@/components/common/Modal"
 import { useUIStore } from "@/components/main/stores"
+import { useCloudSyncStatus } from "@/components/common/useCloudSyncStatus"
 
 type BackupStatus = { type: "idle" } | { type: "loading"; action: "export" | "import" }
 
@@ -51,33 +52,13 @@ export function DataStorage({
   const { handleClearAllGroups, handlePurgeHistory, isPurgingHistory, deletingGroup } =
     useDatabaseManagement(groups, onGroupsChanged, dialog, false)
 
-  const [isPaired, setIsPaired] = useState(false)
-  const [allowKioskDirectoryManagement, setAllowKioskDirectoryManagement] = useState(true)
-
-  useEffect(() => {
-    if (!window.electronAPI?.sync) return
-
-    const fetchConfig = () => {
-      window.electronAPI.sync
-        .getConfig()
-        .then((c) => {
-          setIsPaired(c.connected)
-          setAllowKioskDirectoryManagement(
-            (c as { allowKioskDirectoryManagement?: boolean }).allowKioskDirectoryManagement !==
-              false,
-          )
-        })
-        .catch(console.error)
-    }
-
-    fetchConfig()
-
-    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
-      fetchConfig()
-    })
-
-    return unsubscribe
-  }, [])
+  const {
+    isReady,
+    isPaired,
+    allowKioskDirectoryManagement,
+    status: cloudStatus,
+    refresh,
+  } = useCloudSyncStatus()
 
   const { setError, setSuccess } = useUIStore()
 
@@ -107,14 +88,30 @@ export function DataStorage({
     lastExportedDate: null,
   })
   const [isTriggeringAutoExport, setIsTriggeringAutoExport] = useState(false)
+  const [autoExportLoaded, setAutoExportLoaded] = useState(false)
+  const [autoExportError, setAutoExportError] = useState<string | null>(null)
+  const [autoExportLoadAttempt, setAutoExportLoadAttempt] = useState(0)
 
   useEffect(() => {
-    if (!window.electronAPI?.autoExport) return
+    let active = true
+    if (!window.electronAPI?.autoExport) {
+      setAutoExportError("Scheduled reports are unavailable in this window.")
+      return
+    }
     window.electronAPI.autoExport
       .getConfig()
-      .then((cfg) => setAutoExportConfig(cfg))
-      .catch(console.error)
-  }, [])
+      .then((cfg) => {
+        if (!active) return
+        setAutoExportConfig(cfg)
+        setAutoExportLoaded(true)
+      })
+      .catch(() => {
+        if (active) setAutoExportError("Could not load scheduled reports.")
+      })
+    return () => {
+      active = false
+    }
+  }, [autoExportLoadAttempt])
 
   const handleUpdateAutoExport = async (
     updates: Partial<{
@@ -337,7 +334,7 @@ export function DataStorage({
           </div>
 
           {/* Subtle contextual bridge when operating standalone */}
-          {!isPaired && onNavigateToSync && (
+          {isReady && !isPaired && onNavigateToSync && (
             <div className="flex items-center justify-between rounded-lg border border-white/6 bg-white/[0.02] px-4 py-3">
               <div className="flex items-center gap-2.5 text-xs text-white/65">
                 <Cloud className="size-3 text-emerald-400" />
@@ -349,6 +346,18 @@ export function DataStorage({
                 className="group flex items-center gap-1.5 text-xs font-semibold text-cyan-400 transition-colors hover:text-cyan-300">
                 <span>Set up Facenox Cloud sync</span>
                 <ArrowRight className="size-2.5 transition-transform group-hover:translate-x-0.5" />
+              </button>
+            </div>
+          )}
+          {cloudStatus === "error" && (
+            <div
+              role="status"
+              className="flex items-center justify-between gap-3 text-xs text-white/65">
+              <span>
+                Cloud connection status is unavailable. Restricted actions remain disabled.
+              </span>
+              <button type="button" onClick={() => void refresh()} className="text-cyan-400">
+                Retry
               </button>
             </div>
           )}
@@ -373,15 +382,33 @@ export function DataStorage({
                   while Facenox is running.
                 </p>
               </div>
-              <Switch
-                checked={autoExportConfig.enabled}
-                onChange={(enabled) => handleUpdateAutoExport({ enabled })}
-                ariaLabel="Enable daily auto-export"
-              />
+              {autoExportLoaded ?
+                <Switch
+                  checked={autoExportConfig.enabled}
+                  onChange={(enabled) => handleUpdateAutoExport({ enabled })}
+                  ariaLabel="Enable daily auto-export"
+                />
+              : autoExportError ?
+                <div role="status" className="text-xs text-white/65">
+                  <span>{autoExportError}</span>{" "}
+                  <button
+                    type="button"
+                    className="text-cyan-400"
+                    onClick={() => {
+                      setAutoExportError(null)
+                      setAutoExportLoadAttempt((value) => value + 1)
+                    }}>
+                    Retry
+                  </button>
+                </div>
+              : <span role="status" className="flex items-center gap-2 text-xs text-white/55">
+                  <Loader2 aria-hidden="true" className="size-3 animate-spin" /> Loading schedule…
+                </span>
+              }
             </div>
 
             <AnimatePresence>
-              {autoExportConfig.enabled && (
+              {autoExportLoaded && autoExportConfig.enabled && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -662,6 +689,7 @@ export function DataStorage({
                     onClick={() => handleClearAllGroups(false)}
                     disabled={
                       isLoading ||
+                      !isReady ||
                       deletingGroup === "all" ||
                       groups.length === 0 ||
                       (isPaired && !allowKioskDirectoryManagement)
@@ -694,7 +722,7 @@ export function DataStorage({
                   </div>
                   <button
                     onClick={() => onClearDatabase(false)}
-                    disabled={isLoading || (isPaired && !allowKioskDirectoryManagement)}
+                    disabled={isLoading || !isReady || (isPaired && !allowKioskDirectoryManagement)}
                     className="flex shrink-0 items-center justify-center self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
                     Clear face data
                   </button>

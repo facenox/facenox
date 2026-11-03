@@ -16,6 +16,10 @@ export interface MockSyncConfig {
   lastSyncStatus: "idle" | "success" | "error"
   lastSyncMessage: string | null
   connected: boolean
+  credentialError?: string | null
+  forceLiveness?: boolean
+  policyReady?: boolean
+  policyOverrides?: Awaited<ReturnType<SyncAPI["getConfig"]>>["policyOverrides"]
   unsyncedRecordsCount?: number
   unsyncedSessionsCount?: number
 }

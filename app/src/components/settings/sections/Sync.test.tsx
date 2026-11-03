@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { fireEvent, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import { Sync } from "@/components/settings/sections/Sync"
 import { useUIStore } from "@/components/main/stores"
@@ -27,6 +27,52 @@ function FeedbackDisplay() {
 }
 
 describe("Sync", () => {
+  it("does not show pairing or request a device code while saved pairing is loading", async () => {
+    const api = getElectronAPIMock().sync
+    let resolve!: (config: ReturnType<typeof createSyncConfig>) => void
+    const pending = new Promise<ReturnType<typeof createSyncConfig>>((complete) => {
+      resolve = complete
+    })
+    api.getConfig.mockReturnValue(pending)
+    renderWithProviders(<Sync />)
+    expect(screen.getByText("Loading Cloud connection…")).toBeInTheDocument()
+    expect(screen.queryByText("Connect to Facenox Cloud")).not.toBeInTheDocument()
+    expect(api.initiateReversePairing).not.toHaveBeenCalled()
+    await act(async () => {
+      resolve(createSyncConfig({ connected: true }))
+    })
+    expect(await screen.findByText("Connected to Facenox Cloud")).toBeInTheDocument()
+    expect(api.initiateReversePairing).not.toHaveBeenCalled()
+  })
+
+  it("does not start pairing when configuration cannot be read", async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockRejectedValue(new Error("Saved settings unavailable"))
+    renderWithProviders(<Sync />)
+    expect(await screen.findByText("Saved settings unavailable")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument()
+    expect(api.initiateReversePairing).not.toHaveBeenCalled()
+  })
+
+  it("loads a saved custom destination before starting unpaired-device authorization", async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockResolvedValue(
+      createSyncConfig({
+        connected: false,
+        remoteBaseUrl: "https://sync.example.test",
+        deviceName: "Reception",
+      }),
+    )
+    renderWithProviders(<Sync />)
+    await waitFor(() =>
+      expect(api.initiateReversePairing).toHaveBeenCalledWith({
+        remoteBaseUrl: "https://sync.example.test",
+        deviceName: "Reception",
+      }),
+    )
+    expect(api.initiateReversePairing).toHaveBeenCalledTimes(1)
+  })
+
   it.each([
     ["Plan limit exceeded", "Plan member limit reached"],
     ["Plan limit exceeded: reached 15 (limit: 10)", "Plan limit reached (15 / 10 members)"],
@@ -130,15 +176,14 @@ describe("Sync", () => {
 
   it("clears the pairing code and shows success after a successful pair", async () => {
     const electronAPI = getElectronAPIMock()
-    electronAPI.sync.pairDevice.mockResolvedValue({
-      success: true,
-      message: "Device connected.",
-      initialSyncSucceeded: true,
-      config: createSyncConfig({
+    electronAPI.sync.pairDevice.mockImplementation(async () => {
+      const config = createSyncConfig({
         connected: true,
         organizationName: "Facenox Org",
         siteName: "Main Campus",
-      }),
+      })
+      electronAPI.sync.getConfig.mockResolvedValue(config)
+      return { success: true, message: "Device connected.", initialSyncSucceeded: true, config }
     })
 
     const { user } = renderWithProviders(
@@ -160,11 +205,15 @@ describe("Sync", () => {
 
   it("shows an error-toned banner when pairing succeeds but initial sync fails", async () => {
     const electronAPI = getElectronAPIMock()
-    electronAPI.sync.pairDevice.mockResolvedValue({
-      success: true,
-      message: "Paired, but the first sync failed.",
-      initialSyncSucceeded: false,
-      config: createSyncConfig({ connected: true }),
+    electronAPI.sync.pairDevice.mockImplementation(async () => {
+      const config = createSyncConfig({ connected: true })
+      electronAPI.sync.getConfig.mockResolvedValue(config)
+      return {
+        success: true,
+        message: "Paired, but the first sync failed.",
+        initialSyncSucceeded: false,
+        config,
+      }
     })
 
     const { user } = renderWithProviders(
@@ -222,7 +271,11 @@ describe("Sync", () => {
 
     await waitFor(() => {
       expect(electronAPI.sync.triggerNow).toHaveBeenCalled()
-      expect(electronAPI.sync.getConfig).toHaveBeenCalledTimes(2)
+      expect(
+        electronAPI.sync.getConfig.mock.calls.filter(
+          ([options]) => options?.includeCounts === false,
+        ),
+      ).toHaveLength(2)
       expect(screen.getByText("Sync completed.")).toBeInTheDocument()
     })
   })

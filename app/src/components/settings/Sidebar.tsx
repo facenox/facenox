@@ -6,6 +6,7 @@ import { generateGroupDisplayNames } from "@/utils"
 import type { AttendanceGroup } from "@/types/recognition"
 import type { GroupSection } from "@/components/group/types"
 import { updaterService } from "@/services"
+import { useCloudSyncConfig } from "@/services/cloudSyncState"
 
 interface SidebarProps {
   activeSection: string
@@ -47,11 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   sections,
   groupSections,
 }) => {
-  const [syncStatus, setSyncStatus] = React.useState<{
-    connected: boolean
-    organizationName?: string
-    allowKioskDirectoryManagement?: boolean
-  } | null>(null)
+  const { config: syncStatus, status: cloudConfigStatus } = useCloudSyncConfig()
   const [appVersion, setAppVersion] = React.useState<string>("")
 
   React.useEffect(() => {
@@ -61,29 +58,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       .catch(() => {})
   }, [])
 
-  React.useEffect(() => {
-    if (!window.electronAPI?.sync) return
-
-    const fetchConfig = () => {
-      window.electronAPI.sync
-        .getConfig()
-        .then((cfg) => {
-          setSyncStatus({
-            connected: Boolean(cfg?.connected),
-            organizationName: cfg?.organizationName,
-            allowKioskDirectoryManagement: (cfg as { allowKioskDirectoryManagement?: boolean })
-              .allowKioskDirectoryManagement,
-          })
-        })
-        .catch(console.error)
-    }
-
-    fetchConfig()
-    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
-      fetchConfig()
-    })
-    return unsubscribe
-  }, [])
   return (
     <div className="settings-sidebar flex w-[200px] shrink-0 flex-col border-r border-white/5 bg-[var(--bg-primary)] sm:w-[220px] lg:w-[240px]">
       {/* Workspace Switcher Header */}
@@ -125,6 +99,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               aria-label="Create group"
               onClick={onCreateGroup}
               disabled={
+                cloudConfigStatus !== "ready" ||
+                syncStatus?.policyReady === false ||
                 !syncStatus ||
                 (syncStatus.connected && syncStatus.allowKioskDirectoryManagement === false)
               }

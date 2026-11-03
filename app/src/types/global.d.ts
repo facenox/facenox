@@ -144,7 +144,7 @@ declare global {
   }
 
   interface SyncAPI {
-    getConfig: () => Promise<{
+    getConfig: (options?: { includeCounts?: boolean }) => Promise<{
       enabled: boolean
       remoteBaseUrl: string
       organizationId: string
@@ -158,6 +158,17 @@ declare global {
       lastSyncStatus: "idle" | "success" | "error"
       lastSyncMessage: string | null
       connected: boolean
+      allowKioskDirectoryManagement?: boolean
+      credentialError?: string | null
+      forceLiveness?: boolean
+      policyReady?: boolean
+      policyOverrides?: {
+        trackCheckout?: boolean
+        lateThresholdEnabled?: boolean
+        lateThresholdMinutes?: number
+        attendanceCooldownSeconds?: number
+        dataRetentionDays?: number
+      }
       unsyncedRecordsCount?: number
       unsyncedSessionsCount?: number
     }>

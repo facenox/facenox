@@ -118,6 +118,8 @@ app.whenReady().then(async () => {
     if (!backendReady) {
       throw new Error("The local attendance service took too long to start.")
     }
+    // Restore cached enforcement before the renderer can begin offline scanning.
+    await syncManager.restoreCachedPolicy()
   } catch (e) {
     console.error("[Main] Backend initialization failed:", e)
 

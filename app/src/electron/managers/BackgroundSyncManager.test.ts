@@ -113,6 +113,50 @@ describe("BackgroundSyncManager", () => {
     )
   })
 
+  it("applies the liveness requirement to the backend before publishing its policy", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const manager = new BackgroundSyncManager() as unknown as {
+      applyRemotePolicy(policy: { forceLiveness: boolean }): Promise<void>
+    }
+    vi.mocked(fetch).mockResolvedValue(new Response("{}"))
+    await manager.applyRemotePolicy({ forceLiveness: true })
+    expect(fetch).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/attendance/settings/cloud-liveness",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({ force_liveness_detection: true }),
+      }),
+    )
+    expect(mockStore["sync.policy.forceLiveness"]).toBe(true)
+    await manager.applyRemotePolicy({ forceLiveness: false })
+    expect(mockStore["sync.policy.forceLiveness"]).toBe(false)
+  })
+
+  it("does not publish enforced liveness when the backend rejects the policy", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const manager = new BackgroundSyncManager() as unknown as {
+      applyRemotePolicy(policy: { forceLiveness: boolean }): Promise<void>
+    }
+    mockStore["sync.policy.forceLiveness"] = false
+    vi.mocked(fetch).mockResolvedValue(new Response("{}", { status: 500 }))
+    await expect(manager.applyRemotePolicy({ forceLiveness: true })).rejects.toThrow("liveness")
+    expect(mockStore["sync.policy.forceLiveness"]).toBe(false)
+  })
+
+  it("restores cached enforcement for offline startup without reading Cloud credentials", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const manager = new BackgroundSyncManager()
+    mockStore["sync.organizationId"] = "offline-org"
+    mockStore["sync.deviceId"] = "offline-device"
+    mockStore["sync.policy.forceLiveness"] = true
+    vi.mocked(fetch).mockResolvedValue(new Response("{}"))
+    await manager.restoreCachedPolicy()
+    expect(fetch).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/attendance/settings/cloud-liveness",
+      expect.objectContaining({ body: JSON.stringify({ force_liveness_detection: true }) }),
+    )
+  })
+
   it("does not claim successful timezone policy application when the backend rejects it", async () => {
     const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
     const manager = new BackgroundSyncManager() as unknown as {

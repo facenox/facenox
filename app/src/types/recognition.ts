@@ -243,6 +243,7 @@ export interface AttendanceSettings {
   late_threshold_minutes: number
   enable_location_tracking: boolean
   enable_liveness_detection: boolean
+  cloud_force_liveness?: boolean
   confidence_threshold?: number
   attendance_cooldown_seconds: number
   max_recognition_faces_per_frame: number

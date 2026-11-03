@@ -295,6 +295,25 @@ export class BackgroundSyncManager {
     state.mainWindow?.webContents.send("sync:data-changed")
   }
 
+  private async persistLivenessRequirement(forced: boolean) {
+    const response = await fetch(`${backendService.getUrl()}/attendance/settings/cloud-liveness`, {
+      method: "PUT",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ force_liveness_detection: forced }),
+      signal: this.requestSignal(15000),
+    })
+    if (!response.ok) throw new Error("Could not apply the Cloud liveness requirement.")
+  }
+
+  async restoreCachedPolicy() {
+    const paired = Boolean(
+      persistentStore.get("sync.organizationId") && persistentStore.get("sync.deviceId"),
+    )
+    await this.persistLivenessRequirement(
+      paired && persistentStore.get("sync.policy.forceLiveness") === true,
+    )
+  }
+
   private async applyRemotePolicy(policy?: Record<string, unknown> | null) {
     if (!policy || typeof policy !== "object") return
 
@@ -310,6 +329,7 @@ export class BackgroundSyncManager {
       if (!response.ok) throw new Error("Could not apply the location attendance timezone.")
     }
     if (typeof policy.forceLiveness === "boolean") {
+      await this.persistLivenessRequirement(policy.forceLiveness)
       persistentStore.set("sync.policy.forceLiveness", policy.forceLiveness)
     }
     if (typeof policy.trackCheckout === "boolean") {

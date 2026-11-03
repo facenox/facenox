@@ -8,6 +8,23 @@ import {
 } from "@/test/mocks/electron"
 
 describe("WindowBar", () => {
+  it("does not advertise a connection before the saved Cloud status loads", async () => {
+    let resolve!: (config: ReturnType<typeof createSyncConfig>) => void
+    getElectronAPIMock().sync.getConfig.mockReturnValue(
+      new Promise<ReturnType<typeof createSyncConfig>>((complete) => {
+        resolve = complete
+      }),
+    )
+    render(<WindowBar />)
+    expect(screen.getByText("Loading Cloud status…")).toBeInTheDocument()
+    expect(screen.queryByText("Connect Facenox Cloud")).not.toBeInTheDocument()
+    await act(async () => {
+      resolve(createSyncConfig({ connected: true }))
+    })
+    expect(screen.queryByText("Loading Cloud status…")).not.toBeInTheDocument()
+    expect(screen.queryByText("Connect Facenox Cloud")).not.toBeInTheDocument()
+  })
+
   it.each([
     [undefined, undefined, null, "Waiting for sync"],
     [0, 0, "2026-10-23T02:00:00Z", "Last sync completed"],

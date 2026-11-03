@@ -151,6 +151,8 @@ export const Settings = React.forwardRef<HTMLDivElement, SettingsProps>((props, 
         attendanceSettings={{
           ...props.attendanceSettings,
           forceLiveness: settings.forceLiveness,
+          cloudPolicyReady: settings.cloudPolicyReady,
+          cloudPolicyError: settings.cloudPolicyError,
           ...(settings.policyOverrides.trackCheckout !== undefined && {
             trackCheckout: settings.policyOverrides.trackCheckout,
           }),

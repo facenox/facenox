@@ -29,6 +29,8 @@ export interface AttendanceSettings {
   dataRetentionDays?: number
   cloudRetentionDays?: number
   forceLiveness?: boolean
+  cloudPolicyReady?: boolean
+  cloudPolicyError?: string | null
 }
 
 export interface SettingsOverview {

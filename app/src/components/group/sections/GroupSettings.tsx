@@ -35,8 +35,8 @@ const formatTimeDisplay = (time?: string | null) => {
 export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
   const setSelectedGroup = useGroupStore((state) => state.setSelectedGroup)
   const deleteGroup = useGroupStore((state) => state.deleteGroup)
-  const { isPaired, allowKioskDirectoryManagement } = useCloudSyncStatus()
-  const isDeleteDisabled = isPaired && !allowKioskDirectoryManagement
+  const { isReady, isPaired, allowKioskDirectoryManagement } = useCloudSyncStatus()
+  const isDeleteDisabled = !isReady || (isPaired && !allowKioskDirectoryManagement)
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -646,7 +646,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                         <span className="mt-1 block text-[12px] font-medium text-red-400/85">
                           This action cannot be undone.
                         </span>
-                        {isDeleteDisabled && (
+                        {isReady && isPaired && !allowKioskDirectoryManagement && (
                           <span className="mt-1 block font-medium text-amber-400/80">
                             <Lock className="mr-1 inline size-3" />
                             Your organization has disabled group deletion on this computer.

@@ -33,6 +33,13 @@ describe("Groups directory", () => {
     mocks.getConfig.mockResolvedValue({ connected: false })
     window.electronAPI.sync.getConfig = mocks.getConfig
   })
+  it("keeps mutations disabled without claiming a policy denial while configuration loads", () => {
+    mocks.getConfig.mockReturnValue(new Promise(() => undefined))
+    render(<Groups groups={groups} />)
+    expect(screen.getByRole("button", { name: "Edit Alpha" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Delete Alpha" })).toBeDisabled()
+    expect(screen.queryByText(/Group editing is unavailable/)).not.toBeInTheDocument()
+  })
   it("keeps the modal mounted while closing so its exit animation can run", async () => {
     render(<Groups groups={groups} />)
     const edit = screen.getByRole("button", { name: "Edit Alpha" })

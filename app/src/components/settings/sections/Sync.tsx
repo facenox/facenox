@@ -24,24 +24,13 @@ import {
   isOfficialCloudUrl,
 } from "@/services/syncDefaults"
 import { isOfflineError, parseSyncError } from "./syncErrorUtils.js"
+import {
+  refreshCloudSyncConfig,
+  useCloudSyncConfig,
+  type RemoteSyncConfig,
+} from "@/services/cloudSyncState"
 
-export type RemoteSyncConfig = {
-  enabled: boolean
-  remoteBaseUrl: string
-  organizationId: string
-  organizationName: string
-  siteId: string
-  siteName: string
-  deviceId: string
-  deviceName: string
-  intervalMinutes: number
-  lastSyncedAt: string | null
-  lastSyncStatus: "idle" | "success" | "error"
-  lastSyncMessage: string | null
-  connected: boolean
-  unsyncedRecordsCount?: number
-  unsyncedSessionsCount?: number
-}
+export type { RemoteSyncConfig } from "@/services/cloudSyncState"
 
 const defaultConfig: RemoteSyncConfig = {
   enabled: true,
@@ -76,6 +65,8 @@ interface SyncProps {
 }
 
 interface ReversePairingData {
+  remoteBaseUrl: string
+  deviceName: string
   deviceCode: string
   userCode: string
   verificationUri: string
@@ -87,11 +78,23 @@ interface ReversePairingData {
 export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   const setSuccess = useUIStore((state) => state.setSuccess)
   const setError = useUIStore((state) => state.setError)
-  const [config, setConfig] = useState<RemoteSyncConfig>(defaultConfig)
-  const [remoteBaseUrl, setRemoteBaseUrl] = useState("")
-  const [deviceName, setDeviceName] = useState("")
+  const {
+    config: savedConfig,
+    status: cloudConfigStatus,
+    error: cloudConfigError,
+  } = useCloudSyncConfig()
+  const config = savedConfig ?? defaultConfig
+  const [remoteBaseUrl, setRemoteBaseUrl] = useState(
+    savedConfig && !isOfficialCloudUrl(savedConfig.remoteBaseUrl) ? savedConfig.remoteBaseUrl : "",
+  )
+  const [deviceName, setDeviceName] = useState(
+    savedConfig?.deviceName === "Facenox Desktop" ? "" : savedConfig?.deviceName || "",
+  )
+  const [configFieldsReady, setConfigFieldsReady] = useState(Boolean(savedConfig))
   const [pairingCode, setPairingCode] = useState("")
-  const [intervalMinutes, setIntervalMinutes] = useState(DEFAULT_SYNC_INTERVAL_MINUTES)
+  const [intervalMinutes, setIntervalMinutes] = useState(
+    savedConfig?.intervalMinutes || DEFAULT_SYNC_INTERVAL_MINUTES,
+  )
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [copiedId, setCopiedId] = useState(false)
@@ -145,33 +148,74 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   const [reversePairing, setReversePairing] = useState<ReversePairingData | null>(null)
   const [isInitiating, setIsInitiating] = useState(false)
   const isInitiatingRef = useRef(false)
+  const pairingRequestRef = useRef(0)
+  const mountedRef = useRef(false)
   const [initiateError, setInitiateError] = useState<string | null>(null)
   const [secondsLeft, setSecondsLeft] = useState<number>(900)
+  const pairingConfigDirty =
+    getEffectiveRemoteUrl(remoteBaseUrl).replace(/\/+$/, "") !==
+      getEffectiveRemoteUrl(config.remoteBaseUrl).replace(/\/+$/, "") ||
+    (deviceName.trim() || "Facenox Desktop") !== (config.deviceName.trim() || "Facenox Desktop")
 
-  const syncFromConfig = useCallback(
-    (nextConfig: RemoteSyncConfig) => {
-      const nextRemoteBaseUrl = nextConfig.remoteBaseUrl || DEFAULT_REMOTE_BASE_URL
+  useEffect(() => {
+    const requestSequence = pairingRequestRef
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      requestSequence.current += 1
+      isInitiatingRef.current = false
+    }
+  }, [])
 
-      setConfig(nextConfig)
-      setRemoteBaseUrl(isOfficialCloudUrl(nextRemoteBaseUrl) ? "" : nextRemoteBaseUrl)
-      setDeviceName(nextConfig.deviceName === "Facenox Desktop" ? "" : nextConfig.deviceName || "")
-      setIntervalMinutes(nextConfig.intervalMinutes || DEFAULT_SYNC_INTERVAL_MINUTES)
+  useEffect(() => {
+    ++pairingRequestRef.current
+    isInitiatingRef.current = false
+    setIsInitiating(false)
+    setReversePairing(null)
+    setInitiateError(null)
+  }, [remoteBaseUrl, deviceName])
 
-      if (onStatusChange) {
-        onStatusChange(nextConfig)
-      }
-    },
-    [onStatusChange],
-  )
+  useEffect(() => {
+    if (cloudConfigStatus !== "ready" || config.connected) {
+      ++pairingRequestRef.current
+      isInitiatingRef.current = false
+      setIsInitiating(false)
+      setReversePairing(null)
+      if (config.connected) setInitiateError(null)
+    }
+  }, [cloudConfigStatus, config.connected])
+
+  const configuredUrl = savedConfig?.remoteBaseUrl
+  const configuredName = savedConfig?.deviceName
+  const configuredInterval = savedConfig?.intervalMinutes
+  useEffect(() => {
+    if (configuredUrl === undefined) return
+    setRemoteBaseUrl(isOfficialCloudUrl(configuredUrl) ? "" : configuredUrl)
+    setDeviceName(configuredName === "Facenox Desktop" ? "" : configuredName || "")
+    setIntervalMinutes(configuredInterval || DEFAULT_SYNC_INTERVAL_MINUTES)
+    setConfigFieldsReady(true)
+  }, [configuredUrl, configuredName, configuredInterval])
+
+  useEffect(() => {
+    if (savedConfig) onStatusChange?.(savedConfig)
+  }, [savedConfig, onStatusChange])
 
   const loadConfig = useCallback(async () => {
-    const nextConfig = await window.electronAPI.sync.getConfig()
-    syncFromConfig(nextConfig)
-  }, [syncFromConfig])
+    return refreshCloudSyncConfig()
+  }, [])
 
   const startReversePairing = useCallback(
     async (overrideBaseUrl?: string) => {
-      if (config.connected) return
+      if (
+        !configFieldsReady ||
+        pairingConfigDirty ||
+        busyAction !== null ||
+        cloudConfigStatus !== "ready" ||
+        config.connected ||
+        isInitiatingRef.current
+      )
+        return
+      const request = ++pairingRequestRef.current
       isInitiatingRef.current = true
       setIsInitiating(true)
       setInitiateError(null)
@@ -186,23 +230,35 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
           remoteBaseUrl: targetUrl,
           deviceName,
         })
+        if (!mountedRef.current || pairingRequestRef.current !== request) return
         if (!res.success || !res.data) {
           setInitiateError(res.error || `Could not connect to ${targetDisplayName}.`)
           setReversePairing(null)
         } else {
-          setReversePairing(res.data)
+          setReversePairing({ ...res.data, remoteBaseUrl: targetUrl, deviceName })
           setSecondsLeft(res.data.expiresIn || 900)
           setInitiateError(null)
         }
       } catch (err) {
+        if (!mountedRef.current || pairingRequestRef.current !== request) return
         setInitiateError(err instanceof Error ? err.message : "Connection error.")
         setReversePairing(null)
       } finally {
-        isInitiatingRef.current = false
-        setIsInitiating(false)
+        if (mountedRef.current && pairingRequestRef.current === request) {
+          isInitiatingRef.current = false
+          setIsInitiating(false)
+        }
       }
     },
-    [config.connected, remoteBaseUrl, deviceName],
+    [
+      configFieldsReady,
+      cloudConfigStatus,
+      config.connected,
+      remoteBaseUrl,
+      deviceName,
+      pairingConfigDirty,
+      busyAction,
+    ],
   )
 
   // Auto-reconnect when device comes back online
@@ -222,7 +278,8 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
 
   // Countdown timer for reverse pairing expiry
   useEffect(() => {
-    if (!reversePairing || config.connected) return
+    if (!reversePairing || pairingConfigDirty || config.connected || cloudConfigStatus !== "ready")
+      return
     const timer = setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
@@ -233,11 +290,12 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       })
     }, 1000)
     return () => clearInterval(timer)
-  }, [reversePairing, config.connected, startReversePairing])
+  }, [reversePairing, pairingConfigDirty, config.connected, cloudConfigStatus, startReversePairing])
 
   // Polling loop for authorization
   useEffect(() => {
-    if (!reversePairing || config.connected) return
+    if (!reversePairing || pairingConfigDirty || config.connected || cloudConfigStatus !== "ready")
+      return
     const pollIntervalMs = (reversePairing.interval || 3) * 1000
     let isCancelled = false
 
@@ -245,17 +303,18 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       if (isCancelled || config.connected) return
       try {
         const res = await window.electronAPI.sync.pollDeviceAuthorization({
-          remoteBaseUrl: getEffectiveRemoteUrl(remoteBaseUrl),
+          remoteBaseUrl: reversePairing.remoteBaseUrl,
           deviceCode: reversePairing.deviceCode,
-          deviceName,
+          deviceName: reversePairing.deviceName,
         })
-
         if (isCancelled) return
 
         if (res.status === "approved" && res.config) {
-          syncFromConfig(res.config)
-          setReversePairing(null)
-          setSuccess(res.message || "Device connected.")
+          const current = await loadConfig()
+          if (mountedRef.current && current?.connected) {
+            setReversePairing(null)
+            setSuccess(res.message || "Device connected.")
+          }
         } else if (res.status === "expired") {
           void startReversePairing()
         } else if (res.status === "denied") {
@@ -277,10 +336,12 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     }
   }, [
     reversePairing,
+    pairingConfigDirty,
     config.connected,
+    cloudConfigStatus,
     remoteBaseUrl,
     deviceName,
-    syncFromConfig,
+    loadConfig,
     startReversePairing,
     setSuccess,
   ])
@@ -288,6 +349,10 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   // Auto-initiate reverse pairing if not connected
   useEffect(() => {
     if (
+      configFieldsReady &&
+      !pairingConfigDirty &&
+      busyAction === null &&
+      cloudConfigStatus === "ready" &&
       !config.connected &&
       !reversePairing &&
       !isInitiating &&
@@ -296,35 +361,33 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     ) {
       void startReversePairing()
     }
-  }, [config.connected, reversePairing, isInitiating, initiateError, startReversePairing])
-
-  useEffect(() => {
-    void loadConfig()
-
-    if (!window.electronAPI?.sync) return
-    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
-      void loadConfig()
-    })
-    return unsubscribe
-  }, [loadConfig])
+  }, [
+    configFieldsReady,
+    pairingConfigDirty,
+    busyAction,
+    cloudConfigStatus,
+    config.connected,
+    reversePairing,
+    isInitiating,
+    initiateError,
+    startReversePairing,
+  ])
 
   const handleSave = async () => {
     setError(null)
     setSuccess(null)
     setBusyAction("saving")
     try {
-      const nextConfig = await window.electronAPI.sync.updateConfig({
+      await window.electronAPI.sync.updateConfig({
         remoteBaseUrl: remoteBaseUrl.trim(),
         deviceName,
         intervalMinutes,
         enabled: config.connected,
       })
-      syncFromConfig(nextConfig)
-      if (!nextConfig.connected) {
-        setReversePairing(null)
-        setInitiateError(null)
-        void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
-      }
+      await loadConfig()
+      if (!mountedRef.current) return
+      setReversePairing(null)
+      setInitiateError(null)
       setSuccess("Cloud sync settings saved.")
     } catch (error) {
       setError(
@@ -350,7 +413,8 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
         throw new Error(result.error || "Connection failed.")
       }
 
-      syncFromConfig(result.config)
+      await loadConfig()
+      if (!mountedRef.current) return
       setPairingCode("")
       if (result.initialSyncSucceeded === false) {
         setError(result.message || "Device connected, but initial sync failed.")
@@ -370,15 +434,16 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     setBusyAction("disconnecting")
     try {
       const result = await window.electronAPI.sync.disconnectDevice()
-      syncFromConfig(result.config)
+      await loadConfig()
+      if (!mountedRef.current) return
       setPairingCode("")
       setReversePairing(null)
+      setInitiateError(null)
       if (result.warning) {
         setError(`Disconnected locally, but Cloud returned a warning: ${result.warning}`)
       } else {
         setSuccess("Device disconnected from Facenox Cloud.")
       }
-      void startReversePairing()
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not disconnect this device.")
     } finally {
@@ -406,6 +471,30 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     } finally {
       setBusyAction(null)
     }
+  }
+
+  if (cloudConfigStatus !== "ready" || !configFieldsReady) {
+    return (
+      <div
+        role="status"
+        className="mx-auto flex w-full max-w-[900px] items-center gap-3 px-10 py-10 text-sm text-white/65">
+        {cloudConfigStatus !== "error" ?
+          <>
+            <Spinner size="sm" color="cyan" />
+            <span>Loading Cloud connection…</span>
+          </>
+        : <div className="space-y-3">
+            <p>{cloudConfigError || "Could not load Cloud connection."}</p>
+            <button
+              type="button"
+              onClick={() => void loadConfig()}
+              className="text-xs font-semibold text-cyan-400">
+              Retry
+            </button>
+          </div>
+        }
+      </div>
+    )
   }
 
   const effectiveUrl = getEffectiveRemoteUrl(remoteBaseUrl || config.remoteBaseUrl)
@@ -482,7 +571,13 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                 transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                 className="space-y-6 pt-1">
                 <AnimatePresence mode="wait">
-                  {isInitiating && !reversePairing ?
+                  {pairingConfigDirty ?
+                    <motion.div
+                      key="pairing-draft"
+                      className="flex min-h-[290px] items-center justify-center text-center text-xs text-white/65">
+                      Save configuration to generate a device code for this server.
+                    </motion.div>
+                  : isInitiating && !reversePairing ?
                     <motion.div
                       key="initiating"
                       initial={{ opacity: 0, scale: 0.97 }}
@@ -908,7 +1003,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                           type="url"
                           placeholder="Leave empty for Facenox Cloud"
                           value={remoteBaseUrl}
-                          disabled={config.connected}
+                          disabled={config.connected || busyAction !== null}
                           onChange={(e) => setRemoteBaseUrl(e.target.value)}
                           className={`h-8.5 w-full rounded border bg-transparent px-3 text-[12px] text-white transition-all duration-200 outline-none focus:border-white/20 disabled:cursor-not-allowed disabled:opacity-40 ${
                             isLocalhost ? "border-amber-400/50" : "border-white/10"
@@ -931,7 +1026,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       type="text"
                       placeholder="Facenox Desktop"
                       value={deviceName}
-                      disabled={config.connected}
+                      disabled={config.connected || busyAction !== null}
                       onChange={(e) => setDeviceName(e.target.value)}
                       className="h-8.5 w-full rounded border border-white/10 bg-transparent px-3 text-[12px] text-white transition-all duration-200 outline-none focus:border-white/20 disabled:cursor-not-allowed disabled:opacity-40"
                     />

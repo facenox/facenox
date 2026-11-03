@@ -315,7 +315,9 @@ export function Attendance({
                     exit={{ opacity: 0, y: 2 }}
                     transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
                     className="text-xs font-normal text-white/65">
-                    {attendanceSettings.forceLiveness ?
+                    {attendanceSettings.cloudPolicyReady === false ?
+                      attendanceSettings.cloudPolicyError || "Loading organization policy…"
+                    : attendanceSettings.forceLiveness ?
                       "Enforced and managed by your organization policy."
                     : attendanceSettings.enableSpoofDetection ?
                       "Check for photo and screen spoofing during recognition."
@@ -325,12 +327,22 @@ export function Attendance({
               </div>
             </div>
 
-            <Switch
-              checked={attendanceSettings.enableSpoofDetection || attendanceSettings.forceLiveness}
-              onChange={onSpoofDetectionToggle}
-              disabled={attendanceSettings.forceLiveness}
-              ariaLabel="Liveness verification (anti-spoof)"
-            />
+            {attendanceSettings.cloudPolicyReady === false ?
+              <button
+                type="button"
+                onClick={() => useUIStore.getState().requestOpenSettings("remote-sync")}
+                className="shrink-0 text-xs text-cyan-400">
+                Cloud sync
+              </button>
+            : <Switch
+                checked={
+                  attendanceSettings.enableSpoofDetection || attendanceSettings.forceLiveness
+                }
+                onChange={onSpoofDetectionToggle}
+                disabled={attendanceSettings.forceLiveness}
+                ariaLabel="Liveness verification (anti-spoof)"
+              />
+            }
           </div>
 
           <div className="h-px w-full bg-white/8" />

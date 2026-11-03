@@ -114,8 +114,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     importData: (password: string, filePath: string, overwrite = false) => {
       return ipcRenderer.invoke("sync:import-data", password, filePath, overwrite)
     },
-    getConfig: () => {
-      return ipcRenderer.invoke("sync:get-config")
+    getConfig: (options?: { includeCounts?: boolean }) => {
+      return ipcRenderer.invoke("sync:get-config", options)
     },
     updateConfig: (
       updates: Partial<{

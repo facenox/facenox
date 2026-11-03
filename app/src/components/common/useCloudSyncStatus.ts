@@ -1,49 +1,17 @@
-import { useState, useEffect } from "react"
+import { refreshCloudSyncConfig, useCloudSyncConfig } from "@/services/cloudSyncState"
 
-export interface CloudSyncStatus {
-  isPaired: boolean
-  cloudUrl: string
-  organizationId: string
-  organizationName: string
-  siteName: string
-  allowKioskDirectoryManagement: boolean
-}
-
-export function useCloudSyncStatus(): CloudSyncStatus {
-  const [status, setStatus] = useState<CloudSyncStatus>({
-    isPaired: false,
-    cloudUrl: "https://facenox.com",
-    organizationId: "",
-    organizationName: "",
-    siteName: "",
-    allowKioskDirectoryManagement: true,
-  })
-
-  useEffect(() => {
-    if (!window.electronAPI?.sync) return
-
-    const load = () => {
-      window.electronAPI.sync
-        .getConfig()
-        .then((config) => {
-          setStatus({
-            isPaired: Boolean(config.connected),
-            cloudUrl: config.remoteBaseUrl || "https://facenox.com",
-            organizationId: config.organizationId || "",
-            organizationName: config.organizationName || "",
-            siteName: config.siteName || "",
-            allowKioskDirectoryManagement:
-              (config as { allowKioskDirectoryManagement?: boolean })
-                .allowKioskDirectoryManagement !== false,
-          })
-        })
-        .catch(() => {})
-    }
-
-    load()
-    const unsubscribe = window.electronAPI.sync.onDataChanged(load)
-    return unsubscribe
-  }, [])
-
-  return status
+export function useCloudSyncStatus() {
+  const { config, status, error } = useCloudSyncConfig()
+  return {
+    isPaired: Boolean(config?.connected),
+    isReady: status === "ready" && config?.policyReady !== false,
+    status,
+    error,
+    refresh: refreshCloudSyncConfig,
+    cloudUrl: config?.remoteBaseUrl || "https://facenox.com",
+    organizationId: config?.organizationId || "",
+    organizationName: config?.organizationName || "",
+    siteName: config?.siteName || "",
+    allowKioskDirectoryManagement: config?.allowKioskDirectoryManagement !== false,
+  }
 }

@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { Tooltip } from "@/components/shared"
 import { updaterService } from "@/services"
+import { useCloudSyncConfig } from "@/services/cloudSyncState"
 import type { UpdateInfo } from "@/types/updater"
 import { Modal, Spinner } from "@/components/common"
 import { useUIStore } from "@/components/main/stores/uiStore"
@@ -121,32 +122,8 @@ export default function WindowBar() {
       setUpdateCheckState("error")
     }
   }, [])
-  const [syncConfig, setSyncConfig] = useState<{
-    connected: boolean
-    enabled: boolean
-    lastSyncedAt: string | null
-    lastSyncStatus: "idle" | "success" | "error"
-    lastSyncMessage: string | null
-    unsyncedRecordsCount?: number
-    unsyncedSessionsCount?: number
-  } | null>(null)
+  const { config: syncConfig, status: cloudConfigStatus } = useCloudSyncConfig()
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
-
-  useEffect(() => {
-    if (!window.electronAPI?.sync) return
-
-    const fetchConfig = () => {
-      window.electronAPI.sync.getConfig().then(setSyncConfig).catch(console.error)
-    }
-
-    fetchConfig()
-
-    const unsubscribe = window.electronAPI.sync.onDataChanged(() => {
-      fetchConfig()
-    })
-
-    return unsubscribe
-  }, [])
 
   useEffect(() => {
     // Listen for updates found by background check cycles
@@ -291,7 +268,23 @@ export default function WindowBar() {
             useUIStore.getState().requestOpenSettings("remote-sync")
           }
 
-          if (!syncConfig || !syncConfig.connected) {
+          if (cloudConfigStatus === "error" || !syncConfig) {
+            return (
+              <button
+                type="button"
+                onClick={handleOpenCloudSync}
+                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+                className="pointer-events-auto flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] text-white/45">
+                <Cloud className="size-2.5 opacity-60" />
+                <span>
+                  {cloudConfigStatus === "error" ?
+                    "Cloud status unavailable"
+                  : "Loading Cloud status…"}
+                </span>
+              </button>
+            )
+          }
+          if (!syncConfig.connected) {
             return (
               <Tooltip content="Automatic sync & remote reports" position="bottom" offset={6}>
                 <button

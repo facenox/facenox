@@ -61,7 +61,9 @@ export async function bootstrapShellData(): Promise<void> {
   useAttendanceStore.setState({
     attendanceCooldownSeconds: settings.attendance_cooldown_seconds ?? 300,
     attendanceTimezone: settings.attendance_timezone ?? null,
-    enableSpoofDetection: settings.enable_liveness_detection ?? false,
+    enableSpoofDetection: Boolean(
+      settings.enable_liveness_detection || settings.cloud_force_liveness,
+    ),
     maxRecognitionFacesPerFrame: settings.max_recognition_faces_per_frame ?? 6,
     dataRetentionDays: settings.data_retention_days ?? 0,
     attendanceGroups: groups,
@@ -539,7 +541,12 @@ export function useAttendanceGroups() {
       try {
         const settings = await attendanceManager.getSettings({ forceRefresh: true })
         if (!active || requestId !== settingsRefreshRequestRef.current) return
-        useAttendanceStore.setState({ attendanceTimezone: settings.attendance_timezone ?? null })
+        useAttendanceStore.setState({
+          attendanceTimezone: settings.attendance_timezone ?? null,
+          enableSpoofDetection: Boolean(
+            settings.enable_liveness_detection || settings.cloud_force_liveness,
+          ),
+        })
       } catch (error) {
         console.error("Failed to refresh attendance settings:", error)
       }

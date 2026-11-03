@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
-import { backendService, attendanceManager, persistentSettings } from "@/services"
+import { backendService, attendanceManager } from "@/services"
 import { notifyDataChanged } from "@/utils/syncNotifier"
+import { useCloudSyncConfig } from "@/services/cloudSyncState"
 import { useDialog } from "@/components/shared"
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { useUIStore, useAttendanceStore } from "@/components/main/stores"
@@ -107,7 +108,15 @@ export const useSettings = ({
   )
 
   const [isLoading, setIsLoading] = useState(false)
-  const [forceLiveness, setForceLiveness] = useState(false)
+  const { config: cloudConfig, status: cloudStatus, error: cloudError } = useCloudSyncConfig()
+  const forceLiveness = Boolean(cloudConfig?.forceLiveness)
+  const cloudPolicyReady = cloudStatus === "ready" && cloudConfig?.policyReady !== false
+  const cloudPolicyError =
+    cloudError ||
+    (cloudConfig?.policyReady === false ?
+      "Open Cloud sync to load this device's organization policy."
+    : null)
+  const policyOverrides = cloudConfig?.policyOverrides ?? {}
   const [triggerCreateGroup, setTriggerCreateGroup] = useState(0)
   const [deselectMemberTrigger, setDeselectMemberTrigger] = useState(0)
   const [hasSelectedMember, setHasSelectedMember] = useState(false)
@@ -204,61 +213,6 @@ export const useSettings = ({
       loadSystemData()
     }
   }, [loadSystemData])
-
-  const [policyOverrides, setPolicyOverrides] = useState<{
-    trackCheckout?: boolean
-    lateThresholdEnabled?: boolean
-    lateThresholdMinutes?: number
-    attendanceCooldownSeconds?: number
-    dataRetentionDays?: number
-  }>({})
-
-  const loadPolicy = useCallback(async () => {
-    const syncConfig = await window.electronAPI?.sync?.getConfig().catch(() => null)
-    const isPaired = Boolean(syncConfig?.connected)
-
-    if (!isPaired) {
-      setForceLiveness(false)
-      setPolicyOverrides({})
-      return
-    }
-
-    const [
-      forceLivenessVal,
-      trackCheckout,
-      lateThresholdEnabled,
-      lateThresholdMinutes,
-      attendanceCooldownSeconds,
-      dataRetentionDays,
-    ] = await Promise.all([
-      persistentSettings.get<boolean>("sync.policy.forceLiveness"),
-      persistentSettings.get<boolean>("sync.policy.trackCheckout"),
-      persistentSettings.get<boolean>("sync.policy.lateThresholdEnabled"),
-      persistentSettings.get<number>("sync.policy.lateThresholdMinutes"),
-      persistentSettings.get<number>("sync.policy.attendanceCooldownSeconds"),
-      persistentSettings.get<number>("sync.policy.dataRetentionDays"),
-    ])
-    setForceLiveness(!!forceLivenessVal)
-    setPolicyOverrides({
-      trackCheckout: trackCheckout ?? undefined,
-      lateThresholdEnabled: lateThresholdEnabled ?? undefined,
-      lateThresholdMinutes: lateThresholdMinutes ?? undefined,
-      attendanceCooldownSeconds: attendanceCooldownSeconds ?? undefined,
-      dataRetentionDays: dataRetentionDays ?? undefined,
-    })
-  }, [])
-
-  useEffect(() => {
-    loadPolicy()
-  }, [loadPolicy])
-
-  useEffect(() => {
-    if (!window.electronAPI?.sync?.onDataChanged) return
-    const cleanup = window.electronAPI.sync.onDataChanged(() => {
-      loadPolicy()
-    })
-    return cleanup
-  }, [loadPolicy])
 
   useEffect(() => {
     if (activeSection !== "group" || groupInitialSection !== "reports") {
@@ -392,6 +346,8 @@ export const useSettings = ({
     loadSystemData,
     verifyTimeOnline,
     forceLiveness,
+    cloudPolicyReady,
+    cloudPolicyError,
     policyOverrides,
     enrollmentSource,
     enrollmentMode,

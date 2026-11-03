@@ -6,6 +6,7 @@ import { Tooltip, useDialog } from "@/components/shared"
 import { EditGroup } from "@/components/group/modals/EditGroup"
 import { EmptyState } from "@/components/group/shared/EmptyState"
 import { useDatabaseManagement } from "./hooks/useDatabaseManagement"
+import { useCloudSyncStatus } from "@/components/common/useCloudSyncStatus"
 
 export function Groups({
   groups,
@@ -23,7 +24,8 @@ export function Groups({
   const [searchFocused, setSearchFocused] = useState(false)
   const [editing, setEditing] = useState<AttendanceGroup | null>(null)
   const [editOpen, setEditOpen] = useState(false)
-  const [canManage, setCanManage] = useState<boolean | null>(null)
+  const { isReady, isPaired, allowKioskDirectoryManagement } = useCloudSyncStatus()
+  const canManage = isReady ? !isPaired || allowKioskDirectoryManagement : null
   useEffect(() => {
     onManagementChange?.(canManage === true)
     return () => onManagementChange?.(false)
@@ -35,30 +37,6 @@ export function Groups({
     dialog,
     false,
   )
-  useEffect(() => {
-    let active = true
-    const refresh = async () => {
-      try {
-        const config = await window.electronAPI.sync.getConfig()
-        if (active)
-          setCanManage(
-            !config.connected ||
-              (config as { allowKioskDirectoryManagement?: boolean })
-                .allowKioskDirectoryManagement !== false,
-          )
-      } catch {
-        if (active) setCanManage(false)
-      }
-    }
-    void refresh()
-    const unsubscribe = window.electronAPI?.sync?.onDataChanged(() => {
-      void refresh()
-    })
-    return () => {
-      active = false
-      unsubscribe?.()
-    }
-  }, [])
   const filtered = groups.filter(
     (group) =>
       group.name.toLowerCase().includes(query.trim().toLowerCase()) ||
