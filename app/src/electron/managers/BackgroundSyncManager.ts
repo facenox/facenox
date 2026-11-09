@@ -594,10 +594,6 @@ export class BackgroundSyncManager {
             if (!wipeResponse.ok) {
               throw new Error(await readCommandError(wipeResponse, "Wipe failed on this computer"))
             }
-            // A durable upload is local data too. Never replay it after a wipe.
-            persistentStore.set("sync.pendingUpload", null)
-            persistentStore.set("sync.pendingAcknowledgements", null)
-            persistentStore.set("sync.lastSyncedAt", null)
             const wipeBody = (await wipeResponse.json().catch(() => null)) as CommandResult | null
             if (wipeBody?.success !== true) {
               throw new Error(
@@ -606,6 +602,10 @@ export class BackgroundSyncManager {
                   "The local service did not confirm that the wipe completed. Review this computer before using it again.",
               )
             }
+            // A durable upload is local data too. Never replay it after a confirmed wipe.
+            persistentStore.set("sync.pendingUpload", null)
+            persistentStore.set("sync.pendingAcknowledgements", null)
+            persistentStore.set("sync.lastSyncedAt", null)
             result = wipeBody
           } finally {
             this.isWiping = false
@@ -1078,7 +1078,7 @@ export class BackgroundSyncManager {
               headers: { Authorization: `Bearer ${deviceToken}` },
               signal: this.requestSignal(30000),
             })
-            const supported = capabilities.ok ? await capabilities.json() : null
+            const supported = capabilities.ok ? await capabilities.json().catch(() => null) : null
             if (supported?.capabilities?.session_deletions !== true) {
               throw new Error(
                 "Update Facenox Cloud before syncing removed attendance visits. Deletions remain queued.",
@@ -1112,7 +1112,13 @@ export class BackgroundSyncManager {
             } catch {
               /* HTTP error can contain text. */
             }
-            if (remote.status === 429) this.triggerDebouncedSync(result.retryAfterMs || 5000)
+            if (remote.status === 429) {
+              const retryMs = result.retryAfterMs || 5000
+              this.triggerDebouncedSync(retryMs)
+              throw new Error(
+                `Rate limit exceeded (HTTP 429). Retrying in ${Math.round(retryMs / 1000)}s.`,
+              )
+            }
             if (!remote.ok) {
               if ([400, 402, 422].includes(remote.status)) {
                 pending.rejected = true
@@ -1149,6 +1155,14 @@ export class BackgroundSyncManager {
           pushed = true
         } catch (error) {
           pushError = error instanceof Error ? error.message : "Upload failed."
+          if (pushError.includes("429") || pushError.includes("Rate limit")) {
+            // When rate limited by Cloud, back off immediately without cascading into a pull
+            this.setLastSyncState({
+              lastSyncStatus: "error",
+              lastSyncMessage: `Cloud rate limit reached. Retrying automatically.`,
+            })
+            return { success: false, message: pushError }
+          }
         }
       }
       // Downloads must remain available during quota/validation/upload failures.

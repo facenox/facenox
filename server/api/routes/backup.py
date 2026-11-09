@@ -456,7 +456,11 @@ async def import_backup(
 
         for record in data.records:
             existing_result = await repo.session.execute(
-                select(RecordModel).where(RecordModel.id == record.id)
+                _scope_query(
+                    select(RecordModel).where(RecordModel.id == record.id),
+                    RecordModel,
+                    repo.organization_id,
+                )
             )
             if existing_result.scalars().first() and not overwrite:
                 skipped += 1

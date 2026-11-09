@@ -160,10 +160,14 @@ export class AutoExportManager {
     if (this.isExporting) return false
     this.isExporting = true
 
-    const blockerId = powerSaveBlocker.start("prevent-app-suspension")
-    const dateToExport = targetDate || getTodayLocalDateString()
-
+    let blockerId: number | null = null
     try {
+      try {
+        blockerId = powerSaveBlocker.start("prevent-app-suspension")
+      } catch (blockerErr) {
+        console.warn("[AutoExportManager] Could not start power save blocker:", blockerErr)
+      }
+      const dateToExport = targetDate || getTodayLocalDateString()
       const config = this.getConfig()
       const targetDir = config.directory?.trim() || this.getDefaultExportDirectory()
 
@@ -193,7 +197,7 @@ export class AutoExportManager {
       console.error("[AutoExportManager] Error during auto export:", err)
       return false
     } finally {
-      if (powerSaveBlocker.isStarted(blockerId)) {
+      if (blockerId !== null && powerSaveBlocker.isStarted(blockerId)) {
         powerSaveBlocker.stop(blockerId)
       }
       this.isExporting = false

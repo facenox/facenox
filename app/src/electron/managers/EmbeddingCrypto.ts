@@ -4,7 +4,11 @@ const ALGORITHM = "aes-256-gcm"
 const IV_LENGTH = 12
 
 function deriveKey(orgKey: string): Buffer {
-  return Buffer.from(orgKey, "base64")
+  const key = Buffer.from(orgKey, "base64")
+  if (key.length !== 32) {
+    throw new Error(`Invalid encryption key length: expected 32 bytes, got ${key.length}.`)
+  }
+  return key
 }
 
 export function encryptEmbedding(raw: Uint8Array, orgKey: string): string {
@@ -19,7 +23,14 @@ export function encryptEmbedding(raw: Uint8Array, orgKey: string): string {
 }
 
 export function decryptEmbedding(encoded: string, orgKey: string): Uint8Array {
-  const [ivB64, tagB64, dataB64] = encoded.split(".")
+  if (!encoded || typeof encoded !== "string") {
+    throw new Error("Invalid encrypted embedding format: payload must be a non-empty string.")
+  }
+  const parts = encoded.split(".")
+  if (parts.length !== 3) {
+    throw new Error(`Invalid encrypted embedding format: expected 3 parts, got ${parts.length}.`)
+  }
+  const [ivB64, tagB64, dataB64] = parts
   const key = deriveKey(orgKey)
   const iv = Buffer.from(ivB64, "base64")
   const tag = Buffer.from(tagB64, "base64")

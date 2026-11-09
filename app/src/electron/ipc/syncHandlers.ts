@@ -182,7 +182,7 @@ async function validatePairingDestination(
 }
 
 // Cryptographic Constants
-const FACENOX_MAGIC = Buffer.from("FACENOX\x00\x01") // 6 bytes
+const FACENOX_MAGIC = Buffer.from("FACENOX\x00\x01")
 const SALT_SIZE = 16
 const IV_SIZE = 12
 const TAG_SIZE = 16
@@ -205,7 +205,8 @@ function encryptBackup(plaintext: Buffer, password: string): Buffer {
   const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()])
   const tag = cipher.getAuthTag() // 16 bytes
 
-  return Buffer.concat([FACENOX_MAGIC, salt, iv, tag, ciphertext])
+  // Standard AES-GCM blob layout matching Python: MAGIC | SALT | IV | CIPHERTEXT | TAG
+  return Buffer.concat([FACENOX_MAGIC, salt, iv, ciphertext, tag])
 }
 
 // Decrypt
@@ -222,24 +223,29 @@ function decryptBackup(blob: Buffer, password: string): Buffer {
     throw new Error("Invalid backup file. Select a valid .facenox backup.")
   }
 
-  let offset = magicLen
-  const salt = blob.subarray(offset, offset + SALT_SIZE)
-  offset += SALT_SIZE
-  const iv = blob.subarray(offset, offset + IV_SIZE)
-  offset += IV_SIZE
-  const tag = blob.subarray(offset, offset + TAG_SIZE)
-  offset += TAG_SIZE
-  const ciphertext = blob.subarray(offset)
-
+  const salt = blob.subarray(magicLen, magicLen + SALT_SIZE)
+  const iv = blob.subarray(magicLen + SALT_SIZE, magicLen + SALT_SIZE + IV_SIZE)
+  const payload = blob.subarray(magicLen + SALT_SIZE + IV_SIZE)
   const key = deriveKey(password, salt)
 
-  const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv)
-  decipher.setAuthTag(tag)
-
+  // 1. Try standard layout: [CIPHERTEXT][TAG] (Python AESGCM output format)
   try {
+    const ciphertext = payload.subarray(0, payload.length - TAG_SIZE)
+    const tag = payload.subarray(payload.length - TAG_SIZE)
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv)
+    decipher.setAuthTag(tag)
     return Buffer.concat([decipher.update(ciphertext), decipher.final()])
   } catch {
-    throw new Error("Decryption failed. The password is incorrect or the file is corrupted.")
+    // 2. Fallback to legacy format: [TAG][CIPHERTEXT]
+    try {
+      const tag = payload.subarray(0, TAG_SIZE)
+      const ciphertext = payload.subarray(TAG_SIZE)
+      const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv)
+      decipher.setAuthTag(tag)
+      return Buffer.concat([decipher.update(ciphertext), decipher.final()])
+    } catch {
+      throw new Error("Decryption failed. The password is incorrect or the file is corrupted.")
+    }
   }
 }
 

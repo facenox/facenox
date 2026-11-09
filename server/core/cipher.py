@@ -262,7 +262,15 @@ def _reestablish_envelope_keystores(
         envelope["wrapped_file"] = _wrap_key(file_kek, dek)
         try:
             system = platform.system()
-            if system == "Linux" and os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+            if system == "Windows":
+                keyring_kek = _machine_key_windows(
+                    create_if_missing=True, data_dir=data_dir
+                )
+                envelope["wrapped_keyring"] = _wrap_key(keyring_kek, dek)
+            elif system == "Darwin":
+                keyring_kek = _machine_key_macos_keyring(create_if_missing=True)
+                envelope["wrapped_keyring"] = _wrap_key(keyring_kek, dek)
+            elif system == "Linux" and os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
                 keyring_kek = _machine_key_linux_keyring(create_if_missing=True)
                 envelope["wrapped_keyring"] = _wrap_key(keyring_kek, dek)
         except Exception:

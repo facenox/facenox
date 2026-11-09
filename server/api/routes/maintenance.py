@@ -56,16 +56,14 @@ async def remote_wipe_data(
 ):
     """
     Comprehensive remote wipe:
-    1. Clear all attendance records, sessions, and events.
-    2. Clear all biometric face templates.
+    1. Clear all biometric face templates.
+    2. Clear all attendance records, sessions, and events.
     """
     try:
         # 1. Clear attendance records from DB
-        # We'll use a new method in repository to clear all
         results = await repo.clear_all_attendance_data()
 
         # 2. Clear face database via face_recognizer
-        # We'll import get_face_recognizer to call it here
         from api.recognition_deps import get_face_recognizer
 
         face_recognizer = await get_face_recognizer()
@@ -82,6 +80,8 @@ async def remote_wipe_data(
             target_id="all_data",
             details=f"Remote wipe triggered. Records cleared: {results.get('records_deleted', 0)}. Biometrics cleared: {face_result.get('success', False)}",
         )
+        if hasattr(repo, "session") and repo.session is not None:
+            await repo.session.commit()
 
         return SuccessResponse(
             message="Remote wipe completed. Local attendance records and face templates were removed."
@@ -109,7 +109,6 @@ async def unpair_local_database(
             .where(AttendanceSettings.organization_id.is_(None))
             .values(cloud_force_liveness=False)
         )
-        await repo.session.commit()
 
         await repo.add_audit_log(
             action="DEVICE_MANUALLY_UNPAIRED",
@@ -117,6 +116,7 @@ async def unpair_local_database(
             target_id="settings",
             details="Device disconnected locally. Organization scope removed from database settings and records transitioned to standalone offline scope.",
         )
+        await repo.session.commit()
 
         from core.lifespan import face_recognizer
         from utils.websocket_manager import manager

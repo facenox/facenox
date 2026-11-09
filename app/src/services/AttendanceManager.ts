@@ -49,7 +49,6 @@ export class AttendanceManager {
 
   private settings: AttendanceSettings | null = null
   private settingsRequestId = 0
-  private eventQueue: AttendanceEvent[] = []
 
   constructor() {
     this.httpClient = new HttpClient(API_BASE_URL)
@@ -208,15 +207,13 @@ export class AttendanceManager {
     livenessStatus?: string,
     livenessConfidence?: number,
   ): Promise<AttendanceEvent | null> {
-    const event = await this.recordManager.processAttendanceEvent(
+    return this.recordManager.processAttendanceEvent(
       personId,
       confidence,
       location,
       livenessStatus,
       livenessConfidence,
     )
-    if (event) this.eventQueue.push(event)
-    return event
   }
 
   async getGroupStats(groupId: string, date?: Date): Promise<AttendanceStats> {

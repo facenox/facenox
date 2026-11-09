@@ -114,6 +114,7 @@ function subscribe(listener: () => void) {
   listeners.add(listener)
   if (first) {
     if (bridge === window.electronAPI?.sync && bridge) {
+      unsubscribe?.()
       unsubscribe = bridge.onDataChanged(() => {
         void refreshCloudSyncConfig()
       })

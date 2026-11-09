@@ -45,20 +45,16 @@ class AttendanceService:
 
     async def generate_person_id(self, name: str, group_id: str = None) -> str:
         """Generate a unique person ID"""
-        person_id = ulid.ulid()
-
         max_attempts = 10
-        attempt = 0
-
-        while attempt < max_attempts:
+        for _ in range(max_attempts):
+            person_id = ulid.ulid()
             existing_member = await self.repo.get_member(person_id)
             if not existing_member:
-                break
+                return person_id
 
-            person_id = ulid.ulid()
-            attempt += 1
-
-        return person_id
+        raise RuntimeError(
+            "Failed to generate a unique person_id after multiple attempts."
+        )
 
     @staticmethod
     def _normalize_rule(

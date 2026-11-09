@@ -186,6 +186,9 @@ export class WebSocketService {
             if (socket !== this.ws) {
               return
             }
+            if (activeWebSocketServiceInstance === this) {
+              activeWebSocketServiceInstance = null
+            }
             const prevStatus = this.wsStatus
             this.setWebSocketStatus("disconnected")
             this.ws = null
@@ -209,6 +212,9 @@ export class WebSocketService {
           socket.onerror = () => {
             if (socket !== this.ws) {
               return
+            }
+            if (activeWebSocketServiceInstance === this) {
+              activeWebSocketServiceInstance = null
             }
             this.setWebSocketStatus("error")
             this.connectPromise = null

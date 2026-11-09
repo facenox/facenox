@@ -107,7 +107,7 @@ class DetectionPipeline:
             "model_used": "face_detector",
             "processing_time": processing_time,
             "timestamp": current_timestamp,
-            "frame_timestamp": current_timestamp,
+            "frame_timestamp": start_time,
             "suggested_skip": suggested_skip,
             "success": True,
         }
