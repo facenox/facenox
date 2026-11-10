@@ -16,7 +16,7 @@ from api.deps import get_repository
 from database.repository import AttendanceRepository
 from services.time_authority_service import get_time_authority
 from timezone_rules import attendance_timezone_context
-from time_utils import refresh_local_timezone
+from time_utils import refresh_local_timezone, to_storage_local
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +149,8 @@ async def export_audit_log(
             try:
                 # Handle possible 'Z' suffix or other standard ISO strings
                 clean_start = start_date.replace("Z", "+00:00")
-                start_dt = datetime.fromisoformat(clean_start)
+                parsed_start = datetime.fromisoformat(clean_start)
+                start_dt = to_storage_local(parsed_start)
             except ValueError:
                 raise HTTPException(
                     status_code=400,
@@ -160,16 +161,17 @@ async def export_audit_log(
         if end_date:
             try:
                 clean_end = end_date.replace("Z", "+00:00")
-                end_dt = datetime.fromisoformat(clean_end)
+                parsed_end = datetime.fromisoformat(clean_end)
                 if (
-                    end_dt.hour == 0
-                    and end_dt.minute == 0
-                    and end_dt.second == 0
-                    and end_dt.microsecond == 0
+                    parsed_end.hour == 0
+                    and parsed_end.minute == 0
+                    and parsed_end.second == 0
+                    and parsed_end.microsecond == 0
                 ):
-                    end_dt = end_dt.replace(
+                    parsed_end = parsed_end.replace(
                         hour=23, minute=59, second=59, microsecond=999999
                     )
+                end_dt = to_storage_local(parsed_end)
             except ValueError:
                 raise HTTPException(
                     status_code=400,
@@ -220,6 +222,8 @@ async def export_audit_log(
             media_type="text/csv",
             headers={"Content-Disposition": "attachment; filename=audit_log.csv"},
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error exporting audit log: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

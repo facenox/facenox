@@ -40,6 +40,7 @@ async def cleanup_old_data(
             target_id="attendance_records",
             details=f"Cleanup for data older than {days} days. Deleted {results['records_deleted']} records and {results['sessions_deleted']} sessions.",
         )
+        await repo.session.commit()
 
         return SuccessResponse(
             message=f"Cleanup successful: {results['records_deleted']} records and {results['sessions_deleted']} sessions deleted."
@@ -160,6 +161,7 @@ async def purge_attendance_history(
             target_id="history",
             details=f"All history logs manually purged. Records cleared: {results.get('records_deleted', 0)}. Sessions cleared: {results.get('sessions_deleted', 0)}.",
         )
+        await repo.session.commit()
 
         return SuccessResponse(
             message=f"Purged successfully. Records: {results.get('records_deleted', 0)}, Sessions: {results.get('sessions_deleted', 0)}."

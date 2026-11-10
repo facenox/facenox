@@ -3,6 +3,7 @@
  * to optimize rendering cycles and avoid redundant IPC/API database roundtrips.
  */
 
+import type { RefObject } from "react"
 import { attendanceManager } from "@/services"
 import { ALL_GROUPS_ID } from "@/components/main/hooks/useAttendanceGroups"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
@@ -20,15 +21,18 @@ import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 export async function getMemberFromCache(
   personId: string,
   currentGroup: AttendanceGroup | null,
-  memberCacheRef: React.RefObject<Map<string, AttendanceMember | null>>,
+  memberCacheRef:
+    | RefObject<Map<string, AttendanceMember | null>>
+    | { current: Map<string, AttendanceMember | null> | null },
 ): Promise<{ member: AttendanceMember | null; memberName: string } | null> {
   try {
     const cache = memberCacheRef.current
     if (!cache) return null
+
     let member = cache.get(personId)
-    if (member === undefined) {
+    if (!member) {
       member = (await attendanceManager.getMember(personId)) || null
-      if (memberCacheRef.current === cache) {
+      if (member && memberCacheRef.current === cache) {
         cache.set(personId, member)
       }
     }
@@ -48,8 +52,7 @@ export async function getMemberFromCache(
   } catch {
     if (currentGroup) {
       return null
-    } else {
-      return { member: null, memberName: personId }
     }
+    return { member: null, memberName: personId }
   }
 }

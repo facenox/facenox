@@ -1063,6 +1063,15 @@ class AttendanceService:
         )
 
         if result["success"]:
+            member_name = member.name if member else person_id
+            await self.repo.add_audit_log(
+                action="FACE_DATA_REMOVED",
+                target_type="member",
+                target_id=person_id,
+                details=f"Face data removed for '{member_name}' in group '{group.name}'",
+            )
+            await self.repo.session.commit()
+
             from services.live_stream_service import LiveStreamService
 
             LiveStreamService.invalidate_all(self.repo.organization_id)
