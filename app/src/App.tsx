@@ -30,7 +30,9 @@ function App() {
       <div className="electron-window-container bg-[var(--bg-primary)]">
         <WindowBar />
         <div className="app-content-wrapper">
-          <AppSkeleton />
+          <div className="h-full overflow-hidden text-white">
+            <AppSkeleton />
+          </div>
         </div>
       </div>
     )
