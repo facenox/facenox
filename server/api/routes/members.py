@@ -336,10 +336,26 @@ async def update_member(
         await repo.session.refresh(updated_member)
 
         from services.live_stream_service import LiveStreamService
+        from core.lifespan import face_recognizer
 
         LiveStreamService.invalidate_all(repo.organization_id)
 
-        return updated_member
+        all_persons_set = await _get_enrolled_persons_set(
+            face_recognizer, repo.organization_id
+        )
+
+        return {
+            "id": updated_member.id,
+            "person_id": updated_member.person_id,
+            "group_id": updated_member.group_id,
+            "name": updated_member.name,
+            "role": updated_member.role,
+            "email": updated_member.email,
+            "joined_at": updated_member.joined_at,
+            "is_active": updated_member.is_active,
+            "has_face_data": updated_member.person_id in all_persons_set,
+            "remote_id": updated_member.remote_id,
+        }
 
     except HTTPException:
         raise
@@ -444,13 +460,33 @@ async def get_group_members(
 ):
     """Get all members of a specific group"""
     try:
+        from core.lifespan import face_recognizer
+
         # Check if group exists
         group = await repo.get_group(group_id)
         if not group:
             raise HTTPException(status_code=404, detail="Group not found")
 
         members = await repo.get_group_members(group_id)
-        return members
+        all_persons_set = await _get_enrolled_persons_set(
+            face_recognizer, repo.organization_id
+        )
+
+        return [
+            {
+                "id": member.id,
+                "person_id": member.person_id,
+                "group_id": member.group_id,
+                "name": member.name,
+                "role": member.role,
+                "email": member.email,
+                "joined_at": member.joined_at,
+                "is_active": member.is_active,
+                "has_face_data": member.person_id in all_persons_set,
+                "remote_id": member.remote_id,
+            }
+            for member in members
+        ]
 
     except HTTPException:
         raise

@@ -108,6 +108,8 @@ async def recognize_face(
             error=error,
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         processing_time = time.time() - start_time
         logger.error(f"Face recognition error: {e}")
@@ -244,6 +246,8 @@ async def get_all_persons(
             "stats": stats,
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Get persons error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get persons: {e}")
@@ -347,6 +351,8 @@ async def get_face_stats(
         # Return stats directly in the format expected by the Settings component
         return stats
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Get stats error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get stats: {e}")

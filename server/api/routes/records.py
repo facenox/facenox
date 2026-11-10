@@ -205,6 +205,8 @@ async def void_record(
 
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Error voiding record {record_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -319,6 +321,8 @@ async def get_sessions(
 
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Error getting sessions: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -340,6 +344,8 @@ async def get_session(
 
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Error getting session for {person_id} on {date}: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -559,6 +565,8 @@ async def process_attendance_event(
 
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Error processing attendance event: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

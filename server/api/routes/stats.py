@@ -116,6 +116,8 @@ async def get_group_stats(
 
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Error getting group stats for {group_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

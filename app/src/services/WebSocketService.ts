@@ -42,6 +42,7 @@ export class WebSocketService {
   private messageHandlers = new Map<keyof WebSocketEventMap, Set<(data: unknown) => void>>()
   private clientId: string
   private token: string | null = null
+  private connectTimeoutId: number | null = null
 
   constructor(config?: Partial<WebSocketConfig>) {
     this.config = {
@@ -102,22 +103,37 @@ export class WebSocketService {
     }
 
     this.setWebSocketStatus("connecting")
-    this.connectPromise = new Promise((resolve, reject) => {
+    const currentPromise = new Promise<void>((resolve, reject) => {
       void (async () => {
         try {
           const token = await this.getApiToken()
+          if (this.connectPromise !== currentPromise) {
+            return
+          }
           const wsBaseUrl = this.config.baseUrl.replace(/^http/, "ws")
           const wsUrl = new URL(`/ws/detect/${this.clientId}`, `${wsBaseUrl}/`)
           await appendOrganizationId(wsUrl)
           if (token) {
             wsUrl.searchParams.set("token", token)
           }
+          if (this.connectPromise !== currentPromise) {
+            return
+          }
 
           const socket = new WebSocket(wsUrl.toString())
           this.ws = socket
           socket.binaryType = "arraybuffer"
           let settled = false
-          const connectTimeout = window.setTimeout(() => {
+
+          const cleanupTimeout = () => {
+            if (this.connectTimeoutId !== null) {
+              window.clearTimeout(this.connectTimeoutId)
+              this.connectTimeoutId = null
+            }
+          }
+
+          this.connectTimeoutId = window.setTimeout(() => {
+            this.connectTimeoutId = null
             if (settled) {
               return
             }
@@ -133,7 +149,7 @@ export class WebSocketService {
               return
             }
             settled = true
-            window.clearTimeout(connectTimeout)
+            cleanupTimeout()
             this.connectPromise = null
             resolve()
           }
@@ -143,7 +159,7 @@ export class WebSocketService {
               return
             }
             settled = true
-            window.clearTimeout(connectTimeout)
+            cleanupTimeout()
             this.connectPromise = null
             reject(error)
           }
@@ -183,6 +199,7 @@ export class WebSocketService {
           }
 
           socket.onclose = (event) => {
+            cleanupTimeout()
             if (socket !== this.ws) {
               return
             }
@@ -193,7 +210,6 @@ export class WebSocketService {
             this.setWebSocketStatus("disconnected")
             this.ws = null
             this.connectPromise = null
-            window.clearTimeout(connectTimeout)
             if (!settled && prevStatus === "connecting") {
               rejectOnce(
                 new Error(
@@ -210,6 +226,7 @@ export class WebSocketService {
           }
 
           socket.onerror = () => {
+            cleanupTimeout()
             if (socket !== this.ws) {
               return
             }
@@ -218,11 +235,14 @@ export class WebSocketService {
             }
             this.setWebSocketStatus("error")
             this.connectPromise = null
-            window.clearTimeout(connectTimeout)
             this.notifyHandlers("error", { message: "WebSocket error occurred" })
             rejectOnce(new Error("WebSocket transport error"))
           }
         } catch (error) {
+          if (this.connectTimeoutId !== null) {
+            window.clearTimeout(this.connectTimeoutId)
+            this.connectTimeoutId = null
+          }
           this.setWebSocketStatus("error")
           this.connectPromise = null
           reject(error)
@@ -230,6 +250,7 @@ export class WebSocketService {
       })()
     })
 
+    this.connectPromise = currentPromise
     return this.connectPromise
   }
 
@@ -237,12 +258,19 @@ export class WebSocketService {
     if (activeWebSocketServiceInstance === this) {
       activeWebSocketServiceInstance = null
     }
-    if (this.ws) {
-      this.setWebSocketStatus("disconnected")
-      this.ws.close()
-      this.ws = null
+    if (this.connectTimeoutId !== null) {
+      window.clearTimeout(this.connectTimeoutId)
+      this.connectTimeoutId = null
     }
     this.connectPromise = null
+    if (this.ws) {
+      const socket = this.ws
+      this.ws = null
+      this.setWebSocketStatus("disconnected")
+      socket.close()
+    } else {
+      this.setWebSocketStatus("disconnected")
+    }
   }
 
   onMessage<K extends keyof WebSocketEventMap>(
