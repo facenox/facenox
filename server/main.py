@@ -52,8 +52,8 @@ def is_valid_local_token(provided: str) -> bool:
 
 
 app = FastAPI(
-    title="FACENOX",
-    description="A desktop application for automated attendance tracking using Artificial Intelligence.",
+    title="Facenox",
+    description="Open-source, offline-first face recognition software for attendance tracking that runs with a webcam.",
     lifespan=lifespan,
 )
 

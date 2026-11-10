@@ -49,7 +49,13 @@ async def process_face_detection(
     async def detect_locked():
         async with face_detector_lock:
             original_confidence_threshold = getattr(
-                face_detector, "score_threshold", None
+                face_detector,
+                "conf_threshold",
+                getattr(
+                    face_detector,
+                    "confidence_threshold",
+                    getattr(face_detector, "score_threshold", None),
+                ),
             )
             original_nms_threshold = getattr(face_detector, "nms_threshold", None)
             original_min_face_size = getattr(face_detector, "min_face_size", None)

@@ -178,20 +178,23 @@ async def get_database_stats(
                     )
                 )
 
-                unsynced_sessions = await repo.session.scalar(
-                    repo._apply_org_scope(
-                        select(func.count())
-                        .select_from(AttendanceSession)
-                        .where(
-                            or_(
-                                changed_after_snapshot(AttendanceSession),
-                                AttendanceSession.provenance_updated_at_utc > since_utc,
-                                settings.session_policy_updated_at_utc is not None
-                                and settings.session_policy_updated_at_utc > since_utc,
-                            )
-                        ),
-                        AttendanceSession,
+                replay_policy = bool(
+                    settings.session_policy_updated_at_utc is not None
+                    and settings.session_policy_updated_at_utc > since_utc
+                )
+                sessions_stmt = select(func.count()).select_from(AttendanceSession)
+                if not replay_policy:
+                    sessions_stmt = sessions_stmt.where(
+                        or_(
+                            changed_after_snapshot(AttendanceSession),
+                            AttendanceSession.provenance_updated_at_utc > since_utc,
+                        )
                     )
+                unsynced_sessions = (
+                    await repo.session.scalar(
+                        repo._apply_org_scope(sessions_stmt, AttendanceSession)
+                    )
+                    or 0
                 )
                 unsynced_sessions += (
                     await repo.session.scalar(

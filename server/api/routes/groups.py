@@ -45,15 +45,14 @@ async def create_group(
         }
 
         created_group = await repo.create_group(db_group_data)
-        await repo.session.commit()
-        await repo.session.refresh(created_group)
-
         await repo.add_audit_log(
             action="GROUP_CREATED",
             target_type="group",
             target_id=group_id,
             details=f"Group '{group_data.name}' created",
         )
+        await repo.session.commit()
+        await repo.session.refresh(created_group)
 
         return created_group
 

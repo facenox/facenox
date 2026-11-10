@@ -152,6 +152,14 @@ class FaceDetector:
         if self.detector:
             self.detector.setScoreThreshold(threshold)
 
+    @property
+    def score_threshold(self):
+        return self.conf_threshold
+
+    @property
+    def confidence_threshold(self):
+        return self.conf_threshold
+
     def set_nms_threshold(self, threshold):
         self.nms_threshold = threshold
         if self.detector:

@@ -90,7 +90,11 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
       detectionInFlightRef.current = true
       inflightSinceRef.current = performance.now()
       const frameData = await captureFrame()
-      if (!isCurrentRequest()) return
+      if (!isCurrentRequest()) {
+        detectionInFlightRef.current = false
+        inflightSinceRef.current = 0
+        return
+      }
       if (!frameData) {
         retry()
         return
@@ -101,13 +105,15 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
       inflightSinceRef.current = performance.now()
 
       webSocketServiceRef.current.sendDetectionRequest(frameData).catch((error) => {
-        if (!isCurrentRequest()) return
         detectionInFlightRef.current = false
         inflightSinceRef.current = 0
+        if (!isCurrentRequest()) return
         console.error("Frame detection request failed:", error)
         retry()
       })
     } catch (error) {
+      detectionInFlightRef.current = false
+      inflightSinceRef.current = 0
       if (!isCurrentRequest()) return
       console.error("Frame capture failed:", error)
       retry()

@@ -161,6 +161,15 @@ async def export_audit_log(
             try:
                 clean_end = end_date.replace("Z", "+00:00")
                 end_dt = datetime.fromisoformat(clean_end)
+                if (
+                    end_dt.hour == 0
+                    and end_dt.minute == 0
+                    and end_dt.second == 0
+                    and end_dt.microsecond == 0
+                ):
+                    end_dt = end_dt.replace(
+                        hour=23, minute=59, second=59, microsecond=999999
+                    )
             except ValueError:
                 raise HTTPException(
                     status_code=400,

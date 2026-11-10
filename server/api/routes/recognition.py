@@ -141,6 +141,7 @@ async def remove_person(
                 target_id=person_id,
                 details=f"Face data removed for '{member_name}'",
             )
+            await repo.session.commit()
             return {
                 "success": True,
                 "message": f"Person {person_id} removed successfully",
@@ -314,6 +315,7 @@ async def clear_database(
                 target_id="biometrics",
                 details="Entire face database wiped",
             )
+            await repo.session.commit()
             return {
                 "success": True,
                 "message": "Face database cleared successfully",

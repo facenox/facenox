@@ -28,7 +28,7 @@ export async function getMemberFromCache(
     let member = cache.get(personId)
     if (member === undefined) {
       member = (await attendanceManager.getMember(personId)) || null
-      if (member && memberCacheRef.current === cache) {
+      if (memberCacheRef.current === cache) {
         cache.set(personId, member)
       }
     }

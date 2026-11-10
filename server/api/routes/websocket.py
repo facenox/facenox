@@ -67,54 +67,55 @@ async def handle_websocket_detect(websocket: WebSocket, client_id: str):
     pipeline = DetectionPipeline(live_stream_service)
     await websocket.accept()
 
-    existing_ws = manager.active_connections.get(client_id)
-    if existing_ws is not None and existing_ws is not websocket:
-        try:
-            await existing_ws.close(code=1000)
-        except Exception:
-            pass
-
-    manager.active_connections[client_id] = websocket
-    if client_id not in manager.connection_metadata:
-        manager.connection_metadata[client_id] = {
-            "connected_at": local_now(),
-            "last_activity": local_now(),
-            "message_count": 0,
-            "streaming": False,
-        }
-    else:
-        manager.connection_metadata[client_id]["connected_at"] = local_now()
-        manager.connection_metadata[client_id]["last_activity"] = local_now()
-
-    if client_id not in manager.fps_tracking:
-        manager.fps_tracking[client_id] = {
-            "timestamps": [],
-            "max_samples": 30,
-            "last_update": local_now(),
-            "current_fps": 30,
-        }
-
-    from core.models import FaceTracker
-    from config.models import FACE_TRACKER_CONFIG
-
-    if client_id not in manager.face_trackers:
-        manager.face_trackers[client_id] = FaceTracker(
-            track_thresh=FACE_TRACKER_CONFIG["track_thresh"],
-            match_thresh=FACE_TRACKER_CONFIG["match_thresh"],
-            track_buffer=FACE_TRACKER_CONFIG["track_buffer"],
-            frame_rate=FACE_TRACKER_CONFIG["frame_rate"],
-        )
-        logger.debug("[WebSocket] Created face tracker for client %s", client_id)
-
-    live_session_config = await live_stream_service.load_initial_config()
-    live_session_config.client_id = client_id
-    logger.info(
-        "[WebSocket] Client %s connected (liveness: %s)",
-        client_id,
-        live_session_config.enable_liveness_detection,
-    )
-
+    live_session_config = None
     try:
+        existing_ws = manager.active_connections.get(client_id)
+        if existing_ws is not None and existing_ws is not websocket:
+            try:
+                await existing_ws.close(code=1000)
+            except Exception:
+                pass
+
+        manager.active_connections[client_id] = websocket
+        if client_id not in manager.connection_metadata:
+            manager.connection_metadata[client_id] = {
+                "connected_at": local_now(),
+                "last_activity": local_now(),
+                "message_count": 0,
+                "streaming": False,
+            }
+        else:
+            manager.connection_metadata[client_id]["connected_at"] = local_now()
+            manager.connection_metadata[client_id]["last_activity"] = local_now()
+
+        if client_id not in manager.fps_tracking:
+            manager.fps_tracking[client_id] = {
+                "timestamps": [],
+                "max_samples": 30,
+                "last_update": local_now(),
+                "current_fps": 30,
+            }
+
+        from core.models import FaceTracker
+        from config.models import FACE_TRACKER_CONFIG
+
+        if client_id not in manager.face_trackers:
+            manager.face_trackers[client_id] = FaceTracker(
+                track_thresh=FACE_TRACKER_CONFIG["track_thresh"],
+                match_thresh=FACE_TRACKER_CONFIG["match_thresh"],
+                track_buffer=FACE_TRACKER_CONFIG["track_buffer"],
+                frame_rate=FACE_TRACKER_CONFIG["frame_rate"],
+            )
+            logger.debug("[WebSocket] Created face tracker for client %s", client_id)
+
+        live_session_config = await live_stream_service.load_initial_config()
+        live_session_config.client_id = client_id
+        logger.info(
+            "[WebSocket] Client %s connected (liveness: %s)",
+            client_id,
+            live_session_config.enable_liveness_detection,
+        )
+
         await websocket.send_text(
             json.dumps(
                 {
