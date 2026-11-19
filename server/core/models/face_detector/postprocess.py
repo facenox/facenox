@@ -13,15 +13,22 @@ def process_detection(
     x, y, w, h = face[:4].astype(int)
     conf = float(face[14])
 
-    if x < 0 or y < 0 or x + w > img_width or y + h > img_height:
+    x1 = max(0, min(x, img_width))
+    y1 = max(0, min(y, img_height))
+    x2 = max(0, min(x + w, img_width))
+    y2 = max(0, min(y + h, img_height))
+    clipped_w = x2 - x1
+    clipped_h = y2 - y1
+
+    if clipped_w <= 0 or clipped_h <= 0:
         return None
 
     detection = {
         "bbox": {
-            "x": float(x),
-            "y": float(y),
-            "width": float(w),
-            "height": float(h),
+            "x": float(x1),
+            "y": float(y1),
+            "width": float(clipped_w),
+            "height": float(clipped_h),
         },
         "confidence": conf,
         "landmarks_5": landmarks_5.tolist(),
@@ -41,7 +48,7 @@ def process_detection(
             }
             return detection
 
-    if min_face_size > 0 and (w < min_face_size or h < min_face_size):
+    if min_face_size > 0 and (clipped_w < min_face_size or clipped_h < min_face_size):
         detection["liveness"] = {
             "is_real": None,
             "status": "move_closer",

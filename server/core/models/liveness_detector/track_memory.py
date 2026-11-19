@@ -29,9 +29,8 @@ class TrackLivenessMemory:
         if track_id <= 0:
             return False
         namespace_key = self._normalize_namespace(namespace)
-        return bool(
-            self.track_states[(namespace_key, track_id)].get("stable_real", False)
-        )
+        state = self.track_states.get((namespace_key, track_id))
+        return bool(state.get("stable_real", False)) if state else False
 
     @staticmethod
     def _normalize_namespace(namespace: str | None) -> str:

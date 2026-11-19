@@ -497,6 +497,17 @@ class LiveStreamService:
                 config.track_recognition_cache.pop(tid, None)
                 config.track_last_sampled_frame.pop(tid, None)
 
+        # Periodic cleanup of expired attendance cooldown records
+        if len(config.attendance_cooldowns) > 50:
+            now_ts = time.time()
+            expired_cooldown_keys = [
+                key
+                for key, recorded_at in config.attendance_cooldowns.items()
+                if now_ts - recorded_at > 300.0
+            ]
+            for key in expired_cooldown_keys:
+                config.attendance_cooldowns.pop(key, None)
+
         group_context = await self.ensure_group_context(config)
         if not config.active_group_id or not group_context.group_exists:
             return []

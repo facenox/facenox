@@ -121,6 +121,7 @@ function clearRemoteConnection() {
   persistentStore.set("sync.encryptionKey", "")
   persistentStore.set("sync.lastSyncedAt", null)
   persistentStore.set("sync.pendingAcknowledgements", null)
+  persistentStore.set("sync.pendingUpload", null)
   persistentStore.delete("sync.policy.forceLiveness")
   persistentStore.delete("sync.policy.trackCheckout")
   persistentStore.delete("sync.policy.lateThresholdEnabled")
