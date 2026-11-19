@@ -75,6 +75,12 @@ function releaseActiveMediaStreams(): void {
 export default function WindowBar() {
   const [isMaximized, setIsMaximized] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const isPinPromptOpen = useUIStore((s) => s.isPinPromptOpen)
+
+  // Close the app menu if the PIN prompt opens on top of it
+  useEffect(() => {
+    if (isPinPromptOpen && isMenuOpen) setIsMenuOpen(false)
+  }, [isPinPromptOpen, isMenuOpen])
 
   useEffect(() => {
     if (!isMenuOpen) return
@@ -209,10 +215,15 @@ export default function WindowBar() {
           <div
             style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
             className="pointer-events-auto relative flex items-center">
-            <Tooltip content="App menu" position="bottom" offset={6} disabled={isMenuOpen}>
+            <Tooltip
+              content="App menu"
+              position="bottom"
+              offset={6}
+              disabled={isMenuOpen || isPinPromptOpen}>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`flex h-5 w-5 items-center justify-center rounded border border-transparent bg-transparent text-white/40 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white/80 focus:outline-none active:scale-95 ${
+                disabled={isPinPromptOpen}
+                className={`flex h-5 w-5 items-center justify-center rounded border border-transparent bg-transparent text-white/40 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white/80 focus:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 ${
                   isMenuOpen ? "border-white/10 bg-white/5 text-white/80" : ""
                 }`}
                 style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
@@ -272,9 +283,10 @@ export default function WindowBar() {
             return (
               <button
                 type="button"
-                onClick={handleOpenCloudSync}
+                onClick={isPinPromptOpen ? undefined : handleOpenCloudSync}
+                disabled={isPinPromptOpen}
                 style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                className="pointer-events-auto flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] text-white/45">
+                className="pointer-events-auto flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] text-white/45 disabled:pointer-events-none disabled:opacity-30">
                 <Cloud className="size-2.5 opacity-60" />
                 <span>
                   {cloudConfigStatus === "error" ?
@@ -286,11 +298,16 @@ export default function WindowBar() {
           }
           if (!syncConfig.connected) {
             return (
-              <Tooltip content="Automatic sync & remote reports" position="bottom" offset={6}>
+              <Tooltip
+                content="Automatic sync & remote reports"
+                position="bottom"
+                offset={6}
+                disabled={isPinPromptOpen}>
                 <button
-                  onClick={handleOpenCloudSync}
+                  onClick={isPinPromptOpen ? undefined : handleOpenCloudSync}
+                  disabled={isPinPromptOpen}
                   style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                  className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-white/45 transition-all duration-150 select-none hover:bg-white/5 hover:text-white/80 active:scale-95">
+                  className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-white/45 transition-all duration-150 select-none hover:bg-white/5 hover:text-white/80 active:scale-95 disabled:pointer-events-none disabled:opacity-30">
                   <Cloud className="size-2.5 opacity-60" />
                   <span>Connect Facenox Cloud</span>
                 </button>
@@ -349,11 +366,16 @@ export default function WindowBar() {
           }
 
           return (
-            <Tooltip content={tooltipContent} position="bottom" offset={6}>
+            <Tooltip
+              content={tooltipContent}
+              position="bottom"
+              offset={6}
+              disabled={isPinPromptOpen}>
               <button
-                onClick={handleOpenCloudSync}
+                onClick={isPinPromptOpen ? undefined : handleOpenCloudSync}
+                disabled={isPinPromptOpen}
                 style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                className={`pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide transition-all duration-150 select-none active:scale-95 ${badgeBorderClass}`}>
+                className={`pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide transition-all duration-150 select-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 ${badgeBorderClass}`}>
                 <StatusIcon className={`size-2.5 ${iconColor}`} />
                 <span>{statusText}</span>
               </button>
