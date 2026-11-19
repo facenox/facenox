@@ -112,7 +112,7 @@ class FaceRecognizer:
 
     async def _extract_embeddings(
         self, image: np.ndarray, face_data_list: List[Dict]
-    ) -> List[np.ndarray]:
+    ) -> List[Optional[np.ndarray]]:
         """
         Extract embeddings for faces using batch processing.
 
@@ -121,17 +121,25 @@ class FaceRecognizer:
             face_data_list: List of face data dicts with 'landmarks_5' key
 
         Returns:
-            List of normalized embeddings
+            List of normalized embeddings (or None if a face failed alignment)
         """
         if not face_data_list:
             return []
 
-        aligned_faces = align_faces_batch(image, face_data_list, self.input_size)
+        aligned_faces_all = align_faces_batch(image, face_data_list, self.input_size)
+        valid_pairs = [
+            (idx, face)
+            for idx, face in enumerate(aligned_faces_all)
+            if face is not None
+        ]
 
-        if not aligned_faces:
-            return []
+        if not valid_pairs:
+            return [None] * len(face_data_list)
 
-        batch_input = preprocess_batch(aligned_faces, self.INPUT_MEAN, self.INPUT_STD)
+        valid_indices, valid_aligned_faces = zip(*valid_pairs)
+        batch_input = preprocess_batch(
+            list(valid_aligned_faces), self.INPUT_MEAN, self.INPUT_STD
+        )
 
         feeds = {self.input_name: batch_input}
 
@@ -142,8 +150,13 @@ class FaceRecognizer:
             timeout=10.0,
         )
         embeddings = outputs[0]
+        norm_embeddings = normalize_embeddings_batch(embeddings)
 
-        return normalize_embeddings_batch(embeddings)
+        full_embeddings: List[Optional[np.ndarray]] = [None] * len(face_data_list)
+        for idx, emb in zip(valid_indices, norm_embeddings):
+            full_embeddings[idx] = emb
+
+        return full_embeddings
 
     async def _get_database(
         self, organization_id: Optional[str] = None
@@ -246,7 +259,7 @@ class FaceRecognizer:
             face_data = [{"landmarks_5": landmarks_5}]
             embeddings = await self._extract_embeddings(image, face_data)
 
-            if not embeddings:
+            if not embeddings or embeddings[0] is None:
                 return {
                     "person_id": None,
                     "similarity": 0.0,
@@ -290,27 +303,39 @@ class FaceRecognizer:
                 return []
 
             embeddings = await self._extract_embeddings(image, faces)
-            if len(embeddings) != len(faces):
-                raise ValueError("Failed to extract embeddings for all faces")
-
-            database = await self._get_database(organization_id)
-            matches = find_best_matches_batch(
-                query_embeddings=embeddings,
-                database=database,
-                similarity_threshold=self.similarity_threshold,
-                allowed_person_ids=allowed_person_ids,
-                prebuilt_matrix=prebuilt_matrix,
-                person_index_map=person_index_map,
-            )
+            valid_indices = [
+                idx for idx, emb in enumerate(embeddings) if emb is not None
+            ]
 
             results: List[Dict] = [
                 {
-                    "person_id": person_id,
-                    "similarity": similarity,
-                    "success": person_id is not None,
+                    "person_id": None,
+                    "similarity": 0.0,
+                    "success": False,
+                    "error": "Face alignment failed",
                 }
-                for person_id, similarity in matches
+                for _ in faces
             ]
+
+            if valid_indices:
+                valid_embeddings = [embeddings[idx] for idx in valid_indices]
+                database = await self._get_database(organization_id)
+                matches = find_best_matches_batch(
+                    query_embeddings=valid_embeddings,
+                    database=database,
+                    similarity_threshold=self.similarity_threshold,
+                    allowed_person_ids=allowed_person_ids,
+                    prebuilt_matrix=prebuilt_matrix,
+                    person_index_map=person_index_map,
+                )
+
+                for idx, (person_id, similarity) in zip(valid_indices, matches):
+                    results[idx] = {
+                        "person_id": person_id,
+                        "similarity": similarity,
+                        "success": person_id is not None,
+                    }
+
             return results
         except Exception as e:
             logger.error(f"Face batch recognition error: {e}")
@@ -335,7 +360,7 @@ class FaceRecognizer:
             face_data = [{"landmarks_5": landmarks_5}]
             embeddings = await self._extract_embeddings(image, face_data)
 
-            if not embeddings:
+            if not embeddings or embeddings[0] is None:
                 return {
                     "success": False,
                     "error": "Failed to extract embedding",

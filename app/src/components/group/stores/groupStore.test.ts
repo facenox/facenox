@@ -248,6 +248,21 @@ describe("groupStore", () => {
     expect(useGroupStore.getState().lastDeletedGroupId).toBeNull()
   })
 
+  it("deleteGroup does not dispatch selectGroup or clear active selection when deleting an unrelated group", async () => {
+    const useGroupStore = await loadStore()
+    const activeGroup = createGroup("group-active", "Active Class")
+    const dispatchSpy = vi.spyOn(window, "dispatchEvent")
+    useGroupStore.setState({ selectedGroup: activeGroup })
+    mockAttendanceManager.getGroups.mockResolvedValue([activeGroup])
+
+    await useGroupStore.getState().deleteGroup("group-other")
+
+    expect(mockAttendanceManager.deleteGroup).toHaveBeenCalledWith("group-other")
+    expect(dispatchSpy).not.toHaveBeenCalled()
+    expect(useGroupStore.getState().selectedGroup).toEqual(activeGroup)
+    expect(useGroupStore.getState().lastDeletedGroupId).toBeNull()
+  })
+
   it("exportData creates and clicks a download link", async () => {
     const useGroupStore = await loadStore()
     const createObjectURLSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test")

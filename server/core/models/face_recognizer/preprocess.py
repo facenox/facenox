@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 # Reference points for face alignment (112x112 standard)
 REFERENCE_POINTS = np.array(
@@ -69,9 +69,11 @@ def preprocess_image(
 
 def align_faces_batch(
     image: np.ndarray, face_data_list: List[dict], input_size: Tuple[int, int]
-) -> List[np.ndarray]:
+) -> List[Optional[np.ndarray]]:
     """
     Align multiple faces from a single image.
+    Preserves exact 1:1 index alignment with face_data_list, returning None
+    for any face whose landmarks are missing, invalid, or fail alignment.
 
     Args:
         image: Input image (BGR format)
@@ -79,23 +81,25 @@ def align_faces_batch(
         input_size: Target size (width, height) for aligned faces
 
     Returns:
-        List of aligned face images
+        List of aligned face images, with None for failed alignments
     """
-    aligned_faces = []
+    aligned_faces: List[Optional[np.ndarray]] = []
     for face_data in face_data_list:
         try:
             landmarks_5 = face_data.get("landmarks_5")
             if landmarks_5 is None:
+                aligned_faces.append(None)
                 continue
             landmarks = np.array(landmarks_5, dtype=np.float32)
 
             if landmarks.shape != (5, 2):
+                aligned_faces.append(None)
                 continue
 
             aligned_face = align_face(image, landmarks, input_size)
             aligned_faces.append(aligned_face)
         except Exception:
-            continue
+            aligned_faces.append(None)
 
     return aligned_faces
 

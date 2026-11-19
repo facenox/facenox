@@ -178,13 +178,12 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       await attendanceManager.deleteGroup(groupId)
       const currentSelected = get().selectedGroup
 
-      window.dispatchEvent(
-        new CustomEvent("selectGroup", {
-          detail: { group: null },
-        }),
-      )
-
       if (currentSelected?.id === groupId) {
+        window.dispatchEvent(
+          new CustomEvent("selectGroup", {
+            detail: { group: null },
+          }),
+        )
         set({ selectedGroup: null, members: [] })
       }
       await get().fetchGroups()

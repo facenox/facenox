@@ -467,8 +467,14 @@ class AttendanceService:
             end = datetime.strptime(rule["class_end_time"], "%H:%M").time()
         except (KeyError, TypeError, ValueError):
             return False
-        check_in = ensure_local_aware(check_in)
-        checkout = ensure_local_aware(checkout).astimezone(check_in.tzinfo)
+        if check_in.tzinfo is not None:
+            if checkout.tzinfo is not None:
+                checkout = checkout.astimezone(check_in.tzinfo)
+            else:
+                checkout = checkout.replace(tzinfo=check_in.tzinfo)
+        else:
+            check_in = ensure_local_aware(check_in)
+            checkout = ensure_local_aware(checkout).astimezone(check_in.tzinfo)
         return (
             end < start
             and checkout.date() == check_in.date() + timedelta(days=1)
