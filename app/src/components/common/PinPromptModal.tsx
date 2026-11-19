@@ -241,7 +241,7 @@ export function PinPromptModal() {
                   className="mt-3.5 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-center font-mono text-xs font-semibold tracking-widest text-white uppercase transition-all outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-white/20 focus:border-white/30 focus:bg-white/[0.08]"
                 />
 
-                <div className="mt-2.5 flex min-h-5 items-center justify-center text-center">
+                <div className="mt-2.5 flex min-h-5 items-center justify-start text-left">
                   <AnimatePresence mode="wait">
                     {resetError ?
                       <motion.span
@@ -262,8 +262,8 @@ export function PinPromptModal() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.14 }}
-                        className="inline-flex items-center justify-center gap-1.5 text-center text-[11px] leading-snug text-white/40">
-                        <Cloud className="size-3 text-emerald-400" />
+                        className="inline-flex items-start justify-start gap-1.5 text-left text-[11px] leading-snug text-white/40">
+                        <Cloud className="mt-px size-3 shrink-0 text-emerald-400" />
                         <span>
                           No key? Request a PIN reset in Facenox Cloud. This computer must be online
                           to receive it.
@@ -275,8 +275,8 @@ export function PinPromptModal() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.14 }}
-                        className="inline-flex items-center justify-center gap-1.5 text-center text-[11px] leading-snug text-white/40">
-                        <Shield className="size-3 text-white/30" />
+                        className="inline-flex items-start justify-start gap-1.5 text-left text-[11px] leading-snug text-white/40">
+                        <Shield className="mt-px size-3 shrink-0 text-white/30" />
                         <span>Use the recovery key saved when you set up this computer.</span>
                       </motion.span>
                     }
