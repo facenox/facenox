@@ -54,7 +54,7 @@ describe("AutoExportManager", () => {
     const config = manager.getConfig()
     expect(config.enabled).toBe(false)
     expect(config.time).toBe("17:00")
-    expect(config.format).toBe("excel_workbook")
+    expect(config.format).toBe("combined_csv")
     expect(config.directory).toContain("Facenox_Reports")
     expect(config.lastExportedDate).toBeNull()
   })
@@ -133,7 +133,7 @@ describe("AutoExportManager", () => {
     manager.updateConfig({
       enabled: true,
       directory: "C:\\TestReports",
-      format: "excel_workbook",
+      format: "combined_csv",
     })
 
     const result = await manager.triggerExport("2026-10-09")
@@ -142,8 +142,8 @@ describe("AutoExportManager", () => {
     expect(writeFileSpy).toHaveBeenCalled()
 
     const writtenCall = writeFileSpy.mock.calls[0]
-    expect(writtenCall[0]).toContain("All Groups Attendance (2026-10-09).xls")
-    expect(writtenCall[1]).toContain('Worksheet ss:Name="Faculty Staff"')
+    expect(writtenCall[0]).toContain("All Groups Combined Attendance (2026-10-09).csv")
+    expect(writtenCall[1]).toContain("Faculty Staff")
     expect(writtenCall[1]).toContain("Alice Johnson")
 
     expect(manager.getConfig().lastExportedDate).toBe("2026-10-09")

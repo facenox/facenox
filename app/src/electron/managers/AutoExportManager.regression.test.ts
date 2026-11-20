@@ -30,11 +30,7 @@ vi.mock("electron", () => ({
 }))
 
 const member = { id: "m", person_id: "p", name: "Test Member", group_id: "g" }
-const exportFormats: AutoExportConfig["format"][] = [
-  "excel_workbook",
-  "individual_csvs",
-  "combined_csv",
-]
+const exportFormats: AutoExportConfig["format"][] = ["individual_csvs", "combined_csv"]
 function mockBackend(
   sessions: SessionRecord[],
   options: {
@@ -208,16 +204,11 @@ describe.each(exportFormats)("%s departure consistency", (format) => {
     manager.updateConfig({ format })
     expect(await manager.triggerExport(session.date)).toBe(true)
     const output = String(vi.mocked(fs.writeFile).mock.calls[0][1])
-    const rows =
-      format === "excel_workbook" ?
-        [...output.matchAll(/<Row(?:\s[^>]*)?>([\s\S]*?)<\/Row>/g)].map((row) =>
-          [...row[1].matchAll(/<Data[^>]*>([\s\S]*?)<\/Data>/g)].map((cell) => cell[1]),
-        )
-      : output
-          .split("\n")
-          .map((line) =>
-            [...line.matchAll(/"((?:[^"]|"")*)"/g)].map((cell) => cell[1].replaceAll('""', '"')),
-          )
+    const rows = output
+      .split("\n")
+      .map((line) =>
+        [...line.matchAll(/"((?:[^"]|"")*)"/g)].map((cell) => cell[1].replaceAll('""', '"')),
+      )
     const [header, cells] = rows
     expect(cells).toHaveLength(header.length)
     expect(output).not.toMatch(/After_schedule|On_schedule|Undertime|Overtime/)

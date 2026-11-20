@@ -78,13 +78,13 @@ export function DataStorage({
     enabled: boolean
     time: string
     directory: string
-    format: "excel_workbook" | "individual_csvs" | "combined_csv"
+    format: "individual_csvs" | "combined_csv"
     lastExportedDate: string | null
   }>({
     enabled: false,
     time: "17:00",
     directory: "",
-    format: "excel_workbook",
+    format: "combined_csv",
     lastExportedDate: null,
   })
   const [isTriggeringAutoExport, setIsTriggeringAutoExport] = useState(false)
@@ -118,7 +118,7 @@ export function DataStorage({
       enabled: boolean
       time: string
       directory: string
-      format: "excel_workbook" | "individual_csvs" | "combined_csv"
+      format: "individual_csvs" | "combined_csv"
     }>,
   ) => {
     if (!window.electronAPI?.autoExport) return
@@ -455,17 +455,15 @@ export function DataStorage({
 
                       <div className="flex shrink-0 items-center gap-3">
                         {[
-                          { id: "excel_workbook", label: "Excel (.xls)" },
-                          { id: "individual_csvs", label: "Per-group CSV" },
                           { id: "combined_csv", label: "Combined CSV" },
+                          { id: "individual_csvs", label: "Per-group CSV" },
                         ].map((fmt) => (
                           <button
                             key={fmt.id}
                             type="button"
                             onClick={() =>
                               handleUpdateAutoExport({
-                                format: fmt.id as
-                                  "excel_workbook" | "individual_csvs" | "combined_csv",
+                                format: fmt.id as "individual_csvs" | "combined_csv",
                               })
                             }
                             className={`relative py-1 text-center text-[11px] font-bold tracking-wider transition-all duration-150 ${

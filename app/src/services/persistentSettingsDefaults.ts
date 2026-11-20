@@ -72,7 +72,7 @@ export interface PersistentSettingsSchema {
     enabled: boolean
     time: string
     directory: string
-    format: "excel_workbook" | "individual_csvs" | "combined_csv"
+    format: "individual_csvs" | "combined_csv"
     lastExportedDate: string | null
   }
 }
@@ -144,7 +144,7 @@ export const defaultSettings: PersistentSettingsSchema = {
     enabled: false,
     time: "17:00",
     directory: "",
-    format: "excel_workbook",
+    format: "combined_csv",
     lastExportedDate: null,
   },
 }

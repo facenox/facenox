@@ -16,7 +16,7 @@ export interface AutoExportConfig {
   enabled: boolean
   time: string
   directory: string
-  format: "excel_workbook" | "individual_csvs" | "combined_csv"
+  format: "individual_csvs" | "combined_csv"
   lastExportedDate: string | null
 }
 
@@ -62,15 +62,6 @@ function authHeaders(extra: Record<string, string> = {}) {
   return withLocalBackendHeaders(token ? { "X-Facenox-Token": token, ...extra } : { ...extra })
 }
 
-function escapeXml(unsafe: string): string {
-  return String(unsafe)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;")
-}
-
 function padZero(n: number, len = 2): string {
   return String(n).padStart(len, "0")
 }
@@ -103,7 +94,7 @@ export class AutoExportManager {
       enabled: raw?.enabled ?? false,
       time: raw?.time ?? "17:00",
       directory: raw?.directory || this.getDefaultExportDirectory(),
-      format: raw?.format ?? "excel_workbook",
+      format: raw?.format === "individual_csvs" ? "individual_csvs" : "combined_csv",
       lastExportedDate: raw?.lastExportedDate ?? null,
     }
   }
@@ -350,12 +341,7 @@ export class AutoExportManager {
     format: AutoExportConfig["format"],
     targetDir: string,
   ): Promise<void> {
-    if (format === "excel_workbook") {
-      const xmlContent = this.buildExcelXml(processedGroups)
-      const filename = sanitizeFilename(`All Groups Attendance (${dateStr}).xls`)
-      const filePath = path.join(targetDir, filename)
-      await fs.writeFile(filePath, xmlContent, "utf8")
-    } else if (format === "individual_csvs") {
+    if (format === "individual_csvs") {
       for (const { group, header, rows } of processedGroups) {
         const csvContent = [header, ...rows]
           .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
@@ -392,81 +378,6 @@ export class AutoExportManager {
       const filePath = path.join(targetDir, filename)
       await fs.writeFile(filePath, csvContent, "utf8")
     }
-  }
-
-  private buildExcelXml(processedGroups: ProcessedGroupData[]): string {
-    const usedSheetNames = new Set<string>()
-    const worksheetsXml = processedGroups
-      .map(({ group, header, rows }) => {
-        const cleanName =
-          group.name
-            .replace(/[\\/?*:[\]]/g, "_")
-            .trim()
-            .slice(0, 31) || "Group"
-        let uniqueName = cleanName
-        let counter = 1
-        while (usedSheetNames.has(uniqueName.toLowerCase())) {
-          const suffix = ` (${counter})`
-          uniqueName = `${cleanName.slice(0, 31 - suffix.length)}${suffix}`
-          counter++
-        }
-        usedSheetNames.add(uniqueName.toLowerCase())
-
-        const headerRowXml = `   <Row ss:StyleID="Header">
-${header.map((h) => `    <Cell><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join("\n")}
-   </Row>`
-
-        const dataRowsXml = rows
-          .map(
-            (row) => `   <Row>
-${row.map((cell) => `    <Cell><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join("\n")}
-   </Row>`,
-          )
-          .join("\n")
-
-        return ` <Worksheet ss:Name="${escapeXml(uniqueName)}">
-  <Table>
-   <Column ss:Width="160"/>
-   <Column ss:Width="95"/>
-   <Column ss:Width="60"/>
-   <Column ss:Width="95"/>
-   <Column ss:Width="90"/>
-   <Column ss:Width="85"/>
-   <Column ss:Width="85"/>
-   <Column ss:Width="95"/>
-   <Column ss:Width="85"/>
-   <Column ss:Width="180"/>
-${headerRowXml}
-${dataRowsXml}
-  </Table>
- </Worksheet>`
-      })
-      .join("\n")
-
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40">
- <Styles>
-  <Style ss:ID="Default" ss:Name="Normal">
-   <Alignment ss:Vertical="Center"/>
-   <Borders/>
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#000000"/>
-  </Style>
-  <Style ss:ID="Header">
-   <Alignment ss:Vertical="Center" ss:Horizontal="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D9D9D9"/>
-   </Borders>
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#FFFFFF" ss:Bold="1"/>
-   <Interior ss:Color="#0F172A" ss:Pattern="Solid"/>
-  </Style>
- </Styles>
-${worksheetsXml}
-</Workbook>`
   }
 }
 

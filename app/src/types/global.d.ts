@@ -335,7 +335,7 @@ declare global {
       enabled: boolean
       time: string
       directory: string
-      format: "excel_workbook" | "individual_csvs" | "combined_csv"
+      format: "individual_csvs" | "combined_csv"
       lastExportedDate: string | null
     }>
     updateConfig: (
@@ -343,14 +343,14 @@ declare global {
         enabled: boolean
         time: string
         directory: string
-        format: "excel_workbook" | "individual_csvs" | "combined_csv"
+        format: "individual_csvs" | "combined_csv"
         lastExportedDate: string | null
       }>,
     ) => Promise<{
       enabled: boolean
       time: string
       directory: string
-      format: "excel_workbook" | "individual_csvs" | "combined_csv"
+      format: "individual_csvs" | "combined_csv"
       lastExportedDate: string | null
     }>
     triggerNow: (targetDate?: string) => Promise<boolean>
