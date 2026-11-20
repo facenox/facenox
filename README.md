@@ -80,16 +80,16 @@ _Data and storage management panel detailing system clock accuracy validation, a
 > This is the official open source repository for Facenox. Treat other repositories, installers, and downloads as unverified unless they come from official sources.
 
 > [!NOTE]  
-> **Local biometric processing:** Facenox runs face detection, tracking, liveness checks, and matching on the computer. Starter and higher Cloud plans can sync encrypted face templates between paired computers.
+> **Local biometric processing:** Facenox runs face detection, tracking, liveness checks, and matching directly on your computer. Facenox Cloud enables multi-device sync and remote dashboard access.
 
 ## Why Facenox
 
-Facenox records attendance with a compatible computer and webcam. Face matching runs locally, without requiring a Cloud connection.
+Facenox records attendance with a standard computer and webcam. Face matching runs locally with zero internet dependency.
 
-- **Local operation:** Enroll members and record attendance without internet after installation.
-- **Optional browser access:** Connect Facenox Cloud to review synced records and export reports from another computer.
-- **Separate plan limits:** Desktop has no plan-based local member limit. Cloud plans have separate capabilities and capacity limits.
-- **Data handling:** Templates are encrypted in storage, but remain sensitive biometric data. Review the [privacy documentation](docs/PRIVACY.md) before deployment.
+- **100% Local operation:** Enroll members and record attendance entirely offline.
+- **Remote browser dashboard:** Connect Facenox Cloud to review live records, monitor multiple branches, and export reports from anywhere.
+- **No local limits:** Desktop has no artificial member limits or software locks.
+- **Biometric privacy:** Encrypted numerical vectors at rest with zero member photos stored. Review the [privacy documentation](docs/PRIVACY.md).
 
 ## Features
 
@@ -143,11 +143,10 @@ Facenox Desktop continues to work locally when internet access is unavailable:
 - Recognition and liveness verification remain functional.
 - Attendance is recorded in a local SQLite database. Keep backups to protect against deletion or device failure.
 - Settings, backups, and member management remain accessible.
-- Facenox Cloud sync resumes automatically when connectivity returns.
-  (Completely optional, as cloud sync is disabled by default and only active when your device is paired.)
+- Facenox Cloud sync resumes automatically when connectivity returns. When unpaired, Facenox operates purely offline.
 
 > [!NOTE]  
-> **Data handling:** Raw camera frames are processed locally, not saved or uploaded. Paid Cloud plans can sync AES-256-GCM encrypted face templates between paired computers. Cloud manages location keys and re-encrypts templates during location transfers. Matching stays on your local hardware. Sync is separate from recovery backups.
+> **Data handling:** Raw camera frames are processed locally, not saved or uploaded. Facenox Cloud can sync AES-256-GCM encrypted face templates between paired computers. Cloud manages location keys and re-encrypts templates during location transfers. Matching stays on your local hardware. Sync is separate from recovery backups.
 
 ## How it works
 
@@ -181,7 +180,7 @@ Protect access to the computer and keep password-protected `.facenox` backup arc
 >
 > - **Automated Analysis:** GitHub Actions runs CodeQL analysis on configured source changes.
 > - **Build Transparency:** Release workflows build Desktop artifacts from the public source repository.
-> - **Encrypted template sync:** Starter and higher plans encrypt face templates before upload. Cloud stores encrypted templates and manages their location keys.
+> - **Encrypted template sync:** Face templates are encrypted locally before upload. Cloud stores encrypted templates and manages their location keys.
 
 > **Facenox Cloud:** The official hosted service is optional and provides browser reporting and administration for synced data. This repository contains Facenox Desktop.
 
