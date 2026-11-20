@@ -411,7 +411,7 @@ test.describe("renderer smoke", () => {
   test("boots through startup and shows the intro flow for first-run state", async ({ page }) => {
     await bootApp(page, { hasSeenIntro: false })
 
-    await expect(page.getByText("Welcome to Facenox")).toBeVisible()
+    await expect(page.getByText("On-device face recognition")).toBeVisible()
     await expect(page.getByRole("button", { name: "Next" })).toBeVisible()
 
     await expect
