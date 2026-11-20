@@ -22,8 +22,8 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox Desktop runs face detection, tracking, liveness verification, and recognition
-            directly <strong>on this computer</strong>.
+            Facenox runs face detection, tracking, liveness verification, and recognition directly{" "}
+            <strong>on this computer</strong>.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
             Attendance is recorded continuously even during power or internet disruptions. When
@@ -37,8 +37,8 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox Desktop stores <strong>encrypted numerical face templates</strong>, never member
-            photos. Biometric data cannot be reconstructed into an image.
+            Facenox stores <strong>encrypted numerical face templates</strong>, never member photos.
+            Biometric data cannot be reconstructed into an image.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
             Designed for strict biometric data privacy compliance. The{" "}
@@ -69,8 +69,7 @@ export function IntroModal() {
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox records attendance locally without internet. Connect Facenox Cloud to review
-            live logs from your phone or browser, backup records safely, and sync multiple devices.
+            Monitor daily activity and manage records from anywhere.
           </p>
 
           <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] p-4">
@@ -106,7 +105,7 @@ export function IntroModal() {
           </div>
 
           <p className="text-[11px] text-white/50">
-            You can pair or unpair anytime in{" "}
+            You can connect or disconnect anytime in{" "}
             <span className="text-white/70">Settings → Cloud sync</span>.
           </p>
         </div>
@@ -175,9 +174,8 @@ export function IntroModal() {
             <button
               onClick={handleBack}
               disabled={step === 0}
-              className={`rounded-lg border-none! bg-transparent! px-3 py-1.5 text-xs font-medium shadow-none! transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none ${
-                step === 0 ? "pointer-events-none opacity-0" : "text-white/55 hover:text-white"
-              }`}>
+              className={`rounded-lg border-none! bg-transparent! px-3 py-1.5 text-xs font-medium shadow-none! transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none ${step === 0 ? "pointer-events-none opacity-0" : "text-white/55 hover:text-white"
+                }`}>
               Back
             </button>
 
@@ -185,9 +183,8 @@ export function IntroModal() {
               {steps.map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1 rounded-[1px] transition-all duration-300 ${
-                    i === step ? "w-6 bg-cyan-500" : "w-2 bg-white/10"
-                  }`}
+                  className={`h-1 rounded-[1px] transition-all duration-300 ${i === step ? "w-6 bg-cyan-500" : "w-2 bg-white/10"
+                    }`}
                 />
               ))}
             </div>
@@ -208,7 +205,7 @@ export function IntroModal() {
                   <span>Connect</span>
                 </button>
               </div>
-            : <button
+              : <button
                 type="button"
                 onClick={handleNext}
                 className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-7 py-2 text-xs font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
