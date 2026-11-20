@@ -214,6 +214,23 @@ export const Sidebar = memo(function Sidebar({
           maxWidth: `${currentWidth}px`,
           willChange: "width",
         }}>
+        {!isCollapsed && (
+          <Tooltip content="Drag to resize" position="right">
+            <div
+              className="group absolute top-0 bottom-0 left-0 z-30 w-1 cursor-ew-resize transition-colors hover:bg-cyan-500/30 active:bg-cyan-500/50"
+              onMouseDown={handleResizeStart}
+              style={{
+                paddingLeft: "2px",
+                marginLeft: "-2px",
+              }}>
+              <div
+                className={`absolute top-1/2 left-0 h-12 w-1 -translate-y-1/2 rounded-r transition-all ${
+                  isResizing ? "h-16 bg-cyan-500/70" : "bg-white/10 group-hover:bg-cyan-500/50"
+                }`}
+              />
+            </div>
+          </Tooltip>
+        )}
         <div
           className={`border-b border-white/10 px-2 py-1 transition-opacity duration-200 ${isCollapsed ? "pointer-events-none opacity-0" : "opacity-100"}`}
           style={{ minWidth: isResizing ? undefined : sidebarWidth }}>
@@ -289,24 +306,6 @@ export const Sidebar = memo(function Sidebar({
         <div
           className={`sidebar relative flex min-h-0 flex-1 flex-col transition-opacity duration-200 ${isCollapsed ? "pointer-events-none opacity-0" : "opacity-100"}`}
           style={{ minWidth: isResizing ? undefined : sidebarWidth }}>
-          {!isCollapsed && (
-            <Tooltip content="Drag to resize" position="right">
-              <div
-                className="group absolute top-0 bottom-0 left-0 z-30 w-1 cursor-ew-resize transition-colors hover:bg-cyan-500/30 active:bg-cyan-500/50"
-                onMouseDown={handleResizeStart}
-                style={{
-                  paddingLeft: "2px",
-                  marginLeft: "-2px",
-                }}>
-                <div
-                  className={`absolute top-1/2 left-0 h-12 w-1 -translate-y-1/2 rounded-r transition-all ${
-                    isResizing ? "h-16 bg-cyan-500/70" : "bg-white/10 group-hover:bg-cyan-500/50"
-                  }`}
-                />
-              </div>
-            </Tooltip>
-          )}
-
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <AttendancePanel
               handleSelectGroup={handleSelectGroup}
