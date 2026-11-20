@@ -18,7 +18,7 @@ export function IntroModal() {
 
   const steps = [
     {
-      title: "On-device face recognition",
+      title: "Welcome to Facenox",
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">

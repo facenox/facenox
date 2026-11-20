@@ -322,7 +322,7 @@ async function installRuntimeMocks(page: Page, { hasSeenIntro }: { hasSeenIntro:
           }),
           getVersion: async () => "1.0.0-beta.1",
           onAppReady: () => {
-            ;(window as Window & { __facenoxAppReadyCount?: number }).__facenoxAppReadyCount =
+            ; (window as Window & { __facenoxAppReadyCount?: number }).__facenoxAppReadyCount =
               ((window as Window & { __facenoxAppReadyCount?: number }).__facenoxAppReadyCount ??
                 0) + 1
           },
@@ -374,16 +374,16 @@ async function installRuntimeMocks(page: Page, { hasSeenIntro }: { hasSeenIntro:
           }, 0)
         }
 
-        send() {}
+        send() { }
 
         close() {
           this.readyState = MockWebSocket.CLOSED
           this.onclose?.({ code: 1000, reason: "", wasClean: true } as CloseEvent)
         }
 
-        addEventListener() {}
+        addEventListener() { }
 
-        removeEventListener() {}
+        removeEventListener() { }
       }
 
       Object.defineProperty(window, "WebSocket", {
@@ -411,7 +411,7 @@ test.describe("renderer smoke", () => {
   test("boots through startup and shows the intro flow for first-run state", async ({ page }) => {
     await bootApp(page, { hasSeenIntro: false })
 
-    await expect(page.getByText("On-device face recognition")).toBeVisible()
+    await expect(page.getByText("Welcome to Facenox")).toBeVisible()
     await expect(page.getByRole("button", { name: "Next" })).toBeVisible()
 
     await expect

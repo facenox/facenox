@@ -54,8 +54,9 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
             <div className="text-[13px] font-semibold text-white/90">What syncs with Cloud</div>
             <p className="text-[11px] leading-relaxed text-white/50">
               Connecting Facenox Cloud syncs directory and attendance data for browser access and
-              reporting. Cloud can also sync encrypted face templates and manage template keys. Face recognition remains on paired computers, and raw
-              camera frames are not saved or uploaded.
+              reporting. Cloud can also sync encrypted face templates and manage template keys. Face
+              recognition remains on paired computers, and raw camera frames are not saved or
+              uploaded.
             </p>
           </div>
 
@@ -168,16 +169,17 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
         <button
           onClick={onCheck}
           disabled={isChecking}
-          className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none ${isChecking ?
-            "border-white/10 bg-white/[0.04] text-white/55"
+          className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none ${
+            isChecking ?
+              "border-white/10 bg-white/[0.04] text-white/55"
             : "border-transparent bg-transparent text-white/65 hover:border-white/10 hover:bg-white/[0.06] hover:text-white"
-            } disabled:opacity-50`}>
+          } disabled:opacity-50`}>
           {isChecking ?
             <div className="flex items-center gap-2">
               <Spinner size="xs" color="white" className="opacity-60" />
               <span>Checking…</span>
             </div>
-            : "Check for updates"}
+          : "Check for updates"}
         </button>
       </div>
       {lastChecked && !isChecking && (
@@ -353,7 +355,7 @@ export const About: React.FC = () => {
                     <Spinner size="xs" color="white" className="opacity-60" />
                     <span>Exporting…</span>
                   </>
-                  : <span>Export health data</span>}
+                : <span>Export health data</span>}
               </button>
             </div>
           </div>
