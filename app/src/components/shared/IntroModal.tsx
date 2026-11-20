@@ -26,8 +26,8 @@ export function IntroModal() {
             directly <strong>on this computer</strong>.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
-            Attendance is recorded continuously even during power or internet disruptions.
-            When connected, records automatically mirror to your central dashboard.
+            Attendance is recorded continuously even during power or internet disruptions. When
+            connected, records automatically mirror to your central dashboard.
           </p>
         </div>
       ),
@@ -77,7 +77,9 @@ export function IntroModal() {
             <div className="mb-2.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Cloud className="size-4 text-cyan-400" />
-                <span className="text-xs font-semibold text-white">Included with Facenox Cloud</span>
+                <span className="text-xs font-semibold text-white">
+                  Included with Facenox Cloud
+                </span>
               </div>
               <span className="rounded bg-cyan-500/15 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300">
                 Recommended

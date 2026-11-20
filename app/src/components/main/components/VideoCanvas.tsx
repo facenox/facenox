@@ -104,8 +104,8 @@ export const VideoCanvas = memo(function VideoCanvas({
     (currentGroup?.settings?.track_checkout ? "work_hours" : "attendance")
   const attendanceModeLabel =
     attendanceMode === "work_hours" ? "Time in & time out"
-    : attendanceMode === "visits" ? "Visits"
-    : "Attendance"
+      : attendanceMode === "visits" ? "Visits"
+        : "Attendance"
 
   const tooltipContent =
     currentGroup ?
@@ -130,13 +130,13 @@ export const VideoCanvas = memo(function VideoCanvas({
             <span className="text-right font-medium">
               {isAllGroups ?
                 <span className="text-white/70">Per-group</span>
-              : currentGroup.settings?.late_threshold_enabled ?
-                <span className="font-mono text-[10.5px] text-white/90">
-                  {(currentGroup.settings?.late_threshold_minutes ?? 0) > 0 ?
-                    `${format12hTime(currentGroup.settings?.class_start_time)} (+${currentGroup.settings?.late_threshold_minutes}m)`
-                  : `${format12hTime(currentGroup.settings?.class_start_time)} (Exact)`}
-                </span>
-              : <span className="text-white/40">Disabled</span>}
+                : currentGroup.settings?.late_threshold_enabled ?
+                  <span className="font-mono text-[10.5px] text-white/90">
+                    {(currentGroup.settings?.late_threshold_minutes ?? 0) > 0 ?
+                      `${format12hTime(currentGroup.settings?.class_start_time)} (+${currentGroup.settings?.late_threshold_minutes}m)`
+                      : `${format12hTime(currentGroup.settings?.class_start_time)} (Exact)`}
+                  </span>
+                  : <span className="text-white/40">Disabled</span>}
             </span>
           </div>
 
@@ -146,7 +146,7 @@ export const VideoCanvas = memo(function VideoCanvas({
             <span className="text-right font-medium">
               {isAllGroups ?
                 <span className="text-white/70">Per-group</span>
-              : <span className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-semibold text-white/85">
+                : <span className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-semibold text-white/85">
                   {attendanceModeLabel}
                 </span>
               }
@@ -158,24 +158,24 @@ export const VideoCanvas = memo(function VideoCanvas({
             <span className="text-white/60">
               {isAllGroups ?
                 "Time in & time out"
-              : attendanceMode === "visits" ?
-                "Min. visit duration"
-              : "Time in & time out"}
+                : attendanceMode === "visits" ?
+                  "Min. visit duration"
+                  : "Time in & time out"}
             </span>
             <span className="text-right font-medium">
               {isAllGroups ?
                 <span className="text-white/70">Per-group</span>
-              : attendanceMode === "work_hours" ?
-                <span className="font-mono text-[10.5px] text-white/90">
-                  {currentGroup.settings?.class_end_time ?
-                    `Enabled (${format12hTime(currentGroup.settings.class_end_time)})`
-                  : "Enabled"}
-                </span>
-              : attendanceMode === "visits" ?
-                <span className="font-mono text-[10.5px] text-white/85">
-                  {currentGroup.settings?.min_checkout_delay_minutes ?? 15}m minimum
-                </span>
-              : <span className="text-white/40">Not used</span>}
+                : attendanceMode === "work_hours" ?
+                  <span className="font-mono text-[10.5px] text-white/90">
+                    {currentGroup.settings?.class_end_time ?
+                      `Enabled (${format12hTime(currentGroup.settings.class_end_time)})`
+                      : "Enabled"}
+                  </span>
+                  : attendanceMode === "visits" ?
+                    <span className="font-mono text-[10.5px] text-white/85">
+                      {currentGroup.settings?.min_checkout_delay_minutes ?? 15}m minimum
+                    </span>
+                    : <span className="text-white/40">Not used</span>}
             </span>
           </div>
 
@@ -194,7 +194,7 @@ export const VideoCanvas = memo(function VideoCanvas({
             <span className="text-right font-mono text-[10.5px] font-medium text-white/85">
               {maxRecognitionFacesPerFrame > 0 ?
                 `${maxRecognitionFacesPerFrame} faces`
-              : "Unlimited"}
+                : "Unlimited"}
             </span>
           </div>
 
@@ -204,26 +204,26 @@ export const VideoCanvas = memo(function VideoCanvas({
             <span className="text-right font-medium">
               {enableSpoofDetection ?
                 <span className="text-[10.5px] font-semibold text-emerald-400">Enabled</span>
-              : <span className="text-white/40">Disabled</span>}
+                : <span className="text-white/40">Disabled</span>}
             </span>
           </div>
         </div>
       </div>
-    : null
+      : null
 
   const emptyStateText =
     dataError ? "Attendance data couldn't be loaded."
-    : !isShellReady || isGroupDataLoading ? null
-    : hasSelectedGroup ?
-      !hasMembers ?
-        isAllGroups ? "Add and enroll at least one member to start scanning."
-        : "Add and enroll at least one member in this group to start scanning."
-      : !hasEnrolledFaces ?
-        isAllGroups ? "Enroll at least one member to start scanning."
-        : "Enroll at least one member in this group to start scanning."
-      : null
-    : hasGroups ? "Select a group to start scanning."
-    : "Create a group to start scanning."
+      : !isShellReady || isGroupDataLoading ? null
+        : hasSelectedGroup ?
+          !hasMembers ?
+            isAllGroups ? "Add and enroll at least one member to start scanning."
+              : "Add and enroll at least one member in this group to start scanning."
+            : !hasEnrolledFaces ?
+              isAllGroups ? "Enroll at least one member to start scanning."
+                : "Enroll at least one member in this group to start scanning."
+              : null
+          : hasGroups ? "Select a group to start scanning."
+            : "Create a group to start scanning."
 
   return (
     <div
@@ -233,11 +233,9 @@ export const VideoCanvas = memo(function VideoCanvas({
       <video
         ref={videoRef}
         aria-label="Local camera capture feed"
-        className={`absolute inset-0 h-full w-full bg-[var(--bg-canvas)] ${
-          quickSettings.cameraFitCover ? "object-cover" : "object-contain"
-        } transition-opacity duration-300 ${
-          isStreaming && !isVideoLoading ? "opacity-100" : "opacity-0"
-        } ${quickSettings.cameraMirrored ? "scale-x-[-1]" : ""}`}
+        className={`absolute inset-0 h-full w-full bg-[var(--bg-canvas)] ${quickSettings.cameraFitCover ? "object-cover" : "object-contain"
+          } transition-opacity duration-300 ${isStreaming && !isVideoLoading ? "opacity-100" : "opacity-0"
+          } ${quickSettings.cameraMirrored ? "scale-x-[-1]" : ""}`}
         playsInline
         muted
       />
@@ -278,7 +276,7 @@ export const VideoCanvas = memo(function VideoCanvas({
                     const displayHours = hours % 12 || 12
                     return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`
                   })()
-                : "08:00 AM"}
+                  : "08:00 AM"}
               </span>
             </div>
             {outdated && (
@@ -311,7 +309,7 @@ export const VideoCanvas = memo(function VideoCanvas({
                   className="flex flex-col items-center justify-center">
                   <Spinner size="lg" color="cyan" />
                 </motion.div>
-              : <motion.div
+                : <motion.div
                   key="canvas-idle-state"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -327,20 +325,20 @@ export const VideoCanvas = memo(function VideoCanvas({
                       {!hasGroups ?
                         <button
                           type="button"
-                          onClick={() => requestOpenSettings("group", "groups")}
+                          onClick={() => requestOpenSettings("groups")}
                           className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20 active:scale-95">
                           <Plus className="size-3.5" />
                           Create group
                         </button>
-                      : hasSelectedGroup && !hasEnrolledFaces ?
-                        <button
-                          type="button"
-                          onClick={() => requestOpenSettings("group", "members")}
-                          className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20 active:scale-95">
-                          <UserPlus className="size-3.5" />
-                          Enroll member
-                        </button>
-                      : null}
+                        : hasSelectedGroup && !hasEnrolledFaces ?
+                          <button
+                            type="button"
+                            onClick={() => requestOpenSettings("group", "members")}
+                            className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20 active:scale-95">
+                            <UserPlus className="size-3.5" />
+                            Enroll member
+                          </button>
+                          : null}
                     </div>
                   )}
                 </motion.div>
@@ -362,11 +360,10 @@ export const VideoCanvas = memo(function VideoCanvas({
             onMouseEnter={() => setShowSettings(true)}
             onMouseLeave={() => setShowSettings(false)}>
             <div
-              className={`flex h-full w-full cursor-help items-center justify-center rounded-lg transition-all duration-200 select-none ${
-                showSettings ?
+              className={`flex h-full w-full cursor-help items-center justify-center rounded-lg transition-all duration-200 select-none ${showSettings ?
                   "bg-white/10 text-white backdrop-blur-md"
-                : "bg-black/25 text-white/40 backdrop-blur-sm hover:bg-white/10 hover:text-white/75"
-              }`}>
+                  : "bg-black/25 text-white/40 backdrop-blur-sm hover:bg-white/10 hover:text-white/75"
+                }`}>
               <SlidersHorizontal className="size-3.5" />
             </div>
 
