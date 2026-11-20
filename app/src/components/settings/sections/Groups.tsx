@@ -46,35 +46,37 @@ export function Groups({
     "flex h-7 w-7 items-center justify-center rounded-lg border-0 bg-transparent text-white/45 shadow-none transition-all duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-cyan-400 active:scale-95 disabled:opacity-40"
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden px-10 pt-8 pb-10">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
-        <div
-          className={`group/bar relative w-full transition-all duration-300 ease-out motion-reduce:transition-none ${searchFocused || query.trim() ? "max-w-[190px]" : "max-w-[170px]"}`}>
-          <Search
-            aria-hidden="true"
-            className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45"
-          />
-          <input
-            aria-label="Search groups"
-            type="search"
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setSearchFocused(false)}
-            placeholder="Search groups…"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key !== "Escape" && event.key !== "Esc" && event.keyCode !== 27) return
-              event.preventDefault()
-              event.stopPropagation()
-              if (event.currentTarget.value) {
-                setQuery("")
-              } else {
-                event.currentTarget.blur()
-              }
-            }}
-            className="h-9 w-full rounded-lg border border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none placeholder:text-white/35 focus:border-white/20 focus:bg-white/[0.08]"
-          />
+      {groups.length > 0 && (
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
+          <div
+            className={`group/bar relative w-full transition-all duration-300 ease-out motion-reduce:transition-none ${searchFocused || query.trim() ? "max-w-[190px]" : "max-w-[170px]"}`}>
+            <Search
+              aria-hidden="true"
+              className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45"
+            />
+            <input
+              aria-label="Search groups"
+              type="search"
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              placeholder="Search groups…"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Escape" && event.key !== "Esc" && event.keyCode !== 27) return
+                event.preventDefault()
+                event.stopPropagation()
+                if (event.currentTarget.value) {
+                  setQuery("")
+                } else {
+                  event.currentTarget.blur()
+                }
+              }}
+              className="h-9 w-full rounded-lg border border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none placeholder:text-white/35 focus:border-white/20 focus:bg-white/[0.08]"
+            />
+          </div>
         </div>
-      </div>
+      )}
       {groups.length > 0 && filtered.length > 0 && (
         <div className="mt-4 shrink-0 text-xs text-white/55">
           {filtered.length !== groups.length ?

@@ -1,7 +1,7 @@
 import { memo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { RefObject } from "react"
-import { Plus, SlidersHorizontal, UserPlus, Video } from "lucide-react"
+import { SlidersHorizontal, Video } from "lucide-react"
 import { Spinner } from "@/components/common"
 import { Tooltip } from "@/components/shared"
 import { ActiveHeadTurnGuide } from "./ActiveHeadTurnGuide"
@@ -322,25 +322,8 @@ export const VideoCanvas = memo(function VideoCanvas({
                     <Video className="h-16 w-16 animate-pulse text-white/55" strokeWidth={1.5} />
                   </div>
                   {emptyStateText && (
-                    <div className="absolute top-full left-1/2 mt-4 flex w-max max-w-xl -translate-x-1/2 flex-col items-center gap-2 px-6 text-center text-xs text-white/65">
+                    <div className="absolute top-full left-1/2 mt-4 flex w-max max-w-xl -translate-x-1/2 flex-col items-center gap-3 px-6 text-center text-xs text-white/65">
                       <p className="text-white/65">{emptyStateText}</p>
-                      {!hasGroups ?
-                        <button
-                          type="button"
-                          onClick={() => requestOpenSettings("groups")}
-                          className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20 active:scale-95">
-                          <Plus className="size-3.5" />
-                          Create group
-                        </button>
-                      : hasSelectedGroup && !hasEnrolledFaces ?
-                        <button
-                          type="button"
-                          onClick={() => requestOpenSettings("group", "members")}
-                          className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20 active:scale-95">
-                          <UserPlus className="size-3.5" />
-                          Enroll member
-                        </button>
-                      : null}
                     </div>
                   )}
                 </motion.div>

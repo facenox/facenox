@@ -174,8 +174,9 @@ export function IntroModal() {
             <button
               onClick={handleBack}
               disabled={step === 0}
-              className={`rounded-lg border-none! bg-transparent! px-3 py-1.5 text-xs font-medium shadow-none! transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none ${step === 0 ? "pointer-events-none opacity-0" : "text-white/55 hover:text-white"
-                }`}>
+              className={`rounded-lg border-none! bg-transparent! px-3 py-1.5 text-xs font-medium shadow-none! transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none ${
+                step === 0 ? "pointer-events-none opacity-0" : "text-white/55 hover:text-white"
+              }`}>
               Back
             </button>
 
@@ -183,8 +184,9 @@ export function IntroModal() {
               {steps.map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1 rounded-[1px] transition-all duration-300 ${i === step ? "w-6 bg-cyan-500" : "w-2 bg-white/10"
-                    }`}
+                  className={`h-1 rounded-[1px] transition-all duration-300 ${
+                    i === step ? "w-6 bg-cyan-500" : "w-2 bg-white/10"
+                  }`}
                 />
               ))}
             </div>
@@ -205,7 +207,7 @@ export function IntroModal() {
                   <span>Connect</span>
                 </button>
               </div>
-              : <button
+            : <button
                 type="button"
                 onClick={handleNext}
                 className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-7 py-2 text-xs font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">

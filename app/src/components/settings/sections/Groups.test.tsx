@@ -122,7 +122,7 @@ describe("Groups directory", () => {
       "size-8",
     )
     expect(screen.queryByRole("heading", { name: "No results found" })).not.toBeInTheDocument()
-    expect(screen.getByRole("searchbox", { name: "Search groups" })).toBeInTheDocument()
+    expect(screen.queryByRole("searchbox", { name: "Search groups" })).not.toBeInTheDocument()
   })
 
   it("does not suggest an unavailable create action when organization policy blocks management", async () => {
