@@ -102,6 +102,11 @@ export function IntroModal() {
               </li>
             </ul>
           </div>
+
+          <p className="text-[11px] text-white/50">
+            You can pair or unpair anytime in{" "}
+            <span className="text-white/70">Settings → Cloud sync</span>.
+          </p>
         </div>
       ),
     },
