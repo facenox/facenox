@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Root npm dependencies (safe minor & patch updates)
+  # Root npm dependencies (safe minor & patch updates across all workspace packages)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -10,45 +10,9 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
-    open-pull-requests-limit: 3
-    groups:
-      dependencies:
-        patterns: ["*"]
-        update-types:
-          - "minor"
-          - "patch"
-
-  # Desktop app workspace (/app) (safe minor & patch updates)
-  - package-ecosystem: "npm"
-    directory: "/app"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-    labels:
-      - "dependencies"
     open-pull-requests-limit: 5
     groups:
-      app-dependencies:
-        patterns: ["*"]
-        update-types:
-          - "minor"
-          - "patch"
-
-  # Server workspace (/server) (safe minor & patch updates)
-  - package-ecosystem: "npm"
-    directory: "/server"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-    labels:
-      - "dependencies"
-    open-pull-requests-limit: 3
-    groups:
-      server-dependencies:
+      dependencies:
         patterns: ["*"]
         update-types:
           - "minor"
