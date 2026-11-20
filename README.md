@@ -171,7 +171,6 @@ Protect access to the computer and keep password-protected `.facenox` backup arc
 - [x] Support for cross-platform native installers (Windows, macOS, Linux).
 - [x] Attendance trends and site-level reporting in Facenox Cloud.
 - [ ] Software Signing.
-- [ ] Mobile companion application for remote monitoring.
 
 ---
 
