@@ -74,7 +74,8 @@ class WipeCompletionTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(FakeHTTPException) as caught:
             await self.handler(self.repo)
         self.assertEqual(caught.exception.status_code, 500)
-        self.assertIn("Local attendance was cleared", caught.exception.detail)
+        self.assertIn("Face templates could not be removed", caught.exception.detail)
+        self.repo.clear_all_attendance_data.assert_not_awaited()
         self.repo.add_audit_log.assert_not_awaited()
 
     async def test_face_exception_cannot_report_success(self):
@@ -84,15 +85,17 @@ class WipeCompletionTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(FakeHTTPException) as caught:
             await self.handler(self.repo)
         self.assertEqual(caught.exception.status_code, 500)
+        self.repo.clear_all_attendance_data.assert_not_awaited()
         self.repo.add_audit_log.assert_not_awaited()
 
-    async def test_attendance_exception_stops_before_face_removal(self):
+    async def test_attendance_exception_stops_before_audit_log(self):
         self.repo.clear_all_attendance_data.side_effect = RuntimeError(
             "synthetic attendance failure"
         )
-        with self.assertRaises(FakeHTTPException):
+        with self.assertRaises(FakeHTTPException) as caught:
             await self.handler(self.repo)
-        self.recognizer.clear_database.assert_not_awaited()
+        self.assertEqual(caught.exception.status_code, 500)
+        self.recognizer.clear_database.assert_awaited_once_with("verification-only")
         self.repo.add_audit_log.assert_not_awaited()
 
 
