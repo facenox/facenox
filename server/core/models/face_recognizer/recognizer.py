@@ -128,7 +128,9 @@ class FaceRecognizer:
 
         aligned_faces_all = align_faces_batch(image, face_data_list, self.input_size)
         valid_pairs = [
-            (idx, face) for idx, face in enumerate(aligned_faces_all) if face is not None
+            (idx, face)
+            for idx, face in enumerate(aligned_faces_all)
+            if face is not None
         ]
 
         if not valid_pairs:
