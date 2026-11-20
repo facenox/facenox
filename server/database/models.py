@@ -494,8 +494,22 @@ _SYNC_FIELDS = {
 def track_directory_edits(session, _flush_context, _instances):
     if session.info.get("sync_import"):
         return
+    bumped = session.info.setdefault("_bumped_version_ids", set())
     for obj in session.dirty:
         fields = _SYNC_FIELDS.get(type(obj))
         if fields and any(inspect(obj).attrs[f].history.has_changes() for f in fields):
             obj.sync_dirty = True
-            obj.version = (obj.version or 0) + 1
+            obj_key = (type(obj), id(obj))
+            if obj_key not in bumped:
+                obj.version = (obj.version or 0) + 1
+                bumped.add(obj_key)
+
+
+@event.listens_for(Session, "after_commit")
+def _clear_bumped_version_ids_on_commit(session):
+    session.info.pop("_bumped_version_ids", None)
+
+
+@event.listens_for(Session, "after_rollback")
+def _clear_bumped_version_ids_on_rollback(session):
+    session.info.pop("_bumped_version_ids", None)

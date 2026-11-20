@@ -220,7 +220,10 @@ export class BackgroundSyncManager {
     this.stop()
     this.abortController?.abort()
     await this.idlePromise
-    while (this.isPollingCommands) await new Promise((resolve) => setTimeout(resolve, 20))
+    const deadline = Date.now() + 5000
+    while (this.isPollingCommands && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
   }
 
   private getSyncConfig() {

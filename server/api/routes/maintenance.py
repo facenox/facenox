@@ -61,19 +61,18 @@ async def remote_wipe_data(
     2. Clear all attendance records, sessions, and events.
     """
     try:
-        # 1. Clear attendance records from DB
-        results = await repo.clear_all_attendance_data()
-
-        # 2. Clear face database via face_recognizer
+        # 1. Clear face database via face_recognizer first
         from api.recognition_deps import get_face_recognizer
 
         face_recognizer = await get_face_recognizer()
         face_result = await face_recognizer.clear_database(repo.organization_id)
         if not face_result.get("success"):
             raise RuntimeError(
-                "Local attendance was cleared, but face templates could not be removed. "
-                "Review this computer before using it again."
+                "Face templates could not be removed. Wipe aborted to protect biometric consistency."
             )
+
+        # 2. Clear attendance records from DB
+        results = await repo.clear_all_attendance_data()
 
         await repo.add_audit_log(
             action="REMOTE_WIPE_EXECUTED",
