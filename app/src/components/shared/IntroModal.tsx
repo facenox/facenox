@@ -2,82 +2,46 @@ import { useState } from "react"
 import { useUIStore } from "@/components/main/stores/uiStore"
 import { Modal } from "@/components/common"
 import { motion, AnimatePresence } from "framer-motion"
-import { Shield, Cloud, Check } from "lucide-react"
+import { Cloud, Check } from "lucide-react"
 
 /**
- * First-launch intro flow that educates users about privacy and then
- * presents them with a choice between offline-only usage and cloud
- * dashboard connectivity.
+ * First-launch intro flow that educates users about privacy and on-device architecture,
+ * followed by a streamlined prompt highlighting Facenox Cloud with a seamless opt-out.
  *
- * Steps 1–4: Privacy education (existing)
- * Step 5: "How would you like to use Facenox?" — offline vs cloud choice
- *
- * The cloud choice is presented AFTER privacy context so the user can make
- * an informed decision about data sharing. Both options are equally weighted.
+ * Steps 1–2: On-device architecture & biometric data protection
+ * Step 3: Facenox Cloud value proposition with "Connect Cloud" CTA and "Skip for now"
  */
 export function IntroModal() {
   const { setHasSeenIntro, setPendingCloudSetup } = useUIStore()
   const [step, setStep] = useState(0)
   const [isOpen, setIsOpen] = useState(true)
-  const [hoveredCard, setHoveredCard] = useState<"offline" | "cloud" | null>(null)
-  const [selectedPath, setSelectedPath] = useState<"offline" | "cloud">("offline")
 
   const steps = [
     {
-      title: "Welcome to Facenox",
+      title: "On-device face recognition",
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox Desktop records attendance using face recognition on this computer, even without
-            internet. You can use it locally or connect Facenox Cloud to review synced records from
-            a browser.
+            Facenox Desktop runs face detection, tracking, liveness verification, and recognition
+            directly <strong>on this computer</strong>.
           </p>
-          <p className="text-xs text-white/65">
-            Here is a quick overview of how information is protected.
+          <p className="text-xs leading-relaxed text-white/65">
+            Your kiosk records attendance continuously even during power or internet disruptions.
+            When connected, records automatically mirror to your central dashboard.
           </p>
         </div>
       ),
     },
     {
-      title: "No photos stored",
+      title: "Encrypted face templates",
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-white/80">
-            Facenox Desktop stores <strong>encrypted face templates</strong> for recognition, not
-            member photos.
+            Facenox Desktop stores <strong>encrypted numerical face templates</strong>, never member
+            photos. Biometric data cannot be reconstructed into an image.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
-            A face template is a numerical representation of a face used for recognition. Facenox
-            encrypts these templates when storing them on this computer.
-          </p>
-        </div>
-      ),
-    },
-    {
-      title: "On-device processing",
-      content: (
-        <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-white/80">
-            Face detection, tracking, liveness verification, and recognition run{" "}
-            <strong>on this computer</strong>.
-          </p>
-          <p className="text-xs leading-relaxed text-white/65">
-            Connecting Facenox Cloud syncs member profiles and attendance records. Paid plans also
-            sync encrypted face templates between paired computers.
-          </p>
-        </div>
-      ),
-    },
-    {
-      title: "Privacy & security",
-      content: (
-        <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-white/80">
-            Before enrolling members, decide who can access their records, explain how their data
-            will be used, and set a policy for how long to keep it.
-          </p>
-          <p className="text-xs leading-relaxed text-white/65">
-            The{" "}
+            Designed for strict biometric data privacy compliance. The{" "}
             <a
               href="https://github.com/facenox/facenox"
               target="_blank"
@@ -85,7 +49,7 @@ export function IntroModal() {
               className="rounded px-0.5 text-cyan-400/80 underline decoration-cyan-400/30 underline-offset-4 transition-colors hover:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500/30 focus-visible:outline-none">
               source code
             </a>{" "}
-            is available for review.
+            is open and verifiable.
           </p>
 
           <div className="border-t border-white/5 pt-2 text-center">
@@ -101,14 +65,47 @@ export function IntroModal() {
       ),
     },
     {
-      title: "How would you like to use Facenox?",
-      isChoiceStep: true,
+      title: "Access records anywhere with Cloud",
       content: (
-        <div className="space-y-3">
-          <p className="text-[12.5px] leading-relaxed text-white/55">
-            Both options record attendance without internet. Cloud needs a connection to sync
-            records. You can change this later in{" "}
-            <span className="font-medium text-white/70">Settings → Cloud sync</span>.
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-white/80">
+            Facenox records attendance locally without internet. Connect Facenox Cloud to review
+            live logs from your phone or browser, backup records safely, and sync multiple devices.
+          </p>
+
+          <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] p-4">
+            <div className="mb-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Cloud className="size-4 text-cyan-400" />
+                <span className="text-xs font-semibold text-white">Included with Facenox Cloud</span>
+              </div>
+              <span className="rounded bg-cyan-500/15 px-1.5 py-0.5 text-[9px] font-bold text-cyan-300">
+                Recommended
+              </span>
+            </div>
+            <ul className="grid grid-cols-1 gap-2 text-xs text-white/70">
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 size-3.5 shrink-0 text-cyan-400" />
+                <span>Live attendance dashboard accessible on any phone or browser</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 size-3.5 shrink-0 text-cyan-400" />
+                <span>Automatic off-site backup if this kiosk hardware is damaged</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 size-3.5 shrink-0 text-cyan-400" />
+                <span>Multi-device synchronization across multiple branches or gates</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 size-3.5 shrink-0 text-cyan-400" />
+                <span>Employee portal with time-card (DTR) reviews and approvals</span>
+              </li>
+            </ul>
+          </div>
+
+          <p className="text-[11px] text-white/50">
+            Biometrics always run on this computer. You can pair or unpair anytime in{" "}
+            <span className="text-white/70">Settings → Cloud sync</span>.
           </p>
         </div>
       ),
@@ -116,8 +113,8 @@ export function IntroModal() {
   ]
 
   /** Completes the intro and optionally sets the cloud setup flag. */
-  const handleFinish = (choice: "offline" | "cloud") => {
-    if (choice === "cloud") {
+  const handleFinish = (enableCloud: boolean) => {
+    if (enableCloud) {
       setPendingCloudSetup(true)
     }
     setIsOpen(false)
@@ -129,8 +126,6 @@ export function IntroModal() {
   const handleNext = () => {
     if (step < steps.length - 1) {
       setStep(step + 1)
-    } else {
-      handleFinish(selectedPath)
     }
   }
 
@@ -144,7 +139,7 @@ export function IntroModal() {
   const isLastStep = step === steps.length - 1
 
   return (
-    <Modal isOpen={isOpen} maxWidth={isLastStep ? "max-w-[620px]" : "md"} hideCloseButton={true}>
+    <Modal isOpen={isOpen} maxWidth="max-w-[540px]" hideCloseButton={true}>
       <div className="relative -m-5 overflow-hidden bg-[var(--bg-secondary)]">
         {/* Progress Bar */}
         <div className="absolute top-0 right-0 left-0 h-1 bg-[rgba(255,255,255,0.06)]">
@@ -154,8 +149,8 @@ export function IntroModal() {
           />
         </div>
 
-        <div className="p-10">
-          <div className="mt-2 mb-10 overflow-hidden">
+        <div className="p-8 sm:p-10">
+          <div className="mt-2 mb-8 overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={step}
@@ -164,100 +159,12 @@ export function IntroModal() {
                 exit={{ opacity: 0, x: -12 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
                 style={{ willChange: "opacity, transform" }}>
-                <h2 className="mb-6 text-2xl font-bold tracking-tight text-white">
+                <h2 className="mb-5 text-2xl font-bold tracking-tight text-white">
                   {currentStep.title}
                 </h2>
-                <div
-                  className={`flex flex-col justify-center ${isLastStep ? "" : "min-h-[120px]"}`}>
+                <div className="flex min-h-[140px] flex-col justify-center">
                   {currentStep.content}
                 </div>
-
-                {/* Choice cards — only on the final step */}
-                {isLastStep && (
-                  <div className="mt-5 grid grid-cols-2 gap-4">
-                    {/* Offline Card */}
-                    <button
-                      onClick={() => setSelectedPath("offline")}
-                      onMouseEnter={() => setHoveredCard("offline")}
-                      onMouseLeave={() => setHoveredCard(null)}
-                      className={`group relative flex flex-col rounded-xl border p-5 text-left transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cyan-400/40 focus-visible:outline-none active:scale-[0.98] ${
-                        selectedPath === "offline" ? "border-white/20 bg-white/[0.04]"
-                        : hoveredCard === "offline" ? "border-white/12 bg-white/[0.02]"
-                        : "border-white/6 bg-white/[0.01] opacity-70"
-                      }`}>
-                      <div className="mb-3 flex items-center gap-2">
-                        <Shield
-                          className={`size-4 transition-colors ${
-                            selectedPath === "offline" || hoveredCard === "offline" ?
-                              "text-white"
-                            : "text-white/60"
-                          }`}
-                        />
-                        <span className="text-[14px] font-semibold text-white">
-                          Use this computer only
-                        </span>
-                        <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-medium text-white/60">
-                          Default
-                        </span>
-                      </div>
-                      <p className="mt-1.5 text-[11.5px] leading-relaxed text-white/50">
-                        Keep records on this computer. No Cloud account required.
-                      </p>
-                      {/* Active border indicator */}
-                      <motion.div
-                        className="pointer-events-none absolute inset-0 rounded-xl border-2 border-white/20"
-                        initial={false}
-                        animate={{ opacity: selectedPath === "offline" ? 1 : 0 }}
-                        transition={{ duration: 0.15 }}
-                      />
-                    </button>
-
-                    {/* Cloud Card */}
-                    <button
-                      onClick={() => setSelectedPath("cloud")}
-                      onMouseEnter={() => setHoveredCard("cloud")}
-                      onMouseLeave={() => setHoveredCard(null)}
-                      className={`group relative flex flex-col rounded-xl border p-5 text-left transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cyan-400/40 focus-visible:outline-none active:scale-[0.98] ${
-                        selectedPath === "cloud" ? "border-cyan-400/30 bg-cyan-500/[0.05]"
-                        : hoveredCard === "cloud" ? "border-cyan-400/20 bg-cyan-500/[0.02]"
-                        : "border-white/6 bg-white/[0.01] opacity-70"
-                      }`}>
-                      <div className="mb-3 flex items-center gap-2">
-                        <Cloud
-                          className={`size-4 transition-colors ${
-                            selectedPath === "cloud" || hoveredCard === "cloud" ?
-                              "text-cyan-400"
-                            : "text-white/60"
-                          }`}
-                        />
-                        <span className="text-[14px] font-semibold text-white">
-                          Connect Facenox Cloud
-                        </span>
-                      </div>
-                      <ul className="mt-1.5 space-y-1 text-[11px] leading-relaxed text-white/50">
-                        <li className="flex items-start gap-1.5">
-                          <Check className="mt-[3px] size-2.5 text-cyan-400/60" />
-                          <span>Review synced records in a browser</span>
-                        </li>
-                        <li className="flex items-start gap-1.5">
-                          <Check className="mt-[3px] size-2.5 text-cyan-400/60" />
-                          <span>Start free with one connected computer</span>
-                        </li>
-                        <li className="flex items-start gap-1.5">
-                          <Check className="mt-[3px] size-2.5 text-cyan-400/60" />
-                          <span>Paid plans add more devices and face-template sync</span>
-                        </li>
-                      </ul>
-                      {/* Active border indicator */}
-                      <motion.div
-                        className="pointer-events-none absolute inset-0 rounded-xl border-2 border-cyan-400/30"
-                        initial={false}
-                        animate={{ opacity: selectedPath === "cloud" ? 1 : 0 }}
-                        transition={{ duration: 0.15 }}
-                      />
-                    </button>
-                  </div>
-                )}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -266,7 +173,7 @@ export function IntroModal() {
             <button
               onClick={handleBack}
               disabled={step === 0}
-              className={`rounded-lg border-none! bg-transparent! px-8 pr-5 text-[11px] font-medium shadow-none! transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none ${
+              className={`rounded-lg border-none! bg-transparent! px-3 py-1.5 text-xs font-medium shadow-none! transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none ${
                 step === 0 ? "pointer-events-none opacity-0" : "text-white/55 hover:text-white"
               }`}>
               Back
@@ -283,11 +190,29 @@ export function IntroModal() {
               ))}
             </div>
 
-            <button
-              onClick={handleNext}
-              className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-8 py-2 text-[11px] font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
-              {isLastStep ? "Finish" : "Next"}
-            </button>
+            {isLastStep ?
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleFinish(false)}
+                  className="rounded-lg px-3 py-2 text-xs font-medium text-white/50 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
+                  Skip for now
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleFinish(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2 text-xs font-bold tracking-wide text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
+                  <Cloud className="size-3.5" />
+                  <span>Connect Cloud</span>
+                </button>
+              </div>
+            : <button
+                type="button"
+                onClick={handleNext}
+                className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-7 py-2 text-xs font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
+                Next
+              </button>
+            }
           </div>
         </div>
       </div>
