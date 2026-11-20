@@ -163,7 +163,7 @@ describe("ContentPanel anti-spoof prompt", () => {
     await waitFor(() => expect(create).toBeEnabled())
     fireEvent.click(create)
     expect(screen.getByPlaceholderText("Group name")).toBeInTheDocument()
-    expect(screen.getByRole("searchbox", { name: "Search groups" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "No groups yet" })).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
     await waitFor(() => expect(screen.queryByPlaceholderText("Group name")).not.toBeInTheDocument())
     expect(baseProps.setActiveSection).not.toHaveBeenCalled()
