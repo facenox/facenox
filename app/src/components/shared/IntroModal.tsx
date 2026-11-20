@@ -9,7 +9,7 @@ import { Cloud, Check } from "lucide-react"
  * followed by a streamlined prompt highlighting Facenox Cloud with a seamless opt-out.
  *
  * Steps 1–2: On-device architecture & biometric data protection
- * Step 3: Facenox Cloud value proposition with "Connect Cloud" CTA and "Skip for now"
+ * Step 3: Facenox Cloud value proposition with "Connect" CTA and "Skip for now"
  */
 export function IntroModal() {
   const { setHasSeenIntro, setPendingCloudSetup } = useUIStore()
@@ -26,7 +26,7 @@ export function IntroModal() {
             directly <strong>on this computer</strong>.
           </p>
           <p className="text-xs leading-relaxed text-white/65">
-            Your kiosk records attendance continuously even during power or internet disruptions.
+            Attendance is recorded continuously even during power or internet disruptions.
             When connected, records automatically mirror to your central dashboard.
           </p>
         </div>
@@ -90,7 +90,7 @@ export function IntroModal() {
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-3.5 shrink-0 text-cyan-400" />
-                <span>Automatic off-site backup if this kiosk hardware is damaged</span>
+                <span>Automatic off-site backup if this computer is damaged or lost</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-3.5 shrink-0 text-cyan-400" />
@@ -102,11 +102,6 @@ export function IntroModal() {
               </li>
             </ul>
           </div>
-
-          <p className="text-[11px] text-white/50">
-            Biometrics always run on this computer. You can pair or unpair anytime in{" "}
-            <span className="text-white/70">Settings → Cloud sync</span>.
-          </p>
         </div>
       ),
     },
@@ -203,7 +198,7 @@ export function IntroModal() {
                   onClick={() => handleFinish(true)}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2 text-xs font-bold tracking-wide text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
                   <Cloud className="size-3.5" />
-                  <span>Connect Cloud</span>
+                  <span>Connect</span>
                 </button>
               </div>
             : <button
