@@ -5,7 +5,7 @@ import type { EditingMember, MemberField } from "@/components/settings/sections/
 import { Tooltip } from "@/components/shared"
 
 interface MemberEntryProps {
-  member: AttendanceMember
+  member: AttendanceMember & { displayName?: string }
   editingMember: EditingMember | null
   editValue: string
   savingMember: string | null
@@ -69,7 +69,7 @@ export const MemberEntry = React.memo(
             : <div
                 onClick={() => onStartEditing(member, "name")}
                 className="cursor-pointer truncate text-[13px] font-semibold text-white/90 transition-colors hover:text-white">
-                {member.name}
+                {member.displayName ?? member.name}
               </div>
             }
 
@@ -145,7 +145,10 @@ export const MemberEntry = React.memo(
               }
               position="top">
               <button
-                onClick={() => !isDeleteDisabled && onDeleteMember(member.person_id, member.name)}
+                onClick={() =>
+                  !isDeleteDisabled &&
+                  onDeleteMember(member.person_id, member.displayName ?? member.name)
+                }
                 disabled={deletingMember === member.person_id || isDeleteDisabled}
                 className="flex h-7 w-7 items-center justify-center rounded-md border-0 bg-transparent text-white/55 shadow-none transition-all duration-300 outline-none hover:bg-red-500/10 hover:text-red-400 focus:outline-none disabled:opacity-25">
                 {deletingMember === member.person_id ?

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { attendanceManager, backendService } from "@/services"
-import { generateGroupDisplayNames } from "@/utils"
+import { generateDisplayNames, generateGroupDisplayNames } from "@/utils"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { useAttendanceStore } from "@/components/main/stores"
 import type { DialogAPI } from "@/components/shared"
@@ -97,7 +97,10 @@ export function useDatabaseManagement(
 
   // Filter groups and members based on search
   const filteredData = useMemo(() => {
-    const withDisplayNames = generateGroupDisplayNames(groupsWithMembers)
+    const withDisplayNames = generateGroupDisplayNames(groupsWithMembers).map((group) => ({
+      ...group,
+      members: generateDisplayNames(group.members),
+    }))
 
     if (!searchQuery.trim()) {
       return withDisplayNames
@@ -108,7 +111,7 @@ export function useDatabaseManagement(
       .map((group) => {
         const filteredMembers = group.members.filter(
           (member) =>
-            member.name.toLowerCase().includes(query) ||
+            member.displayName.toLowerCase().includes(query) ||
             member.role?.toLowerCase().includes(query) ||
             member.email?.toLowerCase().includes(query),
         )
@@ -117,7 +120,7 @@ export function useDatabaseManagement(
       .filter(
         (group) =>
           group.members.length > 0 ||
-          group.name.toLowerCase().includes(query) ||
+          group.displayName.toLowerCase().includes(query) ||
           group.id.toLowerCase().includes(query),
       )
   }, [groupsWithMembers, searchQuery])

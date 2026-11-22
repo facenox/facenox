@@ -1,7 +1,7 @@
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
 export interface GroupWithMembers extends AttendanceGroup {
-  members: AttendanceMember[]
+  members: (AttendanceMember & { displayName?: string })[]
   isLoading?: boolean
   displayName?: string
 }

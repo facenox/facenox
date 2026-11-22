@@ -1,3 +1,5 @@
+import { assignDirectoryDisplayNames } from "./directoryDisplayNames"
+
 export interface PersonWithName {
   person_id: string
   name: string
@@ -7,6 +9,7 @@ export interface PersonWithName {
 export interface HasPersonIdAndName {
   person_id: string
   name: string
+  group_id?: string
 }
 
 export interface PersonWithDisplayName extends PersonWithName {
@@ -16,36 +19,10 @@ export interface PersonWithDisplayName extends PersonWithName {
 export function generateDisplayNames<T extends HasPersonIdAndName>(
   persons: T[],
 ): (T & { displayName: string })[] {
-  const nameOccurrences = new Map<string, number>()
-  persons.forEach((person) => {
-    const normalizedName = person.name.toLowerCase()
-    const count = nameOccurrences.get(normalizedName) || 0
-    nameOccurrences.set(normalizedName, count + 1)
-  })
-
-  const nameCounters = new Map<string, number>()
-
-  return persons.map((person) => {
-    const normalizedName = person.name.toLowerCase()
-    const occurrences = nameOccurrences.get(normalizedName) || 1
-
-    if (occurrences === 1) {
-      return {
-        ...person,
-        displayName: person.name,
-      }
-    }
-
-    const currentCount = nameCounters.get(normalizedName) || 0
-    nameCounters.set(normalizedName, currentCount + 1)
-
-    const displayName = currentCount === 0 ? person.name : `${person.name} (${currentCount + 1})`
-
-    return {
-      ...person,
-      displayName,
-    }
-  })
+  return assignDirectoryDisplayNames(persons, (person) => ({
+    scope: person.group_id ?? "",
+    id: person.person_id,
+  }))
 }
 
 export function getDisplayName<T extends HasPersonIdAndName>(
@@ -67,6 +44,7 @@ export function createDisplayNameMap<T extends HasPersonIdAndName>(
 export interface HasIdAndName {
   id: string
   name: string
+  created_at?: Date | string | null
 }
 
 /**
@@ -77,34 +55,10 @@ export interface HasIdAndName {
 export function generateGroupDisplayNames<T extends HasIdAndName>(
   groups: T[],
 ): (T & { displayName: string })[] {
-  const nameOccurrences = new Map<string, number>()
-  groups.forEach((group) => {
-    const normalizedName = group.name.toLowerCase()
-    const count = nameOccurrences.get(normalizedName) || 0
-    nameOccurrences.set(normalizedName, count + 1)
-  })
-
-  const nameCounters = new Map<string, number>()
-
-  return groups.map((group) => {
-    const normalizedName = group.name.toLowerCase()
-    const occurrences = nameOccurrences.get(normalizedName) || 1
-
-    if (occurrences === 1) {
-      return {
-        ...group,
-        displayName: group.name,
-      }
-    }
-
-    const currentCount = nameCounters.get(normalizedName) || 0
-    nameCounters.set(normalizedName, currentCount + 1)
-
-    const displayName = currentCount === 0 ? group.name : `${group.name} (${currentCount + 1})`
-
-    return {
-      ...group,
-      displayName,
-    }
-  })
+  // A standalone directory is local, and a paired directory is scoped to its location.
+  return assignDirectoryDisplayNames(groups, (group) => ({
+    scope: "",
+    id: group.id,
+    createdAt: group.created_at,
+  }))
 }
