@@ -69,34 +69,55 @@ describe("Attendance Retention Policy (Unified Constrained Control)", () => {
     ).toBeInTheDocument()
   })
 
-  it("preserves disabled automatic cleanup under a capped cloud plan", () => {
-    const onDataRetentionChange = vi.fn()
+  it.each([0, 7, 30])(
+    "starts local cleanup at 90 days with a %i-day Cloud window",
+    (cloudRetentionDays) => {
+      const onDataRetentionChange = vi.fn()
+      render(
+        <Attendance
+          attendanceSettings={{
+            ...baseSettings,
+            dataRetentionDays: 0,
+            cloudRetentionDays,
+          }}
+          onSpoofDetectionToggle={vi.fn()}
+          onMaxRecognitionFacesChange={vi.fn()}
+          onDataRetentionChange={onDataRetentionChange}
+          isPaired={true}
+        />,
+      )
+
+      // Local automatic cleanup remains disabled regardless of cloud plan
+      const switchEl = screen.getByRole("switch", { name: "Retention policy" })
+      expect(switchEl).toHaveAttribute("aria-checked", "false")
+      expect(
+        screen.getByText(
+          "Automatic cleanup is off. Local attendance records are kept until you delete them.",
+        ),
+      ).toBeInTheDocument()
+
+      if (cloudRetentionDays === 0) {
+        expect(screen.getByText(/Cloud plan: History unavailable/i)).toBeInTheDocument()
+      }
+
+      fireEvent.click(switchEl)
+      expect(onDataRetentionChange).toHaveBeenCalledWith(90)
+    },
+  )
+
+  it("opens Cloud sync from General when the organization policy is unavailable", () => {
+    const onOpenCloudSync = vi.fn()
     render(
       <Attendance
-        attendanceSettings={{
-          ...baseSettings,
-          dataRetentionDays: 0,
-          cloudRetentionDays: 30,
-        }}
+        attendanceSettings={{ ...baseSettings, cloudPolicyReady: false }}
         onSpoofDetectionToggle={vi.fn()}
         onMaxRecognitionFacesChange={vi.fn()}
-        onDataRetentionChange={onDataRetentionChange}
-        isPaired={true}
+        onDataRetentionChange={vi.fn()}
+        onOpenCloudSync={onOpenCloudSync}
       />,
     )
-
-    // Local automatic cleanup remains disabled regardless of cloud plan
-    const switchEl = screen.getByRole("switch", { name: "Retention policy" })
-    expect(switchEl).toHaveAttribute("aria-checked", "false")
-    expect(
-      screen.getByText(
-        "Automatic cleanup is off. Local attendance records are kept until you delete them.",
-      ),
-    ).toBeInTheDocument()
-
-    // Turning on the switch activates cleanup with capped plan ceiling (30 days)
-    fireEvent.click(switchEl)
-    expect(onDataRetentionChange).toHaveBeenCalledWith(30)
+    fireEvent.click(screen.getByRole("button", { name: "Cloud sync" }))
+    expect(onOpenCloudSync).toHaveBeenCalledOnce()
   })
 
   it("allows enabling and disabling automatic cleanup with an unlimited cloud plan", () => {

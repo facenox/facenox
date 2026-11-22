@@ -273,6 +273,8 @@ class AttendanceSession(Base, SyncMixin):
         return {
             "class_start_time": rule.class_start_time,
             "class_end_time": rule.class_end_time,
+            "late_threshold_enabled": rule.late_threshold_enabled,
+            "late_threshold_minutes": rule.late_threshold_minutes,
             "attendance_mode": mode,
             "scan_behavior": rule.scan_behavior or "automatic",
             "min_checkout_delay_minutes": rule.min_checkout_delay_minutes

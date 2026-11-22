@@ -10,6 +10,7 @@ interface AttendanceProps {
   onSpoofDetectionToggle: (enabled: boolean) => void
   onMaxRecognitionFacesChange: (count: number) => void
   onDataRetentionChange: (days: number) => void
+  onOpenCloudSync?: () => void
   isPaired?: boolean
 }
 
@@ -21,6 +22,7 @@ export function Attendance({
   onSpoofDetectionToggle,
   onMaxRecognitionFacesChange,
   onDataRetentionChange,
+  onOpenCloudSync,
   isPaired = false,
 }: AttendanceProps) {
   const adminPinEnabled = useUIStore((state) => state.adminPinEnabled)
@@ -145,10 +147,11 @@ export function Attendance({
     ) ?
       attendanceSettings.cloudRetentionDays
     : null
-  const isCloudUnlimited =
-    isPaired &&
-    typeof attendanceSettings.cloudRetentionDays === "number" &&
-    attendanceSettings.cloudRetentionDays <= 0
+  const cloudHistoryLabel =
+    cloudCeiling ? `${cloudCeiling}d window`
+    : isPaired && attendanceSettings.cloudRetentionDays === -1 ? "Unlimited"
+    : isPaired && attendanceSettings.cloudRetentionDays === 0 ? "History unavailable"
+    : null
 
   const rawLocalDays = attendanceSettings.dataRetentionDays ?? 0
   const effectiveDays = Math.max(0, rawLocalDays)
@@ -328,12 +331,14 @@ export function Attendance({
             </div>
 
             {attendanceSettings.cloudPolicyReady === false ?
-              <button
-                type="button"
-                onClick={() => useUIStore.getState().requestOpenSettings("remote-sync")}
-                className="shrink-0 text-xs text-cyan-400">
-                Cloud sync
-              </button>
+              onOpenCloudSync && (
+                <button
+                  type="button"
+                  onClick={onOpenCloudSync}
+                  className="shrink-0 text-xs text-cyan-400">
+                  Cloud sync
+                </button>
+              )
             : <Switch
                 checked={
                   attendanceSettings.enableSpoofDetection || attendanceSettings.forceLiveness
@@ -347,27 +352,23 @@ export function Attendance({
 
           <div className="h-px w-full bg-white/8" />
 
-          {/* Retention Policy (Local Kiosk Cache with Cloud Plan Constraint) */}
+          {/* Local attendance retention */}
           <div className="flex flex-col">
             <div className="flex items-center gap-4 py-4">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <div className="text-sm font-medium text-white/90">Retention policy</div>
-                  {isPaired &&
-                    (cloudCeiling ?
-                      <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                        <Cloud className="size-2.5" /> Cloud plan: {cloudCeiling}d window
-                      </span>
-                    : isCloudUnlimited ?
-                      <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                        <Cloud className="size-2.5" /> Cloud plan: Unlimited
-                      </span>
-                    : null)}
+                  {cloudHistoryLabel && (
+                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                      <Cloud className="size-2.5" /> Cloud plan: {cloudHistoryLabel}
+                    </span>
+                  )}
                   <InfoPopover
                     title="Retention policy"
                     description="Choose how many days of local attendance records to keep."
                     details={[
                       "Older records are removed when the local service starts. Member profiles, groups, and face templates are unchanged.",
+                      "Turning this on starts with a 90-day local cutoff.",
                       "Turning this off preserves local attendance records until you delete them.",
                       ...(isPaired && cloudCeiling ?
                         [
@@ -381,7 +382,7 @@ export function Attendance({
                 <div className="relative min-h-4">
                   <AnimatePresence mode="wait">
                     <motion.div
-                      key={`${cloudCeiling}-${isCloudUnlimited}-${effectiveDays}`}
+                      key={effectiveDays}
                       initial={{ opacity: 0, y: -2 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
@@ -403,14 +404,7 @@ export function Attendance({
 
               <Switch
                 checked={effectiveDays > 0}
-                onChange={(checked) => {
-                  if (checked) {
-                    const defaultDays = cloudCeiling ? Math.min(90, cloudCeiling) : 90
-                    onDataRetentionChange(defaultDays)
-                  } else {
-                    onDataRetentionChange(0)
-                  }
-                }}
+                onChange={(checked) => onDataRetentionChange(checked ? 90 : 0)}
                 ariaLabel="Retention policy"
               />
             </div>

@@ -212,6 +212,7 @@ describe("Reports", () => {
         late_minutes: 0,
         visit_number: 2,
         notes: "Reviewed",
+        session: null,
       }
       const update = vi
         .spyOn(attendanceManager, "updateSession")

@@ -1,4 +1,4 @@
-import Store from "electron-store"
+import Store, { type Options as StoreOptions } from "electron-store"
 import { app, safeStorage } from "electron"
 import path from "node:path"
 import fs from "node:fs"
@@ -18,14 +18,9 @@ interface TypedStore<T> {
   store: T
 }
 
-const storeOptions: {
-  name: string
-  defaults: PersistentSettingsSchema
-  cwd?: string
-  projectName?: string
-} = {
+const storeOptions: StoreOptions<PersistentSettingsSchema> & { projectName: string } = {
   name: "config",
-  defaults: defaultSettings,
+  defaults: { ...defaultSettings },
   projectName: "Facenox",
 }
 

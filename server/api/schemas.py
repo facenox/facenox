@@ -280,6 +280,8 @@ class AttendanceRecordVoidRequest(BaseModel):
 class AppliedScheduleResponse(BaseModel):
     class_start_time: str
     class_end_time: Optional[str] = None
+    late_threshold_enabled: Optional[bool] = None
+    late_threshold_minutes: Optional[int] = None
     attendance_mode: str
     scan_behavior: Optional[str] = None
     min_checkout_delay_minutes: Optional[int] = None

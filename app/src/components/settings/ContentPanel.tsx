@@ -668,6 +668,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
                 <Attendance
                   attendanceSettings={attendanceSettings}
+                  onOpenCloudSync={() => setActiveSection("remote-sync")}
                   onSpoofDetectionToggle={handleSpoofDetectionToggle}
                   onMaxRecognitionFacesChange={(count) =>
                     updateAttendanceSetting({ maxRecognitionFacesPerFrame: count })

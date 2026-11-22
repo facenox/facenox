@@ -83,6 +83,8 @@ export const attendanceSessionSchema = z.object({
     .object({
       class_start_time: z.string(),
       class_end_time: z.string().nullable().optional(),
+      late_threshold_enabled: z.boolean().nullable().optional(),
+      late_threshold_minutes: z.number().int().nonnegative().nullable().optional(),
       attendance_mode: z.enum(["attendance", "work_hours", "visits"]),
       scan_behavior: z.enum(["automatic", "entry_only", "exit_only"]).nullable().optional(),
       min_checkout_delay_minutes: z.number().nonnegative().nullable().optional(),

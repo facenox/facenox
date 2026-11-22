@@ -1081,7 +1081,10 @@ export class BackgroundSyncManager {
               headers: { Authorization: `Bearer ${deviceToken}` },
               signal: this.requestSignal(30000),
             })
-            const supported = capabilities.ok ? await capabilities.json().catch(() => null) : null
+            const supported = (
+              capabilities.ok ?
+                await capabilities.json().catch(() => null)
+              : null) as { capabilities?: { session_deletions?: boolean } } | null
             if (supported?.capabilities?.session_deletions !== true) {
               throw new Error(
                 "Update Facenox Cloud before syncing removed attendance visits. Deletions remain queued.",

@@ -26,6 +26,8 @@ def departure_data(test_client, set_api_token):
                 "track_checkout": True,
                 "class_start_time": "08:00",
                 "class_end_time": "17:00",
+                "late_threshold_enabled": True,
+                "late_threshold_minutes": 10,
             },
         },
     )
@@ -111,6 +113,8 @@ def test_historical_schedule_survives_group_schedule_changes(departure_data, end
     assert before["applied_schedule"] == {
         "class_start_time": "08:00",
         "class_end_time": "17:00",
+        "late_threshold_enabled": True,
+        "late_threshold_minutes": 10,
         "attendance_mode": "work_hours",
         "scan_behavior": "automatic",
         "min_checkout_delay_minutes": 15,

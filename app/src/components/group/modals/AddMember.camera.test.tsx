@@ -13,24 +13,25 @@ const animation = vi.hoisted(() => ({ holdPreviewMount: false }))
 // The gate below still exercises a preview mounted after enrollment opens.
 vi.mock("framer-motion", async () => {
   const { forwardRef, isValidElement } = await import("react")
+  const animationProps = ["initial", "animate", "exit", "transition", "layout", "layoutId"] as const
+  type MotionProps = HTMLAttributes<HTMLDivElement> &
+    Partial<Record<(typeof animationProps)[number], unknown>>
   return {
     AnimatePresence: ({ children }: { children: ReactNode }) =>
       animation.holdPreviewMount && isValidElement(children) && children.key === "expanded" ?
         null
       : children,
     motion: {
-      div: forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement> & Record<string, unknown>>(
-        function MotionDiv({ children, ...props }, ref) {
-          for (const key of ["initial", "animate", "exit", "transition", "layout", "layoutId"]) {
-            delete props[key]
-          }
-          return (
-            <div {...props} ref={ref}>
-              {children}
-            </div>
-          )
-        },
-      ),
+      div: forwardRef<HTMLDivElement, MotionProps>(function MotionDiv({ children, ...props }, ref) {
+        for (const key of animationProps) {
+          delete props[key]
+        }
+        return (
+          <div {...props} ref={ref}>
+            {children}
+          </div>
+        )
+      }),
     },
   }
 })
