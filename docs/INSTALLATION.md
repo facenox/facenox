@@ -59,20 +59,7 @@ Install backend dependencies:
 pip install -r server/requirements.txt
 ```
 
-On Linux, `opencv-python` also depends on system GLib libraries that are not bundled in the Python wheel. If backend startup fails with an error like `ImportError: libgthread-2.0.so.0: cannot open shared object file`, install the GLib runtime from your distro first.
-
-Examples:
-
-```bash
-# openSUSE Tumbleweed
-sudo zypper install libgthread-2_0-0
-
-# Debian / Ubuntu
-sudo apt install libglib2.0-0
-
-# Fedora
-sudo dnf install glib2
-```
+If your existing virtual environment has `opencv-python`, recreate it before installing these requirements. Both OpenCV wheels use the `cv2` namespace.
 
 Optional dependency sets (run inside `server/` or point to it):
 
@@ -131,11 +118,11 @@ pnpm dist:linux
 
 Desktop build output is written under `app/dist/` and related build folders.
 
-When packaging the Python backend directly, make sure the build environment has:
+To package just the Python backend, run the build script. It creates a temporary virtual environment and installs the dependencies from `requirements-build.txt`.
 
 ```bash
 cd server
-pip install -r requirements-build.txt
+python build_backend.py --test
 ```
 
 ## Troubleshooting

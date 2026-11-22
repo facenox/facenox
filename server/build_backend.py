@@ -5,12 +5,18 @@ Handles cross-platform builds and optimization
 """
 
 import argparse
+import os
 import platform
 import shutil
 import subprocess
 import sys
 import time
+import venv
 from pathlib import Path
+from tempfile import TemporaryDirectory
+
+
+BACKEND_DIR = Path(__file__).resolve().parent
 
 
 def get_platform_info():
@@ -28,68 +34,15 @@ def get_platform_info():
         return system, machine
 
 
-def check_dependencies():
-    """Check if required dependencies are installed"""
-
-    package_imports = {
-        "pyinstaller": "PyInstaller",
-        "fastapi": "fastapi",
-        "uvicorn": "uvicorn",
-        "opencv-python": "cv2",
-        "onnxruntime": "onnxruntime",
-        "numpy": "numpy",
-        "pydantic": "pydantic",
-        "ulid": "ulid",
-    }
-
-    missing_packages = []
-
-    for package_name, import_name in package_imports.items():
-        try:
-            __import__(import_name)
-        except ImportError:
-            missing_packages.append(package_name)
-
-    if missing_packages:
-        print(f"[ERROR] Missing required packages: {', '.join(missing_packages)}")
-        print("Install them with: pip install " + " ".join(missing_packages))
-        return False
-
-    print("[SUCCESS] All required packages are installed")
-    return True
-
-
 def clean_build_dirs():
     """Clean previous build directories"""
     dirs_to_clean = ["build", "dist"]
 
     for dir_name in dirs_to_clean:
-        dir_path = Path(dir_name)
+        dir_path = BACKEND_DIR / dir_name
         if dir_path.exists():
             print(f"Cleaning {dir_path}")
             shutil.rmtree(dir_path)
-
-
-def install_pyinstaller():
-    """Install PyInstaller if not available"""
-    try:
-        import importlib.util
-
-        if importlib.util.find_spec("PyInstaller") is not None:
-            print("[SUCCESS] PyInstaller is already installed")
-            return True
-        raise ImportError
-    except ImportError:
-        print("Installing PyInstaller...")
-        try:
-            subprocess.check_call(
-                [sys.executable, "-m", "pip", "install", "pyinstaller"]
-            )
-            print("[SUCCESS] PyInstaller installed successfully")
-            return True
-        except subprocess.CalledProcessError:
-            print("[ERROR] Failed to install PyInstaller")
-            return False
 
 
 def build_backend(debug=False, onefile=True, clean=True):
@@ -101,61 +54,52 @@ def build_backend(debug=False, onefile=True, clean=True):
     platform_name, arch = get_platform_info()
     print(f"Platform: {platform_name}-{arch}")
 
-    # Check dependencies
-    if not check_dependencies():
-        return False
-
-    # Install PyInstaller if needed
-    if not install_pyinstaller():
-        return False
-
-    if clean:
-        clean_build_dirs()
-
-    cmd = [
-        sys.executable,
-        "-m",
-        "PyInstaller",
-        "--clean",  # Clean PyInstaller cache
-        "--noconfirm",  # Replace output directory without asking
-    ]
-
+    pyinstaller_args = ["--clean", "--noconfirm"]
     if debug:
-        cmd.extend(["--debug", "all"])
-
-    cmd.append("facenox_backend.spec")
-
-    print("Building backend... This may take several minutes")
-
+        pyinstaller_args.extend(["--debug", "all"])
+    pyinstaller_args.append("facenox_backend.spec")
     start_time = time.time()
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        with TemporaryDirectory(prefix="facenox-backend-build-") as build_dir:
+            print("Preparing isolated build environment...", flush=True)
+            venv.EnvBuilder(with_pip=True).create(build_dir)
+            executable = (
+                "Scripts/python.exe" if sys.platform == "win32" else "bin/python"
+            )
+            python = Path(build_dir) / executable
+            subprocess.run(
+                [python, "-I", "-m", "pip", "install", "-r", "requirements-build.txt"],
+                cwd=BACKEND_DIR,
+                check=True,
+            )
 
-        if result.returncode == 0:
-            build_time = time.time() - start_time
-            print(f"[SUCCESS] Build completed successfully in {build_time:.1f} seconds")
+            if clean:
+                clean_build_dirs()
 
-            dist_dir = Path("dist")
-            if dist_dir.exists():
-                print(f"Output directory: {dist_dir.absolute()}")
-
-                for item in dist_dir.iterdir():
-                    if item.is_file():
-                        size_mb = item.stat().st_size / (1024 * 1024)
-                        print(f"   [FILE] {item.name} ({size_mb:.1f} MB)")
-                    elif item.is_dir():
-                        print(f"   [DIR] {item.name}/")
-
-            return True
-        else:
-            print("[ERROR] Build failed!")
-            print("STDERR:", result.stderr)
-            return False
-
+            print("Building backend... This may take several minutes", flush=True)
+            subprocess.run(
+                [python, "-I", "-m", "PyInstaller", *pyinstaller_args],
+                cwd=BACKEND_DIR,
+                check=True,
+            )
     except Exception as e:
         print(f"[ERROR] Build error: {e}")
         return False
+
+    build_time = time.time() - start_time
+    print(f"[SUCCESS] Build completed successfully in {build_time:.1f} seconds")
+
+    dist_dir = BACKEND_DIR / "dist"
+    print(f"Output directory: {dist_dir}")
+    for item in dist_dir.iterdir():
+        if item.is_file():
+            size_mb = item.stat().st_size / (1024 * 1024)
+            print(f"   [FILE] {item.name} ({size_mb:.1f} MB)")
+        elif item.is_dir():
+            print(f"   [DIR] {item.name}/")
+
+    return True
 
 
 def test_executable():
@@ -163,9 +107,9 @@ def test_executable():
     platform_name, _ = get_platform_info()
 
     if platform_name == "win":
-        exe_path = Path("dist/server.exe")
+        exe_path = BACKEND_DIR / "dist" / "server.exe"
     else:
-        exe_path = Path("dist/server")
+        exe_path = BACKEND_DIR / "dist" / "server"
 
     if not exe_path.exists():
         print("[ERROR] Executable not found")
@@ -174,9 +118,19 @@ def test_executable():
     print("Testing executable...")
 
     try:
-        result = subprocess.run(
-            [str(exe_path), "--help"], capture_output=True, text=True, timeout=10
-        )
+        with TemporaryDirectory(prefix="facenox-backend-smoke-") as smoke_dir:
+            env = dict(
+                os.environ, FACENOX_DATA_DIR=smoke_dir, FACENOX_LOG_DIR=smoke_dir
+            )
+            env.pop("FACENOX_ACTIVE_DB_PATH", None)
+            env.pop("FACENOX_LEGACY_DATA_DIR", None)
+            result = subprocess.run(
+                [str(exe_path), "--help"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                env=env,
+            )
 
         if result.returncode == 0:
             print("[SUCCESS] Executable test passed")
@@ -187,8 +141,8 @@ def test_executable():
             return False
 
     except subprocess.TimeoutExpired:
-        print("[WARNING] Executable test timed out (this might be normal)")
-        return True
+        print("[ERROR] Executable test timed out")
+        return False
     except Exception as e:
         print(f"[ERROR] Executable test error: {e}")
         return False
@@ -219,7 +173,7 @@ def main():
     )
 
     if success and args.test:
-        test_executable()
+        success = test_executable()
 
     if success:
         print("\nBuild completed successfully!")

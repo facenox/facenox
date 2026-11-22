@@ -37,7 +37,7 @@ runtime_hooks = []
 
 a = Analysis(
     ['main.py'],
-    pathex=[],
+    pathex=[SPECPATH],
     binaries=[],
     datas=onnx_datas + collect_data_files("tzdata") + [
         ('core/models', 'core/models'),  # Models moved to core/models

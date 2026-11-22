@@ -22,27 +22,9 @@ if [ ! -f "main.py" ]; then
     exit 1
 fi
 
-# Create virtual environment if it doesn't exist
-if [ ! -d "venv" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv venv
-fi
-
-# Activate virtual environment
-echo "Activating virtual environment..."
-source venv/bin/activate
-
-# Install/upgrade PyInstaller
-echo "Installing/upgrading PyInstaller..."
-pip install --upgrade pyinstaller
-
-# Install required dependencies
-echo "Installing required dependencies..."
-pip install -r requirements.txt
-
 # Run the build script
 echo "Starting build process..."
-python build_backend.py --test
+python3 build_backend.py --test
 
 echo ""
 echo "========================================"
@@ -52,6 +34,3 @@ echo ""
 echo "The executable is located in: dist/server"
 echo "You can now integrate it with your Electron app."
 echo ""
-
-# Deactivate virtual environment
-deactivate

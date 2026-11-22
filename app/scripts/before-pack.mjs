@@ -44,16 +44,6 @@ async function beforePack(context) {
       }
     }
 
-    console.log("Installing Python dependencies...")
-    execSync("python -m pip install -r requirements.txt", {
-      stdio: "inherit",
-      cwd: backendDir,
-    })
-    execSync("python -m pip install -r requirements-build.txt", {
-      stdio: "inherit",
-      cwd: backendDir,
-    })
-
     console.log("Building backend with PyInstaller...")
     execSync("python build_backend.py", { stdio: "inherit", cwd: backendDir })
 

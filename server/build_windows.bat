@@ -23,14 +23,6 @@ if not exist "main.py" (
     exit /b 1
 )
 
-REM Install/upgrade PyInstaller
-echo Installing/upgrading PyInstaller...
-python -m pip install --upgrade pyinstaller
-
-REM Install required dependencies
-echo Installing required dependencies...
-python -m pip install -r requirements.txt
-
 REM Run the build script
 echo Starting build process...
 python build_backend.py --test

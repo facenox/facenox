@@ -70,7 +70,7 @@ https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist
 
 ## `ImportError: libgthread-2.0.so.0` on Linux
 
-This means the Python `opencv-python` package imported successfully enough to load its native extension, but your OS is missing the GLib thread runtime that OpenCV expects.
+Older Facenox builds and development environments that still have the full `opencv-python` wheel can hit this error if the GLib thread runtime is missing. For development, recreate the virtual environment and install the current `server/requirements.txt` to use the headless wheel.
 
 Install the system package that provides `libgthread-2.0.so.0`, then restart the app.
 
