@@ -1,3 +1,4 @@
+import { escapeCsvCell } from "../../shared/csv.js"
 import { app, Notification, powerSaveBlocker } from "electron"
 import path from "node:path"
 import fs from "node:fs/promises"
@@ -344,7 +345,7 @@ export class AutoExportManager {
     if (format === "individual_csvs") {
       for (const { group, header, rows } of processedGroups) {
         const csvContent = [header, ...rows]
-          .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+          .map((row) => row.map(escapeCsvCell).join(","))
           .join("\n")
         const filename = sanitizeFilename(`${group.name} - Attendance (${dateStr}).csv`)
         const filePath = path.join(targetDir, filename)
@@ -372,7 +373,7 @@ export class AutoExportManager {
         }
       }
       const csvContent = [combinedHeader, ...combinedRows]
-        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+        .map((row) => row.map(escapeCsvCell).join(","))
         .join("\n")
       const filename = sanitizeFilename(`All Groups Combined Attendance (${dateStr}).csv`)
       const filePath = path.join(targetDir, filename)

@@ -232,6 +232,7 @@ export class AttendanceManager {
 
   async addRecord(record: {
     person_id: string
+    request_id?: string
     timestamp?: Date
     confidence?: number
     location?: string

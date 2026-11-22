@@ -1,3 +1,4 @@
+import { escapeCsvCell } from "@/shared/csv"
 import type { RowData, ColumnKey } from "@/components/group/sections/reports/types"
 import { parseLocalDate, generateDateRange, createDisplayNameMap, formatDuration } from "@/utils"
 import { attendanceManager } from "@/services/AttendanceManager"
@@ -60,9 +61,7 @@ export function exportReportToCSV(
       })
     })
 
-    const csvContent = [header, ...rows]
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-      .join("\n")
+    const csvContent = [header, ...rows].map((row) => row.map(escapeCsvCell).join(",")).join("\n")
 
     const blob = new Blob([csvContent], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
@@ -449,9 +448,7 @@ export async function exportAllGroupsReportToIndividualCSVs(
 
     for (let i = 0; i < processedGroups.length; i++) {
       const { group, header, rows } = processedGroups[i]
-      const csvContent = [header, ...rows]
-        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-        .join("\n")
+      const csvContent = [header, ...rows].map((row) => row.map(escapeCsvCell).join(",")).join("\n")
 
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
       const filename = sanitizeFilename(`${group.name} - Attendance (${dateRange}).csv`)
@@ -514,7 +511,7 @@ export async function exportAllGroupsReportToCSV(
     }
 
     const csvContent = [combinedHeader, ...combinedRows]
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .map((row) => row.map(escapeCsvCell).join(","))
       .join("\n")
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })

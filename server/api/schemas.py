@@ -2,7 +2,14 @@
 
 from datetime import datetime
 from typing import Dict, List, Optional
-from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    ConfigDict,
+    UUID4,
+    field_validator,
+    model_validator,
+)
 from enum import Enum
 from zoneinfo import ZoneInfo
 
@@ -225,6 +232,7 @@ class AttendanceMemberResponse(CapturedAttendanceResponse):
 
 # Record Models
 class AttendanceRecordCreate(BaseModel):
+    request_id: Optional[UUID4] = None
     person_id: str = Field(..., min_length=1)
     timestamp: Optional[datetime] = None
     confidence: float = Field(1.0, ge=0.0, le=1.0)

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertTriangle, Clipboard, Plus, Loader2, Search, UserX } from "lucide-react"
 import { attendanceManager } from "@/services/AttendanceManager"
@@ -27,6 +27,12 @@ export const ManualEntryModal = ({
   onAddMember,
   currentGroup,
 }: ManualEntryModalProps) => {
+  const pendingEntry = useRef<{
+    personId: string
+    notes: string
+    id: string
+    timestamp: Date
+  } | null>(null)
   const [confirmingMember, setConfirmingMember] = useState<AttendanceMember | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [manualNote, setManualNote] = useState("")
@@ -96,6 +102,7 @@ export const ManualEntryModal = ({
   }
 
   const handleClose = () => {
+    pendingEntry.current = null
     setSearchQuery("")
     setManualNote("")
     setConfirmingMember(null)
@@ -106,6 +113,7 @@ export const ManualEntryModal = ({
   }
 
   const handleManualEntry = (member: AttendanceMember) => {
+    pendingEntry.current = null
     setManualNote("")
     setError(null)
     setConfirmingMember(member)
@@ -118,17 +126,29 @@ export const ManualEntryModal = ({
     setSubmittingId(confirmingMember.person_id)
     setError(null)
 
+    const personId = confirmingMember.person_id
+    const notes = manualNote.trim() || "Manual entry by admin"
+    let entry = pendingEntry.current
+    if (!entry || entry.personId !== personId || entry.notes !== notes) {
+      entry = { personId, notes, id: crypto.randomUUID(), timestamp: new Date() }
+      pendingEntry.current = entry
+    }
+
     try {
       const record = await attendanceManager.addRecord({
-        person_id: confirmingMember.person_id,
-        timestamp: new Date(),
+        person_id: entry.personId,
+        request_id: entry.id,
+        timestamp: entry.timestamp,
         is_manual: true,
-        notes: manualNote.trim() || "Manual entry by admin",
+        notes: entry.notes,
         created_by: "desktop_admin",
       })
 
       const store = useAttendanceStore.getState()
-      store.setRecentAttendance([record, ...store.recentAttendance])
+      store.setRecentAttendance([
+        record,
+        ...store.recentAttendance.filter((existing) => existing.id !== record.id),
+      ])
 
       await Promise.resolve(onSuccess())
       handleClose()

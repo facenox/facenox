@@ -210,6 +210,7 @@ export class RecordManager {
 
   async addRecord(record: {
     person_id: string
+    request_id?: string
     timestamp?: Date
     confidence?: number
     location?: string
@@ -220,6 +221,7 @@ export class RecordManager {
     try {
       const recordData = {
         ...record,
+        request_id: record.request_id ?? crypto.randomUUID(),
         timestamp: record.timestamp ? this.toApiDateTimeParam(record.timestamp) : undefined,
         confidence: record.confidence ?? 1.0,
         is_manual: true,

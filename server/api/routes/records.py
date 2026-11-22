@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, time, timezone
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
 
 from api.schemas import (
     AttendanceRecordCreate,
@@ -24,13 +25,56 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="", tags=["records"])
 
 
+async def _get_replayed_record(
+    repo: AttendanceRepository, record_id: str, requested: AttendanceRecordCreate
+):
+    record = await repo.get_record(record_id, include_voided=True)
+    if record is None:
+        return None
+    if requested.timestamp is not None:
+        settings = await repo.get_settings()
+        requested_at = manual_event_time(
+            requested.timestamp, settings.attendance_timezone
+        )
+        recorded_at = event_time(record, "timestamp")
+        if recorded_at is None or (
+            requested_at.astimezone(timezone.utc)
+            != recorded_at.astimezone(timezone.utc)
+        ):
+            raise HTTPException(
+                status_code=409, detail="Attendance request ID is already in use."
+            )
+    if (
+        record.person_id != requested.person_id
+        or record.confidence != requested.confidence
+        or record.location != requested.location
+        or record.device_id != requested.device_id
+        or record.event_type != requested.event_type
+        or record.notes != requested.notes
+        or record.is_manual != requested.is_manual
+        or record.created_by
+        != (requested.created_by or ("desktop_admin" if requested.is_manual else None))
+    ):
+        raise HTTPException(
+            status_code=409, detail="Attendance request ID is already in use."
+        )
+    return record
+
+
 @router.post("/records", response_model=AttendanceRecordResponse)
 async def add_record(
     record_data: AttendanceRecordCreate,
     repo: AttendanceRepository = Depends(get_repository),
 ):
-    """Add a new attendance record"""
+    """Add a new attendance record or return the prior result of a retry."""
+    retry_record_id = (
+        f"request_{record_data.request_id}" if record_data.request_id else None
+    )
     try:
+        if retry_record_id:
+            replay = await _get_replayed_record(repo, retry_record_id, record_data)
+            if replay is not None:
+                return replay
         # Check if member exists
         member = await repo.get_member(record_data.person_id)
         if not member:
@@ -38,7 +82,7 @@ async def add_record(
 
         # Prepare record data
         service = AttendanceService(repo)
-        record_id = service.generate_id()
+        record_id = retry_record_id or service.generate_id()
         settings = await repo.get_settings()
         timestamp = manual_event_time(
             record_data.timestamp or get_time_authority().current_time_local(),
@@ -87,6 +131,16 @@ async def add_record(
 
         return created_record
 
+    except IntegrityError:
+        await repo.session.rollback()
+        if retry_record_id:
+            replay = await _get_replayed_record(repo, retry_record_id, record_data)
+            if replay is not None:
+                return replay
+        logger.exception("Attendance record write conflicted")
+        raise HTTPException(
+            status_code=409, detail="Attendance record could not be saved."
+        )
     except HTTPException:
         raise
     except ValueError as e:
