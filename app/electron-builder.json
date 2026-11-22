@@ -5,19 +5,19 @@
   "productName": "Facenox",
   "icon": "./public/icons/logo.png",
   "beforePack": "scripts/before-pack.mjs",
+  "extraResources": [
+    {
+      "from": "../server/dist/electron-backend",
+      "to": "server"
+    },
+    {
+      "from": "public/icons",
+      "to": "icons"
+    }
+  ],
   "win": {
     "target": "nsis",
     "artifactName": "Facenox-Windows-v${version}-${arch}.${ext}",
-    "extraResources": [
-      {
-        "from": "../server/dist/server.exe",
-        "to": "server/server.exe"
-      },
-      {
-        "from": "public/icons",
-        "to": "icons"
-      }
-    ],
     "icon": "./public/icons/logo.ico"
   },
   "nsis": {
@@ -34,16 +34,6 @@
     "target": "AppImage",
     "artifactName": "Facenox-Linux-v${version}-${arch}.${ext}",
     "category": "utility",
-    "extraResources": [
-      {
-        "from": "../server/dist/server",
-        "to": "server/server"
-      },
-      {
-        "from": "public/icons",
-        "to": "icons"
-      }
-    ],
     "icon": "./public/icons/logo-transparent.png"
   },
   "mac": {
@@ -54,16 +44,6 @@
     "extendInfo": {
       "NSCameraUsageDescription": "Facenox uses the camera to enroll faces and record attendance on this computer."
     },
-    "extraResources": [
-      {
-        "from": "../server/dist/server",
-        "to": "server/server"
-      },
-      {
-        "from": "public/icons",
-        "to": "icons"
-      }
-    ],
     "icon": "./public/icons/logo.icns"
   }
 }

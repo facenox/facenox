@@ -58,6 +58,8 @@ def build_backend(debug=False, onefile=True, clean=True):
     if debug:
         pyinstaller_args.extend(["--debug", "all"])
     pyinstaller_args.append("facenox_backend.spec")
+    if not onefile:
+        pyinstaller_args.extend(["--", "--onedir"])
     start_time = time.time()
 
     try:
@@ -102,16 +104,16 @@ def build_backend(debug=False, onefile=True, clean=True):
     return True
 
 
-def test_executable():
+def test_executable(onefile=True):
     """Test the built executable"""
     platform_name, _ = get_platform_info()
 
-    if platform_name == "win":
-        exe_path = BACKEND_DIR / "dist" / "server.exe"
-    else:
-        exe_path = BACKEND_DIR / "dist" / "server"
+    output_dir = BACKEND_DIR / "dist"
+    if not onefile:
+        output_dir /= "server-onedir"
+    exe_path = output_dir / ("server.exe" if platform_name == "win" else "server")
 
-    if not exe_path.exists():
+    if not exe_path.is_file():
         print("[ERROR] Executable not found")
         return False
 
@@ -157,7 +159,7 @@ def main():
     parser.add_argument(
         "--onedir",
         action="store_true",
-        help="Build as directory instead of single file",
+        help="Build the backend in dist/server-onedir",
     )
     parser.add_argument(
         "--no-clean", action="store_true", help="Don't clean build directories"
@@ -168,12 +170,11 @@ def main():
 
     args = parser.parse_args()
 
-    success = build_backend(
-        debug=args.debug, onefile=not args.onedir, clean=not args.no_clean
-    )
+    onefile = not args.onedir
+    success = build_backend(debug=args.debug, onefile=onefile, clean=not args.no_clean)
 
     if success and args.test:
-        success = test_executable()
+        success = test_executable(onefile=onefile)
 
     if success:
         print("\nBuild completed successfully!")

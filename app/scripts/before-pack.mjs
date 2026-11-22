@@ -1,74 +1,47 @@
-import { execSync } from "node:child_process"
+import { execFileSync } from "node:child_process"
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const backendDir = fileURLToPath(new URL("../../server/", import.meta.url))
 
-async function beforePack(context) {
-  console.log("Running before-pack script...")
+export default function beforePack(context) {
+  const layout = process.env.FACENOX_BACKEND_LAYOUT ?? "onefile"
+  if (layout !== "onefile" && layout !== "onedir") {
+    throw new Error(`Unknown Facenox backend layout: ${layout}`)
+  }
 
-  const platform = context.electronPlatformName
-  const backendDir = path.join(__dirname, "..", "..", "server")
+  const windows = context.electronPlatformName === "win32"
+  const executableName = windows ? "server.exe" : "server"
   const distDir = path.join(backendDir, "dist")
+  const stage = path.join(distDir, "electron-backend")
+  const onedir = layout === "onedir"
+  const source = onedir ? path.join(distDir, "server-onedir") : distDir
+  const executable = path.join(source, executableName)
+  const contents = path.join(source, "_internal")
 
-  console.log(`Building for platform: ${platform}`)
-  console.log(`Backend directory: ${backendDir}`)
-
-  if (!fs.existsSync(backendDir)) {
-    throw new Error(`Backend directory not found: ${backendDir}`)
+  if (!fs.statSync(executable, { throwIfNoEntry: false })?.isFile()) {
+    if (process.env.FACENOX_PREBUILT_BACKEND === "1") {
+      throw new Error(`The ${layout} backend artifact is missing: ${executable}`)
+    }
+    const args = ["build_backend.py"]
+    if (onedir) args.push("--onedir")
+    execFileSync("python", args, { cwd: backendDir, stdio: "inherit" })
+  }
+  if (!fs.statSync(executable, { throwIfNoEntry: false })?.isFile()) {
+    throw new Error(`The backend executable is missing: ${executable}`)
+  }
+  if (onedir && !fs.statSync(contents, { throwIfNoEntry: false })?.isDirectory()) {
+    throw new Error(`The onedir backend is missing its Python libraries: ${contents}`)
   }
 
-  const executableName = platform === "win32" ? "server.exe" : "server"
-  const executablePath = path.join(distDir, executableName)
-
-  if (fs.existsSync(executablePath)) {
-    console.log(`Backend executable already exists: ${executablePath}`)
-    if (platform !== "win32") {
-      fs.chmodSync(executablePath, 0o755)
-      console.log(`Ensured execute permissions on existing binary: ${executablePath}`)
-    }
-    return
+  fs.rmSync(stage, { force: true, recursive: true })
+  if (onedir) {
+    fs.cpSync(source, stage, { recursive: true, verbatimSymlinks: true })
+  } else {
+    fs.mkdirSync(stage)
+    fs.copyFileSync(executable, path.join(stage, executableName))
   }
-
-  console.log(`Building backend executable for ${platform}...`)
-
-  try {
-    const pkgPath = path.join(backendDir, "package.json")
-    if (fs.existsSync(pkgPath)) {
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"))
-      if (pkg.dependencies || pkg.devDependencies) {
-        console.log("Installing Node dependencies for backend...")
-        execSync("npm install", { stdio: "inherit", cwd: backendDir })
-      }
-    }
-
-    console.log("Building backend with PyInstaller...")
-    execSync("python build_backend.py", { stdio: "inherit", cwd: backendDir })
-
-    if (!fs.existsSync(executablePath)) {
-      throw new Error(`Backend executable was not created: ${executablePath}`)
-    }
-
-    console.log(`Backend executable created successfully: ${executablePath}`)
-
-    if (platform !== "win32") {
-      try {
-        fs.chmodSync(executablePath, 0o755) // rwxr-xr-x
-        console.log(`Set execute permissions on ${executablePath}`)
-      } catch (err) {
-        console.warn(`Failed to set execute permissions: ${err.message}`)
-      }
-    }
-
-    const stats = fs.statSync(executablePath)
-    const fileSizeMB = (stats.size / (1024 * 1024)).toFixed(2)
-    console.log(`Executable size: ${fileSizeMB} MB`)
-  } catch (error) {
-    console.error("Failed to build backend:", error.message)
-    throw error
-  }
+  if (!windows) fs.chmodSync(path.join(stage, executableName), 0o755)
+  console.log(`Staged Facenox ${layout} backend at ${stage}`)
 }
-
-export default beforePack

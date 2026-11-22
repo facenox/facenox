@@ -4,9 +4,14 @@ PyInstaller spec file for Facenox Backend
 Optimized for production builds with ONNX Runtime support
 """
 
+import argparse
 import sys
 import os
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+
+parser = argparse.ArgumentParser(description='Facenox backend bundle options')
+parser.add_argument('--onedir', action='store_true')
+options = parser.parse_args()
 
 block_cipher = None
 
@@ -70,13 +75,14 @@ a = Analysis(
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+exe_inputs = [pyz, a.scripts]
+if not options.onedir:
+    exe_inputs.extend([a.binaries, a.zipfiles, a.datas])
+
 exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
+    *exe_inputs,
     [],
+    exclude_binaries=options.onedir,
     name='server',
     debug=False,
     bootloader_ignore_signals=False,
@@ -92,3 +98,8 @@ exe = EXE(
     entitlements_file=None,
     icon=None,
 )
+
+if options.onedir:
+    bundle = COLLECT(
+        exe, a.binaries, a.zipfiles, a.datas, strip=False, upx=False, name='server-onedir'
+    )

@@ -64,11 +64,7 @@ describe("window and tray icons", () => {
   it.each(platforms)("packages the window and tray assets required on %s", (platform) => {
     setPlatform(platform)
     appMock.isPackaged = true
-    const target =
-      platform === "win32" ? "win"
-      : platform === "darwin" ? "mac"
-      : "linux"
-    const iconResource = config[target].extraResources.find(
+    const iconResource = config.extraResources.find(
       (resource: { from: string; to: string }) => resource.to === "icons",
     )
     expect(iconResource).toBeDefined()

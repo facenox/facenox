@@ -2,10 +2,13 @@ name: Production Build & Sign
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'ci/onedir-*' ]
     tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
+
+env:
+  FACENOX_BACKEND_LAYOUT: ${{ startsWith(github.ref_name, 'ci/onedir-') && 'onedir' || vars.FACENOX_BACKEND_LAYOUT || 'onefile' }}
 
 jobs:
   lint-and-test:
@@ -95,21 +98,33 @@ jobs:
           python -m pytest -q tests/test_safe_migrations.py tests/test_bootstrap.py tests/test_alembic_heads.py
 
       - name: Build Executable
+        shell: bash
+        working-directory: server
         run: |
-          cd server
-          python build_backend.py
+          case "$FACENOX_BACKEND_LAYOUT" in
+            onedir) python build_backend.py --onedir --test; artifact=server-onedir ;;
+            onefile)
+              python build_backend.py --test
+              artifact=server
+              if [ "$RUNNER_OS" = 'Windows' ]; then artifact=server.exe; fi
+              ;;
+            *) echo "Unknown backend layout: $FACENOX_BACKEND_LAYOUT"; exit 1 ;;
+          esac
+          tar -C dist -cf backend.tar "$artifact"
 
       - name: Upload Backend Artifact
         uses: actions/upload-artifact@v7
         with:
           name: backend-${{ matrix.os }}-${{ matrix.arch }}
-          path: server/dist/server*
+          path: server/backend.tar
+          if-no-files-found: error
 
   build-electron:
     name: Build Electron (${{ matrix.os }} - ${{ matrix.arch }})
     needs: build-backend
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
@@ -141,6 +156,10 @@ jobs:
         with:
           name: backend-${{ matrix.os }}-${{ matrix.arch }}
           path: server/dist/
+
+      - name: Extract Backend Artifact
+        working-directory: server/dist
+        run: tar -xf backend.tar
 
       - name: Install Dependencies
         run: |
@@ -174,12 +193,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          FACENOX_PREBUILT_BACKEND: "1"
 
       - name: Sign and notarize macOS release
         if: runner.os == 'macOS' && startsWith(github.ref, 'refs/tags/v')
         shell: bash
         working-directory: app
         env:
+          FACENOX_PREBUILT_BACKEND: "1"
           CSC_LINK: ${{ secrets.MACOS_CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.MACOS_CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -196,6 +217,33 @@ jobs:
           test -n "$app_bundle"
           codesign --verify --deep --strict "$app_bundle"
           xcrun stapler validate "$app_bundle"
+
+      - name: Set up Python for installer smoke test
+        if: env.FACENOX_BACKEND_LAYOUT == 'onedir'
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Test onedir installation and upgrade
+        if: env.FACENOX_BACKEND_LAYOUT == 'onedir'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          case "$RUNNER_OS" in
+            Windows) pattern='*-Windows-*-x64.exe' ;;
+            macOS)
+              pattern="*-macOS-*-${{ matrix.arch }}.dmg"
+              if [[ "$GITHUB_REF" != refs/tags/v* ]]; then
+                # The CI preview has a different signing identity from the previous release.
+                # Use the file-provider fallback to exercise upgrades without a Keychain prompt.
+                export PYTHON_KEYRING_BACKEND=keyring.backends.fail.Keyring
+              fi
+              ;;
+            Linux) pattern='*-Linux-*-amd64.deb' ;;
+          esac
+          gh release download v1.0.0-beta.27 --pattern "$pattern" --dir previous-installer
+          python scripts/check-installer.py previous-installer/$pattern app/dist/$pattern
 
       - name: Upload App Package
         uses: actions/upload-artifact@v7
