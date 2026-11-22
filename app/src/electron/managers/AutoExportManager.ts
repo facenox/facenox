@@ -78,6 +78,7 @@ function formatLocalDate(d: Date): string {
 
 function individualExportFilename(group: GroupRecord, date: string): string {
   const name = [...group.name.normalize("NFC").replace(/[\\/:*?"<>|]/g, "_")]
+    .filter((character) => character.charCodeAt(0) >= 32)
     .slice(0, 38)
     .join("")
     .replace(/[. ]+$/, "")
@@ -167,7 +168,8 @@ export class AutoExportManager {
       const config = this.getConfig()
       if (
         scheduled &&
-        (!config.enabled || config.lastExportedDate === dateToExport ||
+        (!config.enabled ||
+          config.lastExportedDate === dateToExport ||
           formatAttendanceTimeInput(now, attendanceTimeZone) < config.time)
       ) {
         return false
@@ -181,7 +183,11 @@ export class AutoExportManager {
 
       await fs.mkdir(targetDir, { recursive: true })
 
-      const processedGroups = await this.fetchAndProcessAttendance(backendUrl, dateToExport, attendanceTimeZone)
+      const processedGroups = await this.fetchAndProcessAttendance(
+        backendUrl,
+        dateToExport,
+        attendanceTimeZone,
+      )
       if (processedGroups.length === 0) {
         console.warn("[AutoExportManager] No groups or records found to export.")
         this.updateConfig({ lastExportedDate: dateToExport })

@@ -38,6 +38,7 @@ function mockBackend(
     mode?: string
     timezone?: string
     secondGroupFails?: boolean
+    collidingNames?: boolean
   } = {},
 ) {
   vi.stubGlobal(
@@ -56,12 +57,14 @@ function mockBackend(
           const groups = [
             {
               id: "g",
-              name: "Group",
+              name: options.collidingNames ? "A:B" : "Group",
               is_active: true,
               settings: { attendance_mode: options.mode ?? "visits", class_end_time: "17:00" },
             },
           ]
-          if (options.secondGroupFails) groups.push({ ...groups[0], id: "other", name: "Other" })
+          if (options.secondGroupFails || options.collidingNames) {
+            groups.push({ ...groups[0], id: "other", name: options.collidingNames ? "A?B" : "Other" })
+          }
           return groups
         },
       }
@@ -74,6 +77,7 @@ beforeEach(() => {
   vi.spyOn(fs, "writeFile").mockResolvedValue(undefined)
 })
 afterEach(() => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
@@ -289,4 +293,30 @@ describe.each(exportFormats)("%s departure consistency", (format) => {
     })
     expect(row.Departure).toBe("On schedule")
   })
+})
+
+
+it("uses the attendance timezone for the scheduled hour and day", async () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date("2026-01-01T18:00:00Z")) // 02:00 in Manila on January 2
+  mockBackend([], { timezone: "Asia/Manila" })
+  const manager = new AutoExportManager()
+  manager.updateConfig({ enabled: true, time: "03:00" })
+  expect(await manager.checkAndRunExport()).toBe(false)
+
+  vi.setSystemTime(new Date("2026-01-01T20:00:00Z")) // 04:00 in Manila
+  expect(await manager.checkAndRunExport()).toBe(true)
+  expect(manager.getConfig().lastExportedDate).toBe("2026-01-02")
+  expect(vi.mocked(fs.writeFile).mock.calls[0][0]).toContain("2026-01-02")
+})
+
+it("writes distinct files when two group names sanitize to the same filename", async () => {
+  mockBackend([], { collidingNames: true })
+  const manager = new AutoExportManager()
+  manager.updateConfig({ format: "individual_csvs" })
+  expect(await manager.triggerExport("2026-01-02")).toBe(true)
+  const names = vi.mocked(fs.writeFile).mock.calls.map(([file]) => String(file))
+  expect(names).toHaveLength(2)
+  expect(new Set(names).size).toBe(2)
+  expect(names.every((name) => name.includes("A_B - Attendance"))).toBe(true)
 })
