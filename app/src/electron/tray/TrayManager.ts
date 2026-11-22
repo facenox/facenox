@@ -43,7 +43,9 @@ export class TrayManager {
       items.push({
         label: `Update v${version} Available`,
         click: () => {
-          openReleasePage()
+          void openReleasePage().catch((error) => {
+            console.warn("Could not open the Facenox download page.", error)
+          })
         },
       })
       items.push({ type: "separator" })

@@ -46,6 +46,28 @@ function resolveRemoteBaseUrl(value: string): string {
   return normalized
 }
 
+const DIRECT_PAIRING_ATTEMPT = "sync.directPairingAttempt"
+const PAIRING_ATTEMPT_LIFETIME_MS = 24 * 60 * 60 * 1000
+
+function getDirectPairingRecoveryKey(remoteBaseUrl: string, pairingCode: string) {
+  const identity = crypto.createHash("sha256")
+    .update(JSON.stringify([remoteBaseUrl, pairingCode]))
+    .digest("hex")
+  const stored = persistentStore.get(DIRECT_PAIRING_ATTEMPT)
+  if (typeof stored === "string" && stored) {
+    const attempt = JSON.parse(stored) as { identity: string; key: string; expiresAt: number }
+    if (attempt.identity === identity && attempt.expiresAt > Date.now()) return attempt.key
+  }
+
+  const key = crypto.randomBytes(32).toString("hex")
+  persistentStore.set(DIRECT_PAIRING_ATTEMPT, JSON.stringify({
+    identity,
+    key,
+    expiresAt: Date.now() + PAIRING_ATTEMPT_LIFETIME_MS,
+  }))
+  return key
+}
+
 function getRemoteSyncStatus() {
   const remoteBaseUrl = resolveRemoteBaseUrl(
     (persistentStore.get("sync.remoteBaseUrl") as string) || "",
@@ -372,7 +394,7 @@ export function registerSyncHandlers() {
       } = {},
     ) => {
       const remoteBaseUrl = resolveRemoteBaseUrl(input.remoteBaseUrl || "")
-      const pairingCode = (input.pairingCode || "").trim()
+      const pairingCode = (input.pairingCode || "").trim().toUpperCase()
       const deviceName = (input.deviceName || "").trim() || "Facenox Desktop"
 
       if (!pairingCode) {
@@ -391,6 +413,7 @@ export function registerSyncHandlers() {
 
       try {
         requireSecretStorage()
+        const recoveryKey = getDirectPairingRecoveryKey(remoteBaseUrl, pairingCode)
         const response = await fetch(`${remoteBaseUrl}/api/device/pair`, {
           method: "POST",
           headers: {
@@ -400,6 +423,7 @@ export function registerSyncHandlers() {
           },
           body: JSON.stringify({
             pairing_code: pairingCode,
+            recovery_key: recoveryKey,
             device_name: deviceName,
             app_version: getCurrentVersion(),
           }),
@@ -464,6 +488,7 @@ export function registerSyncHandlers() {
           throw assignError
         }
 
+        persistentStore.delete(DIRECT_PAIRING_ATTEMPT)
         syncManager.start({ skipCatchUp: true })
         const initialSyncResult = await syncManager.performSync()
 

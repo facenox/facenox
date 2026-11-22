@@ -1,3 +1,4 @@
+import { safeUpdaterLink } from "../electron/updaterUtils"
 import type { UpdateInfo } from "@/types/updater"
 import { persistentSettings } from "./PersistentSettingsService"
 import { compareVersions } from "@/electron/updaterUtils"
@@ -152,7 +153,7 @@ class UpdaterService {
     } catch (error) {
       console.error("[UpdaterService] Failed to open release page:", error)
 
-      window.open(url || "https://facenox.com/download", "_blank")
+      window.open(safeUpdaterLink(url), "_blank", "noopener,noreferrer")
     }
   }
 

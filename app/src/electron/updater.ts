@@ -7,6 +7,8 @@
 import { app, shell, BrowserWindow, net } from "electron"
 import {
   compareVersions,
+  FACENOX_DOWNLOAD_PAGE,
+  safeUpdaterLink,
   extractSemverLikeVersion,
   getDownloadUrlForPlatform,
   type ReleaseAsset,
@@ -15,7 +17,7 @@ import {
 const GITHUB_OWNER = "facenox"
 const GITHUB_REPO = "facenox"
 const GITHUB_RELEASES_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`
-const GITHUB_RELEASES_PAGE = "https://facenox.com/download"
+const GITHUB_RELEASES_PAGE = FACENOX_DOWNLOAD_PAGE
 
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000 // 24 hours
 const NETWORK_TIMEOUT_MS = 8000 // 8 seconds - fail fast if no internet
@@ -159,7 +161,7 @@ export async function checkForUpdates(force = false): Promise<UpdateInfo> {
         currentVersion,
         latestVersion: currentVersion,
         hasUpdate: false,
-        releaseUrl: release.html_url,
+        releaseUrl: safeUpdaterLink(release.html_url),
         releaseNotes: release.body || "",
         publishedAt: release.published_at,
         downloadUrl: getDownloadUrlForPlatform(release.assets),
@@ -179,7 +181,7 @@ export async function checkForUpdates(force = false): Promise<UpdateInfo> {
       currentVersion,
       latestVersion,
       hasUpdate,
-      releaseUrl: release.html_url,
+      releaseUrl: safeUpdaterLink(release.html_url),
       releaseNotes: release.body || "",
       publishedAt: release.published_at,
       downloadUrl: getDownloadUrlForPlatform(release.assets),
@@ -218,8 +220,8 @@ export function getCurrentVersion(): string {
 /**
  * Open the GitHub releases page in the default browser
  */
-export function openReleasePage(url?: string): void {
-  shell.openExternal(url || GITHUB_RELEASES_PAGE)
+export function openReleasePage(url?: string): Promise<void> {
+  return shell.openExternal(safeUpdaterLink(url))
 }
 
 /**

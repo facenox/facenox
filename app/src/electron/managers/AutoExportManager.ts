@@ -2,6 +2,7 @@ import { escapeCsvCell } from "../../shared/csv.js"
 import { app, Notification, powerSaveBlocker } from "electron"
 import path from "node:path"
 import fs from "node:fs/promises"
+import { createHash } from "node:crypto"
 import { backendService } from "../backendService.js"
 import { persistentStore } from "../persistentStore.js"
 import { withLocalBackendHeaders } from "../localBackendScope.js"
@@ -10,7 +11,11 @@ import {
   getSessionDepartureStatus,
   type DepartureSession,
 } from "../../shared/departureStatus.js"
-import { formatAttendanceTime } from "../../utils/attendanceTime.js"
+import {
+  formatAttendanceTime,
+  formatAttendanceTimeInput,
+  getAttendanceDateString,
+} from "../../utils/attendanceTime.js"
 import { formatDuration } from "../../utils/dateUtils.js"
 
 export interface AutoExportConfig {
@@ -71,18 +76,14 @@ function formatLocalDate(d: Date): string {
   return `${padZero(d.getMonth() + 1)}/${padZero(d.getDate())}/${d.getFullYear()}`
 }
 
-function getTodayLocalDateString(): string {
-  const now = new Date()
-  return `${now.getFullYear()}-${padZero(now.getMonth() + 1)}-${padZero(now.getDate())}`
-}
-
-function getCurrentTimeHHMM(): string {
-  const now = new Date()
-  return `${padZero(now.getHours())}:${padZero(now.getMinutes())}`
-}
-
-function sanitizeFilename(name: string): string {
-  return name.replace(/[\\/:*?"<>|]/g, "_").trim()
+function individualExportFilename(group: GroupRecord, date: string): string {
+  const name = [...group.name.normalize("NFC").replace(/[\\/:*?"<>|]/g, "_")]
+    .slice(0, 38)
+    .join("")
+    .replace(/[. ]+$/, "")
+    .trim()
+  const groupKey = createHash("sha256").update(group.id).digest("hex").slice(0, 20)
+  return `${name || "Group"} - Attendance (${date}) [${groupKey}].csv`
 }
 
 export class AutoExportManager {
@@ -133,39 +134,54 @@ export class AutoExportManager {
   }
 
   public async checkAndRunExport(): Promise<boolean> {
-    const config = this.getConfig()
-    if (!config.enabled) return false
-    if (this.isExporting) return false
-
-    const today = getTodayLocalDateString()
-    const currentTime = getCurrentTimeHHMM()
-
-    // Trigger if currentTime >= scheduled time and hasn't exported for today yet
-    if (currentTime >= config.time && config.lastExportedDate !== today) {
-      return this.triggerExport(today)
-    }
-
-    return false
+    if (!this.getConfig().enabled) return false
+    return this.runExport(undefined, true)
   }
 
   public async triggerExport(targetDate?: string): Promise<boolean> {
+    return this.runExport(targetDate, false)
+  }
+
+  private async runExport(targetDate: string | undefined, scheduled: boolean): Promise<boolean> {
     if (this.isExporting) return false
     this.isExporting = true
 
     let blockerId: number | null = null
     try {
+      const backendUrl = backendService.getUrl()
+      if (!backendUrl) throw new Error("The local service is unavailable for automatic export.")
+      const settingsRes = await fetch(`${backendUrl}/attendance/settings`, {
+        headers: authHeaders(),
+        signal: AbortSignal.timeout(15000),
+      })
+      if (!settingsRes.ok) {
+        throw new Error(`Could not load attendance settings (${settingsRes.status}).`)
+      }
+      const settings = (await settingsRes.json()) as { attendance_timezone?: string | null }
+      const attendanceTimeZone = settings.attendance_timezone
+      const now = new Date()
+      const dateToExport = targetDate || getAttendanceDateString(now, attendanceTimeZone)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateToExport)) {
+        throw new Error("Choose a valid attendance date.")
+      }
+      const config = this.getConfig()
+      if (
+        scheduled &&
+        (!config.enabled || config.lastExportedDate === dateToExport ||
+          formatAttendanceTimeInput(now, attendanceTimeZone) < config.time)
+      ) {
+        return false
+      }
       try {
         blockerId = powerSaveBlocker.start("prevent-app-suspension")
       } catch (blockerErr) {
         console.warn("[AutoExportManager] Could not start power save blocker:", blockerErr)
       }
-      const dateToExport = targetDate || getTodayLocalDateString()
-      const config = this.getConfig()
       const targetDir = config.directory?.trim() || this.getDefaultExportDirectory()
 
       await fs.mkdir(targetDir, { recursive: true })
 
-      const processedGroups = await this.fetchAndProcessAttendance(dateToExport)
+      const processedGroups = await this.fetchAndProcessAttendance(backendUrl, dateToExport, attendanceTimeZone)
       if (processedGroups.length === 0) {
         console.warn("[AutoExportManager] No groups or records found to export.")
         this.updateConfig({ lastExportedDate: dateToExport })
@@ -196,9 +212,11 @@ export class AutoExportManager {
     }
   }
 
-  private async fetchAndProcessAttendance(dateStr: string): Promise<ProcessedGroupData[]> {
-    const backendUrl = backendService.getUrl()
-    if (!backendUrl) throw new Error("The local service is unavailable for automatic export.")
+  private async fetchAndProcessAttendance(
+    backendUrl: string,
+    dateStr: string,
+    attendanceTimeZone?: string | null,
+  ): Promise<ProcessedGroupData[]> {
 
     // 1. Fetch active groups
     const groupsRes = await fetch(`${backendUrl}/attendance/groups`, {
@@ -209,15 +227,6 @@ export class AutoExportManager {
 
     const allGroups = ((await groupsRes.json()) as GroupRecord[]) || []
     const activeGroups = allGroups.filter((g) => !g.is_deleted && g.is_active !== false)
-
-    const settingsRes = await fetch(`${backendUrl}/attendance/settings`, {
-      headers: authHeaders(),
-      signal: AbortSignal.timeout(15000),
-    })
-    if (!settingsRes.ok)
-      throw new Error(`Could not load attendance settings (${settingsRes.status}).`)
-    const settings = (await settingsRes.json()) as { attendance_timezone?: string | null }
-    const attendanceTimeZone = settings.attendance_timezone
 
     const processedList: ProcessedGroupData[] = []
 
@@ -347,7 +356,7 @@ export class AutoExportManager {
         const csvContent = [header, ...rows]
           .map((row) => row.map(escapeCsvCell).join(","))
           .join("\n")
-        const filename = sanitizeFilename(`${group.name} - Attendance (${dateStr}).csv`)
+        const filename = individualExportFilename(group, dateStr)
         const filePath = path.join(targetDir, filename)
         await fs.writeFile(filePath, csvContent, "utf8")
       }
@@ -375,7 +384,7 @@ export class AutoExportManager {
       const csvContent = [combinedHeader, ...combinedRows]
         .map((row) => row.map(escapeCsvCell).join(","))
         .join("\n")
-      const filename = sanitizeFilename(`All Groups Combined Attendance (${dateStr}).csv`)
+      const filename = `All Groups Combined Attendance (${dateStr}).csv`
       const filePath = path.join(targetDir, filename)
       await fs.writeFile(filePath, csvContent, "utf8")
     }

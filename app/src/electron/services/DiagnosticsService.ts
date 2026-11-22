@@ -28,6 +28,12 @@ export interface SystemHealthReport {
   logs: string[]
 }
 
+function redactLocalCredentials(line: string) {
+  return line
+    .replace(/([?&]token=)[^&#\s"']+/gi, "$1[redacted]")
+    .replace(/(X-Facenox-Token:\s*)[A-Za-z0-9_-]+/gi, "$1[redacted]")
+}
+
 export class DiagnosticsService {
   async generateHealthReport(): Promise<SystemHealthReport> {
     const totalMem = os.totalmem()
@@ -41,7 +47,9 @@ export class DiagnosticsService {
       try {
         if (fs.existsSync(logPath)) {
           logs.push(`[${path.basename(logPath)}]`)
-          logs.push(...fs.readFileSync(logPath, "utf8").split(/\r?\n/).slice(-50))
+          logs.push(
+            ...fs.readFileSync(logPath, "utf8").split(/\r?\n/).slice(-50).map(redactLocalCredentials),
+          )
         }
       } catch (error) {
         logs.push(`Failed to read ${path.basename(logPath)}: ${error}`)

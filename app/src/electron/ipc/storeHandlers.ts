@@ -4,6 +4,7 @@ import { persistentStore } from "../persistentStore.js"
 export function registerStoreHandlers() {
   const privateSyncKeys = new Set([
     "deviceToken",
+    "directPairingAttempt",
     "encryptionKey",
     "pendingUpload",
     "pendingAcknowledgements",

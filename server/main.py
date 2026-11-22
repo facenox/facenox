@@ -38,7 +38,7 @@ logger.info("Server script started")
 
 # When Electron does not inject FACENOX_API_TOKEN (e.g. direct
 # `python run.py` invocations), generate a one-time nonce so the
-# local API is never fully open.  The nonce is printed at startup.
+# local API is never fully open.
 _STARTUP_NONCE: str = secrets.token_urlsafe(32)
 
 
@@ -63,13 +63,7 @@ setup_cors(app)
 
 @app.middleware("http")
 async def verify_local_token(request: Request, call_next):
-    """Reject requests that don’t carry the session token injected by Electron.
-
-    Only active when FACENOX_API_TOKEN is set in the environment (i.e. when the
-    backend is launched by the Electron shell).  Direct ‘python run.py’
-    invocations without the variable skip validation so development remains
-    convenient, but a warning is emitted.
-    """
+    """Authenticate local API requests with the process token."""
     # Health-check and CORS preflight are always public
     if request.url.path == "/" or request.method == "OPTIONS":
         return await call_next(request)
@@ -77,9 +71,8 @@ async def verify_local_token(request: Request, call_next):
     if not getattr(app.state, "_token_warn_emitted", False):
         if not os.getenv("FACENOX_API_TOKEN"):
             logger.warning(
-                "FACENOX_API_TOKEN is not set.  A startup nonce has been generated. "
-                "Use X-Facenox-Token: %s to authenticate during development.",
-                _STARTUP_NONCE,
+                "FACENOX_API_TOKEN is not set. The local API uses a private startup nonce. "
+                "Set FACENOX_API_TOKEN before launching a standalone development server.",
             )
         app.state._token_warn_emitted = True
 

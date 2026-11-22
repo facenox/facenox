@@ -1,5 +1,21 @@
 import logging
 import os
+import re
+
+
+_TOKEN_QUERY = re.compile(r"([?&]token=)[^&#\s\"']+", re.IGNORECASE)
+
+
+class RedactLocalToken(logging.Filter):
+    """Remove URL credentials before messages reach any log sink."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        message = record.getMessage()
+        redacted = _TOKEN_QUERY.sub(r"\1[redacted]", message)
+        if redacted != message:
+            record.msg = redacted
+            record.args = ()
+        return True
 
 
 class AccessLogFilter(logging.Filter):
@@ -40,6 +56,7 @@ def get_logging_config():
         "version": 1,
         "disable_existing_loggers": False,
         "filters": {
+            "redact_local_token": {"()": RedactLocalToken},
             "access_filter": {
                 "()": AccessLogFilter,
             },
@@ -54,12 +71,14 @@ def get_logging_config():
                 "class": "logging.StreamHandler",
                 "level": "INFO",
                 "formatter": "default",
+                "filters": ["redact_local_token"],
                 "stream": "ext://sys.stdout",
             },
             "file": {
                 "class": "logging.handlers.RotatingFileHandler",
                 "level": "INFO",
                 "formatter": "default",
+                "filters": ["redact_local_token"],
                 "filename": str(LOG_DIR / "server.log"),
                 "maxBytes": 10485760,  # 10MB
                 "backupCount": 5,

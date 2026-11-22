@@ -169,8 +169,10 @@ describe("updater", () => {
   it("delegates release page opening to Electron shell", async () => {
     const { openReleasePage } = await loadUpdater()
 
-    openReleasePage("https://example.com/release")
+    await openReleasePage("https://github.com/facenox/facenox/releases/tag/v1.2.3")
+    expect(mockOpenExternal).toHaveBeenCalledWith("https://github.com/facenox/facenox/releases/tag/v1.2.3")
 
-    expect(mockOpenExternal).toHaveBeenCalledWith("https://example.com/release")
+    await openReleasePage("https://example.com/release")
+    expect(mockOpenExternal).toHaveBeenLastCalledWith("https://facenox.com/download")
   })
 })

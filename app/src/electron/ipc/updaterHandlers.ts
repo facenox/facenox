@@ -23,8 +23,8 @@ export function registerUpdaterHandlers() {
     return getCurrentVersion()
   })
 
-  ipcMain.handle("updater:open-release-page", (_event, url?: string) => {
-    openReleasePage(url)
+  ipcMain.handle("updater:open-release-page", async (_event, url?: string) => {
+    await openReleasePage(url)
     return true
   })
 }

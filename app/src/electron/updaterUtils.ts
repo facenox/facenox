@@ -94,3 +94,36 @@ export function getDownloadUrlForPlatform(
 
   return null
 }
+
+export const FACENOX_DOWNLOAD_PAGE = "https://facenox.com/download"
+
+const officialLinks = new Set([
+  FACENOX_DOWNLOAD_PAGE,
+  "https://github.com/facenox/facenox",
+  "https://github.com/facenox/facenox#readme",
+  "https://github.com/facenox/facenox/issues",
+  "https://github.com/facenox/facenox/releases",
+  "https://github.com/facenox/facenox/releases/latest",
+  "https://github.com/facenox/facenox/blob/main/docs/PRIVACY.md",
+  "https://www.gnu.org/licenses/agpl-3.0.html",
+])
+
+export function safeUpdaterLink(input: string | undefined): string {
+  if (!input) return FACENOX_DOWNLOAD_PAGE
+  try {
+    const url = new URL(input)
+    if (url.username || url.password || url.protocol !== "https:" || url.search || url.port) {
+      return FACENOX_DOWNLOAD_PAGE
+    }
+    if (officialLinks.has(url.href)) return url.href
+    if (
+      url.hostname === "github.com" && !url.hash &&
+      /^\/facenox\/facenox\/releases\/tag\/[A-Za-z0-9._%+-]+$/.test(url.pathname)
+    ) {
+      return url.href
+    }
+  } catch {
+    // Keep the official download page available for malformed links.
+  }
+  return FACENOX_DOWNLOAD_PAGE
+}
