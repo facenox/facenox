@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react"
+import { act, fireEvent, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { AttendancePanel } from "@/components/main/components/AttendancePanel"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
@@ -39,7 +39,8 @@ vi.mock("@/components/shared", () => ({
 }))
 
 vi.mock("@/components/main/components/ManualEntryModal", () => ({
-  ManualEntryModal: () => null,
+  ManualEntryModal: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div>Manual attendance dialog</div> : null,
 }))
 
 vi.mock("@/components/main/components/ManualCorrectionModal", () => ({
@@ -89,12 +90,32 @@ function resetStores() {
       recognitionSoundEnabled: true,
       recognitionSoundUrl: "./assets/sounds/Recognition_Success.wav",
     },
+    adminPinEnabled: false,
+    isPinPromptOpen: false,
+    pendingPinCallback: null,
   })
 }
 
 describe("AttendancePanel", () => {
   beforeEach(() => {
     resetStores()
+  })
+
+  it("requires the configured admin PIN before opening manual attendance", () => {
+    const group = createAttendanceGroup()
+    useAttendanceStore.setState({ attendanceGroups: [group], currentGroup: group })
+    useUIStore.setState({ adminPinEnabled: true, adminPin: "2468" })
+    renderWithProviders(
+      <AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn()} />,
+      { withDialogProvider: false },
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Members" }))
+    expect(useUIStore.getState().isPinPromptOpen).toBe(true)
+    expect(screen.queryByText("Manual attendance dialog")).not.toBeInTheDocument()
+
+    act(() => useUIStore.getState().verifyPin("2468"))
+    expect(screen.getByText("Manual attendance dialog")).toBeInTheDocument()
   })
 
   it("renders the shell skeleton when the shell is not ready", () => {

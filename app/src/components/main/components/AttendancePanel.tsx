@@ -319,7 +319,7 @@ export const AttendancePanel = memo(function AttendancePanel({
     attendanceTimezone,
   } = useAttendanceStore()
 
-  const { requestOpenSettings } = useUIStore()
+  const { requestOpenSettings, openPinPrompt } = useUIStore()
   const [showManualEntry, setShowManualEntry] = useState(false)
   const [isManualCorrectionOpen, setIsManualCorrectionOpen] = useState(false)
   const [recordToVoid, setRecordToVoid] = useState<AttendanceRecord | null>(null)
@@ -515,7 +515,7 @@ export const AttendancePanel = memo(function AttendancePanel({
             <Tooltip content="Members" position="top">
               <button
                 disabled={isPanelLoading || isPanelSwitchPending || Boolean(panelDataError)}
-                onClick={() => setShowManualEntry(true)}
+                onClick={() => openPinPrompt(() => setShowManualEntry(true))}
                 className={`${sidebarActionButtonClassName} rounded-l-none rounded-r-lg`}
                 aria-label="Members">
                 <Users className="size-3.5" />
@@ -697,8 +697,10 @@ export const AttendancePanel = memo(function AttendancePanel({
                           groupName={memberGroup?.name}
                           attendanceTimeZone={attendanceTimezone}
                           onVoidManual={(record) => {
-                            setRecordToVoid(record)
-                            setIsManualCorrectionOpen(true)
+                            openPinPrompt(() => {
+                              setRecordToVoid(record)
+                              setIsManualCorrectionOpen(true)
+                            })
                           }}
                         />
                       )

@@ -515,7 +515,7 @@ export function Attendance({
                   <div className="text-sm font-medium text-white/90">Administrator PIN lock</div>
                   <InfoPopover
                     title="Administrator PIN lock"
-                    description="Require a 4-digit PIN to open settings and manage members."
+                    description="Require a 4-digit PIN to open settings and manage manual attendance."
                     details={[
                       "Use this on shared or unattended computers.",
                       "The PIN is also required when opening Settings with the keyboard shortcut.",
