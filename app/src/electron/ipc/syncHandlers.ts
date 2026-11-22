@@ -50,7 +50,8 @@ const DIRECT_PAIRING_ATTEMPT = "sync.directPairingAttempt"
 const PAIRING_ATTEMPT_LIFETIME_MS = 24 * 60 * 60 * 1000
 
 function getDirectPairingRecoveryKey(remoteBaseUrl: string, pairingCode: string) {
-  const identity = crypto.createHash("sha256")
+  const identity = crypto
+    .createHash("sha256")
     .update(JSON.stringify([remoteBaseUrl, pairingCode]))
     .digest("hex")
   const stored = persistentStore.get(DIRECT_PAIRING_ATTEMPT)
@@ -60,11 +61,14 @@ function getDirectPairingRecoveryKey(remoteBaseUrl: string, pairingCode: string)
   }
 
   const key = crypto.randomBytes(32).toString("hex")
-  persistentStore.set(DIRECT_PAIRING_ATTEMPT, JSON.stringify({
-    identity,
-    key,
-    expiresAt: Date.now() + PAIRING_ATTEMPT_LIFETIME_MS,
-  }))
+  persistentStore.set(
+    DIRECT_PAIRING_ATTEMPT,
+    JSON.stringify({
+      identity,
+      key,
+      expiresAt: Date.now() + PAIRING_ATTEMPT_LIFETIME_MS,
+    }),
+  )
   return key
 }
 

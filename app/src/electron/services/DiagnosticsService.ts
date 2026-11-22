@@ -48,7 +48,11 @@ export class DiagnosticsService {
         if (fs.existsSync(logPath)) {
           logs.push(`[${path.basename(logPath)}]`)
           logs.push(
-            ...fs.readFileSync(logPath, "utf8").split(/\r?\n/).slice(-50).map(redactLocalCredentials),
+            ...fs
+              .readFileSync(logPath, "utf8")
+              .split(/\r?\n/)
+              .slice(-50)
+              .map(redactLocalCredentials),
           )
         }
       } catch (error) {

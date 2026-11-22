@@ -170,7 +170,9 @@ describe("updater", () => {
     const { openReleasePage } = await loadUpdater()
 
     await openReleasePage("https://github.com/facenox/facenox/releases/tag/v1.2.3")
-    expect(mockOpenExternal).toHaveBeenCalledWith("https://github.com/facenox/facenox/releases/tag/v1.2.3")
+    expect(mockOpenExternal).toHaveBeenCalledWith(
+      "https://github.com/facenox/facenox/releases/tag/v1.2.3",
+    )
 
     await openReleasePage("https://example.com/release")
     expect(mockOpenExternal).toHaveBeenLastCalledWith("https://facenox.com/download")

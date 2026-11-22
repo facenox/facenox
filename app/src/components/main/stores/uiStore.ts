@@ -133,7 +133,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   showSettings: false,
   groupInitialSection: undefined,
   settingsInitialSection: undefined,
-  lastSettingsSection: "group",
+  lastSettingsSection: "attendance",
   lastGroupInitialSection: "overview" as GroupSection,
   lastGroupId: null,
   hasSeenIntro: false,

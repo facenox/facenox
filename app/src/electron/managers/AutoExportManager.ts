@@ -223,7 +223,6 @@ export class AutoExportManager {
     dateStr: string,
     attendanceTimeZone?: string | null,
   ): Promise<ProcessedGroupData[]> {
-
     // 1. Fetch active groups
     const groupsRes = await fetch(`${backendUrl}/attendance/groups`, {
       headers: authHeaders(),

@@ -117,7 +117,8 @@ export function safeUpdaterLink(input: string | undefined): string {
     }
     if (officialLinks.has(url.href)) return url.href
     if (
-      url.hostname === "github.com" && !url.hash &&
+      url.hostname === "github.com" &&
+      !url.hash &&
       /^\/facenox\/facenox\/releases\/tag\/[A-Za-z0-9._%+-]+$/.test(url.pathname)
     ) {
       return url.href

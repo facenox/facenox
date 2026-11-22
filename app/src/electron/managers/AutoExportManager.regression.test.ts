@@ -63,7 +63,11 @@ function mockBackend(
             },
           ]
           if (options.secondGroupFails || options.collidingNames) {
-            groups.push({ ...groups[0], id: "other", name: options.collidingNames ? "A?B" : "Other" })
+            groups.push({
+              ...groups[0],
+              id: "other",
+              name: options.collidingNames ? "A?B" : "Other",
+            })
           }
           return groups
         },
@@ -294,7 +298,6 @@ describe.each(exportFormats)("%s departure consistency", (format) => {
     expect(row.Departure).toBe("On schedule")
   })
 })
-
 
 it("uses the attendance timezone for the scheduled hour and day", async () => {
   vi.useFakeTimers()

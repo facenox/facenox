@@ -46,8 +46,18 @@ export const useSettings = ({
   const dialog = useDialog()
   const uiStore = useUIStore()
 
+  const validInitialGroup = useMemo(() => {
+    if (currentGroup && currentGroup.id !== "all") {
+      return currentGroup
+    }
+    return initialGroups.find((g) => g.id !== "all") ?? null
+  }, [currentGroup, initialGroups])
+
+  const lastSection = uiStore.lastSettingsSection
+  const availableLastSection =
+    lastSection === "group" && !validInitialGroup ? "attendance" : lastSection
   const [activeSection, setActiveSectionState] = useState<string>(
-    initialSection || (initialGroupSection ? "group" : uiStore.lastSettingsSection) || "group",
+    initialSection || (initialGroupSection ? "group" : availableLastSection) || "attendance",
   )
   const [groupInitialSection, setGroupInitialSectionState] = useState<GroupSection | undefined>(
     initialGroupSection || uiStore.lastGroupInitialSection || "overview",
@@ -274,13 +284,6 @@ export const useSettings = ({
     }
     return list
   }, [initialGroups, currentGroup])
-
-  const validInitialGroup = useMemo(() => {
-    if (currentGroup && currentGroup.id !== "all") {
-      return currentGroup
-    }
-    return initialGroups.find((g) => g.id !== "all") ?? null
-  }, [currentGroup, initialGroups])
 
   const handleGroupBack = useCallback(() => {
     setActiveSection("attendance")

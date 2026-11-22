@@ -40,11 +40,7 @@ const rawStore: TypedStore<PersistentSettingsSchema> = new Store<PersistentSetti
   storeOptions,
 ) as unknown as TypedStore<PersistentSettingsSchema>
 
-const secretKeys = new Set([
-  "sync.deviceToken",
-  "sync.encryptionKey",
-  "sync.directPairingAttempt",
-])
+const secretKeys = new Set(["sync.deviceToken", "sync.encryptionKey", "sync.directPairingAttempt"])
 const protectedPrefix = "os:v1:"
 const vaultPrefix = "vault:v1:"
 const IV_LENGTH = 12

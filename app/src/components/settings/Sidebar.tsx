@@ -123,10 +123,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div
               className={`space-y-1 ${!dropdownValue ? "pointer-events-none opacity-40 grayscale" : ""}`}>
               {groupSections.map((subsection) => {
-                const isActive = activeSection === "group" && groupInitialSection === subsection.id
+                const isActive =
+                  !!dropdownValue &&
+                  activeSection === "group" &&
+                  groupInitialSection === subsection.id
                 return (
                   <button
                     key={subsection.id}
+                    disabled={!dropdownValue}
                     onClick={() => {
                       setActiveSection("group")
                       setGroupInitialSection(subsection.id)
