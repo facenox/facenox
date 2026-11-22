@@ -35,7 +35,11 @@ export class HttpClient {
     return
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    retryWrite = false,
+  ): Promise<T> {
     await this.ensureBackendReady()
 
     const url = `${this.baseUrl}${endpoint}`
@@ -54,7 +58,11 @@ export class HttpClient {
     }
     const scopedHeaders = await withLocalBackendHeaders(headers)
 
-    const response = await fetchWithRetry(url, { ...options, headers: scopedHeaders })
+    const response = await fetchWithRetry(
+      url,
+      { ...options, headers: scopedHeaders },
+      { retryWrite },
+    )
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -78,11 +86,19 @@ export class HttpClient {
     return this.request<T>(url)
   }
 
-  async post<T>(endpoint: string, data?: unknown): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: "POST",
-      body: data ? JSON.stringify(data) : undefined,
-    })
+  async post<T>(
+    endpoint: string,
+    data?: unknown,
+    { retryWrite = false }: { retryWrite?: boolean } = {},
+  ): Promise<T> {
+    return this.request<T>(
+      endpoint,
+      {
+        method: "POST",
+        body: data ? JSON.stringify(data) : undefined,
+      },
+      retryWrite,
+    )
   }
 
   async put<T>(endpoint: string, data?: unknown): Promise<T> {

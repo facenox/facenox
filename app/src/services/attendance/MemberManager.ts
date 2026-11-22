@@ -72,6 +72,7 @@ export class MemberManager {
     const member = await this.httpClient.post<AttendanceMember>(
       this.apiEndpoints.members,
       memberData,
+      { retryWrite: true },
     )
     notifyDataChanged()
     return {
@@ -104,6 +105,7 @@ export class MemberManager {
     const res = await this.httpClient.post<BulkMemberCreationResponse>(
       `${this.apiEndpoints.members}/bulk`,
       payload,
+      { retryWrite: true },
     )
 
     notifyDataChanged()

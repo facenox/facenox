@@ -46,7 +46,13 @@ it("retries a lost creation response with exactly the same creation token", asyn
 
 it("preserves an explicit creation token for a manual retry", async () => {
   const post = vi
-    .fn<(endpoint: string, data: Record<string, string>) => Promise<Record<string, string>>>()
+    .fn<
+      (
+        endpoint: string,
+        data: Record<string, string>,
+        options?: { retryWrite?: boolean },
+      ) => Promise<Record<string, string>>
+    >()
     .mockResolvedValue({ id: "m", person_id: "p", joined_at: "2026-11-01T00:00:00Z" })
   const manager = new MemberManager({ post } as unknown as HttpClient, { members: "/members" })
   await manager.addMember("g", " Alice ", { creationId: "same-intent", role: " Role " })
@@ -55,6 +61,7 @@ it("preserves an explicit creation token for a manual retry", async () => {
   expect(post).toHaveBeenCalledWith(
     "/members",
     expect.objectContaining({ creation_id: "same-intent", name: "Alice", role: "Role" }),
+    { retryWrite: true },
   )
 })
 

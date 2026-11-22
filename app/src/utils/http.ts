@@ -1,15 +1,18 @@
 /**
- * Reusable utility to perform fetch requests with exponential backoff retries.
+ * Retry reads and explicitly replay-safe writes after a network failure.
  */
 export async function fetchWithRetry(
   url: string,
   options: RequestInit = {},
-  retries = 20,
-  backoff = 1.5,
-  maxDelay = 3000,
+  {
+    retries = 20,
+    backoff = 1.5,
+    maxDelay = 3000,
+    retryWrite = false,
+  }: { retries?: number; backoff?: number; maxDelay?: number; retryWrite?: boolean } = {},
 ): Promise<Response> {
   const method = (options.method ?? "GET").toUpperCase()
-  const safeToRetry = ["GET", "HEAD", "OPTIONS"].includes(method)
+  const safeToRetry = retryWrite || ["GET", "HEAD", "OPTIONS"].includes(method)
 
   const makeRequest = async (attempt: number): Promise<Response> => {
     try {
