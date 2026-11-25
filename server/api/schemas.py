@@ -247,7 +247,7 @@ class AttendanceRecordCreate(BaseModel):
 class AttendanceRecordResponse(CapturedAttendanceResponse):
     id: str
     person_id: str
-    member_id: str
+    member_id: Optional[str] = None
     group_id: str
     timestamp: datetime
     timestamp_timezone: Optional[str] = None
@@ -291,7 +291,7 @@ class AttendanceSessionResponse(CapturedAttendanceResponse):
     id: str
     is_manual_override: bool = False
     person_id: str
-    member_id: str
+    member_id: Optional[str] = None
     group_id: str
     applied_rule_id: Optional[str] = None
     applied_schedule: Optional[AppliedScheduleResponse] = None

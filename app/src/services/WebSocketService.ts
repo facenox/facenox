@@ -83,14 +83,15 @@ export class WebSocketService {
   }
 
   private async getApiToken(): Promise<string> {
-    if (this.token !== null) return this.token
+    if (this.token) return this.token
     try {
       const t = await window.electronAPI?.backend?.getToken?.()
-      this.token = typeof t === "string" ? t : ""
+      this.token = typeof t === "string" && t.length > 0 ? t : null
+      return this.token ?? ""
     } catch {
-      this.token = ""
+      this.token = null
+      return ""
     }
-    return this.token
   }
 
   async connectWebSocket(): Promise<void> {
@@ -108,6 +109,7 @@ export class WebSocketService {
         try {
           const token = await this.getApiToken()
           if (this.connectPromise !== currentPromise) {
+            resolve()
             return
           }
           const wsBaseUrl = this.config.baseUrl.replace(/^http/, "ws")
@@ -117,6 +119,7 @@ export class WebSocketService {
             wsUrl.searchParams.set("token", token)
           }
           if (this.connectPromise !== currentPromise) {
+            resolve()
             return
           }
 
@@ -139,6 +142,7 @@ export class WebSocketService {
             }
             settled = true
             this.setWebSocketStatus("error")
+            this.token = null
             this.connectPromise = null
             reject(new Error("Timed out opening websocket connection"))
             socket.close()
@@ -234,6 +238,7 @@ export class WebSocketService {
               activeWebSocketServiceInstance = null
             }
             this.setWebSocketStatus("error")
+            this.token = null
             this.connectPromise = null
             this.notifyHandlers("error", { message: "WebSocket error occurred" })
             rejectOnce(new Error("WebSocket transport error"))
@@ -263,6 +268,7 @@ export class WebSocketService {
       this.connectTimeoutId = null
     }
     this.connectPromise = null
+    this.token = null
     if (this.ws) {
       const socket = this.ws
       this.ws = null

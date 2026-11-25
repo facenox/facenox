@@ -515,6 +515,7 @@ export class BackgroundSyncManager {
     this.clearCatchUpTimer()
     this.teardownRealtimeListener()
     this.pendingSyncRequested = false
+    this.pendingPullRequested = false
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer)
       this.debounceTimer = null

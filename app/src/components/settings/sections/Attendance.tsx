@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Cloud, Check, X, RotateCw, Eye, EyeOff, Copy } from "lucide-react"
 import type { AttendanceSettings } from "@/components/settings/types"
@@ -85,13 +85,28 @@ export function Attendance({
     setIsShaking(false)
   }, [adminPinEnabled])
 
+  const pinStepTimerRef = useRef<number | null>(null)
+
+  const clearPinStepTimer = () => {
+    if (pinStepTimerRef.current !== null) {
+      window.clearTimeout(pinStepTimerRef.current)
+      pinStepTimerRef.current = null
+    }
+  }
+
+  useEffect(() => {
+    return () => clearPinStepTimer()
+  }, [])
+
   const handlePinInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "").slice(0, 4)
+    clearPinStepTimer()
     setPinInput(value)
 
     if (pinStep === "enter") {
       if (value.length === 4) {
-        setTimeout(() => {
+        pinStepTimerRef.current = window.setTimeout(() => {
+          pinStepTimerRef.current = null
           setFirstPin(value)
           setPinStep("confirm")
           setPinInput("")
@@ -99,7 +114,8 @@ export function Attendance({
       }
     } else if (pinStep === "confirm") {
       if (value.length === 4) {
-        setTimeout(() => {
+        pinStepTimerRef.current = window.setTimeout(() => {
+          pinStepTimerRef.current = null
           if (value === firstPin) {
             // Success: Match! Auto-save
             setAdminPinSettings({ adminPin: value })
@@ -126,6 +142,7 @@ export function Attendance({
   }
 
   const handleCancelConfirm = () => {
+    clearPinStepTimer()
     setPinStep("enter")
     setFirstPin("")
     setPinInput("")

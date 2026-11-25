@@ -14,16 +14,17 @@ export class HttpClient {
     return this.baseUrl
   }
 
-  /** Lazy-fetch the session token from the Electron main process (once per session). */
+  /** Fetch the session token from the Electron main process (refreshing if empty or invalidated). */
   private async getApiToken(): Promise<string> {
-    if (this.token !== null) return this.token
+    if (this.token) return this.token
     try {
       const t = await window.electronAPI?.backend?.getToken?.()
-      this.token = typeof t === "string" ? t : ""
+      this.token = typeof t === "string" && t.length > 0 ? t : null
+      return this.token ?? ""
     } catch {
-      this.token = ""
+      this.token = null
+      return ""
     }
-    return this.token
   }
 
   /**
@@ -63,6 +64,10 @@ export class HttpClient {
       { ...options, headers: scopedHeaders },
       { retryWrite },
     )
+
+    if (response.status === 401) {
+      this.token = null
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -116,65 +121,58 @@ export class HttpClient {
 
   async postMultipart<T>(endpoint: string, formData: FormData): Promise<T> {
     if (window.electronAPI?.backend?.postMultipart) {
-      try {
-        const files: {
-          name: string
-          filename: string
-          path?: string
-          buffer?: ArrayBuffer
-          mimeType: string
-        }[] = []
-        const extraFields: Record<string, string> = {}
+      const files: {
+        name: string
+        filename: string
+        path?: string
+        buffer?: ArrayBuffer
+        mimeType: string
+      }[] = []
+      const extraFields: Record<string, string> = {}
 
-        for (const [key, value] of formData.entries()) {
-          if (value instanceof File) {
-            const electronFile = value as File & { path?: string }
-            if (electronFile.path) {
-              files.push({
-                name: key,
-                filename: value.name,
-                path: electronFile.path,
-                mimeType: value.type,
-              })
-            } else {
-              const buffer = await value.arrayBuffer()
-              files.push({
-                name: key,
-                filename: value.name,
-                buffer,
-                mimeType: value.type,
-              })
-            }
-          } else if (typeof value !== "string") {
-            const blob = value as unknown as Blob & { path?: string }
-            if (blob.path) {
-              files.push({
-                name: key,
-                filename: "blob",
-                path: blob.path,
-                mimeType: blob.type,
-              })
-            } else {
-              const buffer = await blob.arrayBuffer()
-              files.push({
-                name: key,
-                filename: "blob",
-                buffer,
-                mimeType: blob.type,
-              })
-            }
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          const electronFile = value as File & { path?: string }
+          if (electronFile.path) {
+            files.push({
+              name: key,
+              filename: value.name,
+              path: electronFile.path,
+              mimeType: value.type,
+            })
           } else {
-            extraFields[key] = value
+            const buffer = await value.arrayBuffer()
+            files.push({
+              name: key,
+              filename: value.name,
+              buffer,
+              mimeType: value.type,
+            })
           }
+        } else if (typeof value !== "string") {
+          const blob = value as unknown as Blob & { path?: string }
+          if (blob.path) {
+            files.push({
+              name: key,
+              filename: "blob",
+              path: blob.path,
+              mimeType: blob.type,
+            })
+          } else {
+            const buffer = await blob.arrayBuffer()
+            files.push({
+              name: key,
+              filename: "blob",
+              buffer,
+              mimeType: blob.type,
+            })
+          }
+        } else {
+          extraFields[key] = value
         }
-
-        return (await window.electronAPI.backend.postMultipart(endpoint, files, extraFields)) as T
-      } catch (ipcError) {
-        console.error(
-          "[HttpClient] Electron IPC postMultipart failed, falling back to renderer fetch:",
-          ipcError,
-        )
       }
+
+      return (await window.electronAPI.backend.postMultipart(endpoint, files, extraFields)) as T
     }
 
     const url = `${this.baseUrl}${endpoint}`
@@ -189,6 +187,10 @@ export class HttpClient {
       body: formData,
       headers: scopedHeaders,
     })
+
+    if (response.status === 401) {
+      this.token = null
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -211,6 +213,10 @@ export class HttpClient {
     const scopedHeaders = await withLocalBackendHeaders(headers)
 
     const response = await fetchWithRetry(url, { headers: scopedHeaders })
+    if (response.status === 401) {
+      this.token = null
+    }
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }

@@ -46,6 +46,24 @@ async def _get_enrolled_persons_set(
         return set()
 
 
+def _serialize_member_response(member, has_face_data: bool) -> dict:
+    return {
+        "id": member.id,
+        "person_id": member.person_id,
+        "group_id": member.group_id,
+        "name": member.name,
+        "role": member.role,
+        "email": member.email,
+        "joined_at": member.joined_at,
+        "joined_at_utc": member.joined_at_utc,
+        "joined_at_timezone": member.joined_at_timezone,
+        "joined_at_offset_seconds": member.joined_at_offset_seconds,
+        "is_active": member.is_active,
+        "has_face_data": has_face_data,
+        "remote_id": member.remote_id,
+    }
+
+
 @router.get("", response_model=List[AttendanceMemberResponse])
 async def get_members(repo: AttendanceRepository = Depends(get_repository)):
     """Get all attendance members with face data status"""
@@ -58,18 +76,7 @@ async def get_members(repo: AttendanceRepository = Depends(get_repository)):
         )
 
         return [
-            {
-                "id": member.id,
-                "person_id": member.person_id,
-                "group_id": member.group_id,
-                "name": member.name,
-                "role": member.role,
-                "email": member.email,
-                "joined_at": member.joined_at,
-                "is_active": member.is_active,
-                "has_face_data": member.person_id in all_persons_set,
-                "remote_id": member.remote_id,
-            }
+            _serialize_member_response(member, member.person_id in all_persons_set)
             for member in members
         ]
     except Exception as e:
@@ -274,18 +281,7 @@ async def get_member(
         )
         has_face_data = person_id in all_persons_set
 
-        return {
-            "id": member.id,
-            "person_id": member.person_id,
-            "group_id": member.group_id,
-            "name": member.name,
-            "role": member.role,
-            "email": member.email,
-            "joined_at": member.joined_at,
-            "is_active": member.is_active,
-            "has_face_data": has_face_data,
-            "remote_id": member.remote_id,
-        }
+        return _serialize_member_response(member, has_face_data)
 
     except HTTPException:
         raise
@@ -344,18 +340,9 @@ async def update_member(
             face_recognizer, repo.organization_id
         )
 
-        return {
-            "id": updated_member.id,
-            "person_id": updated_member.person_id,
-            "group_id": updated_member.group_id,
-            "name": updated_member.name,
-            "role": updated_member.role,
-            "email": updated_member.email,
-            "joined_at": updated_member.joined_at,
-            "is_active": updated_member.is_active,
-            "has_face_data": updated_member.person_id in all_persons_set,
-            "remote_id": updated_member.remote_id,
-        }
+        return _serialize_member_response(
+            updated_member, updated_member.person_id in all_persons_set
+        )
 
     except HTTPException:
         raise
@@ -473,18 +460,7 @@ async def get_group_members(
         )
 
         return [
-            {
-                "id": member.id,
-                "person_id": member.person_id,
-                "group_id": member.group_id,
-                "name": member.name,
-                "role": member.role,
-                "email": member.email,
-                "joined_at": member.joined_at,
-                "is_active": member.is_active,
-                "has_face_data": member.person_id in all_persons_set,
-                "remote_id": member.remote_id,
-            }
+            _serialize_member_response(member, member.person_id in all_persons_set)
             for member in members
         ]
 

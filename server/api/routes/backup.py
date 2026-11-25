@@ -687,6 +687,12 @@ async def import_encrypted_backup(
         blob = base64.b64decode(blob_b64)
         plaintext = decrypt_backup(blob, password)
         payload_dict = json.loads(plaintext.decode("utf-8"))
+        if (
+            isinstance(payload_dict, dict)
+            and isinstance(payload_dict.get("attendance"), dict)
+            and "data" not in payload_dict["attendance"]
+        ):
+            payload_dict["attendance"] = {"data": payload_dict["attendance"]}
 
         payload = BackupImportRequest.model_validate(payload_dict)
         return await import_backup(payload, repo)

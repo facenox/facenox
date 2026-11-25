@@ -45,7 +45,7 @@ async def get_group_stats(
         ).strftime("%Y-%m-%d")
 
         if group_id.lower() == "all":
-            members = await repo.get_members(is_active=True)
+            members = await repo.get_members()
             sessions = await repo.get_sessions(
                 start_date=target_date, end_date=target_date
             )

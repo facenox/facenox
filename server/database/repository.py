@@ -620,15 +620,25 @@ class AttendanceRepository:
             return False
 
         member.person_id = new_person_id
+        modified_at_local = to_storage_local(local_now())
+        modified_at_utc = ensure_utc_aware(modified_at_local)
         await self.session.execute(
             update(AttendanceRecord)
             .where(AttendanceRecord.member_id == member.id)
-            .values(person_id=new_person_id)
+            .values(
+                person_id=new_person_id,
+                modified_at_utc=modified_at_utc,
+                last_modified_at=modified_at_local,
+            )
         )
         await self.session.execute(
             update(AttendanceSession)
             .where(AttendanceSession.member_id == member.id)
-            .values(person_id=new_person_id)
+            .values(
+                person_id=new_person_id,
+                modified_at_utc=modified_at_utc,
+                last_modified_at=modified_at_local,
+            )
         )
         return True
 
@@ -1209,7 +1219,11 @@ class AttendanceRepository:
         now = to_storage_local(local_now())
         members_stmt = self._apply_org_scope(
             update(AttendanceMember).values(
-                is_active=False, is_deleted=True, last_modified_at=now
+                is_active=False,
+                is_deleted=True,
+                last_modified_at=now,
+                sync_dirty=True,
+                version=AttendanceMember.version + 1,
             ),
             AttendanceMember,
         )
@@ -1217,7 +1231,11 @@ class AttendanceRepository:
 
         groups_stmt = self._apply_org_scope(
             update(AttendanceGroup).values(
-                is_active=False, is_deleted=True, last_modified_at=now
+                is_active=False,
+                is_deleted=True,
+                last_modified_at=now,
+                sync_dirty=True,
+                version=AttendanceGroup.version + 1,
             ),
             AttendanceGroup,
         )

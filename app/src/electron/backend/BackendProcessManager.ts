@@ -55,6 +55,9 @@ export class BackendProcessManager {
   private currentLogSizeBytes = 0
   private readonly MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
   private isRotating = false
+  private rotationTimeout: NodeJS.Timeout | null = null
+  private rotationCancel: (() => void) | null = null
+  private hasCompletedStartup = false
   private logWriteQueue: string[] = []
   private lastStartupActivityTime = 0
   private startupErrorBuffer = ""
@@ -146,11 +149,31 @@ export class BackendProcessManager {
     }
 
     if (streamToClose) {
+      let finished = false
+      const runOnce = () => {
+        if (finished) return
+        finished = true
+        if (this.rotationTimeout) {
+          clearTimeout(this.rotationTimeout)
+          this.rotationTimeout = null
+        }
+        streamToClose.removeListener("close", runOnce)
+        this.rotationCancel = null
+        performRotation()
+      }
+      this.rotationCancel = () => {
+        finished = true
+        if (this.rotationTimeout) {
+          clearTimeout(this.rotationTimeout)
+          this.rotationTimeout = null
+        }
+        streamToClose.removeListener("close", runOnce)
+      }
       streamToClose.end()
-      streamToClose.once("close", performRotation)
-      setTimeout(() => {
+      streamToClose.once("close", runOnce)
+      this.rotationTimeout = setTimeout(() => {
         if (this.isRotating && !this.logStream) {
-          performRotation()
+          runOnce()
         }
       }, 500)
     } else {
@@ -323,8 +346,10 @@ export class BackendProcessManager {
         }
       })
 
+      this.hasCompletedStartup = false
       this.setupProcessHandlers()
       await this.waitForBackendReady()
+      this.hasCompletedStartup = true
 
       this.status.isRunning = true
       this.status.pid = this.process.pid
@@ -363,7 +388,7 @@ export class BackendProcessManager {
       this.status.isRunning = false
       if (this.process !== null) this.cleanup()
 
-      if (!this.isStoppingManually && code !== 0) {
+      if (!this.isStoppingManually && this.hasCompletedStartup && code !== 0) {
         const now = Date.now()
         this.crashTimestamps = this.crashTimestamps.filter((t) => now - t < this.CRASH_WINDOW_MS)
         this.crashTimestamps.push(now)
@@ -678,6 +703,9 @@ export class BackendProcessManager {
       clearInterval(this.healthCheckTimer)
       this.healthCheckTimer = null
     }
+    this.hasCompletedStartup = false
+    this.rotationCancel?.()
+    this.rotationCancel = null
     this.stdoutBuffer = ""
     this.logWriteQueue = []
     this.isRotating = false
