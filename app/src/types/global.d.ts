@@ -240,7 +240,8 @@ declare global {
       deviceCode: string
       deviceName?: string
     }) => Promise<{
-      status: "pending" | "approved" | "expired" | "denied" | "error" | "network_error"
+      status: "pending" | "approved" | "expired" | "claimed" | "denied" | "error" | "network_error"
+      slowDown?: boolean
       success?: boolean
       message?: string
       error?: string

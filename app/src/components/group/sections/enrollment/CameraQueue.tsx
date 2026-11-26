@@ -121,7 +121,7 @@ export function CameraQueue({
         .map((member) => ({
           personId: member.person_id,
           name: member.displayName,
-          role: member.role,
+          role: member.role ?? undefined,
           status: "pending" as CaptureStatus,
         }))
       setMemberQueue(initialQueue)

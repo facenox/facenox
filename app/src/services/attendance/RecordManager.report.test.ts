@@ -20,6 +20,7 @@ it("does not count members who joined after endDate as absent in earlier reports
       name: "Staff",
       created_at: new Date("2026-01-01T00:00:00"),
       is_active: true,
+      settings: {},
     }),
     async () => [
       {
