@@ -45,14 +45,14 @@ function mockBackend(
     "fetch",
     vi.fn(async (url: string) => {
       if (options.failed && url.includes(options.failed)) return { ok: false, status: 500 }
-      if (options.secondGroupFails && url.includes("/groups/other/members"))
+      if (options.secondGroupFails && url.includes("/groups/other/persons"))
         throw new Error("network error")
       return {
         ok: true,
         json: async () => {
           if (url.includes("/settings"))
             return { attendance_timezone: options.timezone ?? "Asia/Manila" }
-          if (url.includes("/members")) return [member]
+          if (url.includes("/persons")) return [member]
           if (url.includes("/sessions")) return sessions
           const groups = [
             {
@@ -122,7 +122,7 @@ it.each(exportFormats)("exports every visit in order in %s", async (format) => {
   expect(output.match(/Test Member/g)).toHaveLength(2)
 })
 
-it.each(["/attendance/groups", "/attendance/settings", "/members", "/attendance/sessions"])(
+it.each(["/attendance/groups", "/attendance/settings", "/persons", "/attendance/sessions"])(
   "does not write or mark the day complete after a failed %s fetch and allows retry",
   async (failed) => {
     mockBackend([], { failed })

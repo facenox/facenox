@@ -56,7 +56,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
     try {
       const updates: Partial<AttendanceMember> = {
         name: name.trim(),
-        role: role.trim() || undefined,
+        role: role.trim() || null,
       }
 
       await attendanceManager.updateMember(member.person_id, updates)

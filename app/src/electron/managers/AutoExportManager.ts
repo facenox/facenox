@@ -238,7 +238,7 @@ export class AutoExportManager {
     for (const group of activeGroups) {
       try {
         // Fetch members for this group
-        const membersRes = await fetch(`${backendUrl}/attendance/groups/${group.id}/members`, {
+        const membersRes = await fetch(`${backendUrl}/attendance/groups/${group.id}/persons`, {
           headers: authHeaders(),
           signal: AbortSignal.timeout(15000),
         })

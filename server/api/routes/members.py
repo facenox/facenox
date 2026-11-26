@@ -306,6 +306,16 @@ async def update_member(
         # Prepare updates
         update_data = updates.model_dump(exclude_unset=True)
 
+        for field in ("role", "email"):
+            if field in update_data and isinstance(update_data[field], str):
+                update_data[field] = update_data[field].strip() or None
+
+        if "name" in update_data and isinstance(update_data["name"], str):
+            trimmed_name = update_data["name"].strip()
+            if not trimmed_name:
+                raise HTTPException(status_code=422, detail="Name cannot be empty")
+            update_data["name"] = trimmed_name
+
         if not update_data:
             return existing_member
 

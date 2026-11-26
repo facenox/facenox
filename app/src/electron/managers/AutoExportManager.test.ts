@@ -89,7 +89,7 @@ describe("AutoExportManager", () => {
       if (url.includes("/attendance/settings")) {
         return Promise.resolve({ ok: true, json: async () => ({ attendance_timezone: "UTC" }) })
       }
-      if (url.includes("/attendance/groups/") && url.includes("/members")) {
+      if (url.includes("/attendance/groups/") && url.includes("/persons")) {
         return Promise.resolve({
           ok: true,
           json: async () => [{ id: "m1", person_id: "p1", name: "Alice Johnson", group_id: "g1" }],

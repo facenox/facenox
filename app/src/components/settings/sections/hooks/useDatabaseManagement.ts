@@ -169,8 +169,10 @@ export function useDatabaseManagement(
 
       setSavingMember(personId)
       try {
+        const trimmed = value.trim()
+        const nextValue = trimmed === "" ? null : trimmed
         const updates: Partial<AttendanceMember> = {
-          [field]: value.trim() || undefined,
+          [field]: nextValue,
         }
 
         const success = await attendanceManager.updateMember(personId, updates)
@@ -179,7 +181,7 @@ export function useDatabaseManagement(
             prev.map((group) => ({
               ...group,
               members: group.members.map((m) =>
-                m.person_id === personId ? { ...m, [field]: value.trim() || undefined } : m,
+                m.person_id === personId ? { ...m, [field]: nextValue } : m,
               ),
             })),
           )

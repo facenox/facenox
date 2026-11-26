@@ -171,3 +171,51 @@ def test_concurrent_creation_constraint_replays_the_winning_member():
     assert result is winner
     repo.session.rollback.assert_awaited_once()
     assert repo.get_member_by_id.await_count == 2
+
+
+def test_update_member_clears_role_and_email_with_null_or_blank(
+    test_client, set_api_token
+):
+    client, headers, group_id = setup_group(test_client, set_api_token, org="clear-org")
+    created = client.post(
+        "/attendance/members",
+        headers=headers,
+        json={
+            "group_id": group_id,
+            "name": "Alice",
+            "role": "Teacher",
+            "email": "alice@example.com",
+        },
+    )
+    assert created.status_code == 200, created.text
+    person_id = created.json()["person_id"]
+
+    cleared_with_null = client.put(
+        f"/attendance/members/{person_id}",
+        headers=headers,
+        json={"role": None, "email": None},
+    )
+    assert cleared_with_null.status_code == 200, cleared_with_null.text
+    assert cleared_with_null.json()["role"] is None
+    assert cleared_with_null.json()["email"] is None
+
+    reloaded = client.get(f"/attendance/members/{person_id}", headers=headers)
+    assert reloaded.status_code == 200
+    assert reloaded.json()["role"] is None
+    assert reloaded.json()["email"] is None
+
+    refilled = client.put(
+        f"/attendance/members/{person_id}",
+        headers=headers,
+        json={"role": "Lead", "email": "lead@example.com"},
+    )
+    assert refilled.status_code == 200
+
+    cleared_with_blank = client.put(
+        f"/attendance/members/{person_id}",
+        headers=headers,
+        json={"role": "   ", "email": ""},
+    )
+    assert cleared_with_blank.status_code == 200
+    assert cleared_with_blank.json()["role"] is None
+    assert cleared_with_blank.json()["email"] is None

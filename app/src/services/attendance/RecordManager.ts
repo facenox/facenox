@@ -140,9 +140,19 @@ export class RecordManager {
           memberJoinedAt = startDate
         }
 
-        const effectiveStartDate = memberJoinedAt > startDate ? memberJoinedAt : startDate
-        const memberTimeDiff = Math.abs(endDate.getTime() - effectiveStartDate.getTime())
-        const totalDaysMemberWasInGroup = Math.ceil(memberTimeDiff / (1000 * 60 * 60 * 24)) + 1
+        const rangeStart = new Date(startDate)
+        rangeStart.setHours(0, 0, 0, 0)
+        const rangeEnd = new Date(endDate)
+        rangeEnd.setHours(0, 0, 0, 0)
+        const joinedDay = new Date(memberJoinedAt)
+        joinedDay.setHours(0, 0, 0, 0)
+
+        let totalDaysMemberWasInGroup = 0
+        if (joinedDay <= rangeEnd) {
+          const effectiveStartDay = joinedDay > rangeStart ? joinedDay : rangeStart
+          const memberTimeDiff = rangeEnd.getTime() - effectiveStartDay.getTime()
+          totalDaysMemberWasInGroup = Math.round(memberTimeDiff / (1000 * 60 * 60 * 24)) + 1
+        }
 
         const personSessions = sessionsByPerson.get(member.person_id) || []
         const memberSessions = personSessions.filter((s: AttendanceSession) => {

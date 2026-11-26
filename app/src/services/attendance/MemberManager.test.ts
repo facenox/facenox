@@ -141,3 +141,27 @@ it("gives identical names different tokens when they are separate bulk rows", as
   const rows = post.mock.calls[0][1].members
   expect(rows[0].creation_id).not.toBe(rows[1].creation_id)
 })
+
+it("preserves explicit null fields when clearing role or email via updateMember", async () => {
+  const seenBodies: string[] = []
+  const fetch = vi.fn(async (_url: string, options: RequestInit) => {
+    seenBodies.push(String(options.body))
+    return Response.json({
+      id: "m1",
+      person_id: "p1",
+      group_id: "g1",
+      name: "Alice",
+      role: null,
+      email: null,
+      joined_at: "2026-11-01T00:00:00Z",
+      is_active: true,
+    })
+  })
+  vi.stubGlobal("fetch", fetch)
+  const manager = new MemberManager(new HttpClient("http://test.invalid"), {
+    members: "/attendance/members",
+  })
+  const updated = await manager.updateMember("p1", { role: null, email: null })
+  expect(JSON.parse(seenBodies[0])).toEqual({ role: null, email: null })
+  expect(updated).toBe(true)
+})

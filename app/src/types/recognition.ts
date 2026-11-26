@@ -150,8 +150,8 @@ export interface AttendanceMember {
   person_id: string
   group_id: string
   name: string
-  role?: string
-  email?: string
+  role?: string | null
+  email?: string | null
   joined_at: Date
   is_active: boolean
   has_face_data?: boolean
