@@ -98,7 +98,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
 
   const handlePairingWarningOrError = useCallback((msg: string | null) => {
     setPairError(msg)
-    if (msg && msg.includes("initial sync failed")) {
+    if (msg && msg.toLowerCase().includes("sync failed")) {
       useUIStore.getState().setError(msg)
     }
   }, [])
