@@ -216,7 +216,7 @@ export default function WindowBar() {
       {/* Spacer for Mac native traffic lights */}
       {isMac && <div className="w-[80px] shrink-0" />}
 
-      <div className="relative z-40 ml-3 flex flex-1 items-center gap-2">
+      <div className="relative z-[110] ml-3 flex flex-1 items-center gap-2">
         <div className="flex items-center gap-1.5">
           <img
             src="./icons/logo-transparent.png"
@@ -323,22 +323,7 @@ export default function WindowBar() {
               )
             }
             if (!hasSavedCloudPairing(syncConfig)) {
-              return (
-                <Tooltip
-                  content="Automatic sync & remote reports"
-                  position="bottom"
-                  offset={6}
-                  disabled={isPinPromptOpen}>
-                  <button
-                    onClick={isPinPromptOpen ? undefined : handleOpenCloudSync}
-                    disabled={isPinPromptOpen}
-                    style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                    className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-white/45 transition-all duration-150 select-none hover:bg-white/5 hover:text-white/80 active:scale-95 disabled:pointer-events-none disabled:opacity-30">
-                    <Cloud className="size-2.5 opacity-60" />
-                    <span>Connect Facenox Cloud</span>
-                  </button>
-                </Tooltip>
-              )
+              return null
             }
 
             const relativeTime = formatRelativeTime(syncConfig.lastSyncedAt)

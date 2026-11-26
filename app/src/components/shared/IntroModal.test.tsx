@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { IntroModal } from "./IntroModal"
 import { useUIStore } from "@/components/main/stores/uiStore"
@@ -8,6 +8,7 @@ describe("IntroModal", () => {
   beforeEach(() => {
     useUIStore.setState({
       hasSeenIntro: false,
+      error: null,
     })
   })
 
@@ -40,6 +41,27 @@ describe("IntroModal", () => {
     Object.assign(navigator, { clipboard: { writeText } })
     fireEvent.click(screen.getByRole("button", { name: "Copy code" }))
     expect(writeText).toHaveBeenCalledWith("749120")
+  })
+
+  it("loads a saved custom destination before starting device authorization", async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockResolvedValue(
+      createSyncConfig({
+        connected: false,
+        remoteBaseUrl: "https://sync.example.test",
+        deviceName: "Reception",
+      }),
+    )
+
+    render(<IntroModal initialStep={2} />)
+
+    await waitFor(() =>
+      expect(api.initiateReversePairing).toHaveBeenCalledWith({
+        remoteBaseUrl: "https://sync.example.test",
+        deviceName: "Reception",
+      }),
+    )
+    expect(api.initiateReversePairing).toHaveBeenCalledTimes(1)
   })
 
   it("completes onboarding when reverse pairing approves even if onDataChanged flips connected mid-poll", async () => {
@@ -89,6 +111,87 @@ describe("IntroModal", () => {
     })
     expect(manualButton).toBeInTheDocument()
     fireEvent.click(manualButton)
+
+    const connectButton = screen.getByRole("button", { name: "Connect" })
+    expect(connectButton).toBeDisabled()
     expect(screen.getByPlaceholderText("ABCD2345")).toBeInTheDocument()
+  })
+
+  it("pairs via manual code and surfaces initial sync failure warning", async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
+    api.pairDevice.mockImplementation(async () => {
+      const config = createSyncConfig({ connected: true })
+      api.getConfig.mockResolvedValue(config)
+      return {
+        success: true,
+        message: "Paired, but the first sync failed.",
+        initialSyncSucceeded: false,
+        config,
+      }
+    })
+
+    render(<IntroModal initialStep={2} />)
+
+    fireEvent.click(await screen.findByRole("button", { name: /Have a pairing code already/i }))
+    fireEvent.change(screen.getByPlaceholderText("ABCD2345"), { target: { value: "code1234" } })
+    fireEvent.click(screen.getByRole("button", { name: "Connect" }))
+
+    await waitFor(() => {
+      expect(api.pairDevice).toHaveBeenCalledWith(
+        expect.objectContaining({ pairingCode: "CODE1234" }),
+      )
+      expect(useUIStore.getState().error).toBe("Paired, but the first sync failed.")
+    })
+  })
+
+  it("unlocks Dev endpoint on 5 heading clicks and discards stale in-flight codes on endpoint change", async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
+    type Result = Awaited<ReturnType<SyncAPI["initiateReversePairing"]>>
+    let finish!: (value: Result) => void
+    api.initiateReversePairing.mockReturnValue(
+      new Promise<Result>((resolve) => {
+        finish = resolve
+      }),
+    )
+
+    render(<IntroModal initialStep={2} />)
+
+    await waitFor(() => expect(api.initiateReversePairing).toHaveBeenCalledTimes(1))
+    expect(screen.queryByPlaceholderText("https://facenox.com")).not.toBeInTheDocument()
+
+    const heading = screen.getByRole("heading", { name: "Connect to Facenox Cloud" })
+    for (let i = 0; i < 5; i++) {
+      fireEvent.click(heading)
+    }
+
+    const endpointInput = screen.getByPlaceholderText("https://facenox.com")
+    expect(endpointInput).toBeInTheDocument()
+
+    const updatedConfig = createSyncConfig({
+      connected: false,
+      remoteBaseUrl: "http://localhost:3000",
+    })
+    api.updateConfig.mockResolvedValue(updatedConfig)
+    api.getConfig.mockResolvedValue(updatedConfig)
+
+    fireEvent.click(screen.getByRole("button", { name: "Localhost" }))
+
+    await act(async () => {
+      finish({
+        success: true,
+        data: {
+          deviceCode: "obsolete",
+          userCode: "OLD999",
+          verificationUri: "https://facenox.com/pair",
+          verificationUriComplete: "https://facenox.com/pair?code=OLD999",
+          expiresIn: 900,
+          interval: 3,
+        },
+      })
+    })
+
+    expect(screen.queryByText("OLD999")).not.toBeInTheDocument()
   })
 })

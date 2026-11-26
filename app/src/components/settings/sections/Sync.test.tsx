@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { act, fireEvent, screen, waitFor } from "@testing-library/react"
+import { act, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import { Sync } from "@/components/settings/sections/Sync"
 import { useUIStore } from "@/components/main/stores"
@@ -36,7 +36,6 @@ describe("Sync", () => {
     api.getConfig.mockReturnValue(pending)
     renderWithProviders(<Sync />)
     expect(screen.getByText("Loading Cloud connection…")).toBeInTheDocument()
-    expect(screen.queryByText("Connect to Facenox Cloud")).not.toBeInTheDocument()
     expect(api.initiateReversePairing).not.toHaveBeenCalled()
     await act(async () => {
       resolve(createSyncConfig({ connected: true }))
@@ -45,32 +44,13 @@ describe("Sync", () => {
     expect(api.initiateReversePairing).not.toHaveBeenCalled()
   })
 
-  it("does not start pairing when configuration cannot be read", async () => {
+  it("shows an error and Retry button when configuration cannot be read", async () => {
     const api = getElectronAPIMock().sync
     api.getConfig.mockRejectedValue(new Error("Saved settings unavailable"))
     renderWithProviders(<Sync />)
     expect(await screen.findByText("Saved settings unavailable")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument()
     expect(api.initiateReversePairing).not.toHaveBeenCalled()
-  })
-
-  it("loads a saved custom destination before starting unpaired-device authorization", async () => {
-    const api = getElectronAPIMock().sync
-    api.getConfig.mockResolvedValue(
-      createSyncConfig({
-        connected: false,
-        remoteBaseUrl: "https://sync.example.test",
-        deviceName: "Reception",
-      }),
-    )
-    renderWithProviders(<Sync />)
-    await waitFor(() =>
-      expect(api.initiateReversePairing).toHaveBeenCalledWith({
-        remoteBaseUrl: "https://sync.example.test",
-        deviceName: "Reception",
-      }),
-    )
-    expect(api.initiateReversePairing).toHaveBeenCalledTimes(1)
   })
 
   it.each([
@@ -88,6 +68,7 @@ describe("Sync", () => {
     expect(await screen.findByText(expected)).toBeInTheDocument()
     expect(screen.queryByText(/0 \/ 0 members/)).not.toBeInTheDocument()
   })
+
   it.each([
     {
       records: undefined,
@@ -119,7 +100,7 @@ describe("Sync", () => {
     },
   )
 
-  it("loads config and renders both local-only and connected states", async () => {
+  it("loads config and notifies onStatusChange across disconnected and connected states", async () => {
     const electronAPI = getElectronAPIMock()
     electronAPI.sync.getConfig.mockResolvedValueOnce(createSyncConfig())
 
@@ -140,6 +121,7 @@ describe("Sync", () => {
       expect(syncConfig).not.toBeNull()
       expect(syncConfig?.connected).toBe(false)
     })
+    expect(screen.getByText("Device not paired")).toBeInTheDocument()
 
     electronAPI.sync.getConfig.mockResolvedValueOnce(
       createSyncConfig({
@@ -165,85 +147,6 @@ describe("Sync", () => {
       expect(syncConfig?.organizationName).toBe("Facenox Org")
       expect(syncConfig?.siteName).toBe("Main Campus")
     })
-  })
-
-  it("keeps the connect button disabled without a pairing code", async () => {
-    renderWithProviders(<Sync />)
-
-    const connectButton = await screen.findByRole("button", { name: /Connect/i })
-    expect(connectButton).toBeDisabled()
-  })
-
-  it("clears the pairing code and shows success after a successful pair", async () => {
-    const electronAPI = getElectronAPIMock()
-    electronAPI.sync.pairDevice.mockImplementation(async () => {
-      const config = createSyncConfig({
-        connected: true,
-        organizationName: "Facenox Org",
-        siteName: "Main Campus",
-      })
-      electronAPI.sync.getConfig.mockResolvedValue(config)
-      return { success: true, message: "Device connected.", initialSyncSucceeded: true, config }
-    })
-
-    const { user } = renderWithProviders(
-      <>
-        <Sync />
-        <FeedbackDisplay />
-      </>,
-    )
-
-    const pairingInput = await screen.findByPlaceholderText("ABCD2345")
-    await user.type(pairingInput, "abcd2345")
-    await user.click(screen.getByRole("button", { name: /Connect/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText("Device connected.")).toBeInTheDocument()
-    })
-    expect(screen.queryByPlaceholderText("ABCD2345")).not.toBeInTheDocument()
-  })
-
-  it("shows an error-toned banner when pairing succeeds but initial sync fails", async () => {
-    const electronAPI = getElectronAPIMock()
-    electronAPI.sync.pairDevice.mockImplementation(async () => {
-      const config = createSyncConfig({ connected: true })
-      electronAPI.sync.getConfig.mockResolvedValue(config)
-      return {
-        success: true,
-        message: "Paired, but the first sync failed.",
-        initialSyncSucceeded: false,
-        config,
-      }
-    })
-
-    const { user } = renderWithProviders(
-      <>
-        <Sync />
-        <FeedbackDisplay />
-      </>,
-    )
-
-    await user.type(await screen.findByPlaceholderText("ABCD2345"), "CODE1234")
-    await user.click(screen.getByRole("button", { name: /Connect/i }))
-
-    expect(await screen.findByText("Paired, but the first sync failed.")).toBeInTheDocument()
-  })
-
-  it("shows save message when settings are saved", async () => {
-    const electronAPI = getElectronAPIMock()
-    electronAPI.sync.updateConfig.mockResolvedValueOnce(createSyncConfig({ connected: false }))
-
-    renderWithProviders(
-      <>
-        <Sync />
-        <FeedbackDisplay />
-      </>,
-    )
-
-    fireEvent.click(await screen.findByRole("button", { name: /Advanced settings/i }))
-    fireEvent.click(screen.getByRole("button", { name: /Save configuration/i }))
-
-    expect(await screen.findByText("Cloud sync settings saved.")).toBeInTheDocument()
   })
 
   it("reloads config and shows the manual sync result", async () => {
@@ -320,51 +223,5 @@ describe("Sync", () => {
         "Disconnected locally, but Cloud returned a warning: Cloud cleanup failed",
       ),
     ).toBeInTheDocument()
-  })
-
-  it("keeps advanced form state when toggled closed and reopened", async () => {
-    const { user } = renderWithProviders(<Sync />)
-
-    await user.click(await screen.findByRole("button", { name: /Advanced settings/i }))
-
-    fireEvent.change(screen.getByPlaceholderText("Facenox Desktop"), {
-      target: { value: "Reception Desk" },
-    })
-
-    await user.click(screen.getByRole("button", { name: /Hide advanced/i }))
-    await user.click(screen.getByRole("button", { name: /Advanced settings/i }))
-
-    expect(screen.getByPlaceholderText("Facenox Desktop")).toHaveValue("Reception Desk")
-  })
-
-  it("keeps the custom cloud URL hidden by default in advanced settings", async () => {
-    const { user } = renderWithProviders(<Sync />)
-
-    await user.click(await screen.findByRole("button", { name: /Advanced settings/i }))
-
-    expect(screen.queryByPlaceholderText("Leave empty for Facenox Cloud")).not.toBeInTheDocument()
-    expect(screen.getByPlaceholderText("Facenox Desktop")).toBeInTheDocument()
-  })
-
-  it("unlocks custom cloud URL when developer mode is triggered via title clicks", async () => {
-    const { user } = renderWithProviders(
-      <>
-        <Sync />
-        <FeedbackDisplay />
-      </>,
-    )
-
-    const title = await screen.findByText(/Connect to Facenox Cloud/i)
-    for (let i = 0; i < 5; i++) {
-      await user.click(title)
-    }
-
-    expect(await screen.findByText(/Custom endpoint unlocked/i)).toBeInTheDocument()
-
-    const serverUrlInput = screen.getByPlaceholderText("Leave empty for Facenox Cloud")
-    expect(serverUrlInput).toBeInTheDocument()
-
-    fireEvent.change(serverUrlInput, { target: { value: "127.0.0.1:7500" } })
-    expect(serverUrlInput).toHaveValue("127.0.0.1:7500")
   })
 })
