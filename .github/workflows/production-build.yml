@@ -123,6 +123,8 @@ jobs:
     name: Build Electron (${{ matrix.os }} - ${{ matrix.arch }})
     needs: build-backend
     runs-on: ${{ matrix.os }}
+    env:
+      HAS_MACOS_SIGNING: ${{ secrets.MACOS_CSC_LINK != '' && secrets.MACOS_CSC_KEY_PASSWORD != '' && secrets.APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -177,7 +179,7 @@ jobs:
           npm run build
 
       - name: Package CI build
-        if: runner.os != 'macOS' || !startsWith(github.ref, 'refs/tags/v')
+        if: runner.os != 'macOS' || !startsWith(github.ref, 'refs/tags/v') || env.HAS_MACOS_SIGNING != 'true'
         run: |
           cd app
           if [ "${{ matrix.os }}" == "ubuntu-24.04" ]; then
@@ -196,7 +198,7 @@ jobs:
           FACENOX_PREBUILT_BACKEND: "1"
 
       - name: Sign and notarize macOS release
-        if: runner.os == 'macOS' && startsWith(github.ref, 'refs/tags/v')
+        if: runner.os == 'macOS' && startsWith(github.ref, 'refs/tags/v') && env.HAS_MACOS_SIGNING == 'true'
         shell: bash
         working-directory: app
         env:
@@ -263,10 +265,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      HAS_SIGNPATH: ${{ secrets.SIGNPATH_API_TOKEN != '' && secrets.SIGNPATH_ORGANIZATION_ID != '' && secrets.SIGNPATH_PROJECT_SLUG != '' && secrets.SIGNPATH_SIGNING_POLICY_SLUG != '' }}
     steps:
       - uses: actions/checkout@v7
       
       - name: Submit to SignPath (Windows)
+        if: env.HAS_SIGNPATH == 'true'
         uses: signpath/github-action-submit-signing-request@v3
         id: sign-windows
         with:
@@ -283,16 +288,27 @@ jobs:
         with:
           path: original-artifacts/
 
+      - name: Prepare Release Assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          if compgen -G "signed/windows/*.exe" > /dev/null; then
+            cp signed/windows/*.exe release-assets/
+          else
+            cp original-artifacts/unsigned-app-windows-latest-x64/*.exe release-assets/
+          fi
+          cp original-artifacts/app-package-macos-26-intel-x64/*.dmg release-assets/
+          cp original-artifacts/app-package-macos-latest-arm64/*.dmg release-assets/
+          cp original-artifacts/app-package-ubuntu-24.04-x64/*.AppImage release-assets/
+          cp original-artifacts/app-package-ubuntu-24.04-x64/*.deb release-assets/
+          ls -lh release-assets
+
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
-          files: |
-            signed/windows/*.exe
-            original-artifacts/app-package-macos-26-intel-x64/*.dmg
-            original-artifacts/app-package-macos-latest-arm64/*.dmg
-            original-artifacts/app-package-ubuntu-24.04-x64/*.AppImage
-            original-artifacts/app-package-ubuntu-24.04-x64/*.deb
-          generate_release_notes: true
+          files: release-assets/*
+          generate_release_notes: false
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: false
           fail_on_unmatched_files: true
