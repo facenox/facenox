@@ -15,7 +15,7 @@ import {
 import { useUIStore } from "@/components/main/stores"
 import { Modal, QRCodeView, Spinner } from "@/components/common"
 import { ErrorText } from "@/components/common/ErrorText"
-import { Tooltip } from "@/components/shared"
+import { Tooltip, useDialog } from "@/components/shared"
 import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
@@ -57,6 +57,7 @@ interface SyncProps {
 export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   const setSuccess = useUIStore((state) => state.setSuccess)
   const setError = useUIStore((state) => state.setError)
+  const dialog = useDialog()
   const {
     config: savedConfig,
     status: cloudConfigStatus,
@@ -210,7 +211,22 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     }
   }
 
+  const effectiveUrl = getEffectiveRemoteUrl(remoteBaseUrl || config.remoteBaseUrl)
+  const isCustomServer = !isOfficialCloudUrl(effectiveUrl)
+  const serverDisplayName = isCustomServer ? "Custom server" : "Facenox Cloud"
+
   const handleDisconnect = async () => {
+    const workspaceLabel =
+      [config.organizationName, config.siteName].filter(Boolean).join(" / ") || serverDisplayName
+    const confirmed = await dialog.confirm({
+      title: "Unpair device?",
+      message: `This computer will stop syncing with ${workspaceLabel}. Local attendance data stays on this device, and you'll need to pair a Cloud workspace again to resume sync.`,
+      confirmText: "Unpair",
+      cancelText: "Cancel",
+      confirmVariant: "danger",
+    })
+    if (!confirmed) return
+
     setError(null)
     setSuccess(null)
     setBusyAction("disconnecting")
@@ -222,7 +238,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       if (result.warning) {
         setError(`Disconnected locally, but Cloud returned a warning: ${result.warning}`)
       } else {
-        setSuccess("Device disconnected from Facenox Cloud.")
+        setSuccess("Device unpaired from Facenox Cloud.")
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not disconnect this device.")
@@ -276,10 +292,6 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       </div>
     )
   }
-
-  const effectiveUrl = getEffectiveRemoteUrl(remoteBaseUrl || config.remoteBaseUrl)
-  const isCustomServer = !isOfficialCloudUrl(effectiveUrl)
-  const serverDisplayName = isCustomServer ? "Custom server" : "Facenox Cloud"
 
   return (
     <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
@@ -695,13 +707,6 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     : <RotateCw className="size-3" />}
                     Sync now
                   </button>
-                  <button
-                    onClick={handleDisconnect}
-                    disabled={busyAction !== null}
-                    className="flex items-center gap-1.5 rounded border border-white/10 bg-transparent px-3 py-1.5 text-xs font-medium text-white/50 transition-all hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40">
-                    {busyAction === "disconnecting" && <Spinner size="xs" color="white" />}
-                    Disconnect
-                  </button>
                 </div>
               </div>
             }
@@ -818,7 +823,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                   )}
                 </div>
 
-                {!config.connected && (
+                {!config.connected ?
                   <div className="flex justify-end pt-2">
                     <button
                       onClick={handleSave}
@@ -828,7 +833,24 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       Save configuration
                     </button>
                   </div>
-                )}
+                : <div className="flex items-center justify-between gap-4 border-t border-white/5 pt-4">
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-medium text-white/85">Unpair device</div>
+                      <p className="text-[11px] text-white/45">
+                        Disconnect this computer from {config.organizationName || serverDisplayName}{" "}
+                        to switch workspaces or reassign it.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDisconnect}
+                      disabled={busyAction !== null}
+                      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-rose-500/25 bg-rose-500/10 px-3.5 py-1.5 text-xs font-semibold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40">
+                      {busyAction === "disconnecting" && <Spinner size="xs" color="white" />}
+                      Unpair device
+                    </button>
+                  </div>
+                }
               </motion.div>
             </motion.div>
           )}

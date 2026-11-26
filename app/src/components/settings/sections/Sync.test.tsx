@@ -280,7 +280,7 @@ describe("Sync", () => {
     })
   })
 
-  it("shows the disconnect warning when the cloud returns one", async () => {
+  it("confirms unpair inside advanced settings and shows the disconnect warning when the cloud returns one", async () => {
     const electronAPI = getElectronAPIMock()
     electronAPI.sync.getConfig.mockResolvedValue(
       createSyncConfig({
@@ -302,7 +302,18 @@ describe("Sync", () => {
       </>,
     )
 
-    await user.click(await screen.findByRole("button", { name: /Disconnect/i }))
+    expect(await screen.findByText("Connected to Facenox Cloud")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Unpair device/i })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: /Advanced settings/i }))
+    await user.click(screen.getByRole("button", { name: /Unpair device/i }))
+
+    expect(await screen.findByText("Unpair device?")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: /^Cancel$/i }))
+    expect(electronAPI.sync.disconnectDevice).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole("button", { name: /Unpair device/i }))
+    await user.click(await screen.findByRole("button", { name: /^Unpair$/i }))
 
     expect(
       await screen.findByText(
