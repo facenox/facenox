@@ -44,7 +44,7 @@ export const attendanceMemberSchema = z.object({
   sync_revision: z.number().int().nonnegative().default(0),
   version: z.number().int().positive().default(1),
   sync_dirty: z.boolean().default(true),
-  id: z.string().min(1),
+  id: z.string().min(1).optional(),
   person_id: z.string().min(1),
   group_id: z.string().min(1),
   name: z.string().min(1),
@@ -58,7 +58,7 @@ export const attendanceMemberSchema = z.object({
 export const attendanceRecordSchema = z.object({
   id: z.string().min(1),
   person_id: z.string().min(1),
-  member_id: z.string().min(1),
+  member_id: z.string().min(1).optional(),
   group_id: z.string().min(1),
   timestamp: z.string().datetime(),
   timestamp_timezone: captureTimezoneSchema,
@@ -76,38 +76,50 @@ export const attendanceRecordSchema = z.object({
   void_reason: z.string().nullable().optional(),
 })
 
-export const attendanceSessionSchema = z.object({
-  id: z.string().min(1),
-  is_manual_override: z.boolean().optional(),
-  applied_schedule: z
-    .object({
-      class_start_time: z.string(),
-      class_end_time: z.string().nullable().optional(),
-      late_threshold_enabled: z.boolean().nullable().optional(),
-      late_threshold_minutes: z.number().int().nonnegative().nullable().optional(),
-      attendance_mode: z.enum(["attendance", "work_hours", "visits"]),
-      scan_behavior: z.enum(["automatic", "entry_only", "exit_only"]).nullable().optional(),
-      min_checkout_delay_minutes: z.number().nonnegative().nullable().optional(),
-    })
-    .nullable()
-    .optional(),
-  person_id: z.string().min(1),
-  member_id: z.string().min(1),
-  group_id: z.string().min(1),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  visit_number: z.number().int().positive().default(1),
-  check_in_time: z.string().datetime().nullable().optional(),
-  check_out_time: z.string().datetime().nullable().optional(),
-  check_in_time_timezone: captureTimezoneSchema,
-  check_in_time_offset_seconds: captureOffsetSchema,
-  check_out_time_timezone: captureTimezoneSchema,
-  check_out_time_offset_seconds: captureOffsetSchema,
-  total_hours: z.number().nullable().optional(),
-  status: attendanceStatusSchema,
-  is_late: z.boolean(),
-  late_minutes: z.number().nullable().optional(),
-  notes: z.string().nullable().optional(),
-})
+export const attendanceSessionSchema = z
+  .object({
+    id: z.string().min(1),
+    is_manual_override: z.boolean().optional(),
+    applied_schedule: z
+      .object({
+        class_start_time: z.string(),
+        class_end_time: z.string().nullable().optional(),
+        late_threshold_enabled: z.boolean().nullable().optional(),
+        late_threshold_minutes: z.number().int().nonnegative().nullable().optional(),
+        attendance_mode: z.enum(["attendance", "work_hours", "visits"]),
+        scan_behavior: z.enum(["automatic", "entry_only", "exit_only"]).nullable().optional(),
+        min_checkout_delay_minutes: z.number().nonnegative().nullable().optional(),
+      })
+      .nullable()
+      .optional(),
+    person_id: z.string().min(1),
+    member_id: z.string().min(1).optional(),
+    group_id: z.string().min(1),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    visit_number: z.number().int().positive().nullable().optional(),
+    check_in_time: z.string().datetime().nullable().optional(),
+    check_out_time: z.string().datetime().nullable().optional(),
+    check_in_time_timezone: captureTimezoneSchema,
+    check_in_time_offset_seconds: captureOffsetSchema,
+    check_out_time_timezone: captureTimezoneSchema,
+    check_out_time_offset_seconds: captureOffsetSchema,
+    total_hours: z.number().nullable().optional(),
+    status: attendanceStatusSchema,
+    is_late: z.boolean(),
+    late_minutes: z.number().nullable().optional(),
+    notes: z.string().nullable().optional(),
+  })
+  .refine(
+    (session) =>
+      !(
+        session.check_in_time &&
+        session.check_out_time &&
+        session.check_in_time_offset_seconds != null &&
+        session.check_out_time_offset_seconds != null &&
+        new Date(session.check_out_time).getTime() < new Date(session.check_in_time).getTime()
+      ),
+    "Check-out must not precede check-in.",
+  )
 
 export const faceEmbeddingSchema = z.object({
   sync_revision: z.number().int().nonnegative().default(0),

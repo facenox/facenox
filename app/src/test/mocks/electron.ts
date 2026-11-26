@@ -215,8 +215,8 @@ export function createElectronAPIMock(): MockElectronAPI {
         data: {
           deviceCode: "mock-device-code",
           userCode: "749120",
-          verificationUri: "https://facenox.cloud/pair",
-          verificationUriComplete: "https://facenox.cloud/pair?code=749120",
+          verificationUri: "https://facenox.com/pair",
+          verificationUriComplete: "https://facenox.com/pair?code=749120",
           expiresIn: 900,
           interval: 3,
         },

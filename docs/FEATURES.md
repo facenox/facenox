@@ -36,7 +36,7 @@ This page covers the shipped desktop feature set and the scope of the current Fa
 
 - Audit logging for sensitive local actions
 - Desktop settings for camera, attendance, updater, and sync behavior
-- Offline-first operation for the core attendance workflow
+- Offline attendance recording after initial Cloud setup
 
 ## Facenox Cloud Integration
 

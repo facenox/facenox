@@ -24,9 +24,9 @@ Create a group and add the people who will use the attendance computer. Enroll t
 
 Review the entry/exit and attendance settings for your workflow. Scan an enrolled member and confirm that the expected record appears. Local enrollment, recognition, and attendance recording work without internet after installation. Keep the computer powered on and the app running when it needs to record attendance.
 
-## 5. Optionally connect Facenox Cloud
+## 5. Connect Facenox Cloud on first launch
 
-You do not need an account for local use. To review synced records from a browser, create a Facenox Cloud account and set up an organization and location. Generate an 8-character pairing code in Facenox Cloud and enter it in **Settings → Cloud sync** in the desktop app. The settings also support a device-initiated approval flow that uses a 6-character device code. Pairing authorizes organization administrators to apply attendance policies and supported device commands, including local data wipe and admin-PIN reset; review **Cloud sync & privacy** before connecting.
+Sign in once with a free Facenox Cloud account during first-launch setup to link your computer to an organization and location. You can also generate an 8-character pairing code in Facenox Cloud and enter it in **Settings → Cloud sync**, or use the 6-character device authorization code flow. Pairing authorizes organization administrators to apply attendance policies and supported device commands, including local data wipe and admin-PIN reset; review **Privacy & data handling** before connecting.
 
 Cloud requires internet for pairing, syncing, and browser access. If the connection drops, the desktop continues recording locally and pending records sync when it reconnects.
 

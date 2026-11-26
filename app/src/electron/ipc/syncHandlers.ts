@@ -113,9 +113,8 @@ function getRemoteSyncStatus() {
           attendanceCooldownSeconds: persistentStore.get(
             "sync.policy.attendanceCooldownSeconds",
           ) as number | undefined,
-          minCheckoutDelayMinutes: persistentStore.get(
-            "sync.policy.minCheckoutDelayMinutes",
-          ) as number | undefined,
+          minCheckoutDelayMinutes: persistentStore.get("sync.policy.minCheckoutDelayMinutes") as
+            number | undefined,
           dataRetentionDays: persistentStore.get("sync.policy.dataRetentionDays") as
             number | undefined,
         }

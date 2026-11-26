@@ -84,10 +84,7 @@ export function parseSyncError(err: string | null): ParsedSyncError {
   const withoutTelemetry = err
     .replace(/^Snapshot synced\.\s*/i, "")
     .replace(/^Cloud updates downloaded\.\s*/i, "")
-    .replace(
-      /^Pulled \d+ groups?, \d+ members\.(?: Imported \d+ face templates\.)?\s*/i,
-      "",
-    )
+    .replace(/^Pulled \d+ groups?, \d+ members\.(?: Imported \d+ face templates\.)?\s*/i, "")
     .trim()
 
   if (

@@ -368,10 +368,16 @@ export class WindowManager {
     })
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-      if (url.startsWith("http"))
-        shell.openExternal(url).catch((err) => {
-          console.warn("Failed to open external URL:", err)
-        })
+      try {
+        const parsed = new URL(url)
+        if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+          shell.openExternal(parsed.toString()).catch((err) => {
+            console.warn("Failed to open external URL:", err)
+          })
+        }
+      } catch {
+        // Ignore malformed URLs from untrusted content.
+      }
       return { action: "deny" }
     })
 

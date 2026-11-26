@@ -33,7 +33,7 @@ describe("IntroModal", () => {
     await waitFor(() => expect(api.initiateReversePairing).toHaveBeenCalledTimes(1))
     expect(
       await screen.findByRole("link", { name: /Sign in with Facenox Cloud/i }),
-    ).toHaveAttribute("href", "https://facenox.cloud/pair?code=749120")
+    ).toHaveAttribute("href", "https://facenox.com/pair?code=749120")
   })
 
   it("allows continuing with local data for existing beta installations", async () => {

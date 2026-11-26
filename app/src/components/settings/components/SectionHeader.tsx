@@ -17,7 +17,7 @@ interface BreadcrumbsProps {
   children: React.ReactNode
 }
 
-export function Breadcrumbs({ children }: BreadcrumbsProps) {
+function Breadcrumbs({ children }: BreadcrumbsProps) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-[13px] font-medium">
       {children}
@@ -33,7 +33,7 @@ interface BreadcrumbProps extends React.HTMLAttributes<HTMLElement> {
   className?: string
 }
 
-export const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
+const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
   ({ children, active, onClick, color, className = "", ...rest }, ref) => {
     const baseColor = color || "text-white/45"
 
@@ -65,7 +65,7 @@ export const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
 )
 Breadcrumb.displayName = "Breadcrumb"
 
-export function Separator() {
+function Separator() {
   return <span className="shrink-0 text-[13px] font-light text-white/15 select-none">/</span>
 }
 
@@ -73,7 +73,7 @@ interface ActionsProps {
   children: React.ReactNode
 }
 
-export function Actions({ children }: ActionsProps) {
+function Actions({ children }: ActionsProps) {
   return (
     <div className="flex shrink-0 items-center gap-3">
       <AnimatePresence mode="popLayout">{children}</AnimatePresence>
