@@ -449,6 +449,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     setGroupInitialSection,
     syncConfig,
     cloudConfigStatus,
+    isDirectoryLocked,
     canManageGroups,
     openCreateGroup,
     onCreateGroup,
