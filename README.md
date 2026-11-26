@@ -1,7 +1,7 @@
 <a id="readme-top"></a>
 
 <h1 align="center">
-  <img src="docs/assets/header.png" alt="Facenox - Offline-first Face Recognition Software" width="100%">
+  <img src="docs/assets/header.png" alt="Facenox - Privacy-first Face Recognition Software" width="100%">
 </h1>
 
 <p align="center">
@@ -22,8 +22,8 @@
 </p>
 
 <p align="center">
-  <strong>Facenox is open-source, offline-first face recognition software for real-time attendance tracking.</strong><br>
-  Built for privacy: no face photos are stored. Biometric templates are encrypted at rest.
+  <strong>Facenox is open-source, privacy-first face recognition software for real-time attendance tracking.</strong><br>
+  No face photos are stored. Biometric templates are encrypted at rest. Recognition works without internet.
 </p>
 
 <p align="center">
@@ -76,29 +76,22 @@ _Data and storage management panel detailing system clock accuracy validation, a
 
 ---
 
-> [!CAUTION]  
-> This is the official open source repository for Facenox. Treat other repositories, installers, and downloads as unverified unless they come from official sources.
-
-> [!NOTE]  
-> **Local biometric processing & Cloud ecosystem:** Facenox runs face detection, tracking, liveness checks, and matching directly on your computer. After a one-time Cloud sign-in/pairing on setup, attendance continues working offline and syncs automatically when online.
-
 ## Why Facenox
 
-Facenox records attendance with a standard computer and webcam. Face matching runs locally with zero internet dependency after setup.
+Facenox records attendance with a standard computer and webcam. Face matching runs locally on your machine with zero internet dependency after initial Cloud setup.
 
-- **Offline-capable kiosk:** Enroll members and record attendance continuously even during internet disruptions.
-- **Unified Cloud dashboard:** Automatically sync live records, monitor multiple branches, and export reports from anywhere.
-- **No local limits:** Desktop has no artificial member limits or software locks.
-- **Biometric privacy:** Encrypted numerical vectors at rest with zero member photos stored. Review the [privacy documentation](docs/PRIVACY.md).
+- **Privacy by design:** Raw camera frames are never stored or uploaded, and biometric templates stay encrypted at rest. See [privacy documentation](docs/PRIVACY.md).
+- **Offline-capable kiosk:** Record attendance continuously even during internet disruptions; sync resumes automatically when connectivity returns.
+- **Unified Cloud dashboard:** Link your Facenox Cloud workspace once on setup to monitor sites, manage directories, and export attendance and DTR reports from any browser.
+- **No GPU required:** Real-time matching verified on standard CPUs.
 
 ## Features
 
 - **On-Device AI Inference:** Local face detection and recognition with ByteTrack multi-subject tracking and liveness verification.
 - **Cross-Platform:** Supports Windows, macOS, and Linux.
-- **Directory Management:** Full control over group and member directories.
+- **Cloud Directory & Sync:** Manage members, groups, and kiosk policies from Facenox Cloud, with AES-256-GCM encrypted face-template sync across paired computers on eligible plans.
 - **Attendance Tracking:** Automated session recording and CSV/JSON exports.
 - **Secure Storage:** Encrypted local biometric storage and password-protected `.facenox` backups.
-- **Optional Sync:** Secure pairing with Facenox Cloud for centralized reporting. Encrypted face templates can sync between devices, using site-specific encryption keys.
 
 ## Performance
 
@@ -138,25 +131,22 @@ python tests/stress_test_recognition.py
 
 ## Offline-First Behavior
 
-Facenox Desktop continues to work locally when internet access is unavailable:
+Link your Facenox Cloud workspace once on first launch to provision your location and sync your directory. After setup, Facenox Desktop keeps running locally even when internet access is unavailable:
 
-- Recognition and liveness verification remain functional.
-- Attendance is recorded in a local SQLite database. Keep backups to protect against deletion or device failure.
-- Settings, backups, and member management remain accessible.
-- Facenox Cloud sync resumes automatically when connectivity returns. When unpaired, Facenox operates purely offline.
-
-> [!NOTE]  
-> **Data handling:** Raw camera frames are processed locally, not saved or uploaded. Facenox Cloud can sync AES-256-GCM encrypted face templates between paired computers. Cloud manages location keys and re-encrypts templates during location transfers. Matching stays on your local hardware. Sync is separate from recovery backups.
+- Recognition, liveness verification, and attendance recording continue without interruption.
+- Attendance is written to a local SQLite database and syncs automatically when connectivity returns.
+- Settings and encrypted `.facenox` backups remain accessible locally. Keep separate backups to protect against deletion or device failure.
+- Existing standalone local installations preserve local operation.
 
 ## How it works
 
 ### Where is the data stored?
 
-Everything is stored in a local SQLite database on your machine. Biometric templates are encrypted at rest.
+Attendance logs, directory cache, and biometric templates are stored in a local SQLite database with templates encrypted at rest. Attendance and directory data sync with Facenox Cloud, and eligible plans sync AES-256-GCM encrypted face templates between paired computers using Cloud-managed site keys.
 
 ### Does it need the internet?
 
-Core attendance does not require internet. Camera frames are processed on your computer. Packaged builds check GitHub for updates, and system-time settings offer a user-triggered online comparison. Pairing with Facenox Cloud requires internet for synchronization and supported remote administration.
+Only for the one-time Cloud sign-in on first setup, background sync, update checks, and user-triggered system-time comparisons. Camera frames are processed on your computer, and day-to-day face recognition and attendance recording run completely offline.
 
 ### What hardware do I need?
 
@@ -164,24 +154,13 @@ It's designed for standard CPUs and has been tested on hardware as old as 2nd-ge
 
 ### How do I protect my data?
 
-Protect access to the computer and keep password-protected `.facenox` backup archives separately. Connecting Cloud sends directory and attendance data, and eligible plans also sync encrypted templates. See [Privacy and Data Handling](docs/PRIVACY.md) for the data boundary and deletion limitations.
+Protect access to the computer and keep password-protected `.facenox` backup archives separately. Raw camera frames are never saved or uploaded. See [Privacy and Data Handling](docs/PRIVACY.md) and [SECURITY.md](SECURITY.md) for data boundaries and verification details.
 
 ## Roadmap
 
 - [x] Support for cross-platform native installers (Windows, macOS, Linux).
 - [x] Attendance trends and site-level reporting in Facenox Cloud.
 - [ ] Software Signing.
-
----
-
-> [!IMPORTANT]
-> **Security & Trust**
->
-> - **Automated Analysis:** GitHub Actions runs CodeQL analysis on configured source changes.
-> - **Build Transparency:** Release workflows build Desktop artifacts from the public source repository.
-> - **Encrypted template sync:** Face templates are encrypted locally before upload. Cloud stores encrypted templates and manages their location keys.
-
-> **Facenox Cloud:** The official hosted service is optional and provides browser reporting and administration for synced data. This repository contains Facenox Desktop.
 
 ## Download
 
@@ -193,47 +172,45 @@ Download the latest prebuilt binaries for your platform:
   <a href="https://github.com/facenox/facenox/releases/latest"><img src="https://img.shields.io/badge/Linux-Download_.AppImage_/_deb-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Download Linux"></a>
 </p>
 
-For all available releases and architecture packages, visit the [GitHub Releases](https://github.com/facenox/facenox/releases/latest) page.
+For all available releases and architecture packages, visit the [GitHub Releases](https://github.com/facenox/facenox/releases/latest) page. To build from source, follow the [Installation Guide](docs/INSTALLATION.md).
 
-To build from source, follow the [Installation Guide](docs/INSTALLATION.md).
+<details>
+<summary><strong>Installation Notes (OS security prompts until code signing is finalized)</strong></summary>
 
-## Installation Notes
+<br/>
 
-Facenox is in active development. Until code-signing is finalized in a future release, you may encounter OS security prompts.
+**Windows (SmartScreen):** If blocked, click **More info** then **Run anyway**.
 
-> [!WARNING]  
-> **OS Security Prompts & Installation Warnings:**
->
-> **Windows (SmartScreen):** If blocked, click **More info** then **Run anyway**.
->
-> <img src="docs/assets/smartscreen_warning.png" alt="Windows SmartScreen warning" width="350">
->
-> **macOS (Gatekeeper):** If blocked, **Right-click** the app, select **Open**, then confirm the prompt.
->
-> <img src="docs/assets/macos_gatekeeper_warning.png" alt="macOS Gatekeeper warning" width="350">
->
-> **Linux (AppImage / Debian Package):**
->
-> *Using the AppImage:*
-> 1. Make the downloaded `.AppImage` file executable by right-clicking it -> **Properties** -> **Permissions** -> checking **Is executable** (or by running `chmod +x Facenox-Linux-*.AppImage` in the terminal).
-> 2. Double-click the file to execute it. If prompted with a security warning (e.g., in KDE Dolphin), click **Continue**.
->
-> <img src="docs/assets/linux_warning.png" alt="Linux AppImage warning" width="500">
->
-> *Compatibility Note:* Modern Linux distributions (e.g., Ubuntu 22.04+) require `libfuse2` to mount and run AppImages. If the app fails to start, install it by running:
-> ```bash
-> sudo apt update && sudo apt install libfuse2
-> ```
-> *(Warning: Do not install the package named `fuse` as it can conflict with your desktop environment.)*
->
-> *Using the Debian Package (.deb):*
-> 1. Install by running the following commands in the terminal (recommended to automatically resolve dependencies):
->    ```bash
->    sudo apt update
->    sudo apt install ./Facenox-Linux-*.deb
->    ```
->    *(Note: The `./` prefix is required for `apt` to identify the file as a local package.)*
-> 2. Alternatively, double-click the `.deb` file to open it in your system's Software Center and click **Install**.
+<img src="docs/assets/smartscreen_warning.png" alt="Windows SmartScreen warning" width="350">
+
+**macOS (Gatekeeper):** If blocked, **Right-click** the app, select **Open**, then confirm the prompt.
+
+<img src="docs/assets/macos_gatekeeper_warning.png" alt="macOS Gatekeeper warning" width="350">
+
+**Linux (AppImage / Debian Package):**
+
+*Using the AppImage:*
+1. Make the downloaded `.AppImage` file executable by right-clicking it -> **Properties** -> **Permissions** -> checking **Is executable** (or by running `chmod +x Facenox-Linux-*.AppImage` in the terminal).
+2. Double-click the file to execute it. If prompted with a security warning (e.g., in KDE Dolphin), click **Continue**.
+
+<img src="docs/assets/linux_warning.png" alt="Linux AppImage warning" width="500">
+
+*Compatibility Note:* Modern Linux distributions (e.g., Ubuntu 22.04+) require `libfuse2` to mount and run AppImages. If the app fails to start, install it by running:
+```bash
+sudo apt update && sudo apt install libfuse2
+```
+*(Warning: Do not install the package named `fuse` as it can conflict with your desktop environment.)*
+
+*Using the Debian Package (.deb):*
+1. Install by running the following commands in the terminal (recommended to automatically resolve dependencies):
+   ```bash
+   sudo apt update
+   sudo apt install ./Facenox-Linux-*.deb
+   ```
+   *(Note: The `./` prefix is required for `apt` to identify the file as a local package.)*
+2. Alternatively, double-click the `.deb` file to open it in your system's Software Center and click **Install**.
+
+</details>
 
 ## Documentation
 
