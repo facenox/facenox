@@ -260,10 +260,10 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
   )
 
   const hasSplitPairingView =
-    cloudConfigStatus === "ready" &&
+    cloudConfigStatus !== "error" &&
     !cloudConfig?.connected &&
     !initiateError &&
-    (Boolean(reversePairing) || isInitiating)
+    (cloudConfigStatus === "loading" || Boolean(reversePairing) || isInitiating)
 
   const steps = [
     {
@@ -433,7 +433,9 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                       className="flex flex-col items-center justify-center gap-3 text-center">
                       <Spinner size="md" color="cyan" />
                       <p className="text-[11px] font-medium text-white/55">
-                        Generating device code…
+                        {cloudConfigStatus === "loading" ?
+                          "Checking Cloud connection…"
+                        : "Generating device code…"}
                       </p>
                     </motion.div>
                   }

@@ -112,9 +112,9 @@ describe("IntroModal", () => {
     expect(manualButton).toBeInTheDocument()
     fireEvent.click(manualButton)
 
-    const connectButton = screen.getByRole("button", { name: "Connect" })
+    const connectButton = await screen.findByRole("button", { name: "Connect" })
     expect(connectButton).toBeDisabled()
-    expect(screen.getByPlaceholderText("ABCD2345")).toBeInTheDocument()
+    expect(await screen.findByPlaceholderText("ABCD2345")).toBeInTheDocument()
   })
 
   it("pairs via manual code and surfaces initial sync failure warning", async () => {
@@ -134,8 +134,10 @@ describe("IntroModal", () => {
     render(<IntroModal initialStep={2} />)
 
     fireEvent.click(await screen.findByRole("button", { name: /Have a pairing code already/i }))
-    fireEvent.change(screen.getByPlaceholderText("ABCD2345"), { target: { value: "code1234" } })
-    fireEvent.click(screen.getByRole("button", { name: "Connect" }))
+    fireEvent.change(await screen.findByPlaceholderText("ABCD2345"), {
+      target: { value: "code1234" },
+    })
+    fireEvent.click(await screen.findByRole("button", { name: "Connect" }))
 
     await waitFor(() => {
       expect(api.pairDevice).toHaveBeenCalledWith(
@@ -166,7 +168,7 @@ describe("IntroModal", () => {
       fireEvent.click(heading)
     }
 
-    const endpointInput = screen.getByPlaceholderText("https://facenox.com")
+    const endpointInput = await screen.findByPlaceholderText("https://facenox.com")
     expect(endpointInput).toBeInTheDocument()
 
     const updatedConfig = createSyncConfig({
