@@ -31,9 +31,10 @@ describe("IntroModal", () => {
     expect(screen.queryByText("Required to continue")).not.toBeInTheDocument()
 
     await waitFor(() => expect(api.initiateReversePairing).toHaveBeenCalledTimes(1))
-    expect(
-      await screen.findByRole("link", { name: /^Sign in$/i }),
-    ).toHaveAttribute("href", "https://facenox.com/pair?code=749120")
+    expect(await screen.findByRole("link", { name: /^Sign in$/i })).toHaveAttribute(
+      "href",
+      "https://facenox.com/pair?code=749120",
+    )
 
     const writeText = vi.fn().mockResolvedValue(undefined)
     Object.assign(navigator, { clipboard: { writeText } })

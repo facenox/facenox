@@ -125,6 +125,146 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     onConnected: completeOnboarding,
   })
 
+  const handleDevHeadingClick = () => {
+    if (!isDevBuild || step !== 2) return
+    const next = devClickCount + 1
+    if (next >= 5) {
+      setDevClickCount(0)
+      setShowDevEndpoint((prev) => !prev)
+    } else {
+      setDevClickCount(next)
+    }
+  }
+
+  const devEndpointPanel = (
+    <AnimatePresence initial={false}>
+      {isDevBuild && showDevEndpoint && (
+        <motion.div
+          key="dev-endpoint"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="space-y-2 rounded-lg border border-white/10 bg-white/[0.02] p-3 text-left">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] font-bold tracking-wider text-white/50 uppercase">
+              Dev endpoint
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                disabled={busyAction !== null}
+                onClick={() => void applyEndpointOverride(OFFICIAL_REMOTE_BASE_URL)}
+                className={`rounded px-2 py-0.5 text-[10px] font-medium transition ${
+                  isOfficialCloudUrl(cloudConfig?.remoteBaseUrl) ? "bg-white/15 text-white" : (
+                    "bg-white/5 text-white/50 hover:text-white"
+                  )
+                }`}>
+                Production
+              </button>
+              <button
+                type="button"
+                disabled={busyAction !== null}
+                onClick={() => void applyEndpointOverride(LOCAL_DEV_REMOTE_BASE_URL)}
+                className={`rounded px-2 py-0.5 text-[10px] font-medium transition ${
+                  cloudConfig?.remoteBaseUrl?.trim() === LOCAL_DEV_REMOTE_BASE_URL ?
+                    "bg-white/15 text-white"
+                  : "bg-white/5 text-white/50 hover:text-white"
+                }`}>
+                Localhost
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="url"
+              placeholder={OFFICIAL_REMOTE_BASE_URL}
+              value={customEndpoint}
+              onChange={(e) => setCustomEndpoint(e.target.value)}
+              className="h-7 flex-1 rounded border border-white/10 bg-black/20 px-2.5 text-[11px] text-white outline-none focus:border-white/25"
+            />
+            <button
+              type="button"
+              disabled={busyAction !== null}
+              onClick={() => void applyEndpointOverride(customEndpoint)}
+              className="h-7 rounded border border-white/10 bg-white/5 px-2.5 text-[11px] font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+              Apply
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+
+  const manualCodeSection = cloudConfigStatus === "ready" && !cloudConfig?.connected && (
+    <div className="pt-1">
+      <AnimatePresence mode="wait" initial={false}>
+        {!showManualInput ?
+          <motion.button
+            key="manual-toggle"
+            type="button"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+            onClick={() => setShowManualInput(true)}
+            className="text-[11px] text-white/40 transition-colors hover:text-white/75">
+            Have a pairing code already? Enter it here →
+          </motion.button>
+        : <motion.div
+            key="manual-form"
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full space-y-2 pt-1 text-left">
+            <label className="block text-[11px] font-medium text-white/55">
+              Pairing code from Facenox Cloud → Devices
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="ABCD2345"
+                value={pairingCode}
+                onChange={(e) => {
+                  setPairError(null)
+                  setPairingCode(e.target.value.toUpperCase())
+                }}
+                className="h-8 flex-1 rounded border border-white/10 bg-transparent px-3 font-mono text-xs font-semibold tracking-widest text-white uppercase outline-none focus:border-white/25"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => void handlePair()}
+                disabled={busyAction !== null || !pairingCode}
+                className="flex h-8 items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3 text-xs font-medium text-white transition hover:bg-white/10 disabled:opacity-40">
+                {busyAction === "pairing" && <Spinner size="xs" color="white" />}
+                Connect
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowManualInput(false)
+                  setPairingCode("")
+                  setPairError(null)
+                }}
+                className="px-1.5 text-xs text-white/40 transition hover:text-white/75">
+                Cancel
+              </button>
+            </div>
+            {pairError && <p className="text-left text-[11px] text-rose-400">{pairError}</p>}
+          </motion.div>
+        }
+      </AnimatePresence>
+    </div>
+  )
+
+  const hasSplitPairingView =
+    cloudConfigStatus === "ready" &&
+    !cloudConfig?.connected &&
+    !initiateError &&
+    (Boolean(reversePairing) || isInitiating)
+
   const steps = [
     {
       title: "Welcome to Facenox",
@@ -176,235 +316,249 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     {
       title: "Connect to Facenox Cloud",
       content: (
-        <div className="space-y-4">
-          <p className="text-xs leading-relaxed text-white/70">
-            Sign in once to link this computer to your organization. Afterward, the app works offline
-            and syncs automatically whenever you&apos;re back online.
-          </p>
-
-          {isDevBuild && showDevEndpoint && (
-            <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.02] p-3 text-left">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold tracking-wider text-white/50 uppercase">
-                  Dev endpoint
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    disabled={busyAction !== null}
-                    onClick={() => void applyEndpointOverride(OFFICIAL_REMOTE_BASE_URL)}
-                    className={`rounded px-2 py-0.5 text-[10px] font-medium transition ${
-                      isOfficialCloudUrl(cloudConfig?.remoteBaseUrl) ? "bg-white/15 text-white" : (
-                        "bg-white/5 text-white/50 hover:text-white"
-                      )
-                    }`}>
-                    Production
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busyAction !== null}
-                    onClick={() => void applyEndpointOverride(LOCAL_DEV_REMOTE_BASE_URL)}
-                    className={`rounded px-2 py-0.5 text-[10px] font-medium transition ${
-                      cloudConfig?.remoteBaseUrl?.trim() === LOCAL_DEV_REMOTE_BASE_URL ?
-                        "bg-white/15 text-white"
-                      : "bg-white/5 text-white/50 hover:text-white"
-                    }`}>
-                    Localhost
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="url"
-                  placeholder={OFFICIAL_REMOTE_BASE_URL}
-                  value={customEndpoint}
-                  onChange={(e) => setCustomEndpoint(e.target.value)}
-                  className="h-7 flex-1 rounded border border-white/10 bg-black/20 px-2.5 text-[11px] text-white outline-none focus:border-white/25"
-                />
-                <button
-                  type="button"
-                  disabled={busyAction !== null}
-                  onClick={() => void applyEndpointOverride(customEndpoint)}
-                  className="h-7 rounded border border-white/10 bg-white/5 px-2.5 text-[11px] font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
-                  Apply
-                </button>
-              </div>
-            </div>
-          )}
-
-          {cloudConfigStatus === "loading" ?
-            <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
-              <Spinner size="md" color="cyan" />
-              <p className="text-xs text-white/60">Checking Cloud connection…</p>
-            </div>
-          : cloudConfigStatus === "error" ?
-            <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
-              <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-                <AlertCircle className="size-4" />
-              </div>
-              <p className="max-w-xs text-xs text-white/70">
-                {cloudConfigError || "Could not load Cloud connection settings."}
-              </p>
-              <button
-                type="button"
-                onClick={() => void refreshCloudSyncConfig()}
-                className="flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
-                <RotateCw className="size-3" />
-                Retry
-              </button>
-            </div>
-          : cloudConfig?.connected ?
-            <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
-              <div className="flex size-10 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
-                <Check className="size-5" />
-              </div>
-              <p className="text-sm font-semibold text-white">Connected to Facenox Cloud</p>
-              <button
-                type="button"
-                onClick={completeOnboarding}
-                className="mt-1 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-xs font-bold tracking-wider text-slate-950 transition hover:from-cyan-300 hover:to-cyan-400">
-                Continue
-              </button>
-            </div>
-          : isInitiating && !reversePairing ?
-            <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
-              <Spinner size="md" color="cyan" />
-              <p className="text-xs font-medium text-white/70">Preparing sign-in link…</p>
-            </div>
-          : initiateError ?
-            <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
-              {isOfflineError(initiateError) ?
-                <>
-                  <div className="flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/50">
-                    <Wifi className="size-4 text-white/40" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold text-white/90">Device is offline</p>
-                    <p className="max-w-xs text-[11px] leading-relaxed text-white/50">
-                      Connect to the internet once to sign in and link this computer.
-                    </p>
-                  </div>
-                </>
-              : <>
-                  <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-                    <AlertCircle className="size-4" />
-                  </div>
-                  <div className="max-w-sm text-[11px] break-words text-white/60">
-                    <ErrorText message={initiateError} />
-                  </div>
-                </>
-              }
-              <button
-                type="button"
-                onClick={() => {
-                  isInitiatingRef.current = false
-                  void startReversePairing(getEffectiveRemoteUrl(cloudConfig?.remoteBaseUrl))
-                }}
-                className="flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
-                <RotateCw className="size-3" />
-                Retry connection
-              </button>
-            </div>
-          : reversePairing ?
-            <div className="flex flex-col items-center space-y-5 pt-2 text-center">
-              <a
-                href={reversePairing.verificationUriComplete || reversePairing.verificationUri}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2.5 text-xs font-bold tracking-wide text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.98]">
-                <span>Sign in</span>
-                <ExternalLink className="size-3" />
-              </a>
-
-              <div className="flex items-center gap-4">
-                <QRCodeView value={reversePairing.verificationUriComplete} size={96} />
-                <div className="space-y-1.5 text-left">
-                  <p className="text-[11px] text-white/55">Or scan QR &amp; verify code:</p>
-                  <div className="flex items-center gap-1.5">
-                    <div className="inline-flex items-center gap-2 rounded-md bg-white/[0.05] px-3 py-1.5 font-mono text-lg font-bold tracking-[0.2em] text-white select-all">
-                      <span>{reversePairing.userCode.slice(0, 3)}</span>
-                      <span>{reversePairing.userCode.slice(3, 6)}</span>
-                    </div>
-                    <Tooltip content={copiedPin ? "Copied" : "Copy code"} position="top">
-                      <button
-                        type="button"
-                        aria-label="Copy code"
-                        onClick={() => {
-                          void navigator.clipboard.writeText(reversePairing.userCode)
-                          setCopiedPin(true)
-                          if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
-                          copyTimerRef.current = setTimeout(() => setCopiedPin(false), 2000)
-                        }}
-                        className="flex size-8 items-center justify-center rounded-md text-white/40 transition hover:bg-white/[0.06] hover:text-white">
-                        {copiedPin ?
-                          <Check className="size-3.5 text-emerald-400" />
-                        : <Copy className="size-3.5" />}
-                      </button>
-                    </Tooltip>
-                  </div>
-                  <p className="text-[11px] text-white/40">
-                    Waiting for authorization (
-                    <span className="font-mono">
-                      {Math.floor(secondsLeft / 60)}:
-                      {(secondsLeft % 60).toString().padStart(2, "0")}
-                    </span>
-                    )
+        <AnimatePresence mode="wait" initial={false}>
+          {hasSplitPairingView ?
+            <motion.div
+              key="step3-split"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="grid grid-cols-1 items-center gap-8 sm:grid-cols-[1fr_auto]">
+              <div className="min-w-0 space-y-4 text-left">
+                <div className="space-y-3">
+                  <h2
+                    onClick={handleDevHeadingClick}
+                    className="text-2xl font-bold tracking-tight text-white select-none">
+                    Connect to Facenox Cloud
+                  </h2>
+                  <p className="text-xs leading-relaxed text-white/70">
+                    Sign in once to link this computer to your organization. Afterward, the app
+                    works offline and syncs automatically whenever you&apos;re back online.
                   </p>
                 </div>
-              </div>
-            </div>
-          : null}
 
-          {cloudConfigStatus === "ready" && !cloudConfig?.connected && (
-            <div className="flex flex-col items-center pt-1 text-center">
-              {!showManualInput ?
-                <button
-                  type="button"
-                  onClick={() => setShowManualInput(true)}
-                  className="text-[11px] text-white/40 transition-colors hover:text-white/75">
-                  Have a pairing code already? Enter it here →
-                </button>
-              : <div className="w-full space-y-2 pt-1 text-left">
-                  <label className="block text-[11px] font-medium text-white/55">
-                    Enter 8-character code from Cloud Dashboard → Devices
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="ABCD2345"
-                      value={pairingCode}
-                      onChange={(e) => {
-                        setPairError(null)
-                        setPairingCode(e.target.value.toUpperCase())
-                      }}
-                      className="h-8 flex-1 rounded border border-white/10 bg-transparent px-3 font-mono text-xs font-semibold tracking-widest text-white uppercase outline-none focus:border-white/25"
-                      autoFocus
-                    />
+                {devEndpointPanel}
+
+                <AnimatePresence mode="wait" initial={false}>
+                  {reversePairing ?
+                    <motion.a
+                      key={`signin-${reversePairing.deviceCode}`}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                      href={
+                        reversePairing.verificationUriComplete || reversePairing.verificationUri
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-[38px] w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 text-xs font-bold tracking-wide text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.98]">
+                      <span>Sign in</span>
+                      <ExternalLink className="size-3" />
+                    </motion.a>
+                  : <motion.div
+                      key="signin-loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="inline-flex h-[38px] w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-5 text-xs font-medium text-white/55">
+                      <Spinner size="xs" color="cyan" />
+                      <span>Preparing sign-in link…</span>
+                    </motion.div>
+                  }
+                </AnimatePresence>
+
+                {manualCodeSection}
+              </div>
+
+              <div className="flex min-h-[252px] w-full shrink-0 flex-col items-center justify-center text-center sm:w-[210px]">
+                <AnimatePresence mode="wait" initial={false}>
+                  {reversePairing ?
+                    <motion.div
+                      key={`qr-${reversePairing.deviceCode}`}
+                      initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.96 }}
+                      transition={{ duration: 0.36, ease: [0.16, 1, 0.3, 1] }}
+                      className="flex flex-col items-center space-y-2.5 text-center">
+                      <div className="transition-transform duration-200 hover:scale-[1.02]">
+                        <QRCodeView value={reversePairing.verificationUriComplete} size={160} />
+                      </div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.08, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex flex-col items-center space-y-2">
+                        <p className="text-[11px] text-white/55">Or scan QR &amp; verify code:</p>
+                        <div className="flex items-center gap-1.5">
+                          <div className="inline-flex items-center gap-2 rounded-md bg-white/[0.05] px-3 py-1.5 font-mono text-base font-bold tracking-[0.2em] text-white select-all">
+                            <span>{reversePairing.userCode.slice(0, 3)}</span>
+                            <span>{reversePairing.userCode.slice(3, 6)}</span>
+                          </div>
+                          <Tooltip content={copiedPin ? "Copied" : "Copy code"} position="top">
+                            <button
+                              type="button"
+                              aria-label="Copy code"
+                              onClick={() => {
+                                void navigator.clipboard.writeText(reversePairing.userCode)
+                                setCopiedPin(true)
+                                if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+                                copyTimerRef.current = setTimeout(() => setCopiedPin(false), 2000)
+                              }}
+                              className="flex size-8 items-center justify-center rounded-md text-white/40 transition hover:bg-white/[0.06] hover:text-white">
+                              {copiedPin ?
+                                <Check className="size-3.5 text-emerald-400" />
+                              : <Copy className="size-3.5" />}
+                            </button>
+                          </Tooltip>
+                        </div>
+                        <p className="text-[11px] text-white/40">
+                          Waiting for authorization (
+                          <span className="font-mono">
+                            {Math.floor(secondsLeft / 60)}:
+                            {(secondsLeft % 60).toString().padStart(2, "0")}
+                          </span>
+                          )
+                        </p>
+                      </motion.div>
+                    </motion.div>
+                  : <motion.div
+                      key="qr-initiating"
+                      initial={{ opacity: 0, scale: 0.97 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className="flex flex-col items-center justify-center gap-3 text-center">
+                      <Spinner size="md" color="cyan" />
+                      <p className="text-[11px] font-medium text-white/55">
+                        Generating device code…
+                      </p>
+                    </motion.div>
+                  }
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          : <motion.div
+              key="step3-status"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="space-y-4">
+              <h2
+                onClick={handleDevHeadingClick}
+                className="text-2xl font-bold tracking-tight text-white select-none">
+                Connect to Facenox Cloud
+              </h2>
+              <p className="text-xs leading-relaxed text-white/70">
+                Sign in once to link this computer to your organization. Afterward, the app works
+                offline and syncs automatically whenever you&apos;re back online.
+              </p>
+
+              {devEndpointPanel}
+
+              <AnimatePresence mode="wait" initial={false}>
+                {cloudConfigStatus === "loading" ?
+                  <motion.div
+                    key="cfg-loading"
+                    initial={{ opacity: 0, scale: 0.97 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    transition={{ duration: 0.22, ease: "easeOut" }}
+                    className="flex min-h-[180px] flex-col items-center justify-center gap-3 text-center">
+                    <Spinner size="md" color="cyan" />
+                    <p className="text-xs text-white/60">Checking Cloud connection…</p>
+                  </motion.div>
+                : cloudConfigStatus === "error" ?
+                  <motion.div
+                    key="cfg-error"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.22, ease: "easeOut" }}
+                    className="flex min-h-[180px] flex-col items-center justify-center gap-3 text-center">
+                    <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                      <AlertCircle className="size-4" />
+                    </div>
+                    <p className="max-w-xs text-xs text-white/70">
+                      {cloudConfigError || "Could not load Cloud connection settings."}
+                    </p>
                     <button
                       type="button"
-                      onClick={() => void handlePair()}
-                      disabled={busyAction !== null || !pairingCode}
-                      className="flex h-8 items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3 text-xs font-medium text-white transition hover:bg-white/10 disabled:opacity-40">
-                      {busyAction === "pairing" && <Spinner size="xs" color="white" />}
-                      Connect
+                      onClick={() => void refreshCloudSyncConfig()}
+                      className="flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
+                      <RotateCw className="size-3" />
+                      Retry
                     </button>
+                  </motion.div>
+                : cloudConfig?.connected ?
+                  <motion.div
+                    key="cfg-connected"
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                    className="flex min-h-[180px] flex-col items-center justify-center gap-3 text-center">
+                    <div className="flex size-10 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+                      <Check className="size-5" />
+                    </div>
+                    <p className="text-sm font-semibold text-white">Connected to Facenox Cloud</p>
+                    <button
+                      type="button"
+                      onClick={completeOnboarding}
+                      className="mt-1 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-xs font-bold tracking-wider text-slate-950 transition hover:from-cyan-300 hover:to-cyan-400">
+                      Continue
+                    </button>
+                  </motion.div>
+                : initiateError ?
+                  <motion.div
+                    key="cfg-initiate-error"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.22, ease: "easeOut" }}
+                    className="flex min-h-[180px] flex-col items-center justify-center gap-3 text-center">
+                    {isOfflineError(initiateError) ?
+                      <>
+                        <div className="flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/50">
+                          <Wifi className="size-4 text-white/40" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs font-semibold text-white/90">Device is offline</p>
+                          <p className="max-w-xs text-[11px] leading-relaxed text-white/50">
+                            Connect to the internet once to sign in and link this computer.
+                          </p>
+                        </div>
+                      </>
+                    : <>
+                        <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                          <AlertCircle className="size-4" />
+                        </div>
+                        <div className="max-w-sm text-[11px] break-words text-white/60">
+                          <ErrorText message={initiateError} />
+                        </div>
+                      </>
+                    }
                     <button
                       type="button"
                       onClick={() => {
-                        setShowManualInput(false)
-                        setPairingCode("")
-                        setPairError(null)
+                        isInitiatingRef.current = false
+                        void startReversePairing(getEffectiveRemoteUrl(cloudConfig?.remoteBaseUrl))
                       }}
-                      className="px-1.5 text-xs text-white/40 transition hover:text-white/75">
-                      Cancel
+                      className="flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
+                      <RotateCw className="size-3" />
+                      Retry connection
                     </button>
-                  </div>
-                  {pairError && <p className="text-left text-[11px] text-rose-400">{pairError}</p>}
-                </div>
-              }
-            </div>
-          )}
-        </div>
+                  </motion.div>
+                : null}
+              </AnimatePresence>
+
+              <div className="flex flex-col items-center text-center">{manualCodeSection}</div>
+            </motion.div>
+          }
+        </AnimatePresence>
       ),
     },
   ]
@@ -425,7 +579,14 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
   const isLastStep = step === steps.length - 1
 
   return (
-    <Modal isOpen={isOpen} maxWidth="max-w-[540px]" hideCloseButton={true}>
+    <Modal
+      isOpen={isOpen}
+      maxWidth={
+        hasSplitPairingView && isLastStep ?
+          "max-w-[680px] transition-[max-width] duration-300 ease-out"
+        : "max-w-[540px] transition-[max-width] duration-300 ease-out"
+      }
+      hideCloseButton={true}>
       <div className="relative -m-5 overflow-hidden bg-[var(--bg-secondary)]">
         <div className="p-8 sm:p-10">
           <div className="mb-6 overflow-hidden">
@@ -437,20 +598,11 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                 exit={{ opacity: 0, x: -12 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
                 style={{ willChange: "opacity, transform" }}>
-                <h2
-                  onClick={() => {
-                    if (!isDevBuild || step !== 2) return
-                    const next = devClickCount + 1
-                    if (next >= 5) {
-                      setDevClickCount(0)
-                      setShowDevEndpoint((prev) => !prev)
-                    } else {
-                      setDevClickCount(next)
-                    }
-                  }}
-                  className="mb-4 text-2xl font-bold tracking-tight text-white select-none">
-                  {currentStep.title}
-                </h2>
+                {!isLastStep && (
+                  <h2 className="mb-4 text-2xl font-bold tracking-tight text-white select-none">
+                    {currentStep.title}
+                  </h2>
+                )}
                 <div className="flex min-h-[140px] flex-col justify-center">
                   {currentStep.content}
                 </div>
