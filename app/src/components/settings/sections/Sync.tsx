@@ -23,10 +23,7 @@ import {
   isOfficialCloudUrl,
 } from "@/services/syncDefaults"
 import { isOfflineError, parseSyncError } from "./syncErrorUtils.js"
-import {
-  useCloudSyncConfig,
-  type RemoteSyncConfig,
-} from "@/services/cloudSyncState"
+import { useCloudSyncConfig, type RemoteSyncConfig } from "@/services/cloudSyncState"
 import { getEffectiveRemoteUrl, useCloudPairing } from "@/hooks/useCloudPairing"
 
 export type { RemoteSyncConfig } from "@/services/cloudSyncState"

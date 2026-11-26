@@ -121,8 +121,6 @@ export default function Main() {
     quickSettings,
     audioSettings,
     setSidebarCollapsed,
-    pendingCloudSetup,
-    setPendingCloudSetup,
     adminPinEnabled,
     isHydrated,
   } = useUIStore()
@@ -130,16 +128,6 @@ export default function Main() {
   const showEditMemberModal = useGroupUIStore((state) => state.showEditMemberModal)
   const showCreateGroupModal = useGroupUIStore((state) => state.showCreateGroupModal)
   const showEditGroupModal = useGroupUIStore((state) => state.showEditGroupModal)
-
-  // Auto-open Settings → Sync when user chose "Connect to Cloud" during onboarding
-  const hasCheckedCloudSetupRef = useRef(false)
-  useEffect(() => {
-    if (!hasCheckedCloudSetupRef.current && pendingCloudSetup) {
-      hasCheckedCloudSetupRef.current = true
-      requestOpenSettings("remote-sync")
-      setPendingCloudSetup(false)
-    }
-  }, [pendingCloudSetup, requestOpenSettings, setPendingCloudSetup])
 
   // Auto-close Settings after 60s of inactivity when Admin PIN Lock is enabled.
   // Prevents settings from being left open when an admin walks away from the kiosk.

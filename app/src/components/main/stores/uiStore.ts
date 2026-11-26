@@ -34,7 +34,6 @@ interface UIState {
   lastGroupInitialSection: GroupSection
   lastGroupId: string | null
   hasSeenIntro: boolean
-  pendingCloudSetup: boolean
   antiSpoofDetectionInfoDismissed: boolean
   enrollmentInfoDismissed: boolean
   isHydrated: boolean
@@ -73,7 +72,6 @@ interface UIState {
   setLastGroupInitialSection: (section: GroupSection) => void
   setLastGroupId: (id: string | null) => void
   setHasSeenIntro: (seen: boolean) => void
-  setPendingCloudSetup: (pending: boolean) => void
   setAntiSpoofDetectionInfoDismissed: (dismissed: boolean) => void
   setEnrollmentInfoDismissed: (dismissed: boolean) => void
   setSidebarCollapsed: (collapsed: boolean) => void
@@ -102,7 +100,6 @@ const loadInitialSettings = async () => {
     pinLockoutUntil: security.lockoutUntil ?? 0,
     pinFailedAttempts: security.failedAttempts ?? 0,
     hasSeenIntro: uiState.hasSeenIntro,
-    pendingCloudSetup: uiState.pendingCloudSetup,
     antiSpoofDetectionInfoDismissed: uiState.antiSpoofDetectionInfoDismissed,
     enrollmentInfoDismissed: uiState.enrollmentInfoDismissed,
     sidebarCollapsed: uiState.sidebarCollapsed,
@@ -137,7 +134,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   lastGroupInitialSection: "overview" as GroupSection,
   lastGroupId: null,
   hasSeenIntro: false,
-  pendingCloudSetup: false, // Set when user picks "Connect to Cloud" during intro
   antiSpoofDetectionInfoDismissed: false,
   enrollmentInfoDismissed: false,
   isHydrated: false, // Wait for hydration before rendering decisions
@@ -330,7 +326,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   setLastGroupId: (id) => set({ lastGroupId: id }),
 
   setHasSeenIntro: (seen) => set({ hasSeenIntro: seen }),
-  setPendingCloudSetup: (pending) => set({ pendingCloudSetup: pending }),
   setAntiSpoofDetectionInfoDismissed: (dismissed) =>
     set({ antiSpoofDetectionInfoDismissed: dismissed }),
   setEnrollmentInfoDismissed: (dismissed) => set({ enrollmentInfoDismissed: dismissed }),
@@ -360,12 +355,6 @@ useUIStore.subscribe((state, prevState) => {
 
   if (state.hasSeenIntro !== prevState.hasSeenIntro) {
     persistentSettings.setUIState({ hasSeenIntro: state.hasSeenIntro }).catch(console.error)
-  }
-
-  if (state.pendingCloudSetup !== prevState.pendingCloudSetup) {
-    persistentSettings
-      .setUIState({ pendingCloudSetup: state.pendingCloudSetup })
-      .catch(console.error)
   }
 
   if (state.antiSpoofDetectionInfoDismissed !== prevState.antiSpoofDetectionInfoDismissed) {
@@ -432,7 +421,6 @@ if (typeof window !== "undefined") {
         pinLockoutUntil,
         pinFailedAttempts,
         hasSeenIntro,
-        pendingCloudSetup,
         antiSpoofDetectionInfoDismissed,
         enrollmentInfoDismissed,
         sidebarCollapsed,
@@ -447,7 +435,6 @@ if (typeof window !== "undefined") {
           pinLockoutUntil: pinLockoutUntil ?? 0,
           pinFailedAttempts: pinFailedAttempts ?? 0,
           hasSeenIntro,
-          pendingCloudSetup,
           antiSpoofDetectionInfoDismissed,
           enrollmentInfoDismissed,
           sidebarCollapsed: sidebarCollapsed ?? false,

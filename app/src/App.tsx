@@ -12,8 +12,7 @@ import { useCloudSyncConfig } from "@/services/cloudSyncState"
 
 function App() {
   const { hasSeenIntro, isHydrated } = useUIStore()
-  const { isShellReady, shellBootstrapError, attendanceGroups, systemStats } =
-    useAttendanceStore()
+  const { isShellReady, shellBootstrapError, attendanceGroups, systemStats } = useAttendanceStore()
   const { config: cloudConfig, status: cloudConfigStatus } = useCloudSyncConfig()
   const hasSignaledAppReadyRef = useRef(false)
 

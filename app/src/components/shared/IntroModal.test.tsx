@@ -8,7 +8,6 @@ describe("IntroModal", () => {
   beforeEach(() => {
     useUIStore.setState({
       hasSeenIntro: false,
-      pendingCloudSetup: false,
     })
   })
 
@@ -26,14 +25,15 @@ describe("IntroModal", () => {
     expect(await screen.findByText("Connect to Facenox Cloud")).toBeInTheDocument()
 
     expect(screen.queryByRole("button", { name: /Skip/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /Continue with local data/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: /Continue with local data/i }),
+    ).not.toBeInTheDocument()
     expect(screen.queryByText("Required to continue")).not.toBeInTheDocument()
 
     await waitFor(() => expect(api.initiateReversePairing).toHaveBeenCalledTimes(1))
-    expect(await screen.findByRole("link", { name: /Sign in with Facenox Cloud/i })).toHaveAttribute(
-      "href",
-      "https://facenox.cloud/pair?code=749120",
-    )
+    expect(
+      await screen.findByRole("link", { name: /Sign in with Facenox Cloud/i }),
+    ).toHaveAttribute("href", "https://facenox.cloud/pair?code=749120")
   })
 
   it("allows continuing with local data for existing beta installations", async () => {

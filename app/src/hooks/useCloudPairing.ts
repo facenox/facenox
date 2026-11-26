@@ -198,7 +198,14 @@ export function useCloudPairing({
       })
     }, 1000)
     return () => clearInterval(timer)
-  }, [enabled, reversePairing, pairingConfigDirty, connected, cloudConfigStatus, startReversePairing])
+  }, [
+    enabled,
+    reversePairing,
+    pairingConfigDirty,
+    connected,
+    cloudConfigStatus,
+    startReversePairing,
+  ])
 
   useEffect(() => {
     if (
@@ -344,4 +351,3 @@ export function useCloudPairing({
     resetPairingState,
   }
 }
-

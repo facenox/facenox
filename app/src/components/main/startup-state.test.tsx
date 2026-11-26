@@ -145,7 +145,6 @@ beforeEach(() => {
   useUIStore.setState({
     isHydrated: true,
     showSettings: false,
-    pendingCloudSetup: false,
     error: null,
     success: null,
     warning: null,

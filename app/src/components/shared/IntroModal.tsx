@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useUIStore } from "@/components/main/stores/uiStore"
 import { Modal, QRCodeView, Spinner } from "@/components/common"
 import { ErrorText } from "@/components/common/ErrorText"
@@ -7,6 +7,11 @@ import { Check, Cloud, ExternalLink, RotateCw, Wifi, AlertCircle } from "lucide-
 import { useCloudSyncConfig, refreshCloudSyncConfig } from "@/services/cloudSyncState"
 import { getEffectiveRemoteUrl, useCloudPairing } from "@/hooks/useCloudPairing"
 import { isOfflineError } from "@/components/settings/sections/syncErrorUtils"
+import {
+  LOCAL_DEV_REMOTE_BASE_URL,
+  OFFICIAL_REMOTE_BASE_URL,
+  isOfficialCloudUrl,
+} from "@/services/syncDefaults"
 
 interface IntroModalProps {
   initialStep?: number
@@ -30,10 +35,53 @@ export function IntroModal({ initialStep = 0, allowLocalContinue = false }: Intr
   const [step, setStep] = useState(initialStep)
   const [isOpen, setIsOpen] = useState(true)
   const [showManualInput, setShowManualInput] = useState(false)
+  const [showDevEndpoint, setShowDevEndpoint] = useState(false)
+  const [devClickCount, setDevClickCount] = useState(0)
+  const [customEndpoint, setCustomEndpoint] = useState("")
   const [busyAction, setBusyAction] = useState<
     "saving" | "pairing" | "disconnecting" | "syncing" | null
   >(null)
   const [pairError, setPairError] = useState<string | null>(null)
+
+  const isDevBuild = import.meta.env.DEV
+
+  useEffect(() => {
+    if (!isDevBuild) return
+    const saved = cloudConfig?.remoteBaseUrl
+    if (saved && !isOfficialCloudUrl(saved)) {
+      setCustomEndpoint(saved)
+      setShowDevEndpoint(true)
+    } else {
+      setCustomEndpoint("")
+    }
+  }, [isDevBuild, cloudConfig?.remoteBaseUrl])
+
+  useEffect(() => {
+    if (!isDevBuild) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "D" || e.key === "d")) {
+        e.preventDefault()
+        setShowDevEndpoint((prev) => !prev)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isDevBuild])
+
+  const applyEndpointOverride = useCallback(async (nextUrl: string) => {
+    setPairError(null)
+    setBusyAction("saving")
+    try {
+      await window.electronAPI.sync.updateConfig({
+        remoteBaseUrl: nextUrl.trim(),
+      })
+      await refreshCloudSyncConfig()
+    } catch (err) {
+      setPairError(err instanceof Error ? err.message : "Could not switch Cloud endpoint.")
+    } finally {
+      setBusyAction(null)
+    }
+  }, [])
 
   const completeOnboarding = useCallback(() => {
     setIsOpen(false)
@@ -54,7 +102,7 @@ export function IntroModal({ initialStep = 0, allowLocalContinue = false }: Intr
     handlePair,
   } = useCloudPairing({
     enabled: step === 2,
-    remoteBaseUrl: cloudConfig?.remoteBaseUrl,
+    remoteBaseUrl: isDevBuild ? cloudConfig?.remoteBaseUrl : OFFICIAL_REMOTE_BASE_URL,
     deviceName: cloudConfig?.deviceName,
     connected: Boolean(cloudConfig?.connected),
     cloudConfigStatus,
@@ -120,6 +168,56 @@ export function IntroModal({ initialStep = 0, allowLocalContinue = false }: Intr
             Sign in once to link this computer to your workspace. Afterward, the app works offline
             and syncs automatically whenever you&apos;re back online.
           </p>
+
+          {isDevBuild && showDevEndpoint && (
+            <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.02] p-3 text-left">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-bold tracking-wider text-white/50 uppercase">
+                  Dev endpoint
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={busyAction !== null}
+                    onClick={() => void applyEndpointOverride(OFFICIAL_REMOTE_BASE_URL)}
+                    className={`rounded px-2 py-0.5 text-[10px] font-medium transition ${
+                      isOfficialCloudUrl(cloudConfig?.remoteBaseUrl) ? "bg-white/15 text-white" : (
+                        "bg-white/5 text-white/50 hover:text-white"
+                      )
+                    }`}>
+                    Production
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busyAction !== null}
+                    onClick={() => void applyEndpointOverride(LOCAL_DEV_REMOTE_BASE_URL)}
+                    className={`rounded px-2 py-0.5 text-[10px] font-medium transition ${
+                      cloudConfig?.remoteBaseUrl?.trim() === LOCAL_DEV_REMOTE_BASE_URL ?
+                        "bg-white/15 text-white"
+                      : "bg-white/5 text-white/50 hover:text-white"
+                    }`}>
+                    Localhost
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="url"
+                  placeholder={OFFICIAL_REMOTE_BASE_URL}
+                  value={customEndpoint}
+                  onChange={(e) => setCustomEndpoint(e.target.value)}
+                  className="h-7 flex-1 rounded border border-white/10 bg-black/20 px-2.5 text-[11px] text-white outline-none focus:border-white/25"
+                />
+                <button
+                  type="button"
+                  disabled={busyAction !== null}
+                  onClick={() => void applyEndpointOverride(customEndpoint)}
+                  className="h-7 rounded border border-white/10 bg-white/5 px-2.5 text-[11px] font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+                  Apply
+                </button>
+              </div>
+            </div>
+          )}
 
           {cloudConfigStatus === "loading" ?
             <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
@@ -310,7 +408,18 @@ export function IntroModal({ initialStep = 0, allowLocalContinue = false }: Intr
                 exit={{ opacity: 0, x: -12 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
                 style={{ willChange: "opacity, transform" }}>
-                <h2 className="mb-4 text-2xl font-bold tracking-tight text-white">
+                <h2
+                  onClick={() => {
+                    if (!isDevBuild || step !== 2) return
+                    const next = devClickCount + 1
+                    if (next >= 5) {
+                      setDevClickCount(0)
+                      setShowDevEndpoint((prev) => !prev)
+                    } else {
+                      setDevClickCount(next)
+                    }
+                  }}
+                  className="mb-4 text-2xl font-bold tracking-tight text-white select-none">
                   {currentStep.title}
                 </h2>
                 <div className="flex min-h-[140px] flex-col justify-center">
