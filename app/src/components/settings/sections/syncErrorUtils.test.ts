@@ -42,5 +42,18 @@ describe("syncErrorUtils", () => {
       expect(parsed.currentPeople).toBe(150)
       expect(parsed.peopleLimit).toBe(100)
     })
+
+    it("strips developer sync telemetry and simplifies timeout abort errors", () => {
+      const parsed = parseSyncError(
+        "Snapshot synced. Pulled 9 groups, 5 members. Imported 5 face templates. Face sync needs attention: The operation was aborted due to timeout",
+      )
+      expect(parsed.isPlanQuota).toBe(false)
+      expect(parsed.title).toBe("Connection to Cloud timed out")
+      expect(parsed.description).toContain("Cloud took too long to respond")
+      expect(parsed.description).not.toContain("Snapshot synced")
+      expect(parsed.technicalDetails).toBe(
+        "Face sync needs attention: The operation was aborted due to timeout",
+      )
+    })
   })
 })

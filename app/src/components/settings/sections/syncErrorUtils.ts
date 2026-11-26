@@ -80,8 +80,31 @@ export function parseSyncError(err: string | null): ParsedSyncError {
     }
   }
 
-  // Clean developer prefixes (chunk indices, stack errors)
-  const cleaned = err
+  // Clean developer telemetry prefixes and repetitive timeout phrasing
+  const withoutTelemetry = err
+    .replace(/^Snapshot synced\.\s*/i, "")
+    .replace(/^Cloud updates downloaded\.\s*/i, "")
+    .replace(
+      /^Pulled \d+ groups?, \d+ members\.(?: Imported \d+ face templates\.)?\s*/i,
+      "",
+    )
+    .trim()
+
+  if (
+    /aborted due to timeout/i.test(withoutTelemetry) ||
+    /\btimed out\b/i.test(withoutTelemetry) ||
+    /\bETIMEDOUT\b/i.test(withoutTelemetry)
+  ) {
+    return {
+      isPlanQuota: false,
+      title: "Connection to Cloud timed out",
+      description:
+        "Cloud took too long to respond. Sync will retry automatically; attendance continues working offline.",
+      technicalDetails: withoutTelemetry,
+    }
+  }
+
+  const cleaned = withoutTelemetry
     .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
     .replace(/^Sync rejected:\s*/i, "")
     .replace(/^Error:\s*/i, "")

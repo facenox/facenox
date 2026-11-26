@@ -17,6 +17,18 @@ const MIN_PUSH_INTERVAL_MS = 5500
 const TRANSIENT_RETRY_DELAYS_MS = [15_000, 60_000, 5 * 60_000]
 const NON_RETRYABLE_STATUSES = new Set([400, 401, 402, 403, 422, 426])
 
+function deleteStoreKey(key: string) {
+  const store = persistentStore as {
+    delete?: (k: string) => void
+    set: (k: string, v: unknown) => void
+  }
+  if (typeof store.delete === "function") {
+    store.delete(key)
+  } else {
+    store.set(key, undefined)
+  }
+}
+
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
   return withLocalBackendHeaders(token ? { "X-Facenox-Token": token, ...extra } : { ...extra })
@@ -305,6 +317,13 @@ export class BackgroundSyncManager {
   }
 
   private shouldRunCatchUpSync(intervalMinutes: number, lastSyncedAt: string | null) {
+    if (
+      persistentStore.get("sync.lastSyncStatus") === "error" ||
+      Boolean(persistentStore.get("sync.pendingUpload"))
+    ) {
+      return true
+    }
+
     if (!lastSyncedAt) {
       return true
     }
@@ -390,32 +409,29 @@ export class BackgroundSyncManager {
       await this.persistLivenessRequirement(policy.forceLiveness)
       persistentStore.set("sync.policy.forceLiveness", policy.forceLiveness)
     }
-    if (typeof policy.trackCheckout === "boolean") {
-      persistentStore.set("sync.policy.trackCheckout", policy.trackCheckout)
+
+    const syncPolicyFieldMap: Array<[string, "boolean" | "number"]> = [
+      ["trackCheckout", "boolean"],
+      ["lateThresholdEnabled", "boolean"],
+      ["lateThresholdMinutes", "number"],
+      ["attendanceCooldownSeconds", "number"],
+      ["minCheckoutDelayMinutes", "number"],
+      ["dataRetentionDays", "number"],
+      ["allowKioskDirectoryManagement", "boolean"],
+    ]
+    for (const [field, expectedType] of syncPolicyFieldMap) {
+      const value = policy[field]
+      if (typeof value === expectedType) {
+        persistentStore.set(`sync.policy.${field}`, value)
+      } else if (value === null) {
+        deleteStoreKey(`sync.policy.${field}`)
+      }
     }
-    if (typeof policy.lateThresholdEnabled === "boolean") {
-      persistentStore.set("sync.policy.lateThresholdEnabled", policy.lateThresholdEnabled)
-    }
-    if (typeof policy.lateThresholdMinutes === "number") {
-      persistentStore.set("sync.policy.lateThresholdMinutes", policy.lateThresholdMinutes)
-    }
-    if (typeof policy.attendanceCooldownSeconds === "number") {
-      persistentStore.set("sync.policy.attendanceCooldownSeconds", policy.attendanceCooldownSeconds)
-    }
-    if (typeof policy.minCheckoutDelayMinutes === "number") {
-      persistentStore.set("sync.policy.minCheckoutDelayMinutes", policy.minCheckoutDelayMinutes)
-    }
-    if (typeof policy.dataRetentionDays === "number") {
-      persistentStore.set("sync.policy.dataRetentionDays", policy.dataRetentionDays)
-    }
-    if (typeof policy.allowKioskDirectoryManagement === "boolean") {
-      persistentStore.set(
-        "sync.policy.allowKioskDirectoryManagement",
-        policy.allowKioskDirectoryManagement,
-      )
-    }
-    if (policy.faceTemplateSync === false) {
-      persistentStore.set("sync.encryptionKey", "")
+    if (typeof policy.faceTemplateSync === "boolean") {
+      persistentStore.set("sync.policy.faceTemplateSync", policy.faceTemplateSync)
+      if (!policy.faceTemplateSync) {
+        persistentStore.set("sync.encryptionKey", "")
+      }
     }
 
     // Broadcast the updated policy immediately so the UI reflects locks without delay
@@ -814,6 +830,7 @@ export class BackgroundSyncManager {
       let accumulatedMembersCount = 0
       let accumulatedEmbeddingsCount = 0
       let totalDecryptFailures = 0
+      let totalBatchImportFailures = 0
 
       while (hasMorePages && pageCount < MAX_PAGES) {
         pageCount++
@@ -954,7 +971,7 @@ export class BackgroundSyncManager {
               totalDecryptFailures += embBatchResult.failed_count || 0
             } catch (batchErr) {
               console.warn("[Sync] Failed to post batch embeddings:", batchErr)
-              totalDecryptFailures += batchEmbeddings.length
+              totalBatchImportFailures += batchEmbeddings.length
             }
           }
         }
@@ -975,13 +992,20 @@ export class BackgroundSyncManager {
       if (totalDecryptFailures > 0) {
         pullMsg += ` ${totalDecryptFailures} face templates could not be imported; retry or review sync conflicts.`
       }
+      if (totalBatchImportFailures > 0) {
+        pullMsg += ` ${totalBatchImportFailures} face templates failed to save locally; retrying.`
+      }
 
       console.log(
         `[Sync] Automatic metadata pull completed (${pageCount} page${pageCount > 1 ? "s" : ""}).${pullMsg}`,
       )
       state.mainWindow?.webContents.send("sync:data-changed")
 
-      return { success: totalDecryptFailures === 0, message: pullMsg, retryable: true }
+      return {
+        success: totalDecryptFailures === 0 && totalBatchImportFailures === 0,
+        message: pullMsg,
+        retryable: true,
+      }
     } catch (pullError) {
       const errMsg = pullError instanceof Error ? pullError.message : "unknown"
       console.warn("[Sync] Automatic metadata pull failed:", pullError)
@@ -1052,7 +1076,7 @@ export class BackgroundSyncManager {
       this.clearRetryTimer()
     }
     try {
-      if (!encryptionKey) {
+      if (!encryptionKey && persistentStore.get("sync.policy.faceTemplateSync") !== false) {
         try {
           const keyResponse = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/device/key`, {
             headers: { Authorization: `Bearer ${deviceToken}` },

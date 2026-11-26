@@ -113,6 +113,9 @@ function getRemoteSyncStatus() {
           attendanceCooldownSeconds: persistentStore.get(
             "sync.policy.attendanceCooldownSeconds",
           ) as number | undefined,
+          minCheckoutDelayMinutes: persistentStore.get(
+            "sync.policy.minCheckoutDelayMinutes",
+          ) as number | undefined,
           dataRetentionDays: persistentStore.get("sync.policy.dataRetentionDays") as
             number | undefined,
         }
@@ -155,6 +158,7 @@ function clearRemoteConnection() {
   persistentStore.delete("sync.policy.minCheckoutDelayMinutes")
   persistentStore.delete("sync.policy.dataRetentionDays")
   persistentStore.delete("sync.policy.allowKioskDirectoryManagement")
+  persistentStore.delete("sync.policy.faceTemplateSync")
 }
 
 async function validatePairingDestination(
