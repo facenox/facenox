@@ -47,7 +47,7 @@ describe("ClockHealth status", () => {
     expect(screen.queryByRole("button", { name: "Timezone" })).not.toBeInTheDocument()
     expect(screen.getByText("Manila (UTC+08:00)")).toBeInTheDocument()
     expect(screen.getByText("Asia/Manila")).toBeInTheDocument()
-    expect(screen.getByText("Managed by your Cloud location.")).toBeInTheDocument()
+    expect(screen.getByText("Managed in Facenox Cloud → Locations.")).toBeInTheDocument()
   })
 
   it("labels and formats the device clock using the backend zone, independently of attendance", () => {

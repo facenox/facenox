@@ -108,7 +108,7 @@ export function ClockHealth({
               : cloudConfigStatus === "error" ?
                 "Cloud management status unavailable."
               : isPaired ?
-                "Managed by your Cloud location."
+                "Managed in Facenox Cloud → Locations."
               : "Pinned to this attendance location."}
             </div>
             {cloudConfigStatus === "error" && (
