@@ -128,7 +128,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
 
   const pairingConfigDirty =
     getEffectiveRemoteUrl(remoteBaseUrl).replace(/\/+$/, "") !==
-    getEffectiveRemoteUrl(config.remoteBaseUrl).replace(/\/+$/, "") ||
+      getEffectiveRemoteUrl(config.remoteBaseUrl).replace(/\/+$/, "") ||
     (deviceName.trim() || "Facenox Desktop") !== (config.deviceName.trim() || "Facenox Desktop")
 
   const handleSuccessMessage = useCallback(
@@ -263,7 +263,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
             <Spinner size="sm" color="cyan" />
             <span>Loading Cloud connection…</span>
           </>
-          : <div className="space-y-3">
+        : <div className="space-y-3">
             <p>{cloudConfigError || "Could not load Cloud connection."}</p>
             <button
               type="button"
@@ -295,7 +295,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
               className="cursor-default text-sm font-medium text-white/90 select-none">
               {!config.connected ?
                 `Connect to ${serverDisplayName}`
-                : `Connected to ${serverDisplayName}`}
+              : `Connected to ${serverDisplayName}`}
               {config.connected && (config.organizationName || config.siteName) && (
                 <span className="ml-2 font-normal text-white/50">
                   · {[config.organizationName, config.siteName].filter(Boolean).join(" / ")}
@@ -313,7 +313,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     Learn more
                   </button>
                 </>
-                : <>
+              : <>
                   Attendance records sync automatically.{" "}
                   <button
                     type="button"
@@ -332,7 +332,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
               <span>{showAdvanced ? "Hide advanced" : "Advanced settings"}</span>
               {showAdvanced ?
                 <ChevronUp className="size-2.5" />
-                : <ChevronDown className="size-2.5" />}
+              : <ChevronDown className="size-2.5" />}
             </button>
           </div>
         </div>
@@ -358,160 +358,160 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       className="flex min-h-[290px] items-center justify-center text-center text-xs text-white/65">
                       Save configuration to generate a device code for this server.
                     </motion.div>
-                    : isInitiating && !reversePairing ?
-                      <motion.div
-                        key="initiating"
-                        initial={{ opacity: 0, scale: 0.97 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.97 }}
-                        transition={{ duration: 0.3, ease: "easeOut" }}
-                        className="flex min-h-[290px] flex-col items-center justify-center gap-3 text-center">
-                        <Spinner size="md" color="cyan" />
-                        <p className="text-xs font-medium text-white/70">
-                          Connecting to {serverDisplayName}...
-                        </p>
-                        <p className="text-[11px] text-white/40">Generating secure device code</p>
-                      </motion.div>
-                      : initiateError ?
-                        <motion.div
-                          key="error"
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -8 }}
-                          transition={{ duration: 0.25, ease: "easeOut" }}
-                          className="flex min-h-[290px] flex-col items-center justify-center gap-3 py-6 text-center">
-                          {isOfflineError(initiateError) ?
-                            <>
-                              <div className="flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/50">
-                                <Wifi className="size-4 text-white/40" />
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-xs font-semibold text-white/90">Device is offline</p>
-                                <p className="max-w-xs text-[11px] leading-relaxed text-white/50">
-                                  Connect to the internet to link this device with Facenox Cloud.
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  isInitiatingRef.current = false
-                                  void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
-                                }}
-                                className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
-                                <RotateCw className="size-3" />
-                                Check connection
-                              </button>
-                            </>
-                            : <>
-                              <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-                                <AlertCircle className="size-4" />
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-xs font-medium text-white/90">
-                                  Could not start Cloud pairing
-                                </p>
-                                <div className="max-w-md text-[11px] break-words text-white/50">
-                                  <ErrorText message={initiateError} />
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  isInitiatingRef.current = false
-                                  void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
-                                }}
-                                className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
-                                <RotateCw className="size-3" />
-                                Retry connection
-                              </button>
-                            </>
-                          }
-                        </motion.div>
-                        : reversePairing ?
-                          <motion.div
-                            key="reverse-pairing-ready"
-                            initial={{ opacity: 0, y: 12, scale: 0.96 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.96 }}
-                            transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-                            className="flex min-h-[290px] flex-col items-center justify-center py-4 text-center">
-                            {/* Centered QR Code with gentle hover */}
-                            <div className="group relative transition-transform duration-200 hover:scale-[1.02]">
-                              <QRCodeView value={reversePairing.verificationUriComplete} size={156} />
+                  : isInitiating && !reversePairing ?
+                    <motion.div
+                      key="initiating"
+                      initial={{ opacity: 0, scale: 0.97 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="flex min-h-[290px] flex-col items-center justify-center gap-3 text-center">
+                      <Spinner size="md" color="cyan" />
+                      <p className="text-xs font-medium text-white/70">
+                        Connecting to {serverDisplayName}...
+                      </p>
+                      <p className="text-[11px] text-white/40">Generating secure device code</p>
+                    </motion.div>
+                  : initiateError ?
+                    <motion.div
+                      key="error"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className="flex min-h-[290px] flex-col items-center justify-center gap-3 py-6 text-center">
+                      {isOfflineError(initiateError) ?
+                        <>
+                          <div className="flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/50">
+                            <Wifi className="size-4 text-white/40" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-semibold text-white/90">Device is offline</p>
+                            <p className="max-w-xs text-[11px] leading-relaxed text-white/50">
+                              Connect to the internet to link this device with Facenox Cloud.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              isInitiatingRef.current = false
+                              void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
+                            }}
+                            className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
+                            <RotateCw className="size-3" />
+                            Check connection
+                          </button>
+                        </>
+                      : <>
+                          <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                            <AlertCircle className="size-4" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-white/90">
+                              Could not start Cloud pairing
+                            </p>
+                            <div className="max-w-md text-[11px] break-words text-white/50">
+                              <ErrorText message={initiateError} />
                             </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              isInitiatingRef.current = false
+                              void startReversePairing(getEffectiveRemoteUrl(remoteBaseUrl))
+                            }}
+                            className="mt-1 flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
+                            <RotateCw className="size-3" />
+                            Retry connection
+                          </button>
+                        </>
+                      }
+                    </motion.div>
+                  : reversePairing ?
+                    <motion.div
+                      key="reverse-pairing-ready"
+                      initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.96 }}
+                      transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+                      className="flex min-h-[290px] flex-col items-center justify-center py-4 text-center">
+                      {/* Centered QR Code with gentle hover */}
+                      <div className="group relative transition-transform duration-200 hover:scale-[1.02]">
+                        <QRCodeView value={reversePairing.verificationUriComplete} size={156} />
+                      </div>
 
-                            {/* Centered Instructions, PIN Capsule & Status with staggered appearance */}
-                            <motion.div
-                              initial={{ opacity: 0, y: 6 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.1, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                              className="mt-5 max-w-sm space-y-3">
-                              <p className="text-xs leading-relaxed text-white/70">
-                                Connect via QR code, or visit{" "}
-                                <a
-                                  href={
-                                    reversePairing.verificationUriComplete ||
-                                    reversePairing.verificationUri
-                                  }
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex items-center gap-1 font-semibold text-cyan-400 underline-offset-4 transition hover:text-cyan-300 hover:underline">
-                                  <span>
-                                    {reversePairing.verificationUri.replace(/^https?:\/\//, "")}
-                                  </span>
-                                  <ExternalLink className="size-2.5" />
-                                </a>{" "}
-                                and enter this device code:
-                              </p>
+                      {/* Centered Instructions, PIN Capsule & Status with staggered appearance */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                        className="mt-5 max-w-sm space-y-3">
+                        <p className="text-xs leading-relaxed text-white/70">
+                          Connect via QR code, or visit{" "}
+                          <a
+                            href={
+                              reversePairing.verificationUriComplete ||
+                              reversePairing.verificationUri
+                            }
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-cyan-400 underline-offset-4 transition hover:text-cyan-300 hover:underline">
+                            <span>
+                              {reversePairing.verificationUri.replace(/^https?:\/\//, "")}
+                            </span>
+                            <ExternalLink className="size-2.5" />
+                          </a>{" "}
+                          and enter this device code:
+                        </p>
 
-                              {/* Single seamless PIN capsule */}
-                              <div className="flex items-center justify-center gap-2">
-                                <div className="inline-flex items-center gap-3 rounded-lg bg-white/[0.04] px-4 py-2 font-mono text-2xl font-bold tracking-[0.25em] text-white select-all">
-                                  <span>{reversePairing.userCode.slice(0, 3)}</span>
-                                  <span>{reversePairing.userCode.slice(3, 6)}</span>
-                                </div>
-                                <Tooltip
-                                  content={copiedPin ? "Copied to clipboard" : "Copy code"}
-                                  position="top">
-                                  <button
-                                    type="button"
-                                    aria-label="Copy code"
-                                    onClick={() => {
-                                      void navigator.clipboard.writeText(reversePairing.userCode)
-                                      setCopiedPin(true)
-                                      setTimeout(() => setCopiedPin(false), 2000)
-                                    }}
-                                    className="flex size-8 items-center justify-center rounded-lg text-white/35 transition hover:bg-white/5 hover:text-white">
-                                    {copiedPin ?
-                                      <Check className="size-3.5 text-emerald-400" />
-                                      : <Copy className="size-3.5" />}
-                                  </button>
-                                </Tooltip>
-                                <Tooltip content="Refresh code" position="top">
-                                  <button
-                                    type="button"
-                                    aria-label="Refresh code"
-                                    onClick={() => void startReversePairing()}
-                                    disabled={isInitiating}
-                                    className="flex size-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70 disabled:opacity-40">
-                                    <RotateCw
-                                      className={`size-3.5 ${isInitiating ? "animate-spin text-cyan-400" : ""}`}
-                                    />
-                                  </button>
-                                </Tooltip>
-                              </div>
+                        {/* Single seamless PIN capsule */}
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="inline-flex items-center gap-3 rounded-lg bg-white/[0.04] px-4 py-2 font-mono text-2xl font-bold tracking-[0.25em] text-white select-all">
+                            <span>{reversePairing.userCode.slice(0, 3)}</span>
+                            <span>{reversePairing.userCode.slice(3, 6)}</span>
+                          </div>
+                          <Tooltip
+                            content={copiedPin ? "Copied to clipboard" : "Copy code"}
+                            position="top">
+                            <button
+                              type="button"
+                              aria-label="Copy code"
+                              onClick={() => {
+                                void navigator.clipboard.writeText(reversePairing.userCode)
+                                setCopiedPin(true)
+                                setTimeout(() => setCopiedPin(false), 2000)
+                              }}
+                              className="flex size-8 items-center justify-center rounded-lg text-white/35 transition hover:bg-white/5 hover:text-white">
+                              {copiedPin ?
+                                <Check className="size-3.5 text-emerald-400" />
+                              : <Copy className="size-3.5" />}
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="Refresh code" position="top">
+                            <button
+                              type="button"
+                              aria-label="Refresh code"
+                              onClick={() => void startReversePairing()}
+                              disabled={isInitiating}
+                              className="flex size-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70 disabled:opacity-40">
+                              <RotateCw
+                                className={`size-3.5 ${isInitiating ? "animate-spin text-cyan-400" : ""}`}
+                              />
+                            </button>
+                          </Tooltip>
+                        </div>
 
-                              {/* Live waiting indicator */}
-                              <div className="flex items-center justify-center gap-2 text-xs text-white/40">
-                                <span>Waiting for authorization</span>
-                                <span className="font-mono text-white/30">
-                                  ({Math.floor(secondsLeft / 60)}:
-                                  {(secondsLeft % 60).toString().padStart(2, "0")})
-                                </span>
-                              </div>
-                            </motion.div>
-                          </motion.div>
-                          : null}
+                        {/* Live waiting indicator */}
+                        <div className="flex items-center justify-center gap-2 text-xs text-white/40">
+                          <span>Waiting for authorization</span>
+                          <span className="font-mono text-white/30">
+                            ({Math.floor(secondsLeft / 60)}:
+                            {(secondsLeft % 60).toString().padStart(2, "0")})
+                          </span>
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  : null}
                 </AnimatePresence>
 
                 {/* Subtle Collapsible Manual Fallback */}
@@ -532,7 +532,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         className="cursor-pointer text-[11px] text-white/30 transition-colors hover:text-white/60">
                         Have a pairing code from Facenox Cloud? Enter it here &rarr;
                       </motion.button>
-                      : <motion.div
+                    : <motion.div
                         key="manual-input"
                         initial={{ opacity: 0, y: 6, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -568,7 +568,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                   </AnimatePresence>
                 </motion.div>
               </motion.div>
-              : <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            : <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1.5 text-xs">
                   {config.lastSyncStatus === "error" ?
                     (() => {
@@ -585,7 +585,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                                   errInfo.peopleLimit !== undefined
                                 ) ?
                                   `Plan limit reached (${errInfo.currentPeople} / ${errInfo.peopleLimit} members)`
-                                  : "Plan member limit reached"}
+                                : "Plan member limit reached"}
                               </span>
                               {isOfficial && (
                                 <a
@@ -605,7 +605,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                               <span>
                                 {config.lastSyncedAt ?
                                   `Last synced ${new Date(config.lastSyncedAt).toLocaleString()}`
-                                  : "No completed sync yet"}
+                                : "No completed sync yet"}
                               </span>
                             </div>
                           </div>
@@ -629,13 +629,13 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                             <span>
                               {config.lastSyncedAt ?
                                 `Last synced ${new Date(config.lastSyncedAt).toLocaleString()}`
-                                : "No completed sync yet"}
+                              : "No completed sync yet"}
                             </span>
                           </div>
                         </div>
                       )
                     })()
-                    : <div className="space-y-1">
+                  : <div className="space-y-1">
                       {(
                         config.unsyncedRecordsCount !== undefined && config.unsyncedRecordsCount > 0
                       ) ?
@@ -643,33 +643,33 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                           <CloudUpload className="size-3" />
                           <span>{formatQueuedRecords(config.unsyncedRecordsCount)} for upload</span>
                         </div>
-                        : (
-                          config.unsyncedSessionsCount !== undefined &&
-                          config.unsyncedSessionsCount > 0
-                        ) ?
-                          <div className="flex items-center gap-1.5 font-medium text-sky-400">
-                            <CloudUpload className="size-3" />
-                            <span>Attendance updates queued for upload</span>
-                          </div>
-                          : !config.lastSyncedAt ?
-                            <div className="font-medium text-white/65">No completed sync yet</div>
-                            : (
-                              config.unsyncedRecordsCount !== 0 ||
-                              config.unsyncedSessionsCount !== 0 ||
-                              config.lastSyncStatus !== "success"
-                            ) ?
-                              <div className="font-medium text-white/65">
-                                Current sync status unavailable
-                              </div>
-                              : <div className="flex items-center gap-1.5 font-medium text-emerald-400">
-                                <Check className="size-3" />
-                                <span>Last sync completed</span>
-                              </div>
+                      : (
+                        config.unsyncedSessionsCount !== undefined &&
+                        config.unsyncedSessionsCount > 0
+                      ) ?
+                        <div className="flex items-center gap-1.5 font-medium text-sky-400">
+                          <CloudUpload className="size-3" />
+                          <span>Attendance updates queued for upload</span>
+                        </div>
+                      : !config.lastSyncedAt ?
+                        <div className="font-medium text-white/65">No completed sync yet</div>
+                      : (
+                        config.unsyncedRecordsCount !== 0 ||
+                        config.unsyncedSessionsCount !== 0 ||
+                        config.lastSyncStatus !== "success"
+                      ) ?
+                        <div className="font-medium text-white/65">
+                          Current sync status unavailable
+                        </div>
+                      : <div className="flex items-center gap-1.5 font-medium text-emerald-400">
+                          <Check className="size-3" />
+                          <span>Last sync completed</span>
+                        </div>
                       }
                       <div className="text-[11px] text-white/40">
                         {config.lastSyncedAt ?
                           `Last synced ${new Date(config.lastSyncedAt).toLocaleString()}`
-                          : "Ready to sync"}
+                        : "Ready to sync"}
                       </div>
                     </div>
                   }
@@ -690,7 +690,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                     className="flex items-center gap-1.5 rounded border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-white/80 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
                     {busyAction === "syncing" ?
                       <Spinner size="xs" color="white" />
-                      : <RotateCw className="size-3" />}
+                    : <RotateCw className="size-3" />}
                     Sync now
                   </button>
                   <button
@@ -730,16 +730,17 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       value={
                         config.connected && config.deviceId ? config.deviceId : "Not paired yet"
                       }
-                      className={`h-8.5 w-full rounded border border-white/10 bg-white/[0.02] px-3 font-mono text-[11px] outline-none select-all ${config.connected && config.deviceId ?
+                      className={`h-8.5 w-full rounded border border-white/10 bg-white/[0.02] px-3 font-mono text-[11px] outline-none select-all ${
+                        config.connected && config.deviceId ?
                           "text-white/60"
-                          : "text-white/25 italic"
-                        }`}
+                        : "text-white/25 italic"
+                      }`}
                     />
                     <Tooltip
                       content={
                         !config.connected || !config.deviceId ?
                           "Device is not paired to Facenox Cloud"
-                          : "Copy Device ID"
+                        : "Copy Device ID"
                       }>
                       <span
                         className="inline-flex shrink-0"
@@ -756,7 +757,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                           className="flex h-8.5 shrink-0 items-center gap-1.5 rounded border border-white/10 bg-white/[0.04] px-3 text-[11px] font-medium text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 hover:disabled:bg-white/[0.04] hover:disabled:text-white/70">
                           {copiedId ?
                             <Check className="size-3 text-emerald-400" />
-                            : <Copy className="size-3" />}
+                          : <Copy className="size-3" />}
                           {copiedId ? "Copied" : "Copy"}
                         </button>
                       </span>
