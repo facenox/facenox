@@ -135,19 +135,10 @@ export default function WindowBar() {
   const hasSeenIntro = useUIStore((s) => s.hasSeenIntro)
   const isHydrated = useUIStore((s) => s.isHydrated)
   const isShellReady = useAttendanceStore((s) => s.isShellReady)
-  const attendanceGroups = useAttendanceStore((s) => s.attendanceGroups)
-  const systemStats = useAttendanceStore((s) => s.systemStats)
-  const hasExistingLocalData =
-    attendanceGroups.length > 0 ||
-    (systemStats?.totalMembers ?? 0) > 0 ||
-    (systemStats?.totalPersons ?? 0) > 0
   const isOnboardingGateActive =
     isHydrated &&
     isShellReady &&
-    (!hasSeenIntro ||
-      (cloudConfigStatus !== "loading" &&
-        !hasSavedCloudPairing(syncConfig) &&
-        !(hasExistingLocalData && !syncConfig?.wasEverPaired)))
+    (!hasSeenIntro || (cloudConfigStatus !== "loading" && !hasSavedCloudPairing(syncConfig)))
   const cloudDashboardUrl = `${getEffectiveRemoteUrl(syncConfig?.remoteBaseUrl)}/app`
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
 

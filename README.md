@@ -136,7 +136,6 @@ Link your Facenox Cloud workspace once on first launch to provision your locatio
 - Recognition, liveness verification, and attendance recording continue without interruption.
 - Attendance is written to a local SQLite database and syncs automatically when connectivity returns.
 - Settings and encrypted `.facenox` backups remain accessible locally. Keep separate backups to protect against deletion or device failure.
-- Existing standalone local installations preserve local operation.
 
 ## How it works
 

@@ -36,23 +36,6 @@ describe("IntroModal", () => {
     ).toHaveAttribute("href", "https://facenox.com/pair?code=749120")
   })
 
-  it("allows continuing with local data for existing beta installations", async () => {
-    const api = getElectronAPIMock().sync
-    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
-
-    render(<IntroModal initialStep={2} allowLocalContinue={true} />)
-
-    const continueButton = await screen.findByRole("button", {
-      name: "Continue with local data",
-    })
-    expect(continueButton).toBeInTheDocument()
-
-    fireEvent.click(continueButton)
-    await waitFor(() => expect(useUIStore.getState().hasSeenIntro).toBe(true), {
-      timeout: 1000,
-    })
-  })
-
   it("completes onboarding when reverse pairing approves even if onDataChanged flips connected mid-poll", async () => {
     const api = getElectronAPIMock().sync
     let dataChangedListener: (() => void) | undefined

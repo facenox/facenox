@@ -12,33 +12,21 @@ import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncSt
 
 function App() {
   const { hasSeenIntro, isHydrated } = useUIStore()
-  const { isShellReady, shellBootstrapError, attendanceGroups, systemStats } = useAttendanceStore()
+  const { isShellReady, shellBootstrapError } = useAttendanceStore()
   const { config: cloudConfig, status: cloudConfigStatus } = useCloudSyncConfig()
   const hasSignaledAppReadyRef = useRef(false)
 
   useAttendanceBootstrap()
 
-  const hasExistingLocalData =
-    attendanceGroups.length > 0 ||
-    (systemStats?.totalMembers ?? 0) > 0 ||
-    (systemStats?.totalPersons ?? 0) > 0
   const hasSavedPairing = hasSavedCloudPairing(cloudConfig)
-  const cloudStatusSettled = cloudConfigStatus !== "loading" || hasExistingLocalData
+  const cloudStatusSettled = cloudConfigStatus !== "loading"
 
   const shouldRevealWindow =
     isHydrated &&
     (Boolean(shellBootstrapError) || (isShellReady && (!hasSeenIntro || cloudStatusSettled)))
 
-  // wasEverPaired: true means this install previously connected to Cloud (dataOrigin is set).
-  // For such installs, unpair = workspace switch — they must re-pair to continue.
-  // Legacy pre-Cloud beta users (wasEverPaired=false) with local data may still bypass the gate.
-  const wasEverPaired = Boolean(cloudConfig?.wasEverPaired)
-  const allowLocalContinue = hasExistingLocalData && !wasEverPaired
-
   const requiresCloudGate =
-    !shellBootstrapError &&
-    isShellReady &&
-    (!hasSeenIntro || (!hasSavedPairing && !allowLocalContinue))
+    !shellBootstrapError && isShellReady && (!hasSeenIntro || !hasSavedPairing)
 
   useEffect(() => {
     if (shouldRevealWindow && !hasSignaledAppReadyRef.current) {
@@ -78,10 +66,7 @@ function App() {
               : requiresCloudGate ?
                 <>
                   <AppSkeleton />
-                  <IntroModal
-                    initialStep={hasSeenIntro ? 2 : 0}
-                    allowLocalContinue={allowLocalContinue}
-                  />
+                  <IntroModal initialStep={hasSeenIntro ? 2 : 0} />
                 </>
               : <Main />}
             </div>

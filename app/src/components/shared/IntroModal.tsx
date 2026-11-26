@@ -15,17 +15,15 @@ import {
 
 interface IntroModalProps {
   initialStep?: number
-  allowLocalContinue?: boolean
 }
 
 /**
  * First-launch onboarding & Cloud connection gate.
  *
  * Steps 1-2: On-device biometric architecture & template privacy
- * Step 3: Mandatory Cloud sign-in / pairing for new installs (with local continuation
- *         preserved for existing beta installations that already hold local attendance data)
+ * Step 3: Mandatory Cloud sign-in / pairing
  */
-export function IntroModal({ initialStep = 0, allowLocalContinue = false }: IntroModalProps) {
+export function IntroModal({ initialStep = 0 }: IntroModalProps) {
   const { setHasSeenIntro } = useUIStore()
   const {
     config: cloudConfig,
@@ -456,22 +454,14 @@ export function IntroModal({ initialStep = 0, allowLocalContinue = false }: Intr
               Back
             </button>
 
-            {isLastStep ?
-              allowLocalContinue && (
-                <button
-                  type="button"
-                  onClick={completeOnboarding}
-                  className="rounded-lg px-3 py-2 text-xs font-medium text-white/55 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
-                  Continue with local data
-                </button>
-              )
-            : <button
+            {!isLastStep && (
+              <button
                 type="button"
                 onClick={handleNext}
                 className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-7 py-2 text-xs font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
                 Next
               </button>
-            }
+            )}
           </div>
         </div>
       </div>
