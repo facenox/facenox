@@ -292,13 +292,15 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
           <div className="max-w-xl min-w-0 flex-1">
             <h3
               onClick={handleTitleClick}
-              className="cursor-default text-sm font-medium text-white/90 select-none">
-              {!config.connected ?
-                `Connect to ${serverDisplayName}`
-              : `Connected to ${serverDisplayName}`}
+              className="flex cursor-default flex-wrap items-center gap-2 text-sm font-medium text-white/90 select-none">
+              <span>
+                {!config.connected ?
+                  `Connect to ${serverDisplayName}`
+                : `Connected to ${serverDisplayName}`}
+              </span>
               {config.connected && (config.organizationName || config.siteName) && (
-                <span className="ml-2 font-normal text-white/50">
-                  · {[config.organizationName, config.siteName].filter(Boolean).join(" / ")}
+                <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[11px] font-normal text-white/60">
+                  {[config.organizationName, config.siteName].filter(Boolean).join(" / ")}
                 </span>
               )}
             </h3>
