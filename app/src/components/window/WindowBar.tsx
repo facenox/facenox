@@ -15,10 +15,7 @@ import {
 import { Tooltip } from "@/components/shared"
 import { updaterService } from "@/services"
 import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
-import {
-  isNetworkSyncError,
-  isQuotaSyncError,
-} from "@/components/settings/sections/syncErrorUtils"
+import { isNetworkSyncError, isQuotaSyncError } from "@/components/settings/sections/syncErrorUtils"
 import type { UpdateInfo } from "@/types/updater"
 import { Modal, Spinner } from "@/components/common"
 import { useUIStore } from "@/components/main/stores/uiStore"
