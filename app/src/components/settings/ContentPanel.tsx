@@ -19,7 +19,7 @@ import { ClockHealth } from "@/components/settings/sections/ClockHealth"
 import { Attendance } from "@/components/settings/sections/Attendance"
 import { About } from "@/components/settings/sections/About"
 import { Sync } from "@/components/settings/sections/Sync"
-import { useCloudSyncConfig } from "@/services/cloudSyncState"
+import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
 import { AntiSpoofDetectionModal } from "@/components/settings/AntiSpoofDetectionModal"
 import { AuditLogExportModal } from "@/components/settings/AuditLogExportModal"
 import { GroupPanel, type GroupSection } from "@/components/group"
@@ -212,18 +212,19 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   const [dontShowAntiSpoofInfoAgain, setDontShowAntiSpoofInfoAgain] = useState(false)
   const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false)
   const { config: syncConfig, status: cloudConfigStatus } = useCloudSyncConfig()
-  const isPaired = Boolean(syncConfig?.connected)
+  const isPaired = hasSavedCloudPairing(syncConfig)
+  const hasCachedPolicy = isPaired && Boolean(syncConfig?.credentialError)
   const isDirectoryLocked =
-    cloudConfigStatus === "error" ||
+    (cloudConfigStatus === "error" && !hasCachedPolicy) ||
     Boolean(
-      syncConfig?.connected &&
-      (syncConfig.policyReady === false || syncConfig.allowKioskDirectoryManagement === false),
+      isPaired &&
+      (syncConfig?.policyReady === false || syncConfig?.allowKioskDirectoryManagement === false),
     )
   const canManageGroups =
-    cloudConfigStatus === "ready" &&
+    (cloudConfigStatus === "ready" || hasCachedPolicy) &&
     syncConfig?.policyReady !== false &&
     Boolean(syncConfig) &&
-    (!syncConfig?.connected || syncConfig.allowKioskDirectoryManagement !== false)
+    (!isPaired || syncConfig?.allowKioskDirectoryManagement !== false)
   const showCreateGroupModal = useGroupUIStore((state) => state.showCreateGroupModal)
   const openCreateGroup = useGroupUIStore((state) => state.openCreateGroup)
   const closeCreateGroup = useGroupUIStore((state) => state.closeCreateGroup)
@@ -379,7 +380,10 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             Audit log
           </button>
         : (
-          activeSection === "remote-sync" && cloudConfigStatus === "ready" && syncConfig?.connected
+          activeSection === "remote-sync" &&
+          (cloudConfigStatus === "ready" || hasCachedPolicy) &&
+          isPaired &&
+          syncConfig
         ) ?
           (() => {
             const isQuota =
@@ -393,8 +397,10 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             const isRetrying =
               syncConfig.lastSyncStatus === "idle" &&
               Boolean(syncConfig.lastSyncMessage?.includes("Retrying automatically"))
+            const hasError =
+              syncConfig.lastSyncStatus === "error" || Boolean(syncConfig.credentialError)
             const badgeStyle =
-              syncConfig.lastSyncStatus === "error" ?
+              hasError ?
                 isQuota ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
                 : "border-red-500/20 bg-red-500/10 text-red-400"
               : isRetrying ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
@@ -402,7 +408,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 "border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
               : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
             const badgeLabel =
-              syncConfig.lastSyncStatus === "error" ?
+              hasError ?
                 isQuota ? "Plan limit"
                 : "Sync issue"
               : isRetrying ? "Retrying"
@@ -449,6 +455,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     setGroupInitialSection,
     syncConfig,
     cloudConfigStatus,
+    isPaired,
+    hasCachedPolicy,
     isDirectoryLocked,
     canManageGroups,
     openCreateGroup,

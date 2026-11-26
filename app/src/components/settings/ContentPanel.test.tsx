@@ -6,6 +6,8 @@ import { useUIStore } from "@/components/main/stores"
 import { useGroupUIStore } from "@/components/group/stores"
 import { attendanceManager } from "@/services"
 import { DialogProvider } from "@/components/shared/DialogProvider"
+import { createSyncConfig } from "@/test/mocks/electron"
+import type { AttendanceMember } from "@/types/recognition"
 
 const MOTION_PROP_KEYS = new Set([
   "layout",
@@ -459,5 +461,60 @@ describe("ContentPanel inline group name editing", () => {
 
     expect(screen.queryByDisplayValue("Engineering Team")).not.toBeInTheDocument()
     expect(screen.getByText("Engineering Team")).toBeInTheDocument()
+  })
+
+  it("keeps directory controls locked and shows Sync issue when a paired device has a credential error", async () => {
+    vi.spyOn(window.electronAPI.sync, "getConfig").mockResolvedValue(
+      createSyncConfig({
+        connected: false,
+        wasEverPaired: true,
+        organizationId: "org-1",
+        siteId: "site-1",
+        deviceId: "dev-1",
+        allowKioskDirectoryManagement: false,
+        policyReady: true,
+        credentialError: "System credential storage is unavailable.",
+        lastSyncStatus: "error",
+        lastSyncMessage: "System credential storage is unavailable.",
+      }),
+    )
+
+    const { rerender } = render(
+      <DialogProvider>
+        <ContentPanel {...groupProps} activeSection="groups" />
+      </DialogProvider>,
+    )
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Create group" })).toBeDisabled())
+
+    rerender(
+      <DialogProvider>
+        <ContentPanel
+          {...groupProps}
+          groupInitialSection="members"
+          groupSections={[
+            { id: "overview" as const, label: "Overview", icon: () => null },
+            { id: "members" as const, label: "Members", icon: () => null },
+          ]}
+          members={[{ id: "m-1", name: "Alice" } as AttendanceMember]}
+          addMemberHandler={vi.fn()}
+        />
+      </DialogProvider>,
+    )
+    expect(screen.getByRole("button", { name: "Add member" })).toBeDisabled()
+
+    rerender(
+      <DialogProvider>
+        <ContentPanel {...groupProps} groupInitialSection="overview" />
+      </DialogProvider>,
+    )
+    expect(screen.queryByLabelText("Edit group name")).not.toBeInTheDocument()
+
+    rerender(
+      <DialogProvider>
+        <ContentPanel {...groupProps} activeSection="remote-sync" />
+      </DialogProvider>,
+    )
+    expect(screen.getByText("Sync issue")).toBeInTheDocument()
   })
 })

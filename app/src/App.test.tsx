@@ -44,7 +44,8 @@ vi.mock("@/components/main/hooks/useAttendanceBootstrap", () => ({
   useAttendanceBootstrap: () => mockUseAttendanceBootstrap(),
 }))
 
-vi.mock("@/services/cloudSyncState", () => ({
+vi.mock("@/services/cloudSyncState", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/cloudSyncState")>()),
   useCloudSyncConfig: () => mockUseCloudSyncConfig(),
 }))
 

@@ -311,7 +311,10 @@ export default function WindowBar() {
               useUIStore.getState().requestOpenSettings("remote-sync")
             }
 
-            if (cloudConfigStatus === "error" || !syncConfig) {
+            const hasCachedPairing =
+              hasSavedCloudPairing(syncConfig) && Boolean(syncConfig?.credentialError)
+
+            if ((cloudConfigStatus === "error" && !hasCachedPairing) || !syncConfig) {
               return (
                 <button
                   type="button"
@@ -328,7 +331,7 @@ export default function WindowBar() {
                 </button>
               )
             }
-            if (!syncConfig.connected) {
+            if (!hasSavedCloudPairing(syncConfig)) {
               return (
                 <Tooltip
                   content="Automatic sync & remote reports"
@@ -376,7 +379,7 @@ export default function WindowBar() {
               : "No attendance updates queued."
             let tooltipContent = `${lastSyncText} ${queueText} Open Cloud sync for details.`
 
-            if (syncConfig.lastSyncStatus === "error") {
+            if (syncConfig.lastSyncStatus === "error" || syncConfig.credentialError) {
               badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
               StatusIcon = AlertTriangle
               iconColor = "text-amber-400"
@@ -388,7 +391,11 @@ export default function WindowBar() {
 
               statusText = isQuota ? "Plan limit reached" : "Sync issue"
 
-              const cleanMsg = (syncConfig.lastSyncMessage || "The last sync could not complete.")
+              const cleanMsg = (
+                syncConfig.credentialError ||
+                syncConfig.lastSyncMessage ||
+                "The last sync could not complete."
+              )
                 .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
                 .replace(/^Sync rejected:\s*/i, "")
                 .replace(/^Error:\s*/i, "")

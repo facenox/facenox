@@ -103,4 +103,24 @@ describe("WindowBar", () => {
     expect(cleanupMaximize).toHaveBeenCalledTimes(1)
     expect(cleanupUnmaximize).toHaveBeenCalledTimes(1)
   })
+
+  it("shows Sync issue instead of Connect Facenox Cloud when a saved pairing has a credential error", async () => {
+    getElectronAPIMock().sync.getConfig.mockResolvedValue(
+      createSyncConfig({
+        connected: false,
+        wasEverPaired: true,
+        organizationId: "org-1",
+        siteId: "site-1",
+        deviceId: "dev-1",
+        credentialError: "System credential storage is unavailable.",
+        lastSyncStatus: "error",
+        lastSyncMessage: "System credential storage is unavailable.",
+      }),
+    )
+
+    render(<WindowBar />)
+
+    expect(await screen.findByText("Sync issue")).toBeInTheDocument()
+    expect(screen.queryByText("Connect Facenox Cloud")).not.toBeInTheDocument()
+  })
 })

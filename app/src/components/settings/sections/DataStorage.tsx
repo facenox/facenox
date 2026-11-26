@@ -207,7 +207,7 @@ export function DataStorage({
   }
 
   const handleImport = async (password: string, overwriteAttr = false) => {
-    if (!importFilePath) return
+    if (!importFilePath || !isReady || (isPaired && !allowKioskDirectoryManagement)) return
 
     setStatus({ type: "loading", action: "import" })
     try {
@@ -243,6 +243,7 @@ export function DataStorage({
   }
 
   const startImportFlow = async () => {
+    if (!isReady || (isPaired && !allowKioskDirectoryManagement)) return
     try {
       const result = await window.electronAPI.sync.pickImportFile()
       if (result.canceled || !result.filePath) return
@@ -314,17 +315,22 @@ export function DataStorage({
                 Restore a backup using its original encryption password. Existing groups, members,
                 and attendance records are kept; the restore adds missing records and skips items
                 that already exist.
-                {isPaired && (
-                  <span className="mt-1 block font-medium text-amber-500/80">
-                    <Info className="mr-1 inline size-3" />
-                    Restored groups and members will sync to Facenox Cloud.
-                  </span>
-                )}
+                {isPaired &&
+                  (!allowKioskDirectoryManagement ?
+                    <span className="mt-1 block font-medium text-amber-400/80">
+                      <Lock className="mr-1 inline size-3" />
+                      Your organization has disabled directory restoration on this computer. Manage
+                      groups in Facenox Cloud.
+                    </span>
+                  : <span className="mt-1 block font-medium text-amber-500/80">
+                      <Info className="mr-1 inline size-3" />
+                      Restored groups and members will sync to Facenox Cloud.
+                    </span>)}
               </p>
             </div>
             <button
               onClick={startImportFlow}
-              disabled={isBackingUp}
+              disabled={isBackingUp || !isReady || (isPaired && !allowKioskDirectoryManagement)}
               className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40">
               {status.type === "loading" && status.action === "import" ?
                 <Loader2 className="size-3 animate-spin" />

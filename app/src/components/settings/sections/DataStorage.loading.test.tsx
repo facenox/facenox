@@ -34,6 +34,7 @@ describe("Data & storage initial configuration", () => {
     expect(
       screen.queryByText("Want to review synced records from a browser?"),
     ).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Restore" })).toBeDisabled()
     const danger = screen.getByRole("button", { name: /Danger zone/i })
     await act(async () => {
       danger.click()
@@ -46,6 +47,12 @@ describe("Data & storage initial configuration", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Delete directory" })).toBeDisabled(),
     )
+    expect(screen.getByRole("button", { name: "Restore" })).toBeDisabled()
+    expect(
+      screen.getByText(
+        /Your organization has disabled directory restoration on this computer\. Manage groups in Facenox Cloud\./,
+      ),
+    ).toBeInTheDocument()
     expect(
       screen.queryByText("Want to review synced records from a browser?"),
     ).not.toBeInTheDocument()
