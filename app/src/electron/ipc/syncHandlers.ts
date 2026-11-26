@@ -134,6 +134,7 @@ function getRemoteSyncStatus() {
     allowKioskDirectoryManagement:
       persistentStore.get("sync.policy.allowKioskDirectoryManagement") !== false,
     connected: Boolean(remoteBaseUrl && organizationId && siteId && deviceId && deviceToken),
+    wasEverPaired: Boolean(persistentStore.get("sync.dataOrigin")),
   }
 }
 

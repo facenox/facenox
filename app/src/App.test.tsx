@@ -163,8 +163,10 @@ describe("App", () => {
   })
 
   it("preserves access for existing beta installations with local data when unpaired", () => {
+    // Legacy pre-Cloud beta users have local data but were NEVER paired (no dataOrigin set).
+    // wasEverPaired=false means allowLocalContinue remains true → main app renders.
     mockUseCloudSyncConfig.mockReturnValue({
-      config: { connected: false },
+      config: { connected: false, wasEverPaired: false },
       status: "ready",
       error: null,
     })
@@ -179,6 +181,28 @@ describe("App", () => {
 
     expect(screen.getByText("Mock Main")).toBeInTheDocument()
     expect(screen.queryByText(/Mock Intro Modal/)).not.toBeInTheDocument()
+  })
+
+  it("re-gates Cloud connection when a previously-paired device is unpaired even with local data", () => {
+    // Post-v1 bypass path: user paired → created data → unpaired.
+    // wasEverPaired=true means allowLocalContinue=false → Cloud gate re-appears.
+    mockUseCloudSyncConfig.mockReturnValue({
+      config: { connected: false, wasEverPaired: true },
+      status: "ready",
+      error: null,
+    })
+    useUIStore.setState({ isHydrated: true, hasSeenIntro: true })
+    useAttendanceStore.setState({
+      isShellReady: true,
+      shellBootstrapError: null,
+      systemStats: { totalPersons: 1, totalMembers: 1, lastUpdated: "2026-11-26T00:00:00Z" },
+    })
+
+    render(<App />)
+
+    // Despite local data existing, Cloud gate must show because device was previously paired.
+    expect(screen.getByText("Mock Intro Modal (step=2, local=false)")).toBeInTheDocument()
+    expect(screen.queryByText("Mock Main")).not.toBeInTheDocument()
   })
 
   it("reveals the main app when bootstrap failed but the shell should still open", () => {

@@ -840,7 +840,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       <div className="text-xs font-medium text-white/85">Unpair device</div>
                       <p className="text-[11px] text-white/45">
                         Disconnect this computer from {config.organizationName || serverDisplayName}{" "}
-                        to switch workspaces or reassign it.
+                        to connect to a different workspace.
                       </p>
                     </div>
                     <button

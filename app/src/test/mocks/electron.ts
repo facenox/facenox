@@ -16,6 +16,7 @@ export interface MockSyncConfig {
   lastSyncStatus: "idle" | "success" | "error"
   lastSyncMessage: string | null
   connected: boolean
+  wasEverPaired?: boolean
   credentialError?: string | null
   forceLiveness?: boolean
   policyReady?: boolean
@@ -114,6 +115,7 @@ export interface MockFacenoxElectronAPI extends FacenoxElectronAPI {
  * during unit and integration tests without depending on the real system config.
  */
 export function createSyncConfig(overrides: Partial<MockSyncConfig> = {}): MockSyncConfig {
+  const connected = overrides.connected ?? false
   return {
     enabled: false,
     remoteBaseUrl: DEFAULT_REMOTE_BASE_URL,
@@ -127,7 +129,9 @@ export function createSyncConfig(overrides: Partial<MockSyncConfig> = {}): MockS
     lastSyncedAt: null,
     lastSyncStatus: "idle",
     lastSyncMessage: null,
-    connected: false,
+    connected,
+    // A connected device was necessarily paired; default false for fresh/disconnected installs
+    wasEverPaired: connected,
     unsyncedRecordsCount: 0,
     unsyncedSessionsCount: 0,
     ...overrides,

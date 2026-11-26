@@ -158,6 +158,7 @@ declare global {
       lastSyncStatus: "idle" | "success" | "error"
       lastSyncMessage: string | null
       connected: boolean
+      wasEverPaired?: boolean
       allowKioskDirectoryManagement?: boolean
       credentialError?: string | null
       forceLiveness?: boolean

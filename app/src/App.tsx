@@ -29,10 +29,16 @@ function App() {
     isHydrated &&
     (Boolean(shellBootstrapError) || (isShellReady && (!hasSeenIntro || cloudStatusSettled)))
 
+  // wasEverPaired: true means this install previously connected to Cloud (dataOrigin is set).
+  // For such installs, unpair = workspace switch — they must re-pair to continue.
+  // Legacy pre-Cloud beta users (wasEverPaired=false) with local data may still bypass the gate.
+  const wasEverPaired = Boolean(cloudConfig?.wasEverPaired)
+  const allowLocalContinue = hasExistingLocalData && !wasEverPaired
+
   const requiresCloudGate =
     !shellBootstrapError &&
     isShellReady &&
-    (!hasSeenIntro || (!isCloudConnected && !hasExistingLocalData))
+    (!hasSeenIntro || (!isCloudConnected && !allowLocalContinue))
 
   useEffect(() => {
     if (shouldRevealWindow && !hasSignaledAppReadyRef.current) {
@@ -74,7 +80,7 @@ function App() {
                   <AppSkeleton />
                   <IntroModal
                     initialStep={hasSeenIntro ? 2 : 0}
-                    allowLocalContinue={hasExistingLocalData}
+                    allowLocalContinue={allowLocalContinue}
                   />
                 </>
               : <Main />}
