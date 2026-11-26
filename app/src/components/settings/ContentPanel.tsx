@@ -20,6 +20,7 @@ import { Attendance } from "@/components/settings/sections/Attendance"
 import { About } from "@/components/settings/sections/About"
 import { Sync } from "@/components/settings/sections/Sync"
 import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
+import { isNetworkSyncError, isQuotaSyncError } from "@/components/settings/sections/syncErrorUtils"
 import { AntiSpoofDetectionModal } from "@/components/settings/AntiSpoofDetectionModal"
 import { AuditLogExportModal } from "@/components/settings/AuditLogExportModal"
 import { GroupPanel, type GroupSection } from "@/components/group"
@@ -386,31 +387,33 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
           syncConfig
         ) ?
           (() => {
+            const hasError =
+              syncConfig.lastSyncStatus === "error" || Boolean(syncConfig.credentialError)
             const isQuota =
-              syncConfig.lastSyncMessage?.includes("Plan limit exceeded") ||
-              syncConfig.lastSyncMessage?.includes("PLAN_QUOTA_HARD_EXCEEDED") ||
-              syncConfig.lastSyncMessage?.includes("Plan member limit exceeded") ||
-              syncConfig.lastSyncMessage?.includes("Total active members reached")
+              !syncConfig.credentialError && isQuotaSyncError(syncConfig.lastSyncMessage)
+            const isOffline =
+              hasError &&
+              !syncConfig.credentialError &&
+              isNetworkSyncError(syncConfig.lastSyncMessage)
 
             const pendingUpdates =
               (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
             const isRetrying =
               syncConfig.lastSyncStatus === "idle" &&
               Boolean(syncConfig.lastSyncMessage?.includes("Retrying automatically"))
-            const hasError =
-              syncConfig.lastSyncStatus === "error" || Boolean(syncConfig.credentialError)
             const badgeStyle =
               hasError ?
-                isQuota ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
-                : "border-red-500/20 bg-red-500/10 text-red-400"
+                isOffline ? "border-white/15 bg-white/[0.04] text-white/60"
+                : "border-amber-500/20 bg-amber-500/10 text-amber-400"
               : isRetrying ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
               : pendingUpdates > 0 || !syncConfig.lastSyncedAt ?
                 "border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
               : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
             const badgeLabel =
               hasError ?
-                isQuota ? "Plan limit"
-                : "Sync issue"
+                isOffline ? "Offline"
+                : isQuota ? "Plan limit"
+                : "Sync paused"
               : isRetrying ? "Retrying"
               : pendingUpdates > 0 ? "Sync pending"
               : !syncConfig.lastSyncedAt ? "Waiting for sync"

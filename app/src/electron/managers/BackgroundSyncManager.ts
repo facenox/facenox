@@ -216,6 +216,7 @@ export class BackgroundSyncManager {
   private lastPushCompletedAt = 0
   private ablyClient: Ably.Realtime | null = null
   private ablyChannel: Ably.RealtimeChannel | null = null
+  private ablyWasDisconnected = false
   private isSyncing = false
   private isPollingCommands = false
   private isWiping = false
@@ -479,16 +480,35 @@ export class BackgroundSyncManager {
       })
 
       this.ablyClient.connection.on("connected", () => {
+        const recovered = this.ablyWasDisconnected || this.consecutiveTransientFailures > 0
+        this.ablyWasDisconnected = false
         console.log(
           `[Ably] Realtime connected. Listening on site:${siteId} for instant cloud sync.`,
         )
+        const pending = persistentStore.get("sync.pendingUpload") as { rejected?: boolean } | null
+        const lastStatus = persistentStore.get("sync.lastSyncStatus")
+        const hasRecoverableWork =
+          !pending?.rejected && (lastStatus === "error" || Boolean(pending))
+        if (recovered && hasRecoverableWork && !this.suspended && this.timer) {
+          console.log("[Sync] Realtime reconnected after outage; scheduling catch-up sync.")
+          this.consecutiveTransientFailures = 0
+          this.clearRetryTimer()
+          this.triggerDebouncedSync(1500)
+          void this.pollCommands()
+        }
       })
 
       this.ablyClient.connection.on("disconnected", () => {
+        this.ablyWasDisconnected = true
         console.log("[Ably] Realtime disconnected. Reconnecting automatically...")
       })
 
+      this.ablyClient.connection.on("suspended", () => {
+        this.ablyWasDisconnected = true
+      })
+
       this.ablyClient.connection.on("failed", (stateChange) => {
+        this.ablyWasDisconnected = true
         console.warn("[Ably] Realtime connection failed:", stateChange.reason)
       })
 
@@ -528,6 +548,7 @@ export class BackgroundSyncManager {
   }
 
   private teardownRealtimeListener() {
+    this.ablyWasDisconnected = false
     if (this.ablyChannel) {
       try {
         this.ablyChannel.unsubscribe()

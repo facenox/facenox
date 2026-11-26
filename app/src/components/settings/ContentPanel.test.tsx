@@ -463,7 +463,7 @@ describe("ContentPanel inline group name editing", () => {
     expect(screen.getByText("Engineering Team")).toBeInTheDocument()
   })
 
-  it("keeps directory controls locked and shows Sync issue when a paired device has a credential error", async () => {
+  it("keeps directory controls locked and shows Sync paused when a paired device has a credential error", async () => {
     vi.spyOn(window.electronAPI.sync, "getConfig").mockResolvedValue(
       createSyncConfig({
         connected: false,
@@ -515,6 +515,6 @@ describe("ContentPanel inline group name editing", () => {
         <ContentPanel {...groupProps} activeSection="remote-sync" />
       </DialogProvider>,
     )
-    expect(screen.getByText("Sync issue")).toBeInTheDocument()
+    expect(screen.getByText("Sync paused")).toBeInTheDocument()
   })
 })

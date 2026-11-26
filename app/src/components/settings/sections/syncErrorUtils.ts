@@ -28,6 +28,23 @@ export function isOfflineError(err: string | null): boolean {
   )
 }
 
+const PLAN_QUOTA_MARKERS = [
+  "Plan limit exceeded",
+  "PLAN_QUOTA_HARD_EXCEEDED",
+  "Plan member limit exceeded",
+  "Total active members reached",
+]
+
+export function isQuotaSyncError(err?: string | null): boolean {
+  return Boolean(err && PLAN_QUOTA_MARKERS.some((marker) => err.includes(marker)))
+}
+
+export function isNetworkSyncError(err?: string | null): boolean {
+  if (isOfflineError(err ?? null)) return true
+  if (!err) return false
+  return /\btimed out\b|ETIMEDOUT|aborted due to timeout/i.test(err)
+}
+
 export function formatErrorMessage(err: string | null): string {
   if (!err) return ""
   if (err.includes("<!DOCTYPE") || err.includes("<html") || err.includes("<head")) {
@@ -46,12 +63,7 @@ export function parseSyncError(err: string | null): ParsedSyncError {
   }
 
   // Quota & Plan limits
-  if (
-    err.includes("Plan limit exceeded") ||
-    err.includes("PLAN_QUOTA_HARD_EXCEEDED") ||
-    err.includes("Plan member limit exceeded") ||
-    err.includes("Total active members reached")
-  ) {
+  if (isQuotaSyncError(err)) {
     const match = err.match(/reached\s+(\d+)\s*\(limit:\s*(\d+)/i)
     const currentPeople = match ? parseInt(match[1], 10) : undefined
     const peopleLimit = match ? parseInt(match[2], 10) : undefined

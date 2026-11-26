@@ -15,7 +15,10 @@ import {
 import { Tooltip } from "@/components/shared"
 import { updaterService } from "@/services"
 import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
-import { isOfflineError } from "@/components/settings/sections/syncErrorUtils"
+import {
+  isNetworkSyncError,
+  isQuotaSyncError,
+} from "@/components/settings/sections/syncErrorUtils"
 import type { UpdateInfo } from "@/types/updater"
 import { Modal, Spinner } from "@/components/common"
 import { useUIStore } from "@/components/main/stores/uiStore"
@@ -360,14 +363,8 @@ export default function WindowBar() {
             if (syncConfig.lastSyncStatus === "error" || syncConfig.credentialError) {
               const rawErr = syncConfig.credentialError || syncConfig.lastSyncMessage || ""
               const isQuota =
-                syncConfig.lastSyncMessage?.includes("Plan limit exceeded") ||
-                syncConfig.lastSyncMessage?.includes("PLAN_QUOTA_HARD_EXCEEDED") ||
-                syncConfig.lastSyncMessage?.includes("Plan member limit exceeded") ||
-                syncConfig.lastSyncMessage?.includes("Total active members reached")
-              const isOffline =
-                !syncConfig.credentialError &&
-                (isOfflineError(rawErr) ||
-                  /\btimed out\b|ETIMEDOUT|aborted due to timeout/i.test(rawErr))
+                !syncConfig.credentialError && isQuotaSyncError(syncConfig.lastSyncMessage)
+              const isOffline = !syncConfig.credentialError && isNetworkSyncError(rawErr)
 
               if (isOffline) {
                 badgeBorderClass = "text-white/50 hover:bg-white/5 hover:text-white/80"
