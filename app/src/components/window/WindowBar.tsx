@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import { Tooltip } from "@/components/shared"
 import { updaterService } from "@/services"
-import { useCloudSyncConfig } from "@/services/cloudSyncState"
+import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
 import type { UpdateInfo } from "@/types/updater"
 import { Modal, Spinner } from "@/components/common"
 import { useUIStore } from "@/components/main/stores/uiStore"
@@ -145,7 +145,9 @@ export default function WindowBar() {
     isHydrated &&
     isShellReady &&
     (!hasSeenIntro ||
-      (cloudConfigStatus !== "loading" && !syncConfig?.connected && !hasExistingLocalData))
+      (cloudConfigStatus !== "loading" &&
+        !hasSavedCloudPairing(syncConfig) &&
+        !(hasExistingLocalData && !syncConfig?.wasEverPaired)))
   const cloudDashboardUrl = `${getEffectiveRemoteUrl(syncConfig?.remoteBaseUrl)}/app`
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
 

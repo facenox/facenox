@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { backendService, attendanceManager } from "@/services"
 import { notifyDataChanged } from "@/utils/syncNotifier"
-import { useCloudSyncConfig } from "@/services/cloudSyncState"
+import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
 import { useDialog } from "@/components/shared"
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { useUIStore, useAttendanceStore } from "@/components/main/stores"
@@ -120,7 +120,9 @@ export const useSettings = ({
   const [isLoading, setIsLoading] = useState(false)
   const { config: cloudConfig, status: cloudStatus, error: cloudError } = useCloudSyncConfig()
   const forceLiveness = Boolean(cloudConfig?.forceLiveness)
-  const cloudPolicyReady = cloudStatus === "ready" && cloudConfig?.policyReady !== false
+  const hasCachedPolicy = hasSavedCloudPairing(cloudConfig) && Boolean(cloudConfig?.credentialError)
+  const cloudPolicyReady =
+    (cloudStatus === "ready" || hasCachedPolicy) && cloudConfig?.policyReady !== false
   const cloudPolicyError =
     cloudError ||
     (cloudConfig?.policyReady === false ?

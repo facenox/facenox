@@ -8,7 +8,7 @@ import { DialogProvider } from "@/components/shared"
 import { useAttendanceBootstrap } from "@/components/main/hooks/useAttendanceBootstrap"
 import { AppSkeleton } from "@/components/shared/AppSkeleton"
 import { ErrorBoundary } from "@/components/common/ErrorBoundary"
-import { useCloudSyncConfig } from "@/services/cloudSyncState"
+import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
 
 function App() {
   const { hasSeenIntro, isHydrated } = useUIStore()
@@ -22,7 +22,7 @@ function App() {
     attendanceGroups.length > 0 ||
     (systemStats?.totalMembers ?? 0) > 0 ||
     (systemStats?.totalPersons ?? 0) > 0
-  const isCloudConnected = Boolean(cloudConfig?.connected)
+  const hasSavedPairing = hasSavedCloudPairing(cloudConfig)
   const cloudStatusSettled = cloudConfigStatus !== "loading" || hasExistingLocalData
 
   const shouldRevealWindow =
@@ -38,7 +38,7 @@ function App() {
   const requiresCloudGate =
     !shellBootstrapError &&
     isShellReady &&
-    (!hasSeenIntro || (!isCloudConnected && !allowLocalContinue))
+    (!hasSeenIntro || (!hasSavedPairing && !allowLocalContinue))
 
   useEffect(() => {
     if (shouldRevealWindow && !hasSignaledAppReadyRef.current) {

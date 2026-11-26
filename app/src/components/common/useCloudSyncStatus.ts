@@ -1,9 +1,14 @@
-import { refreshCloudSyncConfig, useCloudSyncConfig } from "@/services/cloudSyncState"
+import {
+  hasSavedCloudPairing,
+  refreshCloudSyncConfig,
+  useCloudSyncConfig,
+} from "@/services/cloudSyncState"
 
 export function useCloudSyncStatus() {
   const { config, status, error } = useCloudSyncConfig()
-  const isPaired = Boolean(config?.connected)
-  const isReady = status === "ready" && config?.policyReady !== false
+  const isPaired = hasSavedCloudPairing(config)
+  const hasCachedPolicy = isPaired && Boolean(config?.credentialError)
+  const isReady = (status === "ready" || hasCachedPolicy) && config?.policyReady !== false
   const allowKioskDirectoryManagement = config?.allowKioskDirectoryManagement !== false
   return {
     isPaired,

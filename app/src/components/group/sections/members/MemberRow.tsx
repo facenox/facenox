@@ -29,21 +29,24 @@ export const MemberRow = React.memo(
     return (
       <div
         onClick={() => onToggleSelect?.(member.person_id)}
-        className={`group flex w-full items-center justify-between gap-4 border-b border-l-2 px-6 py-2.5 transition-all duration-200 ${onToggleSelect ? "cursor-pointer" : ""
-          } ${isSelected ?
+        className={`group flex w-full items-center justify-between gap-4 border-b border-l-2 px-6 py-2.5 transition-all duration-200 ${
+          onToggleSelect ? "cursor-pointer" : ""
+        } ${
+          isSelected ?
             "border-b-cyan-500/20 border-l-cyan-400 bg-cyan-500/10 hover:border-b-cyan-500/35 hover:bg-cyan-500/[0.16]"
-            : "border-b-white/[0.03] border-l-transparent hover:bg-white/[0.02]"
-          }`}>
+          : "border-b-white/[0.03] border-l-transparent hover:bg-white/[0.02]"
+        }`}>
         <div className="flex min-w-0 flex-1 items-center">
           <div className="min-w-0 flex-1">
             <div
-              className={`mb-0.5 flex min-w-0 items-center gap-2 text-sm font-semibold transition-colors duration-200 ${isEnrolled ? "text-cyan-400" : "text-white"
-                }`}>
+              className={`mb-0.5 flex min-w-0 items-center gap-2 text-sm font-semibold transition-colors duration-200 ${
+                isEnrolled ? "text-cyan-400" : "text-white"
+              }`}>
               {isEnrolled ?
                 <Tooltip content="Enrolled" position="top">
                   <span className="block truncate">{member.displayName}</span>
                 </Tooltip>
-                : <span className="block truncate">{member.displayName}</span>}
+              : <span className="block truncate">{member.displayName}</span>}
             </div>
 
             <div className="flex min-w-0 items-center gap-2 text-[11px] font-medium text-white/55">

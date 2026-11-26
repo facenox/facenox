@@ -3,6 +3,13 @@ import { useSyncExternalStore } from "react"
 export type RemoteSyncConfig = Awaited<ReturnType<SyncAPI["getConfig"]>>
 export type CloudConfigStatus = "loading" | "ready" | "error"
 
+export function hasSavedCloudPairing(config: RemoteSyncConfig | null) {
+  return Boolean(
+    config?.connected ||
+    (config?.wasEverPaired && config.organizationId && config.siteId && config.deviceId),
+  )
+}
+
 interface CloudSyncSnapshot {
   config: RemoteSyncConfig | null
   status: CloudConfigStatus
