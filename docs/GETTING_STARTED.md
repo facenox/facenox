@@ -30,7 +30,7 @@ Sign in once with a free Facenox Cloud account during first-launch setup to link
 
 Cloud requires internet for pairing, syncing, and browser access. If the connection drops, the desktop continues recording locally and pending records sync when it reconnects.
 
-Essentials provides free Cloud access with member, device, and history limits, including CSV export. Paid plans add capabilities such as PDF and Excel reports, additional devices, and encrypted face-template sync. Check [current plans](https://facenox.com/pricing) before choosing a setup.
+Facenox Cloud Free provides browser access and CSV export within its member, device, and history limits. Paid plans add capabilities such as PDF and Excel reports, additional devices, and encrypted face-template sync. Check [current plans](https://facenox.com/pricing) before choosing a setup.
 
 ## Keep a recovery copy
 

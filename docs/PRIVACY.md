@@ -73,7 +73,7 @@ That does not automatically make every surrounding deployment private. Hosted lo
 
 ## Facenox Cloud data boundary
 
-The desktop app pairs with **Facenox Cloud** during initial setup (existing standalone local installs can keep operating locally or link anytime) for browser access to synced records and reports. Essentials includes CSV export for one connected device. Paid plans add PDF and Excel DTR exports, additional devices, and encrypted face-template sync.
+The desktop app pairs with **Facenox Cloud** during initial setup (existing standalone local installs can keep operating locally or link anytime) for browser access to synced records and reports. The Free plan includes CSV export for one connected device. Paid plans add PDF and Excel DTR exports, additional devices, and encrypted face-template sync.
 
 Synchronization is not an independent recovery backup: updates and removals can propagate between connected systems. Keep password-protected `.facenox` archives separately when you need a recoverable copy.
 
