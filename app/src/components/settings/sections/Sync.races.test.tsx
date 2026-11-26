@@ -21,7 +21,7 @@ describe("Cloud pairing state boundaries", () => {
 
   it("cannot restore a stale connected snapshot when an old save finishes after navigation", async () => {
     const api = getElectronAPIMock().sync
-    let current = createSyncConfig({ connected: true })
+    let current = createSyncConfig({ connected: false })
     api.getConfig.mockImplementation(async () => current)
     let finish!: (value: typeof current) => void
     api.updateConfig.mockReturnValue(
@@ -33,7 +33,7 @@ describe("Cloud pairing state boundaries", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Advanced settings" }))
     fireEvent.click(screen.getByRole("button", { name: "Save configuration" }))
     await waitFor(() => expect(api.updateConfig).toHaveBeenCalled())
-    const obsolete = current
+    const obsolete = createSyncConfig({ connected: true })
     first.unmount()
     current = createSyncConfig({ connected: false })
     renderWithProviders(<Sync />)

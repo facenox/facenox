@@ -84,18 +84,21 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   const [busyAction, setBusyAction] = useState<
     "saving" | "pairing" | "disconnecting" | "syncing" | null
   >(null)
+  const isDevBuild = import.meta.env.DEV
   const [isDevMode, setIsDevMode] = useState(false)
   const [devModeClicks, setDevModeClicks] = useState(0)
 
-  // Auto-reveal developer mode if a custom URL is already configured
+  // Auto-reveal developer mode if a custom URL is already configured in dev/test builds
   useEffect(() => {
+    if (!isDevBuild) return
     if (remoteBaseUrl && !isOfficialCloudUrl(remoteBaseUrl)) {
       setIsDevMode(true)
     }
-  }, [remoteBaseUrl])
+  }, [isDevBuild, remoteBaseUrl])
 
-  // Keyboard shortcut: Ctrl+Shift+D or Cmd+Shift+D to toggle endpoint override
+  // Keyboard shortcut: Ctrl+Shift+D or Cmd+Shift+D to toggle endpoint override (dev only)
   useEffect(() => {
+    if (!isDevBuild) return
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "D" || e.key === "d")) {
         e.preventDefault()
@@ -109,9 +112,10 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [setSuccess])
+  }, [isDevBuild, setSuccess])
 
   const handleTitleClick = () => {
+    if (!isDevBuild) return
     const nextClicks = devModeClicks + 1
     if (nextClicks >= 5) {
       setDevModeClicks(0)
@@ -297,6 +301,11 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
               {!config.connected ?
                 `Connect to ${serverDisplayName}`
               : `Connected to ${serverDisplayName}`}
+              {config.connected && (config.organizationName || config.siteName) && (
+                <span className="ml-2 font-normal text-white/50">
+                  · {[config.organizationName, config.siteName].filter(Boolean).join(" / ")}
+                </span>
+              )}
             </h3>
             <p className="mt-0.5 text-xs text-white/60">
               {!config.connected ?
@@ -672,6 +681,14 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2 pt-0.5">
+                  <a
+                    href={`${effectiveUrl}/app`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 rounded border border-cyan-500/25 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-300 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/15 hover:text-cyan-200">
+                    <span>Open dashboard</span>
+                    <ExternalLink className="size-3" />
+                  </a>
                   <button
                     onClick={handleManualSync}
                     disabled={busyAction !== null}
@@ -754,7 +771,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                 </div>
                 <div className="space-y-4">
                   <AnimatePresence initial={false}>
-                    {isDevMode && (
+                    {isDevBuild && isDevMode && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
@@ -795,30 +812,34 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
-                      Device name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Facenox Desktop"
-                      value={deviceName}
-                      disabled={config.connected || busyAction !== null}
-                      onChange={(e) => setDeviceName(e.target.value)}
-                      className="h-8.5 w-full rounded border border-white/10 bg-transparent px-3 text-[12px] text-white transition-all duration-200 outline-none focus:border-white/20 disabled:cursor-not-allowed disabled:opacity-40"
-                    />
-                  </div>
+                  {!config.connected && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-extrabold tracking-widest text-white/45 uppercase">
+                        Device name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Facenox Desktop"
+                        value={deviceName}
+                        disabled={busyAction !== null}
+                        onChange={(e) => setDeviceName(e.target.value)}
+                        className="h-8.5 w-full rounded border border-white/10 bg-transparent px-3 text-[12px] text-white transition-all duration-200 outline-none focus:border-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                      />
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex justify-end pt-2">
-                  <button
-                    onClick={handleSave}
-                    disabled={busyAction !== null}
-                    className="flex items-center gap-2 rounded border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-semibold text-white/70 transition-all hover:bg-white/[0.08] hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40">
-                    {busyAction === "saving" && <Spinner size="xs" color="white" />}
-                    Save configuration
-                  </button>
-                </div>
+                {!config.connected && (
+                  <div className="flex justify-end pt-2">
+                    <button
+                      onClick={handleSave}
+                      disabled={busyAction !== null}
+                      className="flex items-center gap-2 rounded border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-semibold text-white/70 transition-all hover:bg-white/[0.08] hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40">
+                      {busyAction === "saving" && <Spinner size="xs" color="white" />}
+                      Save configuration
+                    </button>
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           )}

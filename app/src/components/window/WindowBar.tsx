@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   AlertCircle,
+  ExternalLink,
 } from "lucide-react"
 import { Tooltip } from "@/components/shared"
 import { updaterService } from "@/services"
@@ -16,6 +17,8 @@ import { useCloudSyncConfig } from "@/services/cloudSyncState"
 import type { UpdateInfo } from "@/types/updater"
 import { Modal, Spinner } from "@/components/common"
 import { useUIStore } from "@/components/main/stores/uiStore"
+import { useAttendanceStore } from "@/components/main/stores/attendanceStore"
+import { getEffectiveRemoteUrl } from "@/hooks/useCloudPairing"
 
 function formatRelativeTime(dateString: string | null): string {
   if (!dateString) return "Never"
@@ -129,6 +132,21 @@ export default function WindowBar() {
     }
   }, [])
   const { config: syncConfig, status: cloudConfigStatus } = useCloudSyncConfig()
+  const hasSeenIntro = useUIStore((s) => s.hasSeenIntro)
+  const isHydrated = useUIStore((s) => s.isHydrated)
+  const isShellReady = useAttendanceStore((s) => s.isShellReady)
+  const attendanceGroups = useAttendanceStore((s) => s.attendanceGroups)
+  const systemStats = useAttendanceStore((s) => s.systemStats)
+  const hasExistingLocalData =
+    attendanceGroups.length > 0 ||
+    (systemStats?.totalMembers ?? 0) > 0 ||
+    (systemStats?.totalPersons ?? 0) > 0
+  const isOnboardingGateActive =
+    isHydrated &&
+    isShellReady &&
+    (!hasSeenIntro ||
+      (cloudConfigStatus === "ready" && !syncConfig?.connected && !hasExistingLocalData))
+  const cloudDashboardUrl = `${getEffectiveRemoteUrl(syncConfig?.remoteBaseUrl)}/app`
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
 
   useEffect(() => {
@@ -246,6 +264,17 @@ export default function WindowBar() {
                     transition={{ duration: 0.12, ease: "easeOut" }}
                     style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
                     className="absolute top-[22px] left-0 z-90 w-[168px] rounded-lg border border-white/10 bg-[#141518]/95 p-1 shadow-xl backdrop-blur-md">
+                    {syncConfig?.connected && (
+                      <a
+                        href={cloudDashboardUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white">
+                        <ExternalLink className="size-3.5" />
+                        Open Cloud dashboard
+                      </a>
+                    )}
                     <button
                       onClick={() => {
                         setIsMenuOpen(false)
@@ -274,32 +303,103 @@ export default function WindowBar() {
             </AnimatePresence>
           </div>
         </div>
-        {(() => {
-          const handleOpenCloudSync = () => {
-            useUIStore.getState().requestOpenSettings("remote-sync")
-          }
+        {!isOnboardingGateActive &&
+          (() => {
+            const handleOpenCloudSync = () => {
+              useUIStore.getState().requestOpenSettings("remote-sync")
+            }
 
-          if (cloudConfigStatus === "error" || !syncConfig) {
-            return (
-              <button
-                type="button"
-                onClick={isPinPromptOpen ? undefined : handleOpenCloudSync}
-                disabled={isPinPromptOpen}
-                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                className="pointer-events-auto flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] text-white/45 disabled:pointer-events-none disabled:opacity-30">
-                <Cloud className="size-2.5 opacity-60" />
-                <span>
-                  {cloudConfigStatus === "error" ?
-                    "Cloud status unavailable"
-                  : "Loading Cloud status…"}
-                </span>
-              </button>
+            if (cloudConfigStatus === "error" || !syncConfig) {
+              return (
+                <button
+                  type="button"
+                  onClick={isPinPromptOpen ? undefined : handleOpenCloudSync}
+                  disabled={isPinPromptOpen}
+                  style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+                  className="pointer-events-auto flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] text-white/45 disabled:pointer-events-none disabled:opacity-30">
+                  <Cloud className="size-2.5 opacity-60" />
+                  <span>
+                    {cloudConfigStatus === "error" ?
+                      "Cloud status unavailable"
+                    : "Loading Cloud status…"}
+                  </span>
+                </button>
+              )
+            }
+            if (!syncConfig.connected) {
+              return (
+                <Tooltip
+                  content="Automatic sync & remote reports"
+                  position="bottom"
+                  offset={6}
+                  disabled={isPinPromptOpen}>
+                  <button
+                    onClick={isPinPromptOpen ? undefined : handleOpenCloudSync}
+                    disabled={isPinPromptOpen}
+                    style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+                    className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-white/45 transition-all duration-150 select-none hover:bg-white/5 hover:text-white/80 active:scale-95 disabled:pointer-events-none disabled:opacity-30">
+                    <Cloud className="size-2.5 opacity-60" />
+                    <span>Connect Facenox Cloud</span>
+                  </button>
+                </Tooltip>
+              )
+            }
+
+            const relativeTime = formatRelativeTime(syncConfig.lastSyncedAt)
+            const queueKnown = [
+              syncConfig.unsyncedRecordsCount,
+              syncConfig.unsyncedSessionsCount,
+            ].every(
+              (count) => typeof count === "number" && Number.isSafeInteger(count) && count >= 0,
             )
-          }
-          if (!syncConfig.connected) {
+            const pendingCount =
+              (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
+
+            let badgeBorderClass =
+              "text-emerald-400/90 hover:bg-emerald-500/10 hover:text-emerald-300"
+            let StatusIcon = Cloud
+            let iconColor = "text-emerald-400"
+            let statusText =
+              queueKnown && pendingCount > 0 ? "Sync pending"
+              : syncConfig.lastSyncedAt ? "Last sync completed"
+              : "Waiting for sync"
+            const lastSyncText =
+              syncConfig.lastSyncedAt ?
+                `Last completed sync: ${relativeTime}.`
+              : "No completed sync yet."
+            const queueText =
+              !queueKnown ? "Queue status unavailable."
+              : pendingCount > 0 ?
+                `${pendingCount} attendance update${pendingCount === 1 ? "" : "s"} queued.`
+              : "No attendance updates queued."
+            let tooltipContent = `${lastSyncText} ${queueText} Open Cloud sync for details.`
+
+            if (syncConfig.lastSyncStatus === "error") {
+              badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
+              StatusIcon = AlertTriangle
+              iconColor = "text-amber-400"
+              const isQuota =
+                syncConfig.lastSyncMessage?.includes("Plan limit exceeded") ||
+                syncConfig.lastSyncMessage?.includes("PLAN_QUOTA_HARD_EXCEEDED") ||
+                syncConfig.lastSyncMessage?.includes("Plan member limit exceeded") ||
+                syncConfig.lastSyncMessage?.includes("Total active members reached")
+
+              statusText = isQuota ? "Plan limit reached" : "Sync issue"
+
+              const cleanMsg = (syncConfig.lastSyncMessage || "The last sync could not complete.")
+                .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
+                .replace(/^Sync rejected:\s*/i, "")
+                .replace(/^Error:\s*/i, "")
+
+              tooltipContent =
+                isQuota ?
+                  "Plan limit reached: Active members exceed your Cloud plan. Click to open Cloud sync."
+                : `Sync issue: ${cleanMsg} Click to open Cloud sync.`
+            }
+
             return (
               <Tooltip
-                content="Automatic sync & remote reports"
+                content={tooltipContent}
                 position="bottom"
                 offset={6}
                 disabled={isPinPromptOpen}>
@@ -307,81 +407,13 @@ export default function WindowBar() {
                   onClick={isPinPromptOpen ? undefined : handleOpenCloudSync}
                   disabled={isPinPromptOpen}
                   style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                  className="pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-white/45 transition-all duration-150 select-none hover:bg-white/5 hover:text-white/80 active:scale-95 disabled:pointer-events-none disabled:opacity-30">
-                  <Cloud className="size-2.5 opacity-60" />
-                  <span>Connect Facenox Cloud</span>
+                  className={`pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide transition-all duration-150 select-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 ${badgeBorderClass}`}>
+                  <StatusIcon className={`size-2.5 ${iconColor}`} />
+                  <span>{statusText}</span>
                 </button>
               </Tooltip>
             )
-          }
-
-          const relativeTime = formatRelativeTime(syncConfig.lastSyncedAt)
-          const queueKnown = [
-            syncConfig.unsyncedRecordsCount,
-            syncConfig.unsyncedSessionsCount,
-          ].every((count) => typeof count === "number" && Number.isSafeInteger(count) && count >= 0)
-          const pendingCount =
-            (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
-
-          let badgeBorderClass =
-            "text-emerald-400/90 hover:bg-emerald-500/10 hover:text-emerald-300"
-          let StatusIcon = Cloud
-          let iconColor = "text-emerald-400"
-          let statusText =
-            queueKnown && pendingCount > 0 ? "Sync pending"
-            : syncConfig.lastSyncedAt ? "Last sync completed"
-            : "Waiting for sync"
-          const lastSyncText =
-            syncConfig.lastSyncedAt ?
-              `Last completed sync: ${relativeTime}.`
-            : "No completed sync yet."
-          const queueText =
-            !queueKnown ? "Queue status unavailable."
-            : pendingCount > 0 ?
-              `${pendingCount} attendance update${pendingCount === 1 ? "" : "s"} queued.`
-            : "No attendance updates queued."
-          let tooltipContent = `${lastSyncText} ${queueText} Open Cloud sync for details.`
-
-          if (syncConfig.lastSyncStatus === "error") {
-            badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
-            StatusIcon = AlertTriangle
-            iconColor = "text-amber-400"
-            const isQuota =
-              syncConfig.lastSyncMessage?.includes("Plan limit exceeded") ||
-              syncConfig.lastSyncMessage?.includes("PLAN_QUOTA_HARD_EXCEEDED") ||
-              syncConfig.lastSyncMessage?.includes("Plan member limit exceeded") ||
-              syncConfig.lastSyncMessage?.includes("Total active members reached")
-
-            statusText = isQuota ? "Plan limit reached" : "Sync issue"
-
-            const cleanMsg = (syncConfig.lastSyncMessage || "The last sync could not complete.")
-              .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
-              .replace(/^Sync rejected:\s*/i, "")
-              .replace(/^Error:\s*/i, "")
-
-            tooltipContent =
-              isQuota ?
-                "Plan limit reached: Active members exceed your Cloud plan. Click to open Cloud sync."
-              : `Sync issue: ${cleanMsg} Click to open Cloud sync.`
-          }
-
-          return (
-            <Tooltip
-              content={tooltipContent}
-              position="bottom"
-              offset={6}
-              disabled={isPinPromptOpen}>
-              <button
-                onClick={isPinPromptOpen ? undefined : handleOpenCloudSync}
-                disabled={isPinPromptOpen}
-                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                className={`pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide transition-all duration-150 select-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 ${badgeBorderClass}`}>
-                <StatusIcon className={`size-2.5 ${iconColor}`} />
-                <span>{statusText}</span>
-              </button>
-            </Tooltip>
-          )
-        })()}
+          })()}
       </div>
 
       <AnimatePresence>
