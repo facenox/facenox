@@ -45,10 +45,20 @@ vi.mock("electron", () => ({
   },
 }))
 
+const mockRealtimeInstances: Array<{
+  handlers: Record<string, Array<(arg?: unknown) => void>>
+  connection: { state: string; on: ReturnType<typeof vi.fn>; off: ReturnType<typeof vi.fn> }
+  close: ReturnType<typeof vi.fn>
+}> = []
+
 vi.mock("ably", () => {
   class MockRealtime {
+    handlers: Record<string, Array<(arg?: unknown) => void>> = {}
     connection = {
-      on: vi.fn(),
+      state: "initialized",
+      on: vi.fn((event: string, cb: (arg?: unknown) => void) => {
+        ;(this.handlers[event] ??= []).push(cb)
+      }),
       off: vi.fn(),
     }
     channels = {
@@ -57,7 +67,12 @@ vi.mock("ably", () => {
         unsubscribe: vi.fn(),
       }),
     }
-    close = vi.fn()
+    close = vi.fn(() => {
+      this.connection.state = "closed"
+    })
+    constructor() {
+      mockRealtimeInstances.push(this)
+    }
   }
 
   return {
@@ -73,6 +88,7 @@ describe("BackgroundSyncManager", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockRealtimeInstances.length = 0
     vi.useFakeTimers()
     for (const k of Object.keys(mockStore)) delete mockStore[k]
 
@@ -1497,5 +1513,48 @@ describe("BackgroundSyncManager", () => {
     expect(pushCalls).toBe(1)
     expect(mockStore["sync.lastSyncStatus"]).toBe("success")
     manager.stop()
+  })
+
+  it("tears down and re-initializes the Ably client with backoff after a terminal failed state", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const manager = new BackgroundSyncManager()
+
+    vi.mocked(fetch).mockResolvedValue(Response.json({ commands: [] }))
+    manager.start({ skipCatchUp: true })
+    expect(mockRealtimeInstances).toHaveLength(1)
+
+    const firstClient = mockRealtimeInstances[0]
+    firstClient.connection.state = "failed"
+    for (const cb of firstClient.handlers.failed ?? []) {
+      cb({ reason: { message: "Connection limit exceeded" } })
+    }
+    expect(firstClient.close).toHaveBeenCalledTimes(1)
+
+    // First recovery attempt fires after 30s and creates a fresh Ably client
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(mockRealtimeInstances).toHaveLength(2)
+
+    const secondClient = mockRealtimeInstances[1]
+    secondClient.connection.state = "connected"
+    for (const cb of secondClient.handlers.connected ?? []) {
+      cb()
+    }
+
+    // Backoff resets after successful connection, so a later failure recovers in 30s again
+    secondClient.connection.state = "failed"
+    for (const cb of secondClient.handlers.failed ?? []) {
+      cb({ reason: { message: "Token revoked" } })
+    }
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(mockRealtimeInstances).toHaveLength(3)
+
+    // Stopping cancels any pending recovery timer
+    mockRealtimeInstances[2].connection.state = "failed"
+    for (const cb of mockRealtimeInstances[2].handlers.failed ?? []) {
+      cb({ reason: { message: "Token revoked" } })
+    }
+    manager.stop()
+    await vi.advanceTimersByTimeAsync(600_000)
+    expect(mockRealtimeInstances).toHaveLength(3)
   })
 })

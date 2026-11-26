@@ -15,6 +15,7 @@ import {
 const STARTUP_CATCH_UP_DELAY_MS = 5000
 const MIN_PUSH_INTERVAL_MS = 5500
 const TRANSIENT_RETRY_DELAYS_MS = [15_000, 60_000, 5 * 60_000]
+const ABLY_RECOVERY_DELAYS_MS = [30_000, 120_000, 600_000]
 const NON_RETRYABLE_STATUSES = new Set([400, 401, 402, 403, 422, 426])
 
 function deleteStoreKey(key: string) {
@@ -217,6 +218,8 @@ export class BackgroundSyncManager {
   private ablyClient: Ably.Realtime | null = null
   private ablyChannel: Ably.RealtimeChannel | null = null
   private ablyWasDisconnected = false
+  private ablyRetryTimer: NodeJS.Timeout | null = null
+  private ablyRetryAttempt = 0
   private isSyncing = false
   private isPollingCommands = false
   private isWiping = false
@@ -312,6 +315,13 @@ export class BackgroundSyncManager {
     this.clearRetryTimer()
     if (!this.timer) {
       this.start({ skipCatchUp: true })
+    } else if (
+      !this.ablyClient ||
+      this.ablyClient.connection?.state === "failed" ||
+      this.ablyClient.connection?.state === "closed"
+    ) {
+      this.ablyRetryAttempt = 0
+      this.initRealtimeListener()
     }
     this.triggerDebouncedSync(3000)
     void this.pollCommands()
@@ -482,6 +492,8 @@ export class BackgroundSyncManager {
       this.ablyClient.connection.on("connected", () => {
         const recovered = this.ablyWasDisconnected || this.consecutiveTransientFailures > 0
         this.ablyWasDisconnected = false
+        this.ablyRetryAttempt = 0
+        this.clearAblyRetryTimer()
         console.log(
           `[Ably] Realtime connected. Listening on site:${siteId} for instant cloud sync.`,
         )
@@ -510,9 +522,19 @@ export class BackgroundSyncManager {
       this.ablyClient.connection.on("failed", (stateChange) => {
         this.ablyWasDisconnected = true
         console.warn("[Ably] Realtime connection failed:", stateChange.reason)
+        this.teardownRealtimeListener()
+        this.scheduleAblyRecovery()
       })
 
       this.ablyChannel = this.ablyClient.channels.get(`site:${siteId}`)
+      const channelWithEvents = this.ablyChannel as { on?: (ev: string, cb: () => void) => void }
+      if (typeof channelWithEvents.on === "function") {
+        channelWithEvents.on("failed", () => {
+          this.ablyWasDisconnected = true
+          this.teardownRealtimeListener()
+          this.scheduleAblyRecovery()
+        })
+      }
 
       // 1. Listen for instant remote management commands (e.g., WIPE, UPGRADE)
       this.ablyChannel.subscribe("remote_command", (message) => {
@@ -547,7 +569,31 @@ export class BackgroundSyncManager {
     }
   }
 
+  private clearAblyRetryTimer() {
+    if (this.ablyRetryTimer) {
+      clearTimeout(this.ablyRetryTimer)
+      this.ablyRetryTimer = null
+    }
+  }
+
+  private scheduleAblyRecovery() {
+    if (this.suspended || !this.timer || this.ablyRetryTimer) return
+    const delayMs =
+      ABLY_RECOVERY_DELAYS_MS[Math.min(this.ablyRetryAttempt, ABLY_RECOVERY_DELAYS_MS.length - 1)]
+    this.ablyRetryAttempt++
+    console.log(
+      `[Ably] Scheduling realtime re-initialization #${this.ablyRetryAttempt} in ${Math.round(delayMs / 1000)}s.`,
+    )
+    this.ablyRetryTimer = setTimeout(() => {
+      this.ablyRetryTimer = null
+      if (!this.suspended && this.timer) {
+        this.initRealtimeListener()
+      }
+    }, delayMs)
+  }
+
   private teardownRealtimeListener() {
+    this.clearAblyRetryTimer()
     this.ablyWasDisconnected = false
     if (this.ablyChannel) {
       try {
@@ -584,6 +630,14 @@ export class BackgroundSyncManager {
     console.log(`[Sync] Starting Auto-Sync. Interval: ${intervalMinutes} minutes.`)
 
     this.timer = setInterval(() => {
+      if (
+        (!this.ablyClient ||
+          this.ablyClient.connection?.state === "failed" ||
+          this.ablyClient.connection?.state === "closed") &&
+        !this.ablyRetryTimer
+      ) {
+        this.initRealtimeListener()
+      }
       void this.performSync()
     }, intervalMs)
 
@@ -611,6 +665,7 @@ export class BackgroundSyncManager {
     this.clearCatchUpTimer()
     this.clearRetryTimer()
     this.consecutiveTransientFailures = 0
+    this.ablyRetryAttempt = 0
     this.teardownRealtimeListener()
     this.pendingSyncRequested = false
     this.pendingPullRequested = false
