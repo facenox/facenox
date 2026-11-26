@@ -1289,4 +1289,213 @@ describe("BackgroundSyncManager", () => {
     expect(pushCalls[2].body.attendance_export.members).toHaveLength(200)
     expect(pushCalls[2].body.snapshot_id).toContain("part-3-of-3")
   })
+
+  it("retries transient upload failures with bounded backoff while started without waiting 15 minutes", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const manager = new BackgroundSyncManager()
+    let pushAttempts = 0
+
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith("/api/devices/commands")) return Response.json({ commands: [] })
+      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
+      if (url.includes("/attendance/export")) {
+        return Response.json({
+          exported_at: "2026-10-02T00:00:00Z",
+          groups: [],
+          members: [],
+          records: [],
+          sessions: [],
+        })
+      }
+      if (url.includes("/api/sync/push")) {
+        pushAttempts++
+        return pushAttempts === 1 ?
+            Response.json({ error: "Temporary outage" }, { status: 503 })
+          : Response.json({ ok: true, status: "accepted" })
+      }
+      if (url.includes("/api/sync/pull")) {
+        return Response.json({ schema_version: 2, groups: [], members: [] })
+      }
+      if (url.includes("/attendance/import-metadata")) {
+        return Response.json({ groups_count: 0, members_count: 0 })
+      }
+      return Response.json({})
+    })
+
+    manager.start({ skipCatchUp: true })
+    await manager.performSync()
+
+    expect(pushAttempts).toBe(1)
+    expect(mockStore["sync.lastSyncStatus"]).toBe("error")
+
+    // Bounded fast retry fires at 15s (much sooner than the 15-minute fallback timer).
+    await vi.advanceTimersByTimeAsync(15_000)
+
+    expect(pushAttempts).toBe(2)
+    expect(mockStore["sync.lastSyncStatus"]).toBe("success")
+    manager.stop()
+  })
+
+  it("does not schedule fast retries for non-retryable 402 plan limit rejections", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const manager = new BackgroundSyncManager()
+    let pushAttempts = 0
+
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith("/api/devices/commands")) return Response.json({ commands: [] })
+      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
+      if (url.includes("/attendance/export")) {
+        return Response.json({
+          exported_at: "2026-10-02T00:00:00Z",
+          groups: [],
+          members: [],
+          records: [],
+          sessions: [],
+        })
+      }
+      if (url.includes("/api/sync/push")) {
+        pushAttempts++
+        return Response.json(
+          { error: "Plan limit exceeded", code: "PLAN_QUOTA_HARD_EXCEEDED" },
+          { status: 402 },
+        )
+      }
+      if (url.includes("/api/sync/pull")) {
+        return Response.json({ schema_version: 2, groups: [], members: [] })
+      }
+      if (url.includes("/attendance/import-metadata")) {
+        return Response.json({ groups_count: 0, members_count: 0 })
+      }
+      return Response.json({})
+    })
+
+    manager.start({ skipCatchUp: true })
+    await manager.performSync()
+
+    expect(pushAttempts).toBe(1)
+    await vi.advanceTimersByTimeAsync(5 * 60_000)
+    expect(pushAttempts).toBe(1)
+    manager.stop()
+  })
+
+  it("spaces debounced pushes past the 5s Cloud cooldown and avoids flashing error on first 429 retry", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const manager = new BackgroundSyncManager()
+    let pushCount = 0
+
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith("/api/devices/commands")) return Response.json({ commands: [] })
+      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
+      if (url.includes("/attendance/export")) {
+        return Response.json({
+          exported_at: "2026-10-02T00:00:00Z",
+          groups: [],
+          members: [],
+          records: [],
+          sessions: [],
+        })
+      }
+      if (url.includes("/api/sync/push")) {
+        pushCount++
+        if (pushCount === 2) {
+          return Response.json({ error: "Sync throttled", retryAfterMs: 5000 }, { status: 429 })
+        }
+        return Response.json({ ok: true, status: "accepted" })
+      }
+      if (url.includes("/api/sync/pull")) {
+        return Response.json({ schema_version: 2, groups: [], members: [] })
+      }
+      if (url.includes("/attendance/import-metadata")) {
+        return Response.json({ groups_count: 0, members_count: 0 })
+      }
+      return Response.json({})
+    })
+
+    manager.start({ skipCatchUp: true })
+    await manager.performSync()
+    expect(pushCount).toBe(1)
+
+    // Triggering a debounced sync immediately after a completed push waits past the 5.5s cooldown.
+    manager.triggerDebouncedSync(3000)
+    await vi.advanceTimersByTimeAsync(3500)
+    expect(pushCount).toBe(1)
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(pushCount).toBe(2)
+
+    // First background 429 keeps status non-alarming ("idle") and recovers automatically after retryMs + 500ms.
+    expect(mockStore["sync.lastSyncStatus"]).toBe("idle")
+    await vi.advanceTimersByTimeAsync(5500)
+    expect(pushCount).toBe(3)
+    expect(mockStore["sync.lastSyncStatus"]).toBe("success")
+    manager.stop()
+  })
+
+  it("keeps unresolved upload errors visible across pullOnly syncs and triggers resume catch-up", async () => {
+    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const manager = new BackgroundSyncManager()
+    let pushCalls = 0
+
+    mockStore["sync.lastSyncStatus"] = "error"
+    mockStore["sync.lastSyncMessage"] = "Upload failed: Plan limit exceeded."
+    mockStore["sync.pendingUpload"] = {
+      deviceId: "device-test-123",
+      siteId: "site-test-123",
+      remoteBaseUrl: "https://cloud.facenox.test",
+      exportedAt: "2026-10-02T00:00:00Z",
+      chunks: [
+        {
+          snapshot_id: "snap-1",
+          attendance_export: { groups: [], members: [], records: [], sessions: [] },
+        },
+      ],
+      next: 0,
+      acknowledged: {
+        groups: {},
+        members: {},
+        faces: {},
+        accepted: { groups: {}, members: {}, faces: {} },
+      },
+      rejected: true,
+    }
+
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith("/api/devices/commands")) return Response.json({ commands: [] })
+      if (url.includes("/api/sync/pull")) {
+        return Response.json({ schema_version: 2, groups: [], members: [] })
+      }
+      if (url.includes("/attendance/import-metadata")) {
+        return Response.json({ groups_count: 0, members_count: 0 })
+      }
+      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
+      if (url.includes("/attendance/export")) {
+        return Response.json({
+          exported_at: "2026-10-02T00:00:00Z",
+          groups: [],
+          members: [],
+          records: [],
+          sessions: [],
+        })
+      }
+      if (url.includes("/api/sync/push")) {
+        pushCalls++
+        return Response.json({ ok: true, status: "accepted" })
+      }
+      return Response.json({})
+    })
+
+    const pullResult = await manager.performSync(true)
+    expect(pullResult.success).toBe(true)
+    expect(mockStore["sync.lastSyncStatus"]).toBe("error")
+    expect(mockStore["sync.lastSyncMessage"]).toBe("Upload failed: Plan limit exceeded.")
+
+    manager.handleSystemResume()
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(pushCalls).toBe(1)
+    expect(mockStore["sync.lastSyncStatus"]).toBe("success")
+    manager.stop()
+  })
 })

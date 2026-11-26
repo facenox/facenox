@@ -90,6 +90,13 @@ export function IntroModal({ initialStep = 0, allowLocalContinue = false }: Intr
     }, 250)
   }, [setHasSeenIntro])
 
+  const handlePairingWarningOrError = useCallback((msg: string | null) => {
+    setPairError(msg)
+    if (msg && msg.includes("initial sync failed")) {
+      useUIStore.getState().setError(msg)
+    }
+  }, [])
+
   const {
     reversePairing,
     isInitiating,
@@ -108,7 +115,7 @@ export function IntroModal({ initialStep = 0, allowLocalContinue = false }: Intr
     cloudConfigStatus,
     busyAction,
     setBusyAction,
-    onError: setPairError,
+    onError: handlePairingWarningOrError,
     onConnected: completeOnboarding,
   })
 
@@ -246,6 +253,12 @@ export function IntroModal({ initialStep = 0, allowLocalContinue = false }: Intr
                 <Check className="size-5" />
               </div>
               <p className="text-sm font-semibold text-white">Connected to Facenox Cloud</p>
+              <button
+                type="button"
+                onClick={completeOnboarding}
+                className="mt-1 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-xs font-bold tracking-wider text-slate-950 transition hover:from-cyan-300 hover:to-cyan-400">
+                Continue
+              </button>
             </div>
           : isInitiating && !reversePairing ?
             <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
@@ -316,7 +329,11 @@ export function IntroModal({ initialStep = 0, allowLocalContinue = false }: Intr
                   </p>
                 </div>
               </div>
+            </div>
+          : null}
 
+          {cloudConfigStatus === "ready" && !cloudConfig?.connected && (
+            <div className="flex flex-col items-center pt-1 text-center">
               {!showManualInput ?
                 <button
                   type="button"
@@ -363,7 +380,7 @@ export function IntroModal({ initialStep = 0, allowLocalContinue = false }: Intr
                 </div>
               }
             </div>
-          : null}
+          )}
         </div>
       ),
     },

@@ -161,6 +161,7 @@ app.whenReady().then(async () => {
   // Listen for OS resume events to notify renderer for drift corrections and restore backend readiness
   powerMonitor.on("resume", async () => {
     await backendService.checkReadiness().catch(() => {})
+    syncManager.handleSystemResume()
     void autoExportManager.checkAndRunExport().catch(() => {})
     if (state.mainWindow && !state.mainWindow.isDestroyed()) {
       state.mainWindow.webContents.send("system:resume")

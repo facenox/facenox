@@ -667,6 +667,8 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         </div>
                       : !config.lastSyncedAt ?
                         <div className="font-medium text-white/65">No completed sync yet</div>
+                      : config.lastSyncMessage?.includes("Retrying automatically") ?
+                        <div className="font-medium text-white/65">Retrying sync shortly</div>
                       : (
                         config.unsyncedRecordsCount !== 0 ||
                         config.unsyncedSessionsCount !== 0 ||

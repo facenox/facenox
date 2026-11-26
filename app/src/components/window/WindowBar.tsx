@@ -145,7 +145,7 @@ export default function WindowBar() {
     isHydrated &&
     isShellReady &&
     (!hasSeenIntro ||
-      (cloudConfigStatus === "ready" && !syncConfig?.connected && !hasExistingLocalData))
+      (cloudConfigStatus !== "loading" && !syncConfig?.connected && !hasExistingLocalData))
   const cloudDashboardUrl = `${getEffectiveRemoteUrl(syncConfig?.remoteBaseUrl)}/app`
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
 

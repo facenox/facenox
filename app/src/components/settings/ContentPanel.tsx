@@ -213,6 +213,12 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false)
   const { config: syncConfig, status: cloudConfigStatus } = useCloudSyncConfig()
   const isPaired = Boolean(syncConfig?.connected)
+  const isDirectoryLocked =
+    cloudConfigStatus === "error" ||
+    Boolean(
+      syncConfig?.connected &&
+      (syncConfig.policyReady === false || syncConfig.allowKioskDirectoryManagement === false),
+    )
   const canManageGroups =
     cloudConfigStatus === "ready" &&
     syncConfig?.policyReady !== false &&
@@ -270,7 +276,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => addMemberHandler?.()}
-              disabled={!addMemberHandler}
+              disabled={!addMemberHandler || isDirectoryLocked}
               className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-50">
               <UserPlus className="size-3" />
               Add member
@@ -382,6 +388,28 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               syncConfig.lastSyncMessage?.includes("Plan member limit exceeded") ||
               syncConfig.lastSyncMessage?.includes("Total active members reached")
 
+            const pendingUpdates =
+              (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
+            const isRetrying =
+              syncConfig.lastSyncStatus === "idle" &&
+              Boolean(syncConfig.lastSyncMessage?.includes("Retrying automatically"))
+            const badgeStyle =
+              syncConfig.lastSyncStatus === "error" ?
+                isQuota ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
+                : "border-red-500/20 bg-red-500/10 text-red-400"
+              : isRetrying ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
+              : pendingUpdates > 0 || !syncConfig.lastSyncedAt ?
+                "border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
+              : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+            const badgeLabel =
+              syncConfig.lastSyncStatus === "error" ?
+                isQuota ? "Plan limit"
+                : "Sync issue"
+              : isRetrying ? "Retrying"
+              : pendingUpdates > 0 ? "Sync pending"
+              : !syncConfig.lastSyncedAt ? "Waiting for sync"
+              : "Synced"
+
             return (
               <div className="flex items-center gap-2">
                 {!isOfficialCloudUrl(syncConfig.remoteBaseUrl) && (
@@ -397,17 +425,8 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   content={`Linked to ${syncConfig.organizationName || "Facenox Cloud"} • Location: ${syncConfig.siteName || "Default Branch"}`}
                   position="bottom">
                   <div
-                    className={`cursor-help rounded border px-2 py-0.5 text-[9px] font-extrabold tracking-widest uppercase transition-all duration-200 ${
-                      syncConfig.lastSyncStatus === "error" ?
-                        isQuota ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
-                        : "border-red-500/20 bg-red-500/10 text-red-400"
-                      : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
-                    }`}>
-                    {syncConfig.lastSyncStatus === "error" ?
-                      isQuota ?
-                        "Plan limit"
-                      : "Sync issue"
-                    : "Synced"}
+                    className={`cursor-help rounded border px-2 py-0.5 text-[9px] font-extrabold tracking-widest uppercase transition-all duration-200 ${badgeStyle}`}>
+                    {badgeLabel}
                   </div>
                 </Tooltip>
               </div>
@@ -545,6 +564,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                         </SectionHeader.Breadcrumb>
                       </Tooltip>
                       {validInitialGroup &&
+                        !isDirectoryLocked &&
                         (!groupInitialSection || groupInitialSection === "overview") && (
                           <Tooltip content="Edit group name" position="bottom" offset={6}>
                             <button

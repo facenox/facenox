@@ -71,17 +71,18 @@ async def assign_organization_id(
     ),
 ):
     """Assign organization_id to all records with NULL org_id (called after pairing)."""
-    if not x_facenox_organization:
+    org_id = (x_facenox_organization or "").strip()
+    if not org_id:
         raise HTTPException(
             status_code=400, detail="X-Facenox-Organization header is required"
         )
-    counts = await repo.assign_organization_id(x_facenox_organization)
+    counts = await repo.assign_organization_id(org_id)
 
     from core.lifespan import face_recognizer
 
     if face_recognizer:
         try:
-            await face_recognizer.refresh_cache(x_facenox_organization)
+            await face_recognizer.refresh_cache(org_id)
         except Exception as err:
             logger.error(
                 f"Failed to refresh face_recognizer cache after assigning org id: {err}"

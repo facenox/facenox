@@ -1216,6 +1216,14 @@ class AttendanceRepository:
         )
         sessions_result = await self.session.execute(sessions_stmt)
 
+        deletions_stmt = self._apply_org_scope(
+            delete(AttendanceSessionDeletion).execution_options(
+                synchronize_session="evaluate"
+            ),
+            AttendanceSessionDeletion,
+        )
+        await self.session.execute(deletions_stmt)
+
         now = to_storage_local(local_now())
         members_stmt = self._apply_org_scope(
             update(AttendanceMember).values(
@@ -1271,6 +1279,14 @@ class AttendanceRepository:
         )
         sessions_result = await self.session.execute(sessions_stmt)
 
+        deletions_stmt = self._apply_org_scope(
+            delete(AttendanceSessionDeletion).execution_options(
+                synchronize_session="evaluate"
+            ),
+            AttendanceSessionDeletion,
+        )
+        await self.session.execute(deletions_stmt)
+
         await self.session.commit()
 
         return {
@@ -1300,6 +1316,42 @@ class AttendanceRepository:
             "faces": 0,
             "audit_logs": 0,
         }
+
+        # Avoid unique constraint collisions if the target org_id already owns rows
+        # (for instance, an auto-created NULL AttendanceSettings row on startup).
+        existing_settings = (
+            await self.session.execute(
+                select(AttendanceSettings.id).where(
+                    AttendanceSettings.organization_id == org_id
+                )
+            )
+        ).first()
+        if existing_settings is not None:
+            await self.session.execute(
+                delete(AttendanceSettings).where(
+                    AttendanceSettings.organization_id.is_(None)
+                )
+            )
+
+        existing_member_pids = select(AttendanceMember.person_id).where(
+            AttendanceMember.organization_id == org_id
+        )
+        await self.session.execute(
+            delete(AttendanceMember).where(
+                AttendanceMember.organization_id.is_(None),
+                AttendanceMember.person_id.in_(existing_member_pids),
+            )
+        )
+
+        existing_face_pids = select(Face.person_id).where(
+            Face.organization_id == org_id
+        )
+        await self.session.execute(
+            delete(Face).where(
+                Face.organization_id.is_(None),
+                Face.person_id.in_(existing_face_pids),
+            )
+        )
 
         for model, key in [
             (AttendanceGroup, "groups"),
@@ -1338,6 +1390,48 @@ class AttendanceRepository:
             "audit_logs": 0,
         }
 
+        org_filter = lambda m: (  # noqa: E731
+            m.organization_id == org_id if org_id else m.organization_id.is_not(None)
+        )
+        # Remove conflicting standalone duplicates so transitioning back to NULL cannot raise IntegrityError.
+        existing_null_settings = (
+            await self.session.execute(
+                select(AttendanceSettings.id).where(
+                    AttendanceSettings.organization_id.is_(None)
+                )
+            )
+        ).first()
+        if existing_null_settings is not None:
+            has_org_settings = (
+                await self.session.execute(
+                    select(AttendanceSettings.id).where(org_filter(AttendanceSettings))
+                )
+            ).first()
+            if has_org_settings is not None:
+                await self.session.execute(
+                    delete(AttendanceSettings).where(
+                        AttendanceSettings.organization_id.is_(None)
+                    )
+                )
+
+        moving_member_pids = select(AttendanceMember.person_id).where(
+            org_filter(AttendanceMember)
+        )
+        await self.session.execute(
+            delete(AttendanceMember).where(
+                AttendanceMember.organization_id.is_(None),
+                AttendanceMember.person_id.in_(moving_member_pids),
+            )
+        )
+
+        moving_face_pids = select(Face.person_id).where(org_filter(Face))
+        await self.session.execute(
+            delete(Face).where(
+                Face.organization_id.is_(None),
+                Face.person_id.in_(moving_face_pids),
+            )
+        )
+
         for model, key in [
             (AttendanceGroup, "groups"),
             (AttendanceMember, "members"),
@@ -1349,11 +1443,7 @@ class AttendanceRepository:
             (Face, "faces"),
             (AuditLog, "audit_logs"),
         ]:
-            query = update(model)
-            if org_id:
-                query = query.where(model.organization_id == org_id)
-            else:
-                query = query.where(model.organization_id.is_not(None))
+            query = update(model).where(org_filter(model))
             result = await self.session.execute(query.values(organization_id=None))
             counts[key] = result.rowcount
 

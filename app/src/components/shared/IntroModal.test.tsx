@@ -52,4 +52,54 @@ describe("IntroModal", () => {
       timeout: 1000,
     })
   })
+
+  it("completes onboarding when reverse pairing approves even if onDataChanged flips connected mid-poll", async () => {
+    const api = getElectronAPIMock().sync
+    let dataChangedListener: (() => void) | undefined
+    api.onDataChanged.mockImplementation((cb) => {
+      dataChangedListener = cb
+      return () => {
+        dataChangedListener = undefined
+      }
+    })
+    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
+    api.pollDeviceAuthorization.mockImplementation(async () => {
+      const connectedConfig = createSyncConfig({ connected: true })
+      api.getConfig.mockResolvedValue(connectedConfig)
+      dataChangedListener?.()
+      return {
+        status: "approved",
+        success: true,
+        config: connectedConfig,
+        initialSyncSucceeded: true,
+        message: "Device connected.",
+      }
+    })
+
+    render(<IntroModal initialStep={2} />)
+
+    await waitFor(() => expect(api.pollDeviceAuthorization).toHaveBeenCalled(), { timeout: 5000 })
+    await waitFor(() => expect(useUIStore.getState().hasSeenIntro).toBe(true), {
+      timeout: 2000,
+    })
+  })
+
+  it("keeps the manual pairing fallback available even when initiating reverse pairing fails", async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
+    api.initiateReversePairing.mockResolvedValue({
+      success: false,
+      error: "Request failed",
+    })
+
+    render(<IntroModal initialStep={2} />)
+
+    expect(await screen.findByText("Request failed")).toBeInTheDocument()
+    const manualButton = screen.getByRole("button", {
+      name: /Have a pairing code already/i,
+    })
+    expect(manualButton).toBeInTheDocument()
+    fireEvent.click(manualButton)
+    expect(screen.getByPlaceholderText("ABCD2345")).toBeInTheDocument()
+  })
 })

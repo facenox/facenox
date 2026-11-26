@@ -8,7 +8,6 @@ import { syncManager } from "../managers/BackgroundSyncManager.js"
 import { persistentStore, requireSecretStorage } from "../persistentStore.js"
 import { getCurrentVersion } from "../updater.js"
 import { state } from "../State.js"
-import isDev from "../util.js"
 import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
@@ -158,8 +157,6 @@ function clearRemoteConnection() {
   persistentStore.delete("sync.policy.allowKioskDirectoryManagement")
 }
 
-// One local directory belongs to one Cloud location. Keep that origin across
-// disconnects so reconnecting cannot silently copy it into another organization.
 async function validatePairingDestination(
   remoteBaseUrl: string,
   payload: {
@@ -201,11 +198,68 @@ async function validatePairingDestination(
       )
     }
   }
-  persistentStore.set("sync.dataOrigin", {
-    organizationId: payload.organizationId,
-    siteId: payload.siteId,
-    remoteBaseUrl,
-  })
+}
+
+async function finalizeDevicePairing(
+  remoteBaseUrl: string,
+  deviceName: string,
+  payload: Record<string, unknown>,
+) {
+  await validatePairingDestination(remoteBaseUrl, payload)
+  const previousOrigin = persistentStore.get("sync.dataOrigin")
+
+  try {
+    persistentStore.set("sync.remoteBaseUrl", remoteBaseUrl)
+    persistentStore.set("sync.organizationId", String(payload.organizationId ?? ""))
+    persistentStore.set("sync.organizationName", String(payload.organizationName ?? ""))
+    persistentStore.set("sync.siteId", String(payload.siteId ?? ""))
+    persistentStore.set("sync.siteName", String(payload.siteName ?? ""))
+    persistentStore.set("sync.deviceId", String(payload.deviceId ?? ""))
+    persistentStore.set("sync.deviceName", deviceName)
+    persistentStore.set("sync.deviceToken", String(payload.deviceToken ?? ""))
+    persistentStore.set("sync.encryptionKey", String(payload.encryptionKey ?? ""))
+    persistentStore.set("sync.enabled", true)
+    persistentStore.set("sync.lastSyncedAt", null)
+    persistentStore.set("sync.lastSyncStatus", "idle")
+    persistentStore.set("sync.lastSyncMessage", "Device connected. Starting initial sync…")
+
+    const assignUrl = `${backendService.getUrl()}/attendance/groups/assign-org-id`
+    const assignResponse = await fetch(assignUrl, {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!assignResponse.ok) {
+      throw new Error(`Could not assign the local directory (HTTP ${assignResponse.status}).`)
+    }
+    const assignCounts = await assignResponse.json()
+    console.log("[Sync] Successfully assigned organization ID to offline records:", assignCounts)
+
+    persistentStore.set("sync.dataOrigin", {
+      organizationId: payload.organizationId,
+      siteId: payload.siteId,
+      remoteBaseUrl,
+    })
+  } catch (err) {
+    clearRemoteConnection()
+    if (previousOrigin !== undefined) {
+      persistentStore.set("sync.dataOrigin", previousOrigin)
+    } else {
+      persistentStore.delete("sync.dataOrigin")
+    }
+    if (payload.deviceToken && payload.deviceId) {
+      await fetch(`${remoteBaseUrl}/api/device/unpair`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${String(payload.deviceToken)}`,
+        },
+        body: JSON.stringify({ device_id: String(payload.deviceId) }),
+        signal: AbortSignal.timeout(10000),
+      }).catch(() => undefined)
+    }
+    throw err
+  }
 }
 
 // Cryptographic Constants
@@ -351,12 +405,7 @@ export function registerSyncHandlers() {
         throw new Error("Disconnect before changing the Cloud server.")
       }
       const trimmed = updates.remoteBaseUrl.trim()
-      if (
-        !trimmed ||
-        isOfficialCloudUrl(trimmed) ||
-        trimmed === DEFAULT_REMOTE_BASE_URL ||
-        (isDev() && trimmed === "http://localhost:3000")
-      ) {
+      if (!trimmed || isOfficialCloudUrl(trimmed) || trimmed === DEFAULT_REMOTE_BASE_URL) {
         persistentStore.set("sync.remoteBaseUrl", "")
       } else {
         persistentStore.set("sync.remoteBaseUrl", normalizeRemoteBaseUrl(trimmed))
@@ -455,42 +504,7 @@ export function registerSyncHandlers() {
         }
 
         if (!payload) throw new Error("Invalid pairing response.")
-        await validatePairingDestination(remoteBaseUrl, payload)
-        persistentStore.set("sync.remoteBaseUrl", remoteBaseUrl)
-        persistentStore.set("sync.organizationId", String(payload?.organizationId ?? ""))
-        persistentStore.set("sync.organizationName", String(payload?.organizationName ?? ""))
-        persistentStore.set("sync.siteId", String(payload?.siteId ?? ""))
-        persistentStore.set("sync.siteName", String(payload?.siteName ?? ""))
-        persistentStore.set("sync.deviceId", String(payload?.deviceId ?? ""))
-        persistentStore.set("sync.deviceName", deviceName)
-        persistentStore.set("sync.deviceToken", String(payload?.deviceToken ?? ""))
-        persistentStore.set("sync.encryptionKey", String(payload?.encryptionKey ?? ""))
-        persistentStore.set("sync.enabled", true)
-        persistentStore.set("sync.lastSyncedAt", null)
-        persistentStore.set("sync.lastSyncStatus", "idle")
-        persistentStore.set("sync.lastSyncMessage", "Device connected. Starting initial sync…")
-
-        // Assign organization_id to existing offline records
-        try {
-          const assignUrl = `${backendService.getUrl()}/attendance/groups/assign-org-id`
-          const assignResponse = await fetch(assignUrl, {
-            method: "POST",
-            headers: authHeaders({ "Content-Type": "application/json" }),
-            signal: AbortSignal.timeout(10000),
-          })
-          if (assignResponse.ok) {
-            const assignCounts = await assignResponse.json()
-            console.log(
-              "[Sync] Successfully assigned organization ID to offline records:",
-              assignCounts,
-            )
-          } else {
-            throw new Error(`Could not assign the local directory (HTTP ${assignResponse.status}).`)
-          }
-        } catch (assignError) {
-          persistentStore.set("sync.enabled", false)
-          throw assignError
-        }
+        await finalizeDevicePairing(remoteBaseUrl, deviceName, payload)
 
         persistentStore.delete(DIRECT_PAIRING_ATTEMPT)
         syncManager.start({ skipCatchUp: true })
@@ -673,33 +687,21 @@ export function registerSyncHandlers() {
         }
 
         if (payload?.status === "approved" && payload.deviceToken) {
-          await validatePairingDestination(remoteBaseUrl, payload)
-          persistentStore.set("sync.remoteBaseUrl", remoteBaseUrl)
-          persistentStore.set("sync.organizationId", String(payload.organizationId ?? ""))
-          persistentStore.set("sync.organizationName", String(payload.organizationName ?? ""))
-          persistentStore.set("sync.siteId", String(payload.siteId ?? ""))
-          persistentStore.set("sync.siteName", String(payload.siteName ?? ""))
-          persistentStore.set("sync.deviceId", String(payload.deviceId ?? ""))
-          persistentStore.set("sync.deviceName", deviceName)
-          persistentStore.set("sync.deviceToken", String(payload.deviceToken ?? ""))
-          persistentStore.set("sync.encryptionKey", String(payload.encryptionKey ?? ""))
-          persistentStore.set("sync.enabled", true)
-          persistentStore.set("sync.lastSyncedAt", null)
-          persistentStore.set("sync.lastSyncStatus", "idle")
-          persistentStore.set("sync.lastSyncMessage", "Device connected. Starting initial sync…")
-
           try {
-            const assignUrl = `${backendService.getUrl()}/attendance/groups/assign-org-id`
-            const assigned = await fetch(assignUrl, {
-              method: "POST",
-              headers: authHeaders({ "Content-Type": "application/json" }),
-              signal: AbortSignal.timeout(10000),
-            })
-            if (!assigned.ok)
-              throw new Error(`Could not assign the local directory (HTTP ${assigned.status}).`)
-          } catch (assignError) {
-            persistentStore.set("sync.enabled", false)
-            throw assignError
+            await finalizeDevicePairing(
+              remoteBaseUrl,
+              deviceName,
+              payload as Record<string, unknown>,
+            )
+          } catch (finalizeError) {
+            state.mainWindow?.webContents.send("sync:data-changed")
+            return {
+              status: "error",
+              error:
+                finalizeError instanceof Error ?
+                  finalizeError.message
+                : "Could not finalize device pairing.",
+            }
           }
 
           syncManager.start({ skipCatchUp: true })

@@ -78,8 +78,10 @@ async def export_attendance_data(
                 since_utc = cursor_time.astimezone(timezone.utc).replace(
                     tzinfo=None
                 ) - timedelta(seconds=1)
-            except ValueError:
-                pass
+            except ValueError as err:
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid 'since' sync cursor: {err}"
+                )
 
         # Select all groups (even soft-deleted) to propagate deletions
         # Groups and members metadata are always exported in full to maintain directory consistency
@@ -313,15 +315,28 @@ async def import_embeddings_batch(
     repo.session.info["sync_import"] = True
     try:
         imported = 0
+        skipped = 0
+        failed = 0
         for item in request.embeddings:
-            imported += int(await _import_embedding(item, repo))
+            try:
+                was_imported = await _import_embedding(item, repo)
+                if was_imported:
+                    imported += 1
+                else:
+                    skipped += 1
+            except (ValueError, Exception) as item_err:
+                logger.warning(
+                    "Skipping invalid embedding for %s: %s", item.person_id, item_err
+                )
+                failed += 1
         await repo.session.commit()
         if face_recognizer:
             await face_recognizer.refresh_cache(repo.organization_id)
         return {
-            "success": True,
+            "success": failed == 0,
             "imported_count": imported,
-            "failed_count": len(request.embeddings) - imported,
+            "skipped_count": skipped,
+            "failed_count": failed,
             "total": len(request.embeddings),
         }
     except Exception:

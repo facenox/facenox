@@ -13,6 +13,9 @@ import {
   DEFAULT_SYNC_INTERVAL_MINUTES,
 } from "../../services/syncDefaults.js"
 const STARTUP_CATCH_UP_DELAY_MS = 5000
+const MIN_PUSH_INTERVAL_MS = 5500
+const TRANSIENT_RETRY_DELAYS_MS = [15_000, 60_000, 5 * 60_000]
+const NON_RETRYABLE_STATUSES = new Set([400, 401, 402, 403, 422, 426])
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
@@ -196,6 +199,9 @@ export class BackgroundSyncManager {
   private commandTimer: NodeJS.Timeout | null = null
   private catchUpTimer: NodeJS.Timeout | null = null
   private debounceTimer: NodeJS.Timeout | null = null
+  private retryTimer: NodeJS.Timeout | null = null
+  private consecutiveTransientFailures = 0
+  private lastPushCompletedAt = 0
   private ablyClient: Ably.Realtime | null = null
   private ablyChannel: Ably.RealtimeChannel | null = null
   private isSyncing = false
@@ -220,8 +226,8 @@ export class BackgroundSyncManager {
     this.stop()
     this.abortController?.abort()
     await this.idlePromise
-    const deadline = Date.now() + 5000
-    while (this.isPollingCommands && Date.now() < deadline) {
+    const deadline = Date.now() + 10000
+    while ((this.isPollingCommands || this.isWiping) && Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, 50))
     }
   }
@@ -260,6 +266,42 @@ export class BackgroundSyncManager {
       clearTimeout(this.catchUpTimer)
       this.catchUpTimer = null
     }
+  }
+
+  private clearRetryTimer() {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer)
+      this.retryTimer = null
+    }
+  }
+
+  private scheduleTransientRetry() {
+    if (this.suspended || !this.timer) return
+    const delayMs = TRANSIENT_RETRY_DELAYS_MS[this.consecutiveTransientFailures]
+    if (delayMs === undefined) return
+    this.consecutiveTransientFailures++
+    this.clearRetryTimer()
+    console.log(
+      `[Sync] Transient failure; scheduling automatic retry #${this.consecutiveTransientFailures} in ${Math.round(delayMs / 1000)}s.`,
+    )
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null
+      void this.performSync()
+    }, delayMs)
+  }
+
+  handleSystemResume() {
+    const { enabled, remoteBaseUrl, siteId, deviceId, deviceToken } = this.getSyncConfig()
+    if (this.suspended || !enabled || !remoteBaseUrl || !siteId || !deviceId || !deviceToken) {
+      return
+    }
+    this.consecutiveTransientFailures = 0
+    this.clearRetryTimer()
+    if (!this.timer) {
+      this.start({ skipCatchUp: true })
+    }
+    this.triggerDebouncedSync(3000)
+    void this.pollCommands()
   }
 
   private shouldRunCatchUpSync(intervalMinutes: number, lastSyncedAt: string | null) {
@@ -320,16 +362,29 @@ export class BackgroundSyncManager {
   private async applyRemotePolicy(policy?: Record<string, unknown> | null) {
     if (!policy || typeof policy !== "object") return
 
+    const settingsPayload: Record<string, unknown> = {}
     if (typeof policy.timezone === "string") {
       // Apply the administrator-confirmed site clock to attendance, never to
       // the OS clock. Persist in the backend for offline scans and restarts.
+      settingsPayload.attendance_timezone = policy.timezone
+    }
+    if (typeof policy.attendanceCooldownSeconds === "number") {
+      settingsPayload.attendance_cooldown_seconds = policy.attendanceCooldownSeconds
+    }
+    if (Object.keys(settingsPayload).length > 0) {
       const response = await fetch(`${backendService.getUrl()}/attendance/settings`, {
         method: "PUT",
         headers: authHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ attendance_timezone: policy.timezone }),
+        body: JSON.stringify(settingsPayload),
         signal: this.requestSignal(15000),
       })
-      if (!response.ok) throw new Error("Could not apply the location attendance timezone.")
+      if (!response.ok) {
+        throw new Error(
+          typeof policy.timezone === "string" ?
+            "Could not apply the location attendance timezone."
+          : "Could not apply the location attendance policy.",
+        )
+      }
     }
     if (typeof policy.forceLiveness === "boolean") {
       await this.persistLivenessRequirement(policy.forceLiveness)
@@ -358,6 +413,9 @@ export class BackgroundSyncManager {
         "sync.policy.allowKioskDirectoryManagement",
         policy.allowKioskDirectoryManagement,
       )
+    }
+    if (policy.faceTemplateSync === false) {
+      persistentStore.set("sync.encryptionKey", "")
     }
 
     // Broadcast the updated policy immediately so the UI reflects locks without delay
@@ -513,6 +571,8 @@ export class BackgroundSyncManager {
 
   stop() {
     this.clearCatchUpTimer()
+    this.clearRetryTimer()
+    this.consecutiveTransientFailures = 0
     this.teardownRealtimeListener()
     this.pendingSyncRequested = false
     this.pendingPullRequested = false
@@ -610,6 +670,7 @@ export class BackgroundSyncManager {
             persistentStore.set("sync.pendingUpload", null)
             persistentStore.set("sync.pendingAcknowledgements", null)
             persistentStore.set("sync.lastSyncedAt", null)
+            state.mainWindow?.webContents.send("sync:data-changed")
             result = wipeBody
           } finally {
             this.isWiping = false
@@ -732,10 +793,14 @@ export class BackgroundSyncManager {
 
   private async pullMetadata(
     acknowledged: SyncAcknowledgements = emptyAcknowledgements(),
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ success: boolean; message: string; retryable?: boolean }> {
     const { remoteBaseUrl, deviceToken, encryptionKey } = this.getSyncConfig()
     if (!remoteBaseUrl || !deviceToken) {
-      return { success: false, message: "Missing remote connection configuration." }
+      return {
+        success: false,
+        message: "Missing remote connection configuration.",
+        retryable: false,
+      }
     }
 
     try {
@@ -775,6 +840,7 @@ export class BackgroundSyncManager {
           return {
             success: false,
             message: ` Remote metadata pull failed on page ${pageCount} (HTTP ${pullResponse.status}).`,
+            retryable: !NON_RETRYABLE_STATUSES.has(pullResponse.status),
           }
         }
 
@@ -915,11 +981,17 @@ export class BackgroundSyncManager {
       )
       state.mainWindow?.webContents.send("sync:data-changed")
 
-      return { success: totalDecryptFailures === 0, message: pullMsg }
+      return { success: totalDecryptFailures === 0, message: pullMsg, retryable: true }
     } catch (pullError) {
       const errMsg = pullError instanceof Error ? pullError.message : "unknown"
       console.warn("[Sync] Automatic metadata pull failed:", pullError)
-      return { success: false, message: ` Metadata pull error: ${errMsg}` }
+      const nonRetryable =
+        errMsg.includes("Cloud must be updated") || errMsg.includes("exceeds the page limit")
+      return {
+        success: false,
+        message: ` Metadata pull error: ${errMsg}`,
+        retryable: !nonRetryable,
+      }
     }
   }
 
@@ -967,10 +1039,18 @@ export class BackgroundSyncManager {
       (persistentStore.get("sync.pendingAcknowledgements") as SyncAcknowledgements | undefined) ??
       emptyAcknowledgements()
     let pushError: string | null = null
+    let pushStatus: number | undefined
+    let rateLimitScheduled = false
     let exportedAt: string | null = null
     let pushed = false
     let conflicts = 0
     let keyError: string | null = null
+    const hadPendingOrRejectedUpload = Boolean(
+      pending && (pending.rejected || pending.next < pending.chunks.length),
+    )
+    if (!pullOnly) {
+      this.clearRetryTimer()
+    }
     try {
       if (!encryptionKey) {
         try {
@@ -1082,10 +1162,15 @@ export class BackgroundSyncManager {
               headers: { Authorization: `Bearer ${deviceToken}` },
               signal: this.requestSignal(30000),
             })
-            const supported = (
-              capabilities.ok ?
-                await capabilities.json().catch(() => null)
-              : null) as { capabilities?: { session_deletions?: boolean } } | null
+            if (!capabilities.ok) {
+              pushStatus = capabilities.status
+              throw new Error(
+                `Could not verify Cloud sync capabilities (HTTP ${capabilities.status}).`,
+              )
+            }
+            const supported = (await capabilities.json().catch(() => null)) as {
+              capabilities?: { session_deletions?: boolean }
+            } | null
             if (supported?.capabilities?.session_deletions !== true) {
               throw new Error(
                 "Update Facenox Cloud before syncing removed attendance visits. Deletions remain queued.",
@@ -1120,13 +1205,16 @@ export class BackgroundSyncManager {
               /* HTTP error can contain text. */
             }
             if (remote.status === 429) {
-              const retryMs = result.retryAfterMs || 5000
+              const retryMs = (result.retryAfterMs || 5000) + 500
+              this.lastPushCompletedAt = Date.now()
               this.triggerDebouncedSync(retryMs)
+              rateLimitScheduled = true
               throw new Error(
                 `Rate limit exceeded (HTTP 429). Retrying in ${Math.round(retryMs / 1000)}s.`,
               )
             }
             if (!remote.ok) {
+              pushStatus = remote.status
               if ([400, 402, 422].includes(remote.status)) {
                 pending.rejected = true
                 persistentStore.set("sync.pendingUpload", pending)
@@ -1154,19 +1242,25 @@ export class BackgroundSyncManager {
               for (const kind of ["groups", "members", "faces"] as const)
                 Object.assign(acknowledged.accepted[kind], result.accepted[kind])
             conflicts += result.conflicts || 0
-            await this.applyRemotePolicy(result.policy)
             pending.next = i + 1
             pending.acknowledged = acknowledged
             persistentStore.set("sync.pendingUpload", pending)
+            await this.applyRemotePolicy(result.policy)
           }
           pushed = true
+          this.lastPushCompletedAt = Date.now()
         } catch (error) {
           pushError = error instanceof Error ? error.message : "Upload failed."
-          if (pushError.includes("429") || pushError.includes("Rate limit")) {
-            // When rate limited by Cloud, back off immediately without cascading into a pull
+          if (rateLimitScheduled || pushError.includes("429") || pushError.includes("Rate limit")) {
+            // When rate limited by Cloud, back off immediately without cascading into a pull.
+            // Keep status non-alarming on the first automatic background retry so rapid scans stay calm.
+            const keepQuietRetry = Boolean(this.timer) && this.consecutiveTransientFailures === 0
+            if (this.timer) {
+              this.consecutiveTransientFailures++
+            }
             this.setLastSyncState({
-              lastSyncStatus: "error",
-              lastSyncMessage: `Cloud rate limit reached. Retrying automatically.`,
+              lastSyncStatus: keepQuietRetry ? "idle" : "error",
+              lastSyncMessage: "Cloud rate limit reached. Retrying automatically.",
             })
             return { success: false, message: pushError }
           }
@@ -1188,20 +1282,44 @@ export class BackgroundSyncManager {
       ]
         .filter(Boolean)
         .join(" ")
-      this.setLastSyncState({
-        ...(pushed && exportedAt ? { lastSyncedAt: exportedAt } : {}),
-        lastSyncStatus: success ? "success" : "error",
-        lastSyncMessage: message,
-      })
+      if (pullOnly && hadPendingOrRejectedUpload && pull.success) {
+        // Keep the unresolved upload failure visible until a full push clears pendingUpload.
+        if (!pending?.rejected && this.timer) {
+          this.triggerDebouncedSync()
+        }
+      } else {
+        this.setLastSyncState({
+          ...(pushed && exportedAt ? { lastSyncedAt: exportedAt } : {}),
+          lastSyncStatus: success ? "success" : "error",
+          lastSyncMessage: message,
+        })
+      }
       // A failed face import must not prevent newer attendance from uploading.
       // Keep directory acknowledgements separately until a successful pull.
       persistentStore.set("sync.pendingAcknowledgements", pull.success ? null : acknowledged)
       if (pushed) persistentStore.set("sync.pendingUpload", null)
+      if (success) {
+        if (!pullOnly || !hadPendingOrRejectedUpload) {
+          this.consecutiveTransientFailures = 0
+          this.clearRetryTimer()
+        }
+      } else {
+        const nonRetryable =
+          (pushStatus !== undefined && NON_RETRYABLE_STATUSES.has(pushStatus)) ||
+          pull.retryable === false
+        if (!pullOnly && !nonRetryable && !rateLimitScheduled) {
+          this.scheduleTransientRetry()
+        }
+      }
       return { success, message, syncedAt: pushed ? exportedAt || undefined : undefined }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sync failed."
-      if (!this.suspended)
+      if (!this.suspended) {
         this.setLastSyncState({ lastSyncStatus: "error", lastSyncMessage: message })
+        if (!pullOnly) {
+          this.scheduleTransientRetry()
+        }
+      }
       return { success: false, message }
     } finally {
       this.abortController = null
@@ -1221,7 +1339,13 @@ export class BackgroundSyncManager {
       return
     }
 
-    console.log(`[Sync] Debounced sync triggered. Delaying execution by ${delayMs}ms.`)
+    const cooldownRemaining =
+      this.lastPushCompletedAt > 0 ?
+        Math.max(0, MIN_PUSH_INTERVAL_MS - (Date.now() - this.lastPushCompletedAt))
+      : 0
+    const effectiveDelay = Math.max(delayMs, cooldownRemaining)
+
+    console.log(`[Sync] Debounced sync triggered. Delaying execution by ${effectiveDelay}ms.`)
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer)
     }
@@ -1229,7 +1353,7 @@ export class BackgroundSyncManager {
     this.debounceTimer = setTimeout(() => {
       this.debounceTimer = null
       void this.performSync()
-    }, delayMs)
+    }, effectiveDelay)
   }
 }
 

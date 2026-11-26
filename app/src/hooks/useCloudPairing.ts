@@ -65,6 +65,17 @@ export function useCloudPairing({
   const isInitiatingRef = useRef(false)
   const pairingRequestRef = useRef(0)
   const mountedRef = useRef(false)
+  const isPollingRef = useRef(false)
+  const manualPairingInFlightRef = useRef(false)
+  const onSuccessRef = useRef(onSuccess)
+  const onErrorRef = useRef(onError)
+  const onConnectedRef = useRef(onConnected)
+
+  useEffect(() => {
+    onSuccessRef.current = onSuccess
+    onErrorRef.current = onError
+    onConnectedRef.current = onConnected
+  }, [onSuccess, onError, onConnected])
 
   useEffect(() => {
     const requestSequence = pairingRequestRef
@@ -189,16 +200,24 @@ export function useCloudPairing({
       return
     }
     const timer = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          void startReversePairing()
-          return 900
-        }
-        return prev - 1
-      })
+      setSecondsLeft((prev) => Math.max(0, prev - 1))
     }, 1000)
     return () => clearInterval(timer)
+  }, [enabled, reversePairing, pairingConfigDirty, connected, cloudConfigStatus])
+
+  useEffect(() => {
+    if (
+      secondsLeft === 0 &&
+      enabled &&
+      reversePairing &&
+      !pairingConfigDirty &&
+      !connected &&
+      cloudConfigStatus === "ready"
+    ) {
+      void startReversePairing()
+    }
   }, [
+    secondsLeft,
     enabled,
     reversePairing,
     pairingConfigDirty,
@@ -217,44 +236,77 @@ export function useCloudPairing({
     ) {
       return
     }
-    const pollIntervalMs = (reversePairing.interval || 3) * 1000
+    let currentIntervalMs = (reversePairing.interval || 3) * 1000
     let isCancelled = false
+    let timer: ReturnType<typeof setTimeout> | null = null
+
+    const scheduleNext = (delayMs: number) => {
+      if (isCancelled) return
+      timer = setTimeout(() => {
+        void poll()
+      }, delayMs)
+    }
 
     const poll = async () => {
-      if (isCancelled || connected) return
+      if (isCancelled || isPollingRef.current || manualPairingInFlightRef.current) {
+        scheduleNext(currentIntervalMs)
+        return
+      }
+      isPollingRef.current = true
       try {
         const res = await window.electronAPI.sync.pollDeviceAuthorization({
           remoteBaseUrl: reversePairing.remoteBaseUrl,
           deviceCode: reversePairing.deviceCode,
           deviceName: reversePairing.deviceName,
         })
-        if (isCancelled) return
 
+        // Handle approval even if sync:data-changed flipped `connected` while initial sync ran.
         if (res.status === "approved" && res.config) {
           const current = await loadConfig()
           if (mountedRef.current && current?.connected) {
             setReversePairing(null)
-            onSuccess?.(res.message || "Device connected.")
-            onConnected?.()
+            if (res.initialSyncSucceeded === false) {
+              onErrorRef.current?.(res.message || "Device connected, but the initial sync failed.")
+            } else {
+              onSuccessRef.current?.(res.message || "Device connected.")
+            }
+            onConnectedRef.current?.()
           }
-        } else if (res.status === "expired") {
+          return
+        }
+
+        if (isCancelled) return
+
+        if (res.status === "expired" || res.status === "claimed") {
           void startReversePairing()
-        } else if (res.status === "denied") {
+          return
+        }
+        if (res.status === "denied") {
           setInitiateError("Device pairing was denied by the administrator.")
           setReversePairing(null)
+          return
+        }
+        if (res.status === "error") {
+          setInitiateError(res.error || "Could not verify device authorization.")
+          setReversePairing(null)
+          return
+        }
+        if (res.slowDown) {
+          currentIntervalMs = Math.min(15_000, currentIntervalMs + 3_000)
         }
       } catch {
         // Silent retry on transient network error
+      } finally {
+        isPollingRef.current = false
       }
+      scheduleNext(currentIntervalMs)
     }
 
-    const timer = setInterval(() => {
-      void poll()
-    }, pollIntervalMs)
+    scheduleNext(currentIntervalMs)
 
     return () => {
       isCancelled = true
-      clearInterval(timer)
+      if (timer) clearTimeout(timer)
     }
   }, [
     enabled,
@@ -264,8 +316,6 @@ export function useCloudPairing({
     cloudConfigStatus,
     loadConfig,
     startReversePairing,
-    onSuccess,
-    onConnected,
   ])
 
   useEffect(() => {
@@ -297,8 +347,10 @@ export function useCloudPairing({
   ])
 
   const handlePair = useCallback(async () => {
-    onError?.(null)
-    onSuccess?.("")
+    if (manualPairingInFlightRef.current) return
+    manualPairingInFlightRef.current = true
+    onErrorRef.current?.(null)
+    onSuccessRef.current?.("")
     setBusyAction("pairing")
     try {
       const result = await window.electronAPI.sync.pairDevice({
@@ -315,26 +367,20 @@ export function useCloudPairing({
       if (!mountedRef.current) return
       setPairingCode("")
       if (result.initialSyncSucceeded === false) {
-        onError?.(result.message || "Device connected, but initial sync failed.")
+        onErrorRef.current?.(result.message || "Device connected, but initial sync failed.")
       } else {
-        onSuccess?.(result.message || "Device connected.")
+        onSuccessRef.current?.(result.message || "Device connected.")
       }
-      onConnected?.()
+      onConnectedRef.current?.()
     } catch (error) {
-      onError?.(error instanceof Error ? error.message : "Could not connect this desktop.")
+      onErrorRef.current?.(
+        error instanceof Error ? error.message : "Could not connect this desktop.",
+      )
     } finally {
+      manualPairingInFlightRef.current = false
       setBusyAction(null)
     }
-  }, [
-    remoteBaseUrl,
-    pairingCode,
-    deviceName,
-    loadConfig,
-    setBusyAction,
-    onError,
-    onSuccess,
-    onConnected,
-  ])
+  }, [remoteBaseUrl, pairingCode, deviceName, loadConfig, setBusyAction])
 
   return {
     reversePairing,

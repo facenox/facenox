@@ -60,7 +60,12 @@ async def remote_wipe_data(
     1. Clear all biometric face templates.
     2. Clear all attendance records, sessions, and events.
     """
+    session = getattr(repo, "session", None)
+    sync_info = getattr(session, "info", None)
     try:
+        if isinstance(sync_info, dict):
+            sync_info["sync_import"] = True
+
         # 1. Clear face database via face_recognizer first
         from api.recognition_deps import get_face_recognizer
 
@@ -74,14 +79,26 @@ async def remote_wipe_data(
         # 2. Clear attendance records from DB
         results = await repo.clear_all_attendance_data()
 
+        # Remote wipe is a local kiosk clear — never propagate these deletions back to Cloud.
+        if session is not None:
+            from sqlalchemy import update as sa_update
+            from database.models import AttendanceGroup, AttendanceMember, Face
+
+            for model in (AttendanceGroup, AttendanceMember, Face):
+                await session.execute(
+                    repo._apply_org_scope(
+                        sa_update(model).values(sync_dirty=False), model
+                    )
+                )
+
         await repo.add_audit_log(
             action="REMOTE_WIPE_EXECUTED",
             target_type="system",
             target_id="all_data",
             details=f"Remote wipe triggered. Records cleared: {results.get('records_deleted', 0)}. Biometrics cleared: {face_result.get('success', False)}",
         )
-        if hasattr(repo, "session") and repo.session is not None:
-            await repo.session.commit()
+        if session is not None:
+            await session.commit()
 
         return SuccessResponse(
             message="Remote wipe completed. Local attendance records and face templates were removed."
@@ -90,6 +107,9 @@ async def remote_wipe_data(
     except Exception as e:
         logger.error(f"Error during remote wipe: {e}")
         raise HTTPException(status_code=500, detail=f"Wipe failed: {str(e)}")
+    finally:
+        if isinstance(sync_info, dict):
+            sync_info.pop("sync_import", None)
 
 
 @router.post("/unpair", response_model=SuccessResponse)
@@ -101,9 +121,9 @@ async def unpair_local_database(
 ):
     """Reset database organization settings to unlock standalone offline operations."""
     try:
-        await repo.unassign_organization_id(
-            org_id=x_facenox_organization or repo.organization_id
-        )
+        target_org = (x_facenox_organization or "").strip() or repo.organization_id
+        await repo.unassign_organization_id(org_id=target_org)
+        repo.organization_id = None
         await repo.session.execute(
             update(AttendanceSettings)
             .where(AttendanceSettings.organization_id.is_(None))
@@ -330,14 +350,20 @@ async def import_metadata(
                     if m.person_id not in {x.person_id for x in request.members}
                 )
         for gid in group_ids:
-            group = await repo.get_group(gid)
+            group_query = repo._apply_org_scope(
+                select(AttendanceGroup).where(AttendanceGroup.id == gid),
+                AttendanceGroup,
+            )
+            group = (await repo.session.execute(group_query)).scalar_one_or_none()
             if group and group.remote_id:
                 members = await repo.get_group_members(gid)
                 member_ids.update(m.person_id for m in members)
-                await repo.delete_group(gid)
+                if not group.is_deleted:
+                    await repo.delete_group(gid)
                 group.sync_dirty = False
         # Group tombstones also suppress pending member mutations/enrollments.
         deleted_groups = {g.id for g in request.groups if not g.is_active} | group_ids
+        deleted_group_member_ids = set()
         if deleted_groups:
             q = repo._apply_org_scope(
                 select(AttendanceMember).where(
@@ -345,16 +371,17 @@ async def import_metadata(
                 ),
                 AttendanceMember,
             )
-            member_ids.update(
+            deleted_group_member_ids = {
                 m.person_id for m in (await repo.session.execute(q)).scalars()
-            )
+            }
+            member_ids.update(deleted_group_member_ids)
         for pid in member_ids:
             q = repo._apply_org_scope(
                 select(AttendanceMember).where(AttendanceMember.person_id == pid),
                 AttendanceMember,
             )
             member = (await repo.session.execute(q)).scalar_one_or_none()
-            if member and member.remote_id:
+            if member and (member.remote_id or pid in deleted_group_member_ids):
                 await repo.remove_member(pid)
                 member.sync_dirty = False
         # Member removal has erased local bytes. Do not echo downloaded deletions.
