@@ -107,7 +107,7 @@ async function fetchLatestRelease(): Promise<ReleaseFetchResult> {
 }
 
 export async function checkForUpdates(force = false): Promise<UpdateInfo> {
-  // Deduplicate concurrent calls — piggyback on an in-flight check instead
+  // Deduplicate concurrent calls; piggyback on an in-flight check instead
   // of issuing a second API request.
   if (pendingCheckPromise) {
     return pendingCheckPromise

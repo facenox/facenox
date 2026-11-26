@@ -312,7 +312,7 @@ export function FaceAssignmentGrid({
         )}
       </div>
 
-      {/* Face grid — auto-fill, cards fill available width */}
+      {/* Face grid: auto-fill, cards fill available width */}
       <div
         className="grid gap-x-5 gap-y-7"
         style={{ gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))" }}>
@@ -331,7 +331,7 @@ export function FaceAssignmentGrid({
 
           return (
             <div key={face.faceId} className="group flex flex-col gap-2">
-              {/* Image — full bleed, rounded, no border */}
+              {/* Image: full bleed, rounded, no border */}
               <div className="relative aspect-square overflow-hidden rounded-xl bg-white/[0.02]">
                 <img
                   src={face.previewUrl}
@@ -356,7 +356,7 @@ export function FaceAssignmentGrid({
                   </div>
                 )}
 
-                {/* Quality warning — bottom overlay strip */}
+                {/* Quality warning: bottom overlay strip */}
                 {!face.isAcceptable && (
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-amber-950/90 to-transparent px-3 py-2.5">
                     <div className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-300">

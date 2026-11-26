@@ -78,7 +78,7 @@ _Data and storage management panel detailing system clock accuracy validation, a
 
 ## Why Facenox
 
-Facenox records attendance with a standard computer and webcam. Face detection, matching, and liveness verification run locally on your machine—even when internet access is unavailable.
+Facenox records attendance with a standard computer and webcam. Face detection, matching, and liveness verification run locally on your machine, even when internet access is unavailable.
 
 - **Privacy by design:** Raw camera frames are never stored or uploaded, and biometric templates stay encrypted at rest. See [privacy documentation](docs/PRIVACY.md).
 - **Works offline:** Record attendance continuously during internet disruptions; sync resumes automatically when connectivity returns.

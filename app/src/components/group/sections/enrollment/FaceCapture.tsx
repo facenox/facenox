@@ -267,7 +267,7 @@ export function FaceCapture({
           setSuccessMessage(null)
           setSelectedMemberId("")
           resetFrames()
-          // Close the overlay entirely — go back to the main members list
+          // Close the overlay entirely, go back to the main members list
           resetEnrollment()
         }}
         title="Success"
@@ -289,7 +289,7 @@ export function FaceCapture({
                 setSuccessMessage(null)
                 setSelectedMemberId("")
                 resetFrames()
-                // Close the overlay entirely — go back to the main members list
+                // Close the overlay entirely, go back to the main members list
                 resetEnrollment()
               }}
               className="rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-5 py-1.5 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/30">

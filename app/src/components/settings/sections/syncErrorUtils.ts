@@ -116,7 +116,7 @@ export function parseSyncError(err: string | null): ParsedSyncError {
   if (isOfflineError(withoutTelemetry)) {
     return {
       isPlanQuota: false,
-      title: "Offline — sync paused",
+      title: "Offline, sync paused",
       description:
         "No internet connection. Attendance continues working locally and updates will sync once online.",
       technicalDetails: withoutTelemetry,

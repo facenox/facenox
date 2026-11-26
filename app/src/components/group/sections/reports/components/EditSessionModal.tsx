@@ -41,7 +41,7 @@ interface EditSessionModalProps {
 
 /**
  * Attendance correction modal.
- * Design: single-column, no nested panels — uses whitespace and a single
+ * Design: single-column, no nested panels: uses whitespace and a single
  * horizontal divider to separate sections. Selection cards are compact
  * and flat. All containers were removed to avoid the "box inside a box" feel.
  */
@@ -247,7 +247,7 @@ export function EditSessionModal({
       <div className="mt-1">
         {/* ── Scrollable Form Body (Close 'X' stays completely static) ───── */}
         <div className="custom-scroll -mx-5 max-h-[50vh] space-y-5 overflow-y-auto px-5 pb-2">
-          {/* ── Original snapshot — no box, just a quiet grid ──────────────── */}
+          {/* ── Original snapshot (no box, just a quiet grid) ──────────────── */}
           <div>
             <p className="mb-3 text-[10px] font-semibold tracking-widest text-white/25 uppercase">
               Original ·{" "}
@@ -292,7 +292,7 @@ export function EditSessionModal({
 
           <div className="border-t border-white/[0.05]" />
 
-          {/* ── Status — compact radio cards, no heavy borders ─────────────── */}
+          {/* ── Status: compact radio cards, no heavy borders ─────────────── */}
           <div className="space-y-2">
             <p className="text-[10px] font-semibold tracking-widest text-white/30 uppercase">
               New status

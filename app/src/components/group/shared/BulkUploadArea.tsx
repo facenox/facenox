@@ -18,7 +18,7 @@ export function BulkUploadArea({
   if (uploadedCount > 0) {
     return (
       <div className="mb-6 flex items-center justify-between">
-        {/* Left — status */}
+        {/* Left: status */}
         <div className="flex items-center gap-3">
           <div className="flex h-5 w-5 shrink-0 items-center justify-center">
             {isDetecting ?
@@ -32,7 +32,7 @@ export function BulkUploadArea({
           </span>
         </div>
 
-        {/* Right — actions */}
+        {/* Right: actions */}
         <div className="flex items-center gap-4">
           <Tooltip content="Remove all" position="top">
             <button

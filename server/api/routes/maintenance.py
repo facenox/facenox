@@ -79,7 +79,7 @@ async def remote_wipe_data(
         # 2. Clear attendance records from DB
         results = await repo.clear_all_attendance_data()
 
-        # Remote wipe is a local kiosk clear — never propagate these deletions back to Cloud.
+        # Remote wipe is a local kiosk clear; never propagate these deletions back to Cloud.
         if session is not None:
             from sqlalchemy import update as sa_update
             from database.models import AttendanceGroup, AttendanceMember, Face

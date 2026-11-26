@@ -16,7 +16,7 @@ export function EnrollmentResults({
 }: EnrollmentResultsProps) {
   return (
     <div className="flex flex-col gap-8">
-      {/* Summary row — plain numbers, no cards */}
+      {/* Summary row: plain numbers, no cards */}
       <div className="flex items-baseline gap-6">
         <div>
           <div className="text-4xl font-light text-white tabular-nums">{successCount}</div>
@@ -68,7 +68,7 @@ export function EnrollmentResults({
         </div>
       )}
 
-      {/* Done — plain text button */}
+      {/* Done: plain text button */}
       <button
         onClick={onClose}
         className="text-left text-[11px] font-semibold text-white/35 transition-colors hover:text-white/60">

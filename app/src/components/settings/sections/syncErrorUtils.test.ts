@@ -58,7 +58,7 @@ describe("syncErrorUtils", () => {
 
     it("softens offline and generic failures instead of alarming phrasing", () => {
       const offline = parseSyncError("TypeError: fetch failed")
-      expect(offline.title).toBe("Offline — sync paused")
+      expect(offline.title).toBe("Offline, sync paused")
       expect(offline.description).toContain("Attendance continues working locally")
 
       const generic = parseSyncError("Sync rejected: Invalid device token")

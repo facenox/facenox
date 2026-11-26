@@ -502,7 +502,7 @@ async def test_import_metadata_preserves_local_groups_and_empty_pull_safety(
         )
         assert lf_res.scalars().first() is not None
 
-    # 2. Test pull with other cloud groups — local-only group must still NOT be pruned
+    # 2. Test pull with other cloud groups; local-only group must still NOT be pruned
     partial_payload = {
         "groups": [{"id": "cloud-group-1", "name": "Cloud Group 1", "is_active": True}],
         "members": [

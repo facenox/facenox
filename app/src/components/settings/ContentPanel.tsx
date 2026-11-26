@@ -230,7 +230,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   const openCreateGroup = useGroupUIStore((state) => state.openCreateGroup)
   const closeCreateGroup = useGroupUIStore((state) => state.closeCreateGroup)
 
-  /** Audit log export — owned here so the page header can surface the action. */
+  /** Audit log export: owned here so the page header can surface the action. */
   const handleExportAuditLog = useCallback(
     async (startDate?: string, endDate?: string) => {
       try {

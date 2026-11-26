@@ -1,6 +1,6 @@
 @layer base {
   button {
-    /* True neutral reset — visual styling handled by btn-* classes or Tailwind utilities */
+    /* True neutral reset: visual styling handled by btn-* classes or Tailwind utilities */
     border: none;
     padding: 0;
     background: transparent;

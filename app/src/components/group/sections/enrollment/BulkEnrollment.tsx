@@ -67,7 +67,7 @@ export function BulkEnrollment({
 
   return (
     <div className={`relative flex h-full flex-col overflow-hidden ${className ?? ""}`}>
-      {/* Duplicate files dialog — floating, minimal */}
+      {/* Duplicate files dialog: floating, minimal */}
       {pendingDuplicates && (
         <>
           <div className="absolute inset-0 z-40 bg-black/60" />
@@ -198,7 +198,7 @@ export function BulkEnrollment({
         )}
       </div>
 
-      {/* Sticky bottom — enroll CTA, when faces are assigned or ready */}
+      {/* Sticky bottom: enroll CTA, when faces are assigned or ready */}
       {readyCount > 0 && !enrollmentResults && (
         <div className="shrink-0 px-8 py-4">
           <button

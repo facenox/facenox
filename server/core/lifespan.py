@@ -83,7 +83,7 @@ async def lifespan(app: FastAPI):
             emit_startup_progress(step, "Preparing face recognition")
             return result
 
-        # All 3 ONNX model constructors run in parallel — each calls
+        # All 3 ONNX model constructors run in parallel; each calls
         # init_*_session() which is the heavyweight disk+memory operation
         face_detector, liveness_detector, face_recognizer = await asyncio.gather(
             _load_with_progress(_load_face_detector),

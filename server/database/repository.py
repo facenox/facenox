@@ -1175,7 +1175,7 @@ class AttendanceRepository:
         )
         sessions_deleted = sessions_count_result.scalar() or 0
 
-        # Bulk DELETE — single SQL statement, no per-row autoflush.
+        # Bulk DELETE: single SQL statement, no per-row autoflush.
         # synchronize_session="evaluate" evicts matched objects from the session
         # identity map in Python, keeping session state consistent at zero extra
         # DB round-trips (evaluate is free when the session is freshly created).

@@ -314,7 +314,7 @@ export class BackendProcessManager {
           }
         }
       } catch {
-        // log file doesn't exist yet — fine
+        // log file doesn't exist yet (ok)
       }
 
       if (this.logStream) {

@@ -574,7 +574,7 @@ export function Attendance({
                   transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
                   className="overflow-hidden">
                   <div className="flex flex-col pb-1">
-                    {/* Single 2-Step PIN Row — ├─ connector */}
+                    {/* Single 2-Step PIN Row ├─ connector */}
                     <div className="relative flex flex-wrap items-center justify-between gap-3 py-2 pl-4">
                       <div className="pointer-events-none absolute inset-y-0 left-0 border-l border-white/10" />
                       <div className="pointer-events-none absolute top-1/2 left-0 w-3 border-b border-white/10" />
@@ -669,7 +669,7 @@ export function Attendance({
                       </div>
                     </div>
 
-                    {/* Recovery Key — └─ connector (last item, spine ends here) */}
+                    {/* Recovery Key └─ connector (last item, spine ends here) */}
                     <div className="relative flex flex-wrap items-center justify-between gap-3 py-2 pl-4">
                       <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
                       <div className="flex items-center gap-1.5">

@@ -31,7 +31,7 @@ class UpdaterService {
       if (info?.cachedInfo) {
         // Always fetch the runtime version to recompute `hasUpdate`.
         // We cannot trust the persisted `hasUpdate` value because `currentVersion`
-        // changes on every install — the cached conclusion is only valid for the
+        // changes on every install, so the cached conclusion is only valid for the
         // version it was computed for. `latestVersion` and `lastChecked` are still
         // valid raw facts and are preserved.
         const currentVersion = await window.electronAPI.updater.getVersion().catch(() => null)
@@ -40,7 +40,7 @@ class UpdaterService {
           const hasUpdate = compareVersions(info.cachedInfo.latestVersion, currentVersion) > 0
           this.cachedUpdateInfo = { ...info.cachedInfo, currentVersion, hasUpdate }
         } else {
-          // IPC unavailable — load persisted value as-is rather than silently dropping it.
+          // IPC unavailable: load persisted value as-is rather than silently dropping it.
           this.cachedUpdateInfo = info.cachedInfo
         }
 

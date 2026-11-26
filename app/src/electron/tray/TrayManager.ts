@@ -28,7 +28,7 @@ export class TrayManager {
     if (!state.tray || state.tray.isDestroyed()) return
 
     if (version) {
-      state.tray.setToolTip(`Facenox — Update v${version} available`)
+      state.tray.setToolTip(`Facenox - Update v${version} available`)
     } else {
       state.tray.setToolTip("Facenox")
     }
