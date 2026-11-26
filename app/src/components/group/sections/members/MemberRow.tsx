@@ -11,7 +11,7 @@ interface MemberRowProps {
   onToggleSelect?: (personId: string) => void
   onEdit?: (member: AttendanceMember & { displayName?: string }) => void
   onDelete?: (member: AttendanceMember & { displayName?: string }) => void
-  onResetFace: (member: AttendanceMember & { displayName?: string }) => void
+  onResetFace?: (member: AttendanceMember & { displayName?: string }) => void
 }
 
 export const MemberRow = React.memo(
@@ -80,7 +80,7 @@ export const MemberRow = React.memo(
                   </Tooltip>
                 )}
 
-                {isEnrolled && (
+                {isEnrolled && onResetFace && (
                   <Tooltip content="Remove enrollment">
                     <button
                       onClick={(e) => {
@@ -130,7 +130,10 @@ export const MemberRow = React.memo(
     return (
       prevProps.member === nextProps.member &&
       prevProps.isSelected === nextProps.isSelected &&
-      prevProps.isSelectionMode === nextProps.isSelectionMode
+      prevProps.isSelectionMode === nextProps.isSelectionMode &&
+      prevProps.onEdit === nextProps.onEdit &&
+      prevProps.onDelete === nextProps.onDelete &&
+      prevProps.onResetFace === nextProps.onResetFace
     )
   },
 )

@@ -13,6 +13,7 @@ import { FaceCapture } from "./enrollment/FaceCapture"
 import { CameraQueue } from "./enrollment/CameraQueue"
 import { BulkEnrollment } from "./enrollment/BulkEnrollment"
 import { MemberRow } from "./members/MemberRow"
+import { useCloudSyncStatus } from "@/components/common/useCloudSyncStatus"
 
 interface MembersProps {
   group: AttendanceGroup
@@ -40,6 +41,7 @@ export function Members({
   const jumpToEnrollment = useGroupUIStore((state) => state.jumpToEnrollment)
   const showAddMemberModal = useGroupUIStore((state) => state.showAddMemberModal)
   const dialog = useDialog()
+  const { canManageDirectory } = useCloudSyncStatus()
 
   const [memberSearch, setMemberSearch] = useState("")
   const [enrollmentFilter, setEnrollmentFilter] = useState<"all" | "enrolled" | "non-enrolled">(
@@ -317,9 +319,13 @@ export function Members({
         <motion.div key="empty" className="relative flex h-full w-full flex-col">
           <EmptyState
             title="This group has no members"
-            description="Add, edit, and remove members to manage profiles and enrollment status."
+            description={
+              canManageDirectory ?
+                "Add, edit, and remove members to manage profiles and enrollment status."
+              : "Add and remove members from Facenox Cloud to manage this group."
+            }
             action={
-              onAdd ?
+              canManageDirectory && onAdd ?
                 {
                   label: "Add member",
                   onClick: onAdd,
@@ -503,7 +509,7 @@ export function Members({
                       </motion.div>
                     )}
 
-                    {selectedIds.size >= 2 && (
+                    {canManageDirectory && selectedIds.size >= 2 && (
                       <motion.button
                         key="delete"
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -639,9 +645,9 @@ export function Members({
                         isSelected={selectedIds.has(member.person_id)}
                         isSelectionMode={selectedIds.size >= 2}
                         onToggleSelect={toggleSelect}
-                        onEdit={onEdit}
-                        onDelete={setMemberToDelete}
-                        onResetFace={handleResetFace}
+                        onEdit={canManageDirectory ? onEdit : undefined}
+                        onDelete={canManageDirectory ? setMemberToDelete : undefined}
+                        onResetFace={canManageDirectory ? handleResetFace : undefined}
                       />
                     </div>
                   ))}

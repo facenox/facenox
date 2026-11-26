@@ -35,6 +35,7 @@ import {
 } from "@/components/main/hooks/useAttendanceGroups"
 import { ManualEntryModal } from "./ManualEntryModal"
 import { ManualCorrectionModal } from "./ManualCorrectionModal"
+import { useCloudSyncStatus } from "@/components/common/useCloudSyncStatus"
 
 interface AttendancePanelProps {
   handleSelectGroup: (group: AttendanceGroup) => void
@@ -375,6 +376,9 @@ export const AttendancePanel = memo(function AttendancePanel({
         formatAttendanceTimeInput(new Date(), attendanceTimezone),
     }
   }, [attendanceTimezone, currentGroup])
+
+  const { isPaired, isReady, allowKioskDirectoryManagement } = useCloudSyncStatus()
+  const isDirectoryLocked = isPaired && (!isReady || !allowKioskDirectoryManagement)
 
   const handleOpenSettingsForEnrollment = useCallback(() => {
     // Force active settings tab to "group" (Group Management) to override cached history
@@ -756,12 +760,14 @@ export const AttendancePanel = memo(function AttendancePanel({
                     <ScrollCenteredEmptyState>
                       <div className="flex flex-col items-center justify-center space-y-3 text-center">
                         <p className="text-xs text-white/50">This group has no members</p>
-                        <button
-                          onClick={handleOpenSettingsForEnrollment}
-                          className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
-                          <UserPlus className="size-3.5" />
-                          Add member
-                        </button>
+                        {!isDirectoryLocked && (
+                          <button
+                            onClick={handleOpenSettingsForEnrollment}
+                            className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
+                            <UserPlus className="size-3.5" />
+                            Add member
+                          </button>
+                        )}
                       </div>
                     </ScrollCenteredEmptyState>
                   : !groupMembers.some((m) => m.has_face_data) ?
@@ -793,7 +799,7 @@ export const AttendancePanel = memo(function AttendancePanel({
         onSuccess={refreshAttendanceData}
         members={groupMembers}
         presentPersonIds={todayPresentPersonIds}
-        onAddMember={handleOpenSettingsForEnrollment}
+        onAddMember={isDirectoryLocked ? undefined : handleOpenSettingsForEnrollment}
         currentGroup={currentGroup}
       />
       {recordToVoid && (

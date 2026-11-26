@@ -4,6 +4,7 @@ import { Plus } from "lucide-react"
 import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
 import { Members, Overview, Reports, GroupSettings } from "@/components/group/sections"
 import { EmptyState } from "@/components/group/shared"
+import { useCloudSyncStatus } from "@/components/common/useCloudSyncStatus"
 
 interface GroupContentProps {
   onMembersChange: () => void
@@ -30,6 +31,7 @@ function GroupContentComponent({
   const openAddMember = useGroupUIStore((state) => state.openAddMember)
   const openEditMember = useGroupUIStore((state) => state.openEditMember)
   const openCreateGroup = useGroupUIStore((state) => state.openCreateGroup)
+  const { canManageDirectory } = useCloudSyncStatus()
 
   const handleMembersChange = () => {
     onMembersChange()
@@ -62,7 +64,7 @@ function GroupContentComponent({
             : "Create a group to start organizing members and recording attendance."
           }
           action={
-            !hasGroups ?
+            !hasGroups && canManageDirectory ?
               {
                 label: "Create group",
                 onClick: openCreateGroup,
@@ -84,7 +86,11 @@ function GroupContentComponent({
             key={`overview-${selectedGroupId}`}
             {...motionProps}
             className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
-            <Overview group={selectedGroup} members={members} onAddMember={openAddMember} />
+            <Overview
+              group={selectedGroup}
+              members={members}
+              onAddMember={canManageDirectory ? openAddMember : undefined}
+            />
           </motion.div>
         )}
 
@@ -97,7 +103,7 @@ function GroupContentComponent({
               group={selectedGroup}
               onDaysTrackedChange={onDaysTrackedChange}
               onExportHandlersReady={onExportHandlersReady}
-              onAddMember={openAddMember}
+              onAddMember={canManageDirectory ? openAddMember : undefined}
             />
           </motion.div>
         )}
@@ -111,8 +117,8 @@ function GroupContentComponent({
               group={selectedGroup}
               members={members}
               onMembersChange={handleMembersChange}
-              onEdit={openEditMember}
-              onAdd={openAddMember}
+              onEdit={canManageDirectory ? openEditMember : undefined}
+              onAdd={canManageDirectory ? openAddMember : undefined}
               deselectMemberTrigger={deselectMemberTrigger}
               onHasSelectedMemberChange={onHasSelectedMemberChange}
             />

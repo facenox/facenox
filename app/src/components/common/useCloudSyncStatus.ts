@@ -2,9 +2,12 @@ import { refreshCloudSyncConfig, useCloudSyncConfig } from "@/services/cloudSync
 
 export function useCloudSyncStatus() {
   const { config, status, error } = useCloudSyncConfig()
+  const isPaired = Boolean(config?.connected)
+  const isReady = status === "ready" && config?.policyReady !== false
+  const allowKioskDirectoryManagement = config?.allowKioskDirectoryManagement !== false
   return {
-    isPaired: Boolean(config?.connected),
-    isReady: status === "ready" && config?.policyReady !== false,
+    isPaired,
+    isReady,
     status,
     error,
     refresh: refreshCloudSyncConfig,
@@ -12,6 +15,7 @@ export function useCloudSyncStatus() {
     organizationId: config?.organizationId || "",
     organizationName: config?.organizationName || "",
     siteName: config?.siteName || "",
-    allowKioskDirectoryManagement: config?.allowKioskDirectoryManagement !== false,
+    allowKioskDirectoryManagement,
+    canManageDirectory: isReady && (!isPaired || allowKioskDirectoryManagement),
   }
 }
