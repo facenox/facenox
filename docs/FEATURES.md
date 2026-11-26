@@ -13,8 +13,8 @@ This page covers the shipped desktop feature set and the scope of the current Fa
 
 ### Attendance workflows
 
-- Create and manage groups.
-- Create, edit, and remove members.
+- Create and manage groups (when local directory management is enabled by organization policy).
+- Create, edit, and remove members (when local directory management is enabled by organization policy).
 - Record attendance events and attendance sessions.
 - Configure attendance timing behavior in settings.
 - Review historical attendance data and export reports.
@@ -40,13 +40,12 @@ This page covers the shipped desktop feature set and the scope of the current Fa
 
 ## Facenox Cloud Integration
 
-Facenox Cloud connects offline Facenox desktop kiosks to a unified cloud control plane for browser-based review of synced records, automated DTR reporting, and multi-location management.
+Facenox Cloud connects Facenox Desktop computers to a unified cloud control plane for browser-based review of synced records, automated DTR reporting, and multi-location management.
 
 ### What the desktop app supports
 
 - Store a custom Facenox Cloud server address (advanced)
-- Redeem a short-lived 8-character pairing code from Facenox Cloud
-- Connect a desktop instance to an organization and location
+- Link a desktop instance via 1-click browser sign-in (6-character device authorization) or a short-lived 8-character pairing code from Facenox Cloud
 - Show pairing state, last sync state, and sync messages
 - Run background auto-sync
 - Run manual sync on demand

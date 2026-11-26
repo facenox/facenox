@@ -12,25 +12,25 @@ Use the [Facenox download page](https://facenox.com/download) to check system re
 
 If your operating system blocks the app or installation fails, verify the download source and consult the release notes and [troubleshooting guide](TROUBLESHOOTING.md). On managed computers, ask the administrator about installation restrictions.
 
-## 2. Select a camera
+## 2. Connect Facenox Cloud on first launch
 
-Connect a compatible webcam or use the computer's built-in camera. Open Facenox, allow camera access when prompted, and select the camera. Check that the preview shows a clear face in consistent lighting.
-
-## 3. Enroll members
-
-Create a group and add the people who will use the attendance computer. Enroll their faces using the app's enrollment flow. Before collecting biometric data, establish your organization's privacy notices, access rules, and retention practices. See [Privacy and Data Handling](PRIVACY.md).
-
-## 4. Check the attendance workflow
-
-Review the entry/exit and attendance settings for your workflow. Scan an enrolled member and confirm that the expected record appears. Local enrollment, recognition, and attendance recording work without internet after installation. Keep the computer powered on and the app running when it needs to record attendance.
-
-## 5. Connect Facenox Cloud on first launch
-
-Sign in once with a free Facenox Cloud account during first-launch setup to link your computer to an organization and location. You can also generate an 8-character pairing code in Facenox Cloud and enter it in **Settings → Cloud sync**, or use the 6-character device authorization code flow. Pairing authorizes organization administrators to apply attendance policies and supported device commands, including local data wipe and admin-PIN reset; review **Privacy & data handling** before connecting.
+Sign in once with a free Facenox Cloud account during first-launch setup to link your computer to an organization and location, or approve the 6-character device code / QR link in your browser. You can also connect later or re-link via **Settings → Cloud sync** using an 8-character pairing code from Facenox Cloud. Pairing authorizes organization administrators to apply attendance policies and supported device commands, including local data wipe and admin-PIN reset; review **Privacy & data handling** before connecting.
 
 Cloud requires internet for pairing, syncing, and browser access. If the connection drops, the desktop continues recording locally and pending records sync when it reconnects.
 
 Facenox Cloud Free provides browser access and CSV export within its member, device, and history limits. Paid plans add capabilities such as PDF and Excel reports, additional devices, and encrypted face-template sync. Check [current plans](https://facenox.com/pricing) before choosing a setup.
+
+## 3. Select a camera
+
+Connect a compatible webcam or use the computer's built-in camera. Open Facenox, allow camera access when prompted, and select the camera. Check that the preview shows a clear face in consistent lighting.
+
+## 4. Enroll members
+
+Create a group and add the people who will use the attendance computer (when local directory management is enabled for your workspace; otherwise manage groups and members in Facenox Cloud). Enroll their faces using the app's enrollment flow. Before collecting biometric data, establish your organization's privacy notices, access rules, and retention practices. See [Privacy and Data Handling](PRIVACY.md).
+
+## 5. Check the attendance workflow
+
+Review the entry/exit and attendance settings for your workflow. Scan an enrolled member and confirm that the expected record appears. Local enrollment, recognition, and attendance recording work without internet after setup. Keep the computer powered on and the app running when it needs to record attendance.
 
 ## Keep a recovery copy
 

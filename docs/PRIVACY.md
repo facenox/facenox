@@ -124,7 +124,7 @@ Cloud synchronization, service logs, security audit logs, and optional product a
 
 ## Offline Operation
 
-The core desktop workflow remains offline-capable:
+Once paired during setup (or on existing legacy standalone installs), the core desktop workflow runs offline:
 
 - enrollment works locally
 - recognition works locally

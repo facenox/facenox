@@ -78,18 +78,18 @@ _Data and storage management panel detailing system clock accuracy validation, a
 
 ## Why Facenox
 
-Facenox records attendance with a standard computer and webcam. Face matching runs locally on your machine with zero internet dependency after initial Cloud setup.
+Facenox records attendance with a standard computer and webcam. Face detection, matching, and liveness verification run locally on your machine—even when internet access is unavailable.
 
 - **Privacy by design:** Raw camera frames are never stored or uploaded, and biometric templates stay encrypted at rest. See [privacy documentation](docs/PRIVACY.md).
-- **Offline-capable kiosk:** Record attendance continuously even during internet disruptions; sync resumes automatically when connectivity returns.
-- **Unified Cloud dashboard:** Link your Facenox Cloud workspace once on setup to monitor sites, manage directories, and export attendance and DTR reports from any browser.
+- **Works offline:** Record attendance continuously during internet disruptions; sync resumes automatically when connectivity returns.
+- **Unified Cloud dashboard:** Link a free Facenox Cloud workspace during setup to monitor sites, manage directories, and export attendance and DTR reports from any browser.
 - **No GPU required:** Real-time matching verified on standard CPUs.
 
 ## Features
 
 - **On-Device AI Inference:** Local face detection and recognition with ByteTrack multi-subject tracking and liveness verification.
 - **Cross-Platform:** Supports Windows, macOS, and Linux.
-- **Cloud Directory & Sync:** Manage members, groups, and kiosk policies from Facenox Cloud, with AES-256-GCM encrypted face-template sync across paired computers on eligible plans.
+- **Cloud Directory & Sync:** Manage members, groups, and device policies from Facenox Cloud, with AES-256-GCM encrypted face-template sync across paired computers on eligible plans.
 - **Attendance Tracking:** Automated session recording and CSV/JSON exports.
 - **Secure Storage:** Encrypted local biometric storage and password-protected `.facenox` backups.
 
@@ -164,7 +164,7 @@ Protect access to the computer and keep password-protected `.facenox` backup arc
 
 ## Download
 
-Download the latest prebuilt binaries for your platform:
+Download the latest prebuilt binaries for your platform (a free Facenox Cloud account is required on first launch to link your workspace):
 
 <p align="left">
   <a href="https://github.com/facenox/facenox/releases/latest"><img src="https://img.shields.io/badge/Windows-Download_.exe-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows"></a>

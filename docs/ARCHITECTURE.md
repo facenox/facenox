@@ -6,7 +6,7 @@ Facenox is a desktop-first system. Recognition, attendance, and biometric storag
 
 - Primary runtime: desktop app
 - Primary database: local SQLite
-- Network requirement for core attendance: none
+- Network requirement for day-to-day attendance: none (initial pairing, sync, and Cloud controls require internet)
 - Face recognition: local; encrypted templates may sync between paired devices on supported Cloud plans
 - Cloud integration: separate Facenox Cloud deployment for first-launch pairing, reporting, device management, and encrypted template relay
 
@@ -64,32 +64,31 @@ graph TD
 
 ## Data Flow
 
-### Desktop-only flow
+### Local recognition and attendance flow
 
 1. The renderer captures camera frames and attendance input.
 2. The renderer sends binary image data to the local FastAPI backend.
 3. The backend runs detection, anti-spoofing, and recognition locally.
 4. The backend writes results to the local SQLite database.
 
-This path does not require internet access.
+Day-to-day recognition and attendance capture do not require internet access.
 
 Packaged builds perform a non-blocking update check against GitHub after startup and no more than once every 24 hours. Online clock comparison is user-triggered from settings; routine clock protection and attendance processing do not contact a public time service.
 
 ### Facenox Cloud integration flow
 
-1. An admin generates a pairing code in Facenox Cloud.
-2. The desktop app stores the Cloud server address and redeems the pairing code.
-3. The desktop receives an organization ID, site ID, device ID, and device token.
-4. The desktop exports a local directory and attendance snapshot.
-5. The Electron sync manager wraps that export in a sync envelope and sends it to `POST /api/sync/push`.
-6. Push synchronizes dirty local groups, members, attendance, and biometric deletion markers with Cloud under revision control.
-7. Next, the sync manager pulls Cloud updates from `GET /api/sync/pull` and imports them locally via `POST /attendance/import-metadata`. Even if push fails (e.g. quota limits), pulls continue so Cloud updates remain accessible.
+1. During onboarding (or in **Settings → Cloud sync**), the desktop initiates browser device-authorization pairing (6-character code / QR link), or the user redeems an 8-character pairing code generated in Facenox Cloud.
+2. The desktop receives an organization ID, site ID, device ID, and device token (stored via Electron `safeStorage`).
+3. The desktop exports a local directory and attendance snapshot.
+4. The Electron sync manager wraps that export in a sync envelope and sends it to `POST /api/sync/push`.
+5. Push synchronizes dirty local groups, members, attendance, and biometric deletion markers with Cloud under revision control.
+6. Next, the sync manager pulls Cloud updates from `GET /api/sync/pull` and imports them locally via `POST /attendance/import-metadata`. Even if push fails (e.g. quota limits), pulls continue so Cloud updates remain accessible.
 
 The desktop remains the system of record for biometrics and local attendance capture.
 
 Pairing also enables Cloud policies and authenticated remote administration. The current client can receive commands to wipe local Facenox data, reset the local admin PIN, or request an update check, and it returns the result to Cloud. These controls are separate from synchronization telemetry and require explicit disclosure and Cloud-side authorization.
 
-Local directory management (creating, editing, and deleting groups/members) is fully supported while paired. Edits are revisioned: local changes are marked dirty and pushed to Cloud along with acknowledged revisions. Cloud updates advance revisions and are applied locally without overwriting in-flight local modifications.
+When enabled by organization policy (`allowKioskDirectoryManagement`), local directory management (creating, editing, and deleting groups/members, as well as directory restoration) is supported while paired: local edits are revisioned, marked dirty, and pushed to Cloud with conflict detection, while Cloud updates advance revisions cleanly. Organizations can also disable local directory management via Cloud policy to manage directories exclusively from Facenox Cloud.
 
 On supported Cloud plans, encrypted face templates can sync between computers paired to the same location. Templates are encrypted before upload and decrypted by destination computers. Cloud stores encrypted templates and manages location keys. Server-side location transfers can decrypt and re-encrypt templates with the destination location's key.
 
