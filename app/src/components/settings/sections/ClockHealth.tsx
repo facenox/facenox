@@ -128,7 +128,8 @@ export function ClockHealth({
           </div>
           <AttendanceTimezonePicker
             value={resolvedAttendanceTimeZone}
-            disabled={cloudConfigStatus !== "ready" || isPaired}
+            readOnly={isPaired}
+            disabled={cloudConfigStatus !== "ready"}
             onChange={(timeZone) => onAttendanceTimezoneChange?.(timeZone)}
           />
         </div>

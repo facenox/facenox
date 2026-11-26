@@ -104,7 +104,7 @@ describe("WindowBar", () => {
     expect(cleanupUnmaximize).toHaveBeenCalledTimes(1)
   })
 
-  it("shows Sync issue instead of Connect Facenox Cloud when a saved pairing has a credential error", async () => {
+  it("shows Sync paused instead of Connect Facenox Cloud when a saved pairing has a credential error", async () => {
     getElectronAPIMock().sync.getConfig.mockResolvedValue(
       createSyncConfig({
         connected: false,
@@ -120,7 +120,22 @@ describe("WindowBar", () => {
 
     render(<WindowBar />)
 
-    expect(await screen.findByText("Sync issue")).toBeInTheDocument()
+    expect(await screen.findByText("Sync paused")).toBeInTheDocument()
     expect(screen.queryByText("Connect Facenox Cloud")).not.toBeInTheDocument()
+  })
+
+  it("shows calm Offline badge for network errors instead of Sync paused", async () => {
+    getElectronAPIMock().sync.getConfig.mockResolvedValue(
+      createSyncConfig({
+        connected: true,
+        lastSyncStatus: "error",
+        lastSyncMessage: "TypeError: fetch failed",
+      }),
+    )
+
+    render(<WindowBar />)
+
+    expect(await screen.findByText("Offline")).toBeInTheDocument()
+    expect(screen.queryByText("Sync paused")).not.toBeInTheDocument()
   })
 })

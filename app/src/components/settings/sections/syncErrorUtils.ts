@@ -101,6 +101,16 @@ export function parseSyncError(err: string | null): ParsedSyncError {
     }
   }
 
+  if (isOfflineError(withoutTelemetry)) {
+    return {
+      isPlanQuota: false,
+      title: "Offline — sync paused",
+      description:
+        "No internet connection. Attendance continues working locally and updates will sync once online.",
+      technicalDetails: withoutTelemetry,
+    }
+  }
+
   const cleaned = withoutTelemetry
     .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
     .replace(/^Sync rejected:\s*/i, "")
@@ -109,7 +119,7 @@ export function parseSyncError(err: string | null): ParsedSyncError {
 
   return {
     isPlanQuota: false,
-    title: "Sync issue",
+    title: "Sync paused",
     description: cleaned || "An unexpected error occurred during sync.",
   }
 }

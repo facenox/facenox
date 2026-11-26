@@ -6,6 +6,7 @@ interface AttendanceTimezonePickerProps {
   value: string
   onChange: (timeZone: string) => void
   disabled?: boolean
+  readOnly?: boolean
 }
 
 interface TimeZoneDetail {
@@ -64,12 +65,22 @@ export function AttendanceTimezonePicker({
   value,
   onChange,
   disabled = false,
+  readOnly = false,
 }: AttendanceTimezonePickerProps) {
   const options = useMemo<DropdownOption<string>[]>(
     () => supportedTimeZones(value).map((timeZone) => ({ value: timeZone, label: timeZone })),
     [value],
   )
   const selected = timeZoneDetails(value)
+
+  if (readOnly) {
+    return (
+      <div aria-label="Attendance timezone" className="flex shrink-0 flex-col items-end text-right">
+        <span className="text-xs font-medium text-white/90">{selected.label}</span>
+        <span className="mt-0.5 font-mono text-[11px] text-white/45">{value}</span>
+      </div>
+    )
+  }
 
   return (
     <Dropdown

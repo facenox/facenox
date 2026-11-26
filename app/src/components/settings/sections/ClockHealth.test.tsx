@@ -44,7 +44,9 @@ describe("ClockHealth status", () => {
       />,
     )
 
-    expect(screen.getByRole("button", { name: "Attendance timezone" })).toBeDisabled()
+    expect(screen.queryByRole("button", { name: "Attendance timezone" })).not.toBeInTheDocument()
+    expect(screen.getByText("Manila (UTC+08:00)")).toBeInTheDocument()
+    expect(screen.getByText("Asia/Manila")).toBeInTheDocument()
     expect(screen.getByText("Managed by your Cloud location.")).toBeInTheDocument()
   })
 

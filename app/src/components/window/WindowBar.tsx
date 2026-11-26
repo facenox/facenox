@@ -10,10 +10,12 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
+  WifiOff,
 } from "lucide-react"
 import { Tooltip } from "@/components/shared"
 import { updaterService } from "@/services"
 import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
+import { isOfflineError } from "@/components/settings/sections/syncErrorUtils"
 import type { UpdateInfo } from "@/types/updater"
 import { Modal, Spinner } from "@/components/common"
 import { useUIStore } from "@/components/main/stores/uiStore"
@@ -356,30 +358,44 @@ export default function WindowBar() {
             let tooltipContent = `${lastSyncText} ${queueText} Open Cloud sync for details.`
 
             if (syncConfig.lastSyncStatus === "error" || syncConfig.credentialError) {
-              badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
-              StatusIcon = AlertTriangle
-              iconColor = "text-amber-400"
+              const rawErr = syncConfig.credentialError || syncConfig.lastSyncMessage || ""
               const isQuota =
                 syncConfig.lastSyncMessage?.includes("Plan limit exceeded") ||
                 syncConfig.lastSyncMessage?.includes("PLAN_QUOTA_HARD_EXCEEDED") ||
                 syncConfig.lastSyncMessage?.includes("Plan member limit exceeded") ||
                 syncConfig.lastSyncMessage?.includes("Total active members reached")
+              const isOffline =
+                !syncConfig.credentialError &&
+                (isOfflineError(rawErr) ||
+                  /\btimed out\b|ETIMEDOUT|aborted due to timeout/i.test(rawErr))
 
-              statusText = isQuota ? "Plan limit reached" : "Sync issue"
+              if (isOffline) {
+                badgeBorderClass = "text-white/50 hover:bg-white/5 hover:text-white/80"
+                StatusIcon = WifiOff
+                iconColor = "text-white/45"
+                statusText = "Offline"
+                tooltipContent =
+                  "Offline: Attendance continues working locally and will sync when back online. Click to open Cloud sync."
+              } else {
+                badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
+                StatusIcon = AlertTriangle
+                iconColor = "text-amber-400"
+                statusText = isQuota ? "Plan limit reached" : "Sync paused"
 
-              const cleanMsg = (
-                syncConfig.credentialError ||
-                syncConfig.lastSyncMessage ||
-                "The last sync could not complete."
-              )
-                .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
-                .replace(/^Sync rejected:\s*/i, "")
-                .replace(/^Error:\s*/i, "")
+                const cleanMsg = (
+                  syncConfig.credentialError ||
+                  syncConfig.lastSyncMessage ||
+                  "The last sync could not complete."
+                )
+                  .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
+                  .replace(/^Sync rejected:\s*/i, "")
+                  .replace(/^Error:\s*/i, "")
 
-              tooltipContent =
-                isQuota ?
-                  "Plan limit reached: Active members exceed your Cloud plan. Click to open Cloud sync."
-                : `Sync issue: ${cleanMsg} Click to open Cloud sync.`
+                tooltipContent =
+                  isQuota ?
+                    "Plan limit reached: Active members exceed your Cloud plan. Click to open Cloud sync."
+                  : `Sync paused: ${cleanMsg} Click to open Cloud sync.`
+              }
             }
 
             return (

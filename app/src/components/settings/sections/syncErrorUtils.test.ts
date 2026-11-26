@@ -55,5 +55,15 @@ describe("syncErrorUtils", () => {
         "Face sync needs attention: The operation was aborted due to timeout",
       )
     })
+
+    it("softens offline and generic failures instead of alarming phrasing", () => {
+      const offline = parseSyncError("TypeError: fetch failed")
+      expect(offline.title).toBe("Offline — sync paused")
+      expect(offline.description).toContain("Attendance continues working locally")
+
+      const generic = parseSyncError("Sync rejected: Invalid device token")
+      expect(generic.title).toBe("Sync paused")
+      expect(generic.description).toBe("Invalid device token")
+    })
   })
 })
