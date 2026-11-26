@@ -4,7 +4,7 @@ import { Modal, QRCodeView, Spinner } from "@/components/common"
 import { ErrorText } from "@/components/common/ErrorText"
 import { Tooltip } from "@/components/shared/Tooltip"
 import { motion, AnimatePresence } from "framer-motion"
-import { Check, Cloud, Copy, ExternalLink, RotateCw, Wifi, AlertCircle } from "lucide-react"
+import { Check, Copy, ExternalLink, RotateCw, Wifi, AlertCircle } from "lucide-react"
 import { useCloudSyncConfig, refreshCloudSyncConfig } from "@/services/cloudSyncState"
 import { getEffectiveRemoteUrl, useCloudPairing } from "@/hooks/useCloudPairing"
 import { isOfflineError } from "@/components/settings/sections/syncErrorUtils"
@@ -57,7 +57,6 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     const saved = cloudConfig?.remoteBaseUrl
     if (saved && !isOfficialCloudUrl(saved)) {
       setCustomEndpoint(saved)
-      setShowDevEndpoint(true)
     } else {
       setCustomEndpoint("")
     }
@@ -313,8 +312,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2.5 text-xs font-bold tracking-wide text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.98]">
-                <Cloud className="size-3.5" />
-                <span>Sign in with Facenox Cloud</span>
+                <span>Sign in</span>
                 <ExternalLink className="size-3" />
               </a>
 
@@ -430,17 +428,6 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     <Modal isOpen={isOpen} maxWidth="max-w-[540px]" hideCloseButton={true}>
       <div className="relative -m-5 overflow-hidden bg-[var(--bg-secondary)]">
         <div className="p-8 sm:p-10">
-          <div className="mb-5 flex items-center gap-2">
-            {steps.map((_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === step ? "w-6 bg-cyan-400" : "w-1.5 bg-white/15"
-                }`}
-              />
-            ))}
-          </div>
-
           <div className="mb-6 overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div
@@ -471,7 +458,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
             </AnimatePresence>
           </div>
 
-          <div className="mt-6 flex items-center justify-between">
+          <div className="relative mt-6 flex items-center justify-between">
             <button
               onClick={handleBack}
               disabled={step === 0}
@@ -480,6 +467,17 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
               }`}>
               Back
             </button>
+
+            <div className="pointer-events-none absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2">
+              {steps.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === step ? "w-6 bg-cyan-400" : "w-1.5 bg-white/15"
+                  }`}
+                />
+              ))}
+            </div>
 
             {!isLastStep && (
               <button
