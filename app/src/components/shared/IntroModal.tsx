@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useUIStore } from "@/components/main/stores/uiStore"
 import { Modal, QRCodeView, Spinner } from "@/components/common"
 import { ErrorText } from "@/components/common/ErrorText"
+import { Tooltip } from "@/components/shared/Tooltip"
 import { motion, AnimatePresence } from "framer-motion"
-import { Check, Cloud, ExternalLink, RotateCw, Wifi, AlertCircle } from "lucide-react"
+import { Check, Cloud, Copy, ExternalLink, RotateCw, Wifi, AlertCircle } from "lucide-react"
 import { useCloudSyncConfig, refreshCloudSyncConfig } from "@/services/cloudSyncState"
 import { getEffectiveRemoteUrl, useCloudPairing } from "@/hooks/useCloudPairing"
 import { isOfflineError } from "@/components/settings/sections/syncErrorUtils"
@@ -40,6 +41,14 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     "saving" | "pairing" | "disconnecting" | "syncing" | null
   >(null)
   const [pairError, setPairError] = useState<string | null>(null)
+  const [copiedPin, setCopiedPin] = useState(false)
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+    }
+  }, [])
 
   const isDevBuild = import.meta.env.DEV
 
@@ -170,7 +179,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
       content: (
         <div className="space-y-4">
           <p className="text-xs leading-relaxed text-white/70">
-            Sign in once to link this computer to your workspace. Afterward, the app works offline
+            Sign in once to link this computer to your organization. Afterward, the app works offline
             and syncs automatically whenever you&apos;re back online.
           </p>
 
@@ -313,9 +322,27 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                 <QRCodeView value={reversePairing.verificationUriComplete} size={96} />
                 <div className="space-y-1.5 text-left">
                   <p className="text-[11px] text-white/55">Or scan QR &amp; verify code:</p>
-                  <div className="inline-flex items-center gap-2 rounded-md bg-white/[0.05] px-3 py-1.5 font-mono text-lg font-bold tracking-[0.2em] text-white select-all">
-                    <span>{reversePairing.userCode.slice(0, 3)}</span>
-                    <span>{reversePairing.userCode.slice(3, 6)}</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="inline-flex items-center gap-2 rounded-md bg-white/[0.05] px-3 py-1.5 font-mono text-lg font-bold tracking-[0.2em] text-white select-all">
+                      <span>{reversePairing.userCode.slice(0, 3)}</span>
+                      <span>{reversePairing.userCode.slice(3, 6)}</span>
+                    </div>
+                    <Tooltip content={copiedPin ? "Copied" : "Copy code"} position="top">
+                      <button
+                        type="button"
+                        aria-label="Copy code"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(reversePairing.userCode)
+                          setCopiedPin(true)
+                          if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+                          copyTimerRef.current = setTimeout(() => setCopiedPin(false), 2000)
+                        }}
+                        className="flex size-8 items-center justify-center rounded-md text-white/40 transition hover:bg-white/[0.06] hover:text-white">
+                        {copiedPin ?
+                          <Check className="size-3.5 text-emerald-400" />
+                        : <Copy className="size-3.5" />}
+                      </button>
+                    </Tooltip>
                   </div>
                   <p className="text-[11px] text-white/40">
                     Waiting for authorization (

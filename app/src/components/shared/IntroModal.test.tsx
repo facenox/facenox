@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { IntroModal } from "./IntroModal"
 import { useUIStore } from "@/components/main/stores/uiStore"
 import { createSyncConfig, getElectronAPIMock } from "@/test/mocks/electron"
@@ -34,6 +34,11 @@ describe("IntroModal", () => {
     expect(
       await screen.findByRole("link", { name: /Sign in with Facenox Cloud/i }),
     ).toHaveAttribute("href", "https://facenox.com/pair?code=749120")
+
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
+    fireEvent.click(screen.getByRole("button", { name: "Copy code" }))
+    expect(writeText).toHaveBeenCalledWith("749120")
   })
 
   it("completes onboarding when reverse pairing approves even if onDataChanged flips connected mid-poll", async () => {
