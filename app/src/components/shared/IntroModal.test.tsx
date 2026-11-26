@@ -196,4 +196,44 @@ describe("IntroModal", () => {
 
     expect(screen.queryByText("OLD999")).not.toBeInTheDocument()
   })
+
+  it("offers inline local directory reset when pairing hits a Cloud location mismatch and restarts pairing", async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
+    api.initiateReversePairing.mockResolvedValue({
+      success: true,
+      data: {
+        deviceCode: "dev-1",
+        userCode: "MISMATCH",
+        verificationUri: "https://facenox.com/pair",
+        verificationUriComplete: "https://facenox.com/pair?code=MISMATCH",
+        expiresIn: 900,
+        interval: 1,
+      },
+    })
+    api.pollDeviceAuthorization.mockResolvedValueOnce({
+      status: "error",
+      error:
+        "This local directory belongs to another Cloud location. Reconnect to its original location or use a separate local data profile.",
+    })
+    api.resetLocalDirectory.mockResolvedValue({ success: true })
+
+    render(<IntroModal initialStep={2} />)
+
+    await waitFor(() => expect(api.pollDeviceAuthorization).toHaveBeenCalled(), { timeout: 5000 })
+    const resetPromptBtn = await screen.findByRole(
+      "button",
+      { name: "Clear local data & switch location" },
+      { timeout: 5000 },
+    )
+    fireEvent.click(resetPromptBtn)
+
+    const confirmResetBtn = await screen.findByRole("button", {
+      name: "Yes, clear local data",
+    })
+    fireEvent.click(confirmResetBtn)
+
+    await waitFor(() => expect(api.resetLocalDirectory).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(api.initiateReversePairing).toHaveBeenCalledTimes(2))
+  })
 })

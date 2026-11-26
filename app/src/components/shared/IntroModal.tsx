@@ -41,6 +41,8 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     "saving" | "pairing" | "disconnecting" | "syncing" | null
   >(null)
   const [pairError, setPairError] = useState<string | null>(null)
+  const [confirmResetLocalData, setConfirmResetLocalData] = useState(false)
+  const [pendingRepairAfterReset, setPendingRepairAfterReset] = useState(false)
   const [copiedPin, setCopiedPin] = useState(false)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -76,6 +78,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
 
   const applyEndpointOverride = useCallback(async (nextUrl: string) => {
     setPairError(null)
+    setConfirmResetLocalData(false)
     setBusyAction("saving")
     try {
       await window.electronAPI.sync.updateConfig({
@@ -124,6 +127,80 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     onError: handlePairingWarningOrError,
     onConnected: completeOnboarding,
   })
+
+  useEffect(() => {
+    if (!pendingRepairAfterReset || busyAction !== null) return
+    setPendingRepairAfterReset(false)
+    isInitiatingRef.current = false
+    void startReversePairing(getEffectiveRemoteUrl(cloudConfig?.remoteBaseUrl))
+  }, [
+    pendingRepairAfterReset,
+    busyAction,
+    startReversePairing,
+    cloudConfig?.remoteBaseUrl,
+    isInitiatingRef,
+  ])
+
+  const isDirectoryOriginMismatchError = (msg: string | null) =>
+    Boolean(msg && msg.includes("belongs to another Cloud location"))
+
+  const handleResetLocalDirectory = async () => {
+    setPairError(null)
+    setBusyAction("disconnecting")
+    try {
+      const result = await window.electronAPI.sync.resetLocalDirectory()
+      if (!result.success) {
+        setPairError(result.error || "Could not clear local directory.")
+        return
+      }
+      await refreshCloudSyncConfig()
+      setConfirmResetLocalData(false)
+      setPendingRepairAfterReset(true)
+    } catch (err) {
+      setPairError(err instanceof Error ? err.message : "Could not clear local directory.")
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
+  const renderResetDirectoryPrompt = () => (
+    <div className="w-full max-w-sm rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-left">
+      <div className="space-y-2">
+        <p className="text-[11px] leading-relaxed text-amber-200/90">
+          {confirmResetLocalData ?
+            "This will permanently delete people, groups, face templates, and attendance logs stored on this device so it can pair here."
+          : "Need to switch this device to the current Cloud location? Clear its local directory first."
+          }
+        </p>
+        {confirmResetLocalData ?
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={busyAction !== null}
+              onClick={() => void handleResetLocalDirectory()}
+              className="flex items-center gap-1.5 rounded border border-rose-500/35 bg-rose-500/20 px-2.5 py-1 text-[11px] font-medium text-rose-200 transition hover:bg-rose-500/30 disabled:opacity-40">
+              {busyAction === "disconnecting" && <Spinner size="xs" color="white" />}
+              Yes, clear local data
+            </button>
+            <button
+              type="button"
+              disabled={busyAction !== null}
+              onClick={() => setConfirmResetLocalData(false)}
+              className="rounded border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+              Cancel
+            </button>
+          </div>
+        : <button
+            type="button"
+            disabled={busyAction !== null}
+            onClick={() => setConfirmResetLocalData(true)}
+            className="rounded border border-amber-400/30 bg-amber-400/15 px-2.5 py-1 text-[11px] font-medium text-amber-200 transition hover:bg-amber-400/25 disabled:opacity-40">
+            Clear local data & switch location
+          </button>
+        }
+      </div>
+    </div>
+  )
 
   const handleDevHeadingClick = () => {
     if (!isDevBuild || step !== 2) return
@@ -247,12 +324,14 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                   setShowManualInput(false)
                   setPairingCode("")
                   setPairError(null)
+                  setConfirmResetLocalData(false)
                 }}
                 className="px-1.5 text-xs text-white/40 transition hover:text-white/75">
                 Cancel
               </button>
             </div>
             {pairError && <p className="text-left text-[11px] text-rose-400">{pairError}</p>}
+            {isDirectoryOriginMismatchError(pairError) && renderResetDirectoryPrompt()}
           </motion.div>
         }
       </AnimatePresence>
@@ -543,9 +622,11 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                         </div>
                       </>
                     }
+                    {isDirectoryOriginMismatchError(initiateError) && renderResetDirectoryPrompt()}
                     <button
                       type="button"
                       onClick={() => {
+                        setConfirmResetLocalData(false)
                         isInitiatingRef.current = false
                         void startReversePairing(getEffectiveRemoteUrl(cloudConfig?.remoteBaseUrl))
                       }}

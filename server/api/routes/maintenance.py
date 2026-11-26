@@ -54,11 +54,13 @@ async def cleanup_old_data(
 @router.post("/wipe", response_model=SuccessResponse)
 async def remote_wipe_data(
     repo: AttendanceRepository = Depends(get_repository),
+    *,
+    hard: bool = False,
 ):
     """
-    Comprehensive remote wipe:
+    Comprehensive data wipe:
     1. Clear all biometric face templates.
-    2. Clear all attendance records, sessions, and events.
+    2. Clear attendance records/sessions (and hard-delete directory rows when hard=True).
     """
     session = getattr(repo, "session", None)
     sync_info = getattr(session, "info", None)
@@ -76,32 +78,37 @@ async def remote_wipe_data(
                 "Face templates could not be removed. Wipe aborted to protect biometric consistency."
             )
 
-        # 2. Clear attendance records from DB
-        results = await repo.clear_all_attendance_data()
+        # 2. Clear attendance data from DB
+        if hard:
+            results = await repo.hard_reset_attendance_data()
+        else:
+            results = await repo.clear_all_attendance_data()
 
-        # Remote wipe is a local kiosk clear; never propagate these deletions back to Cloud.
-        if session is not None:
-            from sqlalchemy import update as sa_update
-            from database.models import AttendanceGroup, AttendanceMember, Face
+            # Remote wipe is a local kiosk clear; never propagate these deletions back to Cloud.
+            if session is not None:
+                from sqlalchemy import update as sa_update
+                from database.models import AttendanceGroup, AttendanceMember, Face
 
-            for model in (AttendanceGroup, AttendanceMember, Face):
-                await session.execute(
-                    repo._apply_org_scope(
-                        sa_update(model).values(sync_dirty=False), model
+                for model in (AttendanceGroup, AttendanceMember, Face):
+                    await session.execute(
+                        repo._apply_org_scope(
+                            sa_update(model).values(sync_dirty=False), model
+                        )
                     )
-                )
 
         await repo.add_audit_log(
-            action="REMOTE_WIPE_EXECUTED",
+            action="LOCAL_DIRECTORY_RESET" if hard else "REMOTE_WIPE_EXECUTED",
             target_type="system",
             target_id="all_data",
-            details=f"Remote wipe triggered. Records cleared: {results.get('records_deleted', 0)}. Biometrics cleared: {face_result.get('success', False)}",
+            details=f"{'Local directory reset' if hard else 'Remote wipe'} triggered. Records cleared: {results.get('records_deleted', 0)}. Biometrics cleared: {face_result.get('success', False)}",
         )
         if session is not None:
             await session.commit()
 
         return SuccessResponse(
-            message="Remote wipe completed. Local attendance records and face templates were removed."
+            message="Local directory cleared."
+            if hard
+            else "Remote wipe completed. Local attendance records and face templates were removed."
         )
 
     except Exception as e:

@@ -263,4 +263,43 @@ describe("Sync", () => {
       ),
     ).toBeInTheDocument()
   })
+
+  it("passes clearLocalData when unpairing with the local reset checkbox checked", async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockResolvedValue(
+      createSyncConfig({
+        connected: true,
+        organizationName: "Facenox Org",
+        siteName: "Main Campus",
+        deviceId: "device-1",
+      }),
+    )
+    api.disconnectDevice.mockResolvedValue({ success: true })
+
+    const { user } = renderWithProviders(
+      <>
+        <Sync />
+        <FeedbackDisplay />
+      </>,
+    )
+
+    expect(await screen.findByText("Connected to Facenox Cloud")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: /Advanced settings/i }))
+    await user.click(screen.getByRole("button", { name: /^Unpair device$/i }))
+    expect(await screen.findByText("Unpair device?")).toBeInTheDocument()
+
+    const checkbox = screen.getByRole("checkbox", {
+      name: /Also clear local attendance data to connect to another organization/i,
+    })
+    expect(checkbox).not.toBeChecked()
+    await user.click(checkbox)
+    expect(checkbox).toBeChecked()
+
+    await user.click(screen.getByRole("button", { name: "Unpair" }))
+
+    await waitFor(() => expect(api.disconnectDevice).toHaveBeenCalledWith({ clearLocalData: true }))
+    expect(
+      await screen.findByText("Device unpaired and local attendance data cleared."),
+    ).toBeInTheDocument()
+  })
 })

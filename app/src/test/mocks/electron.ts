@@ -71,6 +71,7 @@ export interface MockElectronAPI extends BackendServiceAPI {
     initiateReversePairing: Mock
     pollDeviceAuthorization: Mock
     disconnectDevice: Mock
+    resetLocalDirectory: Mock
     exportData: Mock
     pickImportFile: Mock
     importData: Mock
@@ -232,6 +233,10 @@ export function createElectronAPIMock(): MockElectronAPI {
       disconnectDevice: vi.fn().mockResolvedValue({
         success: true,
         warning: null,
+        config: defaultSyncConfig,
+      }),
+      resetLocalDirectory: vi.fn().mockResolvedValue({
+        success: true,
         config: defaultSyncConfig,
       }),
       exportData: vi.fn().mockResolvedValue({ success: true, filePath: "backup.facenox" }),

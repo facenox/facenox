@@ -1265,6 +1265,32 @@ class AttendanceRepository:
             ),
         }
 
+    async def hard_reset_attendance_data(self) -> Dict[str, int]:
+        """Permanently delete local operational and directory rows for the current scope."""
+        deleted: Dict[str, int] = {}
+        targets = (
+            ("records_deleted", AttendanceRecord),
+            ("sessions_deleted", AttendanceSession),
+            ("deletions_deleted", AttendanceSessionDeletion),
+            ("faces_deleted", Face),
+            ("members_deleted", AttendanceMember),
+            ("group_rules_deleted", AttendanceGroupRule),
+            ("groups_deleted", AttendanceGroup),
+        )
+        for key, model in targets:
+            stmt = self._apply_org_scope(
+                delete(model).execution_options(synchronize_session="evaluate"),
+                model,
+            )
+            result = await self.session.execute(stmt)
+            deleted[key] = (
+                result.rowcount
+                if result.rowcount is not None and result.rowcount >= 0
+                else 0
+            )
+        await self.session.commit()
+        return deleted
+
     async def clear_attendance_history(self) -> Dict[str, int]:
         """Wipe all operational transaction data: records and daily sessions without deleting members or groups."""
         records_stmt = self._apply_org_scope(

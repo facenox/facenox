@@ -264,9 +264,30 @@ declare global {
         unsyncedSessionsCount?: number
       }
     }>
-    disconnectDevice: () => Promise<{
+    disconnectDevice: (options?: { clearLocalData?: boolean }) => Promise<{
       success: boolean
       warning?: string | null
+      config: {
+        enabled: boolean
+        remoteBaseUrl: string
+        organizationId: string
+        organizationName: string
+        siteId: string
+        siteName: string
+        deviceId: string
+        deviceName: string
+        intervalMinutes: number
+        lastSyncedAt: string | null
+        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncMessage: string | null
+        connected: boolean
+        unsyncedRecordsCount?: number
+        unsyncedSessionsCount?: number
+      }
+    }>
+    resetLocalDirectory: () => Promise<{
+      success: boolean
+      error?: string
       config: {
         enabled: boolean
         remoteBaseUrl: string

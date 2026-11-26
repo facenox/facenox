@@ -736,76 +736,128 @@ export function registerSyncHandlers() {
     },
   )
 
-  ipcMain.handle("sync:disconnect-device", async () => {
-    const status = getRemoteSyncStatus()
-    let warning: string | null =
-      !status.connected && status.organizationId && status.siteId && status.deviceId ?
-        "The saved Cloud credential could not be used, so this device may still be paired in Cloud. Check Cloud > Devices and remove it there if needed before pairing again."
-      : null
-    await syncManager.suspend()
-    try {
-      const local = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
-        method: "POST",
-        headers: authHeaders(),
-        signal: AbortSignal.timeout(10000),
-      })
-      if (!local.ok)
-        throw new Error(
-          `Could not disconnect the local database (HTTP ${local.status}). Your connection has been retained.`,
-        )
-    } catch (error) {
-      syncManager.start({ skipCatchUp: true })
-      throw error
-    }
-    if (status.connected)
-      persistentStore.set("sync.dataOrigin", {
-        organizationId: status.organizationId,
-        siteId: status.siteId,
-        remoteBaseUrl: status.remoteBaseUrl,
-      })
-    if (status.connected) {
+  ipcMain.handle(
+    "sync:disconnect-device",
+    async (_event, options?: { clearLocalData?: boolean }) => {
+      const clearLocalData = Boolean(options?.clearLocalData)
+      const status = getRemoteSyncStatus()
+      let warning: string | null =
+        !status.connected && status.organizationId && status.siteId && status.deviceId ?
+          "The saved Cloud credential could not be used, so this device may still be paired in Cloud. Check Cloud > Devices and remove it there if needed before pairing again."
+        : null
+      await syncManager.suspend()
       try {
-        const response = await fetch(`${status.remoteBaseUrl}/api/device/unpair`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${persistentStore.get("sync.deviceToken") as string}`,
-            "X-Facenox-Version": getCurrentVersion(),
-            "User-Agent": "Facenox-Desktop-Unpair",
-          },
-          body: JSON.stringify({
-            device_id: status.deviceId,
-          }),
-          signal: AbortSignal.timeout(30000),
-        })
-
-        if (response.status === 401) {
-          warning =
-            "Cloud rejected the saved device credential. Check Cloud > Devices and remove this device there if it is still paired."
-        } else if (!response.ok && response.status !== 404) {
-          const text = await response.text()
-          warning = text || `Remote disconnect returned HTTP ${response.status}.`
+        if (clearLocalData) {
+          const wipeRes = await fetch(`${backendService.getUrl()}/attendance/wipe?hard=true`, {
+            method: "POST",
+            headers: authHeaders(),
+            signal: AbortSignal.timeout(30000),
+          })
+          if (!wipeRes.ok) {
+            throw new Error(
+              `Could not clear the local directory (HTTP ${wipeRes.status}). Your connection has been retained.`,
+            )
+          }
         }
+        const local = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
+          method: "POST",
+          headers: authHeaders(),
+          signal: AbortSignal.timeout(10000),
+        })
+        if (!local.ok)
+          throw new Error(
+            `Could not disconnect the local database (HTTP ${local.status}). Your connection has been retained.`,
+          )
       } catch (error) {
-        warning = error instanceof Error ? error.message : "Remote disconnect failed."
+        syncManager.start({ skipCatchUp: true })
+        throw error
       }
+      if (status.connected && !clearLocalData) {
+        persistentStore.set("sync.dataOrigin", {
+          organizationId: status.organizationId,
+          siteId: status.siteId,
+          remoteBaseUrl: status.remoteBaseUrl,
+        })
+      }
+      if (status.connected) {
+        try {
+          const response = await fetch(`${status.remoteBaseUrl}/api/device/unpair`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${persistentStore.get("sync.deviceToken") as string}`,
+              "X-Facenox-Version": getCurrentVersion(),
+              "User-Agent": "Facenox-Desktop-Unpair",
+            },
+            body: JSON.stringify({
+              device_id: status.deviceId,
+            }),
+            signal: AbortSignal.timeout(30000),
+          })
+
+          if (response.status === 401) {
+            warning =
+              "Cloud rejected the saved device credential. Check Cloud > Devices and remove this device there if it is still paired."
+          } else if (!response.ok && response.status !== 404) {
+            const text = await response.text()
+            warning = text || `Remote disconnect returned HTTP ${response.status}.`
+          }
+        } catch (error) {
+          warning = error instanceof Error ? error.message : "Remote disconnect failed."
+        }
+      }
+
+      clearRemoteConnection()
+      if (clearLocalData) {
+        persistentStore.delete("sync.dataOrigin")
+        persistentStore.delete("sync.pendingUpload")
+        persistentStore.set("sync.lastSyncedAt", null)
+      }
+      persistentStore.set("sync.lastSyncStatus", "idle")
+      persistentStore.set(
+        "sync.lastSyncMessage",
+        warning ? `Disconnected locally. Remote warning: ${warning}`
+        : clearLocalData ? "Device unpaired and local directory cleared."
+        : "Device disconnected from Facenox Cloud.",
+      )
+      syncManager.stop()
+
+      state.mainWindow?.webContents.send("sync:data-changed")
+
+      return {
+        success: true,
+        warning,
+        config: await getExtendedSyncStatus(),
+      }
+    },
+  )
+
+  ipcMain.handle("sync:reset-local-directory", async () => {
+    if (getRemoteSyncStatus().connected) {
+      throw new Error("Disconnect the current device before resetting the local directory.")
+    }
+    await syncManager.suspend()
+    const wipeRes = await fetch(`${backendService.getUrl()}/attendance/wipe?hard=true`, {
+      method: "POST",
+      headers: authHeaders(),
+      signal: AbortSignal.timeout(30000),
+    })
+    if (!wipeRes.ok) {
+      const detail = await wipeRes.text().catch(() => "")
+      throw new Error(detail || `Could not clear local data (HTTP ${wipeRes.status}).`)
     }
 
-    clearRemoteConnection()
+    persistentStore.delete("sync.dataOrigin")
+    persistentStore.delete("sync.pendingUpload")
+    persistentStore.set("sync.lastSyncedAt", null)
     persistentStore.set("sync.lastSyncStatus", "idle")
-    persistentStore.set(
-      "sync.lastSyncMessage",
-      warning ?
-        `Disconnected locally. Remote warning: ${warning}`
-      : "Device disconnected from Facenox Cloud.",
-    )
+    persistentStore.set("sync.lastSyncMessage", null)
     syncManager.stop()
 
     state.mainWindow?.webContents.send("sync:data-changed")
 
     return {
       success: true,
-      warning,
       config: await getExtendedSyncStatus(),
     }
   })

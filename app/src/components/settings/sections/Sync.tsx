@@ -72,6 +72,8 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   )
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
+  const [showUnpairModal, setShowUnpairModal] = useState(false)
+  const [clearLocalDataOnUnpair, setClearLocalDataOnUnpair] = useState(false)
   const [copiedId, setCopiedId] = useState(false)
   const [busyAction, setBusyAction] = useState<"disconnecting" | "syncing" | null>(null)
   const mountedRef = useRef(true)
@@ -91,38 +93,53 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   const isCustomServer = !isOfficialCloudUrl(effectiveUrl)
   const serverDisplayName = isCustomServer ? "Custom server" : "Facenox Cloud"
 
-  const handleDisconnect = async () => {
-    const workspaceLabel =
-      [config.organizationName, config.siteName].filter(Boolean).join(" / ") || serverDisplayName
-    const confirmed = await dialog.confirm({
-      title: hasUnreadablePairing ? "Reset local pairing?" : "Unpair device?",
-      message:
-        hasUnreadablePairing ?
-          `This computer will stop syncing with ${workspaceLabel}. Local attendance data stays on this device. If the old device is still paired in Cloud, remove it in Cloud > Devices before pairing again.`
-        : `This computer will stop syncing with ${workspaceLabel}. Local attendance data stays on this device, and you'll need to pair again to resume sync.`,
-      confirmText: hasUnreadablePairing ? "Reset pairing" : "Unpair",
-      cancelText: "Cancel",
-      confirmVariant: "danger",
-    })
-    if (!confirmed) return
+  const workspaceLabel =
+    [config.organizationName, config.siteName].filter(Boolean).join(" / ") || serverDisplayName
 
+  const executeDisconnect = async (clearLocalData: boolean) => {
     setError(null)
     setSuccess(null)
     setBusyAction("disconnecting")
     try {
-      const result = await window.electronAPI.sync.disconnectDevice()
+      const result =
+        clearLocalData ?
+          await window.electronAPI.sync.disconnectDevice({ clearLocalData: true })
+        : await window.electronAPI.sync.disconnectDevice()
       await refreshCloudSyncConfig()
       if (!mountedRef.current) return
       if (result.warning) {
         setError(`Disconnected locally. ${result.warning}`)
       } else {
-        setSuccess("Device unpaired from Facenox Cloud.")
+        setSuccess(
+          clearLocalData ?
+            "Device unpaired and local attendance data cleared."
+          : "Device unpaired from Facenox Cloud.",
+        )
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not disconnect this device.")
     } finally {
       setBusyAction(null)
     }
+  }
+
+  const handleDisconnect = async () => {
+    if (!hasUnreadablePairing) {
+      setClearLocalDataOnUnpair(false)
+      setShowUnpairModal(true)
+      return
+    }
+
+    const confirmed = await dialog.confirm({
+      title: "Reset local pairing?",
+      message: `This computer will stop syncing with ${workspaceLabel}. Local attendance data stays on this device. If the old device is still paired in Cloud, remove it in Cloud > Devices before pairing again.`,
+      confirmText: "Reset pairing",
+      cancelText: "Cancel",
+      confirmVariant: "danger",
+    })
+    if (!confirmed) return
+
+    await executeDisconnect(false)
   }
 
   const handleManualSync = async () => {
@@ -468,6 +485,55 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
           )}
         </AnimatePresence>
       </motion.div>
+
+      <Modal
+        isOpen={showUnpairModal}
+        onClose={() => setShowUnpairModal(false)}
+        title="Unpair device?"
+        maxWidth="sm">
+        <div className="space-y-4">
+          <p className="text-xs leading-relaxed text-white/65">
+            This computer will stop syncing with {workspaceLabel}. You&apos;ll need to pair again to
+            resume sync.
+          </p>
+
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-white/10 bg-white/[0.02] p-3 transition-colors hover:border-white/20">
+            <input
+              type="checkbox"
+              checked={clearLocalDataOnUnpair}
+              onChange={(e) => setClearLocalDataOnUnpair(e.target.checked)}
+              className="mt-0.5 size-3.5 rounded border-white/20 bg-transparent accent-rose-500"
+            />
+            <span className="space-y-0.5">
+              <span className="block text-xs font-medium text-white/90">
+                Also clear local attendance data to connect to another organization
+              </span>
+              <span className="block text-[11px] leading-relaxed text-white/50">
+                Deletes people, groups, faces, and attendance logs stored on this device so you can
+                pair with a different Cloud account or server.
+              </span>
+            </span>
+          </label>
+
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setShowUnpairModal(false)}
+              className="rounded-lg border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-white/75 transition hover:bg-white/10 hover:text-white">
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowUnpairModal(false)
+                void executeDisconnect(clearLocalDataOnUnpair)
+              }}
+              className="rounded-lg border border-rose-500/30 bg-rose-500/15 px-3.5 py-1.5 text-xs font-semibold text-rose-300 transition hover:border-rose-500/50 hover:bg-rose-500/25">
+              Unpair
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <DataBoundariesModal
         isOpen={showPrivacyModal}

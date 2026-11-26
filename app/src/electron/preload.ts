@@ -140,8 +140,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
     }) => {
       return ipcRenderer.invoke("sync:poll-device-authorization", input)
     },
-    disconnectDevice: () => {
-      return ipcRenderer.invoke("sync:disconnect-device")
+    disconnectDevice: (options?: { clearLocalData?: boolean }) => {
+      return ipcRenderer.invoke("sync:disconnect-device", options)
+    },
+    resetLocalDirectory: () => {
+      return ipcRenderer.invoke("sync:reset-local-directory")
     },
     restartManager: () => {
       return ipcRenderer.invoke("sync:restart-manager")

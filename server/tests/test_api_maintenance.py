@@ -19,6 +19,7 @@ class DummyFaceRecognizer:
     def __init__(self) -> None:
         self.enrolled = defaultdict(dict)
         self.refreshed_orgs = []
+        self.cleared_orgs: list[str | None] = []
 
     async def remove_person(self, person_id: str, organization_id: str | None) -> dict:
         removed = self.enrolled[organization_id].pop(person_id, None)
@@ -32,6 +33,7 @@ class DummyFaceRecognizer:
 
     async def clear_database(self, organization_id: str | None) -> dict:
         self.enrolled[organization_id].clear()
+        self.cleared_orgs.append(organization_id)
         return {"success": True}
 
 
@@ -50,11 +52,13 @@ def maintenance_env(test_client, set_api_token, monkeypatch):
     }
 
 
-def _headers(organization_id: str) -> dict[str, str]:
-    return {
+def _headers(organization_id: str | None = None) -> dict[str, str]:
+    headers = {
         "X-Facenox-Token": "maintenance-token",
-        "X-Facenox-Organization": organization_id,
     }
+    if organization_id is not None:
+        headers["X-Facenox-Organization"] = organization_id
+    return headers
 
 
 @pytest.mark.asyncio
@@ -204,6 +208,58 @@ async def test_remote_wipe(maintenance_env) -> None:
 
     # Mock recognizer cleared
     assert "member-1" not in recognizer.enrolled["org-1"]
+
+
+@pytest.mark.asyncio
+async def test_wipe_hard_resets_unpaired_directory_for_re_pairing(
+    maintenance_env,
+) -> None:
+    client = maintenance_env["client"]
+    session_factory = maintenance_env["session_factory"]
+    recognizer = maintenance_env["recognizer"]
+
+    async with session_factory() as session:
+        repo = AttendanceRepository(session, organization_id="org-1")
+        await repo.create_group({"id": "group-1", "name": "Lobby"})
+        await repo.add_member(
+            {"person_id": "member-1", "group_id": "group-1", "name": "Alice"}
+        )
+        await repo.add_record(
+            {
+                "id": "rec-1",
+                "person_id": "member-1",
+                "group_id": "group-1",
+                "timestamp": datetime.now(),
+                "confidence": 0.9,
+            }
+        )
+        face_repo = FaceRepository(session, organization_id="org-1")
+        await face_repo.upsert_face("member-1", b"emb-data", 128)
+        await session.commit()
+
+    unpair_res = client.post("/attendance/unpair", headers=_headers("org-1"))
+    assert unpair_res.status_code == 200, unpair_res.text
+
+    hard_wipe_res = client.post("/attendance/wipe?hard=true", headers=_headers())
+    assert hard_wipe_res.status_code == 200, hard_wipe_res.text
+
+    export_res = client.post("/attendance/export", headers=_headers())
+    assert export_res.status_code == 200, export_res.text
+    exported = export_res.json()
+    assert exported["groups"] == []
+    assert exported["members"] == []
+    assert exported["records"] == []
+    assert exported["sessions"] == []
+
+    async with session_factory() as session:
+        assert (
+            len((await session.execute(select(AttendanceGroup))).scalars().all()) == 0
+        )
+        assert (
+            len((await session.execute(select(AttendanceMember))).scalars().all()) == 0
+        )
+        assert len((await session.execute(select(Face))).scalars().all()) == 0
+    assert recognizer.cleared_orgs[-1] is None
 
 
 @pytest.mark.asyncio
