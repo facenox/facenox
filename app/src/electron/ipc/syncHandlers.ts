@@ -544,6 +544,7 @@ export function registerSyncHandlers() {
           body: JSON.stringify({
             device_name: deviceName,
             app_version: getCurrentVersion(),
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           }),
           signal: AbortSignal.timeout(15000),
         })

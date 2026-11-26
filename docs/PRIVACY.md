@@ -62,7 +62,7 @@ The following desktop features can make outbound connections:
 | --- | --- | --- | --- |
 | Update check | In packaged builds, first after a short startup delay and then at most once every 24 hours | GitHub Releases API | Current app version in the user agent; retrieves the latest release metadata |
 | Online clock check | Only when a user selects **Check now** in system-time settings | Google, Cloudflare, or Microsoft public web endpoint | Reads the HTTP `Date` header; no attendance record, member data, or biometric template is included |
-| Facenox Cloud | Only after a computer is explicitly paired | The configured Cloud service and its Ably realtime connection | Pairing, synchronization, operational status, policies, and supported remote administration |
+| Facenox Cloud | After the one-time setup pairing (and while connected) | The configured Cloud service and its Ably realtime connection | Pairing, synchronization, operational status, policies, and supported remote administration |
 | External links | Only when a user opens one | The selected website | Normal browser request |
 
 Normal HTTPS connections expose network metadata such as the public IP address and request time to the destination. The application does not treat update checks or a user-requested clock comparison as product analytics.
@@ -73,7 +73,7 @@ That does not automatically make every surrounding deployment private. Hosted lo
 
 ## Facenox Cloud data boundary
 
-The desktop app can optionally pair with **Facenox Cloud** for browser access to synced records and reports. Essentials includes CSV export for one connected device. Paid plans add PDF and Excel DTR exports, additional devices, and encrypted face-template sync.
+The desktop app pairs with **Facenox Cloud** during initial setup (existing standalone local installs can keep operating locally or link anytime) for browser access to synced records and reports. Essentials includes CSV export for one connected device. Paid plans add PDF and Excel DTR exports, additional devices, and encrypted face-template sync.
 
 Synchronization is not an independent recovery backup: updates and removals can propagate between connected systems. Keep password-protected `.facenox` archives separately when you need a recoverable copy.
 

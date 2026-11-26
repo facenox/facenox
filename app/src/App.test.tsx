@@ -5,8 +5,9 @@ import App from "@/App"
 import { useAttendanceStore, useUIStore } from "@/components/main/stores"
 import { createFacenoxElectronMock } from "@/test/mocks/electron"
 
-const { mockUseAttendanceBootstrap } = vi.hoisted(() => ({
+const { mockUseAttendanceBootstrap, mockUseCloudSyncConfig } = vi.hoisted(() => ({
   mockUseAttendanceBootstrap: vi.fn(),
+  mockUseCloudSyncConfig: vi.fn(),
 }))
 
 vi.mock("@/components/window", () => ({
@@ -18,7 +19,17 @@ vi.mock("@/components/main", () => ({
 }))
 
 vi.mock("@/components/shared/IntroModal", () => ({
-  IntroModal: () => <div>Mock Intro Modal</div>,
+  IntroModal: ({
+    initialStep = 0,
+    allowLocalContinue = false,
+  }: {
+    initialStep?: number
+    allowLocalContinue?: boolean
+  }) => (
+    <div>
+      Mock Intro Modal (step={initialStep}, local={String(allowLocalContinue)})
+    </div>
+  ),
 }))
 
 vi.mock("@/components/shared/AppSkeleton", () => ({
@@ -31,6 +42,10 @@ vi.mock("@/components/shared", () => ({
 
 vi.mock("@/components/main/hooks/useAttendanceBootstrap", () => ({
   useAttendanceBootstrap: () => mockUseAttendanceBootstrap(),
+}))
+
+vi.mock("@/services/cloudSyncState", () => ({
+  useCloudSyncConfig: () => mockUseCloudSyncConfig(),
 }))
 
 function resetStores() {
@@ -86,6 +101,11 @@ describe("App", () => {
     window.facenoxElectron = bridge
     resetStores()
     mockUseAttendanceBootstrap.mockReset()
+    mockUseCloudSyncConfig.mockReturnValue({
+      config: { connected: true },
+      status: "ready",
+      error: null,
+    })
   })
 
   it("keeps the unrevealed shell visible until hydration and shell data are ready", () => {
@@ -106,7 +126,7 @@ describe("App", () => {
 
     expect(screen.getByText("Mock WindowBar")).toBeInTheDocument()
     expect(screen.getByText("Mock App Skeleton")).toBeInTheDocument()
-    expect(screen.getByText("Mock Intro Modal")).toBeInTheDocument()
+    expect(screen.getByText(/Mock Intro Modal/)).toBeInTheDocument()
     expect(screen.queryByText("Mock Main")).not.toBeInTheDocument()
     expect(bridge.onAppReady).toHaveBeenCalledTimes(1)
 
@@ -115,7 +135,7 @@ describe("App", () => {
     expect(bridge.onAppReady).toHaveBeenCalledTimes(1)
   })
 
-  it("renders the main app once the intro has already been seen", () => {
+  it("renders the main app once the intro has been seen and the device is paired", () => {
     useUIStore.setState({ isHydrated: true, hasSeenIntro: true })
     useAttendanceStore.setState({ isShellReady: true, shellBootstrapError: null })
 
@@ -123,8 +143,42 @@ describe("App", () => {
 
     expect(screen.getByText("Mock Main")).toBeInTheDocument()
     expect(screen.queryByText("Mock App Skeleton")).not.toBeInTheDocument()
-    expect(screen.queryByText("Mock Intro Modal")).not.toBeInTheDocument()
+    expect(screen.queryByText(/Mock Intro Modal/)).not.toBeInTheDocument()
     expect(bridge.onAppReady).toHaveBeenCalledTimes(1)
+  })
+
+  it("gates unpaired fresh installs on Cloud pairing even if intro was previously marked seen", () => {
+    mockUseCloudSyncConfig.mockReturnValue({
+      config: { connected: false },
+      status: "ready",
+      error: null,
+    })
+    useUIStore.setState({ isHydrated: true, hasSeenIntro: true })
+    useAttendanceStore.setState({ isShellReady: true, shellBootstrapError: null })
+
+    render(<App />)
+
+    expect(screen.getByText("Mock Intro Modal (step=2, local=false)")).toBeInTheDocument()
+    expect(screen.queryByText("Mock Main")).not.toBeInTheDocument()
+  })
+
+  it("preserves access for existing beta installations with local data when unpaired", () => {
+    mockUseCloudSyncConfig.mockReturnValue({
+      config: { connected: false },
+      status: "ready",
+      error: null,
+    })
+    useUIStore.setState({ isHydrated: true, hasSeenIntro: true })
+    useAttendanceStore.setState({
+      isShellReady: true,
+      shellBootstrapError: null,
+      systemStats: { totalPersons: 1, totalMembers: 1, lastUpdated: "2026-11-26T00:00:00Z" },
+    })
+
+    render(<App />)
+
+    expect(screen.getByText("Mock Main")).toBeInTheDocument()
+    expect(screen.queryByText(/Mock Intro Modal/)).not.toBeInTheDocument()
   })
 
   it("reveals the main app when bootstrap failed but the shell should still open", () => {
@@ -138,7 +192,7 @@ describe("App", () => {
 
     expect(screen.getByText("Mock Main")).toBeInTheDocument()
     expect(screen.queryByText("Mock App Skeleton")).not.toBeInTheDocument()
-    expect(screen.queryByText("Mock Intro Modal")).not.toBeInTheDocument()
+    expect(screen.queryByText(/Mock Intro Modal/)).not.toBeInTheDocument()
     expect(bridge.onAppReady).toHaveBeenCalledTimes(1)
   })
 })

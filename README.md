@@ -80,14 +80,14 @@ _Data and storage management panel detailing system clock accuracy validation, a
 > This is the official open source repository for Facenox. Treat other repositories, installers, and downloads as unverified unless they come from official sources.
 
 > [!NOTE]  
-> **Local biometric processing:** Facenox runs face detection, tracking, liveness checks, and matching directly on your computer. Facenox Cloud enables multi-device sync and remote dashboard access.
+> **Local biometric processing & Cloud ecosystem:** Facenox runs face detection, tracking, liveness checks, and matching directly on your computer. After a one-time Cloud sign-in/pairing on setup, attendance continues working offline and syncs automatically when online.
 
 ## Why Facenox
 
-Facenox records attendance with a standard computer and webcam. Face matching runs locally with zero internet dependency.
+Facenox records attendance with a standard computer and webcam. Face matching runs locally with zero internet dependency after setup.
 
-- **100% Local operation:** Enroll members and record attendance entirely offline.
-- **Remote browser dashboard:** Connect Facenox Cloud to review live records, monitor multiple branches, and export reports from anywhere.
+- **Offline-capable kiosk:** Enroll members and record attendance continuously even during internet disruptions.
+- **Unified Cloud dashboard:** Automatically sync live records, monitor multiple branches, and export reports from anywhere.
 - **No local limits:** Desktop has no artificial member limits or software locks.
 - **Biometric privacy:** Encrypted numerical vectors at rest with zero member photos stored. Review the [privacy documentation](docs/PRIVACY.md).
 

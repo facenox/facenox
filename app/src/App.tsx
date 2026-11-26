@@ -8,15 +8,32 @@ import { DialogProvider } from "@/components/shared"
 import { useAttendanceBootstrap } from "@/components/main/hooks/useAttendanceBootstrap"
 import { AppSkeleton } from "@/components/shared/AppSkeleton"
 import { ErrorBoundary } from "@/components/common/ErrorBoundary"
+import { useCloudSyncConfig } from "@/services/cloudSyncState"
 
 function App() {
   const { hasSeenIntro, isHydrated } = useUIStore()
-  const { isShellReady, shellBootstrapError } = useAttendanceStore()
+  const { isShellReady, shellBootstrapError, attendanceGroups, systemStats } =
+    useAttendanceStore()
+  const { config: cloudConfig, status: cloudConfigStatus } = useCloudSyncConfig()
   const hasSignaledAppReadyRef = useRef(false)
 
   useAttendanceBootstrap()
 
-  const shouldRevealWindow = isHydrated && (isShellReady || Boolean(shellBootstrapError))
+  const hasExistingLocalData =
+    attendanceGroups.length > 0 ||
+    (systemStats?.totalMembers ?? 0) > 0 ||
+    (systemStats?.totalPersons ?? 0) > 0
+  const isCloudConnected = Boolean(cloudConfig?.connected)
+  const cloudStatusSettled = cloudConfigStatus !== "loading" || hasExistingLocalData
+
+  const shouldRevealWindow =
+    isHydrated &&
+    (Boolean(shellBootstrapError) || (isShellReady && (!hasSeenIntro || cloudStatusSettled)))
+
+  const requiresCloudGate =
+    !shellBootstrapError &&
+    isShellReady &&
+    (!hasSeenIntro || (!isCloudConnected && !hasExistingLocalData))
 
   useEffect(() => {
     if (shouldRevealWindow && !hasSignaledAppReadyRef.current) {
@@ -24,6 +41,12 @@ function App() {
       window.facenoxElectron?.onAppReady()
     }
   }, [shouldRevealWindow])
+
+  useEffect(() => {
+    if (requiresCloudGate) {
+      useUIStore.getState().setShowSettings(false)
+    }
+  }, [requiresCloudGate])
 
   if (!isHydrated || !shouldRevealWindow) {
     return (
@@ -47,17 +70,15 @@ function App() {
             <div className="h-full overflow-hidden text-white">
               {shellBootstrapError ?
                 <Main />
-              : !isShellReady ?
-                hasSeenIntro ?
-                  <Main />
-                : <AppSkeleton />
-              : hasSeenIntro ?
-                <Main />
-              : <>
+              : requiresCloudGate ?
+                <>
                   <AppSkeleton />
-                  <IntroModal />
+                  <IntroModal
+                    initialStep={hasSeenIntro ? 2 : 0}
+                    allowLocalContinue={hasExistingLocalData}
+                  />
                 </>
-              }
+              : <Main />}
             </div>
           </div>
         </div>
