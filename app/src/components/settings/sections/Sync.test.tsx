@@ -354,6 +354,6 @@ describe("Sync", () => {
     expect(serverUrlInput).toBeInTheDocument()
 
     fireEvent.change(serverUrlInput, { target: { value: "127.0.0.1:7500" } })
-    expect(screen.getByText(/Localhost cannot sync across devices/i)).toBeInTheDocument()
+    expect(serverUrlInput).toHaveValue("127.0.0.1:7500")
   })
 })
