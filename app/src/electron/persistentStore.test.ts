@@ -55,7 +55,7 @@ it("keeps encrypted credentials intact when the system store cannot decrypt them
     throw new Error("Keyring unavailable")
   })
   expect(() => persistentStore.get("sync.deviceToken")).toThrow(
-    "Could not unlock saved Cloud credentials.",
+    "Could not unlock saved Cloud credentials with the system credential store.",
   )
   expect(disk["sync.deviceToken"]).toBe(encrypted)
 })
