@@ -25,7 +25,7 @@ describe("ClockHealth status", () => {
     )
 
     expect(screen.getByText("Time & location")).toBeInTheDocument()
-    fireEvent.click(screen.getByRole("button", { name: "Attendance timezone" }))
+    fireEvent.click(screen.getByRole("button", { name: "Timezone" }))
     const search = await screen.findByRole("textbox", { name: "Search attendance timezones" })
     fireEvent.change(search, { target: { value: "UTC" } })
     fireEvent.click(await screen.findByRole("option", { name: /UTC/ }))
@@ -44,7 +44,7 @@ describe("ClockHealth status", () => {
       />,
     )
 
-    expect(screen.queryByRole("button", { name: "Attendance timezone" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Timezone" })).not.toBeInTheDocument()
     expect(screen.getByText("Manila (UTC+08:00)")).toBeInTheDocument()
     expect(screen.getByText("Asia/Manila")).toBeInTheDocument()
     expect(screen.getByText("Managed by your Cloud location.")).toBeInTheDocument()
@@ -68,7 +68,7 @@ describe("ClockHealth status", () => {
     )
     expect(screen.getByText(/\/ Asia\/Singapore \(UTC\+08:00\)/)).toBeInTheDocument()
     expect(screen.queryByText(/\/ Asia\/Manila \(UTC\+08:00\)/)).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Attendance timezone" })).toHaveTextContent("Manila")
+    expect(screen.getByRole("button", { name: "Timezone" })).toHaveTextContent("Manila")
   })
 
   it("uses the backend zone for both the time and offset, not just its label", () => {

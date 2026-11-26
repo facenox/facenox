@@ -75,7 +75,7 @@ export function AttendanceTimezonePicker({
 
   if (readOnly) {
     return (
-      <div aria-label="Attendance timezone" className="flex shrink-0 flex-col items-end text-right">
+      <div aria-label="Timezone" className="flex shrink-0 flex-col items-end text-right">
         <span className="text-xs font-medium text-white/90">{selected.label}</span>
         <span className="mt-0.5 font-mono text-[11px] text-white/45">{value}</span>
       </div>
@@ -84,7 +84,7 @@ export function AttendanceTimezonePicker({
 
   return (
     <Dropdown
-      ariaLabel="Attendance timezone"
+      ariaLabel="Timezone"
       options={options}
       value={value}
       onChange={(nextValue) => {

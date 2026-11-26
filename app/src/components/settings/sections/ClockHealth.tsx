@@ -87,9 +87,9 @@ export function ClockHealth({
         <div className="flex items-center gap-4 py-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <div className="text-sm font-medium text-white/90">Attendance timezone</div>
+              <div className="text-sm font-medium text-white/90">Timezone</div>
               <InfoPopover
-                title="Attendance timezone"
+                title="Timezone"
                 description="Keeps attendance times consistent when this computer's timezone changes."
                 details={[
                   "Reports, exports, and manual corrections use this timezone.",
