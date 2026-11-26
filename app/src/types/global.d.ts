@@ -169,6 +169,7 @@ declare global {
         lateThresholdMinutes?: number
         attendanceCooldownSeconds?: number
         dataRetentionDays?: number
+        peopleLimit?: number
       }
       unsyncedRecordsCount?: number
       unsyncedSessionsCount?: number

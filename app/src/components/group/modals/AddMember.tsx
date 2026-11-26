@@ -7,6 +7,7 @@ import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 import { ErrorMessage, FormInput, Modal, Spinner } from "@/components/common"
 import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
 import { useAttendanceStore } from "@/components/main/stores"
+import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
 import { useCamera } from "@/components/group/sections/enrollment/hooks/useCamera"
 import { Tooltip, InfoPopover } from "@/components/shared"
 import { validateAndGetBestFace } from "@/utils/faceValidation"
@@ -71,6 +72,11 @@ export function AddMember({
 }: AddMemberProps) {
   const initialMode = useGroupUIStore((state) => state.addMemberInitialMode)
   const [isBulkMode, setIsBulkMode] = useState(initialMode === "bulk")
+  const { config: syncConfig } = useCloudSyncConfig()
+  const systemStats = useAttendanceStore((state) => state.systemStats)
+  const isPairedCloud = hasSavedCloudPairing(syncConfig)
+  const cloudPeopleLimit = syncConfig?.policyOverrides?.peopleLimit
+  const currentActiveMemberCount = Math.max(systemStats?.totalMembers ?? 0, existingMembers.length)
 
   const [newMemberName, setNewMemberName] = useState("")
   const [newMemberRole, setNewMemberRole] = useState("")
@@ -740,6 +746,23 @@ export function AddMember({
         )}
 
         {error && <ErrorMessage message={error} className="mb-4" />}
+
+        {isPairedCloud &&
+          typeof cloudPeopleLimit === "number" &&
+          cloudPeopleLimit > 0 &&
+          cloudPeopleLimit < 1_000_000 &&
+          (isBulkMode ?
+            currentActiveMemberCount + Math.max(typedCount, 1) > cloudPeopleLimit
+          : currentActiveMemberCount >= cloudPeopleLimit) && (
+            <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-[11px] leading-relaxed text-amber-200/90">
+              <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-amber-400" />
+              <span>
+                Your Cloud plan includes {cloudPeopleLimit.toLocaleString()} active members.
+                Additions still save locally, but Cloud sync will pause once the 20% grace buffer is
+                exceeded until you upgrade or trim active members.
+              </span>
+            </div>
+          )}
 
         <div className="relative">
           <AnimatePresence mode="wait" initial={false}>

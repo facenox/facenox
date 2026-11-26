@@ -2,6 +2,8 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { AddMember } from "./AddMember"
 import { attendanceManager } from "@/services"
+import { createSyncConfig, getElectronAPIMock } from "@/test/mocks/electron"
+import { useAttendanceStore } from "@/components/main/stores"
 import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
 
 vi.mock("@/services", () => ({
@@ -114,5 +116,33 @@ describe("AddMember Modal", () => {
       expect(onSuccess).toHaveBeenCalled()
       expect(onClose).toHaveBeenCalled()
     })
+  })
+
+  it("shows a non-blocking Cloud capacity warning when active members reach peopleLimit", async () => {
+    getElectronAPIMock().sync.getConfig.mockResolvedValue(
+      createSyncConfig({
+        connected: true,
+        policyOverrides: { peopleLimit: 10 },
+      }),
+    )
+    useAttendanceStore.setState({
+      systemStats: { totalPersons: 10, totalMembers: 10, lastUpdated: "" },
+    })
+
+    render(
+      <AddMember
+        isOpen={true}
+        group={mockGroup}
+        existingMembers={[]}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+      />,
+    )
+
+    expect(
+      await screen.findByText(/Your Cloud plan includes 10 active members\./i),
+    ).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText("Name"), { target: { value: "Maria" } })
+    expect(screen.getByRole("button", { name: /Add member/i })).toBeEnabled()
   })
 })

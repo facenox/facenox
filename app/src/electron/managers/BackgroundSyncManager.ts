@@ -417,6 +417,7 @@ export class BackgroundSyncManager {
       ["attendanceCooldownSeconds", "number"],
       ["minCheckoutDelayMinutes", "number"],
       ["dataRetentionDays", "number"],
+      ["peopleLimit", "number"],
       ["allowKioskDirectoryManagement", "boolean"],
     ]
     for (const [field, expectedType] of syncPolicyFieldMap) {

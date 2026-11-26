@@ -21,6 +21,7 @@ export function useCloudSyncStatus() {
     organizationName: config?.organizationName || "",
     siteName: config?.siteName || "",
     allowKioskDirectoryManagement,
+    peopleLimit: config?.policyOverrides?.peopleLimit,
     canManageDirectory: isReady && (!isPaired || allowKioskDirectoryManagement),
   }
 }

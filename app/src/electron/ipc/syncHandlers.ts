@@ -117,6 +117,7 @@ function getRemoteSyncStatus() {
             number | undefined,
           dataRetentionDays: persistentStore.get("sync.policy.dataRetentionDays") as
             number | undefined,
+          peopleLimit: persistentStore.get("sync.policy.peopleLimit") as number | undefined,
         }
       : {},
     enabled,
@@ -157,6 +158,7 @@ function clearRemoteConnection() {
   persistentStore.delete("sync.policy.attendanceCooldownSeconds")
   persistentStore.delete("sync.policy.minCheckoutDelayMinutes")
   persistentStore.delete("sync.policy.dataRetentionDays")
+  persistentStore.delete("sync.policy.peopleLimit")
   persistentStore.delete("sync.policy.allowKioskDirectoryManagement")
   persistentStore.delete("sync.policy.faceTemplateSync")
 }
