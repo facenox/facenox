@@ -731,6 +731,23 @@ def _legacy_source(data_dir: Path) -> tuple[Path | None, Path | None]:
     return None, None
 
 
+def _database_has_user_rows(db_path: Path) -> bool:
+    """Never replace a generated profile once it contains user or policy data."""
+    try:
+        with closing(_connect_read_only(db_path)) as connection:
+            for table in _user_tables(connection) - {"alembic_version"}:
+                quoted = table.replace('"', '""')
+                if connection.execute(
+                    f'SELECT EXISTS(SELECT 1 FROM "{quoted}" LIMIT 1)'
+                ).fetchone()[0]:
+                    return True
+    except sqlite3.Error as exc:
+        raise MigrationSafetyError(
+            f"Could not inspect the current database before legacy recovery: {exc}"
+        ) from exc
+    return False
+
+
 def _stage_legacy_key_material(data_dir: Path, legacy_dir: Path | None) -> None:
     if legacy_dir is None or legacy_dir.resolve() == data_dir.resolve():
         return
@@ -1228,6 +1245,64 @@ def run_migrations(
                 )
 
             storage_changed = False
+            if (
+                pointer is not None
+                and source_db is not None
+                and source_dir != active_data_dir
+            ):
+                manifest = generations.read_generation_manifest(
+                    active_data_dir, pointer.generation, auth_key
+                )
+                if (
+                    pointer.previous_generation is None
+                    and manifest.get("kind") == "new-database"
+                ):
+                    current_db = generations.generation_database(
+                        active_data_dir, pointer.generation
+                    )
+                    if _database_has_user_rows(current_db):
+                        logger.warning(
+                            "Found a legacy database at %s, but the current profile already "
+                            "contains data. Automatic recovery was skipped.",
+                            source_db,
+                        )
+                    else:
+                        source_report = _preflight_database(
+                            source_db, script_directory, active_decryptor
+                        )
+                        _assert_migration_disk_space(source_db, active_data_dir)
+                        adopted_generation, selected_report = (
+                            _publish_database_generation(
+                                data_dir=active_data_dir,
+                                source_db=source_db,
+                                source_report=source_report,
+                                source_generation=pointer.generation,
+                                sequence=pointer.sequence + 1,
+                                script_directory=script_directory,
+                                decryptor=active_decryptor,
+                                auth_key=auth_key,
+                                key_id=key_id,
+                                key_provider=key_provider,
+                                expected_revisions=source_report.revisions,
+                                upgrade=False,
+                                kind="legacy-adoption",
+                            )
+                        )
+                        generations.write_health_marker(
+                            active_data_dir,
+                            adopted_generation,
+                            pointer.sequence + 1,
+                            auth_key,
+                        )
+                        pointer = generations.GenerationPointer(
+                            adopted_generation,
+                            pointer.generation,
+                            pointer.sequence + 1,
+                            "healthy",
+                        )
+                        generations.write_pointer(active_data_dir, pointer, auth_key)
+                        logger.warning("Recovered legacy database from %s.", source_db)
+                        storage_changed = True
             if pointer is None and source_db is not None:
                 source_report = _preflight_database(
                     source_db, script_directory, active_decryptor

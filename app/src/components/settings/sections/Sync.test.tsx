@@ -219,8 +219,47 @@ describe("Sync", () => {
     await user.click(await screen.findByRole("button", { name: /^Unpair$/i }))
 
     expect(
+      await screen.findByText("Disconnected locally. Cloud cleanup failed"),
+    ).toBeInTheDocument()
+  })
+
+  it("offers local pairing recovery when the saved Cloud credential cannot be decrypted", async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig
+      .mockResolvedValueOnce(
+        createSyncConfig({
+          connected: false,
+          wasEverPaired: true,
+          organizationId: "org-1",
+          siteId: "site-1",
+          deviceId: "device-1",
+          credentialError: "Could not unlock saved Cloud credentials.",
+        }),
+      )
+      .mockResolvedValue(createSyncConfig())
+    api.disconnectDevice.mockResolvedValue({
+      success: true,
+      warning: "Remove this device from Cloud > Devices before pairing again.",
+      config: createSyncConfig(),
+    })
+
+    const { user } = renderWithProviders(
+      <>
+        <Sync />
+        <FeedbackDisplay />
+      </>,
+    )
+
+    expect(await screen.findByText("Could not unlock saved Cloud credentials.")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Reset local pairing" }))
+    expect(await screen.findByText("Reset local pairing?")).toBeInTheDocument()
+    expect(api.disconnectDevice).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: "Reset pairing" }))
+    expect(api.disconnectDevice).toHaveBeenCalledTimes(1)
+    expect(
       await screen.findByText(
-        "Disconnected locally, but Cloud returned a warning: Cloud cleanup failed",
+        "Disconnected locally. Remove this device from Cloud > Devices before pairing again.",
       ),
     ).toBeInTheDocument()
   })

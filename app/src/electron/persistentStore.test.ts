@@ -48,6 +48,17 @@ it("encrypts credentials on write and decrypts only on main-process reads", () =
   expect(disk["sync.deviceToken"]).not.toBe("token")
   expect(persistentStore.get("sync.deviceToken")).toBe("token")
 })
+it("keeps encrypted credentials intact when the system store cannot decrypt them", () => {
+  persistentStore.set("sync.deviceToken", "token")
+  const encrypted = disk["sync.deviceToken"]
+  cryptoMock.decryptString.mockImplementationOnce(() => {
+    throw new Error("Keyring unavailable")
+  })
+  expect(() => persistentStore.get("sync.deviceToken")).toThrow(
+    "Could not unlock saved Cloud credentials.",
+  )
+  expect(disk["sync.deviceToken"]).toBe(encrypted)
+})
 it("migrates legacy plaintext credentials on first access", () => {
   disk["sync.encryptionKey"] = "legacy-key"
   expect(persistentStore.get("sync.encryptionKey")).toBe("legacy-key")

@@ -1,3 +1,5 @@
+import fs from "node:fs"
+import os from "node:os"
 import path from "node:path"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -16,7 +18,7 @@ vi.mock("./util.js", () => ({
   default: isDevMock,
 }))
 
-import { getDataDirectory, getLogDirectory } from "./paths.js"
+import { getDataDirectory, getLegacyDataDirectory, getLogDirectory } from "./paths.js"
 
 describe("Electron storage paths", () => {
   beforeEach(() => {
@@ -39,4 +41,19 @@ describe("Electron storage paths", () => {
     expect(getDataDirectory()).toBe(expected)
     expect(getLogDirectory()).toBe(expected)
   })
+
+  it.skipIf(process.platform !== "linux")(
+    "finds a database in the previous lowercase Linux profile",
+    () => {
+      const appData = fs.mkdtempSync(path.join(os.tmpdir(), "facenox-paths-"))
+      const legacy = path.join(appData, "facenox")
+      const current = path.join(appData, "Facenox")
+      fs.mkdirSync(legacy)
+      fs.writeFileSync(path.join(legacy, "attendance.db"), "legacy")
+      electronMocks.getPath.mockImplementation((name: string) =>
+        name === "appData" ? appData : current,
+      )
+      expect(getLegacyDataDirectory()).toBe(legacy)
+    },
+  )
 })

@@ -5,7 +5,7 @@ import path from "path"
 import fs from "fs"
 import { promisify } from "util"
 import isDev from "../util.js"
-import { getDataDirectory, getLogDirectory } from "../paths.js"
+import { getDataDirectory, getLegacyDataDirectory, getLogDirectory } from "../paths.js"
 
 const sleep = promisify(setTimeout)
 const execAsync = promisify(exec)
@@ -262,11 +262,10 @@ export class BackendProcessManager {
       env.FACENOX_LOG_DIR = logDir
 
       if (!isDev()) {
-        const userDataDir = app.getPath("userData")
         const durableDataDir = getDataDirectory()
         fs.mkdirSync(durableDataDir, { recursive: true })
         env.FACENOX_DATA_DIR = durableDataDir
-        env.FACENOX_LEGACY_DATA_DIR = userDataDir
+        env.FACENOX_LEGACY_DATA_DIR = getLegacyDataDirectory()
       }
 
       this.process = spawn(command, args, {

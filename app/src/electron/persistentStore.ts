@@ -147,9 +147,7 @@ export const persistentStore: TypedStore<PersistentSettingsSchema> = {
         return safeStorage.decryptString(Buffer.from(value.slice(protectedPrefix.length), "base64"))
       } catch (error) {
         throw new Error(
-          error instanceof Error ?
-            `Could not unlock credentials from system keyring: ${error.message}`
-          : "Could not unlock credentials from system keyring.",
+          "Could not unlock saved Cloud credentials with the system credential store.",
           { cause: error },
         )
       }

@@ -67,6 +67,9 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
   } = useCloudSyncConfig()
   const config = savedConfig ?? defaultConfig
   const configFieldsReady = Boolean(savedConfig)
+  const hasUnreadablePairing = Boolean(
+    config.credentialError && config.organizationId && config.siteId && config.deviceId,
+  )
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [copiedId, setCopiedId] = useState(false)
@@ -92,9 +95,12 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
     const workspaceLabel =
       [config.organizationName, config.siteName].filter(Boolean).join(" / ") || serverDisplayName
     const confirmed = await dialog.confirm({
-      title: "Unpair device?",
-      message: `This computer will stop syncing with ${workspaceLabel}. Local attendance data stays on this device, and you'll need to pair again to resume sync.`,
-      confirmText: "Unpair",
+      title: hasUnreadablePairing ? "Reset local pairing?" : "Unpair device?",
+      message:
+        hasUnreadablePairing ?
+          `This computer will stop syncing with ${workspaceLabel}. Local attendance data stays on this device. If the old device is still paired in Cloud, remove it in Cloud > Devices before pairing again.`
+        : `This computer will stop syncing with ${workspaceLabel}. Local attendance data stays on this device, and you'll need to pair again to resume sync.`,
+      confirmText: hasUnreadablePairing ? "Reset pairing" : "Unpair",
       cancelText: "Cancel",
       confirmVariant: "danger",
     })
@@ -108,7 +114,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
       await refreshCloudSyncConfig()
       if (!mountedRef.current) return
       if (result.warning) {
-        setError(`Disconnected locally, but Cloud returned a warning: ${result.warning}`)
+        setError(`Disconnected locally. ${result.warning}`)
       } else {
         setSuccess("Device unpaired from Facenox Cloud.")
       }
@@ -153,12 +159,28 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
           </>
         : <div className="space-y-3">
             <p>{cloudConfigError || "Could not load Cloud connection."}</p>
+            {hasUnreadablePairing && (
+              <p>
+                Unlock the system keyring used when this device was paired, then retry. If it cannot
+                be restored, reset the local pairing. Check Cloud &gt; Devices and remove the old
+                device there if it is still paired. Local attendance data stays on this computer.
+              </p>
+            )}
             <button
               type="button"
               onClick={() => void refreshCloudSyncConfig()}
               className="text-xs font-semibold text-cyan-400">
               Retry
             </button>
+            {hasUnreadablePairing && (
+              <button
+                type="button"
+                onClick={() => void handleDisconnect()}
+                disabled={busyAction !== null}
+                className="ml-4 text-xs font-semibold text-white/70 underline underline-offset-4 disabled:opacity-40">
+                {busyAction === "disconnecting" ? "Resetting…" : "Reset local pairing"}
+              </button>
+            )}
           </div>
         }
       </div>

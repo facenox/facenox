@@ -738,7 +738,10 @@ export function registerSyncHandlers() {
 
   ipcMain.handle("sync:disconnect-device", async () => {
     const status = getRemoteSyncStatus()
-    let warning: string | null = null
+    let warning: string | null =
+      !status.connected && status.organizationId && status.siteId && status.deviceId ?
+        "The saved Cloud credential could not be used, so this device may still be paired in Cloud. Check Cloud > Devices and remove it there if needed before pairing again."
+      : null
     await syncManager.suspend()
     try {
       const local = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
@@ -776,7 +779,10 @@ export function registerSyncHandlers() {
           signal: AbortSignal.timeout(30000),
         })
 
-        if (!response.ok && ![401, 404].includes(response.status)) {
+        if (response.status === 401) {
+          warning =
+            "Cloud rejected the saved device credential. Check Cloud > Devices and remove this device there if it is still paired."
+        } else if (!response.ok && response.status !== 404) {
           const text = await response.text()
           warning = text || `Remote disconnect returned HTTP ${response.status}.`
         }

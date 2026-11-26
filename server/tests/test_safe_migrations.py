@@ -196,6 +196,47 @@ def test_beta15_upgrade_publishes_generation_and_retains_legacy(tmp_path):
     assert _hash(active_db) == active_hash
 
 
+def test_recovers_lowercase_legacy_database_after_empty_profile_was_created(
+    tmp_path, monkeypatch
+):
+    data_dir = tmp_path / "Facenox" / "data"
+    first = _run(data_dir)
+    _mark_healthy(data_dir)
+    legacy_dir = tmp_path / "facenox"
+    legacy_db = _make_beta15_fixture(legacy_dir)
+    legacy_hash = _hash(legacy_db)
+    monkeypatch.setenv("FACENOX_LEGACY_DATA_DIR", str(legacy_dir))
+
+    recovered = _run(data_dir)
+
+    assert recovered.migrated is True
+    assert _counts(Path(recovered.active_database))["attendance_groups"] == 1
+    assert _hash(legacy_db) == legacy_hash
+    assert generations.generation_database(data_dir, first.generation).exists()
+
+
+def test_does_not_replace_a_new_profile_that_already_has_data(tmp_path, monkeypatch):
+    data_dir = tmp_path / "Facenox" / "data"
+    first = _run(data_dir)
+    _mark_healthy(data_dir)
+    with closing(sqlite3.connect(first.active_database)) as connection:
+        connection.execute(
+            "INSERT INTO attendance_groups (id, name) VALUES ('current', 'Current')"
+        )
+        connection.commit()
+    legacy_dir = tmp_path / "facenox"
+    legacy_db = _make_beta15_fixture(legacy_dir)
+    legacy_hash = _hash(legacy_db)
+    monkeypatch.setenv("FACENOX_LEGACY_DATA_DIR", str(legacy_dir))
+
+    selected = _run(data_dir)
+
+    assert selected.migrated is False
+    assert selected.generation == first.generation
+    assert _counts(Path(selected.active_database))["attendance_groups"] == 1
+    assert _hash(legacy_db) == legacy_hash
+
+
 def test_healthy_startup_uses_one_lightweight_validation(tmp_path, monkeypatch):
     data_dir = tmp_path / "data"
     result = _run(data_dir)
