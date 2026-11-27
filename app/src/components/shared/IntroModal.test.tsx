@@ -236,4 +236,48 @@ describe("IntroModal", () => {
     await waitFor(() => expect(api.resetLocalDirectory).toHaveBeenCalledTimes(1))
     await waitFor(() => expect(api.initiateReversePairing).toHaveBeenCalledTimes(2))
   })
+
+  it("shows only one reset prompt even if both reverse and manual pairing hit a Cloud location mismatch", async () => {
+    const api = getElectronAPIMock().sync
+    const mismatchMsg =
+      "This local directory belongs to another Cloud location. Reconnect to its original location or use a separate local data profile."
+    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
+    api.initiateReversePairing.mockResolvedValue({
+      success: true,
+      data: {
+        deviceCode: "dev-1",
+        userCode: "MISMATCH",
+        verificationUri: "https://facenox.com/pair",
+        verificationUriComplete: "https://facenox.com/pair?code=MISMATCH",
+        expiresIn: 900,
+        interval: 1,
+      },
+    })
+    api.pollDeviceAuthorization.mockResolvedValueOnce({
+      status: "error",
+      error: mismatchMsg,
+    })
+    api.pairDevice.mockResolvedValueOnce({
+      success: false,
+      error: mismatchMsg,
+    })
+
+    render(<IntroModal initialStep={2} />)
+
+    await waitFor(() => expect(api.pollDeviceAuthorization).toHaveBeenCalled(), { timeout: 5000 })
+    expect(
+      await screen.findAllByRole("button", { name: "Clear local data & switch location" }),
+    ).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole("button", { name: /Have a pairing code already/i }))
+    fireEvent.change(await screen.findByPlaceholderText("ABCD2345"), {
+      target: { value: "ABCD2345" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Connect" }))
+
+    await waitFor(() => expect(api.pairDevice).toHaveBeenCalledTimes(1))
+    expect(
+      screen.getAllByRole("button", { name: "Clear local data & switch location" }),
+    ).toHaveLength(1)
+  })
 })

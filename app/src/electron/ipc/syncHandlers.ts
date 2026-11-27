@@ -139,6 +139,27 @@ function getRemoteSyncStatus() {
   }
 }
 
+function clearLocalSyncMetadata() {
+  persistentStore.delete("sync.dataOrigin")
+  persistentStore.delete("sync.pendingUpload")
+  persistentStore.delete("sync.pendingAcknowledgements")
+  persistentStore.set("sync.lastSyncedAt", null)
+}
+
+async function readBackendErrorMessage(response: Response, fallback: string): Promise<string> {
+  const raw = await response.text().catch(() => "")
+  if (!raw) return fallback
+  try {
+    const parsed = JSON.parse(raw) as { detail?: unknown; error?: unknown; message?: unknown }
+    const detail = parsed.detail ?? parsed.error ?? parsed.message
+    if (typeof detail === "string" && detail.trim()) return detail.trim()
+  } catch {
+    const trimmed = raw.trim()
+    if (trimmed && trimmed.length < 200 && !trimmed.startsWith("<")) return trimmed
+  }
+  return fallback
+}
+
 function clearRemoteConnection() {
   persistentStore.set("sync.enabled", false)
   persistentStore.set("sync.organizationId", "")
@@ -809,9 +830,7 @@ export function registerSyncHandlers() {
 
       clearRemoteConnection()
       if (clearLocalData) {
-        persistentStore.delete("sync.dataOrigin")
-        persistentStore.delete("sync.pendingUpload")
-        persistentStore.set("sync.lastSyncedAt", null)
+        clearLocalSyncMetadata()
       }
       persistentStore.set("sync.lastSyncStatus", "idle")
       persistentStore.set(
@@ -833,7 +852,8 @@ export function registerSyncHandlers() {
   )
 
   ipcMain.handle("sync:reset-local-directory", async () => {
-    if (getRemoteSyncStatus().connected) {
+    const status = getRemoteSyncStatus()
+    if (status.connected) {
       throw new Error("Disconnect the current device before resetting the local directory.")
     }
     await syncManager.suspend()
@@ -843,13 +863,32 @@ export function registerSyncHandlers() {
       signal: AbortSignal.timeout(30000),
     })
     if (!wipeRes.ok) {
-      const detail = await wipeRes.text().catch(() => "")
-      throw new Error(detail || `Could not clear local data (HTTP ${wipeRes.status}).`)
+      throw new Error(
+        await readBackendErrorMessage(
+          wipeRes,
+          `Could not clear local data (HTTP ${wipeRes.status}).`,
+        ),
+      )
     }
 
-    persistentStore.delete("sync.dataOrigin")
-    persistentStore.delete("sync.pendingUpload")
-    persistentStore.set("sync.lastSyncedAt", null)
+    if (status.organizationId || status.deviceId) {
+      const unpairRes = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
+        method: "POST",
+        headers: authHeaders(),
+        signal: AbortSignal.timeout(10000),
+      }).catch(() => null)
+      if (unpairRes && !unpairRes.ok) {
+        throw new Error(
+          await readBackendErrorMessage(
+            unpairRes,
+            `Could not finish clearing local pairing (HTTP ${unpairRes.status}).`,
+          ),
+        )
+      }
+      clearRemoteConnection()
+    }
+
+    clearLocalSyncMetadata()
     persistentStore.set("sync.lastSyncStatus", "idle")
     persistentStore.set("sync.lastSyncMessage", null)
     syncManager.stop()

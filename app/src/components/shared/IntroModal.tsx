@@ -53,6 +53,8 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
   }, [])
 
   const isDevBuild = import.meta.env.DEV
+  const effectiveRemoteBaseUrl =
+    isDevBuild ? getEffectiveRemoteUrl(cloudConfig?.remoteBaseUrl) : OFFICIAL_REMOTE_BASE_URL
 
   useEffect(() => {
     if (!isDevBuild) return
@@ -118,7 +120,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     handlePair,
   } = useCloudPairing({
     enabled: step === 2,
-    remoteBaseUrl: isDevBuild ? cloudConfig?.remoteBaseUrl : OFFICIAL_REMOTE_BASE_URL,
+    remoteBaseUrl: effectiveRemoteBaseUrl,
     deviceName: cloudConfig?.deviceName,
     connected: Boolean(cloudConfig?.connected),
     cloudConfigStatus,
@@ -132,17 +134,21 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     if (!pendingRepairAfterReset || busyAction !== null) return
     setPendingRepairAfterReset(false)
     isInitiatingRef.current = false
-    void startReversePairing(getEffectiveRemoteUrl(cloudConfig?.remoteBaseUrl))
+    void startReversePairing(effectiveRemoteBaseUrl)
   }, [
     pendingRepairAfterReset,
     busyAction,
     startReversePairing,
-    cloudConfig?.remoteBaseUrl,
+    effectiveRemoteBaseUrl,
     isInitiatingRef,
   ])
 
   const isDirectoryOriginMismatchError = (msg: string | null) =>
     Boolean(msg && msg.includes("belongs to another Cloud location"))
+
+  const showManualResetPrompt = isDirectoryOriginMismatchError(pairError)
+  const showInitiateResetPrompt =
+    isDirectoryOriginMismatchError(initiateError) && !(showManualInput && showManualResetPrompt)
 
   const handleResetLocalDirectory = async () => {
     setPairError(null)
@@ -331,7 +337,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
               </button>
             </div>
             {pairError && <p className="text-left text-[11px] text-rose-400">{pairError}</p>}
-            {isDirectoryOriginMismatchError(pairError) && renderResetDirectoryPrompt()}
+            {showManualResetPrompt && renderResetDirectoryPrompt()}
           </motion.div>
         }
       </AnimatePresence>
@@ -622,13 +628,13 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                         </div>
                       </>
                     }
-                    {isDirectoryOriginMismatchError(initiateError) && renderResetDirectoryPrompt()}
+                    {showInitiateResetPrompt && renderResetDirectoryPrompt()}
                     <button
                       type="button"
                       onClick={() => {
                         setConfirmResetLocalData(false)
                         isInitiatingRef.current = false
-                        void startReversePairing(getEffectiveRemoteUrl(cloudConfig?.remoteBaseUrl))
+                        void startReversePairing(effectiveRemoteBaseUrl)
                       }}
                       className="flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
                       <RotateCw className="size-3" />
