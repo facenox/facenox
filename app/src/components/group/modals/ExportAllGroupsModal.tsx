@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { FileSpreadsheet, FolderTree, FileText, Download } from 'lucide-react'
+import { FolderTree, FileText, Download } from 'lucide-react'
 import { Modal, Spinner } from '@/components/common'
 
-export type ExportAllGroupsFormat = 'excel' | 'individual' | 'combined'
+export type ExportAllGroupsFormat = 'individual' | 'combined'
 
 interface ExportAllGroupsModalProps {
   isOpen: boolean
@@ -19,7 +19,7 @@ export function ExportAllGroupsModal({
   groupCount,
   dateRangeLabel
 }: ExportAllGroupsModalProps) {
-  const [selectedFormat, setSelectedFormat] = useState<ExportAllGroupsFormat>('excel')
+  const [selectedFormat, setSelectedFormat] = useState<ExportAllGroupsFormat>('combined')
   const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -50,23 +50,17 @@ export function ExportAllGroupsModal({
     icon: React.ReactNode
   }> = [
     {
-      id: 'excel',
-      title: 'Multi-sheet Excel workbook',
+      id: 'combined',
+      title: 'Single combined CSV',
       badge: 'Recommended',
-      description: 'Create one Excel file with a worksheet for each group.',
-      icon: <FileSpreadsheet className='size-4' />
+      description: 'Export all groups in one CSV file, with a Group column to identify each record.',
+      icon: <FileText className='size-4' />
     },
     {
       id: 'individual',
       title: 'Individual CSV files per group',
       description: 'Download a separate CSV file for each group.',
       icon: <FolderTree className='size-4' />
-    },
-    {
-      id: 'combined',
-      title: 'Single combined CSV',
-      description: 'Export all groups in one CSV file, with a Group column to identify each record.',
-      icon: <FileText className='size-4' />
     }
   ]
 
@@ -125,6 +119,10 @@ export function ExportAllGroupsModal({
             )
           })}
         </div>
+
+        <p className='text-[11px] leading-relaxed text-white/45'>
+          Need Excel workbooks or printable DTRs? Export them anytime from Facenox Cloud.
+        </p>
 
         {error && (
           <p role='alert' className='text-xs text-red-400'>

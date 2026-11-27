@@ -14,7 +14,6 @@ const mockUseReportViews = vi.fn()
 const mockUseReportTransform = vi.fn()
 const mockExportReportToCSV = vi.fn()
 const mockExportAllGroupsReportToCSV = vi.fn()
-const mockExportAllGroupsReportToExcel = vi.fn()
 const mockExportAllGroupsReportToIndividualCSVs = vi.fn()
 
 vi.mock('framer-motion', () => ({
@@ -43,7 +42,6 @@ vi.mock('@/components/group/sections/reports/hooks/useReportTransform', () => ({
 vi.mock('@/components/group/sections/reports/utils/exportUtils', () => ({
   exportReportToCSV: (...args: unknown[]) => mockExportReportToCSV(...args),
   exportAllGroupsReportToCSV: (...args: unknown[]) => mockExportAllGroupsReportToCSV(...args),
-  exportAllGroupsReportToExcel: (...args: unknown[]) => mockExportAllGroupsReportToExcel(...args),
   exportAllGroupsReportToIndividualCSVs: (...args: unknown[]) => mockExportAllGroupsReportToIndividualCSVs(...args)
 }))
 
@@ -126,7 +124,6 @@ describe('Reports', () => {
   beforeEach(() => {
     mockExportReportToCSV.mockReturnValue({ success: true })
     mockExportAllGroupsReportToCSV.mockResolvedValue({ success: true })
-    mockExportAllGroupsReportToExcel.mockResolvedValue({ success: true })
     mockExportAllGroupsReportToIndividualCSVs.mockResolvedValue({ success: true })
     resetGroupStore()
     useAttendanceStore.setState({ attendanceTimezone: null })
@@ -311,13 +308,12 @@ describe('Reports', () => {
     act(() => {
       fireEvent.click(exportNowBtn)
     })
-    expect(mockExportAllGroupsReportToExcel).toHaveBeenCalled()
+    expect(mockExportAllGroupsReportToCSV).toHaveBeenCalled()
   })
 
   it.each([
-    ['Multi-sheet Excel workbook', mockExportAllGroupsReportToExcel],
-    ['Individual CSV files per group', mockExportAllGroupsReportToIndividualCSVs],
-    ['Single combined CSV', mockExportAllGroupsReportToCSV]
+    ['Single combined CSV', mockExportAllGroupsReportToCSV],
+    ['Individual CSV files per group', mockExportAllGroupsReportToIndividualCSVs]
   ] as const)('keeps %s failures visible and allows retry', async (format, exporter) => {
     exporter.mockResolvedValueOnce({ success: false, error: new Error('Offline') })
     const members = [createAttendanceMember()]

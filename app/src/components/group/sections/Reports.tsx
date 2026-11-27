@@ -14,7 +14,6 @@ import { ReportTable } from '@/components/group/sections/reports/components/Repo
 import {
   exportReportToCSV,
   exportAllGroupsReportToCSV,
-  exportAllGroupsReportToExcel,
   exportAllGroupsReportToIndividualCSVs
 } from '@/components/group/sections/reports/utils/exportUtils'
 import { ExportAllGroupsModal, type ExportAllGroupsFormat } from '@/components/group/modals'
@@ -147,9 +146,7 @@ export function Reports({ group, onDaysTrackedChange, onExportHandlersReady, onA
     async (format: ExportAllGroupsFormat) => {
       const allGroups = useGroupStore.getState().groups
       const exportReport =
-        format === 'excel' ? exportAllGroupsReportToExcel
-        : format === 'individual' ? exportAllGroupsReportToIndividualCSVs
-        : exportAllGroupsReportToCSV
+        format === 'individual' ? exportAllGroupsReportToIndividualCSVs : exportAllGroupsReportToCSV
       const result = await exportReport(allGroups, reportStartDate, reportEndDate, attendanceTimeZone)
       if (!result.success) {
         throw new Error('Could not export the report. Check the local service and try again.')

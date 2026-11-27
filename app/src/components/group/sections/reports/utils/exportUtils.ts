@@ -105,15 +105,6 @@ interface ProcessedGroupReportData {
   rows: string[][]
 }
 
-function escapeXml(unsafe: string): string {
-  return String(unsafe)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
-}
-
 function triggerDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
@@ -310,103 +301,6 @@ async function fetchAllGroupsProcessedData(
   }
 
   return processedGroups
-}
-
-/**
- * Exports all groups into a multi-sheet Excel workbook (SpreadsheetML XML).
- * Opens directly in Microsoft Excel, Apple Numbers, LibreOffice, and Google Sheets with separate tabs.
- */
-export async function exportAllGroupsReportToExcel(
-  groups: AttendanceGroup[],
-  startDate: string,
-  endDate: string,
-  attendanceTimeZone?: string | null
-) {
-  try {
-    const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, '_').trim()
-    const processedGroups = await fetchAllGroupsProcessedData(groups, startDate, endDate, attendanceTimeZone)
-    if (processedGroups.length === 0) return { success: true }
-
-    const usedSheetNames = new Set<string>()
-    const worksheetsXml = processedGroups
-      .map(({ group, header, rows }) => {
-        const cleanName =
-          group.name
-            .replace(/[\\/?*:[\]]/g, '_')
-            .trim()
-            .slice(0, 31) || 'Group'
-        let uniqueName = cleanName
-        let counter = 1
-        while (usedSheetNames.has(uniqueName.toLowerCase())) {
-          const suffix = ` (${counter})`
-          uniqueName = `${cleanName.slice(0, 31 - suffix.length)}${suffix}`
-          counter++
-        }
-        usedSheetNames.add(uniqueName.toLowerCase())
-
-        const headerRowXml = `   <Row ss:StyleID="Header">
-${header.map((h) => `    <Cell><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('\n')}
-   </Row>`
-
-        const dataRowsXml = rows
-          .map(
-            (row) => `   <Row>
-${row.map((cell) => `    <Cell><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join('\n')}
-   </Row>`
-          )
-          .join('\n')
-
-        return ` <Worksheet ss:Name="${escapeXml(uniqueName)}">
-  <Table>
-   <Column ss:Width="160"/>
-   <Column ss:Width="95"/>
-   <Column ss:Width="90"/>
-   <Column ss:Width="85"/>
-   <Column ss:Width="85"/>
-   <Column ss:Width="95"/>
-   <Column ss:Width="85"/>
-   <Column ss:Width="180"/>
-${headerRowXml}
-${dataRowsXml}
-  </Table>
- </Worksheet>`
-      })
-      .join('\n')
-
-    const excelXml = `<?xml version="1.0" encoding="UTF-8"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40">
- <Styles>
-  <Style ss:ID="Default" ss:Name="Normal">
-   <Alignment ss:Vertical="Center"/>
-   <Borders/>
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#000000"/>
-  </Style>
-  <Style ss:ID="Header">
-   <Alignment ss:Vertical="Center" ss:Horizontal="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D9D9D9"/>
-   </Borders>
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#FFFFFF" ss:Bold="1"/>
-   <Interior ss:Color="#0F172A" ss:Pattern="Solid"/>
-  </Style>
- </Styles>
-${worksheetsXml}
-</Workbook>`
-
-    const dateRange = getDateRangeFilenameLabel(startDate, endDate)
-    const filename = sanitizeFilename(`All Groups Attendance (${dateRange}).xls`)
-    const blob = new Blob([excelXml], { type: 'application/vnd.ms-excel;charset=utf-8' })
-    triggerDownload(blob, filename)
-    return { success: true }
-  } catch (err) {
-    console.error('Error exporting all groups to Excel:', err)
-    return { success: false, error: err }
-  }
 }
 
 /**
