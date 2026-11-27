@@ -223,7 +223,8 @@ export function useCloudPairing({
     if (!enabled || !reversePairing || pairingConfigDirty || connected || cloudConfigStatus !== 'ready') {
       return
     }
-    let currentIntervalMs = (reversePairing.interval || 3) * 1000
+    const baseIntervalMs = (reversePairing.interval || 3) * 1000
+    let currentIntervalMs = baseIntervalMs
     let isCancelled = false
     let timer: ReturnType<typeof setTimeout> | null = null
 
@@ -240,6 +241,7 @@ export function useCloudPairing({
         return
       }
       isPollingRef.current = true
+      let nextDelayMs = currentIntervalMs
       try {
         const res = await window.electronAPI.sync.pollDeviceAuthorization({
           remoteBaseUrl: reversePairing.remoteBaseUrl,
@@ -279,15 +281,19 @@ export function useCloudPairing({
           return
         }
         if (res.slowDown) {
+          currentIntervalMs = Math.min(15_000, currentIntervalMs + 3_000)
           const retryMs = res.retryAfterSeconds ? res.retryAfterSeconds * 1000 : 0
-          currentIntervalMs = Math.min(60_000, Math.max(currentIntervalMs + 3_000, retryMs))
+          nextDelayMs = Math.min(60_000, Math.max(currentIntervalMs, retryMs))
+        } else if (currentIntervalMs > baseIntervalMs) {
+          currentIntervalMs = Math.max(baseIntervalMs, currentIntervalMs - 2_000)
+          nextDelayMs = currentIntervalMs
         }
       } catch {
         // Silent retry on transient network error
       } finally {
         isPollingRef.current = false
       }
-      scheduleNext(currentIntervalMs)
+      scheduleNext(nextDelayMs)
     }
 
     scheduleNext(currentIntervalMs)
