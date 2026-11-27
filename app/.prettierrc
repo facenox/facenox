@@ -3,11 +3,13 @@
   "singleQuote": false,
   "tabWidth": 2,
   "trailingComma": "all",
-  "printWidth": 100,
+  "printWidth": 120,
   "bracketSpacing": true,
   "arrowParens": "always",
   "endOfLine": "lf",
   "bracketSameLine": true,
   "experimentalTernaries": true,
-  "plugins": ["prettier-plugin-tailwindcss"]
+  "plugins": [
+    "prettier-plugin-tailwindcss"
+  ]
 }

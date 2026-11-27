@@ -284,150 +284,157 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     }
   }
 
-  const renderResetDirectoryPrompt = () => (
-    <div className="w-full max-w-sm rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-left">
-      <div className="space-y-2.5">
-        <p className="text-[11px] leading-relaxed text-amber-200/90">
-          {mismatchAction === "reset" ?
-            `This will permanently delete ${formatSummaryText()} stored on this device so it can pair here.`
-          : mismatchAction === "migrate" ?
-            `This will attach ${formatSummaryText()} to your new Cloud location on the next sync.`
-          : mismatchAction === "backup" ?
-            `Save an encrypted .facenox backup of ${formatSummaryText()} before switching.`
-          : `This device holds ${formatSummaryText()} from another Cloud location. Export a backup, clear local data, or migrate it here.`
-          }
+  const renderResetDirectoryPrompt = (align: "center" | "left" = "center") => (
+    <div
+      className={`w-full max-w-sm space-y-3 ${
+        align === "left" ? "border-t border-white/10 pt-3 text-left" : "text-center"
+      }`}>
+      <p className="text-[11px] leading-relaxed text-white/60">
+        {mismatchAction === "reset" ?
+          `This will permanently delete ${formatSummaryText()} stored on this device so it can pair here.`
+        : mismatchAction === "migrate" ?
+          `This will attach ${formatSummaryText()} to your new Cloud location on the next sync.`
+        : mismatchAction === "backup" ?
+          `Save an encrypted .facenox backup of ${formatSummaryText()} before switching.`
+        : `This device holds ${formatSummaryText()} from another Cloud location.`
+        }
+      </p>
+
+      {backupFeedback && (
+        <p
+          className={`text-[11px] ${
+            backupFeedback.tone === "success" ? "text-emerald-300/90"
+            : backupFeedback.tone === "error" ? "text-rose-400"
+            : "text-white/60"
+          }`}>
+          {backupFeedback.message}
         </p>
+      )}
 
-        {backupFeedback && (
-          <p
-            className={`text-[11px] ${
-              backupFeedback.tone === "success" ? "text-emerald-300/90"
-              : backupFeedback.tone === "error" ? "text-rose-400"
-              : "text-white/60"
-            }`}>
-            {backupFeedback.message}
-          </p>
-        )}
+      {mismatchAction === "reset" && (
+        <div
+          className={`flex items-center gap-2 ${align === "center" ? "justify-center" : ""}`}>
+          <button
+            type="button"
+            disabled={busyAction !== null}
+            onClick={() => void handleResetLocalDirectory()}
+            className="flex items-center gap-1.5 rounded border border-rose-500/35 bg-rose-500/15 px-3 py-1.5 text-[11px] font-medium text-rose-200 transition hover:bg-rose-500/25 disabled:opacity-40">
+            {busyAction === "disconnecting" && <Spinner size="xs" color="white" />}
+            Yes, clear local data
+          </button>
+          <button
+            type="button"
+            disabled={busyAction !== null}
+            onClick={() => setMismatchAction("idle")}
+            className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+            Cancel
+          </button>
+        </div>
+      )}
 
-        {mismatchAction === "reset" && (
-          <div className="flex items-center gap-2">
+      {mismatchAction === "migrate" && (
+        <div className="space-y-2.5 text-left">
+          <label className="flex cursor-pointer items-start gap-2 text-[11px] text-white/75">
+            <input
+              type="checkbox"
+              checked={migrateConfirmed}
+              onChange={(e) => setMigrateConfirmed(e.target.checked)}
+              className="mt-0.5 accent-cyan-400"
+            />
+            <span>I confirm these local members and logs belong to this new Cloud location.</span>
+          </label>
+          <div
+            className={`flex items-center gap-2 ${align === "center" ? "justify-center" : ""}`}>
             <button
               type="button"
-              disabled={busyAction !== null}
-              onClick={() => void handleResetLocalDirectory()}
-              className="flex items-center gap-1.5 rounded border border-rose-500/35 bg-rose-500/20 px-2.5 py-1 text-[11px] font-medium text-rose-200 transition hover:bg-rose-500/30 disabled:opacity-40">
+              disabled={busyAction !== null || !migrateConfirmed}
+              onClick={() => void handleMigrateLocalDirectory()}
+              className="flex items-center gap-1.5 rounded border border-white/20 bg-white px-3 py-1.5 text-[11px] font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-40">
               {busyAction === "disconnecting" && <Spinner size="xs" color="white" />}
-              Yes, clear local data
+              Yes, migrate &amp; pair
             </button>
             <button
               type="button"
               disabled={busyAction !== null}
-              onClick={() => setMismatchAction("idle")}
-              className="rounded border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+              onClick={() => {
+                setMismatchAction("idle")
+                setMigrateConfirmed(false)
+              }}
+              className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
               Cancel
             </button>
           </div>
-        )}
+        </div>
+      )}
 
-        {mismatchAction === "migrate" && (
-          <div className="space-y-2">
-            <label className="flex cursor-pointer items-start gap-2 text-[11px] text-amber-100/90">
-              <input
-                type="checkbox"
-                checked={migrateConfirmed}
-                onChange={(e) => setMigrateConfirmed(e.target.checked)}
-                className="mt-0.5 accent-cyan-400"
-              />
-              <span>I confirm these local members and logs belong to this new Cloud location.</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={busyAction !== null || !migrateConfirmed}
-                onClick={() => void handleMigrateLocalDirectory()}
-                className="flex items-center gap-1.5 rounded border border-cyan-400/35 bg-cyan-500/20 px-2.5 py-1 text-[11px] font-medium text-cyan-200 transition hover:bg-cyan-500/30 disabled:opacity-40">
-                {busyAction === "disconnecting" && <Spinner size="xs" color="white" />}
-                Yes, migrate &amp; pair
-              </button>
-              <button
-                type="button"
-                disabled={busyAction !== null}
-                onClick={() => {
-                  setMismatchAction("idle")
-                  setMigrateConfirmed(false)
-                }}
-                className="rounded border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {mismatchAction === "backup" && (
-          <div className="space-y-2">
-            <input
-              type="password"
-              placeholder="Backup encryption password"
-              value={backupPassword}
-              onChange={(e) => setBackupPassword(e.target.value)}
-              className="h-7 w-full rounded border border-white/15 bg-black/30 px-2.5 text-[11px] text-white outline-none placeholder:text-white/40 focus:border-white/30"
-            />
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={busyAction !== null}
-                onClick={() => void handleBackupBeforeSwitch()}
-                className="flex items-center gap-1.5 rounded border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white transition hover:bg-white/20 disabled:opacity-40">
-                {busyAction === "saving" && <Spinner size="xs" color="white" />}
-                Save .facenox backup
-              </button>
-              <button
-                type="button"
-                disabled={busyAction !== null}
-                onClick={() => {
-                  setMismatchAction("idle")
-                  setBackupPassword("")
-                  setBackupFeedback(null)
-                }}
-                className="rounded border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {mismatchAction === "idle" && (
-          <div className="flex flex-wrap items-center gap-1.5">
+      {mismatchAction === "backup" && (
+        <div className="space-y-2.5">
+          <input
+            type="password"
+            placeholder="Backup encryption password"
+            value={backupPassword}
+            onChange={(e) => setBackupPassword(e.target.value)}
+            className="h-8 w-full rounded border border-white/10 bg-black/25 px-3 text-[11px] text-white outline-none placeholder:text-white/40 focus:border-white/25"
+          />
+          <div
+            className={`flex items-center gap-2 ${align === "center" ? "justify-center" : ""}`}>
             <button
               type="button"
               disabled={busyAction !== null}
-              onClick={() => {
-                setBackupFeedback(null)
-                setMismatchAction("reset")
-              }}
-              className="rounded border border-amber-400/30 bg-amber-400/15 px-2.5 py-1 text-[11px] font-medium text-amber-200 transition hover:bg-amber-400/25 disabled:opacity-40">
-              Clear local data & switch location
+              onClick={() => void handleBackupBeforeSwitch()}
+              className="flex items-center gap-1.5 rounded border border-white/20 bg-white px-3 py-1.5 text-[11px] font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-40">
+              {busyAction === "saving" && <Spinner size="xs" color="white" />}
+              Save .facenox backup
             </button>
             <button
               type="button"
               disabled={busyAction !== null}
               onClick={() => {
+                setMismatchAction("idle")
+                setBackupPassword("")
                 setBackupFeedback(null)
-                setMismatchAction("migrate")
               }}
-              className="rounded border border-cyan-400/30 bg-cyan-500/15 px-2.5 py-1 text-[11px] font-medium text-cyan-200 transition hover:bg-cyan-500/25 disabled:opacity-40">
-              Migrate local data
-            </button>
-            <button
-              type="button"
-              disabled={busyAction !== null}
-              onClick={() => setMismatchAction("backup")}
-              className="rounded border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
-              Export backup
+              className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+              Cancel
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {mismatchAction === "idle" && (
+        <div
+          className={`flex flex-wrap items-center gap-2 ${
+            align === "center" ? "justify-center" : ""
+          }`}>
+          <button
+            type="button"
+            disabled={busyAction !== null}
+            onClick={() => {
+              setBackupFeedback(null)
+              setMismatchAction("reset")
+            }}
+            className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/85 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+            Clear local data & switch location
+          </button>
+          <button
+            type="button"
+            disabled={busyAction !== null}
+            onClick={() => {
+              setBackupFeedback(null)
+              setMismatchAction("migrate")
+            }}
+            className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/85 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+            Migrate local data
+          </button>
+          <button
+            type="button"
+            disabled={busyAction !== null}
+            onClick={() => setMismatchAction("backup")}
+            className="rounded border border-white/10 bg-transparent px-3 py-1.5 text-[11px] font-medium text-white/60 transition hover:border-white/20 hover:bg-white/5 hover:text-white/90 disabled:opacity-40">
+            Export backup
+          </button>
+        </div>
+      )}
     </div>
   )
 
@@ -560,8 +567,10 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                 Cancel
               </button>
             </div>
-            {pairError && <p className="text-left text-[11px] text-rose-400">{pairError}</p>}
-            {showManualResetPrompt && renderResetDirectoryPrompt()}
+            {pairError && !showManualResetPrompt && (
+              <p className="text-left text-[11px] text-rose-400">{pairError}</p>
+            )}
+            {showManualResetPrompt && renderResetDirectoryPrompt("left")}
           </motion.div>
         }
       </AnimatePresence>
@@ -843,6 +852,16 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                           </p>
                         </div>
                       </>
+                    : showInitiateResetPrompt ?
+                      <>
+                        <div className="flex size-9 items-center justify-center rounded-full bg-amber-500/10 text-amber-400">
+                          <AlertCircle className="size-4" />
+                        </div>
+                        <p className="text-xs font-semibold text-white/90">
+                          Directory belongs to another Cloud location
+                        </p>
+                        {renderResetDirectoryPrompt("center")}
+                      </>
                     : <>
                         <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
                           <AlertCircle className="size-4" />
@@ -852,7 +871,6 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                         </div>
                       </>
                     }
-                    {showInitiateResetPrompt && renderResetDirectoryPrompt()}
                     <button
                       type="button"
                       onClick={() => {
