@@ -637,10 +637,12 @@ describe('BackgroundSyncManager', () => {
     })
   })
 
-  it('does not repeat a wipe when its acknowledgement fails', async () => {
+  it('does not repeat a wipe when its acknowledgement fails, severs sync, and clears credentials on retry ack', async () => {
     const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     let wipes = 0
+    let unpairs = 0
     let acknowledgements = 0
+    mockStore['sync.organizationId'] = 'org-test-123'
     mockStore['sync.pendingUpload'] = { sensitive: 'old local upload' }
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input)
@@ -650,23 +652,49 @@ describe('BackgroundSyncManager', () => {
             commands: [{ id: 'command-once', command: 'WIPE' }]
           })
         )
-      if (url.endsWith('/attendance/wipe')) {
+      if (url.endsWith('/attendance/wipe?hard=true')) {
         wipes++
+        return new Response(JSON.stringify({ success: true }))
+      }
+      if (url.endsWith('/attendance/unpair')) {
+        unpairs++
         return new Response(JSON.stringify({ success: true }))
       }
       if (url.endsWith('/commands/ack')) {
         acknowledgements++
-        return new Response('Unavailable', { status: 503 })
+        if (acknowledgements === 1) {
+          return new Response('Unavailable', { status: 503 })
+        }
+        return new Response('{}')
       }
       return new Response('{}')
     })
+    const manager = new BackgroundSyncManager() as unknown as {
+      pollCommands(): Promise<void>
+      performSync(): Promise<{ success: boolean; message: string }>
+    }
     // Exercise the polling entry point, including receipt loading on a new manager.
-    await (new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }).pollCommands()
+    await manager.pollCommands()
+    expect(wipes).toBe(1)
+    expect(unpairs).toBe(1)
+    expect(mockStore['sync.commandReceipts.command-once']).toMatchObject({ status: 'completed' })
+    expect(mockStore['sync.pendingUpload']).toBeUndefined()
+    expect(mockStore['sync.enabled']).toBe(false)
+    expect(mockStore['sync.organizationId']).toBe('')
+    expect(mockStore['sync.siteId']).toBe('')
+    expect(mockStore['sync.encryptionKey']).toBe('')
+    expect(mockStore['sync.pendingWipeAck']).toBe('command-once')
+
+    const resync = await manager.performSync()
+    expect(resync).toEqual({ success: false, message: 'Device connection is incomplete.' })
+
     await (new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }).pollCommands()
     expect(wipes).toBe(1)
+    expect(unpairs).toBe(1)
     expect(acknowledgements).toBe(2)
-    expect(mockStore['sync.commandReceipts.command-once']).toMatchObject({ status: 'completed' })
-    expect(mockStore['sync.pendingUpload']).toBeNull()
+    expect(mockStore['sync.deviceId']).toBe('')
+    expect(mockStore['sync.deviceToken']).toBe('')
+    expect(mockStore['sync.pendingWipeAck']).toBeUndefined()
   })
 
   it.each(['not JSON', 'null', '{}', '{"success":false}'])(
@@ -679,7 +707,7 @@ describe('BackgroundSyncManager', () => {
         const url = String(input)
         if (url.endsWith('/api/devices/commands'))
           return new Response(JSON.stringify({ commands: [{ id: 'command-unconfirmed', command: 'WIPE' }] }))
-        if (url.endsWith('/attendance/wipe')) return new Response(body)
+        if (url.endsWith('/attendance/wipe?hard=true')) return new Response(body)
         if (url.endsWith('/commands/ack')) {
           acknowledgement = JSON.parse(String(init?.body))
           return new Response('{}')
@@ -706,7 +734,7 @@ describe('BackgroundSyncManager', () => {
             commands: [{ id: 'command-partial-wipe', command: 'WIPE' }]
           })
         )
-      if (url.endsWith('/attendance/wipe'))
+      if (url.endsWith('/attendance/wipe?hard=true'))
         return new Response(
           JSON.stringify({
             detail:

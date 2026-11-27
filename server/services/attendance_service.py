@@ -668,7 +668,7 @@ class AttendanceService:
             class_start_time=(
                 group.class_start_time
                 if group and group.class_start_time
-                else time_health.current_time_local.strftime("%H:%M")
+                else current_time.strftime("%H:%M")
             ),
             late_threshold_enabled=(
                 group.late_threshold_enabled

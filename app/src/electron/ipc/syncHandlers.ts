@@ -5,6 +5,7 @@ import crypto from 'node:crypto'
 import { backendService } from '../backendService.js'
 import { withLocalBackendHeaders } from '../localBackendScope.js'
 import { syncManager } from '../managers/BackgroundSyncManager.js'
+import { clearLocalSyncMetadata, clearRemoteConnection } from '../managers/syncConnectionState.js'
 import { persistentStore, requireSecretStorage } from '../persistentStore.js'
 import { getCurrentVersion } from '../updater.js'
 import { state } from '../State.js'
@@ -127,13 +128,6 @@ function getRemoteSyncStatus() {
   }
 }
 
-function clearLocalSyncMetadata() {
-  persistentStore.delete('sync.dataOrigin')
-  persistentStore.delete('sync.pendingUpload')
-  persistentStore.delete('sync.pendingAcknowledgements')
-  persistentStore.set('sync.lastSyncedAt', null)
-}
-
 async function readBackendErrorMessage(response: Response, fallback: string): Promise<string> {
   const raw = await response.text().catch(() => '')
   if (!raw) return fallback
@@ -146,30 +140,6 @@ async function readBackendErrorMessage(response: Response, fallback: string): Pr
     if (trimmed && trimmed.length < 200 && !trimmed.startsWith('<')) return trimmed
   }
   return fallback
-}
-
-function clearRemoteConnection() {
-  persistentStore.set('sync.enabled', false)
-  persistentStore.set('sync.organizationId', '')
-  persistentStore.set('sync.organizationName', '')
-  persistentStore.set('sync.siteId', '')
-  persistentStore.set('sync.siteName', '')
-  persistentStore.set('sync.deviceId', '')
-  persistentStore.set('sync.deviceToken', '')
-  persistentStore.set('sync.encryptionKey', '')
-  persistentStore.set('sync.lastSyncedAt', null)
-  persistentStore.set('sync.pendingAcknowledgements', null)
-  persistentStore.set('sync.pendingUpload', null)
-  persistentStore.delete('sync.policy.forceLiveness')
-  persistentStore.delete('sync.policy.trackCheckout')
-  persistentStore.delete('sync.policy.lateThresholdEnabled')
-  persistentStore.delete('sync.policy.lateThresholdMinutes')
-  persistentStore.delete('sync.policy.attendanceCooldownSeconds')
-  persistentStore.delete('sync.policy.minCheckoutDelayMinutes')
-  persistentStore.delete('sync.policy.dataRetentionDays')
-  persistentStore.delete('sync.policy.peopleLimit')
-  persistentStore.delete('sync.policy.allowKioskDirectoryManagement')
-  persistentStore.delete('sync.policy.faceTemplateSync')
 }
 
 async function validatePairingDestination(

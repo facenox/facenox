@@ -8,24 +8,18 @@ import { getCurrentVersion, checkForUpdates, notifyRenderer } from '../updater.j
 import { decryptEmbedding, encryptEmbedding } from './EmbeddingCrypto.js'
 import { buildSyncChunks } from './syncChunks.js'
 import { parseAblyTokenRequest } from './ablyTokenRequest.js'
+import {
+  clearDeviceCredentials,
+  clearLocalSyncMetadata,
+  clearRemoteConnection,
+  deleteStoreKey
+} from './syncConnectionState.js'
 import { DEFAULT_REMOTE_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from '../../services/syncDefaults.js'
 const STARTUP_CATCH_UP_DELAY_MS = 5000
 const MIN_PUSH_INTERVAL_MS = 5500
 const TRANSIENT_RETRY_DELAYS_MS = [15_000, 60_000, 5 * 60_000]
 const ABLY_RECOVERY_DELAYS_MS = [30_000, 120_000, 600_000]
 const NON_RETRYABLE_STATUSES = new Set([400, 401, 402, 403, 422, 426])
-
-function deleteStoreKey(key: string) {
-  const store = persistentStore as {
-    delete?: (k: string) => void
-    set: (k: string, v: unknown) => void
-  }
-  if (typeof store.delete === 'function') {
-    store.delete(key)
-  } else {
-    store.set(key, undefined)
-  }
-}
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
@@ -651,9 +645,16 @@ export class BackgroundSyncManager {
     }
   }
 
+  private finalizeWipedCredentials() {
+    clearDeviceCredentials()
+    deleteStoreKey('sync.pendingWipeAck')
+    state.mainWindow?.webContents.send('sync:data-changed')
+  }
+
   private async pollCommands() {
     const { enabled, remoteBaseUrl, deviceToken } = this.getSyncConfig()
-    if (this.suspended || !enabled || !remoteBaseUrl || !deviceToken) return
+    const hasPendingWipeAck = Boolean(persistentStore.get('sync.pendingWipeAck'))
+    if (this.suspended || (!enabled && !hasPendingWipeAck) || !remoteBaseUrl || !deviceToken) return
     if (this.isPollingCommands) return
     this.isPollingCommands = true
 
@@ -690,7 +691,10 @@ export class BackgroundSyncManager {
     const receiptKey = `sync.commandReceipts.${cmd.id}`
     const previous = persistentStore.get(receiptKey) as { status: string; result: CommandResult } | undefined
     if (previous) {
-      await this.acknowledgeCommand(cmd.id, previous.status, previous.result)
+      const ackResult = await this.acknowledgeCommand(cmd.id, previous.status, previous.result)
+      if (cmd.command === 'WIPE' && previous.status === 'completed' && ackResult !== 'retryable') {
+        this.finalizeWipedCredentials()
+      }
       return
     }
     // Persist intent before any side effect. If the process dies mid-command,
@@ -710,7 +714,7 @@ export class BackgroundSyncManager {
           try {
             this.abortController?.abort()
             await this.idlePromise
-            const wipeResponse = await fetch(`${backendService.getUrl()}/attendance/wipe`, {
+            const wipeResponse = await fetch(`${backendService.getUrl()}/attendance/wipe?hard=true`, {
               method: 'POST',
               headers: authHeaders({ 'Content-Type': 'application/json' }),
               signal: AbortSignal.timeout(60000)
@@ -726,11 +730,26 @@ export class BackgroundSyncManager {
                   'The local service did not confirm that the wipe completed. Review this computer before using it again.'
               )
             }
-            // A durable upload is local data too. Never replay it after a confirmed wipe.
-            persistentStore.set('sync.pendingUpload', null)
-            persistentStore.set('sync.pendingAcknowledgements', null)
-            persistentStore.set('sync.lastSyncedAt', null)
-            state.mainWindow?.webContents.send('sync:data-changed')
+            const unpairResponse = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
+              method: 'POST',
+              headers: authHeaders(),
+              signal: AbortSignal.timeout(10000)
+            })
+            if (!unpairResponse.ok) {
+              throw new Error(await readCommandError(unpairResponse, 'Could not disconnect local pairing after wipe'))
+            }
+            // Sever org/site/key + sync timers immediately so background sync can
+            // never re-pull wiped directory or face templates back onto the kiosk.
+            // Device auth stays only until Cloud confirms the WIPE receipt.
+            clearRemoteConnection({ preserveDeviceAuth: true })
+            clearLocalSyncMetadata()
+            persistentStore.set('sync.pendingWipeAck', cmd.id)
+            this.stop()
+            this.setLastSyncState({
+              lastSyncedAt: null,
+              lastSyncStatus: 'idle',
+              lastSyncMessage: null
+            })
             result = wipeBody
           } finally {
             this.isWiping = false
@@ -821,10 +840,17 @@ export class BackgroundSyncManager {
     }
 
     persistentStore.set(receiptKey, { status, result })
-    await this.acknowledgeCommand(cmd.id, status, result)
+    const ackResult = await this.acknowledgeCommand(cmd.id, status, result)
+    if (cmd.command === 'WIPE' && status === 'completed' && ackResult !== 'retryable') {
+      this.finalizeWipedCredentials()
+    }
   }
 
-  private async acknowledgeCommand(commandId: string, status: string, result: CommandResult) {
+  private async acknowledgeCommand(
+    commandId: string,
+    status: string,
+    result: CommandResult
+  ): Promise<'acked' | 'terminal' | 'retryable'> {
     try {
       const { remoteBaseUrl, deviceToken } = this.getSyncConfig()
       const response = await fetch(`${remoteBaseUrl.replace(/\/+$/, '')}/api/devices/commands/ack`, {
@@ -840,9 +866,14 @@ export class BackgroundSyncManager {
         }),
         signal: AbortSignal.timeout(10000)
       })
-      if (!response.ok) throw new Error(`Command acknowledgement failed: HTTP ${response.status}`)
+      if (response.ok) return 'acked'
+      if (response.status === 401 || response.status === 403 || response.status === 404) {
+        return 'terminal'
+      }
+      throw new Error(`Command acknowledgement failed: HTTP ${response.status}`)
     } catch (error) {
       console.warn('[RemoteMgmt] Failed to acknowledge command:', error)
+      return 'retryable'
     }
   }
 

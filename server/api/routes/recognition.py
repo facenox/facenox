@@ -67,12 +67,18 @@ async def recognize_face(
         if not detections:
             raise ValueError("No detectable face found in image")
 
+        settings = await repo.get_settings()
+        effective_liveness = bool(
+            enable_liveness_detection
+            or getattr(settings, "cloud_force_liveness", False)
+        )
+
         (
             should_block,
             error_msg,
             liveness_status,
         ) = await process_liveness_for_face_operation(
-            img, bbox, enable_liveness_detection, "Recognition"
+            img, bbox, effective_liveness, "Recognition"
         )
 
         if should_block:
