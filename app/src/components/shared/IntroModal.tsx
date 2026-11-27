@@ -52,7 +52,10 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
   } | null>(null)
   const [migrateConfirmed, setMigrateConfirmed] = useState(false)
   const [backupPassword, setBackupPassword] = useState("")
-  const [backupFeedback, setBackupFeedback] = useState<string | null>(null)
+  const [backupFeedback, setBackupFeedback] = useState<{
+    message: string
+    tone: "success" | "error" | "muted"
+  } | null>(null)
   const [pendingRepairAfterReset, setPendingRepairAfterReset] = useState(false)
   const [copiedPin, setCopiedPin] = useState(false)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -215,8 +218,11 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
         return
       }
       await refreshCloudSyncConfig()
+      setShowManualInput(false)
+      setPairingCode("")
       setMismatchAction("idle")
       setMigrateConfirmed(false)
+      setBackupFeedback(null)
       setPendingRepairAfterReset(true)
     } catch (err) {
       setPairError(err instanceof Error ? err.message : "Could not clear local directory.")
@@ -235,8 +241,11 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
         return
       }
       await refreshCloudSyncConfig()
+      setShowManualInput(false)
+      setPairingCode("")
       setMismatchAction("idle")
       setMigrateConfirmed(false)
+      setBackupFeedback(null)
       setPendingRepairAfterReset(true)
     } catch (err) {
       setPairError(
@@ -249,7 +258,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
 
   const handleBackupBeforeSwitch = async () => {
     if (!backupPassword.trim()) {
-      setBackupFeedback("Enter a password to encrypt the backup.")
+      setBackupFeedback({ message: "Enter a password to encrypt the backup.", tone: "error" })
       return
     }
     setBackupFeedback(null)
@@ -257,16 +266,19 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     try {
       const result = await window.electronAPI.sync.exportData(backupPassword)
       if (result.canceled) {
-        setBackupFeedback("Backup canceled.")
+        setBackupFeedback({ message: "Backup canceled.", tone: "muted" })
       } else if (result.success) {
         setBackupPassword("")
         setMismatchAction("idle")
-        setBackupFeedback("Backup saved.")
+        setBackupFeedback({ message: "Backup saved.", tone: "success" })
       } else {
-        setBackupFeedback(result.error || "Backup export failed.")
+        setBackupFeedback({ message: result.error || "Backup export failed.", tone: "error" })
       }
     } catch (err) {
-      setBackupFeedback(err instanceof Error ? err.message : "Backup export failed.")
+      setBackupFeedback({
+        message: err instanceof Error ? err.message : "Backup export failed.",
+        tone: "error",
+      })
     } finally {
       setBusyAction(null)
     }
@@ -286,7 +298,16 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
           }
         </p>
 
-        {backupFeedback && <p className="text-[11px] text-emerald-300/90">{backupFeedback}</p>}
+        {backupFeedback && (
+          <p
+            className={`text-[11px] ${
+              backupFeedback.tone === "success" ? "text-emerald-300/90"
+              : backupFeedback.tone === "error" ? "text-rose-400"
+              : "text-white/60"
+            }`}>
+            {backupFeedback.message}
+          </p>
+        )}
 
         {mismatchAction === "reset" && (
           <div className="flex items-center gap-2">
@@ -366,6 +387,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                 onClick={() => {
                   setMismatchAction("idle")
                   setBackupPassword("")
+                  setBackupFeedback(null)
                 }}
                 className="rounded border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
                 Cancel
@@ -379,14 +401,20 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
             <button
               type="button"
               disabled={busyAction !== null}
-              onClick={() => setMismatchAction("reset")}
+              onClick={() => {
+                setBackupFeedback(null)
+                setMismatchAction("reset")
+              }}
               className="rounded border border-amber-400/30 bg-amber-400/15 px-2.5 py-1 text-[11px] font-medium text-amber-200 transition hover:bg-amber-400/25 disabled:opacity-40">
               Clear local data & switch location
             </button>
             <button
               type="button"
               disabled={busyAction !== null}
-              onClick={() => setMismatchAction("migrate")}
+              onClick={() => {
+                setBackupFeedback(null)
+                setMismatchAction("migrate")
+              }}
               className="rounded border border-cyan-400/30 bg-cyan-500/15 px-2.5 py-1 text-[11px] font-medium text-cyan-200 transition hover:bg-cyan-500/25 disabled:opacity-40">
               Migrate local data
             </button>
