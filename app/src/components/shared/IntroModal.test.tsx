@@ -41,6 +41,18 @@ describe('IntroModal', () => {
     expect(writeText).toHaveBeenCalledWith('749120')
   })
 
+  it('shows a single loader on the QR side with a disabled Sign in button while pairing initializes', async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
+    api.initiateReversePairing.mockImplementation(() => new Promise(() => {}))
+
+    render(<IntroModal initialStep={2} />)
+
+    expect(await screen.findByText('Generating device code…')).toBeInTheDocument()
+    expect(screen.queryByText(/Preparing sign-in link/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Sign in$/i })).toBeDisabled()
+  })
+
   it('loads a saved custom destination before starting device authorization', async () => {
     const api = getElectronAPIMock().sync
     api.getConfig.mockResolvedValue(

@@ -640,16 +640,18 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                       <span>Sign in</span>
                       <ExternalLink className='size-3' />
                     </motion.a>
-                  : <motion.div
+                  : <motion.button
                       key='signin-loading'
+                      type='button'
+                      disabled
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.18, ease: 'easeOut' }}
-                      className='inline-flex h-[38px] w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-5 text-xs font-medium text-white/55'>
-                      <Spinner size='xs' color='cyan' />
-                      <span>Preparing sign-in link…</span>
-                    </motion.div>
+                      className='inline-flex h-[38px] w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-5 text-xs font-bold tracking-wide text-white/35'>
+                      <span>Sign in</span>
+                      <ExternalLink className='size-3' />
+                    </motion.button>
                   }
                 </AnimatePresence>
 
