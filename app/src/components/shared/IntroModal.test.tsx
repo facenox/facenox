@@ -280,4 +280,63 @@ describe("IntroModal", () => {
       screen.getAllByRole("button", { name: "Clear local data & switch location" }),
     ).toHaveLength(1)
   })
+
+  it("displays local directory counts, exports backup, and supports explicit migration", async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
+    api.getLocalDirectorySummary.mockResolvedValue({
+      success: true,
+      counts: { groups: 3, members: 42, records: 120, sessions: 60 },
+    })
+    api.initiateReversePairing.mockResolvedValue({
+      success: true,
+      data: {
+        deviceCode: "dev-1",
+        userCode: "MISMATCH",
+        verificationUri: "https://facenox.com/pair",
+        verificationUriComplete: "https://facenox.com/pair?code=MISMATCH",
+        expiresIn: 900,
+        interval: 1,
+      },
+    })
+    api.pollDeviceAuthorization.mockResolvedValueOnce({
+      status: "error",
+      error:
+        "This local directory belongs to another Cloud location. Reconnect to its original location or use a separate local data profile.",
+    })
+    api.exportData.mockResolvedValue({ success: true, filePath: "/tmp/backup.facenox" })
+    api.migrateLocalDirectory.mockResolvedValue({ success: true })
+
+    render(<IntroModal initialStep={2} />)
+
+    await waitFor(() => expect(api.getLocalDirectorySummary).toHaveBeenCalled(), { timeout: 5000 })
+    expect(
+      await screen.findByText(/42 members, 3 groups, 180 attendance logs/i),
+    ).toBeInTheDocument()
+
+    // Test backup export flow
+    fireEvent.click(screen.getByRole("button", { name: "Export backup" }))
+    fireEvent.change(screen.getByPlaceholderText("Backup encryption password"), {
+      target: { value: "secret-pass" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Save .facenox backup" }))
+    await waitFor(() => expect(api.exportData).toHaveBeenCalledWith("secret-pass"))
+    expect(await screen.findByText("Backup saved.")).toBeInTheDocument()
+
+    // Test explicit migrate confirmation flow
+    fireEvent.click(screen.getByRole("button", { name: "Migrate local data" }))
+    const confirmMigrateBtn = screen.getByRole("button", { name: /Yes, migrate & pair/i })
+    expect(confirmMigrateBtn).toBeDisabled()
+
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: /I confirm these local members and logs belong to this new Cloud location/i,
+      }),
+    )
+    expect(confirmMigrateBtn).toBeEnabled()
+    fireEvent.click(confirmMigrateBtn)
+
+    await waitFor(() => expect(api.migrateLocalDirectory).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(api.initiateReversePairing).toHaveBeenCalledTimes(2))
+  })
 })

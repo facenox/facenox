@@ -1390,10 +1390,11 @@ class AttendanceRepository:
             (Face, "faces"),
             (AuditLog, "audit_logs"),
         ]:
+            values: Dict[str, Any] = {"organization_id": org_id}
+            if hasattr(model, "sync_dirty"):
+                values["sync_dirty"] = True
             result = await self.session.execute(
-                update(model)
-                .where(model.organization_id.is_(None))
-                .values(organization_id=org_id)
+                update(model).where(model.organization_id.is_(None)).values(**values)
             )
             counts[key] = result.rowcount
 

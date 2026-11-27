@@ -143,6 +143,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     disconnectDevice: (options?: { clearLocalData?: boolean }) => {
       return ipcRenderer.invoke("sync:disconnect-device", options)
     },
+    getLocalDirectorySummary: () => {
+      return ipcRenderer.invoke("sync:get-local-directory-summary")
+    },
+    migrateLocalDirectory: () => {
+      return ipcRenderer.invoke("sync:migrate-local-directory")
+    },
     resetLocalDirectory: () => {
       return ipcRenderer.invoke("sync:reset-local-directory")
     },

@@ -41,7 +41,18 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     "saving" | "pairing" | "disconnecting" | "syncing" | null
   >(null)
   const [pairError, setPairError] = useState<string | null>(null)
-  const [confirmResetLocalData, setConfirmResetLocalData] = useState(false)
+  const [mismatchAction, setMismatchAction] = useState<"idle" | "backup" | "reset" | "migrate">(
+    "idle",
+  )
+  const [directorySummary, setDirectorySummary] = useState<{
+    groups: number
+    members: number
+    records: number
+    sessions: number
+  } | null>(null)
+  const [migrateConfirmed, setMigrateConfirmed] = useState(false)
+  const [backupPassword, setBackupPassword] = useState("")
+  const [backupFeedback, setBackupFeedback] = useState<string | null>(null)
   const [pendingRepairAfterReset, setPendingRepairAfterReset] = useState(false)
   const [copiedPin, setCopiedPin] = useState(false)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -80,7 +91,9 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
 
   const applyEndpointOverride = useCallback(async (nextUrl: string) => {
     setPairError(null)
-    setConfirmResetLocalData(false)
+    setMismatchAction("idle")
+    setMigrateConfirmed(false)
+    setBackupFeedback(null)
     setBusyAction("saving")
     try {
       await window.electronAPI.sync.updateConfig({
@@ -149,6 +162,48 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
   const showManualResetPrompt = isDirectoryOriginMismatchError(pairError)
   const showInitiateResetPrompt =
     isDirectoryOriginMismatchError(initiateError) && !(showManualInput && showManualResetPrompt)
+  const isMismatchPromptVisible = showManualResetPrompt || showInitiateResetPrompt
+
+  useEffect(() => {
+    if (!isMismatchPromptVisible) {
+      setMismatchAction("idle")
+      setMigrateConfirmed(false)
+      setBackupPassword("")
+      setBackupFeedback(null)
+      setDirectorySummary(null)
+      return
+    }
+    let cancelled = false
+    window.electronAPI.sync
+      .getLocalDirectorySummary?.()
+      .then((res) => {
+        if (!cancelled && res?.success && res.counts) {
+          setDirectorySummary(res.counts)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [isMismatchPromptVisible])
+
+  const formatSummaryText = () => {
+    if (!directorySummary) return "existing people, groups, and attendance logs"
+    const parts: string[] = []
+    if (directorySummary.members > 0) {
+      parts.push(
+        `${directorySummary.members} ${directorySummary.members === 1 ? "member" : "members"}`,
+      )
+    }
+    if (directorySummary.groups > 0) {
+      parts.push(`${directorySummary.groups} ${directorySummary.groups === 1 ? "group" : "groups"}`)
+    }
+    const logCount = directorySummary.records + directorySummary.sessions
+    if (logCount > 0) {
+      parts.push(`${logCount} ${logCount === 1 ? "attendance log" : "attendance logs"}`)
+    }
+    return parts.length > 0 ? parts.join(", ") : "existing local directory data"
+  }
 
   const handleResetLocalDirectory = async () => {
     setPairError(null)
@@ -160,7 +215,8 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
         return
       }
       await refreshCloudSyncConfig()
-      setConfirmResetLocalData(false)
+      setMismatchAction("idle")
+      setMigrateConfirmed(false)
       setPendingRepairAfterReset(true)
     } catch (err) {
       setPairError(err instanceof Error ? err.message : "Could not clear local directory.")
@@ -169,16 +225,70 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     }
   }
 
+  const handleMigrateLocalDirectory = async () => {
+    setPairError(null)
+    setBusyAction("disconnecting")
+    try {
+      const result = await window.electronAPI.sync.migrateLocalDirectory()
+      if (!result.success) {
+        setPairError(result.error || "Could not prepare local directory for migration.")
+        return
+      }
+      await refreshCloudSyncConfig()
+      setMismatchAction("idle")
+      setMigrateConfirmed(false)
+      setPendingRepairAfterReset(true)
+    } catch (err) {
+      setPairError(
+        err instanceof Error ? err.message : "Could not prepare local directory for migration.",
+      )
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
+  const handleBackupBeforeSwitch = async () => {
+    if (!backupPassword.trim()) {
+      setBackupFeedback("Enter a password to encrypt the backup.")
+      return
+    }
+    setBackupFeedback(null)
+    setBusyAction("saving")
+    try {
+      const result = await window.electronAPI.sync.exportData(backupPassword)
+      if (result.canceled) {
+        setBackupFeedback("Backup canceled.")
+      } else if (result.success) {
+        setBackupPassword("")
+        setMismatchAction("idle")
+        setBackupFeedback("Backup saved.")
+      } else {
+        setBackupFeedback(result.error || "Backup export failed.")
+      }
+    } catch (err) {
+      setBackupFeedback(err instanceof Error ? err.message : "Backup export failed.")
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
   const renderResetDirectoryPrompt = () => (
     <div className="w-full max-w-sm rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-left">
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <p className="text-[11px] leading-relaxed text-amber-200/90">
-          {confirmResetLocalData ?
-            "This will permanently delete people, groups, face templates, and attendance logs stored on this device so it can pair here."
-          : "Need to switch this device to the current Cloud location? Clear its local directory first."
+          {mismatchAction === "reset" ?
+            `This will permanently delete ${formatSummaryText()} stored on this device so it can pair here.`
+          : mismatchAction === "migrate" ?
+            `This will attach ${formatSummaryText()} to your new Cloud location on the next sync.`
+          : mismatchAction === "backup" ?
+            `Save an encrypted .facenox backup of ${formatSummaryText()} before switching.`
+          : `This device holds ${formatSummaryText()} from another Cloud location. Export a backup, clear local data, or migrate it here.`
           }
         </p>
-        {confirmResetLocalData ?
+
+        {backupFeedback && <p className="text-[11px] text-emerald-300/90">{backupFeedback}</p>}
+
+        {mismatchAction === "reset" && (
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -191,19 +301,104 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
             <button
               type="button"
               disabled={busyAction !== null}
-              onClick={() => setConfirmResetLocalData(false)}
+              onClick={() => setMismatchAction("idle")}
               className="rounded border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
               Cancel
             </button>
           </div>
-        : <button
-            type="button"
-            disabled={busyAction !== null}
-            onClick={() => setConfirmResetLocalData(true)}
-            className="rounded border border-amber-400/30 bg-amber-400/15 px-2.5 py-1 text-[11px] font-medium text-amber-200 transition hover:bg-amber-400/25 disabled:opacity-40">
-            Clear local data & switch location
-          </button>
-        }
+        )}
+
+        {mismatchAction === "migrate" && (
+          <div className="space-y-2">
+            <label className="flex cursor-pointer items-start gap-2 text-[11px] text-amber-100/90">
+              <input
+                type="checkbox"
+                checked={migrateConfirmed}
+                onChange={(e) => setMigrateConfirmed(e.target.checked)}
+                className="mt-0.5 accent-cyan-400"
+              />
+              <span>I confirm these local members and logs belong to this new Cloud location.</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={busyAction !== null || !migrateConfirmed}
+                onClick={() => void handleMigrateLocalDirectory()}
+                className="flex items-center gap-1.5 rounded border border-cyan-400/35 bg-cyan-500/20 px-2.5 py-1 text-[11px] font-medium text-cyan-200 transition hover:bg-cyan-500/30 disabled:opacity-40">
+                {busyAction === "disconnecting" && <Spinner size="xs" color="white" />}
+                Yes, migrate &amp; pair
+              </button>
+              <button
+                type="button"
+                disabled={busyAction !== null}
+                onClick={() => {
+                  setMismatchAction("idle")
+                  setMigrateConfirmed(false)
+                }}
+                className="rounded border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {mismatchAction === "backup" && (
+          <div className="space-y-2">
+            <input
+              type="password"
+              placeholder="Backup encryption password"
+              value={backupPassword}
+              onChange={(e) => setBackupPassword(e.target.value)}
+              className="h-7 w-full rounded border border-white/15 bg-black/30 px-2.5 text-[11px] text-white outline-none placeholder:text-white/40 focus:border-white/30"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={busyAction !== null}
+                onClick={() => void handleBackupBeforeSwitch()}
+                className="flex items-center gap-1.5 rounded border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white transition hover:bg-white/20 disabled:opacity-40">
+                {busyAction === "saving" && <Spinner size="xs" color="white" />}
+                Save .facenox backup
+              </button>
+              <button
+                type="button"
+                disabled={busyAction !== null}
+                onClick={() => {
+                  setMismatchAction("idle")
+                  setBackupPassword("")
+                }}
+                className="rounded border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {mismatchAction === "idle" && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              disabled={busyAction !== null}
+              onClick={() => setMismatchAction("reset")}
+              className="rounded border border-amber-400/30 bg-amber-400/15 px-2.5 py-1 text-[11px] font-medium text-amber-200 transition hover:bg-amber-400/25 disabled:opacity-40">
+              Clear local data & switch location
+            </button>
+            <button
+              type="button"
+              disabled={busyAction !== null}
+              onClick={() => setMismatchAction("migrate")}
+              className="rounded border border-cyan-400/30 bg-cyan-500/15 px-2.5 py-1 text-[11px] font-medium text-cyan-200 transition hover:bg-cyan-500/25 disabled:opacity-40">
+              Migrate local data
+            </button>
+            <button
+              type="button"
+              disabled={busyAction !== null}
+              onClick={() => setMismatchAction("backup")}
+              className="rounded border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+              Export backup
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -330,7 +525,8 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                   setShowManualInput(false)
                   setPairingCode("")
                   setPairError(null)
-                  setConfirmResetLocalData(false)
+                  setMismatchAction("idle")
+                  setMigrateConfirmed(false)
                 }}
                 className="px-1.5 text-xs text-white/40 transition hover:text-white/75">
                 Cancel
@@ -632,7 +828,8 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                     <button
                       type="button"
                       onClick={() => {
-                        setConfirmResetLocalData(false)
+                        setMismatchAction("idle")
+                        setMigrateConfirmed(false)
                         isInitiatingRef.current = false
                         void startReversePairing(effectiveRemoteBaseUrl)
                       }}

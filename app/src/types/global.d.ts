@@ -285,6 +285,37 @@ declare global {
         unsyncedSessionsCount?: number
       }
     }>
+    getLocalDirectorySummary: () => Promise<{
+      success: boolean
+      error?: string
+      counts?: {
+        groups: number
+        members: number
+        records: number
+        sessions: number
+      }
+    }>
+    migrateLocalDirectory: () => Promise<{
+      success: boolean
+      error?: string
+      config: {
+        enabled: boolean
+        remoteBaseUrl: string
+        organizationId: string
+        organizationName: string
+        siteId: string
+        siteName: string
+        deviceId: string
+        deviceName: string
+        intervalMinutes: number
+        lastSyncedAt: string | null
+        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncMessage: string | null
+        connected: boolean
+        unsyncedRecordsCount?: number
+        unsyncedSessionsCount?: number
+      }
+    }>
     resetLocalDirectory: () => Promise<{
       success: boolean
       error?: string

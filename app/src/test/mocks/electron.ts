@@ -71,6 +71,8 @@ export interface MockElectronAPI extends BackendServiceAPI {
     initiateReversePairing: Mock
     pollDeviceAuthorization: Mock
     disconnectDevice: Mock
+    getLocalDirectorySummary: Mock
+    migrateLocalDirectory: Mock
     resetLocalDirectory: Mock
     exportData: Mock
     pickImportFile: Mock
@@ -234,6 +236,28 @@ export function createElectronAPIMock(): MockElectronAPI {
         success: true,
         warning: null,
         config: defaultSyncConfig,
+      }),
+      getLocalDirectorySummary: vi.fn().mockResolvedValue({
+        success: true,
+        counts: { groups: 0, members: 0, records: 0, sessions: 0 },
+      }),
+      migrateLocalDirectory: vi.fn().mockResolvedValue({
+        success: true,
+        config: {
+          enabled: false,
+          remoteBaseUrl: "https://app.facenox.com",
+          organizationId: "",
+          organizationName: "",
+          siteId: "",
+          siteName: "",
+          deviceId: "",
+          deviceName: "Facenox Desktop",
+          intervalMinutes: 15,
+          lastSyncedAt: null,
+          lastSyncStatus: "idle",
+          lastSyncMessage: null,
+          connected: false,
+        },
       }),
       resetLocalDirectory: vi.fn().mockResolvedValue({
         success: true,

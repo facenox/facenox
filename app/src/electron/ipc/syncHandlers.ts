@@ -851,6 +851,77 @@ export function registerSyncHandlers() {
     },
   )
 
+  ipcMain.handle("sync:get-local-directory-summary", async () => {
+    try {
+      const response = await fetch(`${backendService.getUrl()}/attendance/export`, {
+        method: "POST",
+        headers: authHeaders(),
+        signal: AbortSignal.timeout(15000),
+      })
+      if (!response.ok) {
+        return {
+          success: false,
+          error: await readBackendErrorMessage(
+            response,
+            `Could not inspect local directory (HTTP ${response.status}).`,
+          ),
+        }
+      }
+      const data = (await response.json()) as Record<string, unknown>
+      const countOf = (key: string) => (Array.isArray(data[key]) ? data[key].length : 0)
+      return {
+        success: true,
+        counts: {
+          groups: countOf("groups"),
+          members: countOf("members"),
+          records: countOf("records"),
+          sessions: countOf("sessions"),
+        },
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Could not inspect local directory.",
+      }
+    }
+  })
+
+  ipcMain.handle("sync:migrate-local-directory", async () => {
+    const status = getRemoteSyncStatus()
+    if (status.connected) {
+      throw new Error("Disconnect the current device before migrating the local directory.")
+    }
+    await syncManager.suspend()
+    if (status.organizationId || status.deviceId) {
+      const unpairRes = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
+        method: "POST",
+        headers: authHeaders(),
+        signal: AbortSignal.timeout(10000),
+      }).catch(() => null)
+      if (unpairRes && !unpairRes.ok) {
+        throw new Error(
+          await readBackendErrorMessage(
+            unpairRes,
+            `Could not prepare local directory for migration (HTTP ${unpairRes.status}).`,
+          ),
+        )
+      }
+      clearRemoteConnection()
+    }
+
+    clearLocalSyncMetadata()
+    persistentStore.set("sync.lastSyncStatus", "idle")
+    persistentStore.set("sync.lastSyncMessage", null)
+    syncManager.stop()
+
+    state.mainWindow?.webContents.send("sync:data-changed")
+
+    return {
+      success: true,
+      config: await getExtendedSyncStatus(),
+    }
+  })
+
   ipcMain.handle("sync:reset-local-directory", async () => {
     const status = getRemoteSyncStatus()
     if (status.connected) {
