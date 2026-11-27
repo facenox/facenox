@@ -1,4 +1,4 @@
-export type AttendanceStatusDisplay = "present" | "absent" | "late" | "no_records"
+export type AttendanceStatusDisplay = 'present' | 'absent' | 'late' | 'no_records'
 
 export interface StatusConfig {
   label: string

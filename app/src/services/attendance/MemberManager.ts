@@ -1,8 +1,8 @@
-import type { AttendanceMember } from "@/types/recognition"
-import type { HttpClient } from "./HttpClient"
-import { dataUrlToBlob } from "@/utils/dataUrl"
-import { notifyDataChanged } from "@/utils/syncNotifier"
-import { webSocketService } from "@/services/WebSocketService"
+import type { AttendanceMember } from '@/types/recognition'
+import type { HttpClient } from './HttpClient'
+import { dataUrlToBlob } from '@/utils/dataUrl'
+import { notifyDataChanged } from '@/utils/syncNotifier'
+import { webSocketService } from '@/services/WebSocketService'
 
 export interface BulkMemberCreationResponse {
   success_count: number
@@ -31,10 +31,10 @@ export class MemberManager {
       const members = await this.httpClient.get<AttendanceMember[]>(this.apiEndpoints.members)
       return members.map((member) => ({
         ...member,
-        joined_at: new Date(member.joined_at),
+        joined_at: new Date(member.joined_at)
       }))
     } catch (error) {
-      console.error("Error getting members:", error)
+      console.error('Error getting members:', error)
       if (options?.throwOnError) throw error
       return []
     }
@@ -48,7 +48,7 @@ export class MemberManager {
       creationId?: string
       role?: string
       email?: string
-    },
+    }
   ): Promise<AttendanceMember> {
     const memberData: {
       group_id: string
@@ -60,24 +60,22 @@ export class MemberManager {
     } = {
       group_id: groupId,
       creation_id: options?.creationId ?? crypto.randomUUID(),
-      name: name.replace(/[\t\r\n]+/g, " ").trim(),
-      role: options?.role ? options.role.replace(/[\t\r\n]+/g, " ").trim() : undefined,
-      email: options?.email ? options.email.trim() : undefined,
+      name: name.replace(/[\t\r\n]+/g, ' ').trim(),
+      role: options?.role ? options.role.replace(/[\t\r\n]+/g, ' ').trim() : undefined,
+      email: options?.email ? options.email.trim() : undefined
     }
 
     if (options?.personId) {
       memberData.person_id = options.personId
     }
 
-    const member = await this.httpClient.post<AttendanceMember>(
-      this.apiEndpoints.members,
-      memberData,
-      { retryWrite: true },
-    )
+    const member = await this.httpClient.post<AttendanceMember>(this.apiEndpoints.members, memberData, {
+      retryWrite: true
+    })
     notifyDataChanged()
     return {
       ...member,
-      joined_at: new Date(member.joined_at),
+      joined_at: new Date(member.joined_at)
     }
   }
 
@@ -89,24 +87,22 @@ export class MemberManager {
       personId?: string
       creationId?: string
     }>,
-    groupId: string,
+    groupId: string
   ): Promise<BulkMemberCreationResponse> {
     const payload = {
       members: members.map((m) => ({
         group_id: groupId,
         creation_id: m.creationId ?? crypto.randomUUID(),
-        name: m.name.replace(/[\t\r\n]+/g, " ").trim(),
-        role: m.role ? m.role.replace(/[\t\r\n]+/g, " ").trim() : undefined,
+        name: m.name.replace(/[\t\r\n]+/g, ' ').trim(),
+        role: m.role ? m.role.replace(/[\t\r\n]+/g, ' ').trim() : undefined,
         email: m.email ? m.email.trim() : undefined,
-        person_id: m.personId || undefined,
-      })),
+        person_id: m.personId || undefined
+      }))
     }
 
-    const res = await this.httpClient.post<BulkMemberCreationResponse>(
-      `${this.apiEndpoints.members}/bulk`,
-      payload,
-      { retryWrite: true },
-    )
+    const res = await this.httpClient.post<BulkMemberCreationResponse>(`${this.apiEndpoints.members}/bulk`, payload, {
+      retryWrite: true
+    })
 
     notifyDataChanged()
 
@@ -114,19 +110,17 @@ export class MemberManager {
       ...res,
       members: (res.members || []).map((m) => ({
         ...m,
-        joined_at: new Date(m.joined_at),
-      })),
+        joined_at: new Date(m.joined_at)
+      }))
     }
   }
 
   async getMember(personId: string): Promise<AttendanceMember | undefined> {
     try {
-      const member = await this.httpClient.get<AttendanceMember>(
-        `${this.apiEndpoints.members}/${personId}`,
-      )
+      const member = await this.httpClient.get<AttendanceMember>(`${this.apiEndpoints.members}/${personId}`)
       return {
         ...member,
-        joined_at: new Date(member.joined_at),
+        joined_at: new Date(member.joined_at)
       }
     } catch {
       return undefined
@@ -135,14 +129,11 @@ export class MemberManager {
 
   async updateMember(personId: string, updates: Partial<AttendanceMember>): Promise<boolean> {
     try {
-      await this.httpClient.put<AttendanceMember>(
-        `${this.apiEndpoints.members}/${personId}`,
-        updates,
-      )
+      await this.httpClient.put<AttendanceMember>(`${this.apiEndpoints.members}/${personId}`, updates)
       notifyDataChanged()
       return true
     } catch (error) {
-      console.error("Error updating member:", error)
+      console.error('Error updating member:', error)
       return false
     }
   }
@@ -167,7 +158,7 @@ export class MemberManager {
       notifyDataChanged()
       return true
     } catch (error) {
-      console.error("Error removing member:", error)
+      console.error('Error removing member:', error)
       return false
     }
   }
@@ -177,26 +168,25 @@ export class MemberManager {
     personId: string,
     imageData: Blob | string,
     bbox: number[],
-    landmarks_5: number[][],
+    landmarks_5: number[][]
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
       let imageBlob: Blob
-      if (typeof imageData === "string") {
-        const dataUrl =
-          imageData.startsWith("data:") ? imageData : `data:image/jpeg;base64,${imageData}`
+      if (typeof imageData === 'string') {
+        const dataUrl = imageData.startsWith('data:') ? imageData : `data:image/jpeg;base64,${imageData}`
         imageBlob = dataUrlToBlob(dataUrl)
       } else {
         imageBlob = imageData
       }
 
       const formData = new FormData()
-      formData.append("image", imageBlob, "face.jpg")
+      formData.append('image', imageBlob, 'face.jpg')
       formData.append(
-        "metadata",
+        'metadata',
         JSON.stringify({
           bbox,
-          landmarks_5,
-        }),
+          landmarks_5
+        })
       )
 
       const url = `${this.apiEndpoints.groups}/${groupId}/persons/${personId}/enroll-face`
@@ -209,17 +199,17 @@ export class MemberManager {
       webSocketService.refreshActiveStream()
       return { success: true, message: result.message }
     } catch (error) {
-      console.error("Error enrolling face for group person:", error)
+      console.error('Error enrolling face for group person:', error)
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Failed to enroll member",
+        error: error instanceof Error ? error.message : 'Failed to enroll member'
       }
     }
   }
 
   async removeFaceDataForGroupPerson(
     groupId: string,
-    personId: string,
+    personId: string
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
       const result = await this.httpClient.delete<{
@@ -230,10 +220,10 @@ export class MemberManager {
       webSocketService.refreshActiveStream()
       return { success: true, message: result.message }
     } catch (error) {
-      console.error("Error removing face data for group person:", error)
+      console.error('Error removing face data for group person:', error)
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Failed to remove face data",
+        error: error instanceof Error ? error.message : 'Failed to remove face data'
       }
     }
   }

@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from "react"
-import { useCameraStore, useUIStore } from "@/components/main/stores"
+import { useCallback, useEffect } from 'react'
+import { useCameraStore, useUIStore } from '@/components/main/stores'
 
 interface UseVideoStreamOptions {
   videoRef: React.RefObject<HTMLVideoElement | null>
@@ -21,17 +21,11 @@ export function useVideoStream(options: UseVideoStreamOptions) {
     videoRectRef,
     lastVideoRectUpdateRef,
     isStartingRef,
-    onDeviceDisconnected,
+    onDeviceDisconnected
   } = options
 
-  const {
-    cameraDevices,
-    selectedCamera,
-    setCameraDevices,
-    setSelectedCamera,
-    setIsStreaming,
-    setCameraActive,
-  } = useCameraStore()
+  const { cameraDevices, selectedCamera, setCameraDevices, setSelectedCamera, setIsStreaming, setCameraActive } =
+    useCameraStore()
   const { setError } = useUIStore()
 
   useEffect(() => {
@@ -61,7 +55,7 @@ export function useVideoStream(options: UseVideoStreamOptions) {
     }
 
     checkVideoState()
-    const events = ["loadedmetadata", "play", "pause", "ended", "emptied"]
+    const events = ['loadedmetadata', 'play', 'pause', 'ended', 'emptied']
     events.forEach((event) => {
       video.addEventListener(event, checkVideoState)
     })
@@ -92,7 +86,7 @@ export function useVideoStream(options: UseVideoStreamOptions) {
     setCameraActive,
     setIsStreaming,
     videoRectRef,
-    videoRef,
+    videoRef
   ])
 
   const captureFrame = useCallback((): Promise<ArrayBuffer | null> => {
@@ -107,9 +101,9 @@ export function useVideoStream(options: UseVideoStreamOptions) {
       return Promise.resolve(null)
     }
 
-    const ctx = canvas.getContext("2d", {
+    const ctx = canvas.getContext('2d', {
       alpha: false,
-      willReadFrequently: false,
+      willReadFrequently: false
     })
     if (!ctx) {
       return Promise.resolve(null)
@@ -136,8 +130,8 @@ export function useVideoStream(options: UseVideoStreamOptions) {
                 resolve(null)
               })
           },
-          "image/jpeg",
-          0.9,
+          'image/jpeg',
+          0.9
         )
       } catch {
         resolve(null)
@@ -148,11 +142,11 @@ export function useVideoStream(options: UseVideoStreamOptions) {
   const getCameraDevices = useCallback(async (): Promise<MediaDeviceInfo[]> => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices()
-      const videoDevices = devices.filter((device) => device.kind === "videoinput")
+      const videoDevices = devices.filter((device) => device.kind === 'videoinput')
       setCameraDevices(videoDevices)
       return videoDevices
     } catch {
-      setError("Unable to detect cameras. Ensure a camera is connected.")
+      setError('Unable to detect cameras. Ensure a camera is connected.')
       return []
     }
   }, [setError, setCameraDevices])
@@ -170,7 +164,7 @@ export function useVideoStream(options: UseVideoStreamOptions) {
       if (isStreaming && activeCameraId) {
         const stillExists = refreshedDevices.some((device) => device.deviceId === activeCameraId)
         if (!stillExists) {
-          setError("Active camera disconnected. Select a different camera or reconnect the device.")
+          setError('Active camera disconnected. Select a different camera or reconnect the device.')
 
           if (onDeviceDisconnected) {
             onDeviceDisconnected()
@@ -181,9 +175,9 @@ export function useVideoStream(options: UseVideoStreamOptions) {
       }
     }
 
-    navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange)
+    navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange)
     return () => {
-      navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange)
+      navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange)
     }
   }, [getCameraDevices, onDeviceDisconnected, setError])
 
@@ -192,6 +186,6 @@ export function useVideoStream(options: UseVideoStreamOptions) {
     selectedCamera,
     setSelectedCamera,
     captureFrame,
-    getCameraDevices,
+    getCameraDevices
   }
 }

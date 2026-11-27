@@ -1,41 +1,41 @@
-import { contextBridge, ipcRenderer } from "electron"
+import { contextBridge, ipcRenderer } from 'electron'
 
-contextBridge.exposeInMainWorld("electronAPI", {
+contextBridge.exposeInMainWorld('electronAPI', {
   backend_ready: {
     isReady: () => {
-      return ipcRenderer.invoke("backend:is-ready")
-    },
+      return ipcRenderer.invoke('backend:is-ready')
+    }
   },
   backend: {
     checkAvailability: () => {
-      return ipcRenderer.invoke("backend:check-availability")
+      return ipcRenderer.invoke('backend:check-availability')
     },
     checkReadiness: () => {
-      return ipcRenderer.invoke("backend:check-readiness")
+      return ipcRenderer.invoke('backend:check-readiness')
     },
     getToken: () => {
-      return ipcRenderer.invoke("backend:get-token")
+      return ipcRenderer.invoke('backend:get-token')
     },
     getModels: () => {
-      return ipcRenderer.invoke("backend:get-models")
+      return ipcRenderer.invoke('backend:get-models')
     },
     getFaceStats: () => {
-      return ipcRenderer.invoke("backend:get-face-stats")
+      return ipcRenderer.invoke('backend:get-face-stats')
     },
     removePerson: (personId: string) => {
-      return ipcRenderer.invoke("backend:remove-person", personId)
+      return ipcRenderer.invoke('backend:remove-person', personId)
     },
     updatePerson: (oldPersonId: string, newPersonId: string) => {
-      return ipcRenderer.invoke("backend:update-person", oldPersonId, newPersonId)
+      return ipcRenderer.invoke('backend:update-person', oldPersonId, newPersonId)
     },
     getAllPersons: () => {
-      return ipcRenderer.invoke("backend:get-all-persons")
+      return ipcRenderer.invoke('backend:get-all-persons')
     },
     setThreshold: (threshold: number) => {
-      return ipcRenderer.invoke("backend:set-threshold", threshold)
+      return ipcRenderer.invoke('backend:set-threshold', threshold)
     },
     clearDatabase: () => {
-      return ipcRenderer.invoke("backend:clear-database")
+      return ipcRenderer.invoke('backend:clear-database')
     },
     postMultipart: (
       endpoint: string,
@@ -46,37 +46,37 @@ contextBridge.exposeInMainWorld("electronAPI", {
         buffer?: ArrayBuffer
         mimeType: string
       }>,
-      extraFields?: Record<string, string>,
+      extraFields?: Record<string, string>
     ) => {
-      return ipcRenderer.invoke("backend:post-multipart", endpoint, files, extraFields)
-    },
+      return ipcRenderer.invoke('backend:post-multipart', endpoint, files, extraFields)
+    }
   },
   store: {
     get: (key: string) => {
-      return ipcRenderer.invoke("store:get", key)
+      return ipcRenderer.invoke('store:get', key)
     },
     set: (key: string, value: unknown) => {
-      return ipcRenderer.invoke("store:set", key, value)
+      return ipcRenderer.invoke('store:set', key, value)
     },
     delete: (key: string) => {
-      return ipcRenderer.invoke("store:delete", key)
+      return ipcRenderer.invoke('store:delete', key)
     },
     getAll: () => {
-      return ipcRenderer.invoke("store:getAll")
+      return ipcRenderer.invoke('store:getAll')
     },
     reset: () => {
-      return ipcRenderer.invoke("store:reset")
-    },
+      return ipcRenderer.invoke('store:reset')
+    }
   },
   updater: {
     checkForUpdates: (force?: boolean) => {
-      return ipcRenderer.invoke("updater:check-for-updates", force)
+      return ipcRenderer.invoke('updater:check-for-updates', force)
     },
     getVersion: () => {
-      return ipcRenderer.invoke("updater:get-version")
+      return ipcRenderer.invoke('updater:get-version')
     },
     openReleasePage: (url?: string) => {
-      return ipcRenderer.invoke("updater:open-release-page", url)
+      return ipcRenderer.invoke('updater:open-release-page', url)
     },
     onUpdateAvailable: (
       callback: (updateInfo: {
@@ -87,35 +87,33 @@ contextBridge.exposeInMainWorld("electronAPI", {
         releaseNotes: string
         publishedAt: string
         downloadUrl: string | null
-      }) => void,
+      }) => void
     ) => {
-      const listener = (
-        _event: Electron.IpcRendererEvent,
-        updateInfo: Parameters<typeof callback>[0],
-      ) => callback(updateInfo)
-      ipcRenderer.on("updater:update-available", listener)
-      return () => ipcRenderer.removeListener("updater:update-available", listener)
-    },
+      const listener = (_event: Electron.IpcRendererEvent, updateInfo: Parameters<typeof callback>[0]) =>
+        callback(updateInfo)
+      ipcRenderer.on('updater:update-available', listener)
+      return () => ipcRenderer.removeListener('updater:update-available', listener)
+    }
   },
 
   assets: {
     listRecognitionSounds: () => {
-      return ipcRenderer.invoke("assets:list-recognition-sounds")
-    },
+      return ipcRenderer.invoke('assets:list-recognition-sounds')
+    }
   },
 
   sync: {
     exportData: (password: string) => {
-      return ipcRenderer.invoke("sync:export-data", password)
+      return ipcRenderer.invoke('sync:export-data', password)
     },
     pickImportFile: () => {
-      return ipcRenderer.invoke("sync:pick-import-file")
+      return ipcRenderer.invoke('sync:pick-import-file')
     },
     importData: (password: string, filePath: string, overwrite = false) => {
-      return ipcRenderer.invoke("sync:import-data", password, filePath, overwrite)
+      return ipcRenderer.invoke('sync:import-data', password, filePath, overwrite)
     },
     getConfig: (options?: { includeCounts?: boolean }) => {
-      return ipcRenderer.invoke("sync:get-config", options)
+      return ipcRenderer.invoke('sync:get-config', options)
     },
     updateConfig: (
       updates: Partial<{
@@ -123,129 +121,120 @@ contextBridge.exposeInMainWorld("electronAPI", {
         remoteBaseUrl: string
         deviceName: string
         intervalMinutes: number
-      }>,
+      }>
     ) => {
-      return ipcRenderer.invoke("sync:update-config", updates)
+      return ipcRenderer.invoke('sync:update-config', updates)
     },
     pairDevice: (input: { remoteBaseUrl?: string; pairingCode: string; deviceName?: string }) => {
-      return ipcRenderer.invoke("sync:pair-device", input)
+      return ipcRenderer.invoke('sync:pair-device', input)
     },
     initiateReversePairing: (input?: { remoteBaseUrl?: string; deviceName?: string }) => {
-      return ipcRenderer.invoke("sync:initiate-reverse-pairing", input)
+      return ipcRenderer.invoke('sync:initiate-reverse-pairing', input)
     },
-    pollDeviceAuthorization: (input: {
-      remoteBaseUrl?: string
-      deviceCode: string
-      deviceName?: string
-    }) => {
-      return ipcRenderer.invoke("sync:poll-device-authorization", input)
+    pollDeviceAuthorization: (input: { remoteBaseUrl?: string; deviceCode: string; deviceName?: string }) => {
+      return ipcRenderer.invoke('sync:poll-device-authorization', input)
     },
     disconnectDevice: (options?: { clearLocalData?: boolean }) => {
-      return ipcRenderer.invoke("sync:disconnect-device", options)
+      return ipcRenderer.invoke('sync:disconnect-device', options)
     },
     getLocalDirectorySummary: () => {
-      return ipcRenderer.invoke("sync:get-local-directory-summary")
+      return ipcRenderer.invoke('sync:get-local-directory-summary')
     },
     migrateLocalDirectory: () => {
-      return ipcRenderer.invoke("sync:migrate-local-directory")
+      return ipcRenderer.invoke('sync:migrate-local-directory')
     },
     resetLocalDirectory: () => {
-      return ipcRenderer.invoke("sync:reset-local-directory")
+      return ipcRenderer.invoke('sync:reset-local-directory')
     },
     restartManager: () => {
-      return ipcRenderer.invoke("sync:restart-manager")
+      return ipcRenderer.invoke('sync:restart-manager')
     },
     triggerNow: () => {
-      return ipcRenderer.invoke("sync:trigger-now")
+      return ipcRenderer.invoke('sync:trigger-now')
     },
     triggerDebouncedSync: () => {
-      return ipcRenderer.invoke("sync:trigger-debounced")
+      return ipcRenderer.invoke('sync:trigger-debounced')
     },
     onDataChanged: (callback: () => void) => {
       const listener = () => callback()
-      ipcRenderer.on("sync:data-changed", listener)
-      return () => ipcRenderer.removeListener("sync:data-changed", listener)
-    },
+      ipcRenderer.on('sync:data-changed', listener)
+      return () => ipcRenderer.removeListener('sync:data-changed', listener)
+    }
   },
 
   autoExport: {
     getConfig: () => {
-      return ipcRenderer.invoke("auto-export:get-config")
+      return ipcRenderer.invoke('auto-export:get-config')
     },
     updateConfig: (updates: Record<string, unknown>) => {
-      return ipcRenderer.invoke("auto-export:update-config", updates)
+      return ipcRenderer.invoke('auto-export:update-config', updates)
     },
     triggerNow: (targetDate?: string) => {
-      return ipcRenderer.invoke("auto-export:trigger-now", targetDate)
+      return ipcRenderer.invoke('auto-export:trigger-now', targetDate)
     },
     selectDirectory: () => {
-      return ipcRenderer.invoke("auto-export:select-directory")
+      return ipcRenderer.invoke('auto-export:select-directory')
     },
     openDirectory: () => {
-      return ipcRenderer.invoke("auto-export:open-directory")
-    },
+      return ipcRenderer.invoke('auto-export:open-directory')
+    }
   },
 
   security: {
     onPinReset: (callback: (data?: { adminPin?: string; adminPinEnabled?: boolean }) => void) => {
-      const listener = (_: unknown, data?: { adminPin?: string; adminPinEnabled?: boolean }) =>
-        callback(data)
-      ipcRenderer.on("security:pin-reset", listener)
-      return () => ipcRenderer.removeListener("security:pin-reset", listener)
-    },
-  },
+      const listener = (_: unknown, data?: { adminPin?: string; adminPinEnabled?: boolean }) => callback(data)
+      ipcRenderer.on('security:pin-reset', listener)
+      return () => ipcRenderer.removeListener('security:pin-reset', listener)
+    }
+  }
 })
 
-contextBridge.exposeInMainWorld("facenoxElectron", {
+contextBridge.exposeInMainWorld('facenoxElectron', {
   platform: process.platform,
-  desktopEnv: process.env.XDG_CURRENT_DESKTOP || "",
-  minimize: () => ipcRenderer.invoke("window:minimize"),
-  maximize: () => ipcRenderer.invoke("window:maximize"),
-  close: () => ipcRenderer.invoke("window:close"),
+  desktopEnv: process.env.XDG_CURRENT_DESKTOP || '',
+  minimize: () => ipcRenderer.invoke('window:minimize'),
+  maximize: () => ipcRenderer.invoke('window:maximize'),
+  close: () => ipcRenderer.invoke('window:close'),
   updateSplashProgress: (progress: number, detail?: string) =>
-    ipcRenderer.send("splash:update-progress", progress, detail),
-  updateSplashDataStep: (step: number, detail?: string) =>
-    ipcRenderer.send("splash:update-data-step", step, detail),
-  reportSplashRenderedProgress: (progress: number) =>
-    ipcRenderer.send("splash:rendered-progress", progress),
+    ipcRenderer.send('splash:update-progress', progress, detail),
+  updateSplashDataStep: (step: number, detail?: string) => ipcRenderer.send('splash:update-data-step', step, detail),
+  reportSplashRenderedProgress: (progress: number) => ipcRenderer.send('splash:rendered-progress', progress),
   onSplashProgress: (callback: (update: { progress: number; detail?: string }) => void) => {
-    const listener = (
-      _event: Electron.IpcRendererEvent,
-      update: { progress: number; detail?: string },
-    ) => callback(update)
-    ipcRenderer.on("splash:progress", listener)
-    return () => ipcRenderer.removeListener("splash:progress", listener)
+    const listener = (_event: Electron.IpcRendererEvent, update: { progress: number; detail?: string }) =>
+      callback(update)
+    ipcRenderer.on('splash:progress', listener)
+    return () => ipcRenderer.removeListener('splash:progress', listener)
   },
   onMaximize: (callback: () => void) => {
     const listener = () => callback()
-    ipcRenderer.on("window:maximized", listener)
-    return () => ipcRenderer.removeListener("window:maximized", listener)
+    ipcRenderer.on('window:maximized', listener)
+    return () => ipcRenderer.removeListener('window:maximized', listener)
   },
   onUnmaximize: (callback: () => void) => {
     const listener = () => callback()
-    ipcRenderer.on("window:unmaximized", listener)
-    return () => ipcRenderer.removeListener("window:unmaximized", listener)
+    ipcRenderer.on('window:unmaximized', listener)
+    return () => ipcRenderer.removeListener('window:unmaximized', listener)
   },
   onMinimize: (callback: () => void) => {
     const listener = () => callback()
-    ipcRenderer.on("window:minimized", listener)
-    return () => ipcRenderer.removeListener("window:minimized", listener)
+    ipcRenderer.on('window:minimized', listener)
+    return () => ipcRenderer.removeListener('window:minimized', listener)
   },
   onRestore: (callback: () => void) => {
     const listener = () => callback()
-    ipcRenderer.on("window:restored", listener)
-    return () => ipcRenderer.removeListener("window:restored", listener)
+    ipcRenderer.on('window:restored', listener)
+    return () => ipcRenderer.removeListener('window:restored', listener)
   },
   onSystemResume: (callback: () => void) => {
     const listener = () => callback()
-    ipcRenderer.on("system:resume", listener)
-    return () => ipcRenderer.removeListener("system:resume", listener)
+    ipcRenderer.on('system:resume', listener)
+    return () => ipcRenderer.removeListener('system:resume', listener)
   },
-  getSystemStats: () => ipcRenderer.invoke("system:get-stats"),
-  exportHealth: () => ipcRenderer.invoke("system:export-health"),
-  getVersion: () => ipcRenderer.invoke("updater:get-version"),
-  openDataDir: () => ipcRenderer.invoke("system:open-data-dir"),
-  openInstallDir: () => ipcRenderer.invoke("system:open-install-dir"),
-  openLogFile: () => ipcRenderer.invoke("system:open-log-file"),
-  onAppReady: () => ipcRenderer.send("app:ready"),
+  getSystemStats: () => ipcRenderer.invoke('system:get-stats'),
+  exportHealth: () => ipcRenderer.invoke('system:export-health'),
+  getVersion: () => ipcRenderer.invoke('updater:get-version'),
+  openDataDir: () => ipcRenderer.invoke('system:open-data-dir'),
+  openInstallDir: () => ipcRenderer.invoke('system:open-install-dir'),
+  openLogFile: () => ipcRenderer.invoke('system:open-log-file'),
+  onAppReady: () => ipcRenderer.send('app:ready')
 })

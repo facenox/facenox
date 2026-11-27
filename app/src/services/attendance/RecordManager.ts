@@ -5,11 +5,11 @@ import type {
   AttendanceReport,
   AttendanceEvent,
   AttendanceGroup,
-  AttendanceMember,
-} from "@/types/recognition"
-import { getLocalDateString, parseLocalDate, notifyDataChanged } from "@/utils"
-import type { HttpClient } from "./HttpClient"
-import { clockWarningFromHealth } from "../clockWarnings"
+  AttendanceMember
+} from '@/types/recognition'
+import { getLocalDateString, parseLocalDate, notifyDataChanged } from '@/utils'
+import type { HttpClient } from './HttpClient'
+import { clockWarningFromHealth } from '../clockWarnings'
 
 export class RecordManager {
   private httpClient: HttpClient
@@ -23,7 +23,7 @@ export class RecordManager {
     apiEndpoints: Record<string, string>,
     toApiDateTimeParam: (date: Date) => string,
     warnIfSystemClockWentBackwards: () => void,
-    emitClockWarning: (message: string, dedupeKey?: string) => void,
+    emitClockWarning: (message: string, dedupeKey?: string) => void
   ) {
     this.httpClient = httpClient
     this.apiEndpoints = apiEndpoints
@@ -41,19 +41,19 @@ export class RecordManager {
     confidence: number,
     location?: string,
     livenessStatus?: string,
-    livenessConfidence?: number,
+    livenessConfidence?: number
   ): Promise<AttendanceEvent | null> {
     try {
       this.warnIfSystemClockWentBackwards()
 
       const eventData: Record<string, unknown> = {
         person_id: personId,
-        confidence,
+        confidence
       }
 
       if (location) eventData.location = location
       if (livenessStatus) eventData.liveness_status = livenessStatus
-      if (typeof livenessConfidence === "number") {
+      if (typeof livenessConfidence === 'number') {
         eventData.liveness_confidence = livenessConfidence
       }
 
@@ -64,10 +64,10 @@ export class RecordManager {
 
       return {
         ...event,
-        timestamp: new Date(event.timestamp),
+        timestamp: new Date(event.timestamp)
       }
     } catch (error: unknown) {
-      console.error("Error processing attendance event:", error)
+      console.error('Error processing attendance event:', error)
       throw error
     }
   }
@@ -79,17 +79,14 @@ export class RecordManager {
         params.date = getLocalDateString(date)
       }
 
-      return await this.httpClient.get<AttendanceStats>(
-        `${this.apiEndpoints.groups}/${groupId}/stats`,
-        params,
-      )
+      return await this.httpClient.get<AttendanceStats>(`${this.apiEndpoints.groups}/${groupId}/stats`, params)
     } catch (error) {
-      console.error("Error getting group stats:", error)
+      console.error('Error getting group stats:', error)
       return {
         total_members: 0,
         present_today: 0,
         absent_today: 0,
-        late_today: 0,
+        late_today: 0
       }
     }
   }
@@ -99,7 +96,7 @@ export class RecordManager {
     startDate: Date,
     endDate: Date,
     getGroup: (id: string) => Promise<AttendanceGroup | undefined>,
-    getGroupMembers: (id: string) => Promise<AttendanceMember[]>,
+    getGroupMembers: (id: string) => Promise<AttendanceMember[]>
   ): Promise<AttendanceReport> {
     try {
       const [group, members, sessions] = await Promise.all([
@@ -108,11 +105,11 @@ export class RecordManager {
         this.getSessions({
           group_id: groupId,
           start_date: getLocalDateString(startDate),
-          end_date: getLocalDateString(endDate),
-        }),
+          end_date: getLocalDateString(endDate)
+        })
       ])
 
-      if (!group) throw new Error("Group not found")
+      if (!group) throw new Error('Group not found')
 
       const timeDiff = Math.abs(endDate.getTime() - startDate.getTime())
       const totalDaysInRange = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1
@@ -163,14 +160,10 @@ export class RecordManager {
           return sessionDate >= joinedDate
         })
 
-        const presentDays = memberSessions.filter(
-          (s: AttendanceSession) => s.status !== "absent",
-        ).length
-        const absentDays =
-          totalDaysMemberWasInGroup > 0 ? totalDaysMemberWasInGroup - presentDays : 0
+        const presentDays = memberSessions.filter((s: AttendanceSession) => s.status !== 'absent').length
+        const absentDays = totalDaysMemberWasInGroup > 0 ? totalDaysMemberWasInGroup - presentDays : 0
         const lateDays = memberSessions.filter((s: AttendanceSession) => s.is_late).length
-        const attendanceRate =
-          totalDaysMemberWasInGroup > 0 ? (presentDays / totalDaysMemberWasInGroup) * 100 : 0
+        const attendanceRate = totalDaysMemberWasInGroup > 0 ? (presentDays / totalDaysMemberWasInGroup) * 100 : 0
 
         return {
           person_id: member.person_id,
@@ -179,27 +172,24 @@ export class RecordManager {
           present_days: presentDays,
           absent_days: absentDays,
           late_days: lateDays,
-          attendance_rate: Math.round(attendanceRate * 100) / 100,
+          attendance_rate: Math.round(attendanceRate * 100) / 100
         }
       })
 
       const averageAttendanceRate =
         memberReports.length > 0 ?
-          memberReports.reduce((sum: number, m) => sum + m.attendance_rate, 0) /
-          memberReports.length
+          memberReports.reduce((sum: number, m) => sum + m.attendance_rate, 0) / memberReports.length
         : 0
 
       const mostPunctual =
-        memberReports.reduce(
-          (best, current) => (current.late_days < best.late_days ? current : best),
-          memberReports[0],
-        )?.name || "N/A"
+        memberReports.reduce((best, current) => (current.late_days < best.late_days ? current : best), memberReports[0])
+          ?.name || 'N/A'
 
       const mostAbsent =
         memberReports.reduce(
           (worst, current) => (current.absent_days > worst.absent_days ? current : worst),
-          memberReports[0],
-        )?.name || "N/A"
+          memberReports[0]
+        )?.name || 'N/A'
 
       return {
         group_id: groupId,
@@ -209,11 +199,11 @@ export class RecordManager {
           total_working_days: totalDaysInRange,
           average_attendance_rate: Math.round(averageAttendanceRate * 100) / 100,
           most_punctual: mostPunctual,
-          most_absent: mostAbsent,
-        },
+          most_absent: mostAbsent
+        }
       }
     } catch (error) {
-      console.error("Error generating report:", error)
+      console.error('Error generating report:', error)
       throw error
     }
   }
@@ -234,21 +224,18 @@ export class RecordManager {
         request_id: record.request_id ?? crypto.randomUUID(),
         timestamp: record.timestamp ? this.toApiDateTimeParam(record.timestamp) : undefined,
         confidence: record.confidence ?? 1.0,
-        is_manual: true,
+        is_manual: true
       }
 
-      const newRecord = await this.httpClient.post<AttendanceRecord>(
-        this.apiEndpoints.records,
-        recordData,
-      )
+      const newRecord = await this.httpClient.post<AttendanceRecord>(this.apiEndpoints.records, recordData)
       this.triggerSync()
       return {
         ...newRecord,
         timestamp: new Date(newRecord.timestamp),
-        voided_at: newRecord.voided_at ? new Date(newRecord.voided_at) : undefined,
+        voided_at: newRecord.voided_at ? new Date(newRecord.voided_at) : undefined
       }
     } catch (error) {
-      console.error("Error adding record:", error)
+      console.error('Error adding record:', error)
       throw error
     }
   }
@@ -259,17 +246,17 @@ export class RecordManager {
         `${this.apiEndpoints.records}/${recordId}/void`,
         {
           reason,
-          voided_by: voidedBy,
-        },
+          voided_by: voidedBy
+        }
       )
       this.triggerSync()
       return {
         ...updatedRecord,
         timestamp: new Date(updatedRecord.timestamp),
-        voided_at: updatedRecord.voided_at ? new Date(updatedRecord.voided_at) : undefined,
+        voided_at: updatedRecord.voided_at ? new Date(updatedRecord.voided_at) : undefined
       }
     } catch (error) {
-      console.error("Error voiding record:", error)
+      console.error('Error voiding record:', error)
       throw error
     }
   }
@@ -283,7 +270,7 @@ export class RecordManager {
       limit?: number
       include_voided?: boolean
     },
-    options?: { throwOnError?: boolean },
+    options?: { throwOnError?: boolean }
   ): Promise<AttendanceRecord[]> {
     try {
       const params: Record<string, string> = {}
@@ -292,19 +279,16 @@ export class RecordManager {
       if (filters?.start_date) params.start_date = filters.start_date
       if (filters?.end_date) params.end_date = filters.end_date
       if (filters?.limit) params.limit = filters.limit.toString()
-      if (filters?.include_voided) params.include_voided = "true"
+      if (filters?.include_voided) params.include_voided = 'true'
 
-      const records = await this.httpClient.get<AttendanceRecord[]>(
-        this.apiEndpoints.records,
-        params,
-      )
+      const records = await this.httpClient.get<AttendanceRecord[]>(this.apiEndpoints.records, params)
       return records.map((record) => ({
         ...record,
         timestamp: new Date(record.timestamp),
-        voided_at: record.voided_at ? new Date(record.voided_at) : undefined,
+        voided_at: record.voided_at ? new Date(record.voided_at) : undefined
       }))
     } catch (error) {
-      console.error("Error getting records:", error)
+      console.error('Error getting records:', error)
       if (options?.throwOnError) throw error
       return []
     }
@@ -317,7 +301,7 @@ export class RecordManager {
       start_date?: string
       end_date?: string
     },
-    options?: { throwOnError?: boolean },
+    options?: { throwOnError?: boolean }
   ): Promise<AttendanceSession[]> {
     try {
       const params: Record<string, string> = {}
@@ -326,17 +310,14 @@ export class RecordManager {
       if (filters?.start_date) params.start_date = filters.start_date
       if (filters?.end_date) params.end_date = filters.end_date
 
-      const sessions = await this.httpClient.get<AttendanceSession[]>(
-        this.apiEndpoints.sessions,
-        params,
-      )
+      const sessions = await this.httpClient.get<AttendanceSession[]>(this.apiEndpoints.sessions, params)
       return sessions.map((session) => ({
         ...session,
         check_in_time: session.check_in_time ? new Date(session.check_in_time) : undefined,
-        check_out_time: session.check_out_time ? new Date(session.check_out_time) : undefined,
+        check_out_time: session.check_out_time ? new Date(session.check_out_time) : undefined
       }))
     } catch (error) {
-      console.error("Error getting sessions:", error)
+      console.error('Error getting sessions:', error)
       if (options?.throwOnError) throw error
       return []
     }
@@ -358,7 +339,7 @@ export class RecordManager {
       is_late?: boolean
       late_minutes?: number
       visit_number?: number
-    },
+    }
   ): Promise<AttendanceSession> {
     try {
       const payload: Record<string, unknown> = { ...updates }
@@ -371,16 +352,16 @@ export class RecordManager {
 
       const updated = await this.httpClient.put<AttendanceSession>(
         `${this.apiEndpoints.sessions}/${personId}/${date}`,
-        payload,
+        payload
       )
       this.triggerSync()
       return {
         ...updated,
         check_in_time: updated.check_in_time ? new Date(updated.check_in_time) : undefined,
-        check_out_time: updated.check_out_time ? new Date(updated.check_out_time) : undefined,
+        check_out_time: updated.check_out_time ? new Date(updated.check_out_time) : undefined
       }
     } catch (error) {
-      console.error("Error updating session:", error)
+      console.error('Error updating session:', error)
       throw error
     }
   }

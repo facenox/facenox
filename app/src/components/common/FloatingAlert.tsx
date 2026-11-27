@@ -1,8 +1,8 @@
-import { motion } from "framer-motion"
-import { CheckCircle2, AlertTriangle, AlertCircle, X } from "lucide-react"
-import { ErrorText } from "./ErrorText"
+import { motion } from 'framer-motion'
+import { CheckCircle2, AlertTriangle, AlertCircle, X } from 'lucide-react'
+import { ErrorText } from './ErrorText'
 
-export type AlertVariant = "success" | "warning" | "error"
+export type AlertVariant = 'success' | 'warning' | 'error'
 
 interface FloatingAlertProps {
   /** The message text to display inside the alert. */
@@ -22,31 +22,31 @@ interface FloatingAlertProps {
 export function FloatingAlert({ message, variant, onDismiss }: FloatingAlertProps) {
   const configs = {
     success: {
-      borderBg: "border-emerald-500/30 bg-[rgba(6,28,20,0.92)] text-emerald-100/95",
+      borderBg: 'border-emerald-500/30 bg-[rgba(6,28,20,0.92)] text-emerald-100/95',
       icon: CheckCircle2,
-      iconColor: "text-emerald-400",
-      label: "Success",
-      labelColor: "text-emerald-400",
+      iconColor: 'text-emerald-400',
+      label: 'Success',
+      labelColor: 'text-emerald-400'
     },
     warning: {
-      borderBg: "border-amber-500/30 bg-[rgba(24,18,10,0.9)] text-amber-100/95",
+      borderBg: 'border-amber-500/30 bg-[rgba(24,18,10,0.9)] text-amber-100/95',
       icon: AlertTriangle,
-      iconColor: "text-amber-400",
-      label: "Warning",
-      labelColor: "text-amber-400",
+      iconColor: 'text-amber-400',
+      label: 'Warning',
+      labelColor: 'text-amber-400'
     },
     error: {
-      borderBg: "border-red-500/30 bg-[rgba(28,10,10,0.9)] text-red-100/95",
+      borderBg: 'border-red-500/30 bg-[rgba(28,10,10,0.9)] text-red-100/95',
       icon: AlertCircle,
-      iconColor: "text-red-400",
-      label: "Error",
-      labelColor: "text-red-400",
-    },
+      iconColor: 'text-red-400',
+      label: 'Error',
+      labelColor: 'text-red-400'
+    }
   }
 
   const current = configs[variant]
   const Icon = current.icon
-  const cleanMessage = message.replace(/^(error|warning|success):\s*/i, "").trim()
+  const cleanMessage = message.replace(/^(error|warning|success):\s*/i, '').trim()
 
   return (
     <motion.div
@@ -56,20 +56,18 @@ export function FloatingAlert({ message, variant, onDismiss }: FloatingAlertProp
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       className={`pointer-events-auto mt-2 inline-flex w-fit max-w-2xl items-center gap-3 rounded-xl border px-4 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-md ${current.borderBg}`}>
       <Icon className={`size-4 shrink-0 ${current.iconColor}`} />
-      <div className="text-sm leading-snug">
-        <span className={`mr-1.5 font-semibold whitespace-nowrap ${current.labelColor}`}>
-          {current.label}:
-        </span>
-        {variant === "error" ?
+      <div className='text-sm leading-snug'>
+        <span className={`mr-1.5 font-semibold whitespace-nowrap ${current.labelColor}`}>{current.label}:</span>
+        {variant === 'error' ?
           <ErrorText message={cleanMessage || message} />
         : cleanMessage || message}
       </div>
       <button
-        type="button"
+        type='button'
         onClick={onDismiss}
-        className="ml-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-none bg-transparent p-0 text-white/55 shadow-none transition-all hover:bg-white/[0.08] hover:text-white"
+        className='ml-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-none bg-transparent p-0 text-white/55 shadow-none transition-all hover:bg-white/[0.08] hover:text-white'
         aria-label={`Dismiss ${variant}`}>
-        <X className="size-3.5" />
+        <X className='size-3.5' />
       </button>
     </motion.div>
   )

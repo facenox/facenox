@@ -1,33 +1,33 @@
-import { useState, useEffect } from "react"
-import { Loader2 } from "lucide-react"
-import { ErrorMessage, Modal } from "@/components/common"
-import { Dropdown } from "@/components/shared"
-import { attendanceManager } from "@/services/AttendanceManager"
-import type { RowData } from "@/components/group/sections/reports/types"
-import type { AttendanceGroup } from "@/types/recognition"
-import { parseLocalDate } from "@/utils"
+import { useState, useEffect } from 'react'
+import { Loader2 } from 'lucide-react'
+import { ErrorMessage, Modal } from '@/components/common'
+import { Dropdown } from '@/components/shared'
+import { attendanceManager } from '@/services/AttendanceManager'
+import type { RowData } from '@/components/group/sections/reports/types'
+import type { AttendanceGroup } from '@/types/recognition'
+import { parseLocalDate } from '@/utils'
 import {
   attendanceDateTimeToDate,
   formatAttendanceTime,
   formatAttendanceTimeInput,
   getAttendanceDateString,
-  addAttendanceDays,
-} from "@/utils/attendanceTime"
+  addAttendanceDays
+} from '@/utils/attendanceTime'
 
 const REASON_PRESETS = [
-  "Forgot to scan",
-  "System error",
-  "Sick leave",
-  "Emergency leave",
-  "Excused absence",
-  "Approved remote",
-  "Traffic / delays",
-  "Admin correction",
-  "Other",
+  'Forgot to scan',
+  'System error',
+  'Sick leave',
+  'Emergency leave',
+  'Excused absence',
+  'Approved remote',
+  'Traffic / delays',
+  'Admin correction',
+  'Other'
 ] as const
 
 type ReasonPreset = (typeof REASON_PRESETS)[number]
-const OTHER_PRESET: ReasonPreset = "Other"
+const OTHER_PRESET: ReasonPreset = 'Other'
 
 interface EditSessionModalProps {
   isOpen: boolean
@@ -51,26 +51,26 @@ export function EditSessionModal({
   row,
   group,
   attendanceTimeZone,
-  onSuccess,
+  onSuccess
 }: EditSessionModalProps) {
-  const [status, setStatus] = useState<"present" | "absent">("present")
-  const [checkInTime, setCheckInTime] = useState("")
-  const [checkOutTime, setCheckOutTime] = useState("")
-  const [selectedReason, setSelectedReason] = useState<ReasonPreset | "">("")
-  const [customNote, setCustomNote] = useState("")
+  const [status, setStatus] = useState<'present' | 'absent'>('present')
+  const [checkInTime, setCheckInTime] = useState('')
+  const [checkOutTime, setCheckOutTime] = useState('')
+  const [selectedReason, setSelectedReason] = useState<ReasonPreset | ''>('')
+  const [customNote, setCustomNote] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!row) return
-    const initialStatus = row.status === "absent" ? "absent" : "present"
+    const initialStatus = row.status === 'absent' ? 'absent' : 'present'
     setStatus(initialStatus)
 
     // Parse preset reason and custom note from row.notes
-    let parsedReason: ReasonPreset | "" = ""
-    let parsedNote = ""
+    let parsedReason: ReasonPreset | '' = ''
+    let parsedNote = ''
 
-    if (row.notes && row.notes !== "Manual correction by admin") {
+    if (row.notes && row.notes !== 'Manual correction by admin') {
       const match = REASON_PRESETS.find((preset) => {
         if (row.notes?.toLowerCase() === preset.toLowerCase()) return true
         if (row.notes?.toLowerCase().startsWith(`${preset.toLowerCase()} — `)) return true
@@ -79,8 +79,8 @@ export function EditSessionModal({
 
       if (match) {
         parsedReason = match
-        const prefixIdx = row.notes.indexOf(" — ")
-        parsedNote = prefixIdx !== -1 ? row.notes.slice(prefixIdx + 3) : ""
+        const prefixIdx = row.notes.indexOf(' — ')
+        parsedNote = prefixIdx !== -1 ? row.notes.slice(prefixIdx + 3) : ''
       } else {
         parsedNote = row.notes
       }
@@ -91,36 +91,31 @@ export function EditSessionModal({
 
     if (row.check_in_time) {
       setCheckInTime(
-        formatAttendanceTimeInput(
-          row.check_in_time,
-          row.session?.check_in_time_timezone || attendanceTimeZone,
-        ),
+        formatAttendanceTimeInput(row.check_in_time, row.session?.check_in_time_timezone || attendanceTimeZone)
       )
-    } else if (initialStatus !== "absent") {
+    } else if (initialStatus !== 'absent') {
       setCheckInTime(formatAttendanceTimeInput(new Date(), attendanceTimeZone))
     } else {
-      setCheckInTime("")
+      setCheckInTime('')
     }
 
     if (row.check_out_time) {
       setCheckOutTime(
         formatAttendanceTimeInput(
           row.check_out_time,
-          row.session?.check_out_time_timezone ||
-            row.session?.check_in_time_timezone ||
-            attendanceTimeZone,
-        ),
+          row.session?.check_out_time_timezone || row.session?.check_in_time_timezone || attendanceTimeZone
+        )
       )
     } else {
-      setCheckOutTime("")
+      setCheckOutTime('')
     }
 
     setError(null)
   }, [row, attendanceTimeZone])
 
-  const handleStatusSelect = (s: "present" | "absent") => {
+  const handleStatusSelect = (s: 'present' | 'absent') => {
     setStatus(s)
-    if (s === "present" && !checkInTime) {
+    if (s === 'present' && !checkInTime) {
       const defaultTime = group?.settings?.class_start_time
       if (defaultTime) {
         setCheckInTime(defaultTime)
@@ -131,19 +126,19 @@ export function EditSessionModal({
   }
 
   const resolvedNote = (): string => {
-    const reason = selectedReason && selectedReason !== OTHER_PRESET ? selectedReason : ""
+    const reason = selectedReason && selectedReason !== OTHER_PRESET ? selectedReason : ''
     const note = customNote.trim()
 
     if (reason && note) return `${reason} — ${note}`
     if (reason) return reason
     if (note) return note
-    return "Manual correction by admin"
+    return 'Manual correction by admin'
   }
 
   const handleSave = async () => {
     if (!row) return
-    if (status === "present" && !checkInTime) {
-      setError("Time in is required when marking as present.")
+    if (status === 'present' && !checkInTime) {
+      setError('Time in is required when marking as present.')
       return
     }
     setIsSubmitting(true)
@@ -153,9 +148,9 @@ export function EditSessionModal({
       const updates: Parameters<typeof attendanceManager.updateSession>[2] = {
         status,
         notes: resolvedNote(),
-        visit_number: row.visit_number,
+        visit_number: row.visit_number
       }
-      if (status === "absent") {
+      if (status === 'absent') {
         updates.check_in_time = null
         updates.check_out_time = null
       } else {
@@ -170,7 +165,7 @@ export function EditSessionModal({
           : attendanceDateTimeToDate(
               row.check_in_time ? getAttendanceDateString(row.check_in_time, inZone) : row.date,
               checkInTime,
-              inZone,
+              inZone
             )
         if (!row.check_in_time || checkInTime !== originalIn) {
           updates.check_in_time = finalCheckIn
@@ -201,12 +196,12 @@ export function EditSessionModal({
       await attendanceManager.updateSession(row.person_id, row.date, updates)
 
       onSuccess(
-        `${row.name}'s attendance corrected for ${parseLocalDate(row.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}.`,
-        row,
+        `${row.name}'s attendance corrected for ${parseLocalDate(row.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}.`,
+        row
       )
     } catch (err) {
       console.error(err)
-      setError(err instanceof Error ? err.message : "Could not save the correction. Try again.")
+      setError(err instanceof Error ? err.message : 'Could not save the correction. Try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -220,17 +215,17 @@ export function EditSessionModal({
 
   if (!rowSnapshot) return null
 
-  const originalStatus = rowSnapshot.status === "no_records" ? "N/A" : rowSnapshot.status
+  const originalStatus = rowSnapshot.status === 'no_records' ? 'N/A' : rowSnapshot.status
 
   const statusColor =
-    originalStatus === "present" ? "text-cyan-400"
-    : originalStatus === "late" ? "text-orange-400"
-    : originalStatus === "absent" ? "text-red-400"
-    : "text-white/35"
+    originalStatus === 'present' ? 'text-cyan-400'
+    : originalStatus === 'late' ? 'text-orange-400'
+    : originalStatus === 'absent' ? 'text-red-400'
+    : 'text-white/35'
 
   const reasonOptions = REASON_PRESETS.map((r) => ({
     value: r,
-    label: r,
+    label: r
   }))
 
   return (
@@ -239,87 +234,85 @@ export function EditSessionModal({
       onClose={onClose}
       title={
         <div>
-          <h3 className="text-base font-semibold text-white">Correct attendance</h3>
-          <p className="mt-0.5 text-xs text-white/40">{rowSnapshot.name}</p>
+          <h3 className='text-base font-semibold text-white'>Correct attendance</h3>
+          <p className='mt-0.5 text-xs text-white/40'>{rowSnapshot.name}</p>
         </div>
       }
-      maxWidth="sm">
-      <div className="mt-1">
+      maxWidth='sm'>
+      <div className='mt-1'>
         {/* ── Scrollable Form Body (Close 'X' stays completely static) ───── */}
-        <div className="custom-scroll -mx-5 max-h-[50vh] space-y-5 overflow-y-auto px-5 pb-2">
+        <div className='custom-scroll -mx-5 max-h-[50vh] space-y-5 overflow-y-auto px-5 pb-2'>
           {/* ── Original snapshot (no box, just a quiet grid) ──────────────── */}
           <div>
-            <p className="mb-3 text-[10px] font-semibold tracking-widest text-white/25 uppercase">
-              Original ·{" "}
+            <p className='mb-3 text-[10px] font-semibold tracking-widest text-white/25 uppercase'>
+              Original ·{' '}
               {parseLocalDate(rowSnapshot.date).toLocaleDateString(undefined, {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
               })}
             </p>
-            <div className="grid grid-cols-3 gap-x-4">
+            <div className='grid grid-cols-3 gap-x-4'>
               <div>
-                <p className="mb-0.5 text-[10px] text-white/30">Status</p>
+                <p className='mb-0.5 text-[10px] text-white/30'>Status</p>
                 <p className={`text-sm font-semibold capitalize ${statusColor}`}>
                   {originalStatus}
-                  {rowSnapshot.is_late && originalStatus !== "late" && (
-                    <span className="ml-1 text-[11px] font-normal text-orange-400/80">· late</span>
+                  {rowSnapshot.is_late && originalStatus !== 'late' && (
+                    <span className='ml-1 text-[11px] font-normal text-orange-400/80'>· late</span>
                   )}
                 </p>
               </div>
               <div>
-                <p className="mb-0.5 text-[10px] text-white/30">Time in</p>
-                <p className="text-sm font-semibold text-white/70">
+                <p className='mb-0.5 text-[10px] text-white/30'>Time in</p>
+                <p className='text-sm font-semibold text-white/70'>
                   {formatAttendanceTime(
                     rowSnapshot.check_in_time,
-                    rowSnapshot.session?.check_in_time_timezone || attendanceTimeZone,
+                    rowSnapshot.session?.check_in_time_timezone || attendanceTimeZone
                   )}
                 </p>
               </div>
               <div>
-                <p className="mb-0.5 text-[10px] text-white/30">Time out</p>
-                <p className="text-sm font-semibold text-white/70">
+                <p className='mb-0.5 text-[10px] text-white/30'>Time out</p>
+                <p className='text-sm font-semibold text-white/70'>
                   {formatAttendanceTime(
                     rowSnapshot.check_out_time,
                     rowSnapshot.session?.check_out_time_timezone ||
                       rowSnapshot.session?.check_in_time_timezone ||
-                      attendanceTimeZone,
+                      attendanceTimeZone
                   )}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-white/[0.05]" />
+          <div className='border-t border-white/[0.05]' />
 
           {/* ── Status: compact radio cards, no heavy borders ─────────────── */}
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold tracking-widest text-white/30 uppercase">
-              New status
-            </p>
-            <div className="flex gap-2">
-              {(["present", "absent"] as const).map((s) => {
+          <div className='space-y-2'>
+            <p className='text-[10px] font-semibold tracking-widest text-white/30 uppercase'>New status</p>
+            <div className='flex gap-2'>
+              {(['present', 'absent'] as const).map((s) => {
                 const active = status === s
-                const isPresent = s === "present"
+                const isPresent = s === 'present'
                 return (
                   <button
                     key={s}
-                    type="button"
-                    role="radio"
+                    type='button'
+                    role='radio'
                     aria-checked={active}
                     onClick={() => handleStatusSelect(s)}
                     className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-center transition-all duration-150 ${
                       active ?
-                        isPresent ? "bg-cyan-500/10 ring-1 ring-cyan-500/30 ring-inset"
-                        : "bg-red-500/10 ring-1 ring-red-500/25 ring-inset"
-                      : "bg-white/[0.03] ring-1 ring-white/[0.06] ring-inset hover:bg-white/[0.05]"
+                        isPresent ? 'bg-cyan-500/10 ring-1 ring-cyan-500/30 ring-inset'
+                        : 'bg-red-500/10 ring-1 ring-red-500/25 ring-inset'
+                      : 'bg-white/[0.03] ring-1 ring-white/[0.06] ring-inset hover:bg-white/[0.05]'
                     }`}>
                     <span
                       className={`text-[12px] leading-none font-bold capitalize ${
                         active ?
-                          isPresent ? "text-cyan-400"
-                          : "text-red-400"
-                        : "text-white/40"
+                          isPresent ? 'text-cyan-400'
+                          : 'text-red-400'
+                        : 'text-white/40'
                       }`}>
                       {s}
                     </span>
@@ -330,65 +323,63 @@ export function EditSessionModal({
           </div>
 
           {/* ── Time inputs ────────────────────────────────────────────────── */}
-          {status === "present" && (
-            <div className="animate-in fade-in flex gap-4 duration-200">
+          {status === 'present' && (
+            <div className='animate-in fade-in flex gap-4 duration-200'>
               {[
                 {
-                  label: "Time in",
+                  label: 'Time in',
                   value: checkInTime,
                   onChange: setCheckInTime,
-                  required: true,
+                  required: true
                 },
                 {
-                  label: "Time out",
+                  label: 'Time out',
                   value: checkOutTime,
                   onChange: setCheckOutTime,
                   required: false,
-                  hint: "Leave blank if not checked out.",
-                },
+                  hint: 'Leave blank if not checked out.'
+                }
               ].map(({ label, value, onChange, required, hint }) => (
-                <div key={label} className="flex-1 space-y-1.5">
-                  <label className="text-[10px] font-semibold tracking-widest text-white/30 uppercase">
+                <div key={label} className='flex-1 space-y-1.5'>
+                  <label className='text-[10px] font-semibold tracking-widest text-white/30 uppercase'>
                     {label}
-                    {required && <span className="ml-1 text-red-400/60">*</span>}
+                    {required && <span className='ml-1 text-red-400/60'>*</span>}
                   </label>
                   <input
-                    type="time"
-                    title=""
+                    type='time'
+                    title=''
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="h-9 w-full rounded-lg border border-white/8 bg-white/[0.04] px-3 text-[12px] font-medium text-white transition-colors outline-none focus:border-white/20 focus:bg-white/[0.06]"
+                    className='h-9 w-full rounded-lg border border-white/8 bg-white/[0.04] px-3 text-[12px] font-medium text-white transition-colors outline-none focus:border-white/20 focus:bg-white/[0.06]'
                   />
-                  {hint && <p className="text-[10px] text-white/40">{hint}</p>}
+                  {hint && <p className='text-[10px] text-white/40'>{hint}</p>}
                 </div>
               ))}
             </div>
           )}
 
           {/* ── Reason ────────────────────────────────────────────────────── */}
-          <div className="space-y-2">
-            <p className="text-[10px] font-semibold tracking-widest text-white/30 uppercase">
-              Reason
-            </p>
+          <div className='space-y-2'>
+            <p className='text-[10px] font-semibold tracking-widest text-white/30 uppercase'>Reason</p>
             <Dropdown
               options={reasonOptions}
               value={selectedReason || null}
-              onChange={(val) => setSelectedReason((val as ReasonPreset | null) || "")}
-              placeholder="Select a reason…"
-              className="w-full"
-              buttonClassName="h-9 border border-white/8 bg-white/[0.04] text-[12px] font-medium text-white hover:bg-white/[0.06] focus:border-white/20"
+              onChange={(val) => setSelectedReason((val as ReasonPreset | null) || '')}
+              placeholder='Select a reason…'
+              className='w-full'
+              buttonClassName='h-9 border border-white/8 bg-white/[0.04] text-[12px] font-medium text-white hover:bg-white/[0.06] focus:border-white/20'
             />
 
             <textarea
               placeholder={
                 selectedReason === OTHER_PRESET || !selectedReason ?
-                  "Describe the circumstance…"
-                : "Additional details (optional)…"
+                  'Describe the circumstance…'
+                : 'Additional details (optional)…'
               }
               value={customNote}
               onChange={(e) => setCustomNote(e.target.value)}
               rows={2}
-              className="custom-scroll w-full resize-none rounded-lg border border-white/8 bg-white/[0.04] p-3 text-[12px] font-medium text-white transition-colors duration-200 outline-none placeholder:text-white/20 focus:border-white/20 focus:bg-white/[0.06]"
+              className='custom-scroll w-full resize-none rounded-lg border border-white/8 bg-white/[0.04] p-3 text-[12px] font-medium text-white transition-colors duration-200 outline-none placeholder:text-white/20 focus:border-white/20 focus:bg-white/[0.06]'
             />
           </div>
 
@@ -397,23 +388,23 @@ export function EditSessionModal({
         </div>
 
         {/* ── Fixed Footer Actions (Docked, doesn't scroll) ──────────────── */}
-        <div className="flex items-center justify-end border-t border-white/[0.05] pt-4">
-          <div className="flex gap-2">
+        <div className='flex items-center justify-end border-t border-white/[0.05] pt-4'>
+          <div className='flex gap-2'>
             <button
-              type="button"
+              type='button'
               disabled={isSubmitting}
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 active:scale-[0.97] disabled:opacity-30">
+              className='rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 active:scale-[0.97] disabled:opacity-30'>
               Cancel
             </button>
             <button
-              type="button"
+              type='button'
               disabled={isSubmitting}
               onClick={handleSave}
-              className="inline-flex min-w-[108px] items-center justify-center gap-1.5 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2 text-[11px] font-bold tracking-wide text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97] disabled:opacity-30">
+              className='inline-flex min-w-[108px] items-center justify-center gap-1.5 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2 text-[11px] font-bold tracking-wide text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97] disabled:opacity-30'>
               {isSubmitting ?
-                <Loader2 className="size-3 animate-spin" />
-              : "Save changes"}
+                <Loader2 className='size-3 animate-spin' />
+              : 'Save changes'}
             </button>
           </div>
         </div>

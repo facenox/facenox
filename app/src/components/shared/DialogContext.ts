@@ -1,6 +1,6 @@
-import { createContext, useContext } from "react"
+import { createContext, useContext } from 'react'
 
-export type DialogVariant = "default" | "danger"
+export type DialogVariant = 'default' | 'danger'
 
 export interface AlertDialogOptions {
   title?: string
@@ -32,7 +32,7 @@ export const DialogContext = createContext<DialogAPI | null>(null)
 export function useDialog(): DialogAPI {
   const api = useContext(DialogContext)
   if (!api) {
-    throw new Error("useDialog must be used within DialogProvider")
+    throw new Error('useDialog must be used within DialogProvider')
   }
   return api
 }

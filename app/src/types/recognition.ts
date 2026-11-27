@@ -108,8 +108,7 @@ export interface FaceWithRecognition {
     real_logit?: number
     spoof_logit?: number
     confidence?: number
-    status:
-      "real" | "spoof" | "candidate_real" | "unknown" | "error" | "move_closer" | "center_face"
+    status: 'real' | 'spoof' | 'candidate_real' | 'unknown' | 'error' | 'move_closer' | 'center_face'
     label?: string
     attack_type?: string
     message?: string
@@ -122,9 +121,9 @@ export interface DetectionWithRecognitionResult {
   model_used: string
 }
 
-export type AttendanceStatus = "present" | "absent"
-export type AttendanceMode = "attendance" | "work_hours" | "visits"
-export type ScanBehavior = "automatic" | "entry_only" | "exit_only"
+export type AttendanceStatus = 'present' | 'absent'
+export type AttendanceMode = 'attendance' | 'work_hours' | 'visits'
+export type ScanBehavior = 'automatic' | 'entry_only' | 'exit_only'
 
 export interface AttendanceGroup {
   id: string
@@ -171,7 +170,7 @@ export interface AttendanceRecord {
   location?: string
   notes?: string
   is_manual: boolean
-  event_type?: "check_in" | "check_out"
+  event_type?: 'check_in' | 'check_out'
   created_by?: string
   is_voided?: boolean
   voided_at?: Date
@@ -189,8 +188,8 @@ export interface AttendanceSession {
   applied_schedule?: {
     class_start_time: string
     class_end_time?: string | null
-    attendance_mode: "attendance" | "work_hours" | "visits"
-    scan_behavior?: "automatic" | "entry_only" | "exit_only" | null
+    attendance_mode: 'attendance' | 'work_hours' | 'visits'
+    scan_behavior?: 'automatic' | 'entry_only' | 'exit_only' | null
     min_checkout_delay_minutes?: number | null
   } | null
   date: string
@@ -277,7 +276,7 @@ export interface AttendanceEvent {
   confidence: number
   location?: string
   processed: boolean
-  event_type?: "check_in" | "check_out"
+  event_type?: 'check_in' | 'check_out'
   error?: string
   time_health?: AttendanceTimeHealth
 }

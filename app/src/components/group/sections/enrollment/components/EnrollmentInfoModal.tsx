@@ -1,6 +1,6 @@
-import { useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import { Modal } from "@/components/common"
+import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Modal } from '@/components/common'
 
 interface EnrollmentInfoModalProps {
   isOpen: boolean
@@ -15,19 +15,19 @@ export function EnrollmentInfoModal({
   dontShowAgain,
   onClose,
   onConfirm,
-  onDontShowAgainChange,
+  onDontShowAgainChange
 }: EnrollmentInfoModalProps) {
   const slides = [
     {
-      title: "Use a camera or photo",
+      title: 'Use a camera or photo',
       description:
-        "Capture a photo with the attendance camera or select an existing photo. Use a clear, front-facing image with even lighting.",
+        'Capture a photo with the attendance camera or select an existing photo. Use a clear, front-facing image with even lighting.'
     },
     {
-      title: "Face the camera",
+      title: 'Face the camera',
       description:
-        "Face the camera directly with open eyes and a neutral expression. Avoid dim lighting, heavy shadows, and accessories like hats or sunglasses that obstruct the face.",
-    },
+        'Face the camera directly with open eyes and a neutral expression. Avoid dim lighting, heavy shadows, and accessories like hats or sunglasses that obstruct the face.'
+    }
   ] as const
 
   const [step, setStep] = useState(0)
@@ -38,25 +38,25 @@ export function EnrollmentInfoModal({
 
   const slideTransition = {
     duration: 0.28,
-    ease: [0.22, 1, 0.36, 1] as const,
+    ease: [0.22, 1, 0.36, 1] as const
   }
 
   const slideVariants = {
     enter: (currentDirection: number) => ({
       opacity: 0,
       x: currentDirection > 0 ? 28 : -28,
-      scale: 0.985,
+      scale: 0.985
     }),
     center: {
       opacity: 1,
       x: 0,
-      scale: 1,
+      scale: 1
     },
     exit: (currentDirection: number) => ({
       opacity: 0,
       x: currentDirection > 0 ? -28 : 28,
-      scale: 0.985,
-    }),
+      scale: 0.985
+    })
   }
 
   const navigateToStep = (nextStep: number) => {
@@ -81,58 +81,50 @@ export function EnrollmentInfoModal({
   }
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      maxWidth="max-w-[480px]"
-      title="Enrollment guidelines">
-      <div className="space-y-6 py-2">
-        <div className="relative min-h-[110px] overflow-hidden">
-          <AnimatePresence initial={false} mode="wait" custom={direction}>
+    <Modal isOpen={isOpen} onClose={handleClose} maxWidth='max-w-[480px]' title='Enrollment guidelines'>
+      <div className='space-y-6 py-2'>
+        <div className='relative min-h-[110px] overflow-hidden'>
+          <AnimatePresence initial={false} mode='wait' custom={direction}>
             <motion.div
               key={step}
               custom={direction}
               variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
+              initial='enter'
+              animate='center'
+              exit='exit'
               transition={slideTransition}
-              className="w-full">
-              <div className="mb-2 text-[15px] font-semibold text-white/92">
-                {currentSlide.title}
-              </div>
-              <p className="text-[12px] leading-relaxed text-white/60">
-                {currentSlide.description}
-              </p>
+              className='w-full'>
+              <div className='mb-2 text-[15px] font-semibold text-white/92'>{currentSlide.title}</div>
+              <p className='text-[12px] leading-relaxed text-white/60'>{currentSlide.description}</p>
             </motion.div>
           </AnimatePresence>
         </div>
 
         {/* Bottom Actions */}
-        <div className="flex items-center justify-between gap-3 border-t border-white/5 pt-4">
-          <label className="flex cursor-pointer items-center gap-2.5 text-[12px] text-white/70">
+        <div className='flex items-center justify-between gap-3 border-t border-white/5 pt-4'>
+          <label className='flex cursor-pointer items-center gap-2.5 text-[12px] text-white/70'>
             <input
-              type="checkbox"
+              type='checkbox'
               checked={dontShowAgain}
               onChange={(event) => onDontShowAgainChange(event.target.checked)}
-              className="h-4 w-4 rounded border-white/20 bg-transparent accent-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none"
+              className='h-4 w-4 rounded border-white/20 bg-transparent accent-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none'
             />
             {"Don't show this again"}
           </label>
 
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <button
-              type="button"
+              type='button'
               disabled={step === 0}
               onClick={() => navigateToStep(step - 1)}
-              className="flex h-9 w-24 items-center justify-center rounded-lg text-[10px] font-semibold tracking-[0.16em] text-white/55 uppercase transition-all duration-200 hover:bg-white/5 hover:text-white/85 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none active:scale-[0.97] disabled:pointer-events-none disabled:opacity-30">
+              className='flex h-9 w-24 items-center justify-center rounded-lg text-[10px] font-semibold tracking-[0.16em] text-white/55 uppercase transition-all duration-200 hover:bg-white/5 hover:text-white/85 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none active:scale-[0.97] disabled:pointer-events-none disabled:opacity-30'>
               Back
             </button>
             <button
-              type="button"
+              type='button'
               onClick={isLastStep ? handleConfirm : () => navigateToStep(step + 1)}
-              className="flex h-9 w-24 items-center justify-center rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 text-[10px] font-semibold tracking-[0.16em] text-slate-950 uppercase shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
-              {isLastStep ? "Continue" : "Next"}
+              className='flex h-9 w-24 items-center justify-center rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 text-[10px] font-semibold tracking-[0.16em] text-slate-950 uppercase shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]'>
+              {isLastStep ? 'Continue' : 'Next'}
             </button>
           </div>
         </div>

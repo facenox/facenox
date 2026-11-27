@@ -1,8 +1,6 @@
-import type { DetectionResult } from "@/components/main/types"
+import type { DetectionResult } from '@/components/main/types'
 
-export function resetLastDetectionRef(
-  lastDetectionRef: React.RefObject<DetectionResult | null>,
-): void {
+export function resetLastDetectionRef(lastDetectionRef: React.RefObject<DetectionResult | null>): void {
   if (lastDetectionRef.current !== null) {
     ;(lastDetectionRef as React.MutableRefObject<DetectionResult | null>).current = null
   }
@@ -11,7 +9,7 @@ export function resetLastDetectionRef(
 export function resetFrameCounters(
   frameCounterRef: React.RefObject<number>,
   skipFramesRef: React.RefObject<number>,
-  lastFrameTimestampRef: React.RefObject<number>,
+  lastFrameTimestampRef: React.RefObject<number>
 ): void {
   ;(frameCounterRef as React.MutableRefObject<number>).current = 0
   ;(skipFramesRef as React.MutableRefObject<number>).current = 0

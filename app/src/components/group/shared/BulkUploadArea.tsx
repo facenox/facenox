@@ -1,6 +1,6 @@
-import { CheckCircle2, Plus, FolderOpen, Folder, Images } from "lucide-react"
-import { Tooltip } from "@/components/shared"
-import { Spinner } from "@/components/common"
+import { CheckCircle2, Plus, FolderOpen, Folder, Images } from 'lucide-react'
+import { Tooltip } from '@/components/shared'
+import { Spinner } from '@/components/common'
 
 interface BulkUploadAreaProps {
   uploadedCount: number
@@ -9,55 +9,50 @@ interface BulkUploadAreaProps {
   onClear: () => void
 }
 
-export function BulkUploadArea({
-  uploadedCount,
-  isDetecting,
-  onFilesSelected,
-  onClear,
-}: BulkUploadAreaProps) {
+export function BulkUploadArea({ uploadedCount, isDetecting, onFilesSelected, onClear }: BulkUploadAreaProps) {
   if (uploadedCount > 0) {
     return (
-      <div className="mb-6 flex items-center justify-between">
+      <div className='mb-6 flex items-center justify-between'>
         {/* Left: status */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-5 w-5 shrink-0 items-center justify-center">
+        <div className='flex items-center gap-3'>
+          <div className='flex h-5 w-5 shrink-0 items-center justify-center'>
             {isDetecting ?
-              <Spinner size="xs" color="cyan" />
-            : <CheckCircle2 className="size-4 text-cyan-400" />}
+              <Spinner size='xs' color='cyan' />
+            : <CheckCircle2 className='size-4 text-cyan-400' />}
           </div>
-          <span className="text-[13px] font-semibold text-white">
+          <span className='text-[13px] font-semibold text-white'>
             {isDetecting ?
-              "Analyzing photos…"
-            : `${uploadedCount} ${uploadedCount === 1 ? "image" : "images"} uploaded`}
+              'Analyzing photos…'
+            : `${uploadedCount} ${uploadedCount === 1 ? 'image' : 'images'} uploaded`}
           </span>
         </div>
 
         {/* Right: actions */}
-        <div className="flex items-center gap-4">
-          <Tooltip content="Remove all" position="top">
+        <div className='flex items-center gap-4'>
+          <Tooltip content='Remove all' position='top'>
             <button
               onClick={onClear}
               disabled={isDetecting}
-              className="text-[11px] font-medium text-white/35 transition-colors hover:text-red-400 disabled:pointer-events-none disabled:opacity-40">
+              className='text-[11px] font-medium text-white/35 transition-colors hover:text-red-400 disabled:pointer-events-none disabled:opacity-40'>
               Clear
             </button>
           </Tooltip>
-          <div className="h-3.5 w-px bg-white/10" />
-          <label className="flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-white/55 transition-colors hover:text-white">
+          <div className='h-3.5 w-px bg-white/10' />
+          <label className='flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-white/55 transition-colors hover:text-white'>
             <input
-              type="file"
-              accept="image/*"
+              type='file'
+              accept='image/*'
               multiple
-              className="hidden"
+              className='hidden'
               disabled={isDetecting}
               onChange={(e) => {
                 if (e.target.files && e.target.files.length > 0) {
                   onFilesSelected(e.target.files)
-                  e.target.value = ""
+                  e.target.value = ''
                 }
               }}
             />
-            <Plus className="size-3" />
+            <Plus className='size-3' />
             Add more
           </label>
         </div>
@@ -66,47 +61,46 @@ export function BulkUploadArea({
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
-      <div className="relative flex w-full max-w-lg flex-col items-center justify-center gap-5 rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-10 text-center transition-all hover:border-white/20 hover:bg-white/[0.02]">
+    <div className='flex flex-1 items-center justify-center p-6'>
+      <div className='relative flex w-full max-w-lg flex-col items-center justify-center gap-5 rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-10 text-center transition-all hover:border-white/20 hover:bg-white/[0.02]'>
         {/* Icon */}
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400">
-          <FolderOpen className="size-6" />
+        <div className='flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400'>
+          <FolderOpen className='size-6' />
         </div>
 
         <div>
-          <div className="mb-1 text-sm font-semibold text-white/90">Import photos</div>
-          <p className="max-w-sm text-[11px] leading-relaxed text-white/40">
-            Filenames like{" "}
-            <code className="rounded bg-white/5 px-1 py-0.5 text-cyan-300">Juan_Dela_Cruz.jpg</code>{" "}
-            are used to suggest member matches and names. Review the assignments before enrolling.
+          <div className='mb-1 text-sm font-semibold text-white/90'>Import photos</div>
+          <p className='max-w-sm text-[11px] leading-relaxed text-white/40'>
+            Filenames like <code className='rounded bg-white/5 px-1 py-0.5 text-cyan-300'>Juan_Dela_Cruz.jpg</code> are
+            used to suggest member matches and names. Review the assignments before enrolling.
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-          <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97]">
-            <Folder className="size-3.5" />
+        <div className='mt-2 flex flex-wrap items-center justify-center gap-3'>
+          <label className='flex cursor-pointer items-center gap-2 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97]'>
+            <Folder className='size-3.5' />
             Choose folder
             <input
-              type="file"
+              type='file'
               {...({
-                webkitdirectory: "",
-                directory: "",
+                webkitdirectory: '',
+                directory: ''
               } as React.InputHTMLAttributes<HTMLInputElement>)}
               multiple
-              className="hidden"
+              className='hidden'
               onChange={(e) => onFilesSelected(e.target.files)}
             />
           </label>
 
-          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-white/80 transition-all hover:bg-white/10 hover:text-white active:scale-95">
-            <Images className="size-3.5 text-white/60" />
+          <label className='flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-white/80 transition-all hover:bg-white/10 hover:text-white active:scale-95'>
+            <Images className='size-3.5 text-white/60' />
             Choose files
             <input
-              type="file"
-              accept="image/*"
+              type='file'
+              accept='image/*'
               multiple
-              className="hidden"
+              className='hidden'
               onChange={(e) => onFilesSelected(e.target.files)}
             />
           </label>

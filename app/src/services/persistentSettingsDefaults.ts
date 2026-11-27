@@ -1,6 +1,6 @@
-import type { AudioSettings, QuickSettings } from "@/components/settings/types"
-import type { UpdateInfo } from "@/types/updater"
-import { DEFAULT_REMOTE_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "./syncDefaults"
+import type { AudioSettings, QuickSettings } from '@/components/settings/types'
+import type { UpdateInfo } from '@/types/updater'
+import { DEFAULT_REMOTE_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from './syncDefaults'
 
 export interface PersistentSettingsSchema {
   quickSettings: QuickSettings
@@ -57,7 +57,7 @@ export interface PersistentSettingsSchema {
     deviceToken: string
     intervalMinutes: number
     lastSyncedAt: string | null
-    lastSyncStatus: "idle" | "success" | "error"
+    lastSyncStatus: 'idle' | 'success' | 'error'
     lastSyncMessage: string | null
   }
   security: {
@@ -71,7 +71,7 @@ export interface PersistentSettingsSchema {
     enabled: boolean
     time: string
     directory: string
-    format: "individual_csvs" | "combined_csv"
+    format: 'individual_csvs' | 'combined_csv'
     lastExportedDate: string | null
   }
 }
@@ -83,66 +83,66 @@ export const defaultSettings: PersistentSettingsSchema = {
     showTrackingBoxes: true,
     cameraFitCover: false,
     showDetectionPanel: true,
-    autoStartScan: false,
+    autoStartScan: false
   },
   audio: {
     recognitionSoundEnabled: true,
-    recognitionSoundUrl: "./assets/sounds/Recognition_Success.wav",
+    recognitionSoundUrl: './assets/sounds/Recognition_Success.wav'
   },
   attendance: {
     lateThresholdEnabled: false,
     lateThresholdMinutes: 5,
-    classStartTime: "00:00",
-    attendanceCooldownSeconds: 60,
+    classStartTime: '00:00',
+    attendanceCooldownSeconds: 60
   },
   ui: {
     sidebarCollapsed: false,
     sidebarWidth: 360, // Middle value between MIN_EXPANDED_WIDTH (240) and MAX_WIDTH (480)
     selectedGroupId: null,
     groupSidebarCollapsed: false,
-    selectedCamera: "",
+    selectedCamera: '',
     selectedCameraLabel: null,
     lastEnrollmentSource: null,
     lastEnrollmentMode: null,
     hasSeenIntro: false,
     activeGroupSection: null,
     antiSpoofDetectionInfoDismissed: false,
-    enrollmentInfoDismissed: false,
+    enrollmentInfoDismissed: false
   },
   reportScratchpad: {},
   reportViews: {},
   reportDefaultViewNames: {},
   updater: {
     lastChecked: null,
-    cachedInfo: null,
+    cachedInfo: null
   },
   sync: {
     enabled: true,
     remoteBaseUrl: DEFAULT_REMOTE_BASE_URL,
-    organizationId: "",
-    organizationName: "",
-    siteId: "",
-    siteName: "",
-    deviceId: "",
-    deviceName: "",
-    deviceToken: "",
+    organizationId: '',
+    organizationName: '',
+    siteId: '',
+    siteName: '',
+    deviceId: '',
+    deviceName: '',
+    deviceToken: '',
     intervalMinutes: DEFAULT_SYNC_INTERVAL_MINUTES,
     lastSyncedAt: null,
-    lastSyncStatus: "idle",
-    lastSyncMessage: null,
+    lastSyncStatus: 'idle',
+    lastSyncMessage: null
   },
   security: {
     adminPinEnabled: false,
-    adminPin: "1234",
-    recoveryKey: "FNX2-9843",
+    adminPin: '1234',
+    recoveryKey: 'FNX2-9843',
     lockoutUntil: 0,
-    failedAttempts: 0,
+    failedAttempts: 0
   },
   autoExport: {
     enabled: false,
-    time: "17:00",
-    directory: "",
-    format: "combined_csv",
-    lastExportedDate: null,
-  },
+    time: '17:00',
+    directory: '',
+    format: 'combined_csv',
+    lastExportedDate: null
+  }
 }

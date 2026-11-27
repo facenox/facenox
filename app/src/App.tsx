@@ -1,14 +1,14 @@
-import { useEffect, useRef } from "react"
-import { WindowBar } from "@/components/window"
-import Main from "@/components/main"
-import { useUIStore } from "@/components/main/stores/uiStore"
-import { useAttendanceStore } from "@/components/main/stores/attendanceStore"
-import { IntroModal } from "@/components/shared/IntroModal"
-import { DialogProvider } from "@/components/shared"
-import { useAttendanceBootstrap } from "@/components/main/hooks/useAttendanceBootstrap"
-import { AppSkeleton } from "@/components/shared/AppSkeleton"
-import { ErrorBoundary } from "@/components/common/ErrorBoundary"
-import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
+import { useEffect, useRef } from 'react'
+import { WindowBar } from '@/components/window'
+import Main from '@/components/main'
+import { useUIStore } from '@/components/main/stores/uiStore'
+import { useAttendanceStore } from '@/components/main/stores/attendanceStore'
+import { IntroModal } from '@/components/shared/IntroModal'
+import { DialogProvider } from '@/components/shared'
+import { useAttendanceBootstrap } from '@/components/main/hooks/useAttendanceBootstrap'
+import { AppSkeleton } from '@/components/shared/AppSkeleton'
+import { ErrorBoundary } from '@/components/common/ErrorBoundary'
+import { hasSavedCloudPairing, useCloudSyncConfig } from '@/services/cloudSyncState'
 
 function App() {
   const { hasSeenIntro, isHydrated } = useUIStore()
@@ -19,14 +19,12 @@ function App() {
   useAttendanceBootstrap()
 
   const hasSavedPairing = hasSavedCloudPairing(cloudConfig)
-  const cloudStatusSettled = cloudConfigStatus !== "loading"
+  const cloudStatusSettled = cloudConfigStatus !== 'loading'
 
   const shouldRevealWindow =
-    isHydrated &&
-    (Boolean(shellBootstrapError) || (isShellReady && (!hasSeenIntro || cloudStatusSettled)))
+    isHydrated && (Boolean(shellBootstrapError) || (isShellReady && (!hasSeenIntro || cloudStatusSettled)))
 
-  const requiresCloudGate =
-    !shellBootstrapError && isShellReady && (!hasSeenIntro || !hasSavedPairing)
+  const requiresCloudGate = !shellBootstrapError && isShellReady && (!hasSeenIntro || !hasSavedPairing)
 
   useEffect(() => {
     if (shouldRevealWindow && !hasSignaledAppReadyRef.current) {
@@ -43,10 +41,10 @@ function App() {
 
   if (!isHydrated || !shouldRevealWindow) {
     return (
-      <div className="electron-window-container bg-[var(--bg-primary)]">
+      <div className='electron-window-container bg-[var(--bg-primary)]'>
         <WindowBar />
-        <div className="app-content-wrapper">
-          <div className="h-full overflow-hidden text-white">
+        <div className='app-content-wrapper'>
+          <div className='h-full overflow-hidden text-white'>
             <AppSkeleton />
           </div>
         </div>
@@ -57,10 +55,10 @@ function App() {
   return (
     <ErrorBoundary>
       <DialogProvider>
-        <div className="electron-window-container bg-[var(--bg-primary)]">
+        <div className='electron-window-container bg-[var(--bg-primary)]'>
           <WindowBar />
-          <div className="app-content-wrapper">
-            <div className="h-full overflow-hidden text-white">
+          <div className='app-content-wrapper'>
+            <div className='h-full overflow-hidden text-white'>
               {shellBootstrapError ?
                 <Main />
               : requiresCloudGate ?

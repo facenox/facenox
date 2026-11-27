@@ -1,12 +1,12 @@
-import { useMemo, memo, useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Check } from "lucide-react"
-import { MemberTooltip } from "@/components/shared"
-import { createDisplayNameMap } from "@/utils"
-import type { DetectionResult, TrackedFace, CooldownInfo } from "@/components/main/types"
-import type { AttendanceMember } from "@/types/recognition"
-import type { ExtendedFaceRecognitionResponse } from "@/components/main/utils"
-import { useAttendanceStore } from "@/components/main/stores"
+import { useMemo, memo, useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Check } from 'lucide-react'
+import { MemberTooltip } from '@/components/shared'
+import { createDisplayNameMap } from '@/utils'
+import type { DetectionResult, TrackedFace, CooldownInfo } from '@/components/main/types'
+import type { AttendanceMember } from '@/types/recognition'
+import type { ExtendedFaceRecognitionResponse } from '@/components/main/utils'
+import { useAttendanceStore } from '@/components/main/stores'
 
 interface DetectionPanelProps {
   currentDetections: DetectionResult | null
@@ -26,7 +26,7 @@ const DetectionCard = memo(
     displayName,
     member,
     trackedFace,
-    isDone,
+    isDone
   }: {
     isRecognized: boolean
     displayName: string
@@ -42,62 +42,56 @@ const DetectionCard = memo(
         initial={{ opacity: 0, x: -8 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -8 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
         className={`group relative rounded-md px-2.5 py-1.5 transition-all duration-150 ${
           isActive ?
-            "bg-gradient-to-r from-cyan-500/20 to-transparent shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)] hover:from-cyan-500/28"
-          : "hover:bg-gradient-to-r hover:from-white/5 hover:to-transparent"
+            'bg-gradient-to-r from-cyan-500/20 to-transparent shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)] hover:from-cyan-500/28'
+          : 'hover:bg-gradient-to-r hover:from-white/5 hover:to-transparent'
         }`}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
-            <AnimatePresence mode="wait">
+        <div className='flex items-center justify-between gap-3'>
+          <div className='flex min-w-0 flex-1 items-center gap-2 overflow-hidden'>
+            <AnimatePresence mode='wait'>
               {isRecognized ?
                 <motion.div
-                  key="recognized"
+                  key='recognized'
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="min-w-0 flex-1">
-                  <MemberTooltip
-                    member={member}
-                    displayName={displayName}
-                    position="right"
-                    role="Recognized">
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  className='min-w-0 flex-1'>
+                  <MemberTooltip member={member} displayName={displayName} position='right' role='Recognized'>
                     <span
                       className={`block cursor-help truncate text-[13px] font-semibold transition-colors ${
-                        isActive ?
-                          "text-cyan-100 group-hover:text-cyan-200"
-                        : "text-white group-hover:text-cyan-300"
+                        isActive ? 'text-cyan-100 group-hover:text-cyan-200' : 'text-white group-hover:text-cyan-300'
                       }`}>
                       {displayName}
                     </span>
                   </MemberTooltip>
                 </motion.div>
               : <motion.span
-                  key="searching"
+                  key='searching'
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="flex items-center gap-2 text-[13px] font-medium text-white/45">
-                  <span className="inline-block h-2 w-[3px] shrink-0 animate-pulse rounded-[1px] bg-cyan-500/50" />
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  className='flex items-center gap-2 text-[13px] font-medium text-white/45'>
+                  <span className='inline-block h-2 w-[3px] shrink-0 animate-pulse rounded-[1px] bg-cyan-500/50' />
                   Searching...
                 </motion.span>
               }
             </AnimatePresence>
           </div>
 
-          <div className="flex min-h-5 shrink-0 items-center pr-1">
+          <div className='flex min-h-5 shrink-0 items-center pr-1'>
             <AnimatePresence>
               {isDone && (
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 380, damping: 18 }}
-                  className="flex items-center justify-center text-cyan-400">
-                  <Check className="size-3.5 stroke-[2.5]" />
+                  transition={{ type: 'spring', stiffness: 380, damping: 18 }}
+                  className='flex items-center justify-center text-cyan-400'>
+                  <Check className='size-3.5 stroke-[2.5]' />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -105,10 +99,10 @@ const DetectionCard = memo(
         </div>
       </motion.div>
     )
-  },
+  }
 )
 
-DetectionCard.displayName = "DetectionCard"
+DetectionCard.displayName = 'DetectionCard'
 
 export function DetectionPanel({
   currentDetections,
@@ -119,7 +113,7 @@ export function DetectionPanel({
   isStreaming,
   isVideoLoading,
   persistentCooldowns,
-  currentGroupId,
+  currentGroupId
 }: DetectionPanelProps) {
   const enableSpoofDetection = useAttendanceStore((state) => state.enableSpoofDetection)
   const displayNameMap = useMemo(() => {
@@ -144,11 +138,11 @@ export function DetectionPanel({
       .filter((f) => {
         const trackId = f.track_id!
         const rec = currentRecognitionResults.get(trackId)
-        return (!enableSpoofDetection || f.liveness?.status === "real") && !!rec?.person_id
+        return (!enableSpoofDetection || f.liveness?.status === 'real') && !!rec?.person_id
       })
       .sort((a, b) => {
-        const aIsLive = a.liveness?.status === "real"
-        const bIsLive = b.liveness?.status === "real"
+        const aIsLive = a.liveness?.status === 'real'
+        const bIsLive = b.liveness?.status === 'real'
 
         if (aIsLive && !bIsLive) return -1
         if (!aIsLive && bIsLive) return 1
@@ -171,64 +165,62 @@ export function DetectionPanel({
   }, [hasDetections, persistentCooldowns])
 
   return (
-    <AnimatePresence mode="popLayout" initial={false}>
+    <AnimatePresence mode='popLayout' initial={false}>
       {!hasDetections ?
         <motion.div
-          key="scanner-placeholder"
+          key='scanner-placeholder'
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.96 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-          className="flex min-h-0 w-full flex-1 items-center justify-center">
-          <div className="relative flex flex-col items-center">
-            <div className="relative h-20 w-20">
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+          className='flex min-h-0 w-full flex-1 items-center justify-center'>
+          <div className='relative flex flex-col items-center'>
+            <div className='relative h-20 w-20'>
               <div
                 className={`absolute inset-0 rounded-xl border transition-all duration-300 ${
-                  isStreaming || isVideoLoading ?
-                    "ai-pulse-ring border-cyan-500/30"
-                  : "border-white/20"
+                  isStreaming || isVideoLoading ? 'ai-pulse-ring border-cyan-500/30' : 'border-white/20'
                 }`}
               />
 
-              <div className="absolute inset-1 overflow-hidden rounded-lg">
-                <AnimatePresence mode="wait">
+              <div className='absolute inset-1 overflow-hidden rounded-lg'>
+                <AnimatePresence mode='wait'>
                   {isVideoLoading ?
                     <motion.div
-                      key="loading-spinner"
+                      key='loading-spinner'
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-8 w-8 rounded-full border border-cyan-500/20">
-                        <div className="h-full w-full animate-spin rounded-full border-t border-cyan-400/60"></div>
+                      className='absolute inset-0 flex items-center justify-center'>
+                      <div className='h-8 w-8 rounded-full border border-cyan-500/20'>
+                        <div className='h-full w-full animate-spin rounded-full border-t border-cyan-400/60'></div>
                       </div>
                     </motion.div>
                   : isStreaming ?
                     <motion.div
-                      key="scan-active"
+                      key='scan-active'
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute inset-0">
-                      <div className="ai-scan-line absolute right-0 left-0 h-0.5 bg-linear-to-r from-transparent via-cyan-400 to-transparent" />
+                      className='absolute inset-0'>
+                      <div className='ai-scan-line absolute right-0 left-0 h-0.5 bg-linear-to-r from-transparent via-cyan-400 to-transparent' />
                     </motion.div>
                   : <motion.svg
-                      key="camera-idle"
+                      key='camera-idle'
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.2 }}
-                      className="h-full w-full animate-pulse p-4 text-white/55"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24">
+                      className='h-full w-full animate-pulse p-4 text-white/55'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'>
                       <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
                         strokeWidth={1.5}
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-10 4h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-10 4h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'
                       />
                     </motion.svg>
                   }
@@ -237,38 +229,38 @@ export function DetectionPanel({
 
               <div
                 className={`absolute top-0 left-0 h-3 w-3 rounded-tl-lg border-t-2 border-l-2 transition-all duration-300 ${
-                  isStreaming || isVideoLoading ? "border-cyan-400/40" : "border-white/20"
+                  isStreaming || isVideoLoading ? 'border-cyan-400/40' : 'border-white/20'
                 }`}
               />
               <div
                 className={`absolute top-0 right-0 h-3 w-3 rounded-tr-lg border-t-2 border-r-2 transition-all duration-300 ${
-                  isStreaming || isVideoLoading ? "border-cyan-400/40" : "border-white/20"
+                  isStreaming || isVideoLoading ? 'border-cyan-400/40' : 'border-white/20'
                 }`}
               />
               <div
                 className={`absolute bottom-0 left-0 h-3 w-3 rounded-bl-lg border-b-2 border-l-2 transition-all duration-300 ${
-                  isStreaming || isVideoLoading ? "border-cyan-400/40" : "border-white/20"
+                  isStreaming || isVideoLoading ? 'border-cyan-400/40' : 'border-white/20'
                 }`}
               />
               <div
                 className={`absolute right-0 bottom-0 h-3 w-3 rounded-br-lg border-r-2 border-b-2 transition-all duration-300 ${
-                  isStreaming || isVideoLoading ? "border-cyan-400/40" : "border-white/20"
+                  isStreaming || isVideoLoading ? 'border-cyan-400/40' : 'border-white/20'
                 }`}
               />
             </div>
           </div>
         </motion.div>
       : <motion.div
-          key="detections-list"
-          role="region"
-          aria-live="polite"
-          aria-label="Live recognition results"
+          key='detections-list'
+          role='region'
+          aria-live='polite'
+          aria-label='Live recognition results'
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="w-full space-y-0.5 pt-1.5 pr-0 pb-1 pl-2">
-          <AnimatePresence mode="popLayout" initial={false}>
+          className='w-full space-y-0.5 pt-1.5 pr-0 pb-1 pl-2'>
+          <AnimatePresence mode='popLayout' initial={false}>
             {filteredFaces.map((face) => {
               const trackId = face.track_id!
               const recognitionResult = currentRecognitionResults.get(trackId)
@@ -278,18 +270,16 @@ export function DetectionPanel({
                   displayNameMap.get(recognitionResult.person_id) ||
                   recognitionResult.name ||
                   recognitionResult.memberName ||
-                  "Member"
-                : ""
+                  'Member'
+                : ''
 
               const trackedFace = trackedFacesArray.find(
                 (track) =>
                   track.personId === recognitionResult?.person_id ||
-                  (Math.abs(track.bbox.x - face.bbox.x) < 30 &&
-                    Math.abs(track.bbox.y - face.bbox.y) < 30),
+                  (Math.abs(track.bbox.x - face.bbox.x) < 30 && Math.abs(track.bbox.y - face.bbox.y) < 30)
               )
 
-              const member =
-                recognitionResult?.person_id ? memberMap.get(recognitionResult.person_id) : null
+              const member = recognitionResult?.person_id ? memberMap.get(recognitionResult.person_id) : null
               const effectiveGroupId = member?.group_id || currentGroupId
               const cooldownKey =
                 recognitionResult?.person_id && effectiveGroupId ?
@@ -299,27 +289,21 @@ export function DetectionPanel({
               const matchingCooldowns =
                 recognitionResult?.person_id ?
                   Array.from(persistentCooldowns.values()).filter(
-                    (info) => info.personId === recognitionResult.person_id,
+                    (info) => info.personId === recognitionResult.person_id
                   )
                 : []
 
               const newestCooldown =
                 matchingCooldowns.length > 0 ?
-                  matchingCooldowns.reduce((latest, curr) =>
-                    curr.startTime > latest.startTime ? curr : latest,
-                  )
+                  matchingCooldowns.reduce((latest, curr) => (curr.startTime > latest.startTime ? curr : latest))
                 : undefined
 
-              const cooldownInfo =
-                (cooldownKey ? persistentCooldowns.get(cooldownKey) : undefined) || newestCooldown
+              const cooldownInfo = (cooldownKey ? persistentCooldowns.get(cooldownKey) : undefined) || newestCooldown
 
               const cooldownDurationMs = (cooldownInfo?.cooldownDurationSeconds ?? 5) * 1000
               const elapsed = cooldownInfo ? now - cooldownInfo.startTime : Infinity
               const isDone = Boolean(
-                recognitionResult?.person_id &&
-                cooldownInfo &&
-                elapsed >= 0 &&
-                elapsed < cooldownDurationMs,
+                recognitionResult?.person_id && cooldownInfo && elapsed >= 0 && elapsed < cooldownDurationMs
               )
 
               return (

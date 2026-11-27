@@ -1,14 +1,10 @@
-import {
-  hasSavedCloudPairing,
-  refreshCloudSyncConfig,
-  useCloudSyncConfig,
-} from "@/services/cloudSyncState"
+import { hasSavedCloudPairing, refreshCloudSyncConfig, useCloudSyncConfig } from '@/services/cloudSyncState'
 
 export function useCloudSyncStatus() {
   const { config, status, error } = useCloudSyncConfig()
   const isPaired = hasSavedCloudPairing(config)
   const hasCachedPolicy = isPaired && Boolean(config?.credentialError)
-  const isReady = (status === "ready" || hasCachedPolicy) && config?.policyReady !== false
+  const isReady = (status === 'ready' || hasCachedPolicy) && config?.policyReady !== false
   const allowKioskDirectoryManagement = config?.allowKioskDirectoryManagement !== false
   return {
     isPaired,
@@ -16,12 +12,12 @@ export function useCloudSyncStatus() {
     status,
     error,
     refresh: refreshCloudSyncConfig,
-    cloudUrl: config?.remoteBaseUrl || "https://facenox.com",
-    organizationId: config?.organizationId || "",
-    organizationName: config?.organizationName || "",
-    siteName: config?.siteName || "",
+    cloudUrl: config?.remoteBaseUrl || 'https://facenox.com',
+    organizationId: config?.organizationId || '',
+    organizationName: config?.organizationName || '',
+    siteName: config?.siteName || '',
     allowKioskDirectoryManagement,
     peopleLimit: config?.policyOverrides?.peopleLimit,
-    canManageDirectory: isReady && (!isPaired || allowKioskDirectoryManagement),
+    canManageDirectory: isReady && (!isPaired || allowKioskDirectoryManagement)
   }
 }

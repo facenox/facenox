@@ -9,7 +9,7 @@ function getAudio(url: string): HTMLAudioElement {
   if (cached) return cached.audio
 
   const audio = new Audio(url)
-  audio.preload = "auto"
+  audio.preload = 'auto'
 
   audioCache.set(url, { audio })
   return audio
@@ -52,7 +52,7 @@ export const soundEffects = {
 
       await audioClone.play()
     } catch (err) {
-      console.error("Audio playback error:", err)
+      console.error('Audio playback error:', err)
     }
-  },
+  }
 }

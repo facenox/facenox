@@ -4,9 +4,9 @@ import type {
   SimilarityThresholdResponse,
   PersonUpdateResponse,
   PersonListResponse,
-  DatabaseClearResponse,
-} from "@/types/recognition"
-import type { UpdateInfo } from "@/types/updater"
+  DatabaseClearResponse
+} from '@/types/recognition'
+import type { UpdateInfo } from '@/types/updater'
 
 declare global {
   interface FacenoxWSClientAPI {
@@ -50,9 +50,7 @@ declare global {
     updateSplashProgress: (progress: number, detail?: string) => void
     updateSplashDataStep: (step: number, detail?: string) => void
     reportSplashRenderedProgress: (progress: number) => void
-    onSplashProgress: (
-      callback: (update: { progress: number; detail?: string }) => void,
-    ) => () => void
+    onSplashProgress: (callback: (update: { progress: number; detail?: string }) => void) => () => void
     onMaximize: (callback: () => void) => () => void
     onUnmaximize: (callback: () => void) => () => void
     onRestore: (callback: () => void) => () => void
@@ -123,7 +121,7 @@ declare global {
         buffer?: ArrayBuffer
         mimeType: string
       }>,
-      extraFields?: Record<string, string>,
+      extraFields?: Record<string, string>
     ) => Promise<unknown>
   }
 
@@ -155,7 +153,7 @@ declare global {
       deviceName: string
       intervalMinutes: number
       lastSyncedAt: string | null
-      lastSyncStatus: "idle" | "success" | "error"
+      lastSyncStatus: 'idle' | 'success' | 'error'
       lastSyncMessage: string | null
       connected: boolean
       wasEverPaired?: boolean
@@ -190,17 +188,13 @@ declare global {
       deviceName: string
       intervalMinutes: number
       lastSyncedAt: string | null
-      lastSyncStatus: "idle" | "success" | "error"
+      lastSyncStatus: 'idle' | 'success' | 'error'
       lastSyncMessage: string | null
       connected: boolean
       unsyncedRecordsCount?: number
       unsyncedSessionsCount?: number
     }>
-    pairDevice: (input: {
-      remoteBaseUrl?: string
-      pairingCode: string
-      deviceName?: string
-    }) => Promise<{
+    pairDevice: (input: { remoteBaseUrl?: string; pairingCode: string; deviceName?: string }) => Promise<{
       success: boolean
       message?: string
       error?: string
@@ -216,7 +210,7 @@ declare global {
         deviceName: string
         intervalMinutes: number
         lastSyncedAt: string | null
-        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncStatus: 'idle' | 'success' | 'error'
         lastSyncMessage: string | null
         connected: boolean
         unsyncedRecordsCount?: number
@@ -235,12 +229,8 @@ declare global {
         interval: number
       }
     }>
-    pollDeviceAuthorization: (input: {
-      remoteBaseUrl?: string
-      deviceCode: string
-      deviceName?: string
-    }) => Promise<{
-      status: "pending" | "approved" | "expired" | "claimed" | "denied" | "error" | "network_error"
+    pollDeviceAuthorization: (input: { remoteBaseUrl?: string; deviceCode: string; deviceName?: string }) => Promise<{
+      status: 'pending' | 'approved' | 'expired' | 'claimed' | 'denied' | 'error' | 'network_error'
       slowDown?: boolean
       success?: boolean
       message?: string
@@ -257,7 +247,7 @@ declare global {
         deviceName: string
         intervalMinutes: number
         lastSyncedAt: string | null
-        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncStatus: 'idle' | 'success' | 'error'
         lastSyncMessage: string | null
         connected: boolean
         unsyncedRecordsCount?: number
@@ -278,7 +268,7 @@ declare global {
         deviceName: string
         intervalMinutes: number
         lastSyncedAt: string | null
-        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncStatus: 'idle' | 'success' | 'error'
         lastSyncMessage: string | null
         connected: boolean
         unsyncedRecordsCount?: number
@@ -309,7 +299,7 @@ declare global {
         deviceName: string
         intervalMinutes: number
         lastSyncedAt: string | null
-        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncStatus: 'idle' | 'success' | 'error'
         lastSyncMessage: string | null
         connected: boolean
         unsyncedRecordsCount?: number
@@ -330,7 +320,7 @@ declare global {
         deviceName: string
         intervalMinutes: number
         lastSyncedAt: string | null
-        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncStatus: 'idle' | 'success' | 'error'
         lastSyncMessage: string | null
         connected: boolean
         unsyncedRecordsCount?: number
@@ -351,7 +341,7 @@ declare global {
     importData: (
       password: string,
       filePath: string,
-      overwrite?: boolean,
+      overwrite?: boolean
     ) => Promise<{
       success: boolean
       canceled?: boolean
@@ -371,7 +361,7 @@ declare global {
         deviceName: string
         intervalMinutes: number
         lastSyncedAt: string | null
-        lastSyncStatus: "idle" | "success" | "error"
+        lastSyncStatus: 'idle' | 'success' | 'error'
         lastSyncMessage: string | null
         connected: boolean
       }
@@ -390,7 +380,7 @@ declare global {
       enabled: boolean
       time: string
       directory: string
-      format: "individual_csvs" | "combined_csv"
+      format: 'individual_csvs' | 'combined_csv'
       lastExportedDate: string | null
     }>
     updateConfig: (
@@ -398,14 +388,14 @@ declare global {
         enabled: boolean
         time: string
         directory: string
-        format: "individual_csvs" | "combined_csv"
+        format: 'individual_csvs' | 'combined_csv'
         lastExportedDate: string | null
-      }>,
+      }>
     ) => Promise<{
       enabled: boolean
       time: string
       directory: string
-      format: "individual_csvs" | "combined_csv"
+      format: 'individual_csvs' | 'combined_csv'
       lastExportedDate: string | null
     }>
     triggerNow: (targetDate?: string) => Promise<boolean>
@@ -429,9 +419,7 @@ declare global {
   }
 
   interface SecurityAPI {
-    onPinReset: (
-      callback: (data?: { adminPin?: string; adminPinEnabled?: boolean }) => void,
-    ) => () => void
+    onPinReset: (callback: (data?: { adminPin?: string; adminPinEnabled?: boolean }) => void) => () => void
   }
 
   interface Window {

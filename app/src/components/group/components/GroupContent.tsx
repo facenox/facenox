@@ -1,20 +1,17 @@
-import { useMemo, memo } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Plus } from "lucide-react"
-import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
-import { Members, Overview, Reports, GroupSettings } from "@/components/group/sections"
-import { EmptyState } from "@/components/group/shared"
-import { useCloudSyncStatus } from "@/components/common/useCloudSyncStatus"
+import { useMemo, memo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Plus } from 'lucide-react'
+import { useGroupStore, useGroupUIStore } from '@/components/group/stores'
+import { Members, Overview, Reports, GroupSettings } from '@/components/group/sections'
+import { EmptyState } from '@/components/group/shared'
+import { useCloudSyncStatus } from '@/components/common/useCloudSyncStatus'
 
 interface GroupContentProps {
   onMembersChange: () => void
   deselectMemberTrigger?: number
   onHasSelectedMemberChange?: (hasSelectedMember: boolean) => void
   onDaysTrackedChange?: (daysTracked: number, loading: boolean) => void
-  onExportHandlersReady?: (handlers: {
-    exportCSV: () => void
-    exportAllGroupsCSV?: () => void
-  }) => void
+  onExportHandlersReady?: (handlers: { exportCSV: () => void; exportAllGroupsCSV?: () => void }) => void
 }
 
 function GroupContentComponent({
@@ -22,7 +19,7 @@ function GroupContentComponent({
   deselectMemberTrigger,
   onHasSelectedMemberChange,
   onDaysTrackedChange,
-  onExportHandlersReady,
+  onExportHandlersReady
 }: GroupContentProps) {
   const selectedGroup = useGroupStore((state) => state.selectedGroup)
   const groupsLength = useGroupStore((state) => state.groups.length)
@@ -50,42 +47,42 @@ function GroupContentComponent({
     initial: { opacity: 0, scale: 0.995 },
     animate: { opacity: 1, scale: 1 },
     exit: { opacity: 0, scale: 0.995 },
-    transition: { duration: 0.18, ease: "easeOut" as const },
+    transition: { duration: 0.18, ease: 'easeOut' as const }
   }
 
   if (!hasSelectedGroup || !selectedGroup) {
     return (
-      <div className="h-full px-6 pt-6">
+      <div className='h-full px-6 pt-6'>
         <EmptyState
-          title={hasGroups ? "Select a group to continue" : "No groups created"}
+          title={hasGroups ? 'Select a group to continue' : 'No groups created'}
           description={
             hasGroups ?
-              "Choose a group from the sidebar to view overview, reports, members, and schedule settings."
-            : "Create a group to start organizing members and recording attendance."
+              'Choose a group from the sidebar to view overview, reports, members, and schedule settings.'
+            : 'Create a group to start organizing members and recording attendance.'
           }
           action={
             !hasGroups && canManageDirectory ?
               {
-                label: "Create group",
+                label: 'Create group',
                 onClick: openCreateGroup,
-                icon: <Plus className="size-3" />,
+                icon: <Plus className='size-3' />
               }
             : undefined
           }
-          className="h-full"
+          className='h-full'
         />
       </div>
     )
   }
 
   return (
-    <div className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
-      <AnimatePresence mode="wait">
-        {activeSection === "overview" && (
+    <div className='relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden'>
+      <AnimatePresence mode='wait'>
+        {activeSection === 'overview' && (
           <motion.div
             key={`overview-${selectedGroupId}`}
             {...motionProps}
-            className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
+            className='relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden'>
             <Overview
               group={selectedGroup}
               members={members}
@@ -94,11 +91,11 @@ function GroupContentComponent({
           </motion.div>
         )}
 
-        {activeSection === "reports" && (
+        {activeSection === 'reports' && (
           <motion.div
             key={`reports-${selectedGroupId}`}
             {...motionProps}
-            className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
+            className='relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden'>
             <Reports
               group={selectedGroup}
               onDaysTrackedChange={onDaysTrackedChange}
@@ -108,11 +105,11 @@ function GroupContentComponent({
           </motion.div>
         )}
 
-        {activeSection === "members" && (
+        {activeSection === 'members' && (
           <motion.div
             key={`members-${selectedGroupId}`}
             {...motionProps}
-            className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
+            className='relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden'>
             <Members
               group={selectedGroup}
               members={members}
@@ -125,11 +122,11 @@ function GroupContentComponent({
           </motion.div>
         )}
 
-        {activeSection === "settings" && (
+        {activeSection === 'settings' && (
           <motion.div
             key={`settings-${selectedGroupId}`}
             {...motionProps}
-            className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
+            className='relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden'>
             <GroupSettings group={selectedGroup} onGroupsChanged={handleMembersChange} />
           </motion.div>
         )}

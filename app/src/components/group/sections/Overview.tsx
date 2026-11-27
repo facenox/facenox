@@ -1,20 +1,20 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, ChevronDown, Clock, Ghost, Search, UserPlus, X } from "lucide-react"
-import { useGroupStore } from "@/components/group/stores"
-import { useAttendanceStore } from "@/components/main/stores"
-import { createDisplayNameMap } from "@/utils"
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Calendar, ChevronDown, Clock, Ghost, Search, UserPlus, X } from 'lucide-react'
+import { useGroupStore } from '@/components/group/stores'
+import { useAttendanceStore } from '@/components/main/stores'
+import { createDisplayNameMap } from '@/utils'
 import {
   addAttendanceDays,
   formatAttendanceDate,
   formatAttendanceTime,
   getAttendanceDateString,
-  getAttendanceWeekStart,
-} from "@/utils/attendanceTime"
-import { StatsCard, EmptyState } from "@/components/group/shared"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
-import { Spinner } from "@/components/common"
-import { Tooltip } from "@/components/shared/Tooltip"
+  getAttendanceWeekStart
+} from '@/utils/attendanceTime'
+import { StatsCard, EmptyState } from '@/components/group/shared'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
+import { Spinner } from '@/components/common'
+import { Tooltip } from '@/components/shared/Tooltip'
 
 interface OverviewProps {
   group: AttendanceGroup
@@ -26,9 +26,9 @@ const toDate = (value: Date | string): Date => (value instanceof Date ? value : 
 
 const getRelativeTime = (value: Date | string, timeZone?: string | null): string => {
   const date = toDate(value)
-  if (Number.isNaN(date.getTime())) return "Just now"
+  if (Number.isNaN(date.getTime())) return 'Just now'
   const diffInSeconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
-  if (diffInSeconds < 60) return "Just now"
+  if (diffInSeconds < 60) return 'Just now'
   const diffInMinutes = Math.floor(diffInSeconds / 60)
   if (diffInMinutes < 60) return `${diffInMinutes}m ago`
   const diffInHours = Math.floor(diffInMinutes / 60)
@@ -39,13 +39,13 @@ const getRelativeTime = (value: Date | string, timeZone?: string | null): string
 }
 
 const getLateScheduleDisplay = (startTimeStr?: string | null, thresholdMinutes = 0): string => {
-  const [hStr, mStr] = (startTimeStr || "08:00").split(":")
+  const [hStr, mStr] = (startTimeStr || '08:00').split(':')
   const rawH = parseInt(hStr, 10) || 0
   const rawM = parseInt(mStr, 10) || 0
 
-  const period = rawH >= 12 ? "PM" : "AM"
+  const period = rawH >= 12 ? 'PM' : 'AM'
   const displayH = rawH % 12 === 0 ? 12 : rawH % 12
-  const displayM = rawM.toString().padStart(2, "0")
+  const displayM = rawM.toString().padStart(2, '0')
   const formattedTime = `${displayH}:${displayM} ${period}`
 
   if (!thresholdMinutes || thresholdMinutes === 0) {
@@ -54,23 +54,20 @@ const getLateScheduleDisplay = (startTimeStr?: string | null, thresholdMinutes =
   return `Start: ${formattedTime} (+${thresholdMinutes}m)`
 }
 
-type DateFilter = "today" | "yesterday" | "week"
+type DateFilter = 'today' | 'yesterday' | 'week'
 
 const DATE_FILTER_LABELS: Record<DateFilter, string> = {
-  today: "Today",
-  yesterday: "Yesterday",
-  week: "This Week",
+  today: 'Today',
+  yesterday: 'Yesterday',
+  week: 'This Week'
 }
 
-const getDateRange = (
-  filter: DateFilter,
-  timeZone?: string | null,
-): { start: string; end: string } => {
+const getDateRange = (filter: DateFilter, timeZone?: string | null): { start: string; end: string } => {
   const today = getAttendanceDateString(new Date(), timeZone)
 
-  if (filter === "today") return { start: today, end: today }
+  if (filter === 'today') return { start: today, end: today }
 
-  if (filter === "yesterday") {
+  if (filter === 'yesterday') {
     const y = addAttendanceDays(today, -1)
     return { start: y, end: y }
   }
@@ -83,8 +80,8 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
   const stats = useGroupStore((state) => state.overviewStats[group.id])
   const attendanceTimeZone = useAttendanceStore((state) => state.attendanceTimezone)
 
-  const [activitySearch, setActivitySearch] = useState("")
-  const [dateFilter, setDateFilter] = useState<DateFilter>("today")
+  const [activitySearch, setActivitySearch] = useState('')
+  const [dateFilter, setDateFilter] = useState<DateFilter>('today')
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [shouldKeepExpanded, setShouldKeepExpanded] = useState(false)
@@ -104,36 +101,33 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
     if (!filterDropdownOpen) return
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" && event.key !== "Esc" && event.keyCode !== 27) return
+      if (event.key !== 'Escape' && event.key !== 'Esc' && event.keyCode !== 27) return
       event.preventDefault()
       event.stopPropagation()
       event.stopImmediatePropagation()
       setFilterDropdownOpen(false)
     }
 
-    window.addEventListener("keydown", handleEscape, true)
-    return () => window.removeEventListener("keydown", handleEscape, true)
+    window.addEventListener('keydown', handleEscape, true)
+    return () => window.removeEventListener('keydown', handleEscape, true)
   }, [filterDropdownOpen])
 
   const isSearchExpanded = activitySearch.trim().length > 0 || isSearchFocused || shouldKeepExpanded
   const dropdownWidthClass =
-    dateFilter === "today" ? "w-[98px]"
-    : dateFilter === "yesterday" ? "w-[120px]"
-    : "w-[130px]"
+    dateFilter === 'today' ? 'w-[98px]'
+    : dateFilter === 'yesterday' ? 'w-[120px]'
+    : 'w-[130px]'
 
   const searchBarMaxWidthClass =
     isSearchExpanded ?
-      dateFilter === "today" ? "max-w-[280px]"
-      : dateFilter === "yesterday" ? "max-w-[300px]"
-      : "max-w-[310px]"
-    : dateFilter === "today" ? "max-w-[260px]"
-    : dateFilter === "yesterday" ? "max-w-[280px]"
-    : "max-w-[290px]"
+      dateFilter === 'today' ? 'max-w-[280px]'
+      : dateFilter === 'yesterday' ? 'max-w-[300px]'
+      : 'max-w-[310px]'
+    : dateFilter === 'today' ? 'max-w-[260px]'
+    : dateFilter === 'yesterday' ? 'max-w-[280px]'
+    : 'max-w-[290px]'
 
-  const { start, end } = useMemo(
-    () => getDateRange(dateFilter, attendanceTimeZone),
-    [dateFilter, attendanceTimeZone],
-  )
+  const { start, end } = useMemo(() => getDateRange(dateFilter, attendanceTimeZone), [dateFilter, attendanceTimeZone])
   const cacheKey = `${start}_${end}`
 
   const cachedRecords = useGroupStore((state) => state.overviewRecords[group.id]?.[cacheKey])
@@ -146,8 +140,8 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
         setFilterDropdownOpen(false)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const displayNameMap = useMemo(() => {
@@ -165,7 +159,7 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
     if (activitySearch.trim()) {
       const query = activitySearch.toLowerCase()
       result = result.filter((record) => {
-        const name = (displayNameMap.get(record.person_id) || "Member").toLowerCase()
+        const name = (displayNameMap.get(record.person_id) || 'Member').toLowerCase()
         return name.includes(query) || record.person_id.toLowerCase().includes(query)
       })
     }
@@ -186,52 +180,44 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
 
   if (!stats) {
     return (
-      <section className="flex h-full w-full animate-pulse flex-col px-10 pt-8">
+      <section className='flex h-full w-full animate-pulse flex-col px-10 pt-8'>
         {/* Activity Overview Skeleton */}
-        <section className="shrink-0">
-          <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3">
-            <div className="flex flex-col items-center gap-1.5">
-              <p className="text-[11px] font-bold tracking-wider text-white/30 uppercase">
-                Present today
-              </p>
-              <div className="h-9 w-16 rounded bg-white/5" />
+        <section className='shrink-0'>
+          <div className='grid grid-cols-1 gap-6 text-center sm:grid-cols-3'>
+            <div className='flex flex-col items-center gap-1.5'>
+              <p className='text-[11px] font-bold tracking-wider text-white/30 uppercase'>Present today</p>
+              <div className='h-9 w-16 rounded bg-white/5' />
             </div>
-            <div className="flex flex-col items-center gap-1.5">
-              <p className="text-[11px] font-bold tracking-wider text-white/30 uppercase">
-                Late arrivals
-              </p>
-              <div className="h-9 w-12 rounded bg-white/5" />
+            <div className='flex flex-col items-center gap-1.5'>
+              <p className='text-[11px] font-bold tracking-wider text-white/30 uppercase'>Late arrivals</p>
+              <div className='h-9 w-12 rounded bg-white/5' />
             </div>
-            <div className="flex flex-col items-center gap-1.5">
-              <p className="text-[11px] font-bold tracking-wider text-white/30 uppercase">
-                Enrolled
-              </p>
-              <div className="h-9 w-16 rounded bg-white/5" />
+            <div className='flex flex-col items-center gap-1.5'>
+              <p className='text-[11px] font-bold tracking-wider text-white/30 uppercase'>Enrolled</p>
+              <div className='h-9 w-16 rounded bg-white/5' />
             </div>
           </div>
         </section>
 
         {/* Activity Log Skeleton */}
-        <section className="mt-8 flex min-h-0 flex-1 flex-col">
-          <div className="mb-6 flex shrink-0 items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="h-4 w-24 rounded bg-white/10" />
-              <div className="mt-1 h-3 w-32 rounded bg-white/5" />
+        <section className='mt-8 flex min-h-0 flex-1 flex-col'>
+          <div className='mb-6 flex shrink-0 items-center justify-between gap-3'>
+            <div className='min-w-0'>
+              <div className='h-4 w-24 rounded bg-white/10' />
+              <div className='mt-1 h-3 w-32 rounded bg-white/5' />
             </div>
           </div>
 
-          <div className="flex-1 space-y-3 py-2">
+          <div className='flex-1 space-y-3 py-2'>
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between rounded-lg bg-white/[0.02] px-4 py-3">
-                <div className="flex items-center gap-4">
-                  <div className="space-y-1.5">
-                    <div className="h-3.5 w-28 rounded bg-white/10" />
-                    <div className="h-2.5 w-16 rounded bg-white/5" />
+              <div key={i} className='flex items-center justify-between rounded-lg bg-white/[0.02] px-4 py-3'>
+                <div className='flex items-center gap-4'>
+                  <div className='space-y-1.5'>
+                    <div className='h-3.5 w-28 rounded bg-white/10' />
+                    <div className='h-2.5 w-16 rounded bg-white/5' />
                   </div>
                 </div>
-                <div className="h-3 w-12 rounded bg-white/5" />
+                <div className='h-3 w-12 rounded bg-white/5' />
               </div>
             ))}
           </div>
@@ -243,14 +229,14 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
   if (stats.total_members === 0 && members.length === 0) {
     return (
       <EmptyState
-        title="This group has no members"
-        description="Add, edit, and remove members to manage profiles and attendance."
+        title='This group has no members'
+        description='Add, edit, and remove members to manage profiles and attendance.'
         action={
           onAddMember ?
             {
-              label: "Add member",
+              label: 'Add member',
               onClick: onAddMember,
-              icon: <UserPlus className="size-3" />,
+              icon: <UserPlus className='size-3' />
             }
           : undefined
         }
@@ -259,135 +245,128 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
   }
 
   return (
-    <section className="flex h-full w-full flex-col px-10 pt-8">
+    <section className='flex h-full w-full flex-col px-10 pt-8'>
       {/* Activity Overview */}
-      <section className="shrink-0">
-        <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3">
-          <div className="flex flex-col items-center">
+      <section className='shrink-0'>
+        <div className='grid grid-cols-1 gap-6 text-center sm:grid-cols-3'>
+          <div className='flex flex-col items-center'>
             <StatsCard
-              type="present"
+              type='present'
               value={stats.present_today}
               total={stats.total_members}
-              label="Present today"
+              label='Present today'
               tooltipText={
                 <span>
-                  Members with at least one valid scan today.{" "}
-                  <span className="text-white/65">Resets at midnight.</span>
+                  Members with at least one valid scan today. <span className='text-white/65'>Resets at midnight.</span>
                 </span>
               }
             />
             {(() => {
               const absent = Math.max(0, (stats.total_members ?? 0) - (stats.present_today ?? 0))
-              return absent > 0 ?
-                  <p className="mt-1.5 text-[11px] text-white/50">{absent} absent</p>
-                : null
+              return absent > 0 ? <p className='mt-1.5 text-[11px] text-white/50'>{absent} absent</p> : null
             })()}
           </div>
-          <div className="flex flex-col items-center">
+          <div className='flex flex-col items-center'>
             <StatsCard
-              type="late"
+              type='late'
               value={stats.late_today}
-              label="Late arrivals"
+              label='Late arrivals'
               disabled={!(group.settings?.late_threshold_enabled ?? false)}
               tooltipText={
                 <span>
-                  Members whose first valid scan was after the scheduled start time and grace period
-                  today. <span className="text-white/65">Resets at midnight.</span>
+                  Members whose first valid scan was after the scheduled start time and grace period today.{' '}
+                  <span className='text-white/65'>Resets at midnight.</span>
                 </span>
               }
               disabledTooltipText={
                 <span>
-                  Late tracking is disabled for this group. Enable it in{" "}
-                  <span className="font-medium text-cyan-400">Group rules</span> to flag and count
-                  late arrivals.
+                  Late tracking is disabled for this group. Enable it in{' '}
+                  <span className='font-medium text-cyan-400'>Group rules</span> to flag and count late arrivals.
                 </span>
               }
             />
             {(group.settings?.late_threshold_enabled ?? false) && (
-              <p className="mt-1.5 text-[11px] text-white/50">
-                {getLateScheduleDisplay(
-                  group.settings?.class_start_time,
-                  group.settings?.late_threshold_minutes,
-                )}
+              <p className='mt-1.5 text-[11px] text-white/50'>
+                {getLateScheduleDisplay(group.settings?.class_start_time, group.settings?.late_threshold_minutes)}
               </p>
             )}
           </div>
-          <div className="flex flex-col items-center">
+          <div className='flex flex-col items-center'>
             <StatsCard
-              type="present"
+              type='present'
               value={enrolledCount}
               total={members.length}
-              label="Enrolled"
+              label='Enrolled'
               tooltipText={<span>Members in this group with registered face data.</span>}
             />
             {pendingEnrollment > 0 ?
-              <p className="mt-1.5 text-[11px] text-white/50">{pendingEnrollment} pending</p>
+              <p className='mt-1.5 text-[11px] text-white/50'>{pendingEnrollment} pending</p>
             : members.length > 0 ?
-              <p className="mt-1.5 text-[11px] text-white/50">All enrolled</p>
+              <p className='mt-1.5 text-[11px] text-white/50'>All enrolled</p>
             : null}
           </div>
         </div>
       </section>
 
       {/* Activity Log */}
-      <section className="mt-8 flex min-h-0 flex-1 flex-col">
-        <div className="mb-6 flex shrink-0 items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-[14px] font-bold tracking-tight text-white">Activity log</h2>
-            <p className="mt-0.5 text-[12px] font-medium text-white/65">
+      <section className='mt-8 flex min-h-0 flex-1 flex-col'>
+        <div className='mb-6 flex shrink-0 items-center justify-between gap-3'>
+          <div className='min-w-0'>
+            <h2 className='text-[14px] font-bold tracking-tight text-white'>Activity log</h2>
+            <p className='mt-0.5 text-[12px] font-medium text-white/65'>
               {DATE_FILTER_LABELS[dateFilter]}&apos;s records
             </p>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className='flex shrink-0 items-center gap-2'>
             <div
               className={`group/bar flex w-full items-center transition-all duration-300 ease-out ${searchBarMaxWidthClass}`}>
-              <div className="relative flex-1">
-                <Search className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45" />
+              <div className='relative flex-1'>
+                <Search className='absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45' />
                 <input
-                  type="text"
+                  type='text'
                   value={activitySearch}
                   onChange={(e) => setActivitySearch(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setTimeout(() => setIsSearchFocused(false), 150)}
                   onKeyDown={(e) => {
-                    if (e.key !== "Escape" && e.key !== "Esc" && e.keyCode !== 27) return
+                    if (e.key !== 'Escape' && e.key !== 'Esc' && e.keyCode !== 27) return
                     e.preventDefault()
                     e.stopPropagation()
                     if (e.currentTarget.value) {
-                      setActivitySearch("")
+                      setActivitySearch('')
                     } else {
                       e.currentTarget.blur()
                     }
                   }}
-                  placeholder="Search activity…"
-                  className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-7 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/bar:border-white/20 placeholder:text-white/35 focus:bg-white/[0.08]"
+                  placeholder='Search activity…'
+                  className='h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-7 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/bar:border-white/20 placeholder:text-white/35 focus:bg-white/[0.08]'
                 />
                 {activitySearch && (
-                  <Tooltip content="Clear search">
+                  <Tooltip content='Clear search'>
                     <button
-                      type="button"
-                      aria-label="Clear search"
-                      onClick={() => setActivitySearch("")}
-                      className="absolute top-1/2 right-2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-sm text-white/55 hover:text-white">
-                      <X className="size-2.5" />
+                      type='button'
+                      aria-label='Clear search'
+                      onClick={() => setActivitySearch('')}
+                      className='absolute top-1/2 right-2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-sm text-white/55 hover:text-white'>
+                      <X className='size-2.5' />
                     </button>
                   </Tooltip>
                 )}
               </div>
 
-              <div className="relative shrink-0" ref={filterDropdownRef}>
+              <div className='relative shrink-0' ref={filterDropdownRef}>
                 <button
-                  type="button"
+                  type='button'
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setFilterDropdownOpen((o) => !o)}
                   className={`flex h-9 transform-gpu items-center justify-between gap-1.5 rounded-l-none rounded-r-lg border border-l-0 border-white/5 bg-white/5 px-2.5 text-[12px] font-semibold text-white/80 transition-colors duration-300 outline-none group-focus-within/bar:border-white/20 focus-within:bg-white/[0.08] hover:border-white/10 hover:bg-white/[0.08] focus:border-white/20 focus:bg-white/[0.08] ${dropdownWidthClass}`}>
-                  <span className="flex min-w-0 items-center gap-1.5">
-                    <Calendar className="size-3" />
-                    <span className="truncate">{DATE_FILTER_LABELS[dateFilter]}</span>
+                  <span className='flex min-w-0 items-center gap-1.5'>
+                    <Calendar className='size-3' />
+                    <span className='truncate'>{DATE_FILTER_LABELS[dateFilter]}</span>
                   </span>
                   <ChevronDown
-                    className={`size-2.5 shrink-0 text-white/55 transition-transform duration-150 ${filterDropdownOpen ? "rotate-180" : ""}`}
+                    className={`size-2.5 shrink-0 text-white/55 transition-transform duration-150 ${filterDropdownOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
 
@@ -397,12 +376,12 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                       initial={{ opacity: 0, scale: 0.95, y: -5 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="absolute top-full right-0 z-50 mt-1.5 min-w-[128px] overflow-hidden rounded-lg border border-white/5 bg-[#0f1011]/95 p-1 shadow-xl">
-                      {(["today", "yesterday", "week"] as DateFilter[]).map((filter) => (
+                      transition={{ duration: 0.15, ease: 'easeOut' }}
+                      className='absolute top-full right-0 z-50 mt-1.5 min-w-[128px] overflow-hidden rounded-lg border border-white/5 bg-[#0f1011]/95 p-1 shadow-xl'>
+                      {(['today', 'yesterday', 'week'] as DateFilter[]).map((filter) => (
                         <button
                           key={filter}
-                          type="button"
+                          type='button'
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => {
                             setDateFilter(filter)
@@ -410,8 +389,8 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
                           }}
                           className={`flex w-full items-center rounded px-3 py-1.5 text-left text-[12px] transition-all duration-150 ${
                             dateFilter === filter ?
-                              "bg-cyan-500/10 font-semibold text-cyan-400"
-                            : "text-white/65 hover:bg-white/5 hover:text-white"
+                              'bg-cyan-500/10 font-semibold text-cyan-400'
+                            : 'text-white/65 hover:bg-white/5 hover:text-white'
                           }`}>
                           {DATE_FILTER_LABELS[filter]}
                         </button>
@@ -425,86 +404,82 @@ export function Overview({ group, members, onAddMember }: OverviewProps) {
         </div>
 
         <div
-          className="custom-scroll relative flex-1 overflow-y-auto pr-2 pb-10 text-left"
+          className='custom-scroll relative flex-1 overflow-y-auto pr-2 pb-10 text-left'
           style={{
-            maskImage: "linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)",
-            WebkitMaskImage:
-              "linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)",
+            maskImage: 'linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)'
           }}>
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode='wait'>
             {recordsLoading ?
               <motion.div
-                key="loading"
+                key='loading'
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center justify-center py-12 text-white/20">
-                <Spinner size="sm" color="muted" />
+                className='flex items-center justify-center py-12 text-white/20'>
+                <Spinner size='sm' color='muted' />
               </motion.div>
             : <motion.div
                 key={dateFilter}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-                className="flex h-full min-h-[200px] flex-col">
-                <AnimatePresence mode="wait">
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                className='flex h-full min-h-[200px] flex-col'>
+                <AnimatePresence mode='wait'>
                   {recentRecords.length === 0 ?
                     <EmptyState
-                      key="no-activity"
-                      title="No activity recorded"
+                      key='no-activity'
+                      title='No activity recorded'
                       description={`No attendance records found for ${
-                        dateFilter === "today" ? "today"
-                        : dateFilter === "yesterday" ? "yesterday"
-                        : "this week"
+                        dateFilter === 'today' ? 'today'
+                        : dateFilter === 'yesterday' ? 'yesterday'
+                        : 'this week'
                       }.`}
-                      icon={<Clock className="size-8" />}
+                      icon={<Clock className='size-8' />}
                     />
                   : filteredRecords.length === 0 ?
                     <EmptyState
-                      key="no-results"
-                      title="No results found"
+                      key='no-results'
+                      title='No results found'
                       description={`No activity matched "${activitySearch}".`}
-                      icon={<Ghost className="size-8" />}
+                      icon={<Ghost className='size-8' />}
                     />
                   : <motion.div
-                      key="results"
+                      key='results'
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
                       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                      className="space-y-1">
+                      className='space-y-1'>
                       {filteredRecords.slice(0, 50).map((record, idx) => {
-                        const displayName = displayNameMap.get(record.person_id) || "Member"
+                        const displayName = displayNameMap.get(record.person_id) || 'Member'
 
                         return (
                           <div
                             key={record.id || `record-${idx}`}
-                            className="group/item flex items-center justify-between rounded-lg border border-transparent bg-transparent px-4 py-3 transition-colors hover:bg-white/[0.02]">
-                            <div className="flex items-center gap-4">
-                              <div className="flex flex-col">
-                                <span className="text-[13px] font-medium text-white transition-colors">
+                            className='group/item flex items-center justify-between rounded-lg border border-transparent bg-transparent px-4 py-3 transition-colors hover:bg-white/[0.02]'>
+                            <div className='flex items-center gap-4'>
+                              <div className='flex flex-col'>
+                                <span className='text-[13px] font-medium text-white transition-colors'>
                                   {displayName}
                                 </span>
-                                <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-white/65">
-                                  <Clock className="size-2.5 opacity-70" />
+                                <div className='mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-white/65'>
+                                  <Clock className='size-2.5 opacity-70' />
                                   <span>
                                     {formatAttendanceTime(
                                       record.timestamp,
-                                      record.timestamp_timezone || attendanceTimeZone,
+                                      record.timestamp_timezone || attendanceTimeZone
                                     )}
                                   </span>
                                 </div>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-4">
-                              <span className="text-[12px] font-medium text-white/55">
-                                {getRelativeTime(
-                                  record.timestamp,
-                                  record.timestamp_timezone || attendanceTimeZone,
-                                )}
+                            <div className='flex items-center gap-4'>
+                              <span className='text-[12px] font-medium text-white/55'>
+                                {getRelativeTime(record.timestamp, record.timestamp_timezone || attendanceTimeZone)}
                               </span>
                             </div>
                           </div>

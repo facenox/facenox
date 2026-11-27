@@ -1,8 +1,8 @@
-import type { AttendanceRecord } from "@/components/main/types"
+import type { AttendanceRecord } from '@/components/main/types'
 
-export type AttendanceSortField = "time" | "name"
-export type AttendanceSortOrder = "asc" | "desc"
-export type AttendanceRecordScope = "today" | "yesterday" | "week" | "all"
+export type AttendanceSortField = 'time' | 'name'
+export type AttendanceSortOrder = 'asc' | 'desc'
+export type AttendanceRecordScope = 'today' | 'yesterday' | 'week' | 'all'
 
 interface ProcessAttendanceRecordsOptions {
   recentAttendance: AttendanceRecord[]
@@ -21,7 +21,7 @@ export function processAttendanceRecords({
   searchQuery,
   sortField,
   sortOrder,
-  today = new Date(),
+  today = new Date()
 }: ProcessAttendanceRecordsOptions): AttendanceRecord[] {
   if (!recentAttendance.length) {
     return []
@@ -29,15 +29,15 @@ export function processAttendanceRecords({
 
   let filtered = [...recentAttendance]
 
-  if (recordScope === "today") {
+  if (recordScope === 'today') {
     const todayString = today.toDateString()
     filtered = filtered.filter((record) => record.timestamp.toDateString() === todayString)
-  } else if (recordScope === "yesterday") {
+  } else if (recordScope === 'yesterday') {
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
     const yesterdayString = yesterday.toDateString()
     filtered = filtered.filter((record) => record.timestamp.toDateString() === yesterdayString)
-  } else if (recordScope === "week") {
+  } else if (recordScope === 'week') {
     // This week: Monday to today
     const monday = new Date(today)
     monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
@@ -55,54 +55,47 @@ export function processAttendanceRecords({
   const normalizedQuery = searchQuery.trim().toLowerCase()
   if (normalizedQuery) {
     filtered = filtered.filter((record) => {
-      const displayName = (displayNameMap.get(record.person_id) || "Member").toLowerCase()
+      const displayName = (displayNameMap.get(record.person_id) || 'Member').toLowerCase()
       return displayName.includes(normalizedQuery)
     })
   }
 
-  if (sortField === "time") {
+  if (sortField === 'time') {
     filtered.sort((a, b) => {
       const timeA = a.timestamp.getTime()
       const timeB = b.timestamp.getTime()
-      return sortOrder === "asc" ? timeA - timeB : timeB - timeA
+      return sortOrder === 'asc' ? timeA - timeB : timeB - timeA
     })
   } else {
     const nameCache = new Map<string, string>()
     filtered.sort((a, b) => {
       let nameA = nameCache.get(a.person_id)
       if (!nameA) {
-        nameA = (displayNameMap.get(a.person_id) || "Member").toLowerCase()
+        nameA = (displayNameMap.get(a.person_id) || 'Member').toLowerCase()
         nameCache.set(a.person_id, nameA)
       }
 
       let nameB = nameCache.get(b.person_id)
       if (!nameB) {
-        nameB = (displayNameMap.get(b.person_id) || "Member").toLowerCase()
+        nameB = (displayNameMap.get(b.person_id) || 'Member').toLowerCase()
         nameCache.set(b.person_id, nameB)
       }
 
       const comparison = nameA.localeCompare(nameB)
-      return sortOrder === "asc" ? comparison : -comparison
+      return sortOrder === 'asc' ? comparison : -comparison
     })
   }
 
   return filtered
 }
 
-export function limitAttendanceRecords(
-  processedRecords: AttendanceRecord[],
-  displayLimit: number,
-): AttendanceRecord[] {
+export function limitAttendanceRecords(processedRecords: AttendanceRecord[], displayLimit: number): AttendanceRecord[] {
   return processedRecords.slice(0, displayLimit)
 }
 
-export function buildRecordCheckInStatusMap(
-  processedRecords: AttendanceRecord[],
-): Map<string, boolean> {
+export function buildRecordCheckInStatusMap(processedRecords: AttendanceRecord[]): Map<string, boolean> {
   const checkedInSet = new Set<string>()
-  const chronologicalRecords = [...processedRecords].sort(
-    (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
-  )
+  const chronologicalRecords = [...processedRecords].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
 
   const recordCheckInStatus = new Map<string, boolean>()
 

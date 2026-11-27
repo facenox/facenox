@@ -7,12 +7,12 @@ interface DirectoryIdentity {
 
 export function assignDirectoryDisplayNames<T extends { name: string }>(
   entries: readonly T[],
-  identify: (entry: T) => DirectoryIdentity,
+  identify: (entry: T) => DirectoryIdentity
 ): (T & { displayName: string })[] {
   const keyFor = (scope: string, name: string) => JSON.stringify([scope, name.toLowerCase()])
   const ordered = entries.map((entry, index) => {
     const { scope, id, createdAt } = identify(entry)
-    const timestamp = createdAt instanceof Date ? createdAt.getTime() : Date.parse(createdAt ?? "")
+    const timestamp = createdAt instanceof Date ? createdAt.getTime() : Date.parse(createdAt ?? '')
     return { entry, index, scope, id, timestamp: Number.isFinite(timestamp) ? timestamp : Infinity }
   })
   const savedNames = new Set(ordered.map(({ scope, entry }) => keyFor(scope, entry.name)))

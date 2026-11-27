@@ -3,5 +3,5 @@ export {
   createAttendanceMember,
   createAttendanceRecord,
   createAttendanceReport,
-  createAttendanceSession,
-} from "@/test/fixtures/attendance"
+  createAttendanceSession
+} from '@/test/fixtures/attendance'

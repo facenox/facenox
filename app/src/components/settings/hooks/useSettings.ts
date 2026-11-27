@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"
-import { backendService, attendanceManager } from "@/services"
-import { notifyDataChanged } from "@/utils/syncNotifier"
-import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
-import { useDialog } from "@/components/shared"
-import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
-import { useUIStore, useAttendanceStore } from "@/components/main/stores"
-import type { GroupSection } from "@/components/group"
-import type { QuickSettings, AttendanceSettings, AudioSettings } from "@/components/settings/types"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { backendService, attendanceManager } from '@/services'
+import { notifyDataChanged } from '@/utils/syncNotifier'
+import { hasSavedCloudPairing, useCloudSyncConfig } from '@/services/cloudSyncState'
+import { useDialog } from '@/components/shared'
+import { useGroupStore, useGroupUIStore } from '@/components/group/stores'
+import { useUIStore, useAttendanceStore } from '@/components/main/stores'
+import type { GroupSection } from '@/components/group'
+import type { QuickSettings, AttendanceSettings, AudioSettings } from '@/components/settings/types'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
 
 interface UseSettingsProps {
   initialGroupSection?: GroupSection
@@ -41,26 +41,25 @@ export const useSettings = ({
   onGroupSelect,
   onGroupsChanged,
   quickSettings,
-  attendanceSettings,
+  attendanceSettings
 }: UseSettingsProps) => {
   const dialog = useDialog()
   const uiStore = useUIStore()
 
   const validInitialGroup = useMemo(() => {
-    if (currentGroup && currentGroup.id !== "all") {
+    if (currentGroup && currentGroup.id !== 'all') {
       return currentGroup
     }
-    return initialGroups.find((g) => g.id !== "all") ?? null
+    return initialGroups.find((g) => g.id !== 'all') ?? null
   }, [currentGroup, initialGroups])
 
   const lastSection = uiStore.lastSettingsSection
-  const availableLastSection =
-    lastSection === "group" && !validInitialGroup ? "attendance" : lastSection
+  const availableLastSection = lastSection === 'group' && !validInitialGroup ? 'attendance' : lastSection
   const [activeSection, setActiveSectionState] = useState<string>(
-    initialSection || (initialGroupSection ? "group" : availableLastSection) || "attendance",
+    initialSection || (initialGroupSection ? 'group' : availableLastSection) || 'attendance'
   )
   const [groupInitialSection, setGroupInitialSectionState] = useState<GroupSection | undefined>(
-    initialGroupSection || uiStore.lastGroupInitialSection || "overview",
+    initialGroupSection || uiStore.lastGroupInitialSection || 'overview'
   )
 
   const setActiveSection = useCallback((section: string) => {
@@ -80,10 +79,10 @@ export const useSettings = ({
 
       // Only reset active sections if switching to a completely different group context during this session!
       if (store.lastGroupId && store.lastGroupId !== currentGroup.id) {
-        store.setLastSettingsSection("group")
-        store.setLastGroupInitialSection("overview")
-        setActiveSectionState("group")
-        setGroupInitialSectionState("overview")
+        store.setLastSettingsSection('group')
+        store.setLastGroupInitialSection('overview')
+        setActiveSectionState('group')
+        setGroupInitialSectionState('overview')
       }
 
       // Keep track of the active group ID to distinguish real group switches from component remounts
@@ -112,22 +111,19 @@ export const useSettings = ({
     () => ({
       timeHealth,
       loading: isTimeHealthLoading,
-      error: timeHealthError,
+      error: timeHealthError
     }),
-    [timeHealth, isTimeHealthLoading, timeHealthError],
+    [timeHealth, isTimeHealthLoading, timeHealthError]
   )
 
   const [isLoading, setIsLoading] = useState(false)
   const { config: cloudConfig, status: cloudStatus, error: cloudError } = useCloudSyncConfig()
   const forceLiveness = Boolean(cloudConfig?.forceLiveness)
   const hasCachedPolicy = hasSavedCloudPairing(cloudConfig) && Boolean(cloudConfig?.credentialError)
-  const cloudPolicyReady =
-    (cloudStatus === "ready" || hasCachedPolicy) && cloudConfig?.policyReady !== false
+  const cloudPolicyReady = (cloudStatus === 'ready' || hasCachedPolicy) && cloudConfig?.policyReady !== false
   const cloudPolicyError =
     cloudError ||
-    (cloudConfig?.policyReady === false ?
-      "Open Cloud sync to load this device's organization policy."
-    : null)
+    (cloudConfig?.policyReady === false ? "Open Cloud sync to load this device's organization policy." : null)
   const policyOverrides = cloudConfig?.policyOverrides ?? {}
   const [triggerCreateGroup, setTriggerCreateGroup] = useState(0)
   const [deselectMemberTrigger, setDeselectMemberTrigger] = useState(0)
@@ -144,7 +140,7 @@ export const useSettings = ({
 
   const toggleQuickSetting = (key: keyof QuickSettings) => {
     const currentVal =
-      key === "showTrackingBoxes" || key === "showDetectionPanel" ?
+      key === 'showTrackingBoxes' || key === 'showDetectionPanel' ?
         quickSettings[key] !== false
       : Boolean(quickSettings[key])
     const newSettings = { ...quickSettings, [key]: !currentVal }
@@ -165,15 +161,15 @@ export const useSettings = ({
       useAttendanceStore.getState().setStatsLoading(true)
       const [faceStats, attendanceStats] = await Promise.all([
         backendService.getDatabaseStats(),
-        attendanceManager.getAttendanceStats(),
+        attendanceManager.getAttendanceStats()
       ])
       useAttendanceStore.getState().setSystemStats({
         totalPersons: faceStats.total_persons,
         totalMembers: attendanceStats.total_members,
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: new Date().toISOString()
       })
     } catch (error) {
-      console.error("Failed to load system data:", error)
+      console.error('Failed to load system data:', error)
     } finally {
       useAttendanceStore.getState().setStatsLoading(false)
     }
@@ -191,8 +187,8 @@ export const useSettings = ({
       useAttendanceStore.getState().setTimeHealth(timeHealthData)
     } catch (error) {
       if (request !== timeHealthRequest.current) return
-      console.error("Failed to refresh system time:", error)
-      setTimeHealthError("Clock check failed. Check your connection and try again.")
+      console.error('Failed to refresh system time:', error)
+      setTimeHealthError('Clock check failed. Check your connection and try again.')
     } finally {
       if (request === timeHealthRequest.current) setIsTimeHealthLoading(false)
       if (onlineTimeRequest.current === request) onlineTimeRequest.current = null
@@ -202,7 +198,7 @@ export const useSettings = ({
   const verifyTimeOnline = useCallback(() => refreshTimeHealth(true), [refreshTimeHealth])
 
   useEffect(() => {
-    if (activeSection !== "attendance") return
+    if (activeSection !== 'attendance') return
     void refreshTimeHealth(false)
     const interval = setInterval(() => void refreshTimeHealth(false), 10_000)
     const unsubscribe = window.electronAPI?.sync?.onDataChanged?.(() => {
@@ -227,7 +223,7 @@ export const useSettings = ({
   }, [loadSystemData])
 
   useEffect(() => {
-    if (activeSection !== "group" || groupInitialSection !== "reports") {
+    if (activeSection !== 'group' || groupInitialSection !== 'reports') {
       setReportsExportHandlers(null)
     }
   }, [activeSection, groupInitialSection])
@@ -241,16 +237,16 @@ export const useSettings = ({
   const handleClearDatabase = async (skipConfirmation = false) => {
     if (!skipConfirmation) {
       const ok = await dialog.confirm({
-        title: "Clear face data",
+        title: 'Clear face data',
         message:
-          "Clear all enrolled face data? Groups, members, and attendance history are not affected. Members will need to enroll again before they can be recognized. This cannot be undone.",
-        confirmText: "Clear face data",
-        cancelText: "Cancel",
-        confirmVariant: "danger",
+          'Clear all enrolled face data? Groups, members, and attendance history are not affected. Members will need to enroll again before they can be recognized. This cannot be undone.',
+        confirmText: 'Clear face data',
+        cancelText: 'Cancel',
+        confirmVariant: 'danger',
         requireTypedConfirmation: {
-          label: "To confirm, type CLEAR FACE DATA",
-          value: "CLEAR FACE DATA",
-        },
+          label: 'To confirm, type CLEAR FACE DATA',
+          value: 'CLEAR FACE DATA'
+        }
       })
       if (!ok) return
     }
@@ -260,15 +256,15 @@ export const useSettings = ({
       notifyDataChanged()
       await loadSystemData()
       await dialog.alert({
-        title: "Face data cleared",
-        message: "All enrolled face data was removed.",
+        title: 'Face data cleared',
+        message: 'All enrolled face data was removed.'
       })
     } catch (error) {
-      console.error("Failed to clear database:", error)
+      console.error('Failed to clear database:', error)
       await dialog.alert({
-        title: "Could not clear face data",
+        title: 'Could not clear face data',
         message: "Facenox couldn't clear the enrolled face data. Try again.",
-        variant: "danger",
+        variant: 'danger'
       })
     } finally {
       setIsLoading(false)
@@ -280,22 +276,22 @@ export const useSettings = ({
   // Ensures the newly selected group is instantly recognized by consumers even before
   // background network synchronizations complete.
   const dropdownGroups = useMemo(() => {
-    const list = initialGroups.filter((g) => g.id !== "all")
-    if (currentGroup && currentGroup.id !== "all" && !list.some((g) => g.id === currentGroup.id)) {
+    const list = initialGroups.filter((g) => g.id !== 'all')
+    if (currentGroup && currentGroup.id !== 'all' && !list.some((g) => g.id === currentGroup.id)) {
       list.push(currentGroup)
     }
     return list
   }, [initialGroups, currentGroup])
 
   const handleGroupBack = useCallback(() => {
-    setActiveSection("attendance")
+    setActiveSection('attendance')
   }, [setActiveSection])
 
   const handleExportHandlersReady = useCallback(
     (handlers: { exportCSV: () => void; exportAllGroupsCSV?: () => void }) => {
       setReportsExportHandlers(handlers)
     },
-    [],
+    []
   )
 
   const handleAddMemberHandlerReady = useCallback((handler: () => void) => {
@@ -314,7 +310,7 @@ export const useSettings = ({
       await loadSystemData()
       onGroupsChanged?.()
     },
-    [loadSystemData, onGroupSelect, onGroupsChanged],
+    [loadSystemData, onGroupSelect, onGroupsChanged]
   )
 
   const dropdownValue = validInitialGroup?.id ?? null
@@ -356,6 +352,6 @@ export const useSettings = ({
     policyOverrides,
     enrollmentSource,
     enrollmentMode,
-    setEnrollmentState,
+    setEnrollmentState
   }
 }

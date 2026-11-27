@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Clock } from "lucide-react"
-import { attendanceManager } from "@/services"
-import type { AttendanceGroup, AttendanceMode } from "@/types/recognition"
-import { ErrorMessage, FormInput, Modal } from "@/components/common"
-import { Dropdown, Switch } from "@/components/shared"
-import { AttendanceModeInfoPopover } from "@/components/group/shared"
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Clock } from 'lucide-react'
+import { attendanceManager } from '@/services'
+import type { AttendanceGroup, AttendanceMode } from '@/types/recognition'
+import { ErrorMessage, FormInput, Modal } from '@/components/common'
+import { Dropdown, Switch } from '@/components/shared'
+import { AttendanceModeInfoPopover } from '@/components/group/shared'
 
 interface EditGroupProps {
   isOpen: boolean
@@ -15,64 +15,53 @@ interface EditGroupProps {
 }
 
 const formatTimeDisplay = (time?: string) => {
-  if (!time) return { time: "08:00", period: "AM" }
+  if (!time) return { time: '08:00', period: 'AM' }
   try {
-    const [hours, minutes] = time.split(":").map(Number)
-    const period = hours >= 12 ? "PM" : "AM"
+    const [hours, minutes] = time.split(':').map(Number)
+    const period = hours >= 12 ? 'PM' : 'AM'
     const displayHours = hours % 12 || 12
     return {
-      time: `${displayHours}:${String(minutes).padStart(2, "0")}`,
-      period,
+      time: `${displayHours}:${String(minutes).padStart(2, '0')}`,
+      period
     }
   } catch {
-    return { time: time || "08:00", period: "" }
+    return { time: time || '08:00', period: '' }
   }
 }
 
 export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps) {
   const [name, setName] = useState(group.name)
-  const [lateThresholdEnabled, setLateThresholdEnabled] = useState(
-    Boolean(group.settings?.late_threshold_enabled),
-  )
-  const [classStartTime, setClassStartTime] = useState(group.settings?.class_start_time || "08:00")
-  const [classEndTime, setClassEndTime] = useState(group.settings?.class_end_time || "17:00")
-  const [lateThresholdMinutes, setLateThresholdMinutes] = useState(
-    group.settings?.late_threshold_minutes ?? 15,
-  )
+  const [lateThresholdEnabled, setLateThresholdEnabled] = useState(Boolean(group.settings?.late_threshold_enabled))
+  const [classStartTime, setClassStartTime] = useState(group.settings?.class_start_time || '08:00')
+  const [classEndTime, setClassEndTime] = useState(group.settings?.class_end_time || '17:00')
+  const [lateThresholdMinutes, setLateThresholdMinutes] = useState(group.settings?.late_threshold_minutes ?? 15)
   const [trackCheckout, setTrackCheckout] = useState(Boolean(group.settings?.track_checkout))
   const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>(
-    group.settings?.attendance_mode ??
-      (group.settings?.track_checkout ? "work_hours" : "attendance"),
+    group.settings?.attendance_mode ?? (group.settings?.track_checkout ? 'work_hours' : 'attendance')
   )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const showsLateTracking = true
-  const showsDepartureRules = attendanceMode === "work_hours"
+  const showsDepartureRules = attendanceMode === 'work_hours'
 
   useEffect(() => {
     setName(group.name)
     setLateThresholdEnabled(Boolean(group.settings?.late_threshold_enabled))
-    setClassStartTime(group.settings?.class_start_time || "08:00")
-    setClassEndTime(group.settings?.class_end_time || "17:00")
+    setClassStartTime(group.settings?.class_start_time || '08:00')
+    setClassEndTime(group.settings?.class_end_time || '17:00')
     setLateThresholdMinutes(group.settings?.late_threshold_minutes ?? 15)
     setTrackCheckout(Boolean(group.settings?.track_checkout))
-    setAttendanceMode(
-      group.settings?.attendance_mode ??
-        (group.settings?.track_checkout ? "work_hours" : "attendance"),
-    )
+    setAttendanceMode(group.settings?.attendance_mode ?? (group.settings?.track_checkout ? 'work_hours' : 'attendance'))
   }, [group, isOpen])
 
   const handleClose = () => {
     setName(group.name)
     setLateThresholdEnabled(Boolean(group.settings?.late_threshold_enabled))
-    setClassStartTime(group.settings?.class_start_time || "08:00")
-    setClassEndTime(group.settings?.class_end_time || "17:00")
+    setClassStartTime(group.settings?.class_start_time || '08:00')
+    setClassEndTime(group.settings?.class_end_time || '17:00')
     setLateThresholdMinutes(group.settings?.late_threshold_minutes ?? 15)
     setTrackCheckout(Boolean(group.settings?.track_checkout))
-    setAttendanceMode(
-      group.settings?.attendance_mode ??
-        (group.settings?.track_checkout ? "work_hours" : "attendance"),
-    )
+    setAttendanceMode(group.settings?.attendance_mode ?? (group.settings?.track_checkout ? 'work_hours' : 'attendance'))
     setError(null)
     setLoading(false)
     onClose()
@@ -94,14 +83,14 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
           class_end_time: trackCheckout ? classEndTime : null,
           late_threshold_minutes: lateThresholdMinutes,
           attendance_mode: attendanceMode,
-          track_checkout: trackCheckout,
-        },
+          track_checkout: trackCheckout
+        }
       })
       onSuccess()
       handleClose()
     } catch (err) {
-      console.error("Error updating group:", err)
-      setError(err instanceof Error ? err.message : "Failed to update group")
+      console.error('Error updating group:', err)
+      setError(err instanceof Error ? err.message : 'Failed to update group')
     } finally {
       setLoading(false)
     }
@@ -113,78 +102,76 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
       onClose={handleClose}
       title={
         <div>
-          <h3 className="text-xl font-semibold">Edit group</h3>
-          <p className="mt-1 text-xs font-normal text-white/65">
-            Update name and attendance schedule for this group
-          </p>
+          <h3 className='text-xl font-semibold'>Edit group</h3>
+          <p className='mt-1 text-xs font-normal text-white/65'>Update name and attendance schedule for this group</p>
         </div>
       }
-      maxWidth="md">
+      maxWidth='md'>
       <div>
-        {error && <ErrorMessage message={error} className="mb-4" />}
+        {error && <ErrorMessage message={error} className='mb-4' />}
 
-        <div className="space-y-4">
-          <div className="flex flex-col">
+        <div className='space-y-4'>
+          <div className='flex flex-col'>
             <FormInput
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Group name"
-              aria-label="Group name"
+              placeholder='Group name'
+              aria-label='Group name'
               maxLength={100}
-              focusColor="border-white/20"
+              focusColor='border-white/20'
             />
           </div>
 
-          <div className="flex items-center justify-between gap-4 px-0.5 py-1">
+          <div className='flex items-center justify-between gap-4 px-0.5 py-1'>
             <div>
-              <div className="flex items-center gap-1.5">
-                <div className="text-xs font-semibold text-white/90">Attendance mode</div>
+              <div className='flex items-center gap-1.5'>
+                <div className='text-xs font-semibold text-white/90'>Attendance mode</div>
                 <AttendanceModeInfoPopover />
               </div>
-              <div className="text-[11px] text-white/55">Choose what to record for this group.</div>
+              <div className='text-[11px] text-white/55'>Choose what to record for this group.</div>
             </div>
-            <div className="flex w-[180px] shrink-0 justify-end">
+            <div className='flex w-[180px] shrink-0 justify-end'>
               <Dropdown
                 fit
                 options={[
-                  { value: "attendance", label: "Attendance" },
-                  { value: "work_hours", label: "Time in & time out" },
-                  { value: "visits", label: "Visits" },
+                  { value: 'attendance', label: 'Attendance' },
+                  { value: 'work_hours', label: 'Time in & time out' },
+                  { value: 'visits', label: 'Visits' }
                 ]}
                 value={attendanceMode}
                 onChange={(value) => {
                   if (!value) return
                   const mode = value as AttendanceMode
                   setAttendanceMode(mode)
-                  setTrackCheckout(mode !== "attendance")
+                  setTrackCheckout(mode !== 'attendance')
                 }}
                 allowClear={false}
                 menuWidth={180}
-                buttonClassName="h-8 !border-white/10 !bg-white/5 px-2.5 text-xs font-medium text-white/90 hover:!border-white/20 hover:!bg-white/[0.08]"
-                optionClassName="text-xs"
+                buttonClassName='h-8 !border-white/10 !bg-white/5 px-2.5 text-xs font-medium text-white/90 hover:!border-white/20 hover:!bg-white/[0.08]'
+                optionClassName='text-xs'
               />
             </div>
           </div>
 
           {/* Schedule & Attendance Rules */}
           <>
-            <div className="divide-y divide-white/6 pt-1">
+            <div className='divide-y divide-white/6 pt-1'>
               {/* Late Tracking Row */}
               {showsLateTracking && (
-                <div className="py-2">
-                  <div className="flex items-center justify-between gap-3">
+                <div className='py-2'>
+                  <div className='flex items-center justify-between gap-3'>
                     <div>
-                      <div className="text-xs font-semibold text-white/90">Late tracking</div>
-                      <div className="text-[11px] text-white/55">
+                      <div className='text-xs font-semibold text-white/90'>Late tracking</div>
+                      <div className='text-[11px] text-white/55'>
                         {lateThresholdEnabled ?
-                          "Flag arrivals after the scheduled start time and grace period."
-                        : "Late tracking is disabled."}
+                          'Flag arrivals after the scheduled start time and grace period.'
+                        : 'Late tracking is disabled.'}
                       </div>
                     </div>
                     <Switch
                       checked={lateThresholdEnabled}
                       onChange={setLateThresholdEnabled}
-                      ariaLabel="Late tracking"
+                      ariaLabel='Late tracking'
                     />
                   </div>
 
@@ -192,64 +179,64 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                     {lateThresholdEnabled && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
+                        animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.18, ease: "easeOut" }}
-                        className="overflow-hidden">
-                        <div className="flex flex-col pt-1">
+                        transition={{ duration: 0.18, ease: 'easeOut' }}
+                        className='overflow-hidden'>
+                        <div className='flex flex-col pt-1'>
                           {/* Scheduled Start Time */}
-                          <div className="relative flex items-center gap-4 py-2 pl-4">
-                            <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10" />
-                            <div className="pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10" />
+                          <div className='relative flex items-center gap-4 py-2 pl-4'>
+                            <div className='pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10' />
+                            <div className='pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10' />
 
-                            <div className="min-w-0 flex-1">
-                              <div className="text-xs text-white/65">Scheduled start time:</div>
+                            <div className='min-w-0 flex-1'>
+                              <div className='text-xs text-white/65'>Scheduled start time:</div>
                             </div>
-                            <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                              <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
-                              <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
+                            <div className='group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8'>
+                              <Clock className='mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70' />
+                              <div className='flex items-baseline gap-1 font-mono text-xs font-bold text-white/90'>
                                 <span>{formatTimeDisplay(classStartTime).time}</span>
-                                <span className="text-[10px] font-medium text-white/55">
+                                <span className='text-[10px] font-medium text-white/55'>
                                   {formatTimeDisplay(classStartTime).period}
                                 </span>
                               </div>
                               <input
-                                type="time"
-                                title=""
-                                aria-label="Scheduled start time"
+                                type='time'
+                                title=''
+                                aria-label='Scheduled start time'
                                 value={classStartTime}
                                 onChange={(e) => setClassStartTime(e.target.value)}
                                 onClick={(e) => e.currentTarget.showPicker?.()}
-                                className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
+                                className='absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden'
                               />
                             </div>
                           </div>
 
                           {/* Late Grace Period */}
-                          <div className="relative flex items-center gap-4 py-2 pl-4">
-                            <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+                          <div className='relative flex items-center gap-4 py-2 pl-4'>
+                            <div className='pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10' />
 
-                            <div className="min-w-0 flex-1">
-                              <div className="text-xs text-white/65">Grace period:</div>
+                            <div className='min-w-0 flex-1'>
+                              <div className='text-xs text-white/65'>Grace period:</div>
                             </div>
 
-                            <div className="ml-auto flex shrink-0 items-center gap-3">
+                            <div className='ml-auto flex shrink-0 items-center gap-3'>
                               {([0, 5, 10, 15, 30, 45, 60] as const).map((mins) => (
                                 <button
                                   key={mins}
-                                  type="button"
+                                  type='button'
                                   onClick={() => setLateThresholdMinutes(mins)}
                                   className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
-                                    lateThresholdMinutes === mins ? "text-cyan-400" : (
-                                      "text-white/40 hover:text-white/70"
+                                    lateThresholdMinutes === mins ? 'text-cyan-400' : (
+                                      'text-white/40 hover:text-white/70'
                                     )
                                   }`}>
-                                  {mins === 0 ? "Exact" : `${mins}m`}
+                                  {mins === 0 ? 'Exact' : `${mins}m`}
                                   {lateThresholdMinutes === mins && (
                                     <motion.div
-                                      layoutId="editGroupLateUnderline"
-                                      className="absolute right-1 bottom-[-2px] left-1 h-[2px] rounded-[1px] bg-cyan-400"
-                                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                      layoutId='editGroupLateUnderline'
+                                      className='absolute right-1 bottom-[-2px] left-1 h-[2px] rounded-[1px] bg-cyan-400'
+                                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                                     />
                                   )}
                                 </button>
@@ -265,15 +252,11 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
 
               {/* Departure & Checkout Tracking Row */}
               {showsDepartureRules && (
-                <div className="py-2">
-                  <div className="flex items-center justify-between gap-3">
+                <div className='py-2'>
+                  <div className='flex items-center justify-between gap-3'>
                     <div>
-                      <div className="text-xs font-semibold text-white/90">
-                        Time in &amp; time out
-                      </div>
-                      <div className="text-[11px] text-white/55">
-                        Records Time in and Time out from member scans.
-                      </div>
+                      <div className='text-xs font-semibold text-white/90'>Time in &amp; time out</div>
+                      <div className='text-[11px] text-white/55'>Records Time in and Time out from member scans.</div>
                     </div>
                   </div>
 
@@ -281,36 +264,36 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
                     {trackCheckout && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
+                        animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.18, ease: "easeOut" }}
-                        className="overflow-hidden">
-                        <div className="flex flex-col pt-1">
-                          <div className="relative flex items-center gap-4 py-2 pl-4">
-                            <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+                        transition={{ duration: 0.18, ease: 'easeOut' }}
+                        className='overflow-hidden'>
+                        <div className='flex flex-col pt-1'>
+                          <div className='relative flex items-center gap-4 py-2 pl-4'>
+                            <div className='pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10' />
 
-                            <div className="min-w-0 flex-1">
-                              <div className="text-xs text-white/65">Scheduled end time:</div>
-                              <div className="mt-0.5 text-[10px] text-white/40">
+                            <div className='min-w-0 flex-1'>
+                              <div className='text-xs text-white/65'>Scheduled end time:</div>
+                              <div className='mt-0.5 text-[10px] text-white/40'>
                                 Used for Undertime/Overtime reports. Time out still requires a scan.
                               </div>
                             </div>
-                            <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                              <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
-                              <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
+                            <div className='group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8'>
+                              <Clock className='mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70' />
+                              <div className='flex items-baseline gap-1 font-mono text-xs font-bold text-white/90'>
                                 <span>{formatTimeDisplay(classEndTime).time}</span>
-                                <span className="text-[10px] font-medium text-white/55">
+                                <span className='text-[10px] font-medium text-white/55'>
                                   {formatTimeDisplay(classEndTime).period}
                                 </span>
                               </div>
                               <input
-                                type="time"
-                                title=""
-                                aria-label="Scheduled end time"
+                                type='time'
+                                title=''
+                                aria-label='Scheduled end time'
                                 value={classEndTime}
                                 onChange={(e) => setClassEndTime(e.target.value)}
                                 onClick={(e) => e.currentTarget.showPicker?.()}
-                                className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
+                                className='absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden'
                               />
                             </div>
                           </div>
@@ -324,17 +307,17 @@ export function EditGroup({ isOpen, group, onClose, onSuccess }: EditGroupProps)
           </>
         </div>
 
-        <div className="mt-8 flex justify-end gap-3">
+        <div className='mt-8 flex justify-end gap-3'>
           <button
             onClick={handleClose}
-            className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
+            className='rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]'>
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!name.trim() || loading}
-            className="min-w-[120px] rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-30">
-            {loading ? "Saving…" : "Update group"}
+            className='min-w-[120px] rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-30'>
+            {loading ? 'Saving…' : 'Update group'}
           </button>
         </div>
       </div>

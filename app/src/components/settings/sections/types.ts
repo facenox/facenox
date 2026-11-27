@@ -1,4 +1,4 @@
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
 
 export interface GroupWithMembers extends AttendanceGroup {
   members: (AttendanceMember & { displayName?: string })[]
@@ -6,8 +6,8 @@ export interface GroupWithMembers extends AttendanceGroup {
   displayName?: string
 }
 
-export type MemberField = "name" | "email" | "role"
-export type GroupField = "name"
+export type MemberField = 'name' | 'email' | 'role'
+export type GroupField = 'name'
 
 export interface EditingMember {
   personId: string

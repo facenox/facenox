@@ -1,7 +1,7 @@
-import { Tray, Menu, app, nativeImage } from "electron"
-import { state } from "../State.js"
-import { getTrayIconPath } from "../iconPaths.js"
-import { openReleasePage } from "../updater.js"
+import { Tray, Menu, app, nativeImage } from 'electron'
+import { state } from '../State.js'
+import { getTrayIconPath } from '../iconPaths.js'
+import { openReleasePage } from '../updater.js'
 
 export class TrayManager {
   static createTray(): void {
@@ -11,16 +11,16 @@ export class TrayManager {
       const icon = nativeImage.createFromPath(getTrayIconPath())
       const tray = new Tray(icon)
 
-      tray.setToolTip("Facenox")
+      tray.setToolTip('Facenox')
       tray.setContextMenu(this.buildMenu(null))
 
-      tray.on("click", () => {
+      tray.on('click', () => {
         this.toggleWindow()
       })
 
       state.tray = tray
     } catch (e) {
-      console.warn("Failed to instantiate Tray:", e)
+      console.warn('Failed to instantiate Tray:', e)
     }
   }
 
@@ -30,7 +30,7 @@ export class TrayManager {
     if (version) {
       state.tray.setToolTip(`Facenox - Update v${version} available`)
     } else {
-      state.tray.setToolTip("Facenox")
+      state.tray.setToolTip('Facenox')
     }
 
     state.tray.setContextMenu(this.buildMenu(version))
@@ -44,23 +44,23 @@ export class TrayManager {
         label: `Update v${version} Available`,
         click: () => {
           void openReleasePage().catch((error) => {
-            console.warn("Could not open the Facenox download page.", error)
+            console.warn('Could not open the Facenox download page.', error)
           })
-        },
+        }
       })
-      items.push({ type: "separator" })
+      items.push({ type: 'separator' })
     }
 
     items.push({
-      label: "Show Facenox",
-      click: () => this.showWindow(),
+      label: 'Show Facenox',
+      click: () => this.showWindow()
     })
 
     items.push({
-      label: "Quit",
+      label: 'Quit',
       click: () => {
         app.quit()
-      },
+      }
     })
 
     return Menu.buildFromTemplate(items)

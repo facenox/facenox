@@ -23,10 +23,7 @@ export function cleanupStream(streamRef: React.RefObject<MediaStream | null>): v
 /**
  * Cleans up a video element by clearing srcObject and optionally pausing
  */
-export function cleanupVideo(
-  videoRef: React.RefObject<HTMLVideoElement | null>,
-  pause = true,
-): void {
+export function cleanupVideo(videoRef: React.RefObject<HTMLVideoElement | null>, pause = true): void {
   if (videoRef.current) {
     try {
       videoRef.current.srcObject = null
@@ -42,9 +39,7 @@ export function cleanupVideo(
 /**
  * Cleans up an animation frame by canceling it
  */
-export function cleanupAnimationFrame(
-  animationFrameRef: React.RefObject<number | undefined>,
-): void {
+export function cleanupAnimationFrame(animationFrameRef: React.RefObject<number | undefined>): void {
   if (animationFrameRef.current) {
     try {
       cancelAnimationFrame(animationFrameRef.current)

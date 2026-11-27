@@ -1,11 +1,11 @@
-import { Plus, X } from "lucide-react"
-import { Dropdown, Tooltip } from "@/components/shared"
-import { generateGroupDisplayNames } from "@/utils"
+import { Plus, X } from 'lucide-react'
+import { Dropdown, Tooltip } from '@/components/shared'
+import { generateGroupDisplayNames } from '@/utils'
 
-import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
-import { useGroupModals } from "@/components/group/hooks"
-import { GroupHeader } from "@/components/group/components/GroupHeader"
-import { GroupNav } from "@/components/group/components/GroupNav"
+import { useGroupStore, useGroupUIStore } from '@/components/group/stores'
+import { useGroupModals } from '@/components/group/hooks'
+import { GroupHeader } from '@/components/group/components/GroupHeader'
+import { GroupNav } from '@/components/group/components/GroupNav'
 
 interface GroupSidebarProps {
   onBack: () => void
@@ -18,17 +18,17 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
 
   return (
     <aside
-      className={`flex h-full shrink-0 flex-col border-r border-white/10 bg-[#0f1011] transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "w-16" : "w-64"}`}>
+      className={`flex h-full shrink-0 flex-col border-r border-white/10 bg-[#0f1011] transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-16' : 'w-64'}`}>
       <GroupHeader isCollapsed={isSidebarCollapsed} onToggleCollapse={toggleSidebar} />
 
       {!isSidebarCollapsed && (
-        <div className="border-b border-white/10 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1">
+        <div className='border-b border-white/10 px-4 py-3'>
+          <div className='flex items-center gap-2'>
+            <div className='min-w-0 flex-1'>
               <Dropdown
                 options={generateGroupDisplayNames(groups).map((group) => ({
                   value: group.id,
-                  label: group.displayName,
+                  label: group.displayName
                 }))}
                 value={selectedGroup?.id ?? null}
                 onChange={(value: string | number | null) => {
@@ -40,22 +40,22 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
                     setSelectedGroup(null)
                   }
                 }}
-                placeholder={groups.length === 0 ? "No groups yet" : "Select group…"}
+                placeholder={groups.length === 0 ? 'No groups yet' : 'Select group…'}
                 disabled={groups.length === 0}
-                emptyMessage="No groups available"
+                emptyMessage='No groups available'
                 maxHeight={256}
-                buttonClassName="h-10"
+                buttonClassName='h-10'
                 allowClear={true}
                 menuWidth={220}
-                align="left"
+                align='left'
               />
             </div>
-            <Tooltip content="New group" position="top">
+            <Tooltip content='New group' position='top'>
               <button
                 onClick={openCreateGroup}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-white/65 transition-all hover:border-white/10 hover:bg-white/[0.08] hover:text-white active:scale-95"
-                aria-label="New group">
-                <Plus className="size-4" />
+                className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-white/65 transition-all hover:border-white/10 hover:bg-white/[0.08] hover:text-white active:scale-95'
+                aria-label='New group'>
+                <Plus className='size-4' />
               </button>
             </Tooltip>
           </div>
@@ -69,15 +69,14 @@ export function GroupSidebar({ onBack }: GroupSidebarProps) {
         isCollapsed={isSidebarCollapsed}
       />
 
-      <div
-        className={`mt-auto border-t border-white/10 py-3 ${isSidebarCollapsed ? "px-2" : "px-4"}`}>
+      <div className={`mt-auto border-t border-white/10 py-3 ${isSidebarCollapsed ? 'px-2' : 'px-4'}`}>
         <button
           onClick={onBack}
-          className={`w-full rounded-lg border-none bg-transparent text-center text-[11px] font-medium text-white/55 transition-all hover:bg-white/[0.06] hover:text-white/80 ${isSidebarCollapsed ? "px-2 py-2" : "px-3 py-2"}`}
-          aria-label="Close">
+          className={`w-full rounded-lg border-none bg-transparent text-center text-[11px] font-medium text-white/55 transition-all hover:bg-white/[0.06] hover:text-white/80 ${isSidebarCollapsed ? 'px-2 py-2' : 'px-3 py-2'}`}
+          aria-label='Close'>
           {!isSidebarCollapsed ?
-            <span className="text-sm">Close</span>
-          : <X className="mx-auto size-5" />}
+            <span className='text-sm'>Close</span>
+          : <X className='mx-auto size-5' />}
         </button>
       </div>
     </aside>

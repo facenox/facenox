@@ -1,25 +1,20 @@
-import { useRef, useCallback, useEffect } from "react"
-import { startTransition } from "react"
-import { WebSocketService } from "@/services/WebSocketService"
-import { soundEffects } from "@/services/SoundEffectsService"
+import { useRef, useCallback, useEffect } from 'react'
+import { startTransition } from 'react'
+import { WebSocketService } from '@/services/WebSocketService'
+import { soundEffects } from '@/services/SoundEffectsService'
 import type {
   WebSocketDetectionResponse,
   WebSocketConnectionMessage,
   WebSocketErrorMessage,
   DetectionResult,
-  WebSocketFaceData,
-} from "@/components/main/types"
-import { cleanupStream, cleanupVideo, cleanupAnimationFrame } from "@/components/main/utils"
-import { ALL_GROUPS_ID } from "@/components/main/hooks/useAttendanceGroups"
-import {
-  useCameraStore,
-  useDetectionStore,
-  useAttendanceStore,
-  useUIStore,
-} from "@/components/main/stores"
-import { notifyDataChanged } from "@/utils/syncNotifier"
-import { persistentSettings } from "@/services"
-import { clockWarningFromHealth, dispatchClockWarning } from "@/services/clockWarnings"
+  WebSocketFaceData
+} from '@/components/main/types'
+import { cleanupStream, cleanupVideo, cleanupAnimationFrame } from '@/components/main/utils'
+import { ALL_GROUPS_ID } from '@/components/main/hooks/useAttendanceGroups'
+import { useCameraStore, useDetectionStore, useAttendanceStore, useUIStore } from '@/components/main/stores'
+import { notifyDataChanged } from '@/utils/syncNotifier'
+import { persistentSettings } from '@/services'
+import { clockWarningFromHealth, dispatchClockWarning } from '@/services/clockWarnings'
 
 interface UseBackendServiceOptions {
   webSocketServiceRef: React.RefObject<WebSocketService | null>
@@ -63,16 +58,10 @@ export function useBackendService(options: UseBackendServiceOptions) {
     streamRef,
     videoRef,
     backendServiceReadyRef,
-    loadAttendanceDataRef,
+    loadAttendanceDataRef
   } = options
 
-  const {
-    setIsStreaming,
-    setIsVideoLoading,
-    setCameraActive,
-    websocketStatus,
-    setWebsocketStatus,
-  } = useCameraStore()
+  const { setIsStreaming, setIsVideoLoading, setCameraActive, websocketStatus, setWebsocketStatus } = useCameraStore()
   const { setCurrentDetections } = useDetectionStore()
   const { enableSpoofDetection, setPersistentCooldowns } = useAttendanceStore()
   const { setError } = useUIStore()
@@ -94,17 +83,17 @@ export function useBackendService(options: UseBackendServiceOptions) {
     webSocketService.updateLiveConfig({
       enableLivenessDetection: enableSpoofDetection,
       groupId: currentGroupId,
-      maxRecognitionFacesPerFrame,
+      maxRecognitionFacesPerFrame
     })
 
     const syncDeviceId = async () => {
       try {
-        const deviceId = await persistentSettings.get<string>("sync.deviceId")
+        const deviceId = await persistentSettings.get<string>('sync.deviceId')
         if (cancelled || webSocketServiceRef.current !== webSocketService) return
         webSocketService.updateLiveConfig({ deviceId: deviceId || undefined })
       } catch (error) {
         if (!cancelled) {
-          console.warn("Could not load device ID for live scanning:", error)
+          console.warn('Could not load device ID for live scanning:', error)
         }
       }
     }
@@ -117,7 +106,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
   const waitForBackendReady = useCallback(
     async (
       maxWaitTime = 60000,
-      pollInterval = 100,
+      pollInterval = 100
     ): Promise<{ ready: boolean; modelsLoaded: boolean; error?: string }> => {
       const startTime = Date.now()
       let lastError: string | undefined
@@ -129,12 +118,12 @@ export function useBackendService(options: UseBackendServiceOptions) {
           if (readinessCheck?.ready && readinessCheck?.modelsLoaded) {
             return {
               ready: true,
-              modelsLoaded: true,
+              modelsLoaded: true
             }
           }
         }
       } catch (error) {
-        lastError = error instanceof Error ? error.message : "Unknown error"
+        lastError = error instanceof Error ? error.message : 'Unknown error'
       }
 
       while (Date.now() - startTime < maxWaitTime) {
@@ -149,19 +138,19 @@ export function useBackendService(options: UseBackendServiceOptions) {
           if (readinessCheck?.ready && readinessCheck?.modelsLoaded) {
             return {
               ready: true,
-              modelsLoaded: true,
+              modelsLoaded: true
             }
           }
 
           if (readinessCheck?.error) {
             lastError = readinessCheck.error
           } else {
-            lastError = "Models still loading"
+            lastError = 'Models still loading'
           }
 
           if (
-            readinessCheck?.error?.includes("Backend service not started") ||
-            readinessCheck?.error?.includes("Backend health check failed")
+            readinessCheck?.error?.includes('Backend service not started') ||
+            readinessCheck?.error?.includes('Backend health check failed')
           ) {
             await new Promise((resolve) => setTimeout(resolve, pollInterval))
             continue
@@ -170,7 +159,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
           const waitTime = Math.min(pollInterval * 2, 500)
           await new Promise((resolve) => setTimeout(resolve, waitTime))
         } catch (error) {
-          lastError = error instanceof Error ? error.message : "Unknown error"
+          lastError = error instanceof Error ? error.message : 'Unknown error'
           await new Promise((resolve) => setTimeout(resolve, pollInterval))
         }
       }
@@ -178,41 +167,39 @@ export function useBackendService(options: UseBackendServiceOptions) {
       return {
         ready: false,
         modelsLoaded: false,
-        error: lastError ?? "Timeout waiting for backend to be ready",
+        error: lastError ?? 'Timeout waiting for backend to be ready'
       }
     },
-    [],
+    []
   )
 
   const registerWebSocketHandlers = useCallback(() => {
     if (!webSocketServiceRef.current) return
 
-    webSocketServiceRef.current.offMessage("detection_response")
-    webSocketServiceRef.current.offMessage("connection")
-    webSocketServiceRef.current.offMessage("error")
-    webSocketServiceRef.current.offMessage("attendance_event")
+    webSocketServiceRef.current.offMessage('detection_response')
+    webSocketServiceRef.current.offMessage('connection')
+    webSocketServiceRef.current.offMessage('error')
+    webSocketServiceRef.current.offMessage('attendance_event')
 
     webSocketServiceRef.current.onMessage(
-      "attendance_event",
+      'attendance_event',
       (
-        data: import("@/components/main/types").AttendanceEvent & {
-          data?: import("@/components/main/types").AttendanceEvent
-        },
+        data: import('@/components/main/types').AttendanceEvent & {
+          data?: import('@/components/main/types').AttendanceEvent
+        }
       ) => {
         const { currentGroup } = useAttendanceStore.getState()
         const payload = data.data ?? data
         const warning = clockWarningFromHealth(payload.time_health)
         if (warning?.message) dispatchClockWarning(warning.message, warning.dedupeKey)
 
-        const isAllGroups = currentGroup?.id === ALL_GROUPS_ID || currentGroup?.id === "all"
+        const isAllGroups = currentGroup?.id === ALL_GROUPS_ID || currentGroup?.id === 'all'
         if (currentGroup && (payload.group_id === currentGroup.id || isAllGroups)) {
           const member =
             payload.member?.name ?
               { name: payload.member.name }
-            : useAttendanceStore
-                .getState()
-                .groupMembers.find((m) => m.person_id === payload.person_id)
-          const memberName = member ? member.name : "Member"
+            : useAttendanceStore.getState().groupMembers.find((m) => m.person_id === payload.person_id)
+          const memberName = member ? member.name : 'Member'
           const cooldownKey = `${payload.person_id}-${payload.group_id}`
 
           setPersistentCooldowns((prev) => {
@@ -233,10 +220,10 @@ export function useBackendService(options: UseBackendServiceOptions) {
                     x: payload.bbox.x,
                     y: payload.bbox.y,
                     width: payload.bbox.width,
-                    height: payload.bbox.height,
+                    height: payload.bbox.height
                   }
                 : undefined,
-              cooldownDurationSeconds: 5,
+              cooldownDurationSeconds: 5
             }
             next.set(cooldownKey, info)
             return next
@@ -258,136 +245,129 @@ export function useBackendService(options: UseBackendServiceOptions) {
           // Trigger debounced cloud sync so the attendance record appears on web cloud in near real-time
           notifyDataChanged()
         }
-      },
+      }
     )
 
-    webSocketServiceRef.current.onMessage(
-      "detection_response",
-      (data: WebSocketDetectionResponse) => {
-        detectionInFlightRef.current = false
+    webSocketServiceRef.current.onMessage('detection_response', (data: WebSocketDetectionResponse) => {
+      detectionInFlightRef.current = false
 
-        if (!isStreamingRef.current || !isScanningRef.current) {
+      if (!isStreamingRef.current || !isScanningRef.current) {
+        return
+      }
+
+      // WebSocket messages arrive in order; wall-clock timestamps can move
+      // backward after a clock correction and must not stop the frame loop.
+      if (typeof data.frame_timestamp === 'number' && Number.isFinite(data.frame_timestamp)) {
+        lastFrameTimestampRef.current = data.frame_timestamp
+      }
+
+      if (data.faces && Array.isArray(data.faces)) {
+        if (data.suggested_skip !== undefined) {
+          skipFramesRef.current = data.suggested_skip
+        }
+
+        if (!data.model_used) {
+          requestAnimationFrame(() => processCurrentFrameRef.current?.())
           return
         }
 
-        // WebSocket messages arrive in order; wall-clock timestamps can move
-        // backward after a clock correction and must not stop the frame loop.
-        if (typeof data.frame_timestamp === "number" && Number.isFinite(data.frame_timestamp)) {
-          lastFrameTimestampRef.current = data.frame_timestamp
-        }
+        const detectionResult: DetectionResult = {
+          faces: data.faces
+            .map((face: WebSocketFaceData) => {
+              if (!face.bbox || !Array.isArray(face.bbox) || face.bbox.length !== 4) {
+                return null
+              }
 
-        if (data.faces && Array.isArray(data.faces)) {
-          if (data.suggested_skip !== undefined) {
-            skipFramesRef.current = data.suggested_skip
-          }
+              if (face.confidence === undefined) {
+                return null
+              }
 
-          if (!data.model_used) {
-            requestAnimationFrame(() => processCurrentFrameRef.current?.())
-            return
-          }
+              const bbox = face.bbox
 
-          const detectionResult: DetectionResult = {
-            faces: data.faces
-              .map((face: WebSocketFaceData) => {
-                if (!face.bbox || !Array.isArray(face.bbox) || face.bbox.length !== 4) {
-                  return null
-                }
+              if (!face.landmarks_5 || !Array.isArray(face.landmarks_5) || face.landmarks_5.length !== 5) {
+                return null
+              }
 
-                if (face.confidence === undefined) {
-                  return null
-                }
-
-                const bbox = face.bbox
-
-                if (
-                  !face.landmarks_5 ||
-                  !Array.isArray(face.landmarks_5) ||
-                  face.landmarks_5.length !== 5
-                ) {
-                  return null
-                }
-
-                return {
-                  bbox: {
-                    x: bbox[0],
-                    y: bbox[1],
-                    width: bbox[2],
-                    height: bbox[3],
-                  },
-                  confidence: face.confidence,
-                  track_id: face.track_id,
-                  landmarks_5: face.landmarks_5,
-                  low_light: face.low_light,
-                  liveness: (() => {
-                    if (!face.liveness) {
-                      return undefined
+              return {
+                bbox: {
+                  x: bbox[0],
+                  y: bbox[1],
+                  width: bbox[2],
+                  height: bbox[3]
+                },
+                confidence: face.confidence,
+                track_id: face.track_id,
+                landmarks_5: face.landmarks_5,
+                low_light: face.low_light,
+                liveness: (() => {
+                  if (!face.liveness) {
+                    return undefined
+                  }
+                  if (face.liveness.status === undefined) {
+                    return undefined
+                  }
+                  if (face.liveness.is_real === undefined) {
+                    return undefined
+                  }
+                  return {
+                    is_real: face.liveness.is_real,
+                    confidence: face.liveness.confidence,
+                    logit_diff: face.liveness.logit_diff,
+                    real_logit: face.liveness.real_logit,
+                    spoof_logit: face.liveness.spoof_logit,
+                    status: face.liveness.status,
+                    attack_type: face.liveness.attack_type,
+                    message: face.liveness.message
+                  }
+                })(),
+                recognition:
+                  face.recognition ?
+                    {
+                      success: face.recognition.success,
+                      person_id: face.recognition.person_id ?? null,
+                      name: face.recognition.name,
+                      similarity: face.recognition.similarity,
+                      processing_time: face.recognition.processing_time,
+                      error: face.recognition.error ?? null,
+                      memberName: face.recognition.memberName
                     }
-                    if (face.liveness.status === undefined) {
-                      return undefined
-                    }
-                    if (face.liveness.is_real === undefined) {
-                      return undefined
-                    }
-                    return {
-                      is_real: face.liveness.is_real,
-                      confidence: face.liveness.confidence,
-                      logit_diff: face.liveness.logit_diff,
-                      real_logit: face.liveness.real_logit,
-                      spoof_logit: face.liveness.spoof_logit,
-                      status: face.liveness.status,
-                      attack_type: face.liveness.attack_type,
-                      message: face.liveness.message,
-                    }
-                  })(),
-                  recognition:
-                    face.recognition ?
-                      {
-                        success: face.recognition.success,
-                        person_id: face.recognition.person_id ?? null,
-                        name: face.recognition.name,
-                        similarity: face.recognition.similarity,
-                        processing_time: face.recognition.processing_time,
-                        error: face.recognition.error ?? null,
-                        memberName: face.recognition.memberName,
-                      }
-                    : undefined,
-                }
-              })
-              .filter((face) => face !== null) as DetectionResult["faces"],
-            model_used: data.model_used,
-          }
-
-          setCurrentDetections(detectionResult)
-          lastDetectionRef.current = detectionResult
-
-          if (backendServiceReadyRef.current && trackingSessionRef.current > 0) {
-            startTransition(() => {
-              performFaceRecognition(detectionResult).catch((error) => {
-                console.error("Face recognition failed:", error)
-              })
+                  : undefined
+              }
             })
-          }
+            .filter((face) => face !== null) as DetectionResult['faces'],
+          model_used: data.model_used
         }
 
-        if (isScanningRef.current && isStreamingRef.current) {
-          requestAnimationFrame(() => processCurrentFrameRef.current?.())
-        }
-      },
-    )
+        setCurrentDetections(detectionResult)
+        lastDetectionRef.current = detectionResult
 
-    webSocketServiceRef.current.onMessage("connection", (data: WebSocketConnectionMessage) => {
+        if (backendServiceReadyRef.current && trackingSessionRef.current > 0) {
+          startTransition(() => {
+            performFaceRecognition(detectionResult).catch((error) => {
+              console.error('Face recognition failed:', error)
+            })
+          })
+        }
+      }
+
+      if (isScanningRef.current && isStreamingRef.current) {
+        requestAnimationFrame(() => processCurrentFrameRef.current?.())
+      }
+    })
+
+    webSocketServiceRef.current.onMessage('connection', (data: WebSocketConnectionMessage) => {
       detectionInFlightRef.current = false
-      if (data.status === "connected") {
+      if (data.status === 'connected') {
         backendServiceReadyRef.current = true
-        setWebsocketStatus("connected")
-      } else if (data.status === "disconnected") {
-        setWebsocketStatus("disconnected")
+        setWebsocketStatus('connected')
+      } else if (data.status === 'disconnected') {
+        setWebsocketStatus('disconnected')
         setCurrentDetections(null)
         lastDetectionRef.current = null
       }
     })
 
-    webSocketServiceRef.current.onMessage("error", (data: WebSocketErrorMessage) => {
+    webSocketServiceRef.current.onMessage('error', (data: WebSocketErrorMessage) => {
       detectionInFlightRef.current = false
       setCurrentDetections(null)
       lastDetectionRef.current = null
@@ -396,11 +376,11 @@ export function useBackendService(options: UseBackendServiceOptions) {
         return
       }
 
-      console.error("WebSocket error message:", data)
+      console.error('WebSocket error message:', data)
       if (data.message) {
         setError(`Detection error: ${data.message}`)
       } else {
-        setError("Detection error occurred")
+        setError('Detection error occurred')
       }
 
       requestAnimationFrame(() => processCurrentFrameRef.current?.())
@@ -421,7 +401,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
     setWebsocketStatus,
     setError,
     setPersistentCooldowns,
-    loadAttendanceDataRef,
+    loadAttendanceDataRef
   ])
 
   const initializeWebSocket = useCallback(async () => {
@@ -431,7 +411,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
       }
 
       const currentStatus = webSocketServiceRef.current.getWebSocketStatus()
-      if (currentStatus === "connected") {
+      if (currentStatus === 'connected') {
         registerWebSocketHandlers()
         return
       }
@@ -439,27 +419,25 @@ export function useBackendService(options: UseBackendServiceOptions) {
       const readinessResult = await waitForBackendReady(60000, 500)
 
       if (!readinessResult.ready || !readinessResult.modelsLoaded) {
-        const errorMessage = readinessResult.error ?? "Backend not ready: Models still loading"
+        const errorMessage = readinessResult.error ?? 'Backend not ready: Models still loading'
         throw new Error(errorMessage)
       }
 
       registerWebSocketHandlers()
       await webSocketServiceRef.current.connectWebSocket()
     } catch (error) {
-      console.error("WebSocket initialization failed:", error)
-      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+      console.error('WebSocket initialization failed:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
       if (!isStartingRef.current) {
-        if (errorMessage.includes("Models still loading")) {
-          setError("AI models are loading. Wait a moment and retry.")
-        } else if (errorMessage.includes("Backend service not started")) {
+        if (errorMessage.includes('Models still loading')) {
+          setError('AI models are loading. Wait a moment and retry.')
+        } else if (errorMessage.includes('Backend service not started')) {
           setError("The local service isn't running. Restart Facenox.")
-        } else if (errorMessage.includes("Timeout")) {
-          setError("Facenox timed out while loading its models. Restart the app and try again.")
+        } else if (errorMessage.includes('Timeout')) {
+          setError('Facenox timed out while loading its models. Restart the app and try again.')
         } else {
-          setError(
-            "Facenox couldn't connect to the detection service. Restart the app and try again.",
-          )
+          setError("Facenox couldn't connect to the detection service. Restart the app and try again.")
         }
       }
       throw error
@@ -474,7 +452,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
     setIsStreaming(false)
     setIsVideoLoading(false)
     setCameraActive(false)
-    setWebsocketStatus("disconnected")
+    setWebsocketStatus('disconnected')
 
     cleanupStream(streamRef)
     cleanupVideo(videoRef, true)
@@ -507,7 +485,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
         await initializeWebSocket()
         initializationRef.current.initialized = true
       } catch {
-        setWebsocketStatus("disconnected")
+        setWebsocketStatus('disconnected')
         initializationRef.current.initialized = false
       } finally {
         initializationRef.current.isInitializing = false
@@ -562,7 +540,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
     setError,
     setWebsocketStatus,
     streamRef,
-    videoRef,
+    videoRef
   ])
 
   useEffect(() => {
@@ -574,7 +552,7 @@ export function useBackendService(options: UseBackendServiceOptions) {
   }, [webSocketServiceRef, setWebsocketStatus])
 
   useEffect(() => {
-    if (websocketStatus === "connected" && isScanningRef.current && isStreamingRef.current) {
+    if (websocketStatus === 'connected' && isScanningRef.current && isStreamingRef.current) {
       if (webSocketServiceRef.current?.isWebSocketReady()) {
         processCurrentFrameRef.current?.()
       }
@@ -585,6 +563,6 @@ export function useBackendService(options: UseBackendServiceOptions) {
     backendServiceReadyRef,
     initializeWebSocket,
     registerWebSocketHandlers,
-    waitForBackendReady,
+    waitForBackendReady
   }
 }

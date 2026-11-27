@@ -9,15 +9,15 @@ import type {
   AttendanceEvent,
   AttendanceTimeHealth,
   BulkDetectResponse,
-  BulkEnrollResponse,
-} from "@/types/recognition"
+  BulkEnrollResponse
+} from '@/types/recognition'
 
-import { HttpClient } from "./attendance/HttpClient"
-import { GroupManager } from "./attendance/GroupManager"
-import { MemberManager, type BulkMemberCreationResponse } from "./attendance/MemberManager"
-import { RecordManager } from "./attendance/RecordManager"
-import { dispatchClockWarning } from "./clockWarnings"
-import { notifyDataChanged } from "@/utils/syncNotifier"
+import { HttpClient } from './attendance/HttpClient'
+import { GroupManager } from './attendance/GroupManager'
+import { MemberManager, type BulkMemberCreationResponse } from './attendance/MemberManager'
+import { RecordManager } from './attendance/RecordManager'
+import { dispatchClockWarning } from './clockWarnings'
+import { notifyDataChanged } from '@/utils/syncNotifier'
 
 export interface DesktopAuditLog {
   timestamp: string | null
@@ -27,19 +27,19 @@ export interface DesktopAuditLog {
   details: string | null
 }
 
-const API_BASE_URL = "http://127.0.0.1:7400"
+const API_BASE_URL = 'http://127.0.0.1:7400'
 const API_ENDPOINTS = {
-  groups: "/attendance/groups",
-  members: "/attendance/members",
-  records: "/attendance/records",
-  sessions: "/attendance/sessions",
-  events: "/attendance/events",
-  settings: "/attendance/settings",
-  stats: "/attendance/stats",
+  groups: '/attendance/groups',
+  members: '/attendance/members',
+  records: '/attendance/records',
+  sessions: '/attendance/sessions',
+  events: '/attendance/events',
+  settings: '/attendance/settings',
+  stats: '/attendance/stats'
 }
 
 export class AttendanceManager {
-  private readonly clockCheckStorageKey = "facenox:lastSystemTimeMs"
+  private readonly clockCheckStorageKey = 'facenox:lastSystemTimeMs'
   private readonly clockBackwardWarnThresholdMs = 60 * 1000
 
   private httpClient: HttpClient
@@ -60,7 +60,7 @@ export class AttendanceManager {
       API_ENDPOINTS,
       this.toApiDateTimeParam.bind(this),
       this.warnIfSystemClockWentBackwards.bind(this),
-      this.emitClockWarning.bind(this),
+      this.emitClockWarning.bind(this)
     )
   }
 
@@ -70,15 +70,12 @@ export class AttendanceManager {
       const settings = await this.httpClient.get<AttendanceSettings>(API_ENDPOINTS.settings)
       if (requestId === this.settingsRequestId) this.settings = settings
     } catch (error) {
-      console.error("[AttendanceManager] Failed to load settings:", error)
+      console.error('[AttendanceManager] Failed to load settings:', error)
       if (throwOnError) throw error
     }
   }
 
-  async createGroup(
-    name: string,
-    settings?: Partial<AttendanceGroup["settings"]>,
-  ): Promise<AttendanceGroup> {
+  async createGroup(name: string, settings?: Partial<AttendanceGroup['settings']>): Promise<AttendanceGroup> {
     return this.groupManager.createGroup(name, settings)
   }
 
@@ -98,10 +95,7 @@ export class AttendanceManager {
     return this.groupManager.deleteGroup(groupId)
   }
 
-  async getGroupMembers(
-    groupId: string,
-    options?: { throwOnError?: boolean },
-  ): Promise<AttendanceMember[]> {
+  async getGroupMembers(groupId: string, options?: { throwOnError?: boolean }): Promise<AttendanceMember[]> {
     return this.groupManager.getGroupMembers(groupId, options)
   }
 
@@ -113,7 +107,7 @@ export class AttendanceManager {
       creationId?: string
       role?: string
       email?: string
-    },
+    }
   ): Promise<AttendanceMember> {
     return this.memberManager.addMember(groupId, name, options)
   }
@@ -126,7 +120,7 @@ export class AttendanceManager {
       personId?: string
       creationId?: string
     }>,
-    groupId: string,
+    groupId: string
   ): Promise<BulkMemberCreationResponse> {
     return this.memberManager.addMembersBulk(members, groupId)
   }
@@ -164,20 +158,14 @@ export class AttendanceManager {
     personId: string,
     imageData: Blob | string,
     bbox: number[],
-    landmarks_5: number[][],
+    landmarks_5: number[][]
   ): Promise<{ success: boolean; message?: string; error?: string }> {
-    return this.memberManager.enrollFaceForGroupPerson(
-      groupId,
-      personId,
-      imageData,
-      bbox,
-      landmarks_5,
-    )
+    return this.memberManager.enrollFaceForGroupPerson(groupId, personId, imageData, bbox, landmarks_5)
   }
 
   async removeFaceDataForGroupPerson(
     groupId: string,
-    personId: string,
+    personId: string
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     return this.memberManager.removeFaceDataForGroupPerson(groupId, personId)
   }
@@ -195,7 +183,7 @@ export class AttendanceManager {
       filename?: string
       image_index?: number
     }[],
-    images: { file: File; filename: string }[],
+    images: { file: File; filename: string }[]
   ): Promise<BulkEnrollResponse> {
     return this.groupManager.bulkEnrollFaces(groupId, enrollments, images)
   }
@@ -205,15 +193,9 @@ export class AttendanceManager {
     confidence: number,
     location?: string,
     livenessStatus?: string,
-    livenessConfidence?: number,
+    livenessConfidence?: number
   ): Promise<AttendanceEvent | null> {
-    return this.recordManager.processAttendanceEvent(
-      personId,
-      confidence,
-      location,
-      livenessStatus,
-      livenessConfidence,
-    )
+    return this.recordManager.processAttendanceEvent(personId, confidence, location, livenessStatus, livenessConfidence)
   }
 
   async getGroupStats(groupId: string, date?: Date): Promise<AttendanceStats> {
@@ -226,7 +208,7 @@ export class AttendanceManager {
       startDate,
       endDate,
       this.getGroup.bind(this),
-      this.getGroupMembers.bind(this),
+      this.getGroupMembers.bind(this)
     )
   }
 
@@ -256,7 +238,7 @@ export class AttendanceManager {
       limit?: number
       include_voided?: boolean
     },
-    options?: { throwOnError?: boolean },
+    options?: { throwOnError?: boolean }
   ): Promise<AttendanceRecord[]> {
     return this.recordManager.getRecords(filters, options)
   }
@@ -268,7 +250,7 @@ export class AttendanceManager {
       start_date?: string
       end_date?: string
     },
-    options?: { throwOnError?: boolean },
+    options?: { throwOnError?: boolean }
   ): Promise<AttendanceSession[]> {
     return this.recordManager.getSessions(filters, options)
   }
@@ -279,56 +261,50 @@ export class AttendanceManager {
   }
 
   async getTimeHealth(verifyOnline = false): Promise<AttendanceTimeHealth> {
-    const query = verifyOnline ? "?verify_online=true" : ""
+    const query = verifyOnline ? '?verify_online=true' : ''
     return this.httpClient.get<AttendanceTimeHealth>(`/attendance/settings/time-health${query}`)
   }
 
   async updateSettings(newSettings: Partial<AttendanceSettings>): Promise<void> {
     try {
-      const updated = await this.httpClient.put<AttendanceSettings>(
-        API_ENDPOINTS.settings,
-        newSettings,
-      )
+      const updated = await this.httpClient.put<AttendanceSettings>(API_ENDPOINTS.settings, newSettings)
       this.settings = updated
       this.settingsRequestId += 1
       notifyDataChanged()
     } catch (error) {
-      console.error("Error updating settings:", error)
+      console.error('Error updating settings:', error)
       throw error
     }
   }
 
   async cleanupOldData(daysToKeep = 90): Promise<void> {
-    await this.httpClient.post("/attendance/cleanup", {
-      days_to_keep: daysToKeep,
+    await this.httpClient.post('/attendance/cleanup', {
+      days_to_keep: daysToKeep
     })
     notifyDataChanged()
   }
 
   async purgeAttendanceHistory(): Promise<void> {
-    await this.httpClient.post("/attendance/purge-history")
+    await this.httpClient.post('/attendance/purge-history')
     notifyDataChanged()
   }
 
   async exportData(): Promise<string> {
-    const data = await this.httpClient.post<Record<string, unknown>>("/attendance/export")
+    const data = await this.httpClient.post<Record<string, unknown>>('/attendance/export')
     return JSON.stringify(data, null, 2)
   }
 
   async downloadAuditLog(startDate?: string, endDate?: string): Promise<void> {
     const params = new URLSearchParams()
-    if (startDate) params.append("start_date", startDate)
-    if (endDate) params.append("end_date", endDate)
+    if (startDate) params.append('start_date', startDate)
+    if (endDate) params.append('end_date', endDate)
     const queryString = params.toString()
-    const urlPath =
-      queryString ?
-        `/attendance/settings/audit-log?${queryString}`
-      : "/attendance/settings/audit-log"
+    const urlPath = queryString ? `/attendance/settings/audit-log?${queryString}` : '/attendance/settings/audit-log'
 
     const csv = await this.httpClient.getText(urlPath)
-    const blob = new Blob([csv], { type: "text/csv" })
+    const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
+    const a = document.createElement('a')
     a.href = url
     a.download = `audit_log_${new Date().toISOString().slice(0, 10)}.csv`
     document.body.appendChild(a)
@@ -338,12 +314,12 @@ export class AttendanceManager {
   }
 
   async getAuditLogs(): Promise<DesktopAuditLog[]> {
-    return this.httpClient.get<DesktopAuditLog[]>("/attendance/settings/audit-log?format=json")
+    return this.httpClient.get<DesktopAuditLog[]>('/attendance/settings/audit-log?format=json')
   }
 
   async isBackendAvailable(): Promise<boolean> {
     try {
-      await this.httpClient.get("/")
+      await this.httpClient.get('/')
       return true
     } catch {
       return false
@@ -360,13 +336,13 @@ export class AttendanceManager {
 
   async getAttendanceStats(): Promise<AttendanceStats> {
     try {
-      return await this.httpClient.get<AttendanceStats>("/attendance/stats")
+      return await this.httpClient.get<AttendanceStats>('/attendance/stats')
     } catch {
       return {
         total_members: 0,
         present_today: 0,
         absent_today: 0,
-        late_today: 0,
+        late_today: 0
       }
     }
   }
@@ -387,7 +363,7 @@ export class AttendanceManager {
       is_late?: boolean
       late_minutes?: number
       visit_number?: number
-    },
+    }
   ): Promise<AttendanceSession> {
     return this.recordManager.updateSession(personId, date, updates)
   }
@@ -402,7 +378,7 @@ export class AttendanceManager {
         const diffMs = last - now
         const diffMinutes = Math.max(1, Math.round(diffMs / 60000))
         dispatchClockWarning(
-          `System clock appears to have moved backwards by more than 1 minute (~${diffMinutes} minute(s)).`,
+          `System clock appears to have moved backwards by more than 1 minute (~${diffMinutes} minute(s)).`
         )
       }
       localStorage.setItem(this.clockCheckStorageKey, String(now))

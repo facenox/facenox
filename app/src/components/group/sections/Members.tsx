@@ -1,19 +1,19 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import { FolderOpen, Ghost, Search, UserPlus, UserX, Video } from "lucide-react"
-import { attendanceManager } from "@/services"
-import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
-import { useAttendanceStore } from "@/components/main/stores"
-import { generateDisplayNames } from "@/utils"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
-import { EmptyState } from "@/components/group/shared/EmptyState"
-import { Dropdown, useDialog, Tooltip } from "@/components/shared"
-import { DeleteMemberModal } from "./DeleteMemberModal"
-import { FaceCapture } from "./enrollment/FaceCapture"
-import { CameraQueue } from "./enrollment/CameraQueue"
-import { BulkEnrollment } from "./enrollment/BulkEnrollment"
-import { MemberRow } from "./members/MemberRow"
-import { useCloudSyncStatus } from "@/components/common/useCloudSyncStatus"
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { FolderOpen, Ghost, Search, UserPlus, UserX, Video } from 'lucide-react'
+import { attendanceManager } from '@/services'
+import { useGroupUIStore, useGroupStore } from '@/components/group/stores'
+import { useAttendanceStore } from '@/components/main/stores'
+import { generateDisplayNames } from '@/utils'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
+import { EmptyState } from '@/components/group/shared/EmptyState'
+import { Dropdown, useDialog, Tooltip } from '@/components/shared'
+import { DeleteMemberModal } from './DeleteMemberModal'
+import { FaceCapture } from './enrollment/FaceCapture'
+import { CameraQueue } from './enrollment/CameraQueue'
+import { BulkEnrollment } from './enrollment/BulkEnrollment'
+import { MemberRow } from './members/MemberRow'
+import { useCloudSyncStatus } from '@/components/common/useCloudSyncStatus'
 
 interface MembersProps {
   group: AttendanceGroup
@@ -32,7 +32,7 @@ export function Members({
   onEdit,
   onAdd,
   deselectMemberTrigger,
-  onHasSelectedMemberChange,
+  onHasSelectedMemberChange
 }: MembersProps) {
   const mode = useGroupUIStore((state) => state.lastEnrollmentMode)
   const source = useGroupUIStore((state) => state.lastEnrollmentSource)
@@ -43,10 +43,8 @@ export function Members({
   const dialog = useDialog()
   const { canManageDirectory } = useCloudSyncStatus()
 
-  const [memberSearch, setMemberSearch] = useState("")
-  const [enrollmentFilter, setEnrollmentFilter] = useState<"all" | "enrolled" | "non-enrolled">(
-    "all",
-  )
+  const [memberSearch, setMemberSearch] = useState('')
+  const [enrollmentFilter, setEnrollmentFilter] = useState<'all' | 'enrolled' | 'non-enrolled'>('all')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [memberToDelete, setMemberToDelete] = useState<AttendanceMember | null>(null)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
@@ -68,14 +66,14 @@ export function Members({
       const target = e.target as HTMLElement
       if (
         target.closest(
-          "button, input, select, label, [data-member-row], [role=button], [role=combobox], [role=dialog], .modal, [data-modal]",
+          'button, input, select, label, [data-member-row], [role=button], [role=combobox], [role=dialog], .modal, [data-modal]'
         )
       )
         return
       setSelectedIds(new Set())
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [selectedIds.size, memberToDelete])
 
   const handleSearchFocus = () => {
@@ -119,14 +117,14 @@ export function Members({
           member.name.toLowerCase().includes(query) ||
           member.displayName.toLowerCase().includes(query) ||
           member.person_id.toLowerCase().includes(query) ||
-          (member.role || "member").toLowerCase().includes(query),
+          (member.role || 'member').toLowerCase().includes(query)
       )
     }
 
-    if (enrollmentFilter !== "all") {
+    if (enrollmentFilter !== 'all') {
       result = result.filter((member) => {
         const isEnrolled = member.has_face_data
-        return enrollmentFilter === "enrolled" ? isEnrolled : !isEnrolled
+        return enrollmentFilter === 'enrolled' ? isEnrolled : !isEnrolled
       })
     }
 
@@ -155,7 +153,7 @@ export function Members({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         setSelectedIds((prev) => {
           if (prev.size > 0) {
             e.preventDefault()
@@ -163,20 +161,16 @@ export function Members({
           }
           return prev
         })
-        if (
-          document.activeElement instanceof HTMLInputElement &&
-          document.activeElement.type === "search"
-        ) {
+        if (document.activeElement instanceof HTMLInputElement && document.activeElement.type === 'search') {
           document.activeElement.blur()
         }
         return
       }
 
       const isCmdOrCtrl = e.metaKey || e.ctrlKey
-      if (isCmdOrCtrl && e.key.toLowerCase() === "a") {
+      if (isCmdOrCtrl && e.key.toLowerCase() === 'a') {
         const target = e.target as HTMLElement
-        const isInputField =
-          target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable
+        const isInputField = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
 
         if (!isInputField) {
           e.preventDefault()
@@ -185,9 +179,9 @@ export function Members({
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener('keydown', handleKeyDown)
     return () => {
-      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener('keydown', handleKeyDown)
     }
   }, [filteredMembers])
 
@@ -207,10 +201,7 @@ export function Members({
   // Calculate visible range with a larger overscan buffer to prevent blanking on fast scrolls
   const OVERSCAN = 20
   const startIndex = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - OVERSCAN)
-  const endIndex = Math.min(
-    filteredMembers.length - 1,
-    Math.floor((scrollTop + 800) / ITEM_HEIGHT) + OVERSCAN,
-  )
+  const endIndex = Math.min(filteredMembers.length - 1, Math.floor((scrollTop + 800) / ITEM_HEIGHT) + OVERSCAN)
 
   const visibleMembers = filteredMembers.slice(startIndex, endIndex + 1)
 
@@ -234,7 +225,7 @@ export function Members({
       ready,
       enrolled,
       total: selectedMembersList.length,
-      eligible: selectedMembersList.length,
+      eligible: selectedMembersList.length
     }
   }, [selectedMembersList])
 
@@ -245,22 +236,22 @@ export function Members({
       const previousAttendanceMembers = useAttendanceStore.getState().groupMembers
 
       useGroupStore.setState({
-        members: previousGroupMembers.filter((m) => m.person_id !== targetId),
+        members: previousGroupMembers.filter((m) => m.person_id !== targetId)
       })
       useAttendanceStore.setState({
-        groupMembers: previousAttendanceMembers.filter((m) => m.person_id !== targetId),
+        groupMembers: previousAttendanceMembers.filter((m) => m.person_id !== targetId)
       })
 
       try {
         await attendanceManager.removeMember(targetId)
         onMembersChange()
       } catch (err) {
-        console.error("Error removing member, rolling back state:", err)
+        console.error('Error removing member, rolling back state:', err)
         useGroupStore.setState({ members: previousGroupMembers })
         useAttendanceStore.setState({ groupMembers: previousAttendanceMembers })
       }
     },
-    [onMembersChange],
+    [onMembersChange]
   )
 
   const confirmRemoveMember = async () => {
@@ -275,171 +266,160 @@ export function Members({
       try {
         const targetName = member.displayName || member.name
         const confirmed = await dialog.confirm({
-          title: "Remove enrollment",
+          title: 'Remove enrollment',
           message: `Remove face enrollment for ${targetName}? They will need to re-enroll to be recognized.`,
-          confirmText: "Remove",
-          confirmVariant: "danger",
+          confirmText: 'Remove',
+          confirmVariant: 'danger'
         })
 
         if (confirmed) {
-          const result = await attendanceManager.removeFaceDataForGroupPerson(
-            group.id,
-            member.person_id,
-          )
+          const result = await attendanceManager.removeFaceDataForGroupPerson(group.id, member.person_id)
           if (result.success) {
             onMembersChange()
           }
         }
       } catch (err) {
-        console.error("Error resetting face data:", err)
+        console.error('Error resetting face data:', err)
       }
     },
-    [dialog, group.id, onMembersChange],
+    [dialog, group.id, onMembersChange]
   )
 
   const isSearchExpanded = memberSearch.trim().length > 0 || isSearchFocused || shouldKeepExpanded
   const dropdownWidthClass =
-    enrollmentFilter === "all" ? "w-[68px]"
-    : enrollmentFilter === "enrolled" ? "w-[112px]"
-    : "w-[138px]"
+    enrollmentFilter === 'all' ? 'w-[68px]'
+    : enrollmentFilter === 'enrolled' ? 'w-[112px]'
+    : 'w-[138px]'
 
   const searchBarMaxWidthClass =
     isSearchExpanded ?
-      enrollmentFilter === "all" ? "max-w-[280px]"
-      : enrollmentFilter === "enrolled" ? "max-w-[324px]"
-      : "max-w-[350px]"
-    : enrollmentFilter === "all" ? "max-w-[260px]"
-    : enrollmentFilter === "enrolled" ? "max-w-[304px]"
-    : "max-w-[330px]"
+      enrollmentFilter === 'all' ? 'max-w-[280px]'
+      : enrollmentFilter === 'enrolled' ? 'max-w-[324px]'
+      : 'max-w-[350px]'
+    : enrollmentFilter === 'all' ? 'max-w-[260px]'
+    : enrollmentFilter === 'enrolled' ? 'max-w-[304px]'
+    : 'max-w-[330px]'
 
   return (
-    <div ref={outerRef} className="relative flex h-full w-full flex-col overflow-hidden">
+    <div ref={outerRef} className='relative flex h-full w-full flex-col overflow-hidden'>
       {/* BACKGROUND CONTENT: Always render the list or empty state */}
       {members.length === 0 ?
-        <motion.div key="empty" className="relative flex h-full w-full flex-col">
+        <motion.div key='empty' className='relative flex h-full w-full flex-col'>
           <EmptyState
-            title="This group has no members"
+            title='This group has no members'
             description={
               canManageDirectory ?
-                "Add, edit, and remove members to manage profiles and enrollment status."
-              : "Add and remove members from Facenox Cloud to manage this group."
+                'Add, edit, and remove members to manage profiles and enrollment status.'
+              : 'Add and remove members from Facenox Cloud to manage this group.'
             }
             action={
               canManageDirectory && onAdd ?
                 {
-                  label: "Add member",
+                  label: 'Add member',
                   onClick: onAdd,
-                  icon: <UserPlus className="size-3" />,
+                  icon: <UserPlus className='size-3' />
                 }
               : undefined
             }
           />
         </motion.div>
-      : <motion.div
-          key="members-list"
-          className="relative flex h-full w-full flex-col overflow-hidden">
-          <div className="sticky top-0 z-30 shrink-0 space-y-4 bg-transparent px-10 pt-8 pb-4">
-            <div className="flex items-center justify-between gap-4">
+      : <motion.div key='members-list' className='relative flex h-full w-full flex-col overflow-hidden'>
+          <div className='sticky top-0 z-30 shrink-0 space-y-4 bg-transparent px-10 pt-8 pb-4'>
+            <div className='flex items-center justify-between gap-4'>
               <div
                 className={`group/bar flex w-full items-center transition-all duration-300 ease-out ${searchBarMaxWidthClass}`}>
-                <div className="relative flex-1">
-                  <Search className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45" />
+                <div className='relative flex-1'>
+                  <Search className='absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45' />
                   <input
-                    type="search"
+                    type='search'
                     value={memberSearch}
                     onChange={(e) => setMemberSearch(e.target.value)}
                     onFocus={handleSearchFocus}
                     onBlur={handleSearchBlur}
                     onKeyDown={(e) => {
-                      if (e.key !== "Escape" && e.key !== "Esc" && e.keyCode !== 27) return
+                      if (e.key !== 'Escape' && e.key !== 'Esc' && e.keyCode !== 27) return
                       e.preventDefault()
                       e.stopPropagation()
                       if (e.currentTarget.value) {
-                        setMemberSearch("")
+                        setMemberSearch('')
                       } else {
                         e.currentTarget.blur()
                       }
                     }}
-                    placeholder="Search name or role…"
-                    className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none placeholder:text-white/35 focus:border-white/20 focus:bg-white/[0.08]"
+                    placeholder='Search name or role…'
+                    className='h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none placeholder:text-white/35 focus:border-white/20 focus:bg-white/[0.08]'
                   />
                 </div>
 
-                <div className="relative shrink-0">
+                <div className='relative shrink-0'>
                   <Dropdown
                     options={[
-                      { value: "all", label: "All" },
-                      { value: "enrolled", label: "Enrolled" },
-                      { value: "non-enrolled", label: "Not enrolled" },
+                      { value: 'all', label: 'All' },
+                      { value: 'enrolled', label: 'Enrolled' },
+                      { value: 'non-enrolled', label: 'Not enrolled' }
                     ]}
                     value={enrollmentFilter}
                     onChange={(val) => {
                       if (val) {
-                        setEnrollmentFilter(val as "all" | "enrolled" | "non-enrolled")
+                        setEnrollmentFilter(val as 'all' | 'enrolled' | 'non-enrolled')
                       }
                     }}
                     allowClear={false}
                     menuWidth={160}
-                    align="right"
+                    align='right'
                     onOpenChange={handleDropdownOpenChange}
                     buttonClassName={`h-9 !bg-white/5 !border-white/5 group-focus-within/bar:!border-white/20 border-l-0 rounded-l-none rounded-r-lg px-3 ${dropdownWidthClass} text-[11px] font-bold tracking-wider text-white hover:!bg-white/[0.08] hover:!border-white/10 focus:!border-white/20 focus:!bg-white/[0.08] transition-all duration-300`}
-                    optionClassName="text-[11px] font-bold tracking-wider"
-                    iconClassName="text-[10px]"
+                    optionClassName='text-[11px] font-bold tracking-wider'
+                    iconClassName='text-[10px]'
                   />
                 </div>
               </div>
             </div>
 
             {members.length > 0 && filteredMembers.length > 0 && (
-              <div className="flex min-h-8 w-full items-center justify-between py-1">
-                <div className="text-xs text-white/55">
+              <div className='flex min-h-8 w-full items-center justify-between py-1'>
+                <div className='text-xs text-white/55'>
                   {selectedStats.total > 0 ?
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-white/80">
-                        {selectedStats.total} selected
-                      </span>
-                      <div className="h-3 w-px bg-white/10" />
-                      <div className="flex gap-2 text-[10px] font-medium">
+                    <div className='flex items-center gap-3'>
+                      <span className='font-bold text-white/80'>{selectedStats.total} selected</span>
+                      <div className='h-3 w-px bg-white/10' />
+                      <div className='flex gap-2 text-[10px] font-medium'>
                         {selectedStats.ready > 0 && (
-                          <span className="text-cyan-400">
-                            {selectedStats.ready} not enrolled yet
-                          </span>
+                          <span className='text-cyan-400'>{selectedStats.ready} not enrolled yet</span>
                         )}
                         {selectedStats.enrolled > 0 && (
-                          <span className="text-white/55">{selectedStats.enrolled} enrolled</span>
+                          <span className='text-white/55'>{selectedStats.enrolled} enrolled</span>
                         )}
                       </div>
                     </div>
                   : <span>
                       {filteredMembers.length !== members.length ?
-                        `${filteredMembers.length} of ${members.length} member${members.length !== 1 ? "s" : ""}`
-                      : `${members.length} member${members.length !== 1 ? "s" : ""}`}
+                        `${filteredMembers.length} of ${members.length} member${members.length !== 1 ? 's' : ''}`
+                      : `${members.length} member${members.length !== 1 ? 's' : ''}`}
                     </span>
                   }
                 </div>
-                <div className="flex items-center gap-4">
+                <div className='flex items-center gap-4'>
                   <AnimatePresence>
                     {selectedStats.eligible === 1 && (
                       <motion.div
-                        key="enroll-single"
+                        key='enroll-single'
                         initial={{ opacity: 0, scale: 0.95, x: 10 }}
                         animate={{ opacity: 1, scale: 1, x: 0 }}
                         exit={{ opacity: 0, scale: 0.95, x: 10 }}
                         transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}>
                         <Tooltip
                           content={
-                            selectedStats.enrolled > 0 ?
-                              "Already enrolled. Re-enroll member."
-                            : "Enroll member"
+                            selectedStats.enrolled > 0 ? 'Already enrolled. Re-enroll member.' : 'Enroll member'
                           }>
                           <motion.button
                             onClick={() => jumpToEnrollment(selectedMembersList[0].person_id)}
                             className={`flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] font-bold tracking-wider transition-all ${
                               selectedStats.enrolled > 0 ?
-                                "border border-white/10 bg-transparent text-white/65 hover:bg-white/5 hover:text-white"
-                              : "bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 hover:text-cyan-200"
+                                'border border-white/10 bg-transparent text-white/65 hover:bg-white/5 hover:text-white'
+                              : 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 hover:text-cyan-200'
                             }`}>
-                            {selectedStats.enrolled > 0 ? "Re-enroll (1)" : "Enroll (1)"}
+                            {selectedStats.enrolled > 0 ? 'Re-enroll (1)' : 'Enroll (1)'}
                           </motion.button>
                         </Tooltip>
                       </motion.div>
@@ -447,7 +427,7 @@ export function Members({
 
                     {selectedStats.eligible > 1 && (
                       <motion.div
-                        key="enroll-multi"
+                        key='enroll-multi'
                         initial={{ opacity: 0, scale: 0.95, x: 10 }}
                         animate={{ opacity: 1, scale: 1, x: 0 }}
                         exit={{ opacity: 0, scale: 0.95, x: 10 }}
@@ -455,54 +435,52 @@ export function Members({
                         <Tooltip
                           content={
                             selectedStats.enrolled > 0 ?
-                              `Includes ${selectedStats.enrolled} already enrolled member${selectedStats.enrolled > 1 ? "s" : ""}`
-                            : "Enroll members"
+                              `Includes ${selectedStats.enrolled} already enrolled member${selectedStats.enrolled > 1 ? 's' : ''}`
+                            : 'Enroll members'
                           }>
                           <div>
                             <Dropdown
                               options={[
                                 {
-                                  value: "camera",
+                                  value: 'camera',
                                   label: (
-                                    <div className="flex items-center gap-2">
-                                      <Video className="size-3.5 text-white/55" />
+                                    <div className='flex items-center gap-2'>
+                                      <Video className='size-3.5 text-white/55' />
                                       <span>Webcam</span>
                                     </div>
-                                  ),
+                                  )
                                 },
                                 {
-                                  value: "upload",
+                                  value: 'upload',
                                   label: (
-                                    <div className="flex items-center gap-2">
-                                      <FolderOpen className="size-3.5 text-white/55" />
+                                    <div className='flex items-center gap-2'>
+                                      <FolderOpen className='size-3.5 text-white/55' />
                                       <span>File upload</span>
                                     </div>
-                                  ),
-                                },
+                                  )
+                                }
                               ]}
                               value={null}
                               onChange={(val) => {
-                                if (val === "camera") setEnrollmentState("camera", "queue")
-                                if (val === "upload") setEnrollmentState("upload", "bulk")
+                                if (val === 'camera') setEnrollmentState('camera', 'queue')
+                                if (val === 'upload') setEnrollmentState('upload', 'bulk')
                               }}
                               allowClear={false}
                               showPlaceholderOption={false}
                               fit
                               trigger={
                                 <span>
-                                  {selectedStats.enrolled > 0 && selectedStats.ready === 0 ?
-                                    "Re-enroll"
-                                  : "Enroll"}{" "}
-                                  ({selectedStats.eligible})
+                                  {selectedStats.enrolled > 0 && selectedStats.ready === 0 ? 'Re-enroll' : 'Enroll'} (
+                                  {selectedStats.eligible})
                                 </span>
                               }
                               menuWidth={180}
                               buttonClassName={`!gap-2 !rounded-md !px-2.5 !py-1 !text-[10px] !font-bold !tracking-wider ${
                                 selectedStats.enrolled > 0 && selectedStats.ready === 0 ?
-                                  "!border-white/10 !bg-transparent !text-white/65 hover:!bg-white/5 hover:!text-white"
-                                : "!border-transparent !bg-cyan-500/20 !text-cyan-300 hover:!bg-cyan-500/30 hover:!text-cyan-200"
+                                  '!border-white/10 !bg-transparent !text-white/65 hover:!bg-white/5 hover:!text-white'
+                                : '!border-transparent !bg-cyan-500/20 !text-cyan-300 hover:!bg-cyan-500/30 hover:!text-cyan-200'
                               }`}
-                              optionClassName="text-[11px] font-bold tracking-wider py-2.5"
+                              optionClassName='text-[11px] font-bold tracking-wider py-2.5'
                             />
                           </div>
                         </Tooltip>
@@ -511,78 +489,71 @@ export function Members({
 
                     {canManageDirectory && selectedIds.size >= 2 && (
                       <motion.button
-                        key="delete"
+                        key='delete'
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
                         onClick={async () => {
                           const confirmed = await dialog.confirm({
-                            title: "Remove members",
-                            message: `Remove ${selectedIds.size} member${selectedIds.size > 1 ? "s" : ""}? This removes them from this group and deletes their enrolled face data. Attendance history is retained.`,
+                            title: 'Remove members',
+                            message: `Remove ${selectedIds.size} member${selectedIds.size > 1 ? 's' : ''}? This removes them from this group and deletes their enrolled face data. Attendance history is retained.`,
                             confirmText: `Remove (${selectedIds.size})`,
-                            confirmVariant: "danger",
+                            confirmVariant: 'danger'
                           })
                           if (confirmed) {
                             const ids = [...selectedIds]
                             const previousGroupMembers = useGroupStore.getState().members
-                            const previousAttendanceMembers =
-                              useAttendanceStore.getState().groupMembers
+                            const previousAttendanceMembers = useAttendanceStore.getState().groupMembers
 
                             useGroupStore.setState({
-                              members: previousGroupMembers.filter(
-                                (m) => !ids.includes(m.person_id),
-                              ),
+                              members: previousGroupMembers.filter((m) => !ids.includes(m.person_id))
                             })
                             useAttendanceStore.setState({
-                              groupMembers: previousAttendanceMembers.filter(
-                                (m) => !ids.includes(m.person_id),
-                              ),
+                              groupMembers: previousAttendanceMembers.filter((m) => !ids.includes(m.person_id))
                             })
 
                             try {
                               const result = await attendanceManager.removeMembersBulk(ids)
                               if (result.error_count > 0) {
-                                console.warn("Some members failed to delete:", result.errors)
+                                console.warn('Some members failed to delete:', result.errors)
                               }
                               onMembersChange()
                             } catch (err) {
-                              console.error("Error removing members, rolling back state:", err)
+                              console.error('Error removing members, rolling back state:', err)
                               useGroupStore.setState({ members: previousGroupMembers })
                               useAttendanceStore.setState({
-                                groupMembers: previousAttendanceMembers,
+                                groupMembers: previousAttendanceMembers
                               })
                             }
                             setSelectedIds(new Set())
                           }
                         }}
-                        className="flex items-center gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-red-400 transition-all hover:bg-red-500/20">
+                        className='flex items-center gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-red-400 transition-all hover:bg-red-500/20'>
                         Remove ({selectedIds.size})
                       </motion.button>
                     )}
 
                     {selectedIds.size > 0 && (
                       <motion.button
-                        key="clear"
+                        key='clear'
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
                         onClick={() => setSelectedIds(new Set())}
-                        className="flex items-center gap-2 text-[11px] font-bold text-white/55 transition-all hover:text-white">
+                        className='flex items-center gap-2 text-[11px] font-bold text-white/55 transition-all hover:text-white'>
                         Clear
                       </motion.button>
                     )}
                   </AnimatePresence>
                   <button
-                    onClick={
-                      selectedIds.size === filteredMembers.length ? undefined : toggleSelectAll
-                    }
+                    onClick={selectedIds.size === filteredMembers.length ? undefined : toggleSelectAll}
                     disabled={selectedIds.size === filteredMembers.length}
                     className={`flex items-center gap-2 text-[11px] font-bold transition-all ${
                       selectedIds.size === filteredMembers.length ?
-                        "cursor-default text-white/20"
-                      : "text-cyan-400/80 hover:text-cyan-400"
+                        'cursor-default text-white/20'
+                      : 'text-cyan-400/80 hover:text-cyan-400'
                     }`}>
                     Select all
                   </button>
@@ -594,38 +565,33 @@ export function Members({
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="custom-scroll hover-scrollbar flex flex-1 flex-col overflow-y-auto px-10 pb-10"
+            className='custom-scroll hover-scrollbar flex flex-1 flex-col overflow-y-auto px-10 pb-10'
             style={{
-              maskImage: "linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)",
-              WebkitMaskImage:
-                "linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)",
+              maskImage: 'linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)'
             }}>
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode='wait'>
               {filteredMembers.length === 0 ?
                 <EmptyState
-                  key="empty"
-                  className="min-h-[300px]"
+                  key='empty'
+                  className='min-h-[300px]'
                   title={
-                    memberSearch.trim() ? "No results found"
-                    : enrollmentFilter === "enrolled" ?
-                      "No enrolled members"
-                    : enrollmentFilter === "non-enrolled" ?
-                      "All members are enrolled"
-                    : "No members found"
+                    memberSearch.trim() ? 'No results found'
+                    : enrollmentFilter === 'enrolled' ?
+                      'No enrolled members'
+                    : enrollmentFilter === 'non-enrolled' ?
+                      'All members are enrolled'
+                    : 'No members found'
                   }
                   description={
                     memberSearch.trim() ? `No members matched "${memberSearch}".`
-                    : enrollmentFilter === "enrolled" ?
-                      "No enrolled members in this group."
-                    : enrollmentFilter === "non-enrolled" ?
-                      "All members in this group are enrolled."
-                    : "No members have been added to this group yet."
+                    : enrollmentFilter === 'enrolled' ?
+                      'No enrolled members in this group.'
+                    : enrollmentFilter === 'non-enrolled' ?
+                      'All members in this group are enrolled.'
+                    : 'No members have been added to this group yet.'
                   }
-                  icon={
-                    memberSearch.trim() ?
-                      <Ghost className="size-8" />
-                    : <UserX className="size-8" />
-                  }
+                  icon={memberSearch.trim() ? <Ghost className='size-8' /> : <UserX className='size-8' />}
                 />
               : <motion.div
                   key={`results-${enrollmentFilter}`}
@@ -633,10 +599,10 @@ export function Members({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex w-full flex-col gap-1"
+                  className='flex w-full flex-col gap-1'
                   style={{
                     paddingTop: `${paddingTop}px`,
-                    paddingBottom: `${paddingBottom}px`,
+                    paddingBottom: `${paddingBottom}px`
                   }}>
                   {visibleMembers.map((member, idx) => (
                     <div key={member.person_id || `member-${idx}`} data-member-row>
@@ -672,18 +638,18 @@ export function Members({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            className="absolute inset-0 z-50 flex flex-col bg-[#08090a]">
-            {mode === "bulk" && source === "upload" && (
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className='absolute inset-0 z-50 flex flex-col bg-[#08090a]'>
+            {mode === 'bulk' && source === 'upload' && (
               <BulkEnrollment
                 group={group}
                 members={selectedMembersList.length > 0 ? selectedMembersList : members}
                 onRefresh={onMembersChange}
                 onClose={resetEnrollment}
-                className="flex-1"
+                className='flex-1'
               />
             )}
-            {mode === "queue" && source === "camera" && (
+            {mode === 'queue' && source === 'camera' && (
               <CameraQueue
                 group={group}
                 members={members}
@@ -692,12 +658,12 @@ export function Members({
                 onClose={resetEnrollment}
               />
             )}
-            {mode === "single" && source && (
+            {mode === 'single' && source && (
               <FaceCapture
                 group={group}
                 members={members}
                 onRefresh={onMembersChange}
-                initialSource={source === "camera" ? "live" : source}
+                initialSource={source === 'camera' ? 'live' : source}
                 deselectMemberTrigger={deselectMemberTrigger}
                 onHasSelectedMemberChange={onHasSelectedMemberChange}
               />

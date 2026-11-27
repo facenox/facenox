@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Check, Volume2, Play } from "lucide-react"
-import type { QuickSettings, AudioSettings } from "@/components/settings/types"
-import { Switch, Dropdown, Tooltip } from "@/components/shared"
-import { soundEffects } from "@/services/SoundEffectsService"
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Check, Volume2, Play } from 'lucide-react'
+import type { QuickSettings, AudioSettings } from '@/components/settings/types'
+import { Switch, Dropdown, Tooltip } from '@/components/shared'
+import { soundEffects } from '@/services/SoundEffectsService'
 
 interface DisplayProps {
   quickSettings: QuickSettings
@@ -18,26 +18,22 @@ const SETTINGS_ROW_ANIMATION_DURATION = 0.18
 
 const DEFAULT_SOUNDS = [
   {
-    fileName: "Recognition_Success.wav",
-    url: "./assets/sounds/Recognition_Success.wav",
-  },
+    fileName: 'Recognition_Success.wav',
+    url: './assets/sounds/Recognition_Success.wav'
+  }
 ]
 
 function formatSoundName(fileName: string): string {
-  if (!fileName) return "Default"
-  const withoutExt = fileName.replace(/\.[^/.]+$/, "")
-  const formatted = withoutExt.replace(/[_-]+/g, " ").trim()
-  if (
-    !formatted ||
-    formatted.toLowerCase() === "recognition success" ||
-    formatted.toLowerCase() === "default"
-  ) {
-    return "Default"
+  if (!fileName) return 'Default'
+  const withoutExt = fileName.replace(/\.[^/.]+$/, '')
+  const formatted = withoutExt.replace(/[_-]+/g, ' ').trim()
+  if (!formatted || formatted.toLowerCase() === 'recognition success' || formatted.toLowerCase() === 'default') {
+    return 'Default'
   }
   return formatted
-    .split(" ")
+    .split(' ')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ")
+    .join(' ')
 }
 
 export function Display({
@@ -45,7 +41,7 @@ export function Display({
   toggleQuickSetting,
   audioSettings,
   onAudioSettingsChange,
-  streamRef,
+  streamRef
 }: DisplayProps) {
   const previewVideoRef = useRef<HTMLVideoElement>(null)
 
@@ -81,7 +77,7 @@ export function Display({
           }
         })
         .catch((err) => {
-          console.error("Failed to load recognition sounds:", err)
+          console.error('Failed to load recognition sounds:', err)
         })
     }
     return () => {
@@ -113,7 +109,7 @@ export function Display({
         }, 650)
       }
     },
-    [currentSoundUrl, isPlaying],
+    [currentSoundUrl, isPlaying]
   )
 
   const soundOptions = useMemo(() => {
@@ -121,7 +117,7 @@ export function Display({
     const list = sounds
       .map((s) => ({
         value: s.url,
-        label: formatSoundName(s.fileName),
+        label: formatSoundName(s.fileName)
       }))
       .filter((item) => {
         if (seen.has(item.label)) return false
@@ -130,120 +126,100 @@ export function Display({
       })
 
     return list.sort((a, b) => {
-      if (a.label === "Default") return -1
-      if (b.label === "Default") return 1
+      if (a.label === 'Default') return -1
+      if (b.label === 'Default') return 1
       return a.label.localeCompare(b.label)
     })
   }, [sounds])
 
   const isSettingActive = (key: keyof QuickSettings) => {
-    if (key === "showTrackingBoxes") return quickSettings.showTrackingBoxes !== false
-    if (key === "showDetectionPanel") return quickSettings.showDetectionPanel !== false
-    if (key === "cameraFitCover") return Boolean(quickSettings.cameraFitCover)
+    if (key === 'showTrackingBoxes') return quickSettings.showTrackingBoxes !== false
+    if (key === 'showDetectionPanel') return quickSettings.showDetectionPanel !== false
+    if (key === 'cameraFitCover') return Boolean(quickSettings.cameraFitCover)
     return Boolean(quickSettings[key])
   }
 
   const cameraSettingItems = [
     {
-      key: "cameraMirrored" as keyof QuickSettings,
-      label: "Mirror view",
+      key: 'cameraMirrored' as keyof QuickSettings,
+      label: 'Mirror view',
       descriptions: {
-        on: "Flip camera feed horizontally.",
-        off: "Show standard camera orientation.",
-      },
+        on: 'Flip camera feed horizontally.',
+        off: 'Show standard camera orientation.'
+      }
     },
     {
-      key: "showRecognitionNames" as keyof QuickSettings,
-      label: "Show names",
+      key: 'showRecognitionNames' as keyof QuickSettings,
+      label: 'Show names',
       descriptions: {
-        on: "Show recognized members’ names in the camera preview.",
-        off: "Hide member names from the camera preview.",
-      },
+        on: 'Show recognized members’ names in the camera preview.',
+        off: 'Hide member names from the camera preview.'
+      }
     },
     {
-      key: "showTrackingBoxes" as keyof QuickSettings,
-      label: "Show tracking boxes",
+      key: 'showTrackingBoxes' as keyof QuickSettings,
+      label: 'Show tracking boxes',
       descriptions: {
-        on: "Show boxes around detected faces.",
-        off: "Hide tracking boxes from the camera feed.",
-      },
+        on: 'Show boxes around detected faces.',
+        off: 'Hide tracking boxes from the camera feed.'
+      }
     },
     {
-      key: "cameraFitCover" as keyof QuickSettings,
-      label: "Fill camera preview",
+      key: 'cameraFitCover' as keyof QuickSettings,
+      label: 'Fill camera preview',
       descriptions: {
-        on: "Fill the preview area by cropping the image edges.",
-        off: "Show the full camera image without cropping.",
-      },
+        on: 'Fill the preview area by cropping the image edges.',
+        off: 'Show the full camera image without cropping.'
+      }
     },
     {
-      key: "showDetectionPanel" as keyof QuickSettings,
-      label: "Live recognition results",
+      key: 'showDetectionPanel' as keyof QuickSettings,
+      label: 'Live recognition results',
       descriptions: {
-        on: "Show live recognition results below the attendance list.",
-        off: "Hide live results to give attendance records full height.",
-      },
-    },
+        on: 'Show live recognition results below the attendance list.',
+        off: 'Hide live results to give attendance records full height.'
+      }
+    }
   ]
 
   return (
-    <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
+    <div className='mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10'>
       {/* Viewport Preview */}
-      <div className="flex justify-center pb-2">
-        <div className="relative flex aspect-video w-full max-w-[400px] overflow-hidden rounded-xl border border-white/10 bg-black">
+      <div className='flex justify-center pb-2'>
+        <div className='relative flex aspect-video w-full max-w-[400px] overflow-hidden rounded-xl border border-white/10 bg-black'>
           {/* Camera feed */}
-          <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden">
+          <div className='relative flex h-full flex-1 items-center justify-center overflow-hidden'>
             {hasActiveStream ?
               <video
                 ref={previewVideoRef}
                 playsInline
                 muted
                 autoPlay
-                aria-label="Camera display preview"
+                aria-label='Camera display preview'
                 className={`h-full w-full transition-all duration-300 ${
-                  quickSettings.cameraFitCover ? "object-cover" : "object-contain"
-                } ${quickSettings.cameraMirrored ? "scale-x-[-1]" : ""}`}
+                  quickSettings.cameraFitCover ? 'object-cover' : 'object-contain'
+                } ${quickSettings.cameraMirrored ? 'scale-x-[-1]' : ''}`}
               />
-            : <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
+            : <div className='relative flex h-full w-full items-center justify-center overflow-hidden bg-black'>
                 <div
                   className={`relative flex items-center justify-center bg-[#0f1011] transition-all duration-300 ${
-                    quickSettings.cameraFitCover ? "h-full w-full scale-105" : (
-                      "h-full w-[78%] scale-100"
-                    )
+                    quickSettings.cameraFitCover ? 'h-full w-full scale-105' : 'h-full w-[78%] scale-100'
                   }`}>
                   <div
                     className={`relative flex h-full w-full items-center justify-center pt-2 transition-transform duration-300 ${
-                      quickSettings.cameraMirrored ? "scale-x-[-1]" : ""
+                      quickSettings.cameraMirrored ? 'scale-x-[-1]' : ''
                     }`}>
-                    <svg
-                      viewBox="0 0 100 100"
-                      className="h-28 w-28 text-white/20 select-none"
-                      fill="currentColor">
-                      <circle cx="50" cy="38" r="16" fill="rgba(255,255,255,0.06)" />
+                    <svg viewBox='0 0 100 100' className='h-28 w-28 text-white/20 select-none' fill='currentColor'>
+                      <circle cx='50' cy='38' r='16' fill='rgba(255,255,255,0.06)' />
+                      <path d='M 34 36 C 35 23, 50 20, 66 28 C 60 22, 43 21, 34 36 Z' fill='rgba(255,255,255,0.22)' />
+                      <circle cx='50' cy='38' r='16' stroke='rgba(255,255,255,0.18)' strokeWidth='1.5' fill='none' />
                       <path
-                        d="M 34 36 C 35 23, 50 20, 66 28 C 60 22, 43 21, 34 36 Z"
-                        fill="rgba(255,255,255,0.22)"
+                        d='M 18 86 C 18 64, 34 58, 44 58 L 56 58 C 66 58, 82 64, 82 86 Z'
+                        fill='rgba(255,255,255,0.06)'
+                        stroke='rgba(255,255,255,0.18)'
+                        strokeWidth='1.5'
                       />
-                      <circle
-                        cx="50"
-                        cy="38"
-                        r="16"
-                        stroke="rgba(255,255,255,0.18)"
-                        strokeWidth="1.5"
-                        fill="none"
-                      />
-                      <path
-                        d="M 18 86 C 18 64, 34 58, 44 58 L 56 58 C 66 58, 82 64, 82 86 Z"
-                        fill="rgba(255,255,255,0.06)"
-                        stroke="rgba(255,255,255,0.18)"
-                        strokeWidth="1.5"
-                      />
-                      <path
-                        d="M 44 58 L 50 68 L 56 58"
-                        stroke="rgba(255,255,255,0.25)"
-                        strokeWidth="1.5"
-                        fill="none"
-                      />
+                      <path d='M 44 58 L 50 68 L 56 58' stroke='rgba(255,255,255,0.25)' strokeWidth='1.5' fill='none' />
                     </svg>
                   </div>
                 </div>
@@ -253,11 +229,11 @@ export function Display({
             {/* Overlays */}
             <div
               className={`pointer-events-none absolute inset-0 flex items-center justify-center ${
-                quickSettings.cameraMirrored ? "scale-x-[-1]" : ""
+                quickSettings.cameraMirrored ? 'scale-x-[-1]' : ''
               }`}>
               <div
                 className={`relative flex -translate-y-3.5 items-center justify-center transition-all duration-300 ${
-                  quickSettings.cameraFitCover ? "h-15 w-13" : "h-14 w-12"
+                  quickSettings.cameraFitCover ? 'h-15 w-13' : 'h-14 w-12'
                 }`}>
                 <AnimatePresence>
                   {quickSettings.showTrackingBoxes !== false && (
@@ -266,7 +242,7 @@ export function Display({
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute inset-0 rounded-lg border-2 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.35)]"
+                      className='absolute inset-0 rounded-lg border-2 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.35)]'
                     />
                   )}
                 </AnimatePresence>
@@ -279,7 +255,7 @@ export function Display({
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: 0.12 }}
                       className={`pointer-events-none absolute -top-5.5 text-[11px] font-bold whitespace-nowrap text-cyan-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] select-none ${
-                        quickSettings.cameraMirrored ? "scale-x-[-1]" : ""
+                        quickSettings.cameraMirrored ? 'scale-x-[-1]' : ''
                       }`}>
                       John Doe
                     </motion.span>
@@ -290,22 +266,22 @@ export function Display({
           </div>
 
           {/* Sidebar preview */}
-          <div className="flex h-full w-[100px] shrink-0 flex-col border-l border-white/10 bg-[#0f1011] select-none">
+          <div className='flex h-full w-[100px] shrink-0 flex-col border-l border-white/10 bg-[#0f1011] select-none'>
             {/* Attendance list */}
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 transition-all duration-200">
-              <div className="mb-2.5 flex h-4.5 items-center justify-between rounded border border-white/[0.08] bg-white/[0.02] px-1.5">
-                <div className="h-1 w-11 rounded-full bg-white/40" />
-                <span className="text-[6px] text-white/30">▼</span>
+            <div className='flex min-h-0 flex-1 flex-col overflow-hidden p-2 transition-all duration-200'>
+              <div className='mb-2.5 flex h-4.5 items-center justify-between rounded border border-white/[0.08] bg-white/[0.02] px-1.5'>
+                <div className='h-1 w-11 rounded-full bg-white/40' />
+                <span className='text-[6px] text-white/30'>▼</span>
               </div>
 
-              <div className="flex flex-col gap-1.5 overflow-hidden">
-                <div className="flex items-center justify-between rounded px-1.5 py-1 hover:bg-white/[0.04]">
-                  <div className="h-1.5 w-10 rounded-full bg-white/70" />
-                  <div className="h-2 w-6 rounded bg-white/10" />
+              <div className='flex flex-col gap-1.5 overflow-hidden'>
+                <div className='flex items-center justify-between rounded px-1.5 py-1 hover:bg-white/[0.04]'>
+                  <div className='h-1.5 w-10 rounded-full bg-white/70' />
+                  <div className='h-2 w-6 rounded bg-white/10' />
                 </div>
-                <div className="flex items-center justify-between rounded px-1.5 py-1 hover:bg-white/[0.04]">
-                  <div className="h-1.5 w-8 rounded-full bg-white/40" />
-                  <div className="h-2 w-6 rounded bg-white/10" />
+                <div className='flex items-center justify-between rounded px-1.5 py-1 hover:bg-white/[0.04]'>
+                  <div className='h-1.5 w-8 rounded-full bg-white/40' />
+                  <div className='h-2 w-6 rounded bg-white/10' />
                 </div>
               </div>
             </div>
@@ -314,14 +290,14 @@ export function Display({
             <AnimatePresence initial={false}>
               {quickSettings.showDetectionPanel !== false && (
                 <motion.div
-                  initial={{ opacity: 0, flex: "0 0 0px" }}
-                  animate={{ opacity: 1, flex: "1 1 0%" }}
-                  exit={{ opacity: 0, flex: "0 0 0px" }}
-                  transition={{ duration: 0.22, ease: "easeInOut" }}
-                  className="flex min-h-0 flex-col overflow-hidden border-t border-white/10 bg-[#08090a] p-2">
-                  <div className="flex items-center justify-between rounded-md bg-gradient-to-r from-cyan-500/20 to-transparent px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)]">
-                    <div className="h-1.5 w-11 rounded-full bg-cyan-100/80" />
-                    <Check className="size-2.5 stroke-[2.5] text-cyan-400" />
+                  initial={{ opacity: 0, flex: '0 0 0px' }}
+                  animate={{ opacity: 1, flex: '1 1 0%' }}
+                  exit={{ opacity: 0, flex: '0 0 0px' }}
+                  transition={{ duration: 0.22, ease: 'easeInOut' }}
+                  className='flex min-h-0 flex-col overflow-hidden border-t border-white/10 bg-[#08090a] p-2'>
+                  <div className='flex items-center justify-between rounded-md bg-gradient-to-r from-cyan-500/20 to-transparent px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)]'>
+                    <div className='h-1.5 w-11 rounded-full bg-cyan-100/80' />
+                    <Check className='size-2.5 stroke-[2.5] text-cyan-400' />
                   </div>
                 </motion.div>
               )}
@@ -330,23 +306,23 @@ export function Display({
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className='space-y-4'>
         {/* Camera settings */}
         {cameraSettingItems.map(({ key, label, descriptions }) => {
           const active = isSettingActive(key)
           return (
-            <div key={key} className="flex items-center gap-4 border-b border-white/5 py-3">
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-white/90">{label}</div>
-                <div className="relative min-h-4">
-                  <AnimatePresence mode="wait">
+            <div key={key} className='flex items-center gap-4 border-b border-white/5 py-3'>
+              <div className='min-w-0 flex-1'>
+                <div className='text-sm font-medium text-white/90'>{label}</div>
+                <div className='relative min-h-4'>
+                  <AnimatePresence mode='wait'>
                     <motion.div
                       key={`${key}-${active}`}
                       initial={{ opacity: 0, y: -2 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                      className="text-xs font-medium text-white/65">
+                      className='text-xs font-medium text-white/65'>
                       {active ? descriptions.on : descriptions.off}
                     </motion.div>
                   </AnimatePresence>
@@ -360,22 +336,22 @@ export function Display({
 
         {/* Audio feedback */}
         {audioSettings && onAudioSettingsChange && (
-          <div className="flex flex-col border-b border-white/5 pb-2">
-            <div className="flex items-center gap-4 py-3">
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-white/90">Audio feedback</div>
-                <div className="relative min-h-4">
-                  <AnimatePresence mode="wait">
+          <div className='flex flex-col border-b border-white/5 pb-2'>
+            <div className='flex items-center gap-4 py-3'>
+              <div className='min-w-0 flex-1'>
+                <div className='text-sm font-medium text-white/90'>Audio feedback</div>
+                <div className='relative min-h-4'>
+                  <AnimatePresence mode='wait'>
                     <motion.div
-                      key={audioSettings.recognitionSoundEnabled ? "on" : "off"}
+                      key={audioSettings.recognitionSoundEnabled ? 'on' : 'off'}
                       initial={{ opacity: 0, y: -2 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                      className="text-xs font-medium text-white/65">
+                      className='text-xs font-medium text-white/65'>
                       {audioSettings.recognitionSoundEnabled ?
-                        "Play a sound when a face is recognized."
-                      : "Recognition sounds are off."}
+                        'Play a sound when a face is recognized.'
+                      : 'Recognition sounds are off.'}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -385,10 +361,10 @@ export function Display({
                 checked={audioSettings.recognitionSoundEnabled}
                 onChange={(checked) =>
                   onAudioSettingsChange({
-                    recognitionSoundEnabled: checked,
+                    recognitionSoundEnabled: checked
                   })
                 }
-                ariaLabel="Audio feedback"
+                ariaLabel='Audio feedback'
               />
             </div>
 
@@ -397,20 +373,20 @@ export function Display({
               {audioSettings.recognitionSoundEnabled && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
+                  animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: SETTINGS_ROW_ANIMATION_DURATION, ease: "easeInOut" }}
-                  className="overflow-hidden">
-                  <div className="relative flex items-center gap-4 pt-2 pb-2 pl-4">
-                    <div className="absolute top-0 bottom-1/2 left-0 w-px rounded-bl-xs bg-white/10" />
-                    <div className="absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10" />
+                  transition={{ duration: SETTINGS_ROW_ANIMATION_DURATION, ease: 'easeInOut' }}
+                  className='overflow-hidden'>
+                  <div className='relative flex items-center gap-4 pt-2 pb-2 pl-4'>
+                    <div className='absolute top-0 bottom-1/2 left-0 w-px rounded-bl-xs bg-white/10' />
+                    <div className='absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 rounded-bl-xs bg-white/10' />
 
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-normal text-white/65">Tone:</div>
+                    <div className='min-w-0 flex-1'>
+                      <div className='text-xs font-normal text-white/65'>Tone:</div>
                     </div>
 
-                    <div className="ml-auto flex shrink-0 items-center gap-2">
-                      <div className="w-[180px]">
+                    <div className='ml-auto flex shrink-0 items-center gap-2'>
+                      <div className='w-[180px]'>
                         <Dropdown
                           options={soundOptions}
                           value={currentSoundUrl}
@@ -418,28 +394,28 @@ export function Display({
                             if (value) {
                               const newUrl = String(value)
                               onAudioSettingsChange({
-                                recognitionSoundUrl: newUrl,
+                                recognitionSoundUrl: newUrl
                               })
                               handlePlayTest(newUrl)
                             }
                           }}
-                          placeholder="Select tone…"
-                          emptyMessage="No sounds available"
+                          placeholder='Select tone…'
+                          emptyMessage='No sounds available'
                           showPlaceholderOption={false}
                           allowClear={false}
                         />
                       </div>
 
-                      <Tooltip content={isPlaying ? "Playing…" : "Test sound"}>
+                      <Tooltip content={isPlaying ? 'Playing…' : 'Test sound'}>
                         <button
-                          type="button"
+                          type='button'
                           onClick={() => handlePlayTest()}
                           disabled={isPlaying || sounds.length === 0}
-                          aria-label="Test recognition sound"
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white/55 transition-colors hover:bg-white/5 hover:text-white active:scale-90 disabled:cursor-not-allowed disabled:opacity-30">
+                          aria-label='Test recognition sound'
+                          className='flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white/55 transition-colors hover:bg-white/5 hover:text-white active:scale-90 disabled:cursor-not-allowed disabled:opacity-30'>
                           {isPlaying ?
-                            <Volume2 className="size-3.5 text-cyan-400 transition-colors" />
-                          : <Play className="size-3 fill-current transition-colors" />}
+                            <Volume2 className='size-3.5 text-cyan-400 transition-colors' />
+                          : <Play className='size-3 fill-current transition-colors' />}
                         </button>
                       </Tooltip>
                     </div>

@@ -1,11 +1,11 @@
 @property --sb-thumb {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: rgba(255, 255, 255, 0.09);
 }
 
 @property --sb-thumb-hover {
-  syntax: "<color>";
+  syntax: '<color>';
   inherits: true;
   initial-value: rgba(255, 255, 255, 0.2);
 }

@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   MoreVertical,
   CloudUpload,
@@ -10,28 +10,28 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
-  WifiOff,
-} from "lucide-react"
-import { Tooltip } from "@/components/shared"
-import { updaterService } from "@/services"
-import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
-import { isNetworkSyncError, isQuotaSyncError } from "@/components/settings/sections/syncErrorUtils"
-import type { UpdateInfo } from "@/types/updater"
-import { Modal, Spinner } from "@/components/common"
-import { useUIStore } from "@/components/main/stores/uiStore"
-import { useAttendanceStore } from "@/components/main/stores/attendanceStore"
-import { getEffectiveRemoteUrl } from "@/hooks/useCloudPairing"
+  WifiOff
+} from 'lucide-react'
+import { Tooltip } from '@/components/shared'
+import { updaterService } from '@/services'
+import { hasSavedCloudPairing, useCloudSyncConfig } from '@/services/cloudSyncState'
+import { isNetworkSyncError, isQuotaSyncError } from '@/components/settings/sections/syncErrorUtils'
+import type { UpdateInfo } from '@/types/updater'
+import { Modal, Spinner } from '@/components/common'
+import { useUIStore } from '@/components/main/stores/uiStore'
+import { useAttendanceStore } from '@/components/main/stores/attendanceStore'
+import { getEffectiveRemoteUrl } from '@/hooks/useCloudPairing'
 
 function formatRelativeTime(dateString: string | null): string {
-  if (!dateString) return "Never"
+  if (!dateString) return 'Never'
   try {
     const date = new Date(dateString)
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
-    if (isNaN(diffMs)) return "Never"
+    if (isNaN(diffMs)) return 'Never'
 
     const diffSecs = Math.floor(diffMs / 1000)
-    if (diffSecs < 10) return "Just now"
+    if (diffSecs < 10) return 'Just now'
     if (diffSecs < 60) return `${diffSecs}s ago`
 
     const diffMins = Math.floor(diffSecs / 60)
@@ -41,22 +41,22 @@ function formatRelativeTime(dateString: string | null): string {
     if (diffHours < 24) return `${diffHours}h ago`
 
     return date.toLocaleDateString([], {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
     })
   } catch {
-    return "Never"
+    return 'Never'
   }
 }
 
 function releaseActiveMediaStreams(): void {
   try {
-    const videoElements = document.querySelectorAll("video")
+    const videoElements = document.querySelectorAll('video')
     videoElements.forEach((video) => {
       const stream = video.srcObject as MediaStream | null
-      if (stream && typeof stream.getTracks === "function") {
+      if (stream && typeof stream.getTracks === 'function') {
         stream.getTracks().forEach((track) => {
           try {
             track.stop()
@@ -91,46 +91,46 @@ export default function WindowBar() {
     if (!isMenuOpen) return
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" && event.key !== "Esc" && event.keyCode !== 27) return
+      if (event.key !== 'Escape' && event.key !== 'Esc' && event.keyCode !== 27) return
       event.preventDefault()
       event.stopPropagation()
       event.stopImmediatePropagation()
       setIsMenuOpen(false)
     }
 
-    window.addEventListener("keydown", handleEscape, true)
-    return () => window.removeEventListener("keydown", handleEscape, true)
+    window.addEventListener('keydown', handleEscape, true)
+    return () => window.removeEventListener('keydown', handleEscape, true)
   }, [isMenuOpen])
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
   const [updateCheckState, setUpdateCheckState] = useState<
-    "idle" | "checking" | "up-to-date" | "available" | "error" | "offline"
-  >("idle")
+    'idle' | 'checking' | 'up-to-date' | 'available' | 'error' | 'offline'
+  >('idle')
   const [checkedUpdateInfo, setCheckedUpdateInfo] = useState<UpdateInfo | null>(null)
   const [isReloading, setIsReloading] = useState(false)
 
   useEffect(() => {
-    window.addEventListener("beforeunload", releaseActiveMediaStreams)
-    return () => window.removeEventListener("beforeunload", releaseActiveMediaStreams)
+    window.addEventListener('beforeunload', releaseActiveMediaStreams)
+    return () => window.removeEventListener('beforeunload', releaseActiveMediaStreams)
   }, [])
 
   const handleCheckUpdates = useCallback(async () => {
     setIsUpdateModalOpen(true)
-    setUpdateCheckState("checking")
+    setUpdateCheckState('checking')
     try {
       const info = await updaterService.checkForUpdates(true)
       setCheckedUpdateInfo(info)
       if (info.hasUpdate) {
-        setUpdateCheckState("available")
+        setUpdateCheckState('available')
       } else if (info.isOffline) {
-        setUpdateCheckState("offline")
+        setUpdateCheckState('offline')
       } else if (info.error) {
-        setUpdateCheckState("error")
+        setUpdateCheckState('error')
       } else {
-        setUpdateCheckState("up-to-date")
+        setUpdateCheckState('up-to-date')
       }
     } catch (err) {
       console.error(err)
-      setUpdateCheckState("error")
+      setUpdateCheckState('error')
     }
   }, [])
   const { config: syncConfig, status: cloudConfigStatus } = useCloudSyncConfig()
@@ -140,7 +140,7 @@ export default function WindowBar() {
   const isOnboardingGateActive =
     isHydrated &&
     isShellReady &&
-    (!hasSeenIntro || (cloudConfigStatus !== "loading" && !hasSavedCloudPairing(syncConfig)))
+    (!hasSeenIntro || (cloudConfigStatus !== 'loading' && !hasSavedCloudPairing(syncConfig)))
   const cloudDashboardUrl = `${getEffectiveRemoteUrl(syncConfig?.remoteBaseUrl)}/app`
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
 
@@ -153,7 +153,7 @@ export default function WindowBar() {
   }, [])
 
   const handleOpenRelease = () => {
-    updaterService.openReleasePage("https://facenox.com/download")
+    updaterService.openReleasePage('https://facenox.com/download')
   }
 
   useEffect(() => {
@@ -192,81 +192,77 @@ export default function WindowBar() {
     }
   }
 
-  const platform = window.facenoxElectron?.platform || "win32"
-  const isLinux = platform === "linux"
-  const isMac = platform === "darwin"
+  const platform = window.facenoxElectron?.platform || 'win32'
+  const isLinux = platform === 'linux'
+  const isMac = platform === 'darwin'
 
   const iconStyle = (iconName: string) => ({
     maskImage: `url(./icons/window/${iconName}.svg)`,
     WebkitMaskImage: `url(./icons/window/${iconName}.svg)`,
-    maskRepeat: "no-repeat",
-    WebkitMaskRepeat: "no-repeat",
-    maskPosition: "center",
-    WebkitMaskPosition: "center",
-    maskSize: "10px",
-    WebkitMaskSize: "10px",
+    maskRepeat: 'no-repeat',
+    WebkitMaskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    WebkitMaskPosition: 'center',
+    maskSize: '10px',
+    WebkitMaskSize: '10px'
   })
 
   return (
     <div
-      className="relative flex h-[32px] w-full shrink-0 items-center justify-between border-b border-white/8 select-none"
+      className='relative flex h-[32px] w-full shrink-0 items-center justify-between border-b border-white/8 select-none'
       style={
         {
-          WebkitAppRegion: isMaximized ? "no-drag" : "drag",
+          WebkitAppRegion: isMaximized ? 'no-drag' : 'drag'
         } as React.CSSProperties
       }>
       {/* Spacer for Mac native traffic lights */}
-      {isMac && <div className="w-[80px] shrink-0" />}
+      {isMac && <div className='w-[80px] shrink-0' />}
 
-      <div className="relative z-[110] ml-3 flex flex-1 items-center gap-2">
-        <div className="flex items-center gap-1.5">
+      <div className='relative z-[110] ml-3 flex flex-1 items-center gap-2'>
+        <div className='flex items-center gap-1.5'>
           <img
-            src="./icons/logo-transparent.png"
-            alt="Facenox"
-            className={`${isMac ? "-ml-4" : ""} pointer-events-none h-4 w-4 object-contain opacity-60`}
+            src='./icons/logo-transparent.png'
+            alt='Facenox'
+            className={`${isMac ? '-ml-4' : ''} pointer-events-none h-4 w-4 object-contain opacity-60`}
           />
           <div
-            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-            className="pointer-events-auto relative flex items-center">
-            <Tooltip
-              content="App menu"
-              position="bottom"
-              offset={6}
-              disabled={isMenuOpen || isPinPromptOpen}>
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+            className='pointer-events-auto relative flex items-center'>
+            <Tooltip content='App menu' position='bottom' offset={6} disabled={isMenuOpen || isPinPromptOpen}>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 disabled={isPinPromptOpen}
                 className={`flex h-5 w-5 items-center justify-center rounded border border-transparent bg-transparent text-white/40 transition-all duration-150 hover:border-white/10 hover:bg-white/5 hover:text-white/80 focus:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 ${
-                  isMenuOpen ? "border-white/10 bg-white/5 text-white/80" : ""
+                  isMenuOpen ? 'border-white/10 bg-white/5 text-white/80' : ''
                 }`}
-                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                aria-label="App menu">
-                <MoreVertical className="size-3" />
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                aria-label='App menu'>
+                <MoreVertical className='size-3' />
               </button>
             </Tooltip>
             <AnimatePresence>
               {isMenuOpen && (
                 <>
                   <div
-                    style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                    className="fixed inset-0 z-80"
+                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                    className='fixed inset-0 z-80'
                     onClick={() => setIsMenuOpen(false)}
                   />
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: -4 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                    transition={{ duration: 0.12, ease: "easeOut" }}
-                    style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                    className="absolute top-[22px] left-0 z-90 w-[168px] rounded-lg border border-white/10 bg-[#141518]/95 p-1 shadow-xl backdrop-blur-md">
+                    transition={{ duration: 0.12, ease: 'easeOut' }}
+                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                    className='absolute top-[22px] left-0 z-90 w-[168px] rounded-lg border border-white/10 bg-[#141518]/95 p-1 shadow-xl backdrop-blur-md'>
                     {syncConfig?.connected && (
                       <a
                         href={cloudDashboardUrl}
-                        target="_blank"
-                        rel="noreferrer"
+                        target='_blank'
+                        rel='noreferrer'
                         onClick={() => setIsMenuOpen(false)}
-                        className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white">
-                        <ExternalLink className="size-3.5" />
+                        className='flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white'>
+                        <ExternalLink className='size-3.5' />
                         Open Cloud dashboard
                       </a>
                     )}
@@ -275,8 +271,8 @@ export default function WindowBar() {
                         setIsMenuOpen(false)
                         handleCheckUpdates()
                       }}
-                      className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white">
-                      <CloudUpload className="size-3.5" />
+                      className='flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white'>
+                      <CloudUpload className='size-3.5' />
                       Check for updates
                     </button>
                     <button
@@ -288,8 +284,8 @@ export default function WindowBar() {
                           window.location.reload()
                         }, 250)
                       }}
-                      className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white">
-                      <RefreshCw className="size-3.5" />
+                      className='flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white'>
+                      <RefreshCw className='size-3.5' />
                       Reload application
                     </button>
                   </motion.div>
@@ -301,26 +297,21 @@ export default function WindowBar() {
         {!isOnboardingGateActive &&
           (() => {
             const handleOpenCloudSync = () => {
-              useUIStore.getState().requestOpenSettings("remote-sync")
+              useUIStore.getState().requestOpenSettings('remote-sync')
             }
 
-            const hasCachedPairing =
-              hasSavedCloudPairing(syncConfig) && Boolean(syncConfig?.credentialError)
+            const hasCachedPairing = hasSavedCloudPairing(syncConfig) && Boolean(syncConfig?.credentialError)
 
-            if ((cloudConfigStatus === "error" && !hasCachedPairing) || !syncConfig) {
+            if ((cloudConfigStatus === 'error' && !hasCachedPairing) || !syncConfig) {
               return (
                 <button
-                  type="button"
+                  type='button'
                   onClick={isPinPromptOpen ? undefined : handleOpenCloudSync}
                   disabled={isPinPromptOpen}
-                  style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                  className="pointer-events-auto flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] text-white/45 disabled:pointer-events-none disabled:opacity-30">
-                  <Cloud className="size-2.5 opacity-60" />
-                  <span>
-                    {cloudConfigStatus === "error" ?
-                      "Cloud status unavailable"
-                    : "Loading Cloud status…"}
-                  </span>
+                  style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                  className='pointer-events-auto flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] text-white/45 disabled:pointer-events-none disabled:opacity-30'>
+                  <Cloud className='size-2.5 opacity-60' />
+                  <span>{cloudConfigStatus === 'error' ? 'Cloud status unavailable' : 'Loading Cloud status…'}</span>
                 </button>
               )
             }
@@ -329,79 +320,66 @@ export default function WindowBar() {
             }
 
             const relativeTime = formatRelativeTime(syncConfig.lastSyncedAt)
-            const queueKnown = [
-              syncConfig.unsyncedRecordsCount,
-              syncConfig.unsyncedSessionsCount,
-            ].every(
-              (count) => typeof count === "number" && Number.isSafeInteger(count) && count >= 0,
+            const queueKnown = [syncConfig.unsyncedRecordsCount, syncConfig.unsyncedSessionsCount].every(
+              (count) => typeof count === 'number' && Number.isSafeInteger(count) && count >= 0
             )
-            const pendingCount =
-              (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
+            const pendingCount = (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
 
-            let badgeBorderClass =
-              "text-emerald-400/90 hover:bg-emerald-500/10 hover:text-emerald-300"
+            let badgeBorderClass = 'text-emerald-400/90 hover:bg-emerald-500/10 hover:text-emerald-300'
             let StatusIcon = Cloud
-            let iconColor = "text-emerald-400"
+            let iconColor = 'text-emerald-400'
             let statusText =
-              queueKnown && pendingCount > 0 ? "Sync pending"
-              : syncConfig.lastSyncedAt ? "Last sync completed"
-              : "Waiting for sync"
+              queueKnown && pendingCount > 0 ? 'Sync pending'
+              : syncConfig.lastSyncedAt ? 'Last sync completed'
+              : 'Waiting for sync'
             const lastSyncText =
-              syncConfig.lastSyncedAt ?
-                `Last completed sync: ${relativeTime}.`
-              : "No completed sync yet."
+              syncConfig.lastSyncedAt ? `Last completed sync: ${relativeTime}.` : 'No completed sync yet.'
             const queueText =
-              !queueKnown ? "Queue status unavailable."
-              : pendingCount > 0 ?
-                `${pendingCount} attendance update${pendingCount === 1 ? "" : "s"} queued.`
-              : "No attendance updates queued."
+              !queueKnown ? 'Queue status unavailable.'
+              : pendingCount > 0 ? `${pendingCount} attendance update${pendingCount === 1 ? '' : 's'} queued.`
+              : 'No attendance updates queued.'
             let tooltipContent = `${lastSyncText} ${queueText} Open Cloud sync for details.`
 
-            if (syncConfig.lastSyncStatus === "error" || syncConfig.credentialError) {
-              const rawErr = syncConfig.credentialError || syncConfig.lastSyncMessage || ""
-              const isQuota =
-                !syncConfig.credentialError && isQuotaSyncError(syncConfig.lastSyncMessage)
+            if (syncConfig.lastSyncStatus === 'error' || syncConfig.credentialError) {
+              const rawErr = syncConfig.credentialError || syncConfig.lastSyncMessage || ''
+              const isQuota = !syncConfig.credentialError && isQuotaSyncError(syncConfig.lastSyncMessage)
               const isOffline = !syncConfig.credentialError && isNetworkSyncError(rawErr)
 
               if (isOffline) {
-                badgeBorderClass = "text-white/50 hover:bg-white/5 hover:text-white/80"
+                badgeBorderClass = 'text-white/50 hover:bg-white/5 hover:text-white/80'
                 StatusIcon = WifiOff
-                iconColor = "text-white/45"
-                statusText = "Offline"
+                iconColor = 'text-white/45'
+                statusText = 'Offline'
                 tooltipContent =
-                  "Offline: Attendance continues working locally and will sync when back online. Click to open Cloud sync."
+                  'Offline: Attendance continues working locally and will sync when back online. Click to open Cloud sync.'
               } else {
-                badgeBorderClass = "text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300"
+                badgeBorderClass = 'text-amber-400/90 hover:bg-amber-500/10 hover:text-amber-300'
                 StatusIcon = AlertTriangle
-                iconColor = "text-amber-400"
-                statusText = isQuota ? "Plan limit reached" : "Sync paused"
+                iconColor = 'text-amber-400'
+                statusText = isQuota ? 'Plan limit reached' : 'Sync paused'
 
                 const cleanMsg = (
                   syncConfig.credentialError ||
                   syncConfig.lastSyncMessage ||
-                  "The last sync could not complete."
+                  'The last sync could not complete.'
                 )
-                  .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, "")
-                  .replace(/^Sync rejected:\s*/i, "")
-                  .replace(/^Error:\s*/i, "")
+                  .replace(/^Sync failed on chunk \d+\/\d+:\s*/i, '')
+                  .replace(/^Sync rejected:\s*/i, '')
+                  .replace(/^Error:\s*/i, '')
 
                 tooltipContent =
                   isQuota ?
-                    "Plan limit reached: Active members exceed your Cloud plan. Click to open Cloud sync."
+                    'Plan limit reached: Active members exceed your Cloud plan. Click to open Cloud sync.'
                   : `Sync paused: ${cleanMsg} Click to open Cloud sync.`
               }
             }
 
             return (
-              <Tooltip
-                content={tooltipContent}
-                position="bottom"
-                offset={6}
-                disabled={isPinPromptOpen}>
+              <Tooltip content={tooltipContent} position='bottom' offset={6} disabled={isPinPromptOpen}>
                 <button
                   onClick={isPinPromptOpen ? undefined : handleOpenCloudSync}
                   disabled={isPinPromptOpen}
-                  style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+                  style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                   className={`pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide transition-all duration-150 select-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 ${badgeBorderClass}`}>
                   <StatusIcon className={`size-2.5 ${iconColor}`} />
                   <span>{statusText}</span>
@@ -417,22 +395,22 @@ export default function WindowBar() {
             initial={{ opacity: 0, scale: 0.96, x: 8 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.96, x: 8 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
             style={
               {
-                WebkitAppRegion: "no-drag",
-                willChange: "transform, opacity",
+                WebkitAppRegion: 'no-drag',
+                willChange: 'transform, opacity'
               } as React.CSSProperties
             }
-            className="relative z-70 mr-3 flex items-center">
+            className='relative z-70 mr-3 flex items-center'>
             <Tooltip
               content={`v${updateInfo?.currentVersion} ➜ v${updateInfo?.latestVersion}`}
-              position="bottom"
+              position='bottom'
               offset={6}>
               <button
                 onClick={handleOpenRelease}
-                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-                className="relative flex cursor-pointer items-center gap-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-cyan-400 uppercase transition-all duration-200 select-none [webkit-app-region:no-drag] hover:border-cyan-500/50 hover:bg-cyan-500/20 hover:text-cyan-300">
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                className='relative flex cursor-pointer items-center gap-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-cyan-400 uppercase transition-all duration-200 select-none [webkit-app-region:no-drag] hover:border-cyan-500/50 hover:bg-cyan-500/20 hover:text-cyan-300'>
                 Update available
               </button>
             </Tooltip>
@@ -443,58 +421,52 @@ export default function WindowBar() {
       {!isMac && (
         <div
           className={`relative z-70 flex h-full [webkit-app-region:no-drag] ${
-            isLinux ? "items-center px-1" : "items-stretch"
+            isLinux ? 'items-center px-1' : 'items-stretch'
           }`}
           style={
             {
-              WebkitAppRegion: "no-drag",
+              WebkitAppRegion: 'no-drag'
             } as React.CSSProperties
           }>
           {/* Minimize */}
           <button
             onClick={handleMinimize}
-            title="Minimize"
-            aria-label="Minimize"
+            title='Minimize'
+            aria-label='Minimize'
             className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
-              isLinux ?
-                "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-white/10"
-              : "h-full w-[46px] hover:bg-white/10"
+              isLinux ? 'mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-white/10' : 'h-full w-[46px] hover:bg-white/10'
             }`}>
             <span
-              className="h-full w-full bg-white/70 transition-colors group-hover:bg-white"
-              style={iconStyle("minimize")}
+              className='h-full w-full bg-white/70 transition-colors group-hover:bg-white'
+              style={iconStyle('minimize')}
             />
           </button>
 
           {/* Maximize / Restore */}
           <button
             onClick={handleMaximize}
-            title={isMaximized ? "Restore" : "Maximize"}
-            aria-label={isMaximized ? "Restore" : "Maximize"}
+            title={isMaximized ? 'Restore' : 'Maximize'}
+            aria-label={isMaximized ? 'Restore' : 'Maximize'}
             className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
-              isLinux ?
-                "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-white/10"
-              : "h-full w-[46px] hover:bg-white/10"
+              isLinux ? 'mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-white/10' : 'h-full w-[46px] hover:bg-white/10'
             }`}>
             <span
-              className="h-full w-full bg-white/70 transition-colors group-hover:bg-white"
-              style={iconStyle(isMaximized ? "restore-down" : "maximize")}
+              className='h-full w-full bg-white/70 transition-colors group-hover:bg-white'
+              style={iconStyle(isMaximized ? 'restore-down' : 'maximize')}
             />
           </button>
 
           {/* Close */}
           <button
             onClick={handleClose}
-            title="Close"
-            aria-label="Close"
+            title='Close'
+            aria-label='Close'
             className={`group flex items-center justify-center border-none bg-transparent p-0 transition-all duration-150 outline-none ${
-              isLinux ?
-                "mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-[#e81123]"
-              : "h-full w-[46px] hover:bg-[#e81123]"
+              isLinux ? 'mx-0.5 h-[28px] w-[28px] rounded-md hover:bg-[#e81123]' : 'h-full w-[46px] hover:bg-[#e81123]'
             }`}>
             <span
-              className="h-full w-full bg-white/80 transition-colors group-hover:bg-white"
-              style={iconStyle("close")}
+              className='h-full w-full bg-white/80 transition-colors group-hover:bg-white'
+              style={iconStyle('close')}
             />
           </button>
         </div>
@@ -502,87 +474,85 @@ export default function WindowBar() {
 
       <Modal
         isOpen={isUpdateModalOpen}
-        onClose={updateCheckState !== "checking" ? () => setIsUpdateModalOpen(false) : undefined}
-        title="App update"
-        maxWidth="sm"
-        hideCloseButton={updateCheckState === "checking"}>
-        {updateCheckState === "checking" && (
-          <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
-            <Spinner size="md" color="cyan" />
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-white">Checking for updates…</p>
-              <p className="text-xs text-white/50">Connecting to update server…</p>
+        onClose={updateCheckState !== 'checking' ? () => setIsUpdateModalOpen(false) : undefined}
+        title='App update'
+        maxWidth='sm'
+        hideCloseButton={updateCheckState === 'checking'}>
+        {updateCheckState === 'checking' && (
+          <div className='flex flex-col items-center justify-center gap-4 py-8 text-center'>
+            <Spinner size='md' color='cyan' />
+            <div className='space-y-1'>
+              <p className='text-sm font-semibold text-white'>Checking for updates…</p>
+              <p className='text-xs text-white/50'>Connecting to update server…</p>
             </div>
           </div>
         )}
 
-        {updateCheckState === "up-to-date" && (
-          <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
-            <CheckCircle2 className="size-10 text-cyan-400" />
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-white">You&apos;re up to date</p>
-              <p className="text-xs text-white/50">
+        {updateCheckState === 'up-to-date' && (
+          <div className='flex flex-col items-center justify-center gap-3 py-6 text-center'>
+            <CheckCircle2 className='size-10 text-cyan-400' />
+            <div className='space-y-1'>
+              <p className='text-sm font-semibold text-white'>You&apos;re up to date</p>
+              <p className='text-xs text-white/50'>
                 Facenox v{checkedUpdateInfo?.currentVersion} is the latest version.
               </p>
             </div>
           </div>
         )}
 
-        {updateCheckState === "available" && (
-          <div className="flex flex-col items-center justify-center gap-4 py-4 text-center">
-            <CloudDownload className="size-10 text-cyan-400" />
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-white">New version available</p>
-              <p className="text-xs text-white/50">
-                v{checkedUpdateInfo?.currentVersion} ➜{" "}
-                <span className="font-bold text-cyan-400">v{checkedUpdateInfo?.latestVersion}</span>
+        {updateCheckState === 'available' && (
+          <div className='flex flex-col items-center justify-center gap-4 py-4 text-center'>
+            <CloudDownload className='size-10 text-cyan-400' />
+            <div className='space-y-1'>
+              <p className='text-sm font-semibold text-white'>New version available</p>
+              <p className='text-xs text-white/50'>
+                v{checkedUpdateInfo?.currentVersion} ➜{' '}
+                <span className='font-bold text-cyan-400'>v{checkedUpdateInfo?.latestVersion}</span>
               </p>
             </div>
             {checkedUpdateInfo?.releaseNotes && (
-              <div className="custom-scroll max-h-32 w-full overflow-y-auto rounded-lg border border-white/5 bg-white/5 p-3 text-left font-mono text-xs text-white/60">
+              <div className='custom-scroll max-h-32 w-full overflow-y-auto rounded-lg border border-white/5 bg-white/5 p-3 text-left font-mono text-xs text-white/60'>
                 {checkedUpdateInfo.releaseNotes}
               </div>
             )}
-            <div className="mt-2 flex gap-3">
+            <div className='mt-2 flex gap-3'>
               <button
                 onClick={() => setIsUpdateModalOpen(false)}
-                className="rounded-lg border border-white/10 bg-transparent px-5 py-2 text-xs font-semibold text-white/70 transition-all hover:bg-white/5 hover:text-white">
+                className='rounded-lg border border-white/10 bg-transparent px-5 py-2 text-xs font-semibold text-white/70 transition-all hover:bg-white/5 hover:text-white'>
                 Cancel
               </button>
               <button
                 onClick={() => {
                   setIsUpdateModalOpen(false)
-                  updaterService.openReleasePage(
-                    checkedUpdateInfo?.releaseUrl || "https://facenox.com/download",
-                  )
+                  updaterService.openReleasePage(checkedUpdateInfo?.releaseUrl || 'https://facenox.com/download')
                 }}
-                className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2 text-xs font-bold text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97]">
+                className='rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2 text-xs font-bold text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97]'>
                 Download update
               </button>
             </div>
           </div>
         )}
 
-        {(updateCheckState === "error" || updateCheckState === "offline") && (
-          <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
-            <AlertCircle className="size-10 text-red-400" />
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-white">Update check failed</p>
-              <p className="text-xs text-white/50">
-                {updateCheckState === "offline" ?
-                  "No internet connection detected."
-                : "Could not reach the update server."}
+        {(updateCheckState === 'error' || updateCheckState === 'offline') && (
+          <div className='flex flex-col items-center justify-center gap-4 py-6 text-center'>
+            <AlertCircle className='size-10 text-red-400' />
+            <div className='space-y-1'>
+              <p className='text-sm font-semibold text-white'>Update check failed</p>
+              <p className='text-xs text-white/50'>
+                {updateCheckState === 'offline' ?
+                  'No internet connection detected.'
+                : 'Could not reach the update server.'}
               </p>
             </div>
-            <div className="mt-2 flex gap-3">
+            <div className='mt-2 flex gap-3'>
               <button
                 onClick={() => setIsUpdateModalOpen(false)}
-                className="rounded-lg border border-white/10 bg-transparent px-5 py-2 text-xs font-semibold text-white/70 transition-all hover:bg-white/5 hover:text-white">
+                className='rounded-lg border border-white/10 bg-transparent px-5 py-2 text-xs font-semibold text-white/70 transition-all hover:bg-white/5 hover:text-white'>
                 Close
               </button>
               <button
                 onClick={handleCheckUpdates}
-                className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2 text-xs font-bold text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97]">
+                className='rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 py-2 text-xs font-bold text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.97]'>
                 Try again
               </button>
             </div>
@@ -596,10 +566,10 @@ export default function WindowBar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#08090a]/85 backdrop-blur-md">
-            <Spinner size="lg" color="cyan" />
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+            className='fixed inset-0 z-[9999] flex items-center justify-center bg-[#08090a]/85 backdrop-blur-md'>
+            <Spinner size='lg' color='cyan' />
           </motion.div>
         )}
       </AnimatePresence>

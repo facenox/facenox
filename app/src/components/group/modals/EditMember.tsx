@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react"
-import { Loader2 } from "lucide-react"
-import { attendanceManager } from "@/services"
-import type { AttendanceMember } from "@/types/recognition"
-import { ErrorMessage, FormInput, Modal } from "@/components/common"
-import { Tooltip } from "@/components/shared"
+import { useState, useEffect, useRef } from 'react'
+import { Loader2 } from 'lucide-react'
+import { attendanceManager } from '@/services'
+import type { AttendanceMember } from '@/types/recognition'
+import { ErrorMessage, FormInput, Modal } from '@/components/common'
+import { Tooltip } from '@/components/shared'
 
 interface EditMemberProps {
   isOpen: boolean
@@ -14,7 +14,7 @@ interface EditMemberProps {
 
 export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberProps) {
   const [name, setName] = useState(member.name)
-  const [role, setRole] = useState(member.role || "")
+  const [role, setRole] = useState(member.role || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -23,7 +23,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
   useEffect(() => {
     if (isOpen) {
       setName(member.name)
-      setRole(member.role || "")
+      setRole(member.role || '')
       setError(null)
 
       const focusInput = () => {
@@ -41,7 +41,7 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
 
   const handleClose = () => {
     setName(member.name)
-    setRole(member.role || "")
+    setRole(member.role || '')
     setError(null)
     setLoading(false)
     onClose()
@@ -56,15 +56,15 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
     try {
       const updates: Partial<AttendanceMember> = {
         name: name.trim(),
-        role: role.trim() || null,
+        role: role.trim() || null
       }
 
       await attendanceManager.updateMember(member.person_id, updates)
       onSuccess()
       handleClose()
     } catch (err) {
-      console.error("Error updating member:", err)
-      setError(err instanceof Error ? err.message : "Failed to update member")
+      console.error('Error updating member:', err)
+      setError(err instanceof Error ? err.message : 'Failed to update member')
     } finally {
       setLoading(false)
     }
@@ -75,64 +75,64 @@ export function EditMember({ isOpen, member, onClose, onSuccess }: EditMemberPro
       isOpen={isOpen}
       onClose={handleClose}
       title={
-        <div className="min-w-0">
-          <h3 className="mb-1 truncate text-xl font-semibold tracking-tight">Edit member</h3>
-          <p className="flex items-center gap-1.5 text-xs font-normal text-white/65">
-            <span className="shrink-0">Update details for</span>
-            <Tooltip content={member.name} position="bottom">
-              <span className="inline-block max-w-[260px] truncate align-bottom font-medium text-cyan-400/80 sm:max-w-[340px]">
+        <div className='min-w-0'>
+          <h3 className='mb-1 truncate text-xl font-semibold tracking-tight'>Edit member</h3>
+          <p className='flex items-center gap-1.5 text-xs font-normal text-white/65'>
+            <span className='shrink-0'>Update details for</span>
+            <Tooltip content={member.name} position='bottom'>
+              <span className='inline-block max-w-[260px] truncate align-bottom font-medium text-cyan-400/80 sm:max-w-[340px]'>
                 {member.name}
               </span>
             </Tooltip>
           </p>
         </div>
       }
-      maxWidth="md">
+      maxWidth='md'>
       <div>
-        {error && <ErrorMessage message={error} className="mb-4" />}
+        {error && <ErrorMessage message={error} className='mb-4' />}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
-          <div className="flex flex-col sm:col-span-8">
+        <div className='grid grid-cols-1 gap-3 sm:grid-cols-12'>
+          <div className='flex flex-col sm:col-span-8'>
             <FormInput
               ref={inputRef}
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Name"
-              aria-label="Name"
+              placeholder='Name'
+              aria-label='Name'
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleSave()
+                if (e.key === 'Enter') handleSave()
               }}
-              focusColor="border-white/20"
+              focusColor='border-white/20'
             />
           </div>
-          <div className="flex flex-col sm:col-span-4">
+          <div className='flex flex-col sm:col-span-4'>
             <FormInput
               value={role}
               onChange={(event) => setRole(event.target.value)}
-              placeholder="Role (optional)"
-              aria-label="Role (optional)"
+              placeholder='Role (optional)'
+              aria-label='Role (optional)'
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleSave()
+                if (e.key === 'Enter') handleSave()
               }}
-              focusColor="border-white/20"
+              focusColor='border-white/20'
             />
           </div>
         </div>
 
-        <div className="mt-8 flex justify-end gap-3">
+        <div className='mt-8 flex justify-end gap-3'>
           <button
             onClick={handleClose}
-            className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
+            className='rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]'>
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!name.trim() || loading}
-            className="min-w-[140px] rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-30">
+            className='min-w-[140px] rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-30'>
             {loading ?
-              <Loader2 className="mr-2 inline size-3.5 animate-spin" />
+              <Loader2 className='mr-2 inline size-3.5 animate-spin' />
             : null}
-            {loading ? "Saving…" : "Update member"}
+            {loading ? 'Saving…' : 'Update member'}
           </button>
         </div>
       </div>

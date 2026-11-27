@@ -1,11 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react"
-import { refreshCloudSyncConfig, type CloudConfigStatus } from "@/services/cloudSyncState"
-import { isOfflineError } from "@/components/settings/sections/syncErrorUtils"
-import {
-  DEFAULT_REMOTE_BASE_URL,
-  OFFICIAL_REMOTE_BASE_URL,
-  isOfficialCloudUrl,
-} from "@/services/syncDefaults"
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { refreshCloudSyncConfig, type CloudConfigStatus } from '@/services/cloudSyncState'
+import { isOfflineError } from '@/components/settings/sections/syncErrorUtils'
+import { DEFAULT_REMOTE_BASE_URL, OFFICIAL_REMOTE_BASE_URL, isOfficialCloudUrl } from '@/services/syncDefaults'
 
 export interface ReversePairingData {
   remoteBaseUrl: string
@@ -19,7 +15,7 @@ export interface ReversePairingData {
 }
 
 export function getEffectiveRemoteUrl(url?: string): string {
-  const clean = (url || "").trim()
+  const clean = (url || '').trim()
   return !clean || isOfficialCloudUrl(clean) ? OFFICIAL_REMOTE_BASE_URL : clean
 }
 
@@ -31,8 +27,8 @@ interface UseCloudPairingOptions {
   deviceName?: string
   connected: boolean
   cloudConfigStatus: CloudConfigStatus
-  busyAction: "saving" | "pairing" | "disconnecting" | "syncing" | null
-  setBusyAction: (action: "saving" | "pairing" | "disconnecting" | "syncing" | null) => void
+  busyAction: 'saving' | 'pairing' | 'disconnecting' | 'syncing' | null
+  setBusyAction: (action: 'saving' | 'pairing' | 'disconnecting' | 'syncing' | null) => void
   onSuccess?: (message: string) => void
   onError?: (message: string | null) => void
   onConnected?: () => void
@@ -47,20 +43,20 @@ export function useCloudPairing({
   configReady = true,
   pairingConfigDirty = false,
   remoteBaseUrl = DEFAULT_REMOTE_BASE_URL,
-  deviceName = "",
+  deviceName = '',
   connected,
   cloudConfigStatus,
   busyAction,
   setBusyAction,
   onSuccess,
   onError,
-  onConnected,
+  onConnected
 }: UseCloudPairingOptions) {
   const [reversePairing, setReversePairing] = useState<ReversePairingData | null>(null)
   const [isInitiating, setIsInitiating] = useState(false)
   const [initiateError, setInitiateError] = useState<string | null>(null)
   const [secondsLeft, setSecondsLeft] = useState<number>(900)
-  const [pairingCode, setPairingCode] = useState("")
+  const [pairingCode, setPairingCode] = useState('')
 
   const isInitiatingRef = useRef(false)
   const pairingRequestRef = useRef(0)
@@ -96,7 +92,7 @@ export function useCloudPairing({
   }, [remoteBaseUrl, deviceName])
 
   useEffect(() => {
-    if (cloudConfigStatus !== "ready" || connected || !enabled) {
+    if (cloudConfigStatus !== 'ready' || connected || !enabled) {
       ++pairingRequestRef.current
       isInitiatingRef.current = false
       setIsInitiating(false)
@@ -110,7 +106,7 @@ export function useCloudPairing({
   }, [])
 
   const resetPairingState = useCallback(() => {
-    setPairingCode("")
+    setPairingCode('')
     setReversePairing(null)
     setInitiateError(null)
   }, [])
@@ -122,7 +118,7 @@ export function useCloudPairing({
         !configReady ||
         pairingConfigDirty ||
         busyAction !== null ||
-        cloudConfigStatus !== "ready" ||
+        cloudConfigStatus !== 'ready' ||
         connected ||
         isInitiatingRef.current
       ) {
@@ -132,16 +128,14 @@ export function useCloudPairing({
       isInitiatingRef.current = true
       setIsInitiating(true)
       setInitiateError(null)
-      const targetUrl = getEffectiveRemoteUrl(
-        overrideBaseUrl !== undefined ? overrideBaseUrl : remoteBaseUrl,
-      )
+      const targetUrl = getEffectiveRemoteUrl(overrideBaseUrl !== undefined ? overrideBaseUrl : remoteBaseUrl)
       const isTargetCustom = !isOfficialCloudUrl(targetUrl)
-      const targetDisplayName = isTargetCustom ? "Custom server" : "Facenox Cloud"
+      const targetDisplayName = isTargetCustom ? 'Custom server' : 'Facenox Cloud'
 
       try {
         const res = await window.electronAPI.sync.initiateReversePairing({
           remoteBaseUrl: targetUrl,
-          deviceName,
+          deviceName
         })
         if (!mountedRef.current || pairingRequestRef.current !== request) return
         if (!res.success || !res.data) {
@@ -154,7 +148,7 @@ export function useCloudPairing({
         }
       } catch (err) {
         if (!mountedRef.current || pairingRequestRef.current !== request) return
-        setInitiateError(err instanceof Error ? err.message : "Connection error.")
+        setInitiateError(err instanceof Error ? err.message : 'Connection error.')
         setReversePairing(null)
       } finally {
         if (mountedRef.current && pairingRequestRef.current === request) {
@@ -163,16 +157,7 @@ export function useCloudPairing({
         }
       }
     },
-    [
-      enabled,
-      configReady,
-      cloudConfigStatus,
-      connected,
-      remoteBaseUrl,
-      deviceName,
-      pairingConfigDirty,
-      busyAction,
-    ],
+    [enabled, configReady, cloudConfigStatus, connected, remoteBaseUrl, deviceName, pairingConfigDirty, busyAction]
   )
 
   useEffect(() => {
@@ -185,18 +170,12 @@ export function useCloudPairing({
       }
     }
 
-    window.addEventListener("online", handleOnline)
-    return () => window.removeEventListener("online", handleOnline)
+    window.addEventListener('online', handleOnline)
+    return () => window.removeEventListener('online', handleOnline)
   }, [enabled, connected, initiateError, startReversePairing, remoteBaseUrl])
 
   useEffect(() => {
-    if (
-      !enabled ||
-      !reversePairing ||
-      pairingConfigDirty ||
-      connected ||
-      cloudConfigStatus !== "ready"
-    ) {
+    if (!enabled || !reversePairing || pairingConfigDirty || connected || cloudConfigStatus !== 'ready') {
       return
     }
     const timer = setInterval(() => {
@@ -212,28 +191,14 @@ export function useCloudPairing({
       reversePairing &&
       !pairingConfigDirty &&
       !connected &&
-      cloudConfigStatus === "ready"
+      cloudConfigStatus === 'ready'
     ) {
       void startReversePairing()
     }
-  }, [
-    secondsLeft,
-    enabled,
-    reversePairing,
-    pairingConfigDirty,
-    connected,
-    cloudConfigStatus,
-    startReversePairing,
-  ])
+  }, [secondsLeft, enabled, reversePairing, pairingConfigDirty, connected, cloudConfigStatus, startReversePairing])
 
   useEffect(() => {
-    if (
-      !enabled ||
-      !reversePairing ||
-      pairingConfigDirty ||
-      connected ||
-      cloudConfigStatus !== "ready"
-    ) {
+    if (!enabled || !reversePairing || pairingConfigDirty || connected || cloudConfigStatus !== 'ready') {
       return
     }
     let currentIntervalMs = (reversePairing.interval || 3) * 1000
@@ -257,18 +222,18 @@ export function useCloudPairing({
         const res = await window.electronAPI.sync.pollDeviceAuthorization({
           remoteBaseUrl: reversePairing.remoteBaseUrl,
           deviceCode: reversePairing.deviceCode,
-          deviceName: reversePairing.deviceName,
+          deviceName: reversePairing.deviceName
         })
 
         // Handle approval even if sync:data-changed flipped `connected` while initial sync ran.
-        if (res.status === "approved" && res.config) {
+        if (res.status === 'approved' && res.config) {
           const current = await loadConfig()
           if (mountedRef.current && current?.connected) {
             setReversePairing(null)
             if (res.initialSyncSucceeded === false) {
-              onErrorRef.current?.(res.message || "Device connected, but the initial sync failed.")
+              onErrorRef.current?.(res.message || 'Device connected, but the initial sync failed.')
             } else {
-              onSuccessRef.current?.(res.message || "Device connected.")
+              onSuccessRef.current?.(res.message || 'Device connected.')
             }
             onConnectedRef.current?.()
           }
@@ -277,17 +242,17 @@ export function useCloudPairing({
 
         if (isCancelled) return
 
-        if (res.status === "expired" || res.status === "claimed") {
+        if (res.status === 'expired' || res.status === 'claimed') {
           void startReversePairing()
           return
         }
-        if (res.status === "denied") {
-          setInitiateError("Device pairing was denied by the administrator.")
+        if (res.status === 'denied') {
+          setInitiateError('Device pairing was denied by the administrator.')
           setReversePairing(null)
           return
         }
-        if (res.status === "error") {
-          setInitiateError(res.error || "Could not verify device authorization.")
+        if (res.status === 'error') {
+          setInitiateError(res.error || 'Could not verify device authorization.')
           setReversePairing(null)
           return
         }
@@ -308,15 +273,7 @@ export function useCloudPairing({
       isCancelled = true
       if (timer) clearTimeout(timer)
     }
-  }, [
-    enabled,
-    reversePairing,
-    pairingConfigDirty,
-    connected,
-    cloudConfigStatus,
-    loadConfig,
-    startReversePairing,
-  ])
+  }, [enabled, reversePairing, pairingConfigDirty, connected, cloudConfigStatus, loadConfig, startReversePairing])
 
   useEffect(() => {
     if (
@@ -324,7 +281,7 @@ export function useCloudPairing({
       configReady &&
       !pairingConfigDirty &&
       busyAction === null &&
-      cloudConfigStatus === "ready" &&
+      cloudConfigStatus === 'ready' &&
       !connected &&
       !reversePairing &&
       !isInitiating &&
@@ -343,39 +300,37 @@ export function useCloudPairing({
     reversePairing,
     isInitiating,
     initiateError,
-    startReversePairing,
+    startReversePairing
   ])
 
   const handlePair = useCallback(async () => {
     if (manualPairingInFlightRef.current) return
     manualPairingInFlightRef.current = true
     onErrorRef.current?.(null)
-    onSuccessRef.current?.("")
-    setBusyAction("pairing")
+    onSuccessRef.current?.('')
+    setBusyAction('pairing')
     try {
       const result = await window.electronAPI.sync.pairDevice({
         remoteBaseUrl: getEffectiveRemoteUrl(remoteBaseUrl),
         pairingCode,
-        deviceName,
+        deviceName
       })
 
       if (!result.success || !result.config) {
-        throw new Error(result.error || "Connection failed.")
+        throw new Error(result.error || 'Connection failed.')
       }
 
       await loadConfig()
       if (!mountedRef.current) return
-      setPairingCode("")
+      setPairingCode('')
       if (result.initialSyncSucceeded === false) {
-        onErrorRef.current?.(result.message || "Device connected, but initial sync failed.")
+        onErrorRef.current?.(result.message || 'Device connected, but initial sync failed.')
       } else {
-        onSuccessRef.current?.(result.message || "Device connected.")
+        onSuccessRef.current?.(result.message || 'Device connected.')
       }
       onConnectedRef.current?.()
     } catch (error) {
-      onErrorRef.current?.(
-        error instanceof Error ? error.message : "Could not connect this desktop.",
-      )
+      onErrorRef.current?.(error instanceof Error ? error.message : 'Could not connect this desktop.')
     } finally {
       manualPairingInFlightRef.current = false
       setBusyAction(null)
@@ -394,6 +349,6 @@ export function useCloudPairing({
     loadConfig,
     startReversePairing,
     handlePair,
-    resetPairingState,
+    resetPairingState
   }
 }

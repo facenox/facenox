@@ -4,18 +4,18 @@
  * Designed to be non-blocking and offline-safe.
  */
 
-import { app, shell, BrowserWindow, net } from "electron"
+import { app, shell, BrowserWindow, net } from 'electron'
 import {
   compareVersions,
   FACENOX_DOWNLOAD_PAGE,
   safeUpdaterLink,
   extractSemverLikeVersion,
   getDownloadUrlForPlatform,
-  type ReleaseAsset,
-} from "./updaterUtils.js"
+  type ReleaseAsset
+} from './updaterUtils.js'
 
-const GITHUB_OWNER = "facenox"
-const GITHUB_REPO = "facenox"
+const GITHUB_OWNER = 'facenox'
+const GITHUB_REPO = 'facenox'
 const GITHUB_RELEASES_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`
 const GITHUB_RELEASES_PAGE = FACENOX_DOWNLOAD_PAGE
 
@@ -61,7 +61,7 @@ interface ReleaseFetchResult {
 
 async function fetchLatestRelease(): Promise<ReleaseFetchResult> {
   if (!isOnline()) {
-    return { release: null, error: "This computer is offline." }
+    return { release: null, error: 'This computer is offline.' }
   }
 
   try {
@@ -70,38 +70,38 @@ async function fetchLatestRelease(): Promise<ReleaseFetchResult> {
 
     const response = await fetch(GITHUB_RELEASES_URL, {
       headers: {
-        Accept: "application/vnd.github.v3+json",
-        "User-Agent": `Facenox/${app.getVersion()}`,
+        Accept: 'application/vnd.github.v3+json',
+        'User-Agent': `Facenox/${app.getVersion()}`
       },
-      signal: controller.signal,
+      signal: controller.signal
     })
 
     clearTimeout(timeoutId)
 
     if (!response.ok) {
       if (response.status === 404) {
-        console.log("[Updater] No releases found")
-        return { release: null, error: "No published release was available to compare versions." }
+        console.log('[Updater] No releases found')
+        return { release: null, error: 'No published release was available to compare versions.' }
       }
       console.log(`[Updater] GitHub API returned ${response.status}`)
       return {
         release: null,
-        error: `The update service returned HTTP ${response.status}.`,
+        error: `The update service returned HTTP ${response.status}.`
       }
     }
 
     return { release: (await response.json()) as GitHubRelease }
   } catch (error) {
     if (error instanceof Error) {
-      if (error.name === "AbortError") {
-        console.log("[Updater] Request timed out - likely offline or slow connection")
-        return { release: null, error: "The update check timed out." }
+      if (error.name === 'AbortError') {
+        console.log('[Updater] Request timed out - likely offline or slow connection')
+        return { release: null, error: 'The update check timed out.' }
       }
-      console.log("[Updater] Network error (expected if offline):", error.message)
+      console.log('[Updater] Network error (expected if offline):', error.message)
     }
     return {
       release: null,
-      error: "Could not reach the update service. Check your connection and try again.",
+      error: 'Could not reach the update service. Check your connection and try again.'
     }
   }
 }
@@ -127,10 +127,10 @@ export async function checkForUpdates(force = false): Promise<UpdateInfo> {
         latestVersion: currentVersion,
         hasUpdate: false,
         releaseUrl: GITHUB_RELEASES_PAGE,
-        releaseNotes: "",
-        publishedAt: "",
+        releaseNotes: '',
+        publishedAt: '',
         downloadUrl: null,
-        isOffline: true,
+        isOffline: true
       }
     }
 
@@ -144,10 +144,10 @@ export async function checkForUpdates(force = false): Promise<UpdateInfo> {
         latestVersion: currentVersion,
         hasUpdate: false,
         releaseUrl: GITHUB_RELEASES_PAGE,
-        releaseNotes: "",
-        publishedAt: "",
+        releaseNotes: '',
+        publishedAt: '',
         downloadUrl: null,
-        ...(fetchError ? { error: fetchError } : {}),
+        ...(fetchError ? { error: fetchError } : {})
       }
       cachedUpdateInfo = noUpdateInfo
       lastCheckTime = now
@@ -162,11 +162,10 @@ export async function checkForUpdates(force = false): Promise<UpdateInfo> {
         latestVersion: currentVersion,
         hasUpdate: false,
         releaseUrl: safeUpdaterLink(release.html_url),
-        releaseNotes: release.body || "",
+        releaseNotes: release.body || '',
         publishedAt: release.published_at,
         downloadUrl: getDownloadUrlForPlatform(release.assets),
-        error:
-          "Latest release tag did not contain a semantic version (expected something like v2.0.0)",
+        error: 'Latest release tag did not contain a semantic version (expected something like v2.0.0)'
       }
 
       cachedUpdateInfo = unknownVersionInfo
@@ -182,17 +181,15 @@ export async function checkForUpdates(force = false): Promise<UpdateInfo> {
       latestVersion,
       hasUpdate,
       releaseUrl: safeUpdaterLink(release.html_url),
-      releaseNotes: release.body || "",
+      releaseNotes: release.body || '',
       publishedAt: release.published_at,
-      downloadUrl: getDownloadUrlForPlatform(release.assets),
+      downloadUrl: getDownloadUrlForPlatform(release.assets)
     }
 
     cachedUpdateInfo = updateInfo
     lastCheckTime = now
 
-    console.log(
-      `[Updater] Latest: v${latestVersion}, Current: v${currentVersion}, Update available: ${hasUpdate}`,
-    )
+    console.log(`[Updater] Latest: v${latestVersion}, Current: v${currentVersion}, Update available: ${hasUpdate}`)
 
     return updateInfo
   })()
@@ -229,7 +226,7 @@ export function openReleasePage(url?: string): Promise<void> {
  */
 export function notifyRenderer(mainWindow: BrowserWindow | null, updateInfo: UpdateInfo): void {
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send("updater:update-available", updateInfo)
+    mainWindow.webContents.send('updater:update-available', updateInfo)
   }
 }
 
@@ -242,11 +239,11 @@ const BACKGROUND_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000 // 24 hours between bac
 export async function startBackgroundUpdateCheck(
   mainWindow: BrowserWindow | null,
   delayMs = 60000, // 1 minute after startup
-  onUpdateAvailable?: (latestVersion: string | null) => void,
+  onUpdateAvailable?: (latestVersion: string | null) => void
 ): Promise<void> {
   async function runCheck() {
     if (!isOnline()) {
-      console.log("[Updater] Skipping background check - offline")
+      console.log('[Updater] Skipping background check - offline')
       return
     }
 
@@ -263,7 +260,7 @@ export async function startBackgroundUpdateCheck(
         notifyRenderer(mainWindow, updateInfo)
       }
     } catch (error) {
-      console.log("[Updater] Background check failed (non-critical):", error)
+      console.log('[Updater] Background check failed (non-critical):', error)
     }
   }
 

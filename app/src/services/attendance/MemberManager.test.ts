@@ -1,11 +1,11 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest"
-import { MemberManager } from "./MemberManager"
-import type { BulkMemberCreationResponse } from "./MemberManager"
-import { HttpClient } from "./HttpClient"
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { MemberManager } from './MemberManager'
+import type { BulkMemberCreationResponse } from './MemberManager'
+import { HttpClient } from './HttpClient'
 
-vi.mock("@/utils/syncNotifier", () => ({ notifyDataChanged: vi.fn() }))
-vi.mock("@/services/WebSocketService", () => ({
-  webSocketService: { refreshActiveStream: vi.fn() },
+vi.mock('@/utils/syncNotifier', () => ({ notifyDataChanged: vi.fn() }))
+vi.mock('@/services/WebSocketService', () => ({
+  webSocketService: { refreshActiveStream: vi.fn() }
 }))
 
 beforeEach(() => {
@@ -16,7 +16,7 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-it("retries a lost creation response with exactly the same creation token", async () => {
+it('retries a lost creation response with exactly the same creation token', async () => {
   const requests: Array<Record<string, string>> = []
   const saved = new Map<string, Record<string, string>>()
   const fetch = vi.fn(async (_url: string, options: RequestInit) => {
@@ -25,57 +25,57 @@ it("retries a lost creation response with exactly the same creation token", asyn
     if (!saved.has(body.creation_id))
       saved.set(body.creation_id, {
         ...body,
-        id: "member-1",
-        person_id: "person-1",
-        joined_at: "2026-11-01T00:00:00Z",
+        id: 'member-1',
+        person_id: 'person-1',
+        joined_at: '2026-11-01T00:00:00Z'
       })
-    if (requests.length === 1) throw new TypeError("Failed to fetch")
+    if (requests.length === 1) throw new TypeError('Failed to fetch')
     return Response.json(saved.get(body.creation_id))
   })
-  vi.stubGlobal("fetch", fetch)
-  const manager = new MemberManager(new HttpClient("http://test.invalid"), { members: "/members" })
-  const pending = manager.addMember("g", "Alice")
+  vi.stubGlobal('fetch', fetch)
+  const manager = new MemberManager(new HttpClient('http://test.invalid'), { members: '/members' })
+  const pending = manager.addMember('g', 'Alice')
   await vi.advanceTimersByTimeAsync(1000)
   const member = await pending
   expect(fetch).toHaveBeenCalledTimes(2)
   expect(requests[0]).toEqual(requests[1])
   expect(requests[0].creation_id).toEqual(expect.any(String))
   expect(saved.size).toBe(1)
-  expect(member.person_id).toBe("person-1")
+  expect(member.person_id).toBe('person-1')
 })
 
-it("preserves an explicit creation token for a manual retry", async () => {
+it('preserves an explicit creation token for a manual retry', async () => {
   const post = vi
     .fn<
       (
         endpoint: string,
         data: Record<string, string>,
-        options?: { retryWrite?: boolean },
+        options?: { retryWrite?: boolean }
       ) => Promise<Record<string, string>>
     >()
-    .mockResolvedValue({ id: "m", person_id: "p", joined_at: "2026-11-01T00:00:00Z" })
-  const manager = new MemberManager({ post } as unknown as HttpClient, { members: "/members" })
-  await manager.addMember("g", " Alice ", { creationId: "same-intent", role: " Role " })
-  await manager.addMember("g", " Alice ", { creationId: "same-intent", role: " Role " })
+    .mockResolvedValue({ id: 'm', person_id: 'p', joined_at: '2026-11-01T00:00:00Z' })
+  const manager = new MemberManager({ post } as unknown as HttpClient, { members: '/members' })
+  await manager.addMember('g', ' Alice ', { creationId: 'same-intent', role: ' Role ' })
+  await manager.addMember('g', ' Alice ', { creationId: 'same-intent', role: ' Role ' })
   expect(post.mock.calls[0]).toEqual(post.mock.calls[1])
   expect(post).toHaveBeenCalledWith(
-    "/members",
-    expect.objectContaining({ creation_id: "same-intent", name: "Alice", role: "Role" }),
-    { retryWrite: true },
+    '/members',
+    expect.objectContaining({ creation_id: 'same-intent', name: 'Alice', role: 'Role' }),
+    { retryWrite: true }
   )
 })
 
-it("uses different creation tokens for distinct add-member actions", async () => {
+it('uses different creation tokens for distinct add-member actions', async () => {
   const post = vi
     .fn<(endpoint: string, data: Record<string, string>) => Promise<Record<string, string>>>()
-    .mockResolvedValue({ id: "m", person_id: "p", joined_at: "2026-11-01T00:00:00Z" })
-  const manager = new MemberManager({ post } as unknown as HttpClient, { members: "/members" })
-  await manager.addMember("g", "Alice")
-  await manager.addMember("g", "Alice")
+    .mockResolvedValue({ id: 'm', person_id: 'p', joined_at: '2026-11-01T00:00:00Z' })
+  const manager = new MemberManager({ post } as unknown as HttpClient, { members: '/members' })
+  await manager.addMember('g', 'Alice')
+  await manager.addMember('g', 'Alice')
   expect(post.mock.calls[0][1].creation_id).not.toBe(post.mock.calls[1][1].creation_id)
 })
 
-it("retries a lost bulk response with the same per-row tokens", async () => {
+it('retries a lost bulk response with the same per-row tokens', async () => {
   const requests: Array<{ members: Array<Record<string, string>> }> = []
   const saved = new Map<string, Record<string, string>>()
   const fetch = vi.fn(async (_url: string, options: RequestInit) => {
@@ -87,16 +87,16 @@ it("retries a lost bulk response with the same per-row tokens", async () => {
           ...row,
           id: row.creation_id,
           person_id: row.creation_id,
-          joined_at: "2026-11-01T00:00:00Z",
+          joined_at: '2026-11-01T00:00:00Z'
         })
       return saved.get(row.creation_id)
     })
-    if (requests.length === 1) throw new TypeError("Failed to fetch")
+    if (requests.length === 1) throw new TypeError('Failed to fetch')
     return Response.json({ success_count: members.length, error_count: 0, errors: [], members })
   })
-  vi.stubGlobal("fetch", fetch)
-  const manager = new MemberManager(new HttpClient("http://test.invalid"), { members: "/members" })
-  const pending = manager.addMembersBulk([{ name: "Alice" }, { name: "Bob" }], "g")
+  vi.stubGlobal('fetch', fetch)
+  const manager = new MemberManager(new HttpClient('http://test.invalid'), { members: '/members' })
+  const pending = manager.addMembersBulk([{ name: 'Alice' }, { name: 'Bob' }], 'g')
   await vi.advanceTimersByTimeAsync(1000)
   const response = await pending
   expect(requests).toHaveLength(2)
@@ -106,62 +106,52 @@ it("retries a lost bulk response with the same per-row tokens", async () => {
   expect(response.members[0].joined_at).toBeInstanceOf(Date)
 })
 
-it("keeps explicit bulk tokens when retrying only a subset of rows", async () => {
+it('keeps explicit bulk tokens when retrying only a subset of rows', async () => {
   const post = vi
-    .fn<
-      (
-        endpoint: string,
-        data: { members: Array<Record<string, string>> },
-      ) => Promise<BulkMemberCreationResponse>
-    >()
+    .fn<(endpoint: string, data: { members: Array<Record<string, string>> }) => Promise<BulkMemberCreationResponse>>()
     .mockResolvedValue({ success_count: 0, error_count: 0, errors: [], members: [] })
-  const manager = new MemberManager({ post } as unknown as HttpClient, { members: "/members" })
+  const manager = new MemberManager({ post } as unknown as HttpClient, { members: '/members' })
   await manager.addMembersBulk(
     [
-      { name: "Alice", creationId: "a" },
-      { name: "Bob", creationId: "b" },
+      { name: 'Alice', creationId: 'a' },
+      { name: 'Bob', creationId: 'b' }
     ],
-    "g",
+    'g'
   )
-  await manager.addMembersBulk([{ name: "Bob", creationId: "b" }], "g")
+  await manager.addMembersBulk([{ name: 'Bob', creationId: 'b' }], 'g')
   expect(post.mock.calls[0][1].members[1]).toEqual(post.mock.calls[1][1].members[0])
 })
 
-it("gives identical names different tokens when they are separate bulk rows", async () => {
+it('gives identical names different tokens when they are separate bulk rows', async () => {
   const post = vi
-    .fn<
-      (
-        endpoint: string,
-        data: { members: Array<Record<string, string>> },
-      ) => Promise<BulkMemberCreationResponse>
-    >()
+    .fn<(endpoint: string, data: { members: Array<Record<string, string>> }) => Promise<BulkMemberCreationResponse>>()
     .mockResolvedValue({ success_count: 0, error_count: 0, errors: [], members: [] })
-  const manager = new MemberManager({ post } as unknown as HttpClient, { members: "/members" })
-  await manager.addMembersBulk([{ name: "Alice" }, { name: "Alice" }], "g")
+  const manager = new MemberManager({ post } as unknown as HttpClient, { members: '/members' })
+  await manager.addMembersBulk([{ name: 'Alice' }, { name: 'Alice' }], 'g')
   const rows = post.mock.calls[0][1].members
   expect(rows[0].creation_id).not.toBe(rows[1].creation_id)
 })
 
-it("preserves explicit null fields when clearing role or email via updateMember", async () => {
+it('preserves explicit null fields when clearing role or email via updateMember', async () => {
   const seenBodies: string[] = []
   const fetch = vi.fn(async (_url: string, options: RequestInit) => {
     seenBodies.push(String(options.body))
     return Response.json({
-      id: "m1",
-      person_id: "p1",
-      group_id: "g1",
-      name: "Alice",
+      id: 'm1',
+      person_id: 'p1',
+      group_id: 'g1',
+      name: 'Alice',
       role: null,
       email: null,
-      joined_at: "2026-11-01T00:00:00Z",
-      is_active: true,
+      joined_at: '2026-11-01T00:00:00Z',
+      is_active: true
     })
   })
-  vi.stubGlobal("fetch", fetch)
-  const manager = new MemberManager(new HttpClient("http://test.invalid"), {
-    members: "/attendance/members",
+  vi.stubGlobal('fetch', fetch)
+  const manager = new MemberManager(new HttpClient('http://test.invalid'), {
+    members: '/attendance/members'
   })
-  const updated = await manager.updateMember("p1", { role: null, email: null })
+  const updated = await manager.updateMember('p1', { role: null, email: null })
   expect(JSON.parse(seenBodies[0])).toEqual({ role: null, email: null })
   expect(updated).toBe(true)
 })

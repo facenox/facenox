@@ -1,14 +1,14 @@
-import { renderHook, waitFor, act } from "@testing-library/react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
-import { useAttendanceBootstrap } from "@/components/main/hooks/useAttendanceBootstrap"
-import { useAttendanceStore, useUIStore } from "@/components/main/stores"
+import { renderHook, waitFor, act } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useAttendanceBootstrap } from '@/components/main/hooks/useAttendanceBootstrap'
+import { useAttendanceStore, useUIStore } from '@/components/main/stores'
 
 const { mockBootstrapShellData } = vi.hoisted(() => ({
-  mockBootstrapShellData: vi.fn(),
+  mockBootstrapShellData: vi.fn()
 }))
 
-vi.mock("@/components/main/hooks/useAttendanceGroups", () => ({
-  bootstrapShellData: (...args: unknown[]) => mockBootstrapShellData(...args),
+vi.mock('@/components/main/hooks/useAttendanceGroups', () => ({
+  bootstrapShellData: (...args: unknown[]) => mockBootstrapShellData(...args)
 }))
 
 function resetStores() {
@@ -22,7 +22,7 @@ function resetStores() {
     hasSeenIntro: false,
     isHydrated: false,
     sidebarCollapsed: false,
-    sidebarWidth: 300,
+    sidebarWidth: 300
   })
 
   useAttendanceStore.setState({
@@ -39,12 +39,12 @@ function resetStores() {
     showGroupManagement: false,
     showDeleteConfirmation: false,
     groupToDelete: null,
-    newGroupName: "",
+    newGroupName: '',
     persistentCooldowns: new Map(),
     attendanceCooldownSeconds: 8,
     enableSpoofDetection: true,
     maxRecognitionFacesPerFrame: 6,
-    dataRetentionDays: 0,
+    dataRetentionDays: 0
   })
 }
 
@@ -58,14 +58,14 @@ function createDeferred<T>() {
   return { promise, resolve, reject }
 }
 
-describe("useAttendanceBootstrap", () => {
+describe('useAttendanceBootstrap', () => {
   beforeEach(() => {
     resetStores()
     mockBootstrapShellData.mockReset()
     vi.mocked(window.facenoxElectron!.updateSplashDataStep).mockClear()
   })
 
-  it("does nothing before UI hydration finishes", () => {
+  it('does nothing before UI hydration finishes', () => {
     renderHook(() => useAttendanceBootstrap())
 
     expect(mockBootstrapShellData).not.toHaveBeenCalled()
@@ -73,38 +73,34 @@ describe("useAttendanceBootstrap", () => {
     expect(useAttendanceStore.getState().isShellReady).toBe(false)
   })
 
-  it("bootstraps the shell and marks it ready on success", async () => {
+  it('bootstraps the shell and marks it ready on success', async () => {
     useUIStore.setState({ isHydrated: true })
     mockBootstrapShellData.mockResolvedValue(undefined)
 
     renderHook(() => useAttendanceBootstrap())
 
-    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(
-      1,
-      8,
-      "Loading attendance data",
-    )
+    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(1, 8, 'Loading attendance data')
 
     await waitFor(() => {
       expect(useAttendanceStore.getState().isShellReady).toBe(true)
     })
 
     expect(mockBootstrapShellData).toHaveBeenCalledTimes(1)
-    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(2, 9, "Ready")
+    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(2, 9, 'Ready')
     expect(useAttendanceStore.getState().isShellBootstrapping).toBe(false)
     expect(useAttendanceStore.getState().shellBootstrapError).toBeNull()
     expect(useUIStore.getState().error).toBeNull()
   })
 
-  it("captures bootstrap errors and exposes them to the UI store", async () => {
+  it('captures bootstrap errors and exposes them to the UI store', async () => {
     useUIStore.setState({ isHydrated: true })
-    mockBootstrapShellData.mockRejectedValue(new Error("backend offline"))
+    mockBootstrapShellData.mockRejectedValue(new Error('backend offline'))
 
     renderHook(() => useAttendanceBootstrap())
 
     await waitFor(() => {
       expect(useAttendanceStore.getState().shellBootstrapError).toBe(
-        "Facenox couldn't load your data because the local service is offline. Restart the app and try again.",
+        "Facenox couldn't load your data because the local service is offline. Restart the app and try again."
       )
     })
 
@@ -112,28 +108,20 @@ describe("useAttendanceBootstrap", () => {
     expect(useAttendanceStore.getState().isShellBootstrapping).toBe(false)
     expect(useAttendanceStore.getState().isPanelLoading).toBe(false)
     expect(useUIStore.getState().error).toBe(
-      "Facenox couldn't load your data because the local service is offline. Restart the app and try again.",
+      "Facenox couldn't load your data because the local service is offline. Restart the app and try again."
     )
     expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenCalledTimes(1)
-    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(
-      1,
-      8,
-      "Loading attendance data",
-    )
+    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(1, 8, 'Loading attendance data')
   })
 
-  it("completes bootstrap state mutation even if the hook unmounts (no cancellation)", async () => {
+  it('completes bootstrap state mutation even if the hook unmounts (no cancellation)', async () => {
     useUIStore.setState({ isHydrated: true })
     const deferred = createDeferred<void>()
     mockBootstrapShellData.mockImplementation(() => deferred.promise)
 
     const { unmount } = renderHook(() => useAttendanceBootstrap())
 
-    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(
-      1,
-      8,
-      "Loading attendance data",
-    )
+    expect(window.facenoxElectron!.updateSplashDataStep).toHaveBeenNthCalledWith(1, 8, 'Loading attendance data')
 
     unmount()
 

@@ -1,49 +1,45 @@
-import { renderHook, act } from "@testing-library/react"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { useSettings } from "@/components/settings/hooks/useSettings"
-import { useGroupUIStore } from "@/components/group/stores"
-import { useAttendanceStore, useUIStore } from "@/components/main/stores"
-import { createAttendanceGroup, createAttendanceMember } from "@/test/fixtures"
-import { createSyncConfig, getElectronAPIMock } from "@/test/mocks/electron"
+import { renderHook, act } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useSettings } from '@/components/settings/hooks/useSettings'
+import { useGroupUIStore } from '@/components/group/stores'
+import { useAttendanceStore, useUIStore } from '@/components/main/stores'
+import { createAttendanceGroup, createAttendanceMember } from '@/test/fixtures'
+import { createSyncConfig, getElectronAPIMock } from '@/test/mocks/electron'
 
-const {
-  mockBackendService,
-  mockAttendanceManager,
-  mockPersistentSettings,
-  mockConfirm,
-  mockAlert,
-} = vi.hoisted(() => ({
-  mockBackendService: {
-    getDatabaseStats: vi.fn(),
-    clearDatabase: vi.fn(),
-  },
-  mockAttendanceManager: {
-    getAttendanceStats: vi.fn(),
-    getTimeHealth: vi.fn(),
-  },
-  mockPersistentSettings: {
-    get: vi.fn(),
-  },
-  mockConfirm: vi.fn(),
-  mockAlert: vi.fn(),
-}))
+const { mockBackendService, mockAttendanceManager, mockPersistentSettings, mockConfirm, mockAlert } = vi.hoisted(
+  () => ({
+    mockBackendService: {
+      getDatabaseStats: vi.fn(),
+      clearDatabase: vi.fn()
+    },
+    mockAttendanceManager: {
+      getAttendanceStats: vi.fn(),
+      getTimeHealth: vi.fn()
+    },
+    mockPersistentSettings: {
+      get: vi.fn()
+    },
+    mockConfirm: vi.fn(),
+    mockAlert: vi.fn()
+  })
+)
 
-vi.mock("@/services", () => ({
+vi.mock('@/services', () => ({
   backendService: mockBackendService,
   attendanceManager: mockAttendanceManager,
-  persistentSettings: mockPersistentSettings,
+  persistentSettings: mockPersistentSettings
 }))
 
-vi.mock("@/components/shared", () => ({
+vi.mock('@/components/shared', () => ({
   useDialog: () => ({
     confirm: mockConfirm,
-    alert: mockAlert,
-  }),
+    alert: mockAlert
+  })
 }))
 
 function resetGroupUIStore() {
   useGroupUIStore.setState({
-    activeSection: "overview",
+    activeSection: 'overview',
     isSidebarCollapsed: false,
 
     showAddMemberModal: false,
@@ -53,7 +49,7 @@ function resetGroupUIStore() {
     editingMember: null,
     preSelectedMemberId: null,
     lastEnrollmentSource: null,
-    lastEnrollmentMode: null,
+    lastEnrollmentMode: null
   })
 }
 
@@ -67,23 +63,23 @@ function resetGlobalStores() {
     systemStats: {
       totalPersons: null,
       totalMembers: null,
-      lastUpdated: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
     },
     timeHealth: null,
-    isStatsLoading: false,
+    isStatsLoading: false
   })
   useUIStore.setState({
-    lastSettingsSection: "group",
-    lastGroupInitialSection: "overview",
-    lastGroupId: null,
+    lastSettingsSection: 'group',
+    lastGroupInitialSection: 'overview',
+    lastGroupId: null
   })
 }
 
 function createProps(overrides: Partial<Parameters<typeof useSettings>[0]> = {}) {
   const currentGroup = createAttendanceGroup()
   return {
-    initialGroupSection: "overview" as const,
-    initialSection: "group",
+    initialGroupSection: 'overview' as const,
+    initialSection: 'group',
     initialGroups: [currentGroup],
     currentGroup,
     currentGroupMembers: [createAttendanceMember()],
@@ -94,9 +90,9 @@ function createProps(overrides: Partial<Parameters<typeof useSettings>[0]> = {})
     onGroupsChanged: vi.fn(),
     quickSettings: {
       cameraMirrored: true,
-      showRecognitionNames: true,
+      showRecognitionNames: true
     },
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -108,7 +104,7 @@ async function flushInitialLoad() {
   })
 }
 
-describe("useSettings", () => {
+describe('useSettings', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     resetGroupUIStore()
@@ -117,32 +113,32 @@ describe("useSettings", () => {
     mockBackendService.getDatabaseStats.mockReset().mockResolvedValue({ total_persons: 12 })
     mockBackendService.clearDatabase.mockReset().mockResolvedValue({
       success: true,
-      message: "Cleared",
+      message: 'Cleared'
     })
     mockAttendanceManager.getAttendanceStats.mockReset().mockResolvedValue({ total_members: 7 })
     mockAttendanceManager.getTimeHealth.mockReset().mockResolvedValue({
-      source: "system",
-      current_time_utc: "2026-04-01T00:00:00.000Z",
-      current_time_local: "2026-04-01T08:00:00.000+08:00",
-      time_zone_name: "Asia/Manila",
+      source: 'system',
+      current_time_utc: '2026-04-01T00:00:00.000Z',
+      current_time_local: '2026-04-01T08:00:00.000+08:00',
+      time_zone_name: 'Asia/Manila',
       os_clock_drift_seconds: 0,
-      online_verification_status: "ok",
+      online_verification_status: 'ok'
     })
     mockConfirm.mockReset().mockResolvedValue(true)
     mockAlert.mockReset().mockResolvedValue(undefined)
-    vi.spyOn(console, "error").mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
     vi.useRealTimers()
   })
 
-  it("does not expose editable policy controls while the shared snapshot is loading", async () => {
+  it('does not expose editable policy controls while the shared snapshot is loading', async () => {
     let finish!: (value: ReturnType<typeof createSyncConfig>) => void
     getElectronAPIMock().sync.getConfig.mockReturnValue(
       new Promise<ReturnType<typeof createSyncConfig>>((resolve) => {
         finish = resolve
-      }),
+      })
     )
     const { result } = renderHook(() => useSettings(createProps()))
     expect(result.current.cloudPolicyReady).toBe(false)
@@ -152,8 +148,8 @@ describe("useSettings", () => {
           connected: true,
           forceLiveness: true,
           policyReady: true,
-          policyOverrides: { dataRetentionDays: 30 },
-        }),
+          policyOverrides: { dataRetentionDays: 30 }
+        })
       )
     })
     expect(result.current.cloudPolicyReady).toBe(true)
@@ -161,8 +157,8 @@ describe("useSettings", () => {
     expect(result.current.policyOverrides.dataRetentionDays).toBe(30)
   })
 
-  it("loads fresh time health when General opens even when other settings use cached data", async () => {
-    const { result } = renderHook(() => useSettings(createProps({ initialSection: "attendance" })))
+  it('loads fresh time health when General opens even when other settings use cached data', async () => {
+    const { result } = renderHook(() => useSettings(createProps({ initialSection: 'attendance' })))
 
     expect(result.current.systemData.totalPersons).toBeNull()
     expect(result.current.timeHealthState.loading).toBe(true)
@@ -171,56 +167,52 @@ describe("useSettings", () => {
 
     expect(result.current.systemData.totalPersons).toBe(12)
     expect(result.current.systemData.totalMembers).toBe(7)
-    expect(result.current.timeHealthState.timeHealth?.source).toBe("system")
+    expect(result.current.timeHealthState.timeHealth?.source).toBe('system')
     expect(result.current.timeHealthState.loading).toBe(false)
     expect(mockAttendanceManager.getTimeHealth).toHaveBeenCalledWith(false)
   })
 
-  it("refreshes local diagnostics after a policy timezone change without contacting network time", async () => {
-    useAttendanceStore.setState({ attendanceTimezone: "Asia/Manila" })
-    const { unmount } = renderHook(() => useSettings(createProps({ initialSection: "attendance" })))
+  it('refreshes local diagnostics after a policy timezone change without contacting network time', async () => {
+    useAttendanceStore.setState({ attendanceTimezone: 'Asia/Manila' })
+    const { unmount } = renderHook(() => useSettings(createProps({ initialSection: 'attendance' })))
     await flushInitialLoad()
     mockAttendanceManager.getTimeHealth.mockClear().mockResolvedValue({
-      source: "updated",
-      attendance_time_zone_name: "Pacific/Chatham",
+      source: 'updated',
+      attendance_time_zone_name: 'Pacific/Chatham'
     })
     await act(async () => {
-      useAttendanceStore.setState({ attendanceTimezone: "Pacific/Chatham" })
+      useAttendanceStore.setState({ attendanceTimezone: 'Pacific/Chatham' })
     })
     expect(mockAttendanceManager.getTimeHealth).toHaveBeenCalledWith(false)
-    expect(useAttendanceStore.getState().timeHealth?.attendance_time_zone_name).toBe(
-      "Pacific/Chatham",
-    )
+    expect(useAttendanceStore.getState().timeHealth?.attendance_time_zone_name).toBe('Pacific/Chatham')
     unmount()
   })
 
-  it("ignores an earlier timezone response after a later policy refresh", async () => {
+  it('ignores an earlier timezone response after a later policy refresh', async () => {
     let finishOld!: (value: unknown) => void
     mockAttendanceManager.getTimeHealth.mockReturnValueOnce(
       new Promise((resolve) => {
         finishOld = resolve
-      }),
+      })
     )
-    useAttendanceStore.setState({ attendanceTimezone: "Asia/Manila" })
-    const { unmount } = renderHook(() => useSettings(createProps({ initialSection: "attendance" })))
+    useAttendanceStore.setState({ attendanceTimezone: 'Asia/Manila' })
+    const { unmount } = renderHook(() => useSettings(createProps({ initialSection: 'attendance' })))
     await flushInitialLoad()
     mockAttendanceManager.getTimeHealth.mockResolvedValue({
-      source: "new",
-      attendance_time_zone_name: "America/St_Johns",
+      source: 'new',
+      attendance_time_zone_name: 'America/St_Johns'
     })
     await act(async () => {
-      useAttendanceStore.setState({ attendanceTimezone: "America/St_Johns" })
+      useAttendanceStore.setState({ attendanceTimezone: 'America/St_Johns' })
     })
     await act(async () => {
-      finishOld({ source: "old", attendance_time_zone_name: "Asia/Manila" })
+      finishOld({ source: 'old', attendance_time_zone_name: 'Asia/Manila' })
     })
-    expect(useAttendanceStore.getState().timeHealth?.attendance_time_zone_name).toBe(
-      "America/St_Johns",
-    )
+    expect(useAttendanceStore.getState().timeHealth?.attendance_time_zone_name).toBe('America/St_Johns')
     unmount()
   })
 
-  it("only requests online time verification after an explicit action", async () => {
+  it('only requests online time verification after an explicit action', async () => {
     const { result } = renderHook(() => useSettings(createProps()))
 
     await flushInitialLoad()
@@ -234,23 +226,21 @@ describe("useSettings", () => {
     expect(mockAttendanceManager.getTimeHealth).toHaveBeenCalledWith(true)
   })
 
-  it("shows an error instead of stale success when online verification fails", async () => {
+  it('shows an error instead of stale success when online verification fails', async () => {
     const { result } = renderHook(() => useSettings(createProps()))
 
     await flushInitialLoad()
-    mockAttendanceManager.getTimeHealth.mockRejectedValueOnce(new Error("offline"))
+    mockAttendanceManager.getTimeHealth.mockRejectedValueOnce(new Error('offline'))
 
     await act(async () => {
       await result.current.verifyTimeOnline()
     })
 
-    expect(result.current.timeHealthState.error).toBe(
-      "Clock check failed. Check your connection and try again.",
-    )
+    expect(result.current.timeHealthState.error).toBe('Clock check failed. Check your connection and try again.')
     expect(result.current.timeHealthState.loading).toBe(false)
   })
 
-  it("clears the database after confirmation and shows a success dialog", async () => {
+  it('clears the database after confirmation and shows a success dialog', async () => {
     const { result } = renderHook(() => useSettings(createProps()))
 
     await flushInitialLoad()
@@ -264,21 +254,21 @@ describe("useSettings", () => {
 
     expect(mockConfirm).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Clear face data",
-        confirmVariant: "danger",
-      }),
+        title: 'Clear face data',
+        confirmVariant: 'danger'
+      })
     )
     expect(mockBackendService.clearDatabase).toHaveBeenCalledTimes(1)
     expect(mockAlert).toHaveBeenCalledWith({
-      title: "Face data cleared",
-      message: "All enrolled face data was removed.",
+      title: 'Face data cleared',
+      message: 'All enrolled face data was removed.'
     })
     expect(mockBackendService.getDatabaseStats).toHaveBeenCalledTimes(1)
     expect(mockAttendanceManager.getAttendanceStats).toHaveBeenCalledTimes(1)
     expect(result.current.isLoading).toBe(false)
   })
 
-  it("does not clear the database if the confirmation dialog is cancelled", async () => {
+  it('does not clear the database if the confirmation dialog is cancelled', async () => {
     mockConfirm.mockResolvedValueOnce(false)
     const { result } = renderHook(() => useSettings(createProps()))
 
@@ -292,8 +282,8 @@ describe("useSettings", () => {
     expect(mockAlert).not.toHaveBeenCalled()
   })
 
-  it("shows a danger dialog when clearing the database fails", async () => {
-    mockBackendService.clearDatabase.mockRejectedValueOnce(new Error("clear failed"))
+  it('shows a danger dialog when clearing the database fails', async () => {
+    mockBackendService.clearDatabase.mockRejectedValueOnce(new Error('clear failed'))
     const { result } = renderHook(() => useSettings(createProps()))
 
     await flushInitialLoad()
@@ -303,24 +293,24 @@ describe("useSettings", () => {
     })
 
     expect(mockAlert).toHaveBeenCalledWith({
-      title: "Could not clear face data",
+      title: 'Could not clear face data',
       message: "Facenox couldn't clear the enrolled face data. Try again.",
-      variant: "danger",
+      variant: 'danger'
     })
     expect(result.current.isLoading).toBe(false)
   })
 
-  it("reloads system data and forwards callbacks when groups change", async () => {
+  it('reloads system data and forwards callbacks when groups change', async () => {
     const onGroupSelect = vi.fn()
     const onGroupsChanged = vi.fn()
-    const nextGroup = createAttendanceGroup({ id: "group-2", name: "Afternoon Class" })
+    const nextGroup = createAttendanceGroup({ id: 'group-2', name: 'Afternoon Class' })
     const { result } = renderHook(() =>
       useSettings(
         createProps({
           onGroupSelect,
-          onGroupsChanged,
-        }),
-      ),
+          onGroupsChanged
+        })
+      )
     )
 
     await flushInitialLoad()
@@ -337,20 +327,17 @@ describe("useSettings", () => {
     expect(onGroupsChanged).toHaveBeenCalledTimes(1)
   })
 
-  it("resets export handlers outside the reports view and clears add-member handlers when no group is selected", async () => {
+  it('resets export handlers outside the reports view and clears add-member handlers when no group is selected', async () => {
     const initialGroup = createAttendanceGroup()
     const exportCSV = vi.fn()
     const addMemberHandler = vi.fn()
-    const { result, rerender } = renderHook(
-      (props: ReturnType<typeof createProps>) => useSettings(props),
-      {
-        initialProps: createProps({
-          initialSection: "group",
-          initialGroupSection: "reports",
-          currentGroup: initialGroup,
-        }),
-      },
-    )
+    const { result, rerender } = renderHook((props: ReturnType<typeof createProps>) => useSettings(props), {
+      initialProps: createProps({
+        initialSection: 'group',
+        initialGroupSection: 'reports',
+        currentGroup: initialGroup
+      })
+    })
 
     act(() => {
       result.current.handleExportHandlersReady({ exportCSV })
@@ -361,15 +348,15 @@ describe("useSettings", () => {
     expect(result.current.addMemberHandler).toBe(addMemberHandler)
 
     act(() => {
-      result.current.setActiveSection("attendance")
+      result.current.setActiveSection('attendance')
     })
 
     expect(result.current.reportsExportHandlers).toBeNull()
 
     rerender(
       createProps({
-        currentGroup: null,
-      }),
+        currentGroup: null
+      })
     )
 
     expect(result.current.addMemberHandler).toBeNull()

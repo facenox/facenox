@@ -1,17 +1,13 @@
-import type { ReactNode } from "react"
-import { screen, fireEvent, act, waitFor } from "@testing-library/react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
-import { Reports } from "@/components/group/sections/Reports"
-import { useGroupStore } from "@/components/group/stores"
-import { useAttendanceStore } from "@/components/main/stores"
-import {
-  createAttendanceGroup,
-  createAttendanceMember,
-  createAttendanceSession,
-} from "@/test/fixtures"
-import { renderWithProviders } from "@/test/utils/renderWithProviders"
-import { attendanceManager } from "@/services/AttendanceManager"
-import type { RowData } from "./reports/types"
+import type { ReactNode } from 'react'
+import { screen, fireEvent, act, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { Reports } from '@/components/group/sections/Reports'
+import { useGroupStore } from '@/components/group/stores'
+import { useAttendanceStore } from '@/components/main/stores'
+import { createAttendanceGroup, createAttendanceMember, createAttendanceSession } from '@/test/fixtures'
+import { renderWithProviders } from '@/test/utils/renderWithProviders'
+import { attendanceManager } from '@/services/AttendanceManager'
+import type { RowData } from './reports/types'
 
 const mockUseReportData = vi.fn()
 const mockUseReportViews = vi.fn()
@@ -21,47 +17,42 @@ const mockExportAllGroupsReportToCSV = vi.fn()
 const mockExportAllGroupsReportToExcel = vi.fn()
 const mockExportAllGroupsReportToIndividualCSVs = vi.fn()
 
-vi.mock("framer-motion", () => ({
+vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => children,
   motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-      <div {...props}>{children}</div>
-    ),
-    span: ({ children, ...props }: React.HTMLAttributes<HTMLSpanElement>) => (
-      <span {...props}>{children}</span>
-    ),
+    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
+    span: ({ children, ...props }: React.HTMLAttributes<HTMLSpanElement>) => <span {...props}>{children}</span>,
     button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
       <button {...props}>{children}</button>
-    ),
-  },
+    )
+  }
 }))
 
-vi.mock("@/components/group/sections/reports/hooks/useReportData", () => ({
-  useReportData: (...args: unknown[]) => mockUseReportData(...args),
+vi.mock('@/components/group/sections/reports/hooks/useReportData', () => ({
+  useReportData: (...args: unknown[]) => mockUseReportData(...args)
 }))
 
-vi.mock("@/components/group/sections/reports/hooks/useReportViews", () => ({
-  useReportViews: (...args: unknown[]) => mockUseReportViews(...args),
+vi.mock('@/components/group/sections/reports/hooks/useReportViews', () => ({
+  useReportViews: (...args: unknown[]) => mockUseReportViews(...args)
 }))
 
-vi.mock("@/components/group/sections/reports/hooks/useReportTransform", () => ({
-  useReportTransform: (...args: unknown[]) => mockUseReportTransform(...args),
+vi.mock('@/components/group/sections/reports/hooks/useReportTransform', () => ({
+  useReportTransform: (...args: unknown[]) => mockUseReportTransform(...args)
 }))
 
-vi.mock("@/components/group/sections/reports/utils/exportUtils", () => ({
+vi.mock('@/components/group/sections/reports/utils/exportUtils', () => ({
   exportReportToCSV: (...args: unknown[]) => mockExportReportToCSV(...args),
   exportAllGroupsReportToCSV: (...args: unknown[]) => mockExportAllGroupsReportToCSV(...args),
   exportAllGroupsReportToExcel: (...args: unknown[]) => mockExportAllGroupsReportToExcel(...args),
-  exportAllGroupsReportToIndividualCSVs: (...args: unknown[]) =>
-    mockExportAllGroupsReportToIndividualCSVs(...args),
+  exportAllGroupsReportToIndividualCSVs: (...args: unknown[]) => mockExportAllGroupsReportToIndividualCSVs(...args)
 }))
 
-vi.mock("@/components/group/sections/reports/components/ReportToolbar", () => ({
+vi.mock('@/components/group/sections/reports/components/ReportToolbar', () => ({
   ReportToolbar: ({
     onStartDateChange,
     onEndDateChange,
     search,
-    setSearch,
+    setSearch
   }: {
     onStartDateChange: (value: string) => void
     onEndDateChange: (value: string) => void
@@ -69,25 +60,25 @@ vi.mock("@/components/group/sections/reports/components/ReportToolbar", () => ({
     setSearch: (value: string) => void
   }) => (
     <div>
-      <button type="button" onClick={() => onStartDateChange("2026-04-01")}>
+      <button type='button' onClick={() => onStartDateChange('2026-04-01')}>
         Set Start
       </button>
-      <button type="button" onClick={() => onEndDateChange("2026-04-07")}>
+      <button type='button' onClick={() => onEndDateChange('2026-04-07')}>
         Set End
       </button>
-      <button type="button" onClick={() => setSearch(search ? "" : "alice")}>
+      <button type='button' onClick={() => setSearch(search ? '' : 'alice')}>
         Toggle Search
       </button>
     </div>
-  ),
+  )
 }))
 
-vi.mock("@/components/group/sections/reports/components/ReportTable", () => ({
+vi.mock('@/components/group/sections/reports/components/ReportTable', () => ({
   ReportTable: ({
     groupedRows,
     error,
     attendanceTimeZone,
-    onEditRow,
+    onEditRow
   }: {
     groupedRows: Record<string, RowData[]>
     error?: string | null
@@ -97,14 +88,14 @@ vi.mock("@/components/group/sections/reports/components/ReportTable", () => ({
     <div>
       {error && <div>{error}</div>}
       <div>Mock Report Table ({Object.keys(groupedRows).length})</div>
-      <div data-testid="report-timezone">{attendanceTimeZone}</div>
+      <div data-testid='report-timezone'>{attendanceTimeZone}</div>
       {onEditRow && groupedRows.__all__?.[0] && (
-        <button type="button" onClick={() => onEditRow(groupedRows.__all__[0])}>
+        <button type='button' onClick={() => onEditRow(groupedRows.__all__[0])}>
           Correct attendance
         </button>
       )}
     </div>
-  ),
+  )
 }))
 
 function resetGroupStore() {
@@ -114,24 +105,24 @@ function resetGroupStore() {
     members: [],
     loading: false,
     error: null,
-    lastDeletedGroupId: null,
+    lastDeletedGroupId: null
   })
 }
 
 function defaultViewsState() {
   return {
-    visibleColumns: ["name", "date", "status", "check_in_time"],
+    visibleColumns: ['name', 'date', 'status', 'check_in_time'],
     setVisibleColumns: vi.fn(),
-    groupBy: "none",
+    groupBy: 'none',
     setGroupBy: vi.fn(),
-    statusFilter: "all",
+    statusFilter: 'all',
     setStatusFilter: vi.fn(),
-    search: "",
-    setSearch: vi.fn(),
+    search: '',
+    setSearch: vi.fn()
   }
 }
 
-describe("Reports", () => {
+describe('Reports', () => {
   beforeEach(() => {
     mockExportReportToCSV.mockReturnValue({ success: true })
     mockExportAllGroupsReportToCSV.mockResolvedValue({ success: true })
@@ -143,7 +134,7 @@ describe("Reports", () => {
     mockUseReportTransform.mockReturnValue({
       groupedRows: { __all__: [] },
       daysTracked: 7,
-      allColumns: [],
+      allColumns: []
     })
     mockUseReportData.mockReturnValue({
       report: null,
@@ -151,34 +142,34 @@ describe("Reports", () => {
       members: [],
       loading: false,
       error: null,
-      generateReport: vi.fn(),
+      generateReport: vi.fn()
     })
   })
 
-  it("shows the loading state", () => {
+  it('shows the loading state', () => {
     mockUseReportData.mockReturnValue({
       report: null,
       sessions: [],
       members: [],
       loading: true,
       error: null,
-      generateReport: vi.fn(),
+      generateReport: vi.fn()
     })
 
     renderWithProviders(<Reports group={createAttendanceGroup()} />)
-    expect(screen.getByText("Generating report")).toBeInTheDocument()
+    expect(screen.getByText('Generating report')).toBeInTheDocument()
   })
 
-  it("shows the empty members state", () => {
+  it('shows the empty members state', () => {
     renderWithProviders(<Reports group={createAttendanceGroup()} onAddMember={vi.fn()} />)
 
-    expect(screen.getByText("This group has no members")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Add member" })).toBeInTheDocument()
+    expect(screen.getByText('This group has no members')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add member' })).toBeInTheDocument()
   })
 
-  it("renders the table when members exist", () => {
+  it('renders the table when members exist', () => {
     useGroupStore.setState({
-      members: [createAttendanceMember({ person_id: "member-1", name: "Alice" })],
+      members: [createAttendanceMember({ person_id: 'member-1', name: 'Alice' })]
     })
     mockUseReportData.mockReturnValue({
       report: null,
@@ -186,55 +177,53 @@ describe("Reports", () => {
       members: useGroupStore.getState().members,
       loading: false,
       error: null,
-      generateReport: vi.fn(),
+      generateReport: vi.fn()
     })
     mockUseReportTransform.mockReturnValue({
-      groupedRows: { __all__: [{ person_id: "member-1" }] },
+      groupedRows: { __all__: [{ person_id: 'member-1' }] },
       daysTracked: 7,
-      allColumns: [],
+      allColumns: []
     })
 
     renderWithProviders(<Reports group={createAttendanceGroup()} />)
 
-    expect(screen.getByText("Mock Report Table (1)")).toBeInTheDocument()
+    expect(screen.getByText('Mock Report Table (1)')).toBeInTheDocument()
   })
 
-  it.each(["absent", "present"] as const)(
-    "sends explicit clears when undoing a correction to an originally %s session",
+  it.each(['absent', 'present'] as const)(
+    'sends explicit clears when undoing a correction to an originally %s session',
     async (status) => {
       const row: RowData = {
-        person_id: "member-1",
-        name: "Alice",
-        date: "2026-11-01",
+        person_id: 'member-1',
+        name: 'Alice',
+        date: '2026-11-01',
         status,
-        check_in_time: status === "present" ? new Date("2026-11-01T08:00:00Z") : undefined,
+        check_in_time: status === 'present' ? new Date('2026-11-01T08:00:00Z') : undefined,
         is_late: false,
         late_minutes: 0,
         visit_number: 2,
-        notes: "Reviewed",
-        session: null,
+        notes: 'Reviewed',
+        session: null
       }
-      const update = vi
-        .spyOn(attendanceManager, "updateSession")
-        .mockResolvedValue(createAttendanceSession())
+      const update = vi.spyOn(attendanceManager, 'updateSession').mockResolvedValue(createAttendanceSession())
       mockUseReportData.mockReturnValue({
         members: [createAttendanceMember()],
         sessions: [],
         report: null,
         loading: false,
         error: null,
-        attendanceTimeZone: "UTC",
-        generateReport: vi.fn(),
+        attendanceTimeZone: 'UTC',
+        generateReport: vi.fn()
       })
       mockUseReportTransform.mockReturnValue({
         groupedRows: { __all__: [row] },
         daysTracked: 1,
-        allColumns: [],
+        allColumns: []
       })
       renderWithProviders(<Reports group={createAttendanceGroup()} />)
-      fireEvent.click(screen.getByRole("button", { name: "Correct attendance" }))
-      fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
-      fireEvent.click(await screen.findByRole("button", { name: "Undo" }))
+      fireEvent.click(screen.getByRole('button', { name: 'Correct attendance' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+      fireEvent.click(await screen.findByRole('button', { name: 'Undo' }))
       await waitFor(() => expect(update).toHaveBeenCalledTimes(2))
       expect(update.mock.calls[1]).toEqual([
         row.person_id,
@@ -243,45 +232,45 @@ describe("Reports", () => {
           status,
           check_in_time: row.check_in_time ?? null,
           check_out_time: null,
-          visit_number: 2,
-        }),
+          visit_number: 2
+        })
       ])
-    },
+    }
   )
 
-  it("applies attendance timezone changes without remounting the report", () => {
-    const members = [createAttendanceMember({ person_id: "member-1", name: "Alice" })]
+  it('applies attendance timezone changes without remounting the report', () => {
+    const members = [createAttendanceMember({ person_id: 'member-1', name: 'Alice' })]
     useGroupStore.setState({ members })
-    useAttendanceStore.setState({ attendanceTimezone: "Asia/Manila" })
+    useAttendanceStore.setState({ attendanceTimezone: 'Asia/Manila' })
     mockUseReportData.mockReturnValue({
       report: null,
       sessions: [],
       members,
       loading: false,
       error: null,
-      attendanceTimeZone: "Asia/Manila",
-      generateReport: vi.fn(),
+      attendanceTimeZone: 'Asia/Manila',
+      generateReport: vi.fn()
     })
     mockUseReportTransform.mockReturnValue({
-      groupedRows: { __all__: [{ person_id: "member-1" }] },
+      groupedRows: { __all__: [{ person_id: 'member-1' }] },
       daysTracked: 7,
-      allColumns: [],
+      allColumns: []
     })
 
     renderWithProviders(<Reports group={createAttendanceGroup()} />)
-    expect(screen.getByTestId("report-timezone")).toHaveTextContent("Asia/Manila")
+    expect(screen.getByTestId('report-timezone')).toHaveTextContent('Asia/Manila')
 
     act(() => {
-      useAttendanceStore.setState({ attendanceTimezone: "America/New_York" })
+      useAttendanceStore.setState({ attendanceTimezone: 'America/New_York' })
     })
 
-    expect(screen.getByTestId("report-timezone")).toHaveTextContent("America/New_York")
+    expect(screen.getByTestId('report-timezone')).toHaveTextContent('America/New_York')
   })
 
-  it("emits days tracked and export handlers when report data is ready", () => {
+  it('emits days tracked and export handlers when report data is ready', () => {
     const onDaysTrackedChange = vi.fn()
     const onExportHandlersReady = vi.fn()
-    const members = [createAttendanceMember({ person_id: "member-1", name: "Alice" })]
+    const members = [createAttendanceMember({ person_id: 'member-1', name: 'Alice' })]
     useGroupStore.setState({ members })
     mockUseReportData.mockReturnValue({
       report: null,
@@ -289,12 +278,12 @@ describe("Reports", () => {
       members,
       loading: false,
       error: null,
-      generateReport: vi.fn(),
+      generateReport: vi.fn()
     })
     mockUseReportTransform.mockReturnValue({
-      groupedRows: { __all__: [{ person_id: "member-1" }] },
+      groupedRows: { __all__: [{ person_id: 'member-1' }] },
       daysTracked: 7,
-      allColumns: [{ key: "name", label: "Name" }],
+      allColumns: [{ key: 'name', label: 'Name' }]
     })
 
     renderWithProviders(
@@ -302,7 +291,7 @@ describe("Reports", () => {
         group={createAttendanceGroup()}
         onDaysTrackedChange={onDaysTrackedChange}
         onExportHandlersReady={onExportHandlersReady}
-      />,
+      />
     )
 
     expect(onDaysTrackedChange).toHaveBeenCalledWith(7, false)
@@ -318,7 +307,7 @@ describe("Reports", () => {
     act(() => {
       handlers.exportAllGroupsCSV()
     })
-    const exportNowBtn = screen.getByRole("button", { name: /Export now/i })
+    const exportNowBtn = screen.getByRole('button', { name: /Export now/i })
     act(() => {
       fireEvent.click(exportNowBtn)
     })
@@ -326,11 +315,11 @@ describe("Reports", () => {
   })
 
   it.each([
-    ["Multi-sheet Excel workbook", mockExportAllGroupsReportToExcel],
-    ["Individual CSV files per group", mockExportAllGroupsReportToIndividualCSVs],
-    ["Single combined CSV", mockExportAllGroupsReportToCSV],
-  ] as const)("keeps %s failures visible and allows retry", async (format, exporter) => {
-    exporter.mockResolvedValueOnce({ success: false, error: new Error("Offline") })
+    ['Multi-sheet Excel workbook', mockExportAllGroupsReportToExcel],
+    ['Individual CSV files per group', mockExportAllGroupsReportToIndividualCSVs],
+    ['Single combined CSV', mockExportAllGroupsReportToCSV]
+  ] as const)('keeps %s failures visible and allows retry', async (format, exporter) => {
+    exporter.mockResolvedValueOnce({ success: false, error: new Error('Offline') })
     const members = [createAttendanceMember()]
     useGroupStore.setState({ members, groups: [createAttendanceGroup()] })
     mockUseReportData.mockReturnValue({
@@ -339,37 +328,35 @@ describe("Reports", () => {
       members,
       loading: false,
       error: null,
-      generateReport: vi.fn(),
+      generateReport: vi.fn()
     })
     const ready = vi.fn()
     renderWithProviders(<Reports group={createAttendanceGroup()} onExportHandlersReady={ready} />)
     act(() => {
       ready.mock.calls.at(-1)![0].exportAllGroupsCSV()
     })
-    fireEvent.click(screen.getByRole("button", { name: new RegExp(format) }))
-    fireEvent.click(screen.getByRole("button", { name: /Export now/i }))
-    expect(await screen.findByRole("alert")).toHaveTextContent("Could not export the report")
-    expect(screen.getByRole("button", { name: /Export now/i })).toBeEnabled()
-    fireEvent.click(screen.getByRole("button", { name: /Export now/i }))
-    await waitFor(() =>
-      expect(screen.queryByRole("button", { name: /Export now/i })).not.toBeInTheDocument(),
-    )
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(format) }))
+    fireEvent.click(screen.getByRole('button', { name: /Export now/i }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not export the report')
+    expect(screen.getByRole('button', { name: /Export now/i })).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', { name: /Export now/i }))
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Export now/i })).not.toBeInTheDocument())
     expect(exporter).toHaveBeenCalledTimes(2)
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
-  it("shows report errors above the content", () => {
+  it('shows report errors above the content', () => {
     mockUseReportData.mockReturnValue({
       report: null,
       sessions: [],
       members: [],
       loading: false,
-      error: "Failed to generate report",
-      generateReport: vi.fn(),
+      error: 'Failed to generate report',
+      generateReport: vi.fn()
     })
 
     renderWithProviders(<Reports group={createAttendanceGroup()} />)
 
-    expect(screen.getByText("Failed to generate report")).toBeInTheDocument()
+    expect(screen.getByText('Failed to generate report')).toBeInTheDocument()
   })
 })

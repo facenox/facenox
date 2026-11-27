@@ -1,48 +1,48 @@
-import { waitFor } from "@testing-library/react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockPersistentSettings = {
   getUIState: vi.fn(),
-  setUIState: vi.fn().mockResolvedValue(undefined),
+  setUIState: vi.fn().mockResolvedValue(undefined)
 }
 
-vi.mock("@/services/PersistentSettingsService", () => ({
-  persistentSettings: mockPersistentSettings,
+vi.mock('@/services/PersistentSettingsService', () => ({
+  persistentSettings: mockPersistentSettings
 }))
 
 async function loadStore() {
   vi.resetModules()
-  const module = await import("@/components/group/stores/groupUIStore")
+  const module = await import('@/components/group/stores/groupUIStore')
   return module.useGroupUIStore
 }
 
-describe("groupUIStore", () => {
+describe('groupUIStore', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockPersistentSettings.getUIState.mockResolvedValue({
       groupSidebarCollapsed: false,
-      activeGroupSection: "overview",
+      activeGroupSection: 'overview',
       lastEnrollmentSource: null,
-      lastEnrollmentMode: null,
+      lastEnrollmentMode: null
     })
   })
 
-  it("persists active section changes only when the section changes", async () => {
+  it('persists active section changes only when the section changes', async () => {
     const useGroupUIStore = await loadStore()
-    await waitFor(() => expect(useGroupUIStore.getState().activeSection).toBe("overview"))
+    await waitFor(() => expect(useGroupUIStore.getState().activeSection).toBe('overview'))
 
-    useGroupUIStore.getState().setActiveSection("members")
-    useGroupUIStore.getState().setActiveSection("members")
+    useGroupUIStore.getState().setActiveSection('members')
+    useGroupUIStore.getState().setActiveSection('members')
 
     await waitFor(() => {
       expect(mockPersistentSettings.setUIState).toHaveBeenCalledTimes(1)
       expect(mockPersistentSettings.setUIState).toHaveBeenCalledWith({
-        activeGroupSection: "members",
+        activeGroupSection: 'members'
       })
     })
   })
 
-  it("persists sidebar collapse state through both setter and toggle", async () => {
+  it('persists sidebar collapse state through both setter and toggle', async () => {
     const useGroupUIStore = await loadStore()
 
     useGroupUIStore.getState().setIsSidebarCollapsed(true)
@@ -50,22 +50,22 @@ describe("groupUIStore", () => {
 
     await waitFor(() => {
       expect(mockPersistentSettings.setUIState).toHaveBeenNthCalledWith(1, {
-        groupSidebarCollapsed: true,
+        groupSidebarCollapsed: true
       })
       expect(mockPersistentSettings.setUIState).toHaveBeenNthCalledWith(2, {
-        groupSidebarCollapsed: false,
+        groupSidebarCollapsed: false
       })
     })
   })
 
-  it("supports enrollment deep-linking and back navigation", async () => {
+  it('supports enrollment deep-linking and back navigation', async () => {
     const useGroupUIStore = await loadStore()
 
-    useGroupUIStore.getState().jumpToEnrollment("member-1", "upload")
+    useGroupUIStore.getState().jumpToEnrollment('member-1', 'upload')
     expect(useGroupUIStore.getState()).toMatchObject({
-      preSelectedMemberId: "member-1",
-      lastEnrollmentSource: "upload",
-      lastEnrollmentMode: "single",
+      preSelectedMemberId: 'member-1',
+      lastEnrollmentSource: 'upload',
+      lastEnrollmentMode: 'single'
     })
 
     useGroupUIStore.getState().handleEnrollmentBack()
@@ -74,8 +74,8 @@ describe("groupUIStore", () => {
       expect(useGroupUIStore.getState().preSelectedMemberId).toBeNull()
       expect(useGroupUIStore.getState().lastEnrollmentMode).toBeNull()
       expect(mockPersistentSettings.setUIState).toHaveBeenCalledWith({
-        lastEnrollmentSource: "upload",
-        lastEnrollmentMode: null,
+        lastEnrollmentSource: 'upload',
+        lastEnrollmentMode: null
       })
     })
 
@@ -85,20 +85,20 @@ describe("groupUIStore", () => {
       expect(useGroupUIStore.getState().lastEnrollmentSource).toBeNull()
       expect(mockPersistentSettings.setUIState).toHaveBeenCalledWith({
         lastEnrollmentSource: null,
-        lastEnrollmentMode: null,
+        lastEnrollmentMode: null
       })
     })
   })
 
-  it("opens and closes member edit state correctly", async () => {
+  it('opens and closes member edit state correctly', async () => {
     vi.useFakeTimers()
     const useGroupUIStore = await loadStore()
     const member = {
-      person_id: "member-1",
-      group_id: "group-1",
-      name: "Alice",
+      person_id: 'member-1',
+      group_id: 'group-1',
+      name: 'Alice',
       joined_at: new Date(),
-      is_active: true,
+      is_active: true
     }
 
     useGroupUIStore.getState().openEditMember(member)

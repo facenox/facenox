@@ -1,17 +1,14 @@
-import Ably from "ably"
-import { type SyncPushPayload, type FaceEmbedding } from "../../shared/syncContract.js"
-import { withLocalBackendHeaders } from "../localBackendScope.js"
-import { persistentStore } from "../persistentStore.js"
-import { backendService } from "../backendService.js"
-import { state } from "../State.js"
-import { getCurrentVersion, checkForUpdates, notifyRenderer } from "../updater.js"
-import { decryptEmbedding, encryptEmbedding } from "./EmbeddingCrypto.js"
-import { buildSyncChunks } from "./syncChunks.js"
-import { parseAblyTokenRequest } from "./ablyTokenRequest.js"
-import {
-  DEFAULT_REMOTE_BASE_URL,
-  DEFAULT_SYNC_INTERVAL_MINUTES,
-} from "../../services/syncDefaults.js"
+import Ably from 'ably'
+import { type SyncPushPayload, type FaceEmbedding } from '../../shared/syncContract.js'
+import { withLocalBackendHeaders } from '../localBackendScope.js'
+import { persistentStore } from '../persistentStore.js'
+import { backendService } from '../backendService.js'
+import { state } from '../State.js'
+import { getCurrentVersion, checkForUpdates, notifyRenderer } from '../updater.js'
+import { decryptEmbedding, encryptEmbedding } from './EmbeddingCrypto.js'
+import { buildSyncChunks } from './syncChunks.js'
+import { parseAblyTokenRequest } from './ablyTokenRequest.js'
+import { DEFAULT_REMOTE_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from '../../services/syncDefaults.js'
 const STARTUP_CATCH_UP_DELAY_MS = 5000
 const MIN_PUSH_INTERVAL_MS = 5500
 const TRANSIENT_RETRY_DELAYS_MS = [15_000, 60_000, 5 * 60_000]
@@ -23,7 +20,7 @@ function deleteStoreKey(key: string) {
     delete?: (k: string) => void
     set: (k: string, v: unknown) => void
   }
-  if (typeof store.delete === "function") {
+  if (typeof store.delete === 'function') {
     store.delete(key)
   } else {
     store.set(key, undefined)
@@ -32,11 +29,11 @@ function deleteStoreKey(key: string) {
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
-  return withLocalBackendHeaders(token ? { "X-Facenox-Token": token, ...extra } : { ...extra })
+  return withLocalBackendHeaders(token ? { 'X-Facenox-Token': token, ...extra } : { ...extra })
 }
 
 function toRemoteIsoDateTime(value: unknown): string | null {
-  if (value == null || value === "") {
+  if (value == null || value === '') {
     return null
   }
 
@@ -44,7 +41,7 @@ function toRemoteIsoDateTime(value: unknown): string | null {
     return Number.isNaN(value.getTime()) ? null : value.toISOString()
   }
 
-  if (typeof value !== "string") {
+  if (typeof value !== 'string') {
     return null
   }
 
@@ -67,8 +64,8 @@ function toRemoteIsoDateTime(value: unknown): string | null {
 }
 
 function normalizeAttendanceExportForRemote(
-  attendanceExport: Record<string, unknown>,
-): SyncPushPayload["attendance_export"] {
+  attendanceExport: Record<string, unknown>
+): SyncPushPayload['attendance_export'] {
   const groups = Array.isArray(attendanceExport.groups) ? attendanceExport.groups : []
   const members = Array.isArray(attendanceExport.members) ? attendanceExport.members : []
   const records = Array.isArray(attendanceExport.records) ? attendanceExport.records : []
@@ -81,15 +78,13 @@ function normalizeAttendanceExportForRemote(
     ...sanitizedAttendance,
     exported_at: toRemoteIsoDateTime(attendanceExport.exported_at) ?? new Date().toISOString(),
     groups: groups.map((group) => {
-      const candidate = typeof group === "object" && group !== null ? group : {}
+      const candidate = typeof group === 'object' && group !== null ? group : {}
       return {
         ...candidate,
-        created_at:
-          toRemoteIsoDateTime((candidate as { created_at?: unknown }).created_at) ??
-          new Date().toISOString(),
+        created_at: toRemoteIsoDateTime((candidate as { created_at?: unknown }).created_at) ?? new Date().toISOString(),
         settings:
           (
-            typeof (candidate as { settings?: unknown }).settings === "object" &&
+            typeof (candidate as { settings?: unknown }).settings === 'object' &&
             (candidate as { settings?: unknown }).settings !== null
           ) ?
             (candidate as { settings: Record<string, unknown> }).settings
@@ -97,55 +92,47 @@ function normalizeAttendanceExportForRemote(
               late_threshold_minutes: 15,
               late_threshold_enabled: false,
               class_start_time: null,
-              track_checkout: false,
-            },
+              track_checkout: false
+            }
       }
     }),
     members: members.map((member) => {
-      const candidate = typeof member === "object" && member !== null ? member : {}
-      const personId = String((candidate as { person_id?: unknown }).person_id || "")
+      const candidate = typeof member === 'object' && member !== null ? member : {}
+      const personId = String((candidate as { person_id?: unknown }).person_id || '')
       const id = String((candidate as { id?: unknown }).id || personId)
       return {
         ...candidate,
         id,
         person_id: personId,
-        group_id: String((candidate as { group_id?: unknown }).group_id || "default"),
-        joined_at:
-          toRemoteIsoDateTime((candidate as { joined_at?: unknown }).joined_at) ??
-          new Date().toISOString(),
+        group_id: String((candidate as { group_id?: unknown }).group_id || 'default'),
+        joined_at: toRemoteIsoDateTime((candidate as { joined_at?: unknown }).joined_at) ?? new Date().toISOString()
       }
     }),
     records: records.map((record) => {
-      const candidate = typeof record === "object" && record !== null ? record : {}
-      const personId = String((candidate as { person_id?: unknown }).person_id || "")
+      const candidate = typeof record === 'object' && record !== null ? record : {}
+      const personId = String((candidate as { person_id?: unknown }).person_id || '')
       const memberId = String((candidate as { member_id?: unknown }).member_id || personId)
       return {
         ...candidate,
         person_id: personId,
         member_id: memberId,
-        timestamp:
-          toRemoteIsoDateTime((candidate as { timestamp?: unknown }).timestamp) ??
-          new Date().toISOString(),
+        timestamp: toRemoteIsoDateTime((candidate as { timestamp?: unknown }).timestamp) ?? new Date().toISOString()
       }
     }),
     sessions: sessions.map((session) => {
-      const candidate = typeof session === "object" && session !== null ? session : {}
-      const personId = String((candidate as { person_id?: unknown }).person_id || "")
+      const candidate = typeof session === 'object' && session !== null ? session : {}
+      const personId = String((candidate as { person_id?: unknown }).person_id || '')
       const memberId = String((candidate as { member_id?: unknown }).member_id || personId)
       return {
         ...candidate,
         person_id: personId,
         member_id: memberId,
-        check_in_time: toRemoteIsoDateTime(
-          (candidate as { check_in_time?: unknown }).check_in_time,
-        ),
-        check_out_time: toRemoteIsoDateTime(
-          (candidate as { check_out_time?: unknown }).check_out_time,
-        ),
+        check_in_time: toRemoteIsoDateTime((candidate as { check_in_time?: unknown }).check_in_time),
+        check_out_time: toRemoteIsoDateTime((candidate as { check_out_time?: unknown }).check_out_time)
       }
     }),
     settings:
-      typeof attendanceExport.settings === "object" && attendanceExport.settings !== null ?
+      typeof attendanceExport.settings === 'object' && attendanceExport.settings !== null ?
         attendanceExport.settings
       : {
           late_threshold_minutes: 15,
@@ -155,9 +142,9 @@ function normalizeAttendanceExportForRemote(
           relog_cooldown_seconds: 1800,
           enable_liveness_detection: false,
           max_recognition_faces_per_frame: 6,
-          data_retention_days: 0,
-        },
-  } as SyncPushPayload["attendance_export"]
+          data_retention_days: 0
+        }
+  } as SyncPushPayload['attendance_export']
 }
 
 interface DeviceCommand {
@@ -174,20 +161,20 @@ interface CommandResult {
 }
 
 async function readCommandError(response: Response, fallback: string): Promise<string> {
-  const text = await response.text().catch(() => "")
+  const text = await response.text().catch(() => '')
   if (!text) return `${fallback} (HTTP ${response.status}).`
 
   try {
     const body = JSON.parse(text) as { detail?: unknown; error?: unknown; message?: unknown }
     const detail = [body.detail, body.error, body.message].find(
-      (value): value is string => typeof value === "string" && value.trim().length > 0,
+      (value): value is string => typeof value === 'string' && value.trim().length > 0
     )
     if (detail) return detail.trim()
   } catch {
     // The backend did not return JSON. Keep a short, inert excerpt below.
   }
 
-  const compact = text.replace(/\s+/g, " ").trim()
+  const compact = text.replace(/\s+/g, ' ').trim()
   return compact ?
       `${fallback} (HTTP ${response.status}): ${compact.slice(0, 500)}`
     : `${fallback} (HTTP ${response.status}).`
@@ -250,30 +237,27 @@ export class BackgroundSyncManager {
 
   private getSyncConfig() {
     let deviceToken: string
-    let encryptionKey = ""
+    let encryptionKey = ''
     try {
-      deviceToken = (persistentStore.get("sync.deviceToken") as string) || ""
-      encryptionKey = (persistentStore.get("sync.encryptionKey") as string) || ""
+      deviceToken = (persistentStore.get('sync.deviceToken') as string) || ''
+      encryptionKey = (persistentStore.get('sync.encryptionKey') as string) || ''
     } catch (error) {
       // Keyring failure pauses Cloud, not offline attendance or application startup.
       this.setLastSyncState({
-        lastSyncStatus: "error",
-        lastSyncMessage:
-          error instanceof Error ? error.message : "Cloud credentials are unavailable.",
+        lastSyncStatus: 'error',
+        lastSyncMessage: error instanceof Error ? error.message : 'Cloud credentials are unavailable.'
       })
-      deviceToken = ""
+      deviceToken = ''
     }
     return {
-      enabled: persistentStore.get("sync.enabled") as boolean,
-      remoteBaseUrl:
-        (persistentStore.get("sync.remoteBaseUrl") as string) || DEFAULT_REMOTE_BASE_URL,
-      siteId: (persistentStore.get("sync.siteId") as string) || "",
-      deviceId: (persistentStore.get("sync.deviceId") as string) || "",
+      enabled: persistentStore.get('sync.enabled') as boolean,
+      remoteBaseUrl: (persistentStore.get('sync.remoteBaseUrl') as string) || DEFAULT_REMOTE_BASE_URL,
+      siteId: (persistentStore.get('sync.siteId') as string) || '',
+      deviceId: (persistentStore.get('sync.deviceId') as string) || '',
       deviceToken,
       encryptionKey,
-      intervalMinutes:
-        (persistentStore.get("sync.intervalMinutes") as number) || DEFAULT_SYNC_INTERVAL_MINUTES,
-      lastSyncedAt: (persistentStore.get("sync.lastSyncedAt") as string | null) || null,
+      intervalMinutes: (persistentStore.get('sync.intervalMinutes') as number) || DEFAULT_SYNC_INTERVAL_MINUTES,
+      lastSyncedAt: (persistentStore.get('sync.lastSyncedAt') as string | null) || null
     }
   }
 
@@ -298,7 +282,7 @@ export class BackgroundSyncManager {
     this.consecutiveTransientFailures++
     this.clearRetryTimer()
     console.log(
-      `[Sync] Transient failure; scheduling automatic retry #${this.consecutiveTransientFailures} in ${Math.round(delayMs / 1000)}s.`,
+      `[Sync] Transient failure; scheduling automatic retry #${this.consecutiveTransientFailures} in ${Math.round(delayMs / 1000)}s.`
     )
     this.retryTimer = setTimeout(() => {
       this.retryTimer = null
@@ -317,8 +301,8 @@ export class BackgroundSyncManager {
       this.start({ skipCatchUp: true })
     } else if (
       !this.ablyClient ||
-      this.ablyClient.connection?.state === "failed" ||
-      this.ablyClient.connection?.state === "closed"
+      this.ablyClient.connection?.state === 'failed' ||
+      this.ablyClient.connection?.state === 'closed'
     ) {
       this.ablyRetryAttempt = 0
       this.initRealtimeListener()
@@ -328,10 +312,7 @@ export class BackgroundSyncManager {
   }
 
   private shouldRunCatchUpSync(intervalMinutes: number, lastSyncedAt: string | null) {
-    if (
-      persistentStore.get("sync.lastSyncStatus") === "error" ||
-      Boolean(persistentStore.get("sync.pendingUpload"))
-    ) {
+    if (persistentStore.get('sync.lastSyncStatus') === 'error' || Boolean(persistentStore.get('sync.pendingUpload'))) {
       return true
     }
 
@@ -357,79 +338,75 @@ export class BackgroundSyncManager {
 
   private setLastSyncState(syncState: {
     lastSyncedAt?: string | null
-    lastSyncStatus: "idle" | "success" | "error"
+    lastSyncStatus: 'idle' | 'success' | 'error'
     lastSyncMessage: string | null
   }) {
     if (syncState.lastSyncedAt !== undefined) {
-      persistentStore.set("sync.lastSyncedAt", syncState.lastSyncedAt)
+      persistentStore.set('sync.lastSyncedAt', syncState.lastSyncedAt)
     }
-    persistentStore.set("sync.lastSyncStatus", syncState.lastSyncStatus)
-    persistentStore.set("sync.lastSyncMessage", syncState.lastSyncMessage)
+    persistentStore.set('sync.lastSyncStatus', syncState.lastSyncStatus)
+    persistentStore.set('sync.lastSyncMessage', syncState.lastSyncMessage)
 
     // Broadcast the status change to the renderer
-    state.mainWindow?.webContents.send("sync:data-changed")
+    state.mainWindow?.webContents.send('sync:data-changed')
   }
 
   private async persistLivenessRequirement(forced: boolean) {
     const response = await fetch(`${backendService.getUrl()}/attendance/settings/cloud-liveness`, {
-      method: "PUT",
-      headers: authHeaders({ "Content-Type": "application/json" }),
+      method: 'PUT',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ force_liveness_detection: forced }),
-      signal: this.requestSignal(15000),
+      signal: this.requestSignal(15000)
     })
-    if (!response.ok) throw new Error("Could not apply the Cloud liveness requirement.")
+    if (!response.ok) throw new Error('Could not apply the Cloud liveness requirement.')
   }
 
   async restoreCachedPolicy() {
-    const paired = Boolean(
-      persistentStore.get("sync.organizationId") && persistentStore.get("sync.deviceId"),
-    )
-    await this.persistLivenessRequirement(
-      paired && persistentStore.get("sync.policy.forceLiveness") === true,
-    )
+    const paired = Boolean(persistentStore.get('sync.organizationId') && persistentStore.get('sync.deviceId'))
+    await this.persistLivenessRequirement(paired && persistentStore.get('sync.policy.forceLiveness') === true)
   }
 
   private async applyRemotePolicy(policy?: Record<string, unknown> | null) {
-    if (!policy || typeof policy !== "object") return
+    if (!policy || typeof policy !== 'object') return
 
     const settingsPayload: Record<string, unknown> = {}
-    if (typeof policy.timezone === "string") {
+    if (typeof policy.timezone === 'string') {
       // Apply the administrator-confirmed site clock to attendance, never to
       // the OS clock. Persist in the backend for offline scans and restarts.
       settingsPayload.attendance_timezone = policy.timezone
     }
-    if (typeof policy.attendanceCooldownSeconds === "number") {
+    if (typeof policy.attendanceCooldownSeconds === 'number') {
       settingsPayload.attendance_cooldown_seconds = policy.attendanceCooldownSeconds
     }
     if (Object.keys(settingsPayload).length > 0) {
       const response = await fetch(`${backendService.getUrl()}/attendance/settings`, {
-        method: "PUT",
-        headers: authHeaders({ "Content-Type": "application/json" }),
+        method: 'PUT',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(settingsPayload),
-        signal: this.requestSignal(15000),
+        signal: this.requestSignal(15000)
       })
       if (!response.ok) {
         throw new Error(
-          typeof policy.timezone === "string" ?
-            "Could not apply the location attendance timezone."
-          : "Could not apply the location attendance policy.",
+          typeof policy.timezone === 'string' ?
+            'Could not apply the location attendance timezone.'
+          : 'Could not apply the location attendance policy.'
         )
       }
     }
-    if (typeof policy.forceLiveness === "boolean") {
+    if (typeof policy.forceLiveness === 'boolean') {
       await this.persistLivenessRequirement(policy.forceLiveness)
-      persistentStore.set("sync.policy.forceLiveness", policy.forceLiveness)
+      persistentStore.set('sync.policy.forceLiveness', policy.forceLiveness)
     }
 
-    const syncPolicyFieldMap: Array<[string, "boolean" | "number"]> = [
-      ["trackCheckout", "boolean"],
-      ["lateThresholdEnabled", "boolean"],
-      ["lateThresholdMinutes", "number"],
-      ["attendanceCooldownSeconds", "number"],
-      ["minCheckoutDelayMinutes", "number"],
-      ["dataRetentionDays", "number"],
-      ["peopleLimit", "number"],
-      ["allowKioskDirectoryManagement", "boolean"],
+    const syncPolicyFieldMap: Array<[string, 'boolean' | 'number']> = [
+      ['trackCheckout', 'boolean'],
+      ['lateThresholdEnabled', 'boolean'],
+      ['lateThresholdMinutes', 'number'],
+      ['attendanceCooldownSeconds', 'number'],
+      ['minCheckoutDelayMinutes', 'number'],
+      ['dataRetentionDays', 'number'],
+      ['peopleLimit', 'number'],
+      ['allowKioskDirectoryManagement', 'boolean']
     ]
     for (const [field, expectedType] of syncPolicyFieldMap) {
       const value = policy[field]
@@ -439,15 +416,15 @@ export class BackgroundSyncManager {
         deleteStoreKey(`sync.policy.${field}`)
       }
     }
-    if (typeof policy.faceTemplateSync === "boolean") {
-      persistentStore.set("sync.policy.faceTemplateSync", policy.faceTemplateSync)
+    if (typeof policy.faceTemplateSync === 'boolean') {
+      persistentStore.set('sync.policy.faceTemplateSync', policy.faceTemplateSync)
       if (!policy.faceTemplateSync) {
-        persistentStore.set("sync.encryptionKey", "")
+        persistentStore.set('sync.encryptionKey', '')
       }
     }
 
     // Broadcast the updated policy immediately so the UI reflects locks without delay
-    state.mainWindow?.webContents.send("sync:data-changed")
+    state.mainWindow?.webContents.send('sync:data-changed')
   }
 
   private initRealtimeListener() {
@@ -459,19 +436,19 @@ export class BackgroundSyncManager {
     }
 
     try {
-      const cleanBaseUrl = remoteBaseUrl.replace(/\/+$/, "")
+      const cleanBaseUrl = remoteBaseUrl.replace(/\/+$/, '')
       console.log(`[Ably] Initializing realtime sync connection for site:${siteId}...`)
 
       this.ablyClient = new Ably.Realtime({
         authCallback: async (_data, callback) => {
           try {
             const res = await fetch(`${cleanBaseUrl}/api/sync/ably-token`, {
-              method: "POST",
+              method: 'POST',
               headers: {
                 Authorization: `Bearer ${deviceToken}`,
-                "User-Agent": "Facenox-Desktop-Ably",
+                'User-Agent': 'Facenox-Desktop-Ably'
               },
-              signal: AbortSignal.timeout(15000),
+              signal: AbortSignal.timeout(15000)
             })
 
             if (!res.ok) {
@@ -482,27 +459,24 @@ export class BackgroundSyncManager {
             callback(null, tokenRequest)
           } catch (err) {
             const errorMsg = err instanceof Error ? err.message : String(err)
-            console.warn("[Ably] Failed to fetch token request from cloud:", errorMsg)
+            console.warn('[Ably] Failed to fetch token request from cloud:', errorMsg)
             callback(errorMsg, null)
           }
         },
-        autoConnect: true,
+        autoConnect: true
       })
 
-      this.ablyClient.connection.on("connected", () => {
+      this.ablyClient.connection.on('connected', () => {
         const recovered = this.ablyWasDisconnected || this.consecutiveTransientFailures > 0
         this.ablyWasDisconnected = false
         this.ablyRetryAttempt = 0
         this.clearAblyRetryTimer()
-        console.log(
-          `[Ably] Realtime connected. Listening on site:${siteId} for instant cloud sync.`,
-        )
-        const pending = persistentStore.get("sync.pendingUpload") as { rejected?: boolean } | null
-        const lastStatus = persistentStore.get("sync.lastSyncStatus")
-        const hasRecoverableWork =
-          !pending?.rejected && (lastStatus === "error" || Boolean(pending))
+        console.log(`[Ably] Realtime connected. Listening on site:${siteId} for instant cloud sync.`)
+        const pending = persistentStore.get('sync.pendingUpload') as { rejected?: boolean } | null
+        const lastStatus = persistentStore.get('sync.lastSyncStatus')
+        const hasRecoverableWork = !pending?.rejected && (lastStatus === 'error' || Boolean(pending))
         if (recovered && hasRecoverableWork && !this.suspended && this.timer) {
-          console.log("[Sync] Realtime reconnected after outage; scheduling catch-up sync.")
+          console.log('[Sync] Realtime reconnected after outage; scheduling catch-up sync.')
           this.consecutiveTransientFailures = 0
           this.clearRetryTimer()
           this.triggerDebouncedSync(1500)
@@ -510,26 +484,26 @@ export class BackgroundSyncManager {
         }
       })
 
-      this.ablyClient.connection.on("disconnected", () => {
+      this.ablyClient.connection.on('disconnected', () => {
         this.ablyWasDisconnected = true
-        console.log("[Ably] Realtime disconnected. Reconnecting automatically...")
+        console.log('[Ably] Realtime disconnected. Reconnecting automatically...')
       })
 
-      this.ablyClient.connection.on("suspended", () => {
+      this.ablyClient.connection.on('suspended', () => {
         this.ablyWasDisconnected = true
       })
 
-      this.ablyClient.connection.on("failed", (stateChange) => {
+      this.ablyClient.connection.on('failed', (stateChange) => {
         this.ablyWasDisconnected = true
-        console.warn("[Ably] Realtime connection failed:", stateChange.reason)
+        console.warn('[Ably] Realtime connection failed:', stateChange.reason)
         this.teardownRealtimeListener()
         this.scheduleAblyRecovery()
       })
 
       this.ablyChannel = this.ablyClient.channels.get(`site:${siteId}`)
       const channelWithEvents = this.ablyChannel as { on?: (ev: string, cb: () => void) => void }
-      if (typeof channelWithEvents.on === "function") {
-        channelWithEvents.on("failed", () => {
+      if (typeof channelWithEvents.on === 'function') {
+        channelWithEvents.on('failed', () => {
           this.ablyWasDisconnected = true
           this.teardownRealtimeListener()
           this.scheduleAblyRecovery()
@@ -537,35 +511,30 @@ export class BackgroundSyncManager {
       }
 
       // 1. Listen for instant remote management commands (e.g., WIPE, UPGRADE)
-      this.ablyChannel.subscribe("remote_command", (message) => {
+      this.ablyChannel.subscribe('remote_command', (message) => {
         const payload = message?.data as { deviceId?: string; command?: string } | undefined
         const currentDeviceId = this.getSyncConfig().deviceId
         if (payload?.deviceId && payload.deviceId !== currentDeviceId) {
           return
         }
-        console.log("[Ably] Instant remote command notification received from cloud:", message.data)
+        console.log('[Ably] Instant remote command notification received from cloud:', message.data)
         void this.pollCommands()
       })
 
       // 2. Listen for realtime metadata and attendance sync triggers
-      this.ablyChannel.subscribe("sync_required", (message) => {
-        const payload = message?.data as
-          { deviceId?: string; source?: string; type?: string } | undefined
+      this.ablyChannel.subscribe('sync_required', (message) => {
+        const payload = message?.data as { deviceId?: string; source?: string; type?: string } | undefined
         const currentDeviceId = this.getSyncConfig().deviceId
         // Ignore self-echo when this device pushes attendance to prevent infinite sync loops
-        if (
-          payload?.source === "device_push" &&
-          payload?.deviceId &&
-          payload.deviceId === currentDeviceId
-        ) {
+        if (payload?.source === 'device_push' && payload?.deviceId && payload.deviceId === currentDeviceId) {
           return
         }
-        console.log("[Ably] Realtime sync notification received from cloud:", message.data)
+        console.log('[Ably] Realtime sync notification received from cloud:', message.data)
         // Remote notifications only download. They must not broadcast another push.
         void this.performSync(true)
       })
     } catch (err) {
-      console.warn("[Ably] Failed to initialize Ably realtime client:", err)
+      console.warn('[Ably] Failed to initialize Ably realtime client:', err)
     }
   }
 
@@ -578,11 +547,10 @@ export class BackgroundSyncManager {
 
   private scheduleAblyRecovery() {
     if (this.suspended || !this.timer || this.ablyRetryTimer) return
-    const delayMs =
-      ABLY_RECOVERY_DELAYS_MS[Math.min(this.ablyRetryAttempt, ABLY_RECOVERY_DELAYS_MS.length - 1)]
+    const delayMs = ABLY_RECOVERY_DELAYS_MS[Math.min(this.ablyRetryAttempt, ABLY_RECOVERY_DELAYS_MS.length - 1)]
     this.ablyRetryAttempt++
     console.log(
-      `[Ably] Scheduling realtime re-initialization #${this.ablyRetryAttempt} in ${Math.round(delayMs / 1000)}s.`,
+      `[Ably] Scheduling realtime re-initialization #${this.ablyRetryAttempt} in ${Math.round(delayMs / 1000)}s.`
     )
     this.ablyRetryTimer = setTimeout(() => {
       this.ablyRetryTimer = null
@@ -622,7 +590,7 @@ export class BackgroundSyncManager {
       this.getSyncConfig()
 
     if (!enabled || !remoteBaseUrl || !siteId || !deviceId || !deviceToken) {
-      console.log("[Sync] Background Auto-Sync is disabled or device pairing is incomplete.")
+      console.log('[Sync] Background Auto-Sync is disabled or device pairing is incomplete.')
       return
     }
 
@@ -632,8 +600,8 @@ export class BackgroundSyncManager {
     this.timer = setInterval(() => {
       if (
         (!this.ablyClient ||
-          this.ablyClient.connection?.state === "failed" ||
-          this.ablyClient.connection?.state === "closed") &&
+          this.ablyClient.connection?.state === 'failed' ||
+          this.ablyClient.connection?.state === 'closed') &&
         !this.ablyRetryTimer
       ) {
         this.initRealtimeListener()
@@ -642,7 +610,7 @@ export class BackgroundSyncManager {
     }, intervalMs)
 
     if (!options.skipCatchUp && this.shouldRunCatchUpSync(intervalMinutes, lastSyncedAt)) {
-      console.log("[Sync] Scheduling a catch-up sync because the device is overdue.")
+      console.log('[Sync] Scheduling a catch-up sync because the device is overdue.')
       this.scheduleCatchUpSync()
     }
 
@@ -657,7 +625,7 @@ export class BackgroundSyncManager {
       () => {
         void this.pollCommands()
       },
-      15 * 60 * 1000,
+      15 * 60 * 1000
     )
   }
 
@@ -690,13 +658,13 @@ export class BackgroundSyncManager {
     this.isPollingCommands = true
 
     try {
-      const response = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/devices/commands`, {
-        method: "GET",
+      const response = await fetch(`${remoteBaseUrl.replace(/\/+$/, '')}/api/devices/commands`, {
+        method: 'GET',
         headers: {
           Authorization: `Bearer ${deviceToken}`,
-          "User-Agent": "Facenox-Desktop-Command-Poll",
+          'User-Agent': 'Facenox-Desktop-Command-Poll'
         },
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(10000)
       })
 
       if (!response.ok) return
@@ -711,7 +679,7 @@ export class BackgroundSyncManager {
         await this.executeCommand(cmd)
       }
     } catch (error) {
-      console.warn("[RemoteMgmt] Command polling failed:", error)
+      console.warn('[RemoteMgmt] Command polling failed:', error)
     } finally {
       this.isPollingCommands = false
     }
@@ -720,8 +688,7 @@ export class BackgroundSyncManager {
   private async executeCommand(cmd: DeviceCommand) {
     console.log(`[RemoteMgmt] Executing command: ${cmd.command} (${cmd.id})`)
     const receiptKey = `sync.commandReceipts.${cmd.id}`
-    const previous = persistentStore.get(receiptKey) as
-      { status: string; result: CommandResult } | undefined
+    const previous = persistentStore.get(receiptKey) as { status: string; result: CommandResult } | undefined
     if (previous) {
       await this.acknowledgeCommand(cmd.id, previous.status, previous.result)
       return
@@ -729,56 +696,56 @@ export class BackgroundSyncManager {
     // Persist intent before any side effect. If the process dies mid-command,
     // report an indeterminate outcome rather than repeating a destructive wipe.
     persistentStore.set(receiptKey, {
-      status: "failed",
-      result: { error: "Command interrupted; outcome unknown. Operator review required." },
+      status: 'failed',
+      result: { error: 'Command interrupted; outcome unknown. Operator review required.' }
     })
-    let status = "completed"
+    let status = 'completed'
     let result: CommandResult
 
     try {
       switch (cmd.command) {
-        case "WIPE": {
-          console.warn("[RemoteMgmt] REMOTE DATA WIPE RECEIVED. Executing programmatically.")
+        case 'WIPE': {
+          console.warn('[RemoteMgmt] REMOTE DATA WIPE RECEIVED. Executing programmatically.')
           this.isWiping = true
           try {
             this.abortController?.abort()
             await this.idlePromise
             const wipeResponse = await fetch(`${backendService.getUrl()}/attendance/wipe`, {
-              method: "POST",
-              headers: authHeaders({ "Content-Type": "application/json" }),
-              signal: AbortSignal.timeout(60000),
+              method: 'POST',
+              headers: authHeaders({ 'Content-Type': 'application/json' }),
+              signal: AbortSignal.timeout(60000)
             })
             if (!wipeResponse.ok) {
-              throw new Error(await readCommandError(wipeResponse, "Wipe failed on this computer"))
+              throw new Error(await readCommandError(wipeResponse, 'Wipe failed on this computer'))
             }
             const wipeBody = (await wipeResponse.json().catch(() => null)) as CommandResult | null
             if (wipeBody?.success !== true) {
               throw new Error(
                 wipeBody?.error ||
                   wipeBody?.message ||
-                  "The local service did not confirm that the wipe completed. Review this computer before using it again.",
+                  'The local service did not confirm that the wipe completed. Review this computer before using it again.'
               )
             }
             // A durable upload is local data too. Never replay it after a confirmed wipe.
-            persistentStore.set("sync.pendingUpload", null)
-            persistentStore.set("sync.pendingAcknowledgements", null)
-            persistentStore.set("sync.lastSyncedAt", null)
-            state.mainWindow?.webContents.send("sync:data-changed")
+            persistentStore.set('sync.pendingUpload', null)
+            persistentStore.set('sync.pendingAcknowledgements', null)
+            persistentStore.set('sync.lastSyncedAt', null)
+            state.mainWindow?.webContents.send('sync:data-changed')
             result = wipeBody
           } finally {
             this.isWiping = false
           }
-          console.warn("[RemoteMgmt] LOCAL DATA WIPE COMPLETED.")
+          console.warn('[RemoteMgmt] LOCAL DATA WIPE COMPLETED.')
 
-          const { dialog } = await import("electron")
+          const { dialog } = await import('electron')
           const parentWindow = state.mainWindow ?? undefined
           const options: Electron.MessageBoxOptions = {
-            type: "info",
-            title: "Data wiped",
-            message: "A remote wipe has been executed on this device.",
+            type: 'info',
+            title: 'Data wiped',
+            message: 'A remote wipe has been executed on this device.',
             detail:
               "Local attendance records and enrolled face templates were removed at the organization administrator's request.",
-            buttons: ["OK"],
+            buttons: ['OK']
           }
           if (parentWindow) {
             dialog.showMessageBox(parentWindow, options).catch(() => {})
@@ -788,70 +755,68 @@ export class BackgroundSyncManager {
           break
         }
 
-        case "UPGRADE": {
-          console.log("[RemoteMgmt] Executing remote update check...")
+        case 'UPGRADE': {
+          console.log('[RemoteMgmt] Executing remote update check...')
           const updateInfo = await checkForUpdates(true) // force check
           if (updateInfo.isOffline) {
-            status = "failed"
+            status = 'failed'
             result = {
-              error: "Could not check for updates because this computer is offline.",
+              error: 'Could not check for updates because this computer is offline.',
               latestVersion: updateInfo.latestVersion,
-              hasUpdate: false,
+              hasUpdate: false
             }
           } else if (updateInfo.error) {
-            status = "failed"
+            status = 'failed'
             result = {
               error: `Could not check for updates: ${updateInfo.error}`,
               latestVersion: updateInfo.latestVersion,
-              hasUpdate: false,
+              hasUpdate: false
             }
           } else if (updateInfo.hasUpdate) {
             notifyRenderer(state.mainWindow, updateInfo)
             result = {
               message: `Update found: v${updateInfo.latestVersion}. Notified local operator.`,
               latestVersion: updateInfo.latestVersion,
-              hasUpdate: true,
+              hasUpdate: true
             }
           } else {
             result = {
-              message: "Device is already up to date.",
+              message: 'Device is already up to date.',
               latestVersion: updateInfo.latestVersion,
-              hasUpdate: false,
+              hasUpdate: false
             }
           }
           break
         }
 
-        case "RESET_PIN": {
-          console.warn(
-            "[RemoteMgmt] REMOTE PIN RESET RECEIVED. Resetting admin PIN and unlocking kiosk.",
-          )
-          const security = (persistentStore.get("security") as Record<string, unknown>) || {}
-          persistentStore.set("security", {
+        case 'RESET_PIN': {
+          console.warn('[RemoteMgmt] REMOTE PIN RESET RECEIVED. Resetting admin PIN and unlocking kiosk.')
+          const security = (persistentStore.get('security') as Record<string, unknown>) || {}
+          persistentStore.set('security', {
             ...security,
-            adminPin: "1234",
+            adminPin: '1234',
             adminPinEnabled: false,
             lockoutUntil: 0,
-            failedAttempts: 0,
+            failedAttempts: 0
           })
-          state.mainWindow?.webContents.send("security:pin-reset", {
-            adminPin: "1234",
-            adminPinEnabled: false,
+          state.mainWindow?.webContents.send('security:pin-reset', {
+            adminPin: '1234',
+            adminPinEnabled: false
           })
           result = {
-            message: "PIN reset to default (1234) and lock disabled.",
+            message: 'PIN reset to default (1234) and lock disabled.'
           }
           break
         }
 
         default:
           console.warn(`[RemoteMgmt] Unknown command: ${cmd.command}`)
-          status = "failed"
-          result = { error: "Unknown command" }
+          status = 'failed'
+          result = { error: 'Unknown command' }
       }
     } catch (error) {
       console.error(`[RemoteMgmt] Command ${cmd.command} failed:`, error)
-      status = "failed"
+      status = 'failed'
       result = { error: error instanceof Error ? error.message : String(error) }
     }
 
@@ -862,42 +827,39 @@ export class BackgroundSyncManager {
   private async acknowledgeCommand(commandId: string, status: string, result: CommandResult) {
     try {
       const { remoteBaseUrl, deviceToken } = this.getSyncConfig()
-      const response = await fetch(
-        `${remoteBaseUrl.replace(/\/+$/, "")}/api/devices/commands/ack`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${deviceToken}`,
-          },
-          body: JSON.stringify({
-            commandId,
-            status,
-            result,
-          }),
-          signal: AbortSignal.timeout(10000),
+      const response = await fetch(`${remoteBaseUrl.replace(/\/+$/, '')}/api/devices/commands/ack`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${deviceToken}`
         },
-      )
+        body: JSON.stringify({
+          commandId,
+          status,
+          result
+        }),
+        signal: AbortSignal.timeout(10000)
+      })
       if (!response.ok) throw new Error(`Command acknowledgement failed: HTTP ${response.status}`)
     } catch (error) {
-      console.warn("[RemoteMgmt] Failed to acknowledge command:", error)
+      console.warn('[RemoteMgmt] Failed to acknowledge command:', error)
     }
   }
 
   private async pullMetadata(
-    acknowledged: SyncAcknowledgements = emptyAcknowledgements(),
+    acknowledged: SyncAcknowledgements = emptyAcknowledgements()
   ): Promise<{ success: boolean; message: string; retryable?: boolean }> {
     const { remoteBaseUrl, deviceToken, encryptionKey } = this.getSyncConfig()
     if (!remoteBaseUrl || !deviceToken) {
       return {
         success: false,
-        message: "Missing remote connection configuration.",
-        retryable: false,
+        message: 'Missing remote connection configuration.',
+        retryable: false
       }
     }
 
     try {
-      console.log("[Sync] Triggering automatic metadata pull sync with cursor pagination...")
+      console.log('[Sync] Triggering automatic metadata pull sync with cursor pagination...')
       let currentCursor: string | null = null
       let hasMorePages = true
       let pageCount = 0
@@ -911,30 +873,27 @@ export class BackgroundSyncManager {
 
       while (hasMorePages && pageCount < MAX_PAGES) {
         pageCount++
-        let pullUrl = `${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/pull?limit=250`
+        let pullUrl = `${remoteBaseUrl.replace(/\/+$/, '')}/api/sync/pull?limit=250`
         if (currentCursor) {
           pullUrl += `&cursor=${encodeURIComponent(currentCursor)}`
         }
 
         const pullResponse = await fetch(pullUrl, {
-          method: "GET",
+          method: 'GET',
           headers: {
             Authorization: `Bearer ${deviceToken}`,
-            "User-Agent": "Facenox-Desktop-Pull",
-            "X-Facenox-Sync-Version": "2",
+            'User-Agent': 'Facenox-Desktop-Pull',
+            'X-Facenox-Sync-Version': '2'
           },
-          signal: this.requestSignal(30000),
+          signal: this.requestSignal(30000)
         })
 
         if (!pullResponse.ok) {
-          console.warn(
-            `[Sync] Automatic remote metadata pull failed on page ${pageCount}: HTTP`,
-            pullResponse.status,
-          )
+          console.warn(`[Sync] Automatic remote metadata pull failed on page ${pageCount}: HTTP`, pullResponse.status)
           return {
             success: false,
             message: ` Remote metadata pull failed on page ${pageCount} (HTTP ${pullResponse.status}).`,
-            retryable: !NON_RETRYABLE_STATUSES.has(pullResponse.status),
+            retryable: !NON_RETRYABLE_STATUSES.has(pullResponse.status)
           }
         }
 
@@ -951,36 +910,33 @@ export class BackgroundSyncManager {
         }
 
         if (pullPayload.schema_version !== 2)
-          throw new Error("Cloud must be updated before this desktop can sync safely.")
+          throw new Error('Cloud must be updated before this desktop can sync safely.')
         if (pullPayload.policy && pageCount === 1) {
           await this.applyRemotePolicy(pullPayload.policy)
         }
 
-        const importResponse = await fetch(
-          `${backendService.getUrl()}/attendance/import-metadata`,
-          {
-            method: "POST",
-            headers: authHeaders({ "Content-Type": "application/json" }),
-            body: JSON.stringify({
-              groups: pullPayload.groups || [],
-              members: pullPayload.members || [],
-              prune_missing: false,
-              acknowledged_groups: acknowledged.groups,
-              acknowledged_members: acknowledged.members,
-              accepted_groups: acknowledged.accepted.groups,
-              accepted_members: acknowledged.accepted.members,
-              removed_group_ids: pullPayload.removed_group_ids || [],
-              removed_member_ids: pullPayload.removed_member_ids || [],
-            }),
-            signal: this.requestSignal(30000),
-          },
-        )
+        const importResponse = await fetch(`${backendService.getUrl()}/attendance/import-metadata`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            groups: pullPayload.groups || [],
+            members: pullPayload.members || [],
+            prune_missing: false,
+            acknowledged_groups: acknowledged.groups,
+            acknowledged_members: acknowledged.members,
+            accepted_groups: acknowledged.accepted.groups,
+            accepted_members: acknowledged.accepted.members,
+            removed_group_ids: pullPayload.removed_group_ids || [],
+            removed_member_ids: pullPayload.removed_member_ids || []
+          }),
+          signal: this.requestSignal(30000)
+        })
 
         if (!importResponse.ok) {
           console.warn(`[Sync] Automatic local metadata import failed on page ${pageCount}.`)
           return {
             success: false,
-            message: ` Metadata pull succeeded on page ${pageCount} but local import failed.`,
+            message: ` Metadata pull succeeded on page ${pageCount} but local import failed.`
           }
         }
 
@@ -1006,12 +962,10 @@ export class BackgroundSyncManager {
 
           for (const fe of pullPayload.face_embeddings) {
             try {
-              if (!fe.is_deleted && !encryptionKey) throw new Error("Missing face encryption key.")
+              if (!fe.is_deleted && !encryptionKey) throw new Error('Missing face encryption key.')
               const rawBytes =
-                fe.is_deleted ?
-                  new Uint8Array()
-                : decryptEmbedding(fe.embedding_encrypted, encryptionKey)
-              const b64 = Buffer.from(rawBytes).toString("base64")
+                fe.is_deleted ? new Uint8Array() : decryptEmbedding(fe.embedding_encrypted, encryptionKey)
+              const b64 = Buffer.from(rawBytes).toString('base64')
               batchEmbeddings.push({
                 person_id: fe.person_id,
                 embedding_bytes: b64,
@@ -1019,7 +973,7 @@ export class BackgroundSyncManager {
                 is_deleted: fe.is_deleted,
                 sync_revision: fe.sync_revision,
                 acknowledged_version: acknowledged.faces[fe.person_id],
-                accepted_revision: acknowledged.accepted.faces[fe.person_id],
+                accepted_revision: acknowledged.accepted.faces[fe.person_id]
               })
             } catch (err) {
               totalDecryptFailures++
@@ -1029,17 +983,13 @@ export class BackgroundSyncManager {
 
           if (batchEmbeddings.length > 0) {
             try {
-              const embBatchResponse = await fetch(
-                `${backendService.getUrl()}/attendance/import-embeddings-batch`,
-                {
-                  method: "POST",
-                  headers: authHeaders({ "Content-Type": "application/json" }),
-                  body: JSON.stringify({ embeddings: batchEmbeddings }),
-                  signal: this.requestSignal(30000),
-                },
-              )
-              if (!embBatchResponse.ok)
-                throw new Error(`Face import failed: HTTP ${embBatchResponse.status}`)
+              const embBatchResponse = await fetch(`${backendService.getUrl()}/attendance/import-embeddings-batch`, {
+                method: 'POST',
+                headers: authHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ embeddings: batchEmbeddings }),
+                signal: this.requestSignal(30000)
+              })
+              if (!embBatchResponse.ok) throw new Error(`Face import failed: HTTP ${embBatchResponse.status}`)
               const embBatchResult = (await embBatchResponse.json()) as {
                 imported_count?: number
                 failed_count?: number
@@ -1047,7 +997,7 @@ export class BackgroundSyncManager {
               accumulatedEmbeddingsCount += embBatchResult.imported_count || 0
               totalDecryptFailures += embBatchResult.failed_count || 0
             } catch (batchErr) {
-              console.warn("[Sync] Failed to post batch embeddings:", batchErr)
+              console.warn('[Sync] Failed to post batch embeddings:', batchErr)
               totalBatchImportFailures += batchEmbeddings.length
             }
           }
@@ -1061,7 +1011,7 @@ export class BackgroundSyncManager {
         }
       }
 
-      if (hasMorePages) throw new Error("Cloud roster exceeds the page limit; sync is incomplete.")
+      if (hasMorePages) throw new Error('Cloud roster exceeds the page limit; sync is incomplete.')
       let pullMsg = ` Pulled ${accumulatedGroupsCount} groups, ${accumulatedMembersCount} members.`
       if (accumulatedEmbeddingsCount > 0) {
         pullMsg += ` Imported ${accumulatedEmbeddingsCount} face templates.`
@@ -1073,42 +1023,39 @@ export class BackgroundSyncManager {
         pullMsg += ` ${totalBatchImportFailures} face templates failed to save locally; retrying.`
       }
 
-      console.log(
-        `[Sync] Automatic metadata pull completed (${pageCount} page${pageCount > 1 ? "s" : ""}).${pullMsg}`,
-      )
-      state.mainWindow?.webContents.send("sync:data-changed")
+      console.log(`[Sync] Automatic metadata pull completed (${pageCount} page${pageCount > 1 ? 's' : ''}).${pullMsg}`)
+      state.mainWindow?.webContents.send('sync:data-changed')
 
       return {
         success: totalDecryptFailures === 0 && totalBatchImportFailures === 0,
         message: pullMsg,
-        retryable: true,
+        retryable: true
       }
     } catch (pullError) {
-      const errMsg = pullError instanceof Error ? pullError.message : "unknown"
-      console.warn("[Sync] Automatic metadata pull failed:", pullError)
-      const nonRetryable =
-        errMsg.includes("Cloud must be updated") || errMsg.includes("exceeds the page limit")
+      const errMsg = pullError instanceof Error ? pullError.message : 'unknown'
+      console.warn('[Sync] Automatic metadata pull failed:', pullError)
+      const nonRetryable = errMsg.includes('Cloud must be updated') || errMsg.includes('exceeds the page limit')
       return {
         success: false,
         message: ` Metadata pull error: ${errMsg}`,
-        retryable: !nonRetryable,
+        retryable: !nonRetryable
       }
     }
   }
 
   async performSync(pullOnly = false) {
-    if (this.isWiping) return { success: false, message: "Sync is paused during a data wipe." }
-    if (this.suspended) return { success: false, message: "Sync is paused for disconnect." }
+    if (this.isWiping) return { success: false, message: 'Sync is paused during a data wipe.' }
+    if (this.suspended) return { success: false, message: 'Sync is paused for disconnect.' }
     if (this.isSyncing) {
       if (pullOnly) this.pendingPullRequested = true
       else this.pendingSyncRequested = true
-      return { success: false, message: "A sync is already running. Queued for re-sync." }
+      return { success: false, message: 'A sync is already running. Queued for re-sync.' }
     }
     const config = this.getSyncConfig()
     const { remoteBaseUrl, siteId, deviceId, deviceToken, lastSyncedAt } = config
     let encryptionKey = config.encryptionKey
     if (!remoteBaseUrl || !siteId || !deviceId || !deviceToken)
-      return { success: false, message: "Device connection is incomplete." }
+      return { success: false, message: 'Device connection is incomplete.' }
     this.isSyncing = true
     this.abortController = new AbortController()
     this.idlePromise = new Promise((resolve) => {
@@ -1124,20 +1071,18 @@ export class BackgroundSyncManager {
       acknowledged: SyncAcknowledgements
       rejected?: boolean
     }
-    let pending = persistentStore.get("sync.pendingUpload") as PendingUpload | undefined
+    let pending = persistentStore.get('sync.pendingUpload') as PendingUpload | undefined
     if (
       pending &&
-      (pending.deviceId !== deviceId ||
-        pending.siteId !== siteId ||
-        pending.remoteBaseUrl !== remoteBaseUrl)
+      (pending.deviceId !== deviceId || pending.siteId !== siteId || pending.remoteBaseUrl !== remoteBaseUrl)
     ) {
       // Never upload a previous organization's data to a new connection.
       pending = undefined
-      persistentStore.set("sync.pendingUpload", null)
+      persistentStore.set('sync.pendingUpload', null)
     }
     const acknowledged =
       pending?.acknowledged ??
-      (persistentStore.get("sync.pendingAcknowledgements") as SyncAcknowledgements | undefined) ??
+      (persistentStore.get('sync.pendingAcknowledgements') as SyncAcknowledgements | undefined) ??
       emptyAcknowledgements()
     let pushError: string | null = null
     let pushStatus: number | undefined
@@ -1146,18 +1091,16 @@ export class BackgroundSyncManager {
     let pushed = false
     let conflicts = 0
     let keyError: string | null = null
-    const hadPendingOrRejectedUpload = Boolean(
-      pending && (pending.rejected || pending.next < pending.chunks.length),
-    )
+    const hadPendingOrRejectedUpload = Boolean(pending && (pending.rejected || pending.next < pending.chunks.length))
     if (!pullOnly) {
       this.clearRetryTimer()
     }
     try {
-      if (!encryptionKey && persistentStore.get("sync.policy.faceTemplateSync") !== false) {
+      if (!encryptionKey && persistentStore.get('sync.policy.faceTemplateSync') !== false) {
         try {
-          const keyResponse = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/device/key`, {
+          const keyResponse = await fetch(`${remoteBaseUrl.replace(/\/+$/, '')}/api/device/key`, {
             headers: { Authorization: `Bearer ${deviceToken}` },
-            signal: this.requestSignal(15000),
+            signal: this.requestSignal(15000)
           })
           if (keyResponse.ok) {
             const keyPayload = (await keyResponse.json()) as {
@@ -1165,13 +1108,10 @@ export class BackgroundSyncManager {
               encryptionKey?: string | null
             }
             if (keyPayload.encryptionKey) {
-              if (
-                keyPayload.siteId !== siteId ||
-                Buffer.from(keyPayload.encryptionKey, "base64").length !== 32
-              ) {
-                throw new Error("Cloud returned an invalid site key.")
+              if (keyPayload.siteId !== siteId || Buffer.from(keyPayload.encryptionKey, 'base64').length !== 32) {
+                throw new Error('Cloud returned an invalid site key.')
               }
-              persistentStore.set("sync.encryptionKey", keyPayload.encryptionKey)
+              persistentStore.set('sync.encryptionKey', keyPayload.encryptionKey)
               encryptionKey = keyPayload.encryptionKey
             }
           } else if (keyResponse.status !== 404) {
@@ -1179,31 +1119,30 @@ export class BackgroundSyncManager {
           }
         } catch (error) {
           // A key-service failure must not hold non-biometric attendance hostage.
-          keyError = error instanceof Error ? error.message : "Face sync key unavailable."
+          keyError = error instanceof Error ? error.message : 'Face sync key unavailable.'
         }
       }
       if (!pullOnly) {
         try {
           if (!pending || pending.rejected) {
             const acceptedChunks = pending?.chunks.slice(0, pending.next) ?? []
-            const exportUrl = `${backendService.getUrl()}/attendance/export${lastSyncedAt ? `?since=${encodeURIComponent(lastSyncedAt)}` : ""}`
+            const exportUrl = `${backendService.getUrl()}/attendance/export${lastSyncedAt ? `?since=${encodeURIComponent(lastSyncedAt)}` : ''}`
             const response = await fetch(exportUrl, {
-              method: "POST",
-              headers: authHeaders({ "Content-Type": "application/json" }),
-              signal: this.requestSignal(60000),
+              method: 'POST',
+              headers: authHeaders({ 'Content-Type': 'application/json' }),
+              signal: this.requestSignal(60000)
             })
             if (!response.ok) throw new Error(`Local export failed: HTTP ${response.status}`)
-            const attendance = normalizeAttendanceExportForRemote(
-              (await response.json()) as Record<string, unknown>,
-            )
+            const attendance = normalizeAttendanceExportForRemote((await response.json()) as Record<string, unknown>)
             exportedAt = attendance.exported_at
-            let faces: NonNullable<SyncPushPayload["attendance_export"]["face_embeddings"]> = []
+            let faces: NonNullable<SyncPushPayload['attendance_export']['face_embeddings']> = []
             if (encryptionKey) {
-              const faceResponse = await fetch(
-                `${backendService.getUrl()}/attendance/export-embeddings`,
-                { method: "POST", headers: authHeaders(), signal: this.requestSignal(30000) },
-              )
-              if (!faceResponse.ok) throw new Error("Could not export local face changes.")
+              const faceResponse = await fetch(`${backendService.getUrl()}/attendance/export-embeddings`, {
+                method: 'POST',
+                headers: authHeaders(),
+                signal: this.requestSignal(30000)
+              })
+              if (!faceResponse.ok) throw new Error('Could not export local face changes.')
               const data = (await faceResponse.json()) as {
                 embeddings?: Array<{
                   person_id: string
@@ -1218,13 +1157,11 @@ export class BackgroundSyncManager {
                 person_id: face.person_id,
                 embedding_dimension: face.embedding_dimension,
                 embedding_encrypted:
-                  face.is_deleted ? "" : (
-                    encryptEmbedding(Buffer.from(face.embedding_bytes, "base64"), encryptionKey)
-                  ),
+                  face.is_deleted ? '' : encryptEmbedding(Buffer.from(face.embedding_bytes, 'base64'), encryptionKey),
                 is_deleted: face.is_deleted,
                 sync_revision: face.sync_revision,
                 version: face.version,
-                sync_dirty: true,
+                sync_dirty: true
               }))
             }
             const groups = attendance.groups.filter((g) => g.sync_dirty !== false)
@@ -1236,10 +1173,10 @@ export class BackgroundSyncManager {
                 site_id: siteId,
                 app_version: getCurrentVersion(),
                 exported_at: exportedAt!,
-                attendance_export: { ...attendance, groups, members, face_embeddings: faces },
+                attendance_export: { ...attendance, groups, members, face_embeddings: faces }
               },
               undefined,
-              acceptedChunks,
+              acceptedChunks
             )
             pending = {
               deviceId,
@@ -1248,9 +1185,9 @@ export class BackgroundSyncManager {
               exportedAt: exportedAt!,
               chunks: [...acceptedChunks, ...chunks],
               next: acceptedChunks.length,
-              acknowledged,
+              acknowledged
             }
-            persistentStore.set("sync.pendingUpload", pending)
+            persistentStore.set('sync.pendingUpload', pending)
           }
           exportedAt = pending.exportedAt
           if (
@@ -1258,37 +1195,33 @@ export class BackgroundSyncManager {
               .slice(pending.next)
               .some((chunk) => (chunk.attendance_export.deleted_sessions?.length ?? 0) > 0)
           ) {
-            const capabilities = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/push`, {
-              method: "GET",
+            const capabilities = await fetch(`${remoteBaseUrl.replace(/\/+$/, '')}/api/sync/push`, {
+              method: 'GET',
               headers: { Authorization: `Bearer ${deviceToken}` },
-              signal: this.requestSignal(30000),
+              signal: this.requestSignal(30000)
             })
             if (!capabilities.ok) {
               pushStatus = capabilities.status
-              throw new Error(
-                `Could not verify Cloud sync capabilities (HTTP ${capabilities.status}).`,
-              )
+              throw new Error(`Could not verify Cloud sync capabilities (HTTP ${capabilities.status}).`)
             }
             const supported = (await capabilities.json().catch(() => null)) as {
               capabilities?: { session_deletions?: boolean }
             } | null
             if (supported?.capabilities?.session_deletions !== true) {
-              throw new Error(
-                "Update Facenox Cloud before syncing removed attendance visits. Deletions remain queued.",
-              )
+              throw new Error('Update Facenox Cloud before syncing removed attendance visits. Deletions remain queued.')
             }
           }
           for (let i = pending.next; i < pending.chunks.length; i++) {
             const payload = pending.chunks[i]
-            const remote = await fetch(`${remoteBaseUrl.replace(/\/+$/, "")}/api/sync/push`, {
-              method: "POST",
+            const remote = await fetch(`${remoteBaseUrl.replace(/\/+$/, '')}/api/sync/push`, {
+              method: 'POST',
               headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
                 Authorization: `Bearer ${deviceToken}`,
-                "X-Sync-Chunk": pending.chunks.length > 1 ? "true" : "false",
+                'X-Sync-Chunk': pending.chunks.length > 1 ? 'true' : 'false'
               },
               body: JSON.stringify(payload),
-              signal: this.requestSignal(60000),
+              signal: this.requestSignal(60000)
             })
             const responseText = await remote.text()
             let result: {
@@ -1297,7 +1230,7 @@ export class BackgroundSyncManager {
               retryAfterMs?: number
               conflicts?: number
               deleted_session_ids?: string[]
-              accepted?: SyncAcknowledgements["accepted"]
+              accepted?: SyncAcknowledgements['accepted']
               policy?: Record<string, unknown>
             } = {}
             try {
@@ -1310,49 +1243,37 @@ export class BackgroundSyncManager {
               this.lastPushCompletedAt = Date.now()
               this.triggerDebouncedSync(retryMs)
               rateLimitScheduled = true
-              throw new Error(
-                `Rate limit exceeded (HTTP 429). Retrying in ${Math.round(retryMs / 1000)}s.`,
-              )
+              throw new Error(`Rate limit exceeded (HTTP 429). Retrying in ${Math.round(retryMs / 1000)}s.`)
             }
             if (!remote.ok) {
               pushStatus = remote.status
               if ([400, 402, 422].includes(remote.status)) {
                 pending.rejected = true
-                persistentStore.set("sync.pendingUpload", pending)
+                persistentStore.set('sync.pendingUpload', pending)
               }
-              throw new Error(
-                result.message || result.error || responseText || `HTTP ${remote.status}`,
-              )
+              throw new Error(result.message || result.error || responseText || `HTTP ${remote.status}`)
             }
             const retiredIds = new Set(result.deleted_session_ids ?? [])
-            if (
-              (payload.attendance_export.deleted_sessions ?? []).some(
-                (row) => !retiredIds.has(row.id),
-              )
-            ) {
-              throw new Error(
-                "Cloud did not confirm removed attendance visits. Deletions remain queued.",
-              )
+            if ((payload.attendance_export.deleted_sessions ?? []).some((row) => !retiredIds.has(row.id))) {
+              throw new Error('Cloud did not confirm removed attendance visits. Deletions remain queued.')
             }
             for (const g of payload.attendance_export.groups) acknowledged.groups[g.id] = g.version
-            for (const m of payload.attendance_export.members)
-              acknowledged.members[m.person_id] = m.version
-            for (const f of payload.attendance_export.face_embeddings || [])
-              acknowledged.faces[f.person_id] = f.version
+            for (const m of payload.attendance_export.members) acknowledged.members[m.person_id] = m.version
+            for (const f of payload.attendance_export.face_embeddings || []) acknowledged.faces[f.person_id] = f.version
             if (result.accepted)
-              for (const kind of ["groups", "members", "faces"] as const)
+              for (const kind of ['groups', 'members', 'faces'] as const)
                 Object.assign(acknowledged.accepted[kind], result.accepted[kind])
             conflicts += result.conflicts || 0
             pending.next = i + 1
             pending.acknowledged = acknowledged
-            persistentStore.set("sync.pendingUpload", pending)
+            persistentStore.set('sync.pendingUpload', pending)
             await this.applyRemotePolicy(result.policy)
           }
           pushed = true
           this.lastPushCompletedAt = Date.now()
         } catch (error) {
-          pushError = error instanceof Error ? error.message : "Upload failed."
-          if (rateLimitScheduled || pushError.includes("429") || pushError.includes("Rate limit")) {
+          pushError = error instanceof Error ? error.message : 'Upload failed.'
+          if (rateLimitScheduled || pushError.includes('429') || pushError.includes('Rate limit')) {
             // When rate limited by Cloud, back off immediately without cascading into a pull.
             // Keep status non-alarming on the first automatic background retry so rapid scans stay calm.
             const keepQuietRetry = Boolean(this.timer) && this.consecutiveTransientFailures === 0
@@ -1360,29 +1281,29 @@ export class BackgroundSyncManager {
               this.consecutiveTransientFailures++
             }
             this.setLastSyncState({
-              lastSyncStatus: keepQuietRetry ? "idle" : "error",
-              lastSyncMessage: "Cloud rate limit reached. Retrying automatically.",
+              lastSyncStatus: keepQuietRetry ? 'idle' : 'error',
+              lastSyncMessage: 'Cloud rate limit reached. Retrying automatically.'
             })
             return { success: false, message: pushError }
           }
         }
       }
       // Downloads must remain available during quota/validation/upload failures.
-      if (this.suspended) return { success: false, message: "Sync cancelled for disconnect." }
+      if (this.suspended) return { success: false, message: 'Sync cancelled for disconnect.' }
       const pull = await this.pullMetadata(acknowledged)
       const success = !pushError && !keyError && pull.success
       const message = [
         pushError ? `Upload failed: ${pushError}.`
-        : pullOnly ? "Cloud updates downloaded."
-        : "Snapshot synced.",
+        : pullOnly ? 'Cloud updates downloaded.'
+        : 'Snapshot synced.',
         pull.message,
-        keyError ? `Face sync needs attention: ${keyError}` : "",
+        keyError ? `Face sync needs attention: ${keyError}` : '',
         conflicts ?
           `${conflicts} concurrent changes kept the Cloud revision. Local directory details are recorded in the audit log.`
-        : "",
+        : ''
       ]
         .filter(Boolean)
-        .join(" ")
+        .join(' ')
       if (pullOnly && hadPendingOrRejectedUpload && pull.success) {
         // Keep the unresolved upload failure visible until a full push clears pendingUpload.
         if (!pending?.rejected && this.timer) {
@@ -1391,14 +1312,14 @@ export class BackgroundSyncManager {
       } else {
         this.setLastSyncState({
           ...(pushed && exportedAt ? { lastSyncedAt: exportedAt } : {}),
-          lastSyncStatus: success ? "success" : "error",
-          lastSyncMessage: message,
+          lastSyncStatus: success ? 'success' : 'error',
+          lastSyncMessage: message
         })
       }
       // A failed face import must not prevent newer attendance from uploading.
       // Keep directory acknowledgements separately until a successful pull.
-      persistentStore.set("sync.pendingAcknowledgements", pull.success ? null : acknowledged)
-      if (pushed) persistentStore.set("sync.pendingUpload", null)
+      persistentStore.set('sync.pendingAcknowledgements', pull.success ? null : acknowledged)
+      if (pushed) persistentStore.set('sync.pendingUpload', null)
       if (success) {
         if (!pullOnly || !hadPendingOrRejectedUpload) {
           this.consecutiveTransientFailures = 0
@@ -1406,17 +1327,16 @@ export class BackgroundSyncManager {
         }
       } else {
         const nonRetryable =
-          (pushStatus !== undefined && NON_RETRYABLE_STATUSES.has(pushStatus)) ||
-          pull.retryable === false
+          (pushStatus !== undefined && NON_RETRYABLE_STATUSES.has(pushStatus)) || pull.retryable === false
         if (!pullOnly && !nonRetryable && !rateLimitScheduled) {
           this.scheduleTransientRetry()
         }
       }
       return { success, message, syncedAt: pushed ? exportedAt || undefined : undefined }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Sync failed."
+      const message = error instanceof Error ? error.message : 'Sync failed.'
       if (!this.suspended) {
-        this.setLastSyncState({ lastSyncStatus: "error", lastSyncMessage: message })
+        this.setLastSyncState({ lastSyncStatus: 'error', lastSyncMessage: message })
         if (!pullOnly) {
           this.scheduleTransientRetry()
         }
@@ -1441,9 +1361,7 @@ export class BackgroundSyncManager {
     }
 
     const cooldownRemaining =
-      this.lastPushCompletedAt > 0 ?
-        Math.max(0, MIN_PUSH_INTERVAL_MS - (Date.now() - this.lastPushCompletedAt))
-      : 0
+      this.lastPushCompletedAt > 0 ? Math.max(0, MIN_PUSH_INTERVAL_MS - (Date.now() - this.lastPushCompletedAt)) : 0
     const effectiveDelay = Math.max(delayMs, cooldownRemaining)
 
     console.log(`[Sync] Debounced sync triggered. Delaying execution by ${effectiveDelay}ms.`)

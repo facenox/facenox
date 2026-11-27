@@ -96,7 +96,7 @@
 }
 
 /* Custom Range Input */
-input[type="range"].premium-range {
+input[type='range'].premium-range {
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
@@ -105,17 +105,17 @@ input[type="range"].premium-range {
   cursor: pointer;
 }
 
-input[type="range"].premium-range:focus {
+input[type='range'].premium-range:focus {
   outline: none;
 }
 
-input[type="range"].premium-range::-webkit-slider-runnable-track {
+input[type='range'].premium-range::-webkit-slider-runnable-track {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 9999px;
   height: 4px;
 }
 
-input[type="range"].premium-range::-webkit-slider-thumb {
+input[type='range'].premium-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   margin-top: -6px;
@@ -129,18 +129,18 @@ input[type="range"].premium-range::-webkit-slider-thumb {
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-input[type="range"].premium-range:hover::-webkit-slider-thumb {
+input[type='range'].premium-range:hover::-webkit-slider-thumb {
   transform: scale(1.1);
   box-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
 }
 
-input[type="range"].premium-range::-moz-range-track {
+input[type='range'].premium-range::-moz-range-track {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 9999px;
   height: 4px;
 }
 
-input[type="range"].premium-range::-moz-range-thumb {
+input[type='range'].premium-range::-moz-range-thumb {
   background-color: #ffffff;
   border-radius: 9999px;
   height: 16px;

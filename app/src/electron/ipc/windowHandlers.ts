@@ -1,14 +1,14 @@
-import { ipcMain } from "electron"
-import { state } from "../State.js"
-import { WindowManager } from "../window/WindowManager.js"
+import { ipcMain } from 'electron'
+import { state } from '../State.js'
+import { WindowManager } from '../window/WindowManager.js'
 
 export function registerWindowHandlers() {
-  ipcMain.handle("window:minimize", () => {
+  ipcMain.handle('window:minimize', () => {
     if (state.mainWindow) state.mainWindow.minimize()
     return true
   })
 
-  ipcMain.handle("window:maximize", () => {
+  ipcMain.handle('window:maximize', () => {
     if (state.mainWindow) {
       if (state.mainWindow.isMaximized()) {
         state.mainWindow.unmaximize()
@@ -19,24 +19,24 @@ export function registerWindowHandlers() {
     return true
   })
 
-  ipcMain.handle("window:close", () => {
+  ipcMain.handle('window:close', () => {
     if (state.mainWindow) state.mainWindow.close()
     return true
   })
 
-  ipcMain.on("splash:update-progress", (_event, progress: number, detail?: string) => {
+  ipcMain.on('splash:update-progress', (_event, progress: number, detail?: string) => {
     WindowManager.updateSplashProgress(progress, detail)
   })
 
-  ipcMain.on("splash:update-data-step", (_event, step: number, detail?: string) => {
+  ipcMain.on('splash:update-data-step', (_event, step: number, detail?: string) => {
     WindowManager.updateSplashDataStep(step, detail)
   })
 
-  ipcMain.on("splash:rendered-progress", (_event, progress: number) => {
+  ipcMain.on('splash:rendered-progress', (_event, progress: number) => {
     WindowManager.handleSplashProgressRendered(progress)
   })
 
-  ipcMain.on("app:ready", () => {
+  ipcMain.on('app:ready', () => {
     void WindowManager.revealMainWindowFromSplash()
   })
 }

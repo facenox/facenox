@@ -1,10 +1,10 @@
-import { BrowserWindow, dialog, shell, app } from "electron"
-import path from "path"
-import { fileURLToPath } from "node:url"
-import isDev from "../util.js"
-import { state } from "../State.js"
-import { persistentStore } from "../persistentStore.js"
-import { getWindowIconPath } from "../iconPaths.js"
+import { BrowserWindow, dialog, shell, app } from 'electron'
+import path from 'path'
+import { fileURLToPath } from 'node:url'
+import isDev from '../util.js'
+import { state } from '../State.js'
+import { persistentStore } from '../persistentStore.js'
+import { getWindowIconPath } from '../iconPaths.js'
 
 const window_filename = fileURLToPath(import.meta.url)
 const window_dirname = path.dirname(window_filename)
@@ -22,7 +22,7 @@ export class WindowManager {
     state.startupTotalSteps = 9
     state.splashProgress = {
       progress: 0,
-      detail: "Starting",
+      detail: 'Starting'
     }
     state.pendingSplashProgress = [state.splashProgress]
     state.isSplashReady = false
@@ -47,27 +47,24 @@ export class WindowManager {
       skipTaskbar: true,
       resizable: false,
       center: true,
-      backgroundColor: "#00000000",
+      backgroundColor: '#00000000',
       icon: getWindowIconPath(),
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-        preload: path.join(window_dirname, "../preload/preload-splash.js"),
-      },
+        preload: path.join(window_dirname, '../preload/preload-splash.js')
+      }
     })
 
     const splashPath =
-      isDev() ?
-        path.join(app.getAppPath(), "out", "main", "splash.html")
-      : path.join(window_dirname, "splash.html")
+      isDev() ? path.join(app.getAppPath(), 'out', 'main', 'splash.html') : path.join(window_dirname, 'splash.html')
     splash.loadFile(splashPath)
-    splash.webContents.once("did-finish-load", () => {
+    splash.webContents.once('did-finish-load', () => {
       state.isSplashReady = true
-      const initialUpdate =
-        state.pendingSplashProgress[state.pendingSplashProgress.length - 1] ?? state.splashProgress
+      const initialUpdate = state.pendingSplashProgress[state.pendingSplashProgress.length - 1] ?? state.splashProgress
 
       state.pendingSplashProgress = []
-      splash.webContents.send("splash:progress", initialUpdate)
+      splash.webContents.send('splash:progress', initialUpdate)
       if (!splash.isDestroyed()) {
         state.splashShownAt = Date.now()
         splash.show()
@@ -115,7 +112,7 @@ export class WindowManager {
 
     const update = {
       progress: clampedProgress,
-      ...(detail?.trim() ? { detail: detail.trim() } : {}),
+      ...(detail?.trim() ? { detail: detail.trim() } : {})
     }
 
     state.splashProgress = update
@@ -130,13 +127,13 @@ export class WindowManager {
       return
     }
 
-    state.splashWindow.webContents.send("splash:progress", update)
+    state.splashWindow.webContents.send('splash:progress', update)
   }
 
   static updateSplashDataStep(step: number, detail?: string): void {
     const update = {
       progress: WindowManager.progressFromStep(step),
-      ...(detail?.trim() ? { detail: detail.trim() } : {}),
+      ...(detail?.trim() ? { detail: detail.trim() } : {})
     }
 
     if (!state.isSplashDataPhaseUnlocked) {
@@ -225,8 +222,8 @@ export class WindowManager {
         return
       }
 
-      console.warn("[WindowManager] Renderer startup timed out. Revealing the loading shell.")
-      WindowManager.updateSplashProgress(100, "Opening Facenox")
+      console.warn('[WindowManager] Renderer startup timed out. Revealing the loading shell.')
+      WindowManager.updateSplashProgress(100, 'Opening Facenox')
       void WindowManager.revealMainWindowFromSplash()
     }, timeoutMs)
   }
@@ -243,7 +240,7 @@ export class WindowManager {
     }
 
     state.splashRevealSafetyTimeout = setTimeout(() => {
-      console.warn("[WindowManager] Splash reveal handshake timed out. Forcing show.")
+      console.warn('[WindowManager] Splash reveal handshake timed out. Forcing show.')
       WindowManager.finalizeSplashReveal()
     }, 2000)
 
@@ -257,11 +254,7 @@ export class WindowManager {
       return
     }
 
-    if (
-      state.splashWindow &&
-      !state.splashWindow.isDestroyed() &&
-      state.splashRenderedProgress >= 100
-    ) {
+    if (state.splashWindow && !state.splashWindow.isDestroyed() && state.splashRenderedProgress >= 100) {
       WindowManager.scheduleSplashRevealAfterCompletion()
       return
     }
@@ -271,7 +264,7 @@ export class WindowManager {
 
   static createWindow(): Promise<void> {
     const mainWindow = new BrowserWindow({
-      title: "Facenox",
+      title: 'Facenox',
       width: 1280,
       height: 600,
       minWidth: 800,
@@ -282,41 +275,41 @@ export class WindowManager {
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-        preload: path.join(window_dirname, "../preload/preload.js"),
+        preload: path.join(window_dirname, '../preload/preload.js'),
         webgl: true,
         zoomFactor: 1.0,
         devTools: isDev(),
-        backgroundThrottling: false,
+        backgroundThrottling: false
       },
-      titleBarStyle: "hidden",
+      titleBarStyle: 'hidden',
       trafficLightPosition: { x: 12, y: 10 },
       transparent: false,
-      backgroundColor: "#000000",
-      icon: getWindowIconPath(),
+      backgroundColor: '#000000',
+      icon: getWindowIconPath()
     })
 
     state.mainWindow = mainWindow
 
     const readyToShow = new Promise<void>((resolve) => {
-      mainWindow.once("ready-to-show", () => resolve())
+      mainWindow.once('ready-to-show', () => resolve())
     })
 
     if (isDev() && process.env.ELECTRON_RENDERER_URL) {
       mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL)
     } else {
-      mainWindow.loadFile(path.join(window_dirname, "../renderer/index.html"))
+      mainWindow.loadFile(path.join(window_dirname, '../renderer/index.html'))
     }
 
-    mainWindow.on("maximize", () => {
-      mainWindow.webContents.send("window:maximized")
+    mainWindow.on('maximize', () => {
+      mainWindow.webContents.send('window:maximized')
     })
 
-    mainWindow.on("unmaximize", () => {
-      mainWindow.webContents.send("window:unmaximized")
+    mainWindow.on('unmaximize', () => {
+      mainWindow.webContents.send('window:unmaximized')
     })
 
     let isHandlingClose = false
-    mainWindow.on("close", (event) => {
+    mainWindow.on('close', (event) => {
       if (state.isQuitting) return
       if (isHandlingClose) {
         event.preventDefault()
@@ -325,7 +318,7 @@ export class WindowManager {
 
       event.preventDefault()
 
-      const dismissed = Boolean(persistentStore.get("ui.closeToTrayNoticeDismissed"))
+      const dismissed = Boolean(persistentStore.get('ui.closeToTrayNoticeDismissed'))
       if (dismissed) {
         mainWindow.hide()
         return
@@ -334,20 +327,20 @@ export class WindowManager {
       isHandlingClose = true
       void dialog
         .showMessageBox(mainWindow, {
-          type: "info",
-          title: "Running in the background",
-          message: "Facenox will continue running in the system tray.",
+          type: 'info',
+          title: 'Running in the background',
+          message: 'Facenox will continue running in the system tray.',
           detail: "Right-click the tray icon and select 'Quit' to exit completely.",
-          buttons: ["Keep running", "Quit"],
+          buttons: ['Keep running', 'Quit'],
           defaultId: 0,
           cancelId: 0,
           checkboxLabel: "Don't show this reminder again",
           checkboxChecked: false,
-          noLink: true,
+          noLink: true
         })
         .then(({ response, checkboxChecked }) => {
           if (checkboxChecked) {
-            persistentStore.set("ui.closeToTrayNoticeDismissed", true)
+            persistentStore.set('ui.closeToTrayNoticeDismissed', true)
           }
 
           if (response === 1) {
@@ -363,22 +356,22 @@ export class WindowManager {
         })
     })
 
-    mainWindow.on("closed", () => {
+    mainWindow.on('closed', () => {
       state.mainWindow = null
     })
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
       try {
         const parsed = new URL(url)
-        if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+        if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
           shell.openExternal(parsed.toString()).catch((err) => {
-            console.warn("Failed to open external URL:", err)
+            console.warn('Failed to open external URL:', err)
           })
         }
       } catch {
         // Ignore malformed URLs from untrusted content.
       }
-      return { action: "deny" }
+      return { action: 'deny' }
     })
 
     return readyToShow
@@ -389,11 +382,11 @@ export class WindowManager {
       state.mainWindow.webContents.setZoomLevel(0)
       state.mainWindow.show()
       state.mainWindow.focus()
-      if (process.platform === "win32") {
+      if (process.platform === 'win32') {
         try {
           state.mainWindow.moveTop()
         } catch (error) {
-          console.warn("Could not move window to top:", error)
+          console.warn('Could not move window to top:', error)
         }
       }
     }

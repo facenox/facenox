@@ -1,5 +1,5 @@
-import { useMemo } from "react"
-import { useGroupUIStore } from "@/components/group/stores"
+import { useMemo } from 'react'
+import { useGroupUIStore } from '@/components/group/stores'
 
 /**
  * Hook that provides access to modal state from Zustand store
@@ -39,7 +39,7 @@ export function useGroupModals() {
       closeAddMember,
       closeEditMember,
       closeCreateGroup,
-      closeEditGroup,
+      closeEditGroup
     }),
     [
       showAddMemberModal,
@@ -55,7 +55,7 @@ export function useGroupModals() {
       closeAddMember,
       closeEditMember,
       closeCreateGroup,
-      closeEditGroup,
-    ],
+      closeEditGroup
+    ]
   )
 }

@@ -1,15 +1,10 @@
-import { create } from "zustand"
-import { subscribeWithSelector } from "zustand/middleware"
-import type {
-  AttendanceGroup,
-  AttendanceMember,
-  AttendanceRecord,
-  AttendanceTimeHealth,
-} from "@/types/recognition"
-import type { CooldownInfo } from "@/components/main/types"
-import type { SettingsOverview } from "@/components/settings/types"
-import { persistentSettings } from "@/services/PersistentSettingsService"
-import { attendanceManager } from "@/services/AttendanceManager"
+import { create } from 'zustand'
+import { subscribeWithSelector } from 'zustand/middleware'
+import type { AttendanceGroup, AttendanceMember, AttendanceRecord, AttendanceTimeHealth } from '@/types/recognition'
+import type { CooldownInfo } from '@/components/main/types'
+import type { SettingsOverview } from '@/components/settings/types'
+import { persistentSettings } from '@/services/PersistentSettingsService'
+import { attendanceManager } from '@/services/AttendanceManager'
 
 interface AttendanceState {
   currentGroup: AttendanceGroup | null
@@ -58,8 +53,7 @@ interface AttendanceState {
   setGroupToDelete: (group: AttendanceGroup | null) => void
   setNewGroupName: (name: string) => void
   setPersistentCooldowns: (
-    cooldowns:
-      Map<string, CooldownInfo> | ((prev: Map<string, CooldownInfo>) => Map<string, CooldownInfo>),
+    cooldowns: Map<string, CooldownInfo> | ((prev: Map<string, CooldownInfo>) => Map<string, CooldownInfo>)
   ) => void
   setAttendanceCooldownSeconds: (seconds: number) => void
   setAttendanceTimezone: (timeZone: string) => void
@@ -85,7 +79,7 @@ export const useAttendanceStore = create<AttendanceState>()(
     systemStats: {
       totalPersons: null,
       totalMembers: null,
-      lastUpdated: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
     },
     timeHealth: null,
     isStatsLoading: false,
@@ -93,7 +87,7 @@ export const useAttendanceStore = create<AttendanceState>()(
     showGroupManagement: false,
     showDeleteConfirmation: false,
     groupToDelete: null,
-    newGroupName: "",
+    newGroupName: '',
     persistentCooldowns: new Map(),
 
     attendanceCooldownSeconds: 8,
@@ -112,13 +106,13 @@ export const useAttendanceStore = create<AttendanceState>()(
             isPanelLoading: Boolean(group),
             isPanelRefreshing: false,
             isPanelSwitchPending: false,
-            panelDataError: null,
+            panelDataError: null
           }
-        : {}),
+        : {})
       }))
       persistentSettings
         .setUIState({
-          selectedGroupId: group?.id || null,
+          selectedGroupId: group?.id || null
         })
         .catch(console.error)
     },
@@ -139,15 +133,13 @@ export const useAttendanceStore = create<AttendanceState>()(
     setNewGroupName: (name) => set({ newGroupName: name }),
     setPersistentCooldowns: (cooldowns) => {
       const prevCooldowns = get().persistentCooldowns
-      const newCooldownsMap = typeof cooldowns === "function" ? cooldowns(prevCooldowns) : cooldowns
+      const newCooldownsMap = typeof cooldowns === 'function' ? cooldowns(prevCooldowns) : cooldowns
       set({ persistentCooldowns: newCooldownsMap })
     },
 
     setAttendanceCooldownSeconds: (seconds) => {
       set({ attendanceCooldownSeconds: seconds })
-      persistentSettings
-        .setAttendanceSettings({ attendanceCooldownSeconds: seconds })
-        .catch(console.error)
+      persistentSettings.setAttendanceSettings({ attendanceCooldownSeconds: seconds }).catch(console.error)
     },
     setAttendanceTimezone: (timeZone) => {
       set({ attendanceTimezone: timeZone })
@@ -160,21 +152,17 @@ export const useAttendanceStore = create<AttendanceState>()(
         .then(() => attendanceManager.getSettings())
         .then((settings) =>
           set({
-            enableSpoofDetection: Boolean(
-              settings.enable_liveness_detection || settings.cloud_force_liveness,
-            ),
-          }),
+            enableSpoofDetection: Boolean(settings.enable_liveness_detection || settings.cloud_force_liveness)
+          })
         )
         .catch(console.error)
     },
     setMaxRecognitionFacesPerFrame: (count) => {
       set({ maxRecognitionFacesPerFrame: count })
-      attendanceManager
-        .updateSettings({ max_recognition_faces_per_frame: count })
-        .catch(console.error)
+      attendanceManager.updateSettings({ max_recognition_faces_per_frame: count }).catch(console.error)
     },
     setDataRetentionDays: (days) => {
       set({ dataRetentionDays: days })
-    },
-  })),
+    }
+  }))
 )

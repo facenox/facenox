@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef } from "react"
-import type { WebSocketService } from "@/services/WebSocketService"
-import type { DetectionResult } from "@/components/main/types"
+import { useCallback, useEffect, useRef } from 'react'
+import type { WebSocketService } from '@/services/WebSocketService'
+import type { DetectionResult } from '@/components/main/types'
 
 // Safety-net: if a frame has been "in-flight" for longer than this
 // without a response, forcibly reset the lock so the pipeline can resume.
@@ -33,7 +33,7 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
     skipFramesRef,
     processCurrentFrameRef,
     trackingSessionRef,
-    detectionInFlightRef,
+    detectionInFlightRef
   } = options
 
   // Tracks when detectionInFlightRef was last set to true
@@ -108,14 +108,14 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
         detectionInFlightRef.current = false
         inflightSinceRef.current = 0
         if (!isCurrentRequest()) return
-        console.error("Frame detection request failed:", error)
+        console.error('Frame detection request failed:', error)
         retry()
       })
     } catch (error) {
       detectionInFlightRef.current = false
       inflightSinceRef.current = 0
       if (!isCurrentRequest()) return
-      console.error("Frame capture failed:", error)
+      console.error('Frame capture failed:', error)
       retry()
     }
   }, [
@@ -128,7 +128,7 @@ export function useFaceDetection(options: UseFaceDetectionOptions) {
     processCurrentFrameRef,
     skipFramesRef,
     trackingSessionRef,
-    detectionInFlightRef,
+    detectionInFlightRef
   ])
 
   useEffect(() => {

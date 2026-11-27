@@ -1,7 +1,7 @@
-import { safeUpdaterLink } from "../electron/updaterUtils"
-import type { UpdateInfo } from "@/types/updater"
-import { persistentSettings } from "./PersistentSettingsService"
-import { compareVersions } from "@/electron/updaterUtils"
+import { safeUpdaterLink } from '../electron/updaterUtils'
+import type { UpdateInfo } from '@/types/updater'
+import { persistentSettings } from './PersistentSettingsService'
+import { compareVersions } from '@/electron/updaterUtils'
 
 class UpdaterService {
   private cachedVersion: string | null = null
@@ -19,7 +19,7 @@ class UpdaterService {
       try {
         listener(info)
       } catch (error) {
-        console.error("[UpdaterService] update listener failed:", error)
+        console.error('[UpdaterService] update listener failed:', error)
       }
     }
   }
@@ -60,14 +60,14 @@ class UpdaterService {
 
           await persistentSettings.setUpdaterInfo({
             cachedInfo: updateInfo,
-            lastChecked: this.lastChecked.toISOString(),
+            lastChecked: this.lastChecked.toISOString()
           })
 
           this.emitUpdateInfo(updateInfo)
         })
       }
     } catch (error) {
-      console.error("[UpdaterService] Initialization failed:", error)
+      console.error('[UpdaterService] Initialization failed:', error)
     }
   }
 
@@ -81,8 +81,8 @@ class UpdaterService {
       this.cachedVersion = version
       return version
     } catch (error) {
-      console.error("[UpdaterService] Failed to get version:", error)
-      return "0.0.0"
+      console.error('[UpdaterService] Failed to get version:', error)
+      return '0.0.0'
     }
   }
 
@@ -94,24 +94,24 @@ class UpdaterService {
 
       await persistentSettings.setUpdaterInfo({
         cachedInfo: updateInfo,
-        lastChecked: this.lastChecked.toISOString(),
+        lastChecked: this.lastChecked.toISOString()
       })
 
       this.emitUpdateInfo(updateInfo)
 
       return updateInfo
     } catch (error) {
-      console.error("[UpdaterService] Failed to check for updates:", error)
+      console.error('[UpdaterService] Failed to check for updates:', error)
       const version = await this.getVersion()
       const fallback: UpdateInfo = {
         currentVersion: version,
         latestVersion: version,
         hasUpdate: false,
-        releaseUrl: "",
-        releaseNotes: "",
-        publishedAt: "",
+        releaseUrl: '',
+        releaseNotes: '',
+        publishedAt: '',
         downloadUrl: null,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error)
       }
 
       this.cachedUpdateInfo = fallback
@@ -151,9 +151,9 @@ class UpdaterService {
     try {
       await window.electronAPI.updater.openReleasePage(url)
     } catch (error) {
-      console.error("[UpdaterService] Failed to open release page:", error)
+      console.error('[UpdaterService] Failed to open release page:', error)
 
-      window.open(safeUpdaterLink(url), "_blank", "noopener,noreferrer")
+      window.open(safeUpdaterLink(url), '_blank', 'noopener,noreferrer')
     }
   }
 
@@ -164,7 +164,7 @@ class UpdaterService {
 
       await persistentSettings.setUpdaterInfo({
         cachedInfo: updateInfo,
-        lastChecked: this.lastChecked.toISOString(),
+        lastChecked: this.lastChecked.toISOString()
       })
 
       this.emitUpdateInfo(updateInfo)
@@ -174,13 +174,13 @@ class UpdaterService {
   }
 
   formatPublishedDate(isoDate: string): string {
-    if (!isoDate) return ""
+    if (!isoDate) return ''
     try {
       const date = new Date(isoDate)
       return date.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
       })
     } catch {
       return isoDate
@@ -190,7 +190,7 @@ class UpdaterService {
   parseReleaseNotes(notes: string): string[] {
     if (!notes) return []
     return notes
-      .split("\n")
+      .split('\n')
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
       .slice(0, 10)

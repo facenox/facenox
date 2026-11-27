@@ -1,15 +1,15 @@
-import { act, renderHook } from "@testing-library/react"
-import { afterEach, expect, it, vi } from "vitest"
-import { useFaceDetection } from "./useFaceDetection"
-import { useBackendService } from "./useBackendService"
-import { useCameraStore, useAttendanceStore } from "@/components/main/stores"
-import type { WebSocketService } from "@/services/WebSocketService"
-import type { DetectionResult } from "@/components/main/types"
+import { act, renderHook } from '@testing-library/react'
+import { afterEach, expect, it, vi } from 'vitest'
+import { useFaceDetection } from './useFaceDetection'
+import { useBackendService } from './useBackendService'
+import { useCameraStore, useAttendanceStore } from '@/components/main/stores'
+import type { WebSocketService } from '@/services/WebSocketService'
+import type { DetectionResult } from '@/components/main/types'
 
-vi.mock("@/services", () => ({ persistentSettings: { get: vi.fn(async () => "device") } }))
-vi.mock("@/components/main/hooks/useAttendanceGroups", () => ({ ALL_GROUPS_ID: "all" }))
-vi.mock("@/services/SoundEffectsService", () => ({ soundEffects: { play: vi.fn() } }))
-vi.mock("@/utils/syncNotifier", () => ({ notifyDataChanged: vi.fn() }))
+vi.mock('@/services', () => ({ persistentSettings: { get: vi.fn(async () => 'device') } }))
+vi.mock('@/components/main/hooks/useAttendanceGroups', () => ({ ALL_GROUPS_ID: 'all' }))
+vi.mock('@/services/SoundEffectsService', () => ({ soundEffects: { play: vi.fn() } }))
+vi.mock('@/utils/syncNotifier', () => ({ notifyDataChanged: vi.fn() }))
 
 afterEach(() => {
   vi.useRealTimers()
@@ -22,8 +22,8 @@ function createDetectionOptions() {
     webSocketServiceRef: {
       current: {
         isWebSocketReady: () => true,
-        sendDetectionRequest: send,
-      } as unknown as WebSocketService,
+        sendDetectionRequest: send
+      } as unknown as WebSocketService
     },
     isScanningRef: { current: true },
     isStreamingRef: { current: true },
@@ -35,12 +35,12 @@ function createDetectionOptions() {
     lastDetectionRef: { current: null },
     processCurrentFrameRef: { current: async () => {} },
     trackingSessionRef: { current: 1 },
-    detectionInFlightRef: { current: false },
+    detectionInFlightRef: { current: false }
   }
   return { options, send }
 }
 
-it("does not send a captured frame after scanning stops", async () => {
+it('does not send a captured frame after scanning stops', async () => {
   const { options, send } = createDetectionOptions()
   let finishCapture!: (value: ArrayBuffer) => void
   options.captureFrame = () =>
@@ -62,7 +62,7 @@ it("does not send a captured frame after scanning stops", async () => {
   expect(send).not.toHaveBeenCalled()
 })
 
-it("drops a late capture when the watchdog has already retried", async () => {
+it('drops a late capture when the watchdog has already retried', async () => {
   vi.useFakeTimers()
   const { options, send } = createDetectionOptions()
   let finishOld!: (value: ArrayBuffer) => void
@@ -73,7 +73,7 @@ it("drops a late capture when the watchdog has already retried", async () => {
       () =>
         new Promise((resolve) => {
           finishOld = resolve
-        }),
+        })
     )
     .mockResolvedValue(latest)
   renderHook(() => useFaceDetection(options))
@@ -93,7 +93,7 @@ it("drops a late capture when the watchdog has already retried", async () => {
   expect(options.lastDetectionFrameRef.current).toBe(latest)
 })
 
-it("cleans up its watchdog on unmount", async () => {
+it('cleans up its watchdog on unmount', async () => {
   vi.useFakeTimers()
   const { options, send } = createDetectionOptions()
   const { unmount } = renderHook(() => useFaceDetection(options))
@@ -106,18 +106,18 @@ it("cleans up its watchdog on unmount", async () => {
   expect(vi.getTimerCount()).toBe(0)
 })
 
-it("automatically retries a frame that receives no response, even after a wall-clock correction", async () => {
+it('automatically retries a frame that receives no response, even after a wall-clock correction', async () => {
   vi.useFakeTimers()
-  vi.setSystemTime(new Date("2026-11-01T00:00:00Z"))
+  vi.setSystemTime(new Date('2026-11-01T00:00:00Z'))
   const send = vi.fn(async () => {})
   const raf = vi.fn()
-  vi.stubGlobal("requestAnimationFrame", raf)
+  vi.stubGlobal('requestAnimationFrame', raf)
   const options = {
     webSocketServiceRef: {
       current: {
         isWebSocketReady: () => true,
-        sendDetectionRequest: send,
-      } as unknown as WebSocketService,
+        sendDetectionRequest: send
+      } as unknown as WebSocketService
     },
     isScanningRef: { current: true },
     isStreamingRef: { current: true },
@@ -129,7 +129,7 @@ it("automatically retries a frame that receives no response, even after a wall-c
     lastDetectionRef: { current: null as DetectionResult | null },
     processCurrentFrameRef: { current: async () => {} },
     trackingSessionRef: { current: 1 },
-    detectionInFlightRef: { current: false },
+    detectionInFlightRef: { current: false }
   }
   renderHook(() => useFaceDetection(options))
   await act(async () => {
@@ -138,7 +138,7 @@ it("automatically retries a frame that receives no response, even after a wall-c
   expect(send).toHaveBeenCalledTimes(1)
   expect(options.detectionInFlightRef.current).toBe(true)
   // A silent/no-response frame is the condition the watchdog says it handles.
-  vi.setSystemTime(new Date("2026-10-31T23:00:00Z"))
+  vi.setSystemTime(new Date('2026-10-31T23:00:00Z'))
   await act(async () => {
     await vi.advanceTimersByTimeAsync(5_000)
   })
@@ -154,9 +154,9 @@ it("automatically retries a frame that receives no response, even after a wall-c
   vi.unstubAllGlobals()
 })
 
-it("schedules the next frame when a backend response timestamp goes backward", async () => {
+it('schedules the next frame when a backend response timestamp goes backward', async () => {
   vi.useFakeTimers()
-  vi.setSystemTime(new Date("2026-11-01T00:00:00Z"))
+  vi.setSystemTime(new Date('2026-11-01T00:00:00Z'))
   const handlers = new Map<string, (data: unknown) => void>()
   const socket = {
     isWebSocketReady: () => true,
@@ -164,10 +164,10 @@ it("schedules the next frame when a backend response timestamp goes backward", a
     offMessage: vi.fn(),
     onMessage: (topic: string, handler: (data: unknown) => void) => handlers.set(topic, handler),
     onStatusChange: () => () => {},
-    sendDetectionRequest: vi.fn(async () => {}),
+    sendDetectionRequest: vi.fn(async () => {})
   }
   const raf = vi.fn()
-  vi.stubGlobal("requestAnimationFrame", raf)
+  vi.stubGlobal('requestAnimationFrame', raf)
   const options = {
     webSocketServiceRef: { current: socket as unknown as WebSocketService },
     isScanningRef: { current: false },
@@ -180,14 +180,14 @@ it("schedules the next frame when a backend response timestamp goes backward", a
     lastDetectionRef: { current: null as DetectionResult | null },
     processCurrentFrameRef: { current: async () => {} },
     trackingSessionRef: { current: 1 },
-    detectionInFlightRef: { current: false },
+    detectionInFlightRef: { current: false }
   }
-  useCameraStore.setState({ websocketStatus: "disconnected" })
+  useCameraStore.setState({ websocketStatus: 'disconnected' })
   useAttendanceStore.setState({ enableSpoofDetection: false })
   const backendOptions = {
     ...options,
     isStartingRef: { current: false },
-    currentGroupId: "g",
+    currentGroupId: 'g',
     maxRecognitionFacesPerFrame: 6,
     performFaceRecognition: vi.fn(async () => {}),
     stopCamera: { current: null },
@@ -195,7 +195,7 @@ it("schedules the next frame when a backend response timestamp goes backward", a
     streamRef: { current: null },
     videoRef: { current: null },
     backendServiceReadyRef: { current: true },
-    loadAttendanceDataRef: { current: async () => {} },
+    loadAttendanceDataRef: { current: async () => {} }
   }
   renderHook(() => {
     useFaceDetection(options)
@@ -208,11 +208,11 @@ it("schedules the next frame when a backend response timestamp goes backward", a
     await options.processCurrentFrameRef.current()
   })
   act(() => {
-    handlers.get("detection_response")?.({
+    handlers.get('detection_response')?.({
       faces: [],
-      model_used: "face_detector",
+      model_used: 'face_detector',
       success: true,
-      frame_timestamp: 99,
+      frame_timestamp: 99
     })
   })
   expect(options.lastFrameTimestampRef.current).toBe(99)

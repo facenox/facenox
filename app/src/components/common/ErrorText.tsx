@@ -1,4 +1,4 @@
-import { isTechnicalErrorMessage } from "@/utils/errorText"
+import { isTechnicalErrorMessage } from '@/utils/errorText'
 
 interface ErrorTextProps {
   message: string
@@ -12,13 +12,13 @@ export function ErrorText({ message, summary }: ErrorTextProps) {
   if (!technical) return <span>{message}</span>
 
   return (
-    <div className="min-w-0">
-      <p>{summary || "Facenox could not complete the request."}</p>
-      <details className="mt-1 text-left text-xs">
-        <summary className="cursor-pointer rounded underline underline-offset-2 focus-visible:outline focus-visible:outline-2">
+    <div className='min-w-0'>
+      <p>{summary || 'Facenox could not complete the request.'}</p>
+      <details className='mt-1 text-left text-xs'>
+        <summary className='cursor-pointer rounded underline underline-offset-2 focus-visible:outline focus-visible:outline-2'>
           Technical details
         </summary>
-        <pre className="mt-2 max-h-40 overflow-auto font-mono text-[11px] break-words whitespace-pre-wrap">
+        <pre className='mt-2 max-h-40 overflow-auto font-mono text-[11px] break-words whitespace-pre-wrap'>
           {message}
         </pre>
       </details>

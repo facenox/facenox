@@ -1,5 +1,5 @@
-import { waitFor } from "@testing-library/react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockPersistentSettings = {
   getQuickSettings: vi.fn(),
@@ -9,84 +9,84 @@ const mockPersistentSettings = {
   setUIState: vi.fn().mockResolvedValue(undefined),
   setQuickSettings: vi.fn().mockResolvedValue(undefined),
   setAudioSettings: vi.fn().mockResolvedValue(undefined),
-  setSecuritySettings: vi.fn().mockResolvedValue(undefined),
+  setSecuritySettings: vi.fn().mockResolvedValue(undefined)
 }
 
-vi.mock("@/services/PersistentSettingsService", () => ({
-  persistentSettings: mockPersistentSettings,
+vi.mock('@/services/PersistentSettingsService', () => ({
+  persistentSettings: mockPersistentSettings
 }))
 
 async function loadStore() {
   vi.resetModules()
-  const module = await import("@/components/main/stores/uiStore")
+  const module = await import('@/components/main/stores/uiStore')
   return module.useUIStore
 }
 
-describe("uiStore", () => {
+describe('uiStore', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockPersistentSettings.getQuickSettings.mockResolvedValue({
       cameraMirrored: true,
-      showRecognitionNames: true,
+      showRecognitionNames: true
     })
     mockPersistentSettings.getAudioSettings.mockResolvedValue({
       recognitionSoundEnabled: true,
-      recognitionSoundUrl: "./assets/sounds/Recognition_Success.wav",
+      recognitionSoundUrl: './assets/sounds/Recognition_Success.wav'
     })
     mockPersistentSettings.getUIState.mockResolvedValue({
       hasSeenIntro: false,
       antiSpoofDetectionInfoDismissed: false,
       sidebarCollapsed: false,
-      sidebarWidth: 300,
+      sidebarWidth: 300
     })
     mockPersistentSettings.getSecuritySettings.mockResolvedValue({
       adminPinEnabled: false,
-      adminPin: "1234",
+      adminPin: '1234'
     })
   })
 
-  it("setQuickSettings supports direct objects and updater functions", async () => {
+  it('setQuickSettings supports direct objects and updater functions', async () => {
     const useUIStore = await loadStore()
     await waitFor(() => expect(useUIStore.getState().isHydrated).toBe(true))
 
     useUIStore.getState().setQuickSettings({
       cameraMirrored: false,
-      showRecognitionNames: false,
+      showRecognitionNames: false
     })
     await waitFor(() => {
       expect(mockPersistentSettings.setQuickSettings).toHaveBeenCalledWith({
         cameraMirrored: false,
-        showRecognitionNames: false,
+        showRecognitionNames: false
       })
     })
 
     expect(useUIStore.getState().quickSettings).toEqual({
       cameraMirrored: false,
-      showRecognitionNames: false,
+      showRecognitionNames: false
     })
 
     useUIStore.getState().setQuickSettings((prev) => ({
       ...prev,
-      showRecognitionNames: true,
+      showRecognitionNames: true
     }))
     expect(useUIStore.getState().quickSettings.showRecognitionNames).toBe(true)
   })
 
-  it("setAudioSettings merges partial values correctly", async () => {
+  it('setAudioSettings merges partial values correctly', async () => {
     const useUIStore = await loadStore()
     await waitFor(() => expect(useUIStore.getState().isHydrated).toBe(true))
 
     useUIStore.getState().setAudioSettings({
-      recognitionSoundEnabled: false,
+      recognitionSoundEnabled: false
     })
 
     expect(useUIStore.getState().audioSettings).toEqual({
       recognitionSoundEnabled: false,
-      recognitionSoundUrl: "./assets/sounds/Recognition_Success.wav",
+      recognitionSoundUrl: './assets/sounds/Recognition_Success.wav'
     })
   })
 
-  it("does not persist side effects before hydration", async () => {
+  it('does not persist side effects before hydration', async () => {
     const pending = new Promise<never>(() => undefined)
     mockPersistentSettings.getQuickSettings.mockReturnValue(pending)
     mockPersistentSettings.getAudioSettings.mockReturnValue(pending)
@@ -99,10 +99,10 @@ describe("uiStore", () => {
     useUIStore.getState().setSidebarCollapsed(true)
     useUIStore.getState().setQuickSettings({
       cameraMirrored: false,
-      showRecognitionNames: false,
+      showRecognitionNames: false
     })
     useUIStore.getState().setAudioSettings({
-      recognitionSoundEnabled: false,
+      recognitionSoundEnabled: false
     })
 
     await Promise.resolve()
@@ -112,7 +112,7 @@ describe("uiStore", () => {
     expect(mockPersistentSettings.setAudioSettings).not.toHaveBeenCalled()
   })
 
-  it("persists intro/sidebar/audio/quick settings after hydration", async () => {
+  it('persists intro/sidebar/audio/quick settings after hydration', async () => {
     const useUIStore = await loadStore()
     await waitFor(() => expect(useUIStore.getState().isHydrated).toBe(true))
 
@@ -126,32 +126,32 @@ describe("uiStore", () => {
     useUIStore.getState().setSidebarWidth(360)
     useUIStore.getState().setQuickSettings({
       cameraMirrored: false,
-      showRecognitionNames: false,
+      showRecognitionNames: false
     })
     useUIStore.getState().setAudioSettings({
-      recognitionSoundEnabled: false,
+      recognitionSoundEnabled: false
     })
 
     await waitFor(() => {
       expect(mockPersistentSettings.setUIState).toHaveBeenCalledWith({
-        hasSeenIntro: true,
+        hasSeenIntro: true
       })
       expect(mockPersistentSettings.setUIState).toHaveBeenCalledWith({
-        antiSpoofDetectionInfoDismissed: true,
+        antiSpoofDetectionInfoDismissed: true
       })
       expect(mockPersistentSettings.setUIState).toHaveBeenCalledWith({
-        sidebarCollapsed: true,
+        sidebarCollapsed: true
       })
       expect(mockPersistentSettings.setUIState).toHaveBeenCalledWith({
-        sidebarWidth: 360,
+        sidebarWidth: 360
       })
       expect(mockPersistentSettings.setQuickSettings).toHaveBeenCalledWith({
         cameraMirrored: false,
-        showRecognitionNames: false,
+        showRecognitionNames: false
       })
       expect(mockPersistentSettings.setAudioSettings).toHaveBeenCalledWith({
         recognitionSoundEnabled: false,
-        recognitionSoundUrl: "./assets/sounds/Recognition_Success.wav",
+        recognitionSoundUrl: './assets/sounds/Recognition_Success.wav'
       })
     })
   })

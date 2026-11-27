@@ -1,48 +1,48 @@
 // @vitest-environment node
 
-import { beforeEach, describe, expect, it, vi, afterEach } from "vitest"
-import { encryptEmbedding } from "./EmbeddingCrypto.js"
-import type { SyncPushPayload } from "../../shared/syncContract.js"
-import { checkForUpdates } from "../updater.js"
+import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest'
+import { encryptEmbedding } from './EmbeddingCrypto.js'
+import type { SyncPushPayload } from '../../shared/syncContract.js'
+import { checkForUpdates } from '../updater.js'
 
 const mockStore: Record<string, unknown> = {}
 
-vi.mock("../persistentStore.js", () => ({
+vi.mock('../persistentStore.js', () => ({
   persistentStore: {
     get: vi.fn((key: string) => mockStore[key]),
     set: vi.fn((key: string, val: unknown) => {
       mockStore[key] = val
-    }),
-  },
+    })
+  }
 }))
 
-vi.mock("../backendService.js", () => ({
+vi.mock('../backendService.js', () => ({
   backendService: {
-    getUrl: () => "http://127.0.0.1:8000",
-    getToken: () => "mock-backend-token",
-  },
+    getUrl: () => 'http://127.0.0.1:8000',
+    getToken: () => 'mock-backend-token'
+  }
 }))
 
-vi.mock("../State.js", () => ({
+vi.mock('../State.js', () => ({
   state: {
     mainWindow: {
       webContents: {
-        send: vi.fn(),
-      },
-    },
-  },
+        send: vi.fn()
+      }
+    }
+  }
 }))
 
-vi.mock("../updater.js", () => ({
-  getCurrentVersion: () => "1.0.0-test",
+vi.mock('../updater.js', () => ({
+  getCurrentVersion: () => '1.0.0-test',
   checkForUpdates: vi.fn(),
-  notifyRenderer: vi.fn(),
+  notifyRenderer: vi.fn()
 }))
 
-vi.mock("electron", () => ({
+vi.mock('electron', () => ({
   dialog: {
-    showMessageBox: vi.fn().mockResolvedValue({ response: 0 }),
-  },
+    showMessageBox: vi.fn().mockResolvedValue({ response: 0 })
+  }
 }))
 
 const mockRealtimeInstances: Array<{
@@ -51,24 +51,24 @@ const mockRealtimeInstances: Array<{
   close: ReturnType<typeof vi.fn>
 }> = []
 
-vi.mock("ably", () => {
+vi.mock('ably', () => {
   class MockRealtime {
     handlers: Record<string, Array<(arg?: unknown) => void>> = {}
     connection = {
-      state: "initialized",
+      state: 'initialized',
       on: vi.fn((event: string, cb: (arg?: unknown) => void) => {
         ;(this.handlers[event] ??= []).push(cb)
       }),
-      off: vi.fn(),
+      off: vi.fn()
     }
     channels = {
       get: vi.fn().mockReturnValue({
         subscribe: vi.fn(),
-        unsubscribe: vi.fn(),
-      }),
+        unsubscribe: vi.fn()
+      })
     }
     close = vi.fn(() => {
-      this.connection.state = "closed"
+      this.connection.state = 'closed'
     })
     constructor() {
       mockRealtimeInstances.push(this)
@@ -78,13 +78,13 @@ vi.mock("ably", () => {
   return {
     Realtime: MockRealtime,
     default: {
-      Realtime: MockRealtime,
-    },
+      Realtime: MockRealtime
+    }
   }
 })
 
-describe("BackgroundSyncManager", () => {
-  const TEST_KEY = Buffer.alloc(32, 1).toString("base64")
+describe('BackgroundSyncManager', () => {
+  const TEST_KEY = Buffer.alloc(32, 1).toString('base64')
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -92,115 +92,115 @@ describe("BackgroundSyncManager", () => {
     vi.useFakeTimers()
     for (const k of Object.keys(mockStore)) delete mockStore[k]
 
-    mockStore["sync.enabled"] = true
-    mockStore["sync.remoteBaseUrl"] = "https://cloud.facenox.test"
-    mockStore["sync.siteId"] = "site-test-123"
-    mockStore["sync.deviceId"] = "device-test-123"
-    mockStore["sync.deviceToken"] = "token-test-123"
-    mockStore["sync.encryptionKey"] = TEST_KEY
-    mockStore["sync.intervalMinutes"] = 15
-    mockStore["sync.lastSyncedAt"] = null
+    mockStore['sync.enabled'] = true
+    mockStore['sync.remoteBaseUrl'] = 'https://cloud.facenox.test'
+    mockStore['sync.siteId'] = 'site-test-123'
+    mockStore['sync.deviceId'] = 'device-test-123'
+    mockStore['sync.deviceToken'] = 'token-test-123'
+    mockStore['sync.encryptionKey'] = TEST_KEY
+    mockStore['sync.intervalMinutes'] = 15
+    mockStore['sync.lastSyncedAt'] = null
 
-    vi.stubGlobal("fetch", vi.fn())
+    vi.stubGlobal('fetch', vi.fn())
   })
 
   afterEach(() => {
     vi.useRealTimers()
   })
 
-  it("persists the confirmed location timezone through the authenticated local backend", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('persists the confirmed location timezone through the authenticated local backend', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager() as unknown as {
       applyRemotePolicy(policy: { timezone?: string | null }): Promise<void>
     }
-    mockStore["sync.organizationId"] = "org-timezone"
-    vi.mocked(fetch).mockResolvedValue(new Response("{}"))
-    await manager.applyRemotePolicy({ timezone: "Australia/Sydney" })
+    mockStore['sync.organizationId'] = 'org-timezone'
+    vi.mocked(fetch).mockResolvedValue(new Response('{}'))
+    await manager.applyRemotePolicy({ timezone: 'Australia/Sydney' })
     expect(fetch).toHaveBeenCalledWith(
-      "http://127.0.0.1:8000/attendance/settings",
+      'http://127.0.0.1:8000/attendance/settings',
       expect.objectContaining({
-        method: "PUT",
+        method: 'PUT',
         headers: expect.objectContaining({
-          "X-Facenox-Token": "mock-backend-token",
-          "X-Facenox-Organization": "org-timezone",
+          'X-Facenox-Token': 'mock-backend-token',
+          'X-Facenox-Organization': 'org-timezone'
         }),
-        body: JSON.stringify({ attendance_timezone: "Australia/Sydney" }),
-      }),
+        body: JSON.stringify({ attendance_timezone: 'Australia/Sydney' })
+      })
     )
   })
 
-  it("applies the liveness requirement to the backend before publishing its policy", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('applies the liveness requirement to the backend before publishing its policy', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager() as unknown as {
       applyRemotePolicy(policy: { forceLiveness: boolean }): Promise<void>
     }
-    vi.mocked(fetch).mockResolvedValue(new Response("{}"))
+    vi.mocked(fetch).mockResolvedValue(new Response('{}'))
     await manager.applyRemotePolicy({ forceLiveness: true })
     expect(fetch).toHaveBeenCalledWith(
-      "http://127.0.0.1:8000/attendance/settings/cloud-liveness",
+      'http://127.0.0.1:8000/attendance/settings/cloud-liveness',
       expect.objectContaining({
-        method: "PUT",
-        body: JSON.stringify({ force_liveness_detection: true }),
-      }),
+        method: 'PUT',
+        body: JSON.stringify({ force_liveness_detection: true })
+      })
     )
-    expect(mockStore["sync.policy.forceLiveness"]).toBe(true)
+    expect(mockStore['sync.policy.forceLiveness']).toBe(true)
     await manager.applyRemotePolicy({ forceLiveness: false })
-    expect(mockStore["sync.policy.forceLiveness"]).toBe(false)
+    expect(mockStore['sync.policy.forceLiveness']).toBe(false)
   })
 
-  it("does not publish enforced liveness when the backend rejects the policy", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('does not publish enforced liveness when the backend rejects the policy', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager() as unknown as {
       applyRemotePolicy(policy: { forceLiveness: boolean }): Promise<void>
     }
-    mockStore["sync.policy.forceLiveness"] = false
-    vi.mocked(fetch).mockResolvedValue(new Response("{}", { status: 500 }))
-    await expect(manager.applyRemotePolicy({ forceLiveness: true })).rejects.toThrow("liveness")
-    expect(mockStore["sync.policy.forceLiveness"]).toBe(false)
+    mockStore['sync.policy.forceLiveness'] = false
+    vi.mocked(fetch).mockResolvedValue(new Response('{}', { status: 500 }))
+    await expect(manager.applyRemotePolicy({ forceLiveness: true })).rejects.toThrow('liveness')
+    expect(mockStore['sync.policy.forceLiveness']).toBe(false)
   })
 
-  it("restores cached enforcement for offline startup without reading Cloud credentials", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('restores cached enforcement for offline startup without reading Cloud credentials', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager()
-    mockStore["sync.organizationId"] = "offline-org"
-    mockStore["sync.deviceId"] = "offline-device"
-    mockStore["sync.policy.forceLiveness"] = true
-    vi.mocked(fetch).mockResolvedValue(new Response("{}"))
+    mockStore['sync.organizationId'] = 'offline-org'
+    mockStore['sync.deviceId'] = 'offline-device'
+    mockStore['sync.policy.forceLiveness'] = true
+    vi.mocked(fetch).mockResolvedValue(new Response('{}'))
     await manager.restoreCachedPolicy()
     expect(fetch).toHaveBeenCalledWith(
-      "http://127.0.0.1:8000/attendance/settings/cloud-liveness",
-      expect.objectContaining({ body: JSON.stringify({ force_liveness_detection: true }) }),
+      'http://127.0.0.1:8000/attendance/settings/cloud-liveness',
+      expect.objectContaining({ body: JSON.stringify({ force_liveness_detection: true }) })
     )
   })
 
-  it("does not claim successful timezone policy application when the backend rejects it", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('does not claim successful timezone policy application when the backend rejects it', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager() as unknown as {
       applyRemotePolicy(policy: { timezone?: string | null }): Promise<void>
     }
-    vi.mocked(fetch).mockResolvedValue(new Response("{}", { status: 422 }))
-    await expect(manager.applyRemotePolicy({ timezone: "invalid" })).rejects.toThrow("timezone")
+    vi.mocked(fetch).mockResolvedValue(new Response('{}', { status: 422 }))
+    await expect(manager.applyRemotePolicy({ timezone: 'invalid' })).rejects.toThrow('timezone')
   })
 
-  it("resumes an interrupted upload with the same snapshot IDs without exporting again", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('resumes an interrupted upload with the same snapshot IDs without exporting again', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const records = Array.from({ length: 300 }, (_, index) => ({
       id: `resume-${index}`,
-      person_id: "person",
-      group_id: "group",
-      timestamp: "2026-10-01T00:00:00Z",
+      person_id: 'person',
+      group_id: 'group',
+      timestamp: '2026-10-01T00:00:00Z',
       confidence: 0.9,
-      is_manual: false,
+      is_manual: false
     }))
     const pushes: string[] = []
     let exports = 0
     let interrupt = true
     vi.mocked(fetch).mockImplementation(async (input, init) => {
       const url = String(input)
-      if (url.includes("/attendance/export-embeddings")) {
+      if (url.includes('/attendance/export-embeddings')) {
         return new Response(JSON.stringify({ embeddings: [] }))
       }
-      if (url.includes("/attendance/export")) {
+      if (url.includes('/attendance/export')) {
         exports++
         return new Response(
           JSON.stringify({
@@ -208,242 +208,229 @@ describe("BackgroundSyncManager", () => {
             members: [],
             records,
             sessions: [],
-            exported_at: "2026-10-02T00:00:00Z",
-          }),
+            exported_at: '2026-10-02T00:00:00Z'
+          })
         )
       }
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         const payload = JSON.parse(String(init?.body)) as SyncPushPayload
         pushes.push(payload.snapshot_id)
-        if (pushes.length === 2 && interrupt) throw new Error("Connection lost")
-        return new Response(JSON.stringify({ ok: true, status: "accepted" }))
+        if (pushes.length === 2 && interrupt) throw new Error('Connection lost')
+        return new Response(JSON.stringify({ ok: true, status: 'accepted' }))
       }
-      if (url.includes("/api/sync/pull")) {
+      if (url.includes('/api/sync/pull')) {
         return new Response(JSON.stringify({ schema_version: 2, groups: [], members: [] }))
       }
       return new Response(JSON.stringify({ groups_count: 0, members_count: 0 }))
     })
     expect((await new BackgroundSyncManager().performSync()).success).toBe(false)
-    expect(mockStore["sync.lastSyncedAt"]).toBeNull()
-    expect(mockStore["sync.pendingUpload"]).toMatchObject({ next: 1 })
+    expect(mockStore['sync.lastSyncedAt']).toBeNull()
+    expect(mockStore['sync.pendingUpload']).toMatchObject({ next: 1 })
     interrupt = false
     expect((await new BackgroundSyncManager().performSync()).success).toBe(true)
     expect(exports).toBe(1)
     expect(pushes).toHaveLength(3)
     expect(pushes[2]).toBe(pushes[1])
-    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-10-02T00:00:00.000Z")
-    expect(mockStore["sync.pendingUpload"]).toBeNull()
+    expect(mockStore['sync.lastSyncedAt']).toBe('2026-10-02T00:00:00.000Z')
+    expect(mockStore['sync.pendingUpload']).toBeNull()
   })
 
-  it("keeps retirements queued for an older Cloud and resumes after capability support appears", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('keeps retirements queued for an older Cloud and resumes after capability support appears', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     let supported = false
     let confirmsDeletion = false
     let exports = 0
     const pushed: SyncPushPayload[] = []
     vi.mocked(fetch).mockImplementation(async (input, init) => {
       const url = String(input)
-      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
-      if (url.includes("/attendance/export")) {
+      if (url.includes('/attendance/export-embeddings')) return Response.json({ embeddings: [] })
+      if (url.includes('/attendance/export')) {
         exports++
         return Response.json({
           groups: [],
           members: [],
           records: [],
           sessions: [],
-          deleted_sessions: [{ id: "retired", person_id: "p", group_id: "g", date: "2026-10-01" }],
-          exported_at: "2026-10-02T00:00:00Z",
+          deleted_sessions: [{ id: 'retired', person_id: 'p', group_id: 'g', date: '2026-10-01' }],
+          exported_at: '2026-10-02T00:00:00Z'
         })
       }
-      if (url.includes("/api/sync/push")) {
-        if (init?.method === "GET") {
+      if (url.includes('/api/sync/push')) {
+        if (init?.method === 'GET') {
           return supported ?
               Response.json({ capabilities: { session_deletions: true } })
-            : new Response("Method Not Allowed", { status: 405 })
+            : new Response('Method Not Allowed', { status: 405 })
         }
         pushed.push(JSON.parse(String(init?.body)) as SyncPushPayload)
         return Response.json({
           ok: true,
-          status: "accepted",
-          ...(confirmsDeletion ? { deleted_session_ids: ["retired"] } : {}),
+          status: 'accepted',
+          ...(confirmsDeletion ? { deleted_session_ids: ['retired'] } : {})
         })
       }
-      if (url.includes("/api/sync/pull"))
-        return Response.json({ schema_version: 2, groups: [], members: [] })
+      if (url.includes('/api/sync/pull')) return Response.json({ schema_version: 2, groups: [], members: [] })
       return Response.json({ groups_count: 0, members_count: 0 })
     })
     expect((await new BackgroundSyncManager().performSync()).success).toBe(false)
     expect(pushed).toHaveLength(0)
-    expect(mockStore["sync.lastSyncedAt"]).toBeNull()
-    expect(mockStore["sync.pendingUpload"]).toMatchObject({ next: 0 })
+    expect(mockStore['sync.lastSyncedAt']).toBeNull()
+    expect(mockStore['sync.pendingUpload']).toMatchObject({ next: 0 })
     supported = true
     expect((await new BackgroundSyncManager().performSync()).success).toBe(false)
-    expect(mockStore["sync.lastSyncedAt"]).toBeNull()
-    expect(mockStore["sync.pendingUpload"]).toMatchObject({ next: 0 })
+    expect(mockStore['sync.lastSyncedAt']).toBeNull()
+    expect(mockStore['sync.pendingUpload']).toMatchObject({ next: 0 })
     confirmsDeletion = true
     expect((await new BackgroundSyncManager().performSync()).success).toBe(true)
     expect(exports).toBe(1)
-    expect(pushed[0].attendance_export.deleted_sessions?.[0].id).toBe("retired")
+    expect(pushed[0].attendance_export.deleted_sessions?.[0].id).toBe('retired')
     expect(pushed[1].snapshot_id).toBe(pushed[0].snapshot_id)
-    expect(mockStore["sync.pendingUpload"]).toBeNull()
-    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-10-02T00:00:00.000Z")
+    expect(mockStore['sync.pendingUpload']).toBeNull()
+    expect(mockStore['sync.lastSyncedAt']).toBe('2026-10-02T00:00:00.000Z')
   })
 
-  it("exports the corrected roster after a quota rejection without advancing its watermark", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('exports the corrected roster after a quota rejection without advancing its watermark', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     let activePeople = 151
     let exports = 0
     const submitted: SyncPushPayload[] = []
     vi.mocked(fetch).mockImplementation(async (input, init) => {
       const url = String(input)
-      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
-      if (url.includes("/attendance/export")) {
+      if (url.includes('/attendance/export-embeddings')) return Response.json({ embeddings: [] })
+      if (url.includes('/attendance/export')) {
         exports++
         return Response.json({
-          exported_at: "2026-10-02T00:00:00Z",
+          exported_at: '2026-10-02T00:00:00Z',
           records: [],
           sessions: [],
           groups: [
             {
-              id: "g",
-              name: "Work",
-              created_at: "2026-01-01T00:00:00Z",
+              id: 'g',
+              name: 'Work',
+              created_at: '2026-01-01T00:00:00Z',
               is_active: true,
-              settings: {},
-            },
+              settings: {}
+            }
           ],
           members: Array.from({ length: 151 }, (_, i) => ({
             person_id: `p${i}`,
-            group_id: "g",
+            group_id: 'g',
             name: `Member ${i}`,
-            joined_at: "2026-01-01T00:00:00Z",
-            is_active: i < activePeople,
-          })),
+            joined_at: '2026-01-01T00:00:00Z',
+            is_active: i < activePeople
+          }))
         })
       }
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         const payload = JSON.parse(String(init?.body)) as SyncPushPayload
         submitted.push(payload)
         return payload.attendance_export.members.filter((m) => m.is_active).length > 150 ?
-            Response.json(
-              { error: "Remove excess local members.", code: "PLAN_QUOTA_HARD_EXCEEDED" },
-              { status: 402 },
-            )
-          : Response.json({ ok: true, status: "accepted" })
+            Response.json({ error: 'Remove excess local members.', code: 'PLAN_QUOTA_HARD_EXCEEDED' }, { status: 402 })
+          : Response.json({ ok: true, status: 'accepted' })
       }
-      if (url.includes("/api/sync/pull"))
-        return Response.json({ schema_version: 2, groups: [], members: [] })
-      if (url.includes("/attendance/import-metadata"))
-        return Response.json({ groups_count: 0, members_count: 0 })
+      if (url.includes('/api/sync/pull')) return Response.json({ schema_version: 2, groups: [], members: [] })
+      if (url.includes('/attendance/import-metadata')) return Response.json({ groups_count: 0, members_count: 0 })
       throw new Error(`Unexpected request: ${url}`)
     })
     expect((await new BackgroundSyncManager().performSync()).success).toBe(false)
-    expect(mockStore["sync.lastSyncedAt"]).toBeNull()
-    expect(mockStore["sync.pendingUpload"]).toMatchObject({ rejected: true, next: 0 })
+    expect(mockStore['sync.lastSyncedAt']).toBeNull()
+    expect(mockStore['sync.pendingUpload']).toMatchObject({ rejected: true, next: 0 })
     activePeople = 149
     // Recreate the manager to exercise recovery from the persisted rejected batch.
     expect((await new BackgroundSyncManager().performSync()).success).toBe(true)
     expect(exports).toBe(2)
     expect(submitted[1].attendance_export.members.filter((m) => m.is_active)).toHaveLength(149)
     expect(submitted[1].snapshot_id).not.toBe(submitted[0].snapshot_id)
-    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-10-02T00:00:00.000Z")
-    expect(mockStore["sync.pendingUpload"]).toBeNull()
+    expect(mockStore['sync.lastSyncedAt']).toBe('2026-10-02T00:00:00.000Z')
+    expect(mockStore['sync.pendingUpload']).toBeNull()
   })
 
-  it.each([400, 422])(
-    "refreshes a corrected export after HTTP %i rejects the snapshot",
-    async (status) => {
-      const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
-      let corrected = false
-      let exports = 0
-      const submissions: SyncPushPayload[] = []
-      vi.mocked(fetch).mockImplementation(async (input, init) => {
-        const url = String(input)
-        if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
-        if (url.includes("/attendance/export")) {
-          exports++
-          return Response.json({
-            groups: [],
-            members: [],
-            sessions: [],
-            exported_at: "2026-10-02T00:00:00Z",
-            records: [
-              {
-                id: "r",
-                person_id: "p",
-                group_id: "g",
-                timestamp: "2026-10-01T08:00:00Z",
-                confidence: 1,
-                is_manual: true,
-                notes: corrected ? "corrected" : "rejected",
-              },
-            ],
-          })
-        }
-        if (url.includes("/api/sync/push")) {
-          const payload = JSON.parse(String(init?.body)) as SyncPushPayload
-          submissions.push(payload)
-          return payload.attendance_export.records[0].notes === "corrected" ?
-              Response.json({ ok: true })
-            : Response.json({ error: "Review the snapshot." }, { status })
-        }
-        if (url.includes("/api/sync/pull"))
-          return Response.json({ schema_version: 2, groups: [], members: [] })
-        if (url.includes("/attendance/import-metadata"))
-          return Response.json({ groups_count: 0, members_count: 0 })
-        throw new Error(`Unexpected request: ${url}`)
-      })
-      const manager = new BackgroundSyncManager()
-      expect((await manager.performSync()).success).toBe(false)
-      expect(mockStore["sync.lastSyncedAt"]).toBeNull()
-      corrected = true
-      expect((await manager.performSync()).success).toBe(true)
-      expect(exports).toBe(2)
-      expect(submissions[1].attendance_export.records[0].notes).toBe("corrected")
-    },
-  )
+  it.each([400, 422])('refreshes a corrected export after HTTP %i rejects the snapshot', async (status) => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
+    let corrected = false
+    let exports = 0
+    const submissions: SyncPushPayload[] = []
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input)
+      if (url.includes('/attendance/export-embeddings')) return Response.json({ embeddings: [] })
+      if (url.includes('/attendance/export')) {
+        exports++
+        return Response.json({
+          groups: [],
+          members: [],
+          sessions: [],
+          exported_at: '2026-10-02T00:00:00Z',
+          records: [
+            {
+              id: 'r',
+              person_id: 'p',
+              group_id: 'g',
+              timestamp: '2026-10-01T08:00:00Z',
+              confidence: 1,
+              is_manual: true,
+              notes: corrected ? 'corrected' : 'rejected'
+            }
+          ]
+        })
+      }
+      if (url.includes('/api/sync/push')) {
+        const payload = JSON.parse(String(init?.body)) as SyncPushPayload
+        submissions.push(payload)
+        return payload.attendance_export.records[0].notes === 'corrected' ?
+            Response.json({ ok: true })
+          : Response.json({ error: 'Review the snapshot.' }, { status })
+      }
+      if (url.includes('/api/sync/pull')) return Response.json({ schema_version: 2, groups: [], members: [] })
+      if (url.includes('/attendance/import-metadata')) return Response.json({ groups_count: 0, members_count: 0 })
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    const manager = new BackgroundSyncManager()
+    expect((await manager.performSync()).success).toBe(false)
+    expect(mockStore['sync.lastSyncedAt']).toBeNull()
+    corrected = true
+    expect((await manager.performSync()).success).toBe(true)
+    expect(exports).toBe(2)
+    expect(submissions[1].attendance_export.records[0].notes).toBe('corrected')
+  })
 
-  it.each([429, 503])("retains the original snapshot for retry after HTTP %i", async (status) => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it.each([429, 503])('retains the original snapshot for retry after HTTP %i', async (status) => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     let exports = 0
     const snapshots: string[] = []
     vi.mocked(fetch).mockImplementation(async (input, init) => {
       const url = String(input)
-      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
-      if (url.includes("/attendance/export")) {
+      if (url.includes('/attendance/export-embeddings')) return Response.json({ embeddings: [] })
+      if (url.includes('/attendance/export')) {
         exports++
         return Response.json({
           groups: [],
           members: [],
           records: [],
           sessions: [],
-          exported_at: "2026-10-02T00:00:00Z",
+          exported_at: '2026-10-02T00:00:00Z'
         })
       }
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         snapshots.push(JSON.parse(String(init?.body)).snapshot_id)
         return snapshots.length === 1 ?
-            Response.json({ error: "Retry shortly." }, { status })
+            Response.json({ error: 'Retry shortly.' }, { status })
           : Response.json({ ok: true })
       }
-      if (url.includes("/api/sync/pull"))
-        return Response.json({ schema_version: 2, groups: [], members: [] })
-      if (url.includes("/attendance/import-metadata"))
-        return Response.json({ groups_count: 0, members_count: 0 })
+      if (url.includes('/api/sync/pull')) return Response.json({ schema_version: 2, groups: [], members: [] })
+      if (url.includes('/attendance/import-metadata')) return Response.json({ groups_count: 0, members_count: 0 })
       throw new Error(`Unexpected request: ${url}`)
     })
     const manager = new BackgroundSyncManager()
     expect((await manager.performSync()).success).toBe(false)
-    expect(mockStore["sync.pendingUpload"]).not.toHaveProperty("rejected")
+    expect(mockStore['sync.pendingUpload']).not.toHaveProperty('rejected')
     expect((await manager.performSync()).success).toBe(true)
     expect(exports).toBe(1)
     expect(snapshots[1]).toBe(snapshots[0])
     manager.stop()
   })
 
-  it("keeps accepted chunks and acknowledgements across rejection and a failed rebuild", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
-    mockStore["sync.lastSyncedAt"] = "2026-09-01T00:00:00Z"
+  it('keeps accepted chunks and acknowledgements across rejection and a failed rebuild', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
+    mockStore['sync.lastSyncedAt'] = '2026-09-01T00:00:00Z'
     let corrected = false
     let failExport = false
     let failPull = true
@@ -453,63 +440,60 @@ describe("BackgroundSyncManager", () => {
     const records = () =>
       Array.from({ length: corrected ? 301 : 300 }, (_, i) => ({
         id: `r${i}`,
-        person_id: "p",
-        group_id: "g",
+        person_id: 'p',
+        group_id: 'g',
         confidence: 1,
         is_manual: false,
-        timestamp: i === 299 && !corrected ? "2099-01-01T00:00:00Z" : "2026-10-01T08:00:00Z",
-        notes: i === 0 && corrected ? "new local correction" : null,
+        timestamp: i === 299 && !corrected ? '2099-01-01T00:00:00Z' : '2026-10-01T08:00:00Z',
+        notes: i === 0 && corrected ? 'new local correction' : null
       }))
     vi.mocked(fetch).mockImplementation(async (input, init) => {
       const url = String(input)
-      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
-      if (url.includes("/attendance/export")) {
+      if (url.includes('/attendance/export-embeddings')) return Response.json({ embeddings: [] })
+      if (url.includes('/attendance/export')) {
         exportUrls.push(url)
-        if (failExport) return Response.json({ error: "Unavailable" }, { status: 503 })
+        if (failExport) return Response.json({ error: 'Unavailable' }, { status: 503 })
         return Response.json({
-          exported_at: "2026-10-02T00:00:00Z",
+          exported_at: '2026-10-02T00:00:00Z',
           records: records(),
           sessions: [],
           groups: [
             {
-              id: "g",
-              name: "Group",
-              created_at: "2026-01-01T00:00:00Z",
+              id: 'g',
+              name: 'Group',
+              created_at: '2026-01-01T00:00:00Z',
               is_active: true,
               settings: {},
-              version: 4,
-            },
+              version: 4
+            }
           ],
           members: [
             {
-              person_id: "p",
-              group_id: "g",
-              name: "Member",
-              joined_at: "2026-01-01T00:00:00Z",
+              person_id: 'p',
+              group_id: 'g',
+              name: 'Member',
+              joined_at: '2026-01-01T00:00:00Z',
               is_active: true,
-              version: 5,
-            },
-          ],
+              version: 5
+            }
+          ]
         })
       }
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         const payload = JSON.parse(String(init?.body)) as SyncPushPayload
         submissions.push(payload)
-        return payload.attendance_export.records.some((r) => r.timestamp.startsWith("2099")) ?
-            Response.json(
-              { error: "Review clock.", code: "CLOCK_REVIEW_REQUIRED" },
-              { status: 422 },
-            )
+        return payload.attendance_export.records.some((r) => r.timestamp.startsWith('2099')) ?
+            Response.json({ error: 'Review clock.', code: 'CLOCK_REVIEW_REQUIRED' }, { status: 422 })
           : Response.json({
               ok: true,
-              accepted: { groups: { g: 2 }, members: { p: 3 }, faces: {} },
+              accepted: { groups: { g: 2 }, members: { p: 3 }, faces: {} }
             })
       }
-      if (url.includes("/api/sync/pull"))
+      if (url.includes('/api/sync/pull'))
         return failPull ?
-            Response.json({ error: "Offline" }, { status: 503 })
+            Response.json({ error: 'Offline' }, { status: 503 })
           : Response.json({ schema_version: 2, groups: [], members: [] })
-      if (url.includes("/attendance/import-metadata")) {
+      if (url.includes('/attendance/import-metadata')) {
         imports.push(JSON.parse(String(init?.body)))
         return Response.json({ groups_count: 0, members_count: 0 })
       }
@@ -517,122 +501,114 @@ describe("BackgroundSyncManager", () => {
     })
     const manager = new BackgroundSyncManager()
     expect((await manager.performSync()).success).toBe(false)
-    expect(mockStore["sync.pendingUpload"]).toMatchObject({ next: 1, rejected: true })
-    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-09-01T00:00:00Z")
+    expect(mockStore['sync.pendingUpload']).toMatchObject({ next: 1, rejected: true })
+    expect(mockStore['sync.lastSyncedAt']).toBe('2026-09-01T00:00:00Z')
     corrected = true
     failExport = true
     expect((await manager.performSync()).success).toBe(false)
-    expect(mockStore["sync.pendingUpload"]).toMatchObject({ next: 1, rejected: true })
+    expect(mockStore['sync.pendingUpload']).toMatchObject({ next: 1, rejected: true })
     failExport = false
     failPull = false
     expect((await new BackgroundSyncManager().performSync()).success).toBe(true)
     expect(exportUrls).toHaveLength(3)
-    expect(exportUrls.every((url) => url.includes("since=2026-09-01T00%3A00%3A00Z"))).toBe(true)
+    expect(exportUrls.every((url) => url.includes('since=2026-09-01T00%3A00%3A00Z'))).toBe(true)
     const replacement = submissions[2]
     expect(replacement.snapshot_id).not.toBe(submissions[0].snapshot_id)
     expect(replacement.snapshot_id).not.toBe(submissions[1].snapshot_id)
     expect(replacement.attendance_export.groups).toEqual([])
     expect(replacement.attendance_export.members).toEqual([])
     expect(replacement.attendance_export.records).toHaveLength(52)
-    expect(replacement.attendance_export.records.find((r) => r.id === "r0")?.notes).toBe(
-      "new local correction",
-    )
-    expect(replacement.attendance_export.records.some((r) => r.id === "r1")).toBe(false)
-    expect(replacement.attendance_export.records.some((r) => r.id === "r300")).toBe(true)
+    expect(replacement.attendance_export.records.find((r) => r.id === 'r0')?.notes).toBe('new local correction')
+    expect(replacement.attendance_export.records.some((r) => r.id === 'r1')).toBe(false)
+    expect(replacement.attendance_export.records.some((r) => r.id === 'r300')).toBe(true)
     expect(imports[0]).toMatchObject({
       acknowledged_groups: { g: 4 },
       acknowledged_members: { p: 5 },
       accepted_groups: { g: 2 },
-      accepted_members: { p: 3 },
+      accepted_members: { p: 3 }
     })
-    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-10-02T00:00:00.000Z")
-    expect(mockStore["sync.pendingUpload"]).toBeNull()
+    expect(mockStore['sync.lastSyncedAt']).toBe('2026-10-02T00:00:00.000Z')
+    expect(mockStore['sync.pendingUpload']).toBeNull()
   })
 
-  it.each(["push", "pull"])(
-    "cancels a stalled timezone-policy request during %s on disconnect",
-    async (source) => {
-      const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
-      let reached!: () => void
-      const atPolicy = new Promise<void>((resolve) => {
-        reached = resolve
-      })
-      let policySignal: AbortSignal | null | undefined
-      vi.mocked(fetch).mockImplementation(async (input, init) => {
-        const url = String(input)
-        if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
-        if (url.includes("/attendance/export"))
-          return Response.json({
-            groups: [],
-            members: [],
-            records: [],
-            sessions: [],
-            exported_at: "2026-10-02T00:00:00Z",
-          })
-        if (url.includes("/api/sync/push"))
-          return Response.json({ ok: true, policy: { timezone: "Asia/Manila" } })
-        if (url.includes("/api/sync/pull"))
-          return Response.json({
-            schema_version: 2,
-            groups: [],
-            members: [],
-            policy: { timezone: "Asia/Manila" },
-          })
-        if (url.includes("/attendance/settings")) {
-          policySignal = init?.signal
-          reached()
-          if (!policySignal) throw new Error("Timezone policy must have a cancellation signal")
-          const signal = policySignal
-          return new Promise<Response>((_resolve, reject) => {
-            signal.addEventListener("abort", () => reject(signal.reason), { once: true })
-          })
-        }
-        throw new Error(`Unexpected request: ${url}`)
-      })
-      const manager = new BackgroundSyncManager()
-      const sync = manager.performSync(source === "pull")
-      await atPolicy
-      expect(policySignal).toBeInstanceOf(AbortSignal)
-      await manager.suspend()
-      expect(policySignal?.aborted).toBe(true)
-      expect((await sync).success).toBe(false)
-      expect((await manager.performSync()).message).toContain("paused for disconnect")
-      expect(mockStore["sync.lastSyncedAt"]).toBeNull()
-    },
-  )
+  it.each(['push', 'pull'])('cancels a stalled timezone-policy request during %s on disconnect', async (source) => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
+    let reached!: () => void
+    const atPolicy = new Promise<void>((resolve) => {
+      reached = resolve
+    })
+    let policySignal: AbortSignal | null | undefined
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = String(input)
+      if (url.includes('/attendance/export-embeddings')) return Response.json({ embeddings: [] })
+      if (url.includes('/attendance/export'))
+        return Response.json({
+          groups: [],
+          members: [],
+          records: [],
+          sessions: [],
+          exported_at: '2026-10-02T00:00:00Z'
+        })
+      if (url.includes('/api/sync/push')) return Response.json({ ok: true, policy: { timezone: 'Asia/Manila' } })
+      if (url.includes('/api/sync/pull'))
+        return Response.json({
+          schema_version: 2,
+          groups: [],
+          members: [],
+          policy: { timezone: 'Asia/Manila' }
+        })
+      if (url.includes('/attendance/settings')) {
+        policySignal = init?.signal
+        reached()
+        if (!policySignal) throw new Error('Timezone policy must have a cancellation signal')
+        const signal = policySignal
+        return new Promise<Response>((_resolve, reject) => {
+          signal.addEventListener('abort', () => reject(signal.reason), { once: true })
+        })
+      }
+      throw new Error(`Unexpected request: ${url}`)
+    })
+    const manager = new BackgroundSyncManager()
+    const sync = manager.performSync(source === 'pull')
+    await atPolicy
+    expect(policySignal).toBeInstanceOf(AbortSignal)
+    await manager.suspend()
+    expect(policySignal?.aborted).toBe(true)
+    expect((await sync).success).toBe(false)
+    expect((await manager.performSync()).message).toContain('paused for disconnect')
+    expect(mockStore['sync.lastSyncedAt']).toBeNull()
+  })
 
-  it("times out a stalled timezone-policy request without a disconnect", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
-    const timeout = vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
+  it('times out a stalled timezone-policy request without a disconnect', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockImplementation((ms) => {
       const controller = new AbortController()
-      setTimeout(() => controller.abort(new DOMException("Timed out", "TimeoutError")), ms)
+      setTimeout(() => controller.abort(new DOMException('Timed out', 'TimeoutError')), ms)
       return controller.signal
     })
     vi.mocked(fetch).mockImplementation(async (_input, init) => {
       const signal = init?.signal
-      if (!signal) throw new Error("Missing timeout signal")
+      if (!signal) throw new Error('Missing timeout signal')
       return new Promise<Response>((_resolve, reject) => {
-        signal.addEventListener("abort", () => reject(signal.reason), { once: true })
+        signal.addEventListener('abort', () => reject(signal.reason), { once: true })
       })
     })
     const manager = new BackgroundSyncManager() as unknown as {
       applyRemotePolicy(policy: { timezone: string }): Promise<void>
     }
-    const result = expect(manager.applyRemotePolicy({ timezone: "Asia/Manila" })).rejects.toThrow(
-      "Timed out",
-    )
+    const result = expect(manager.applyRemotePolicy({ timezone: 'Asia/Manila' })).rejects.toThrow('Timed out')
     expect(timeout).toHaveBeenCalledWith(15000)
     await vi.advanceTimersByTimeAsync(15000)
     await result
   })
 
-  it("imports face tombstones without an encryption key", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
-    mockStore["sync.encryptionKey"] = ""
+  it('imports face tombstones without an encryption key', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
+    mockStore['sync.encryptionKey'] = ''
     let imported: unknown
     vi.mocked(fetch).mockImplementation(async (input, init) => {
       const url = String(input)
-      if (url.includes("/api/sync/pull"))
+      if (url.includes('/api/sync/pull'))
         return new Response(
           JSON.stringify({
             schema_version: 2,
@@ -640,16 +616,16 @@ describe("BackgroundSyncManager", () => {
             members: [],
             face_embeddings: [
               {
-                person_id: "revoked",
+                person_id: 'revoked',
                 is_deleted: true,
-                embedding_encrypted: "",
+                embedding_encrypted: '',
                 embedding_dimension: 512,
-                sync_revision: 4,
-              },
-            ],
-          }),
+                sync_revision: 4
+              }
+            ]
+          })
         )
-      if (url.includes("/import-embeddings-batch")) {
+      if (url.includes('/import-embeddings-batch')) {
         imported = JSON.parse(String(init?.body))
         return new Response(JSON.stringify({ imported_count: 1, failed_count: 0 }))
       }
@@ -657,255 +633,241 @@ describe("BackgroundSyncManager", () => {
     })
     expect((await new BackgroundSyncManager().performSync(true)).success).toBe(true)
     expect(imported).toMatchObject({
-      embeddings: [{ person_id: "revoked", is_deleted: true, embedding_bytes: "" }],
+      embeddings: [{ person_id: 'revoked', is_deleted: true, embedding_bytes: '' }]
     })
   })
 
-  it("does not repeat a wipe when its acknowledgement fails", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('does not repeat a wipe when its acknowledgement fails', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     let wipes = 0
     let acknowledgements = 0
-    mockStore["sync.pendingUpload"] = { sensitive: "old local upload" }
+    mockStore['sync.pendingUpload'] = { sensitive: 'old local upload' }
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input)
-      if (url.endsWith("/api/devices/commands"))
+      if (url.endsWith('/api/devices/commands'))
         return new Response(
           JSON.stringify({
-            commands: [{ id: "command-once", command: "WIPE" }],
-          }),
+            commands: [{ id: 'command-once', command: 'WIPE' }]
+          })
         )
-      if (url.endsWith("/attendance/wipe")) {
+      if (url.endsWith('/attendance/wipe')) {
         wipes++
         return new Response(JSON.stringify({ success: true }))
       }
-      if (url.endsWith("/commands/ack")) {
+      if (url.endsWith('/commands/ack')) {
         acknowledgements++
-        return new Response("Unavailable", { status: 503 })
+        return new Response('Unavailable', { status: 503 })
       }
-      return new Response("{}")
+      return new Response('{}')
     })
     // Exercise the polling entry point, including receipt loading on a new manager.
-    await (
-      new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
-    ).pollCommands()
-    await (
-      new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
-    ).pollCommands()
+    await (new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }).pollCommands()
+    await (new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }).pollCommands()
     expect(wipes).toBe(1)
     expect(acknowledgements).toBe(2)
-    expect(mockStore["sync.commandReceipts.command-once"]).toMatchObject({ status: "completed" })
-    expect(mockStore["sync.pendingUpload"]).toBeNull()
+    expect(mockStore['sync.commandReceipts.command-once']).toMatchObject({ status: 'completed' })
+    expect(mockStore['sync.pendingUpload']).toBeNull()
   })
 
-  it.each(["not JSON", "null", "{}", '{"success":false}'])(
-    "does not confirm a wipe for an unconfirmed response: %s",
+  it.each(['not JSON', 'null', '{}', '{"success":false}'])(
+    'does not confirm a wipe for an unconfirmed response: %s',
     async (body) => {
-      const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
-      const { dialog } = await import("electron")
+      const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
+      const { dialog } = await import('electron')
       let acknowledgement: { status?: string; result?: { error?: string } } | undefined
       vi.mocked(fetch).mockImplementation(async (input, init) => {
         const url = String(input)
-        if (url.endsWith("/api/devices/commands"))
-          return new Response(
-            JSON.stringify({ commands: [{ id: "command-unconfirmed", command: "WIPE" }] }),
-          )
-        if (url.endsWith("/attendance/wipe")) return new Response(body)
-        if (url.endsWith("/commands/ack")) {
+        if (url.endsWith('/api/devices/commands'))
+          return new Response(JSON.stringify({ commands: [{ id: 'command-unconfirmed', command: 'WIPE' }] }))
+        if (url.endsWith('/attendance/wipe')) return new Response(body)
+        if (url.endsWith('/commands/ack')) {
           acknowledgement = JSON.parse(String(init?.body))
-          return new Response("{}")
+          return new Response('{}')
         }
-        return new Response("{}")
+        return new Response('{}')
       })
 
-      await (
-        new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
-      ).pollCommands()
+      await (new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }).pollCommands()
 
-      expect(acknowledgement).toMatchObject({ status: "failed" })
-      expect(acknowledgement?.result?.error).toContain("did not confirm")
+      expect(acknowledgement).toMatchObject({ status: 'failed' })
+      expect(acknowledgement?.result?.error).toContain('did not confirm')
       expect(dialog.showMessageBox).not.toHaveBeenCalled()
-    },
+    }
   )
 
   it("reports the backend's partial-wipe explanation when the wipe fails", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     let acknowledgement: { status?: string; result?: { error?: string } } | undefined
     vi.mocked(fetch).mockImplementation(async (input, init) => {
       const url = String(input)
-      if (url.endsWith("/api/devices/commands"))
+      if (url.endsWith('/api/devices/commands'))
         return new Response(
           JSON.stringify({
-            commands: [{ id: "command-partial-wipe", command: "WIPE" }],
-          }),
+            commands: [{ id: 'command-partial-wipe', command: 'WIPE' }]
+          })
         )
-      if (url.endsWith("/attendance/wipe"))
+      if (url.endsWith('/attendance/wipe'))
         return new Response(
           JSON.stringify({
             detail:
-              "Local attendance was cleared, but face templates could not be removed. Review this computer before using it again.",
+              'Local attendance was cleared, but face templates could not be removed. Review this computer before using it again.'
           }),
-          { status: 500 },
+          { status: 500 }
         )
-      if (url.endsWith("/commands/ack")) {
+      if (url.endsWith('/commands/ack')) {
         acknowledgement = JSON.parse(String(init?.body))
-        return new Response("{}")
+        return new Response('{}')
       }
-      return new Response("{}")
+      return new Response('{}')
     })
 
-    await (
-      new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
-    ).pollCommands()
+    await (new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }).pollCommands()
 
-    expect(acknowledgement).toMatchObject({ status: "failed" })
-    expect(acknowledgement?.result?.error).toContain("Local attendance was cleared")
-    expect(acknowledgement?.result?.error).toContain("face templates could not be removed")
+    expect(acknowledgement).toMatchObject({ status: 'failed' })
+    expect(acknowledgement?.result?.error).toContain('Local attendance was cleared')
+    expect(acknowledgement?.result?.error).toContain('face templates could not be removed')
   })
 
-  it("does not report an offline update check as already up to date", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('does not report an offline update check as already up to date', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     vi.mocked(checkForUpdates).mockResolvedValue({
-      currentVersion: "1.0.0",
-      latestVersion: "1.0.0",
+      currentVersion: '1.0.0',
+      latestVersion: '1.0.0',
       hasUpdate: false,
       isOffline: true,
-      releaseUrl: "",
-      releaseNotes: "",
-      publishedAt: "",
-      downloadUrl: null,
+      releaseUrl: '',
+      releaseNotes: '',
+      publishedAt: '',
+      downloadUrl: null
     })
     let acknowledgement: { status?: string; result?: { error?: string } } | undefined
     vi.mocked(fetch).mockImplementation(async (input, init) => {
       const url = String(input)
-      if (url.endsWith("/api/devices/commands"))
+      if (url.endsWith('/api/devices/commands'))
         return new Response(
           JSON.stringify({
-            commands: [{ id: "command-upgrade-offline", command: "UPGRADE" }],
-          }),
+            commands: [{ id: 'command-upgrade-offline', command: 'UPGRADE' }]
+          })
         )
-      if (url.endsWith("/commands/ack")) {
+      if (url.endsWith('/commands/ack')) {
         acknowledgement = JSON.parse(String(init?.body))
-        return new Response("{}")
+        return new Response('{}')
       }
-      return new Response("{}")
+      return new Response('{}')
     })
 
-    await (
-      new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
-    ).pollCommands()
+    await (new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }).pollCommands()
 
-    expect(acknowledgement).toMatchObject({ status: "failed" })
-    expect(acknowledgement?.result?.error).toContain("offline")
+    expect(acknowledgement).toMatchObject({ status: 'failed' })
+    expect(acknowledgement?.result?.error).toContain('offline')
   })
 
-  it("reports an update-check error instead of already up to date", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('reports an update-check error instead of already up to date', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     vi.mocked(checkForUpdates).mockResolvedValue({
-      currentVersion: "1.0.0",
-      latestVersion: "1.0.0",
+      currentVersion: '1.0.0',
+      latestVersion: '1.0.0',
       hasUpdate: false,
-      error: "The update check timed out.",
-      releaseUrl: "",
-      releaseNotes: "",
-      publishedAt: "",
-      downloadUrl: null,
+      error: 'The update check timed out.',
+      releaseUrl: '',
+      releaseNotes: '',
+      publishedAt: '',
+      downloadUrl: null
     })
     let acknowledgement: { status?: string; result?: { error?: string } } | undefined
     vi.mocked(fetch).mockImplementation(async (input, init) => {
       const url = String(input)
-      if (url.endsWith("/api/devices/commands"))
+      if (url.endsWith('/api/devices/commands'))
         return new Response(
           JSON.stringify({
-            commands: [{ id: "command-upgrade-error", command: "UPGRADE" }],
-          }),
+            commands: [{ id: 'command-upgrade-error', command: 'UPGRADE' }]
+          })
         )
-      if (url.endsWith("/commands/ack")) {
+      if (url.endsWith('/commands/ack')) {
         acknowledgement = JSON.parse(String(init?.body))
-        return new Response("{}")
+        return new Response('{}')
       }
-      return new Response("{}")
+      return new Response('{}')
     })
 
-    await (
-      new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }
-    ).pollCommands()
+    await (new BackgroundSyncManager() as unknown as { pollCommands(): Promise<void> }).pollCommands()
 
-    expect(acknowledgement).toMatchObject({ status: "failed" })
-    expect(acknowledgement?.result?.error).toContain("timed out")
+    expect(acknowledgement).toMatchObject({ status: 'failed' })
+    expect(acknowledgement?.result?.error).toContain('timed out')
   })
 
-  it("acquires a site key after upgrade without pairing again", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
-    mockStore["sync.encryptionKey"] = ""
+  it('acquires a site key after upgrade without pairing again', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
+    mockStore['sync.encryptionKey'] = ''
     vi.mocked(fetch).mockImplementation(async (input) => {
-      if (String(input).endsWith("/api/device/key")) {
-        return new Response(JSON.stringify({ siteId: "site-test-123", encryptionKey: TEST_KEY }))
+      if (String(input).endsWith('/api/device/key')) {
+        return new Response(JSON.stringify({ siteId: 'site-test-123', encryptionKey: TEST_KEY }))
       }
-      if (String(input).includes("/api/sync/pull")) {
+      if (String(input).includes('/api/sync/pull')) {
         return new Response(JSON.stringify({ schema_version: 2, groups: [], members: [] }))
       }
       return new Response(JSON.stringify({ groups_count: 0, members_count: 0 }))
     })
     expect((await new BackgroundSyncManager().performSync(true)).success).toBe(true)
-    expect(mockStore["sync.encryptionKey"]).toBe(TEST_KEY)
+    expect(mockStore['sync.encryptionKey']).toBe(TEST_KEY)
   })
 
-  it("continues attendance uploads and reports partial failure when key delivery is unavailable", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
-    mockStore["sync.encryptionKey"] = ""
+  it('continues attendance uploads and reports partial failure when key delivery is unavailable', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
+    mockStore['sync.encryptionKey'] = ''
     let pushes = 0
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input)
-      if (url.endsWith("/api/device/key")) return new Response("Unavailable", { status: 503 })
-      if (url.includes("/attendance/export"))
+      if (url.endsWith('/api/device/key')) return new Response('Unavailable', { status: 503 })
+      if (url.includes('/attendance/export'))
         return new Response(
           JSON.stringify({
             groups: [],
             members: [],
             records: [],
             sessions: [],
-            exported_at: "2026-10-02T00:00:00Z",
-          }),
+            exported_at: '2026-10-02T00:00:00Z'
+          })
         )
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         pushes++
-        return new Response(JSON.stringify({ status: "accepted" }))
+        return new Response(JSON.stringify({ status: 'accepted' }))
       }
-      if (url.includes("/api/sync/pull"))
+      if (url.includes('/api/sync/pull'))
         return new Response(
           JSON.stringify({
             schema_version: 2,
             groups: [],
-            members: [],
-          }),
+            members: []
+          })
         )
       return new Response(JSON.stringify({ groups_count: 0, members_count: 0 }))
     })
     const result = await new BackgroundSyncManager().performSync()
     expect(pushes).toBe(1)
     expect(result.success).toBe(false)
-    expect(result.message).toContain("Face sync needs attention")
-    expect(mockStore["sync.lastSyncedAt"]).toBe("2026-10-02T00:00:00.000Z")
-    expect(mockStore["sync.pendingUpload"]).toBeNull()
+    expect(result.message).toContain('Face sync needs attention')
+    expect(mockStore['sync.lastSyncedAt']).toBe('2026-10-02T00:00:00.000Z')
+    expect(mockStore['sync.pendingUpload']).toBeNull()
   })
 
-  it("starts the fallback commandTimer and polls commands every 15 minutes", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('starts the fallback commandTimer and polls commands every 15 minutes', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager()
 
     const fetchMock = vi.mocked(fetch)
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
-      json: vi.fn().mockResolvedValue({ commands: [] }),
+      json: vi.fn().mockResolvedValue({ commands: [] })
     } as unknown as Response)
 
     manager.start({ skipCatchUp: true })
 
     // On start, pollCommands() is called immediately
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://cloud.facenox.test/api/devices/commands",
-      expect.objectContaining({ method: "GET" }),
+      'https://cloud.facenox.test/api/devices/commands',
+      expect.objectContaining({ method: 'GET' })
     )
 
     fetchMock.mockClear()
@@ -914,15 +876,15 @@ describe("BackgroundSyncManager", () => {
     await vi.advanceTimersByTimeAsync(15 * 60 * 1000)
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://cloud.facenox.test/api/devices/commands",
-      expect.objectContaining({ method: "GET" }),
+      'https://cloud.facenox.test/api/devices/commands',
+      expect.objectContaining({ method: 'GET' })
     )
 
     manager.stop()
   })
 
-  it("handles corrupted embeddings gracefully with continue instead of aborting the whole batch", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('handles corrupted embeddings gracefully with continue instead of aborting the whole batch', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager()
 
     const validVector = new Uint8Array(512 * 4)
@@ -932,48 +894,48 @@ describe("BackgroundSyncManager", () => {
       schema_version: 2,
       groups: [
         {
-          id: "g1",
-          name: "Group 1",
-          created_at: "2026-03-01T00:00:00.000Z",
+          id: 'g1',
+          name: 'Group 1',
+          created_at: '2026-03-01T00:00:00.000Z',
           is_active: true,
-          settings: {},
-        },
+          settings: {}
+        }
       ],
-      members: [{ person_id: "p1", name: "Alice", is_active: true }],
+      members: [{ person_id: 'p1', name: 'Alice', is_active: true }],
       face_embeddings: [
         // 3 consecutive invalid ciphertexts
-        { person_id: "bad-1", embedding_encrypted: "corrupt.data.here", embedding_dimension: 512 },
-        { person_id: "bad-2", embedding_encrypted: "corrupt.data.here", embedding_dimension: 512 },
-        { person_id: "bad-3", embedding_encrypted: "corrupt.data.here", embedding_dimension: 512 },
+        { person_id: 'bad-1', embedding_encrypted: 'corrupt.data.here', embedding_dimension: 512 },
+        { person_id: 'bad-2', embedding_encrypted: 'corrupt.data.here', embedding_dimension: 512 },
+        { person_id: 'bad-3', embedding_encrypted: 'corrupt.data.here', embedding_dimension: 512 },
         // 4th is VALID! With the old break bug, this would be dropped. With continue, it must be imported!
-        { person_id: "valid-4", embedding_encrypted: validCiphertext, embedding_dimension: 512 },
-      ],
+        { person_id: 'valid-4', embedding_encrypted: validCiphertext, embedding_dimension: 512 }
+      ]
     }
 
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input)
-      if (url.includes("/api/sync/pull")) {
+      if (url.includes('/api/sync/pull')) {
         return {
           ok: true,
           status: 200,
-          json: async () => pullPayload,
+          json: async () => pullPayload
         } as Response
       }
-      if (url.includes("/attendance/import-metadata")) {
+      if (url.includes('/attendance/import-metadata')) {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ success: true, groups_count: 1, members_count: 1 }),
+          json: async () => ({ success: true, groups_count: 1, members_count: 1 })
         } as Response
       }
-      if (url.includes("/attendance/import-embeddings-batch")) {
+      if (url.includes('/attendance/import-embeddings-batch')) {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ imported_count: 1 }),
+          json: async () => ({ imported_count: 1 })
         } as Response
       }
-      if (url.includes("/attendance/export")) {
+      if (url.includes('/attendance/export')) {
         return {
           ok: true,
           status: 200,
@@ -982,29 +944,29 @@ describe("BackgroundSyncManager", () => {
             members: [],
             records: [],
             sessions: [],
-            exported_at: new Date().toISOString(),
-          }),
+            exported_at: new Date().toISOString()
+          })
         } as Response
       }
-      if (url.includes("/attendance/export-embeddings")) {
+      if (url.includes('/attendance/export-embeddings')) {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ embeddings: [] }),
+          json: async () => ({ embeddings: [] })
         } as Response
       }
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         return {
           ok: true,
           status: 200,
-          text: async () => JSON.stringify({ ok: true, status: "accepted" }),
+          text: async () => JSON.stringify({ ok: true, status: 'accepted' })
         } as Response
       }
-      if (url.includes("/api/devices/commands")) {
+      if (url.includes('/api/devices/commands')) {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ commands: [] }),
+          json: async () => ({ commands: [] })
         } as Response
       }
       return { ok: true, status: 200, json: async () => ({}) } as Response
@@ -1013,39 +975,39 @@ describe("BackgroundSyncManager", () => {
     const result = await manager.performSync()
 
     expect(result.success).toBe(false)
-    expect(result.message).toContain("3 face templates could not be imported")
+    expect(result.message).toContain('3 face templates could not be imported')
 
     // Valid profiles are imported, but partial failure must never report success.
     const importEmbeddingsCall = vi
       .mocked(fetch)
-      .mock.calls.find(([url]) => String(url).includes("/attendance/import-embeddings-batch"))
+      .mock.calls.find(([url]) => String(url).includes('/attendance/import-embeddings-batch'))
     expect(importEmbeddingsCall).toBeDefined()
     const requestOptions = importEmbeddingsCall?.[1] as { body?: string } | undefined
-    const requestBody = JSON.parse(requestOptions?.body ?? "{}") as {
+    const requestBody = JSON.parse(requestOptions?.body ?? '{}') as {
       embeddings: Array<{ person_id: string }>
     }
     expect(requestBody.embeddings).toHaveLength(1)
-    expect(requestBody.embeddings[0].person_id).toBe("valid-4")
+    expect(requestBody.embeddings[0].person_id).toBe('valid-4')
   })
 
-  it("executes attendance export and push before pullMetadata so new local groups/members are registered on cloud", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('executes attendance export and push before pullMetadata so new local groups/members are registered on cloud', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager()
 
     const callOrder: string[] = []
 
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input)
-      if (url.includes("/attendance/export-embeddings")) {
-        callOrder.push("EXPORT_EMBEDDINGS")
+      if (url.includes('/attendance/export-embeddings')) {
+        callOrder.push('EXPORT_EMBEDDINGS')
         return {
           ok: true,
           status: 200,
-          json: async () => ({ embeddings: [] }),
+          json: async () => ({ embeddings: [] })
         } as Response
       }
-      if (url.includes("/attendance/export")) {
-        callOrder.push("EXPORT_FROM_LOCAL_DB")
+      if (url.includes('/attendance/export')) {
+        callOrder.push('EXPORT_FROM_LOCAL_DB')
         return {
           ok: true,
           status: 200,
@@ -1054,39 +1016,39 @@ describe("BackgroundSyncManager", () => {
             members: [],
             records: [],
             sessions: [],
-            exported_at: new Date().toISOString(),
-          }),
+            exported_at: new Date().toISOString()
+          })
         } as Response
       }
-      if (url.includes("/api/sync/push")) {
-        callOrder.push("PUSH_TO_CLOUD")
+      if (url.includes('/api/sync/push')) {
+        callOrder.push('PUSH_TO_CLOUD')
         return {
           ok: true,
           status: 200,
-          text: async () => JSON.stringify({ ok: true, status: "accepted" }),
+          text: async () => JSON.stringify({ ok: true, status: 'accepted' })
         } as Response
       }
-      if (url.includes("/api/sync/pull")) {
-        callOrder.push("PULL_FROM_CLOUD")
+      if (url.includes('/api/sync/pull')) {
+        callOrder.push('PULL_FROM_CLOUD')
         return {
           ok: true,
           status: 200,
-          json: async () => ({ schema_version: 2, groups: [], members: [] }),
+          json: async () => ({ schema_version: 2, groups: [], members: [] })
         } as Response
       }
-      if (url.includes("/attendance/import-metadata")) {
-        callOrder.push("IMPORT_TO_LOCAL_DB")
+      if (url.includes('/attendance/import-metadata')) {
+        callOrder.push('IMPORT_TO_LOCAL_DB')
         return {
           ok: true,
           status: 200,
-          json: async () => ({ groups_count: 0, members_count: 0 }),
+          json: async () => ({ groups_count: 0, members_count: 0 })
         } as Response
       }
-      if (url.includes("/api/devices/commands")) {
+      if (url.includes('/api/devices/commands')) {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ commands: [] }),
+          json: async () => ({ commands: [] })
         } as Response
       }
       return { ok: true, status: 200, json: async () => ({}) } as Response
@@ -1095,16 +1057,16 @@ describe("BackgroundSyncManager", () => {
     await manager.performSync()
 
     expect(callOrder).toEqual([
-      "EXPORT_FROM_LOCAL_DB",
-      "EXPORT_EMBEDDINGS",
-      "PUSH_TO_CLOUD",
-      "PULL_FROM_CLOUD",
-      "IMPORT_TO_LOCAL_DB",
+      'EXPORT_FROM_LOCAL_DB',
+      'EXPORT_EMBEDDINGS',
+      'PUSH_TO_CLOUD',
+      'PULL_FROM_CLOUD',
+      'IMPORT_TO_LOCAL_DB'
     ])
   })
 
-  it("chunks large attendance exports (> 250 records) into multiple batched push requests", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('chunks large attendance exports (> 250 records) into multiple batched push requests', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager()
 
     // Generate 600 records (should produce 3 chunks: 250, 250, 100)
@@ -1112,74 +1074,74 @@ describe("BackgroundSyncManager", () => {
       id: `rec-${i}`,
       person_id: `person-${i % 10}`,
       member_id: `person-${i % 10}`,
-      group_id: "g1",
+      group_id: 'g1',
       timestamp: new Date(Date.now() - i * 60_000).toISOString(),
       confidence: 0.95,
-      is_manual: false,
+      is_manual: false
     }))
 
     const pushCalls: Array<{ body: SyncPushPayload; headers: Record<string, string> }> = []
 
     vi.mocked(fetch).mockImplementation(async (input, init) => {
       const url = String(input)
-      if (url.includes("/api/sync/pull")) {
+      if (url.includes('/api/sync/pull')) {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ schema_version: 2, groups: [], members: [] }),
+          json: async () => ({ schema_version: 2, groups: [], members: [] })
         } as Response
       }
-      if (url.includes("/attendance/import-metadata")) {
+      if (url.includes('/attendance/import-metadata')) {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ groups_count: 0, members_count: 0 }),
+          json: async () => ({ groups_count: 0, members_count: 0 })
         } as Response
       }
-      if (url.includes("/attendance/export-embeddings")) {
+      if (url.includes('/attendance/export-embeddings')) {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ embeddings: [] }),
+          json: async () => ({ embeddings: [] })
         } as Response
       }
-      if (url.includes("/attendance/export")) {
+      if (url.includes('/attendance/export')) {
         return {
           ok: true,
           status: 200,
           json: async () => ({
             groups: [
               {
-                id: "g1",
-                name: "Group 1",
-                created_at: "2026-03-01T00:00:00.000Z",
+                id: 'g1',
+                name: 'Group 1',
+                created_at: '2026-03-01T00:00:00.000Z',
                 is_active: true,
-                settings: {},
-              },
+                settings: {}
+              }
             ],
-            members: [{ person_id: "person-1", group_id: "g1", name: "Bob", is_active: true }],
+            members: [{ person_id: 'person-1', group_id: 'g1', name: 'Bob', is_active: true }],
             records: generatedRecords,
             sessions: [],
-            exported_at: "2026-03-18T12:00:00.000Z",
-          }),
+            exported_at: '2026-03-18T12:00:00.000Z'
+          })
         } as Response
       }
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         pushCalls.push({
           body: JSON.parse(String(init?.body)) as SyncPushPayload,
-          headers: (init?.headers ?? {}) as Record<string, string>,
+          headers: (init?.headers ?? {}) as Record<string, string>
         })
         return {
           ok: true,
           status: 200,
-          text: async () => JSON.stringify({ ok: true, status: "accepted" }),
+          text: async () => JSON.stringify({ ok: true, status: 'accepted' })
         } as Response
       }
-      if (url.includes("/api/devices/commands")) {
+      if (url.includes('/api/devices/commands')) {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ commands: [] }),
+          json: async () => ({ commands: [] })
         } as Response
       }
       return { ok: true, status: 200, json: async () => ({}) } as Response
@@ -1195,49 +1157,49 @@ describe("BackgroundSyncManager", () => {
     // Check chunk 1: 250 records, contains auxiliary metadata, header X-Sync-Chunk: true
     expect(pushCalls[0].body.attendance_export.records).toHaveLength(250)
     expect(pushCalls[0].body.attendance_export.groups).toHaveLength(1)
-    expect(pushCalls[0].body.snapshot_id).toContain("part-1-of-3")
-    expect(pushCalls[0].headers["X-Sync-Chunk"]).toBe("true")
+    expect(pushCalls[0].body.snapshot_id).toContain('part-1-of-3')
+    expect(pushCalls[0].headers['X-Sync-Chunk']).toBe('true')
 
     // Check chunk 2: 250 records, groups empty to save bandwidth
     expect(pushCalls[1].body.attendance_export.records).toHaveLength(250)
     expect(pushCalls[1].body.attendance_export.groups).toHaveLength(0)
-    expect(pushCalls[1].body.snapshot_id).toContain("part-2-of-3")
-    expect(pushCalls[1].headers["X-Sync-Chunk"]).toBe("true")
+    expect(pushCalls[1].body.snapshot_id).toContain('part-2-of-3')
+    expect(pushCalls[1].headers['X-Sync-Chunk']).toBe('true')
 
     // Check chunk 3: 100 records (remaining)
     expect(pushCalls[2].body.attendance_export.records).toHaveLength(100)
-    expect(pushCalls[2].body.snapshot_id).toContain("part-3-of-3")
-    expect(pushCalls[2].headers["X-Sync-Chunk"]).toBe("true")
+    expect(pushCalls[2].body.snapshot_id).toContain('part-3-of-3')
+    expect(pushCalls[2].headers['X-Sync-Chunk']).toBe('true')
   })
 
-  it("chunks large member lists (> 500 members) into multiple batched push requests", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('chunks large member lists (> 500 members) into multiple batched push requests', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager()
     const membersList = Array.from({ length: 1200 }, (_, i) => ({
       person_id: `person-${i}`,
-      group_id: "group-1",
+      group_id: 'group-1',
       name: `Member ${i}`,
-      role: "Student",
+      role: 'Student',
       is_active: true,
-      joined_at: new Date().toISOString(),
+      joined_at: new Date().toISOString()
     }))
 
     const pushCalls: Array<{ body: SyncPushPayload; headers: Record<string, string> }> = []
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.includes("/attendance/export-embeddings")) {
+      if (url.includes('/attendance/export-embeddings')) {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ embeddings: [] }),
+          json: async () => ({ embeddings: [] })
         } as Response
       }
-      if (url.includes("/attendance/export")) {
+      if (url.includes('/attendance/export')) {
         return {
           ok: true,
           status: 200,
           json: async () => ({
-            exported_at: "2026-10-09T18:00:00.000Z",
-            groups: [{ id: "group-1", name: "Grade 10", is_active: true }],
+            exported_at: '2026-10-09T18:00:00.000Z',
+            groups: [{ id: 'group-1', name: 'Grade 10', is_active: true }],
             members: membersList,
             sessions: [],
             records: [],
@@ -1249,43 +1211,43 @@ describe("BackgroundSyncManager", () => {
               relog_cooldown_seconds: 60,
               enable_liveness_detection: false,
               max_recognition_faces_per_frame: 1,
-              data_retention_days: 7,
-            },
-          }),
+              data_retention_days: 7
+            }
+          })
         } as Response
       }
-      if (url.includes("/api/sync/pull")) {
+      if (url.includes('/api/sync/pull')) {
         return {
           ok: true,
           status: 200,
           json: async () => ({
             schema_version: 2,
-            organization_id: "org-1",
-            site_id: "site-test-123",
+            organization_id: 'org-1',
+            site_id: 'site-test-123',
             synced_at: new Date().toISOString(),
             groups: [],
             members: [],
-            face_embeddings: [],
-          }),
+            face_embeddings: []
+          })
         } as Response
       }
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         const body = JSON.parse(init?.body as string)
         pushCalls.push({
           body,
-          headers: (init?.headers ?? {}) as Record<string, string>,
+          headers: (init?.headers ?? {}) as Record<string, string>
         })
         return {
           ok: true,
           status: 200,
-          text: async () => JSON.stringify({ ok: true, status: "accepted" }),
+          text: async () => JSON.stringify({ ok: true, status: 'accepted' })
         } as Response
       }
-      if (url.includes("/api/devices/commands")) {
+      if (url.includes('/api/devices/commands')) {
         return {
           ok: true,
           status: 200,
-          json: async () => ({ commands: [] }),
+          json: async () => ({ commands: [] })
         } as Response
       }
       return { ok: true, status: 200, json: async () => ({}) } as Response
@@ -1299,41 +1261,41 @@ describe("BackgroundSyncManager", () => {
     // 1200 members / 500 per chunk = 3 chunks
     expect(pushCalls).toHaveLength(3)
     expect(pushCalls[0].body.attendance_export.members).toHaveLength(500)
-    expect(pushCalls[0].body.snapshot_id).toContain("part-1-of-3")
+    expect(pushCalls[0].body.snapshot_id).toContain('part-1-of-3')
     expect(pushCalls[1].body.attendance_export.members).toHaveLength(500)
-    expect(pushCalls[1].body.snapshot_id).toContain("part-2-of-3")
+    expect(pushCalls[1].body.snapshot_id).toContain('part-2-of-3')
     expect(pushCalls[2].body.attendance_export.members).toHaveLength(200)
-    expect(pushCalls[2].body.snapshot_id).toContain("part-3-of-3")
+    expect(pushCalls[2].body.snapshot_id).toContain('part-3-of-3')
   })
 
-  it("retries transient upload failures with bounded backoff while started without waiting 15 minutes", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('retries transient upload failures with bounded backoff while started without waiting 15 minutes', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager()
     let pushAttempts = 0
 
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input)
-      if (url.endsWith("/api/devices/commands")) return Response.json({ commands: [] })
-      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
-      if (url.includes("/attendance/export")) {
+      if (url.endsWith('/api/devices/commands')) return Response.json({ commands: [] })
+      if (url.includes('/attendance/export-embeddings')) return Response.json({ embeddings: [] })
+      if (url.includes('/attendance/export')) {
         return Response.json({
-          exported_at: "2026-10-02T00:00:00Z",
+          exported_at: '2026-10-02T00:00:00Z',
           groups: [],
           members: [],
           records: [],
-          sessions: [],
+          sessions: []
         })
       }
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         pushAttempts++
         return pushAttempts === 1 ?
-            Response.json({ error: "Temporary outage" }, { status: 503 })
-          : Response.json({ ok: true, status: "accepted" })
+            Response.json({ error: 'Temporary outage' }, { status: 503 })
+          : Response.json({ ok: true, status: 'accepted' })
       }
-      if (url.includes("/api/sync/pull")) {
+      if (url.includes('/api/sync/pull')) {
         return Response.json({ schema_version: 2, groups: [], members: [] })
       }
-      if (url.includes("/attendance/import-metadata")) {
+      if (url.includes('/attendance/import-metadata')) {
         return Response.json({ groups_count: 0, members_count: 0 })
       }
       return Response.json({})
@@ -1343,45 +1305,42 @@ describe("BackgroundSyncManager", () => {
     await manager.performSync()
 
     expect(pushAttempts).toBe(1)
-    expect(mockStore["sync.lastSyncStatus"]).toBe("error")
+    expect(mockStore['sync.lastSyncStatus']).toBe('error')
 
     // Bounded fast retry fires at 15s (much sooner than the 15-minute fallback timer).
     await vi.advanceTimersByTimeAsync(15_000)
 
     expect(pushAttempts).toBe(2)
-    expect(mockStore["sync.lastSyncStatus"]).toBe("success")
+    expect(mockStore['sync.lastSyncStatus']).toBe('success')
     manager.stop()
   })
 
-  it("does not schedule fast retries for non-retryable 402 plan limit rejections", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('does not schedule fast retries for non-retryable 402 plan limit rejections', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager()
     let pushAttempts = 0
 
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input)
-      if (url.endsWith("/api/devices/commands")) return Response.json({ commands: [] })
-      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
-      if (url.includes("/attendance/export")) {
+      if (url.endsWith('/api/devices/commands')) return Response.json({ commands: [] })
+      if (url.includes('/attendance/export-embeddings')) return Response.json({ embeddings: [] })
+      if (url.includes('/attendance/export')) {
         return Response.json({
-          exported_at: "2026-10-02T00:00:00Z",
+          exported_at: '2026-10-02T00:00:00Z',
           groups: [],
           members: [],
           records: [],
-          sessions: [],
+          sessions: []
         })
       }
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         pushAttempts++
-        return Response.json(
-          { error: "Plan limit exceeded", code: "PLAN_QUOTA_HARD_EXCEEDED" },
-          { status: 402 },
-        )
+        return Response.json({ error: 'Plan limit exceeded', code: 'PLAN_QUOTA_HARD_EXCEEDED' }, { status: 402 })
       }
-      if (url.includes("/api/sync/pull")) {
+      if (url.includes('/api/sync/pull')) {
         return Response.json({ schema_version: 2, groups: [], members: [] })
       }
-      if (url.includes("/attendance/import-metadata")) {
+      if (url.includes('/attendance/import-metadata')) {
         return Response.json({ groups_count: 0, members_count: 0 })
       }
       return Response.json({})
@@ -1396,35 +1355,35 @@ describe("BackgroundSyncManager", () => {
     manager.stop()
   })
 
-  it("spaces debounced pushes past the 5s Cloud cooldown and avoids flashing error on first 429 retry", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('spaces debounced pushes past the 5s Cloud cooldown and avoids flashing error on first 429 retry', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager()
     let pushCount = 0
 
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input)
-      if (url.endsWith("/api/devices/commands")) return Response.json({ commands: [] })
-      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
-      if (url.includes("/attendance/export")) {
+      if (url.endsWith('/api/devices/commands')) return Response.json({ commands: [] })
+      if (url.includes('/attendance/export-embeddings')) return Response.json({ embeddings: [] })
+      if (url.includes('/attendance/export')) {
         return Response.json({
-          exported_at: "2026-10-02T00:00:00Z",
+          exported_at: '2026-10-02T00:00:00Z',
           groups: [],
           members: [],
           records: [],
-          sessions: [],
+          sessions: []
         })
       }
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         pushCount++
         if (pushCount === 2) {
-          return Response.json({ error: "Sync throttled", retryAfterMs: 5000 }, { status: 429 })
+          return Response.json({ error: 'Sync throttled', retryAfterMs: 5000 }, { status: 429 })
         }
-        return Response.json({ ok: true, status: "accepted" })
+        return Response.json({ ok: true, status: 'accepted' })
       }
-      if (url.includes("/api/sync/pull")) {
+      if (url.includes('/api/sync/pull')) {
         return Response.json({ schema_version: 2, groups: [], members: [] })
       }
-      if (url.includes("/attendance/import-metadata")) {
+      if (url.includes('/attendance/import-metadata')) {
         return Response.json({ groups_count: 0, members_count: 0 })
       }
       return Response.json({})
@@ -1442,81 +1401,81 @@ describe("BackgroundSyncManager", () => {
     expect(pushCount).toBe(2)
 
     // First background 429 keeps status non-alarming ("idle") and recovers automatically after retryMs + 500ms.
-    expect(mockStore["sync.lastSyncStatus"]).toBe("idle")
+    expect(mockStore['sync.lastSyncStatus']).toBe('idle')
     await vi.advanceTimersByTimeAsync(5500)
     expect(pushCount).toBe(3)
-    expect(mockStore["sync.lastSyncStatus"]).toBe("success")
+    expect(mockStore['sync.lastSyncStatus']).toBe('success')
     manager.stop()
   })
 
-  it("keeps unresolved upload errors visible across pullOnly syncs and triggers resume catch-up", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('keeps unresolved upload errors visible across pullOnly syncs and triggers resume catch-up', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager()
     let pushCalls = 0
 
-    mockStore["sync.lastSyncStatus"] = "error"
-    mockStore["sync.lastSyncMessage"] = "Upload failed: Plan limit exceeded."
-    mockStore["sync.pendingUpload"] = {
-      deviceId: "device-test-123",
-      siteId: "site-test-123",
-      remoteBaseUrl: "https://cloud.facenox.test",
-      exportedAt: "2026-10-02T00:00:00Z",
+    mockStore['sync.lastSyncStatus'] = 'error'
+    mockStore['sync.lastSyncMessage'] = 'Upload failed: Plan limit exceeded.'
+    mockStore['sync.pendingUpload'] = {
+      deviceId: 'device-test-123',
+      siteId: 'site-test-123',
+      remoteBaseUrl: 'https://cloud.facenox.test',
+      exportedAt: '2026-10-02T00:00:00Z',
       chunks: [
         {
-          snapshot_id: "snap-1",
-          attendance_export: { groups: [], members: [], records: [], sessions: [] },
-        },
+          snapshot_id: 'snap-1',
+          attendance_export: { groups: [], members: [], records: [], sessions: [] }
+        }
       ],
       next: 0,
       acknowledged: {
         groups: {},
         members: {},
         faces: {},
-        accepted: { groups: {}, members: {}, faces: {} },
+        accepted: { groups: {}, members: {}, faces: {} }
       },
-      rejected: true,
+      rejected: true
     }
 
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input)
-      if (url.endsWith("/api/devices/commands")) return Response.json({ commands: [] })
-      if (url.includes("/api/sync/pull")) {
+      if (url.endsWith('/api/devices/commands')) return Response.json({ commands: [] })
+      if (url.includes('/api/sync/pull')) {
         return Response.json({ schema_version: 2, groups: [], members: [] })
       }
-      if (url.includes("/attendance/import-metadata")) {
+      if (url.includes('/attendance/import-metadata')) {
         return Response.json({ groups_count: 0, members_count: 0 })
       }
-      if (url.includes("/attendance/export-embeddings")) return Response.json({ embeddings: [] })
-      if (url.includes("/attendance/export")) {
+      if (url.includes('/attendance/export-embeddings')) return Response.json({ embeddings: [] })
+      if (url.includes('/attendance/export')) {
         return Response.json({
-          exported_at: "2026-10-02T00:00:00Z",
+          exported_at: '2026-10-02T00:00:00Z',
           groups: [],
           members: [],
           records: [],
-          sessions: [],
+          sessions: []
         })
       }
-      if (url.includes("/api/sync/push")) {
+      if (url.includes('/api/sync/push')) {
         pushCalls++
-        return Response.json({ ok: true, status: "accepted" })
+        return Response.json({ ok: true, status: 'accepted' })
       }
       return Response.json({})
     })
 
     const pullResult = await manager.performSync(true)
     expect(pullResult.success).toBe(true)
-    expect(mockStore["sync.lastSyncStatus"]).toBe("error")
-    expect(mockStore["sync.lastSyncMessage"]).toBe("Upload failed: Plan limit exceeded.")
+    expect(mockStore['sync.lastSyncStatus']).toBe('error')
+    expect(mockStore['sync.lastSyncMessage']).toBe('Upload failed: Plan limit exceeded.')
 
     manager.handleSystemResume()
     await vi.advanceTimersByTimeAsync(3000)
     expect(pushCalls).toBe(1)
-    expect(mockStore["sync.lastSyncStatus"]).toBe("success")
+    expect(mockStore['sync.lastSyncStatus']).toBe('success')
     manager.stop()
   })
 
-  it("tears down and re-initializes the Ably client with backoff after a terminal failed state", async () => {
-    const { BackgroundSyncManager } = await import("./BackgroundSyncManager.js")
+  it('tears down and re-initializes the Ably client with backoff after a terminal failed state', async () => {
+    const { BackgroundSyncManager } = await import('./BackgroundSyncManager.js')
     const manager = new BackgroundSyncManager()
 
     vi.mocked(fetch).mockResolvedValue(Response.json({ commands: [] }))
@@ -1524,9 +1483,9 @@ describe("BackgroundSyncManager", () => {
     expect(mockRealtimeInstances).toHaveLength(1)
 
     const firstClient = mockRealtimeInstances[0]
-    firstClient.connection.state = "failed"
+    firstClient.connection.state = 'failed'
     for (const cb of firstClient.handlers.failed ?? []) {
-      cb({ reason: { message: "Connection limit exceeded" } })
+      cb({ reason: { message: 'Connection limit exceeded' } })
     }
     expect(firstClient.close).toHaveBeenCalledTimes(1)
 
@@ -1535,23 +1494,23 @@ describe("BackgroundSyncManager", () => {
     expect(mockRealtimeInstances).toHaveLength(2)
 
     const secondClient = mockRealtimeInstances[1]
-    secondClient.connection.state = "connected"
+    secondClient.connection.state = 'connected'
     for (const cb of secondClient.handlers.connected ?? []) {
       cb()
     }
 
     // Backoff resets after successful connection, so a later failure recovers in 30s again
-    secondClient.connection.state = "failed"
+    secondClient.connection.state = 'failed'
     for (const cb of secondClient.handlers.failed ?? []) {
-      cb({ reason: { message: "Token revoked" } })
+      cb({ reason: { message: 'Token revoked' } })
     }
     await vi.advanceTimersByTimeAsync(30_000)
     expect(mockRealtimeInstances).toHaveLength(3)
 
     // Stopping cancels any pending recovery timer
-    mockRealtimeInstances[2].connection.state = "failed"
+    mockRealtimeInstances[2].connection.state = 'failed'
     for (const cb of mockRealtimeInstances[2].handlers.failed ?? []) {
-      cb({ reason: { message: "Token revoked" } })
+      cb({ reason: { message: 'Token revoked' } })
     }
     manager.stop()
     await vi.advanceTimersByTimeAsync(600_000)

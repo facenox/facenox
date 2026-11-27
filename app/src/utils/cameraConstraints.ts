@@ -3,7 +3,7 @@ export function buildCameraConstraints(deviceId?: string): MediaStreamConstraint
 
   return {
     video: Object.keys(video).length > 0 ? video : true,
-    audio: false,
+    audio: false
   }
 }
 
@@ -25,11 +25,11 @@ export function formatCameraDevices(devices: MediaDeviceInfo[]): FormattedCamera
     const rawLabel = device.label || `Camera ${index + 1}`
     // Match patterns like (04f2:b613), (usb-0000:00:14.0-1.6), and (/dev/video0)
     const cleanLabel = rawLabel
-      .replace(/\s*\((usb-[\w\d:.-]+|[0-9a-fA-F]{4}:[0-9a-fA-F]{4}|\/dev\/video\d+)\)/gi, "")
+      .replace(/\s*\((usb-[\w\d:.-]+|[0-9a-fA-F]{4}:[0-9a-fA-F]{4}|\/dev\/video\d+)\)/gi, '')
       .trim()
     return {
       deviceId: device.deviceId,
-      cleanLabel,
+      cleanLabel
     }
   })
 
@@ -44,12 +44,12 @@ export function formatCameraDevices(devices: MediaDeviceInfo[]): FormattedCamera
       indices[item.cleanLabel] = (indices[item.cleanLabel] || 0) + 1
       return {
         value: item.deviceId,
-        label: `${item.cleanLabel} (#${indices[item.cleanLabel]})`,
+        label: `${item.cleanLabel} (#${indices[item.cleanLabel]})`
       }
     }
     return {
       value: item.deviceId,
-      label: item.cleanLabel,
+      label: item.cleanLabel
     }
   })
 }

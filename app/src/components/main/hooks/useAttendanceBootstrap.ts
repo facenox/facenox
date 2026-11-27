@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react"
-import { useAttendanceStore, useUIStore } from "@/components/main/stores"
-import { bootstrapShellData } from "@/components/main/hooks/useAttendanceGroups"
+import { useEffect, useRef } from 'react'
+import { useAttendanceStore, useUIStore } from '@/components/main/stores'
+import { bootstrapShellData } from '@/components/main/hooks/useAttendanceGroups'
 
 export function useAttendanceBootstrap() {
   const isHydrated = useUIStore((state) => state.isHydrated)
@@ -18,18 +18,18 @@ export function useAttendanceBootstrap() {
     setShellBootstrapping(true)
     setShellReady(false)
     setShellBootstrapError(null)
-    window.facenoxElectron?.updateSplashDataStep(8, "Loading attendance data")
+    window.facenoxElectron?.updateSplashDataStep(8, 'Loading attendance data')
 
     const bootstrap = async () => {
       try {
         await bootstrapShellData()
 
-        window.facenoxElectron?.updateSplashDataStep(9, "Ready")
+        window.facenoxElectron?.updateSplashDataStep(9, 'Ready')
 
         setShellReady(true)
         setShellBootstrapping(false)
       } catch (error) {
-        const technicalMessage = error instanceof Error ? error.message : ""
+        const technicalMessage = error instanceof Error ? error.message : ''
         const message =
           /offline|backend|connect/i.test(technicalMessage) ?
             "Facenox couldn't load your data because the local service is offline. Restart the app and try again."

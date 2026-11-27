@@ -1,43 +1,43 @@
-import { app, protocol, nativeTheme, powerMonitor, net, shell } from "electron"
-import path from "path"
-import fs from "fs"
-import { fileURLToPath, pathToFileURL } from "node:url"
-import { backendService } from "./backendService.js"
-import { startBackgroundUpdateCheck } from "./updater.js"
-import isDev from "./util.js"
-import { state } from "./State.js"
+import { app, protocol, nativeTheme, powerMonitor, net, shell } from 'electron'
+import path from 'path'
+import fs from 'fs'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { backendService } from './backendService.js'
+import { startBackgroundUpdateCheck } from './updater.js'
+import isDev from './util.js'
+import { state } from './State.js'
 // This file provides geometric window shape utilities for rounded corners on Windows.
-import { WindowManager } from "./window/WindowManager.js"
-import { TrayManager } from "./tray/TrayManager.js"
-import { registerAllHandlers } from "./ipc/index.js"
-import { syncManager } from "./managers/BackgroundSyncManager.js"
-import { autoExportManager } from "./managers/AutoExportManager.js"
-import { getDataDirectory } from "./paths.js"
-import { configureAppIdentity } from "./appIdentity.js"
+import { WindowManager } from './window/WindowManager.js'
+import { TrayManager } from './tray/TrayManager.js'
+import { registerAllHandlers } from './ipc/index.js'
+import { syncManager } from './managers/BackgroundSyncManager.js'
+import { autoExportManager } from './managers/AutoExportManager.js'
+import { getDataDirectory } from './paths.js'
+import { configureAppIdentity } from './appIdentity.js'
 
 const main_filename = fileURLToPath(import.meta.url)
 const main_dirname = path.dirname(main_filename)
 
 if (isDev()) {
-  app.setName("Facenox-dev")
+  app.setName('Facenox-dev')
 } else {
-  app.setName("Facenox")
+  app.setName('Facenox')
 }
 
-const sessionDataPath = path.join(app.getPath("userData"), "session")
+const sessionDataPath = path.join(app.getPath('userData'), 'session')
 fs.mkdirSync(sessionDataPath, { recursive: true })
-app.setPath("sessionData", sessionDataPath)
+app.setPath('sessionData', sessionDataPath)
 
 configureAppIdentity()
 
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
-  console.warn("[Main] Another instance is already running. Quitting...")
+  console.warn('[Main] Another instance is already running. Quitting...')
   app.quit()
   process.exit(0)
 }
 
-app.on("second-instance", () => {
+app.on('second-instance', () => {
   if (state.mainWindow) {
     if (state.mainWindow.isMinimized()) state.mainWindow.restore()
     state.mainWindow.show()
@@ -47,19 +47,19 @@ app.on("second-instance", () => {
 
 protocol.registerSchemesAsPrivileged([
   {
-    scheme: "app",
+    scheme: 'app',
     privileges: {
       secure: true,
       standard: true,
       supportFetchAPI: true,
       corsEnabled: true,
-      stream: true,
-    },
-  },
+      stream: true
+    }
+  }
 ])
 
 app.whenReady().then(async () => {
-  nativeTheme.themeSource = "dark"
+  nativeTheme.themeSource = 'dark'
   registerAllHandlers()
   const unsubscribeStartupProgress = backendService.onStartupProgress((update) => {
     state.startupTotalSteps = update.totalSteps
@@ -67,32 +67,29 @@ app.whenReady().then(async () => {
   })
 
   // Custom protocol for static file access using modern protocol.handle and net.fetch
-  protocol.handle("app", (request) => {
+  protocol.handle('app', (request) => {
     try {
       const urlObj = new URL(request.url)
-      const relativeUrl = decodeURIComponent(urlObj.pathname.replace(/^\/+/, ""))
+      const relativeUrl = decodeURIComponent(urlObj.pathname.replace(/^\/+/, ''))
 
       let baseDir: string
       if (isDev()) {
-        baseDir = path.join(main_dirname, "../../public")
+        baseDir = path.join(main_dirname, '../../public')
       } else {
         const appPath = app.getAppPath()
-        baseDir = path.join(appPath, "out/renderer")
+        baseDir = path.join(appPath, 'out/renderer')
       }
 
       const resolvedBaseDir = path.resolve(baseDir)
       const resolvedFilePath = path.resolve(resolvedBaseDir, relativeUrl)
 
-      if (
-        resolvedFilePath !== resolvedBaseDir &&
-        !resolvedFilePath.startsWith(resolvedBaseDir + path.sep)
-      ) {
-        return new Response("Access Denied", { status: 403 })
+      if (resolvedFilePath !== resolvedBaseDir && !resolvedFilePath.startsWith(resolvedBaseDir + path.sep)) {
+        return new Response('Access Denied', { status: 403 })
       }
 
       return net.fetch(pathToFileURL(resolvedFilePath).toString())
     } catch {
-      return new Response("Not Found", { status: 404 })
+      return new Response('Not Found', { status: 404 })
     }
   })
 
@@ -116,23 +113,23 @@ app.whenReady().then(async () => {
     }
 
     if (!backendReady) {
-      throw new Error("The local attendance service took too long to start.")
+      throw new Error('The local attendance service took too long to start.')
     }
     // Restore cached enforcement before the renderer can begin offline scanning.
     await syncManager.restoreCachedPolicy()
   } catch (e) {
-    console.error("[Main] Backend initialization failed:", e)
+    console.error('[Main] Backend initialization failed:', e)
 
     // Destroy splash to reveal the blocking system modal dialog.
     WindowManager.destroySplash()
 
-    const { dialog } = await import("electron")
+    const { dialog } = await import('electron')
     const { response } = await dialog.showMessageBox({
-      type: "error",
-      title: "Facenox startup error",
-      message: "Failed to start background services.",
-      detail: e instanceof Error ? e.message : "An unknown error occurred during backend startup.",
-      buttons: ["Retry", "Open data folder", "Quit"],
+      type: 'error',
+      title: 'Facenox startup error',
+      message: 'Failed to start background services.',
+      detail: e instanceof Error ? e.message : 'An unknown error occurred during backend startup.',
+      buttons: ['Retry', 'Open data folder', 'Quit']
     })
 
     if (response === 0) {
@@ -149,7 +146,7 @@ app.whenReady().then(async () => {
     return
   }
 
-  WindowManager.updateSplashProgress(WindowManager.progressFromStep(7), "Opening Facenox")
+  WindowManager.updateSplashProgress(WindowManager.progressFromStep(7), 'Opening Facenox')
   WindowManager.unlockSplashDataPhase()
   syncManager.start()
   autoExportManager.start()
@@ -159,21 +156,19 @@ app.whenReady().then(async () => {
   await mainWindowReady
 
   // Listen for OS resume events to notify renderer for drift corrections and restore backend readiness
-  powerMonitor.on("resume", async () => {
+  powerMonitor.on('resume', async () => {
     await backendService.checkReadiness().catch(() => {})
     syncManager.handleSystemResume()
     void autoExportManager.checkAndRunExport().catch(() => {})
     if (state.mainWindow && !state.mainWindow.isDestroyed()) {
-      state.mainWindow.webContents.send("system:resume")
+      state.mainWindow.webContents.send('system:resume')
     }
   })
 
   TrayManager.createTray()
 
   if (!isDev()) {
-    startBackgroundUpdateCheck(state.mainWindow, 60000, (version) =>
-      TrayManager.setUpdateAvailable(version),
-    )
+    startBackgroundUpdateCheck(state.mainWindow, 60000, (version) => TrayManager.setUpdateAvailable(version))
   }
 
   unsubscribeStartupProgress()
@@ -183,11 +178,11 @@ function cleanup() {
   if (state.isQuitting) return
   state.isQuitting = true
   TrayManager.destroyTray()
-  console.log("[Main] Stopping backend...")
+  console.log('[Main] Stopping backend...')
   backendService.killSync()
 }
 
-app.on("before-quit", (event) => {
+app.on('before-quit', (event) => {
   if (!state.isQuitting) {
     event.preventDefault()
     cleanup()
@@ -195,7 +190,7 @@ app.on("before-quit", (event) => {
   }
 })
 
-app.on("activate", () => {
+app.on('activate', () => {
   if (state.mainWindow === null) {
     void WindowManager.createWindow().then(() => WindowManager.showMainWindow())
   } else if (state.mainWindow && !state.mainWindow.isVisible()) {

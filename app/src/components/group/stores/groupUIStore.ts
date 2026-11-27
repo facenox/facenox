@@ -1,7 +1,7 @@
-import { create } from "zustand"
-import type { AttendanceMember } from "@/types/recognition"
-import type { GroupSection } from "@/components/group/types"
-import { persistentSettings } from "@/services/PersistentSettingsService"
+import { create } from 'zustand'
+import type { AttendanceMember } from '@/types/recognition'
+import type { GroupSection } from '@/components/group/types'
+import { persistentSettings } from '@/services/PersistentSettingsService'
 
 interface GroupUIState {
   // Navigation
@@ -12,7 +12,7 @@ interface GroupUIState {
 
   // Modal states
   showAddMemberModal: boolean
-  addMemberInitialMode: "single" | "bulk"
+  addMemberInitialMode: 'single' | 'bulk'
   showEditMemberModal: boolean
   showCreateGroupModal: boolean
   showEditGroupModal: boolean
@@ -20,8 +20,8 @@ interface GroupUIState {
   // Modal data
   editingMember: AttendanceMember | null
   preSelectedMemberId: string | null
-  lastEnrollmentSource: "upload" | "camera" | null
-  lastEnrollmentMode: "single" | "bulk" | "queue" | null
+  lastEnrollmentSource: 'upload' | 'camera' | null
+  lastEnrollmentMode: 'single' | 'bulk' | 'queue' | null
 
   // Actions - Navigation
   setActiveSection: (section: GroupSection) => void
@@ -31,7 +31,7 @@ interface GroupUIState {
   toggleSidebar: () => void
 
   // Actions - Modals
-  openAddMember: (initialMode?: "single" | "bulk") => void
+  openAddMember: (initialMode?: 'single' | 'bulk') => void
   closeAddMember: () => void
   openAddMemberWithNavigation: () => void // Navigate to members section and open modal
   openEditMember: (member: AttendanceMember) => void
@@ -42,27 +42,24 @@ interface GroupUIState {
   closeEditGroup: () => void
 
   // Audit 5.0 Deep Linking
-  jumpToEnrollment: (memberId: string, source?: "upload" | "camera") => void
-  setEnrollmentState: (
-    source: "upload" | "camera" | null,
-    mode: "single" | "bulk" | "queue" | null,
-  ) => void
+  jumpToEnrollment: (memberId: string, source?: 'upload' | 'camera') => void
+  setEnrollmentState: (source: 'upload' | 'camera' | null, mode: 'single' | 'bulk' | 'queue' | null) => void
   handleEnrollmentBack: () => void
   resetEnrollment: () => void
 }
 
 const initialState = {
-  activeSection: "overview" as GroupSection,
+  activeSection: 'overview' as GroupSection,
   isSidebarCollapsed: false, // Will be loaded from store
   showAddMemberModal: false,
-  addMemberInitialMode: "single" as "single" | "bulk",
+  addMemberInitialMode: 'single' as 'single' | 'bulk',
   showEditMemberModal: false,
   showCreateGroupModal: false,
   showEditGroupModal: false,
   editingMember: null as AttendanceMember | null,
   preSelectedMemberId: null as string | null,
-  lastEnrollmentSource: null as "upload" | "camera" | null,
-  lastEnrollmentMode: null as "single" | "bulk" | "queue" | null,
+  lastEnrollmentSource: null as 'upload' | 'camera' | null,
+  lastEnrollmentMode: null as 'single' | 'bulk' | 'queue' | null
 }
 
 const MODAL_EXIT_DURATION_MS = 260
@@ -93,11 +90,10 @@ export const useGroupUIStore = create<GroupUIState>((set, get) => ({
   },
 
   // Modals
-  openAddMember: (initialMode = "single") =>
-    set({ showAddMemberModal: true, addMemberInitialMode: initialMode }),
-  closeAddMember: () => set({ showAddMemberModal: false, addMemberInitialMode: "single" }),
+  openAddMember: (initialMode = 'single') => set({ showAddMemberModal: true, addMemberInitialMode: initialMode }),
+  closeAddMember: () => set({ showAddMemberModal: false, addMemberInitialMode: 'single' }),
   openAddMemberWithNavigation: () => {
-    set({ showAddMemberModal: true, addMemberInitialMode: "single" })
+    set({ showAddMemberModal: true, addMemberInitialMode: 'single' })
   },
 
   openEditMember: (member) => set({ editingMember: member, showEditMemberModal: true }),
@@ -120,23 +116,23 @@ export const useGroupUIStore = create<GroupUIState>((set, get) => ({
 
   reset: () => set(initialState),
 
-  jumpToEnrollment: (memberId: string, source: "upload" | "camera" = "camera") => {
+  jumpToEnrollment: (memberId: string, source: 'upload' | 'camera' = 'camera') => {
     set({
       preSelectedMemberId: memberId,
       lastEnrollmentSource: source,
-      lastEnrollmentMode: "single",
+      lastEnrollmentMode: 'single'
     })
   },
 
   setEnrollmentState: (source, mode) => {
     set({
       lastEnrollmentSource: source,
-      lastEnrollmentMode: mode,
+      lastEnrollmentMode: mode
     })
     persistentSettings
       .setUIState({
         lastEnrollmentSource: source,
-        lastEnrollmentMode: mode,
+        lastEnrollmentMode: mode
       })
       .catch(console.error)
   },
@@ -154,17 +150,17 @@ export const useGroupUIStore = create<GroupUIState>((set, get) => ({
   resetEnrollment: () => {
     get().setEnrollmentState(null, null)
     set({ preSelectedMemberId: null })
-  },
+  }
 }))
 
 // Load sidebar state from store on initialization
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   persistentSettings.getUIState().then((uiState) => {
     useGroupUIStore.setState({
       isSidebarCollapsed: uiState.groupSidebarCollapsed,
-      activeSection: (uiState.activeGroupSection as GroupSection) || "overview",
-      lastEnrollmentSource: uiState.lastEnrollmentSource as "upload" | "camera" | null,
-      lastEnrollmentMode: uiState.lastEnrollmentMode as "single" | "bulk" | "queue" | null,
+      activeSection: (uiState.activeGroupSection as GroupSection) || 'overview',
+      lastEnrollmentSource: uiState.lastEnrollmentSource as 'upload' | 'camera' | null,
+      lastEnrollmentMode: uiState.lastEnrollmentMode as 'single' | 'bulk' | 'queue' | null
     })
   })
 }

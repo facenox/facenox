@@ -1,7 +1,7 @@
 // Shared types for Main component
 
-import type { AttendanceGroup, AttendanceMember, AttendanceRecord } from "@/types/recognition"
-import type { ExtendedFaceRecognitionResponse } from "@/components/main/utils"
+import type { AttendanceGroup, AttendanceMember, AttendanceRecord } from '@/types/recognition'
+import type { ExtendedFaceRecognitionResponse } from '@/components/main/utils'
 
 export interface DetectionResult {
   faces: {
@@ -23,23 +23,23 @@ export interface DetectionResult {
       real_logit?: number
       spoof_logit?: number
       status:
-        | "real"
-        | "spoof"
-        | "candidate_real"
-        | "unknown"
-        | "error"
-        | "move_closer"
-        | "center_face"
-        | "glare"
-        | "too_dark"
-        | "look_at_camera"
+        | 'real'
+        | 'spoof'
+        | 'candidate_real'
+        | 'unknown'
+        | 'error'
+        | 'move_closer'
+        | 'center_face'
+        | 'glare'
+        | 'too_dark'
+        | 'look_at_camera'
       attack_type?: string
       message?: string
     }
     overlayGuidance?: {
       label: string
       subLabel?: string
-      tone: "warning" | "failure"
+      tone: 'warning' | 'failure'
       isLowLight?: boolean
     }
     recognition?: ExtendedFaceRecognitionResponse
@@ -60,16 +60,16 @@ export interface WebSocketFaceData {
     real_logit?: number
     spoof_logit?: number
     status?:
-      | "real"
-      | "spoof"
-      | "candidate_real"
-      | "unknown"
-      | "error"
-      | "move_closer"
-      | "center_face"
-      | "glare"
-      | "too_dark"
-      | "look_at_camera"
+      | 'real'
+      | 'spoof'
+      | 'candidate_real'
+      | 'unknown'
+      | 'error'
+      | 'move_closer'
+      | 'center_face'
+      | 'glare'
+      | 'too_dark'
+      | 'look_at_camera'
     attack_type?: string
     message?: string
   }
@@ -94,10 +94,10 @@ export interface WebSocketDetectionResponse {
 }
 
 export interface AttendanceEvent {
-  type: "attendance_event"
+  type: 'attendance_event'
   person_id: string
   group_id: string
-  event_type: "check_in" | "check_out"
+  event_type: 'check_in' | 'check_out'
   timestamp: string
   check_in_time?: string
   check_out_time?: string
@@ -150,16 +150,16 @@ export interface TrackedFace {
   occlusionCount: number
   angleConsistency: number
   livenessStatus?:
-    | "real"
-    | "spoof"
-    | "candidate_real"
-    | "unknown"
-    | "error"
-    | "move_closer"
-    | "center_face"
-    | "glare"
-    | "too_dark"
-    | "look_at_camera"
+    | 'real'
+    | 'spoof'
+    | 'candidate_real'
+    | 'unknown'
+    | 'error'
+    | 'move_closer'
+    | 'center_face'
+    | 'glare'
+    | 'too_dark'
+    | 'look_at_camera'
   unknownFramesCount?: number
 }
 

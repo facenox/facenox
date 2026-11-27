@@ -1,23 +1,16 @@
-import { Tooltip } from "@/components/shared"
-import { useState, useCallback, useEffect, useMemo, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import {
-  AlertCircle,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  FastForward,
-  Users,
-} from "lucide-react"
-import { attendanceManager, backendService } from "@/services"
-import { generateDisplayNames } from "@/utils"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
-import { useCamera } from "@/components/group/sections/enrollment/hooks/useCamera"
-import { dataUrlToBlob } from "@/utils/dataUrl"
-import { validateAndGetBestFace } from "@/utils/faceValidation"
-import { CameraFeed } from "@/components/group/sections/enrollment/components/CameraFeed"
+import { Tooltip } from '@/components/shared'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, FastForward, Users } from 'lucide-react'
+import { attendanceManager, backendService } from '@/services'
+import { generateDisplayNames } from '@/utils'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
+import { useCamera } from '@/components/group/sections/enrollment/hooks/useCamera'
+import { dataUrlToBlob } from '@/utils/dataUrl'
+import { validateAndGetBestFace } from '@/utils/faceValidation'
+import { CameraFeed } from '@/components/group/sections/enrollment/components/CameraFeed'
 
-type CaptureStatus = "pending" | "capturing" | "processing" | "completed" | "skipped" | "error"
+type CaptureStatus = 'pending' | 'capturing' | 'processing' | 'completed' | 'skipped' | 'error'
 
 interface QueuedMember {
   personId: string
@@ -37,13 +30,7 @@ interface CameraQueueProps {
   onClose?: () => void
 }
 
-export function CameraQueue({
-  group,
-  members,
-  preselectedIds,
-  onRefresh,
-  onClose,
-}: CameraQueueProps) {
+export function CameraQueue({ group, members, preselectedIds, onRefresh, onClose }: CameraQueueProps) {
   const [memberQueue, setMemberQueue] = useState<QueuedMember[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -71,7 +58,7 @@ export function CameraQueue({
     isVideoReady,
     cameraError,
     startCamera,
-    stopCamera,
+    stopCamera
   } = useCamera()
 
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -82,22 +69,20 @@ export function CameraQueue({
   const isQueueFinished = useMemo(() => {
     return (
       memberQueue.length > 0 &&
-      memberQueue.every(
-        (m) => m.status === "completed" || m.status === "skipped" || m.status === "error",
-      )
+      memberQueue.every((m) => m.status === 'completed' || m.status === 'skipped' || m.status === 'error')
     )
   }, [memberQueue])
 
   const findNextPendingIndex = useCallback((queue: QueuedMember[], startFrom: number): number => {
     // 1. Search after startFrom
     for (let i = startFrom + 1; i < queue.length; i++) {
-      if (queue[i].status === "pending") {
+      if (queue[i].status === 'pending') {
         return i
       }
     }
     // 2. Search from the beginning up to startFrom
     for (let i = 0; i < startFrom; i++) {
-      if (queue[i].status === "pending") {
+      if (queue[i].status === 'pending') {
         return i
       }
     }
@@ -122,7 +107,7 @@ export function CameraQueue({
           personId: member.person_id,
           name: member.displayName,
           role: member.role ?? undefined,
-          status: "pending" as CaptureStatus,
+          status: 'pending' as CaptureStatus
         }))
       setMemberQueue(initialQueue)
     }
@@ -201,7 +186,7 @@ export function CameraQueue({
       left: `${bboxLeft}px`,
       top: `${bboxTop}px`,
       width: `${bboxWidth}px`,
-      height: `${bboxHeight}px`,
+      height: `${bboxHeight}px`
     })
   }, [lastBbox])
 
@@ -234,7 +219,7 @@ export function CameraQueue({
     }
 
     if (!captureCanvasRef.current) {
-      captureCanvasRef.current = document.createElement("canvas")
+      captureCanvasRef.current = document.createElement('canvas')
     }
 
     const video = videoRef.current
@@ -248,16 +233,14 @@ export function CameraQueue({
 
     // Update status
     setMemberQueue((prev) =>
-      prev.map((m, idx) =>
-        idx === currentIndex ? { ...m, status: "capturing" as CaptureStatus } : m,
-      ),
+      prev.map((m, idx) => (idx === currentIndex ? { ...m, status: 'capturing' as CaptureStatus } : m))
     )
 
     canvas.width = width
     canvas.height = height
-    const ctx = canvas.getContext("2d")
+    const ctx = canvas.getContext('2d')
     if (!ctx) {
-      setError("Could not capture a photo. Try again.")
+      setError('Could not capture a photo. Try again.')
       return
     }
 
@@ -265,7 +248,7 @@ export function CameraQueue({
     ctx.scale(-1, 1)
     ctx.drawImage(video, -width, 0, width, height)
 
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.92)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
 
     setIsProcessing(true)
     setError(null)
@@ -274,7 +257,7 @@ export function CameraQueue({
       const blob = dataUrlToBlob(dataUrl)
 
       const detection = await backendService.detectFaces(blob, {
-        model_type: "face_detector",
+        model_type: 'face_detector'
       })
 
       const bestFace = validateAndGetBestFace(detection)
@@ -283,7 +266,7 @@ export function CameraQueue({
         bbox: bestFace.bbox,
         width,
         height,
-        capturedAt: Date.now(),
+        capturedAt: Date.now()
       })
 
       setMemberQueue((prev) =>
@@ -291,11 +274,11 @@ export function CameraQueue({
           idx === currentIndex ?
             {
               ...m,
-              status: "processing" as CaptureStatus,
-              previewUrl: dataUrl,
+              status: 'processing' as CaptureStatus,
+              previewUrl: dataUrl
             }
-          : m,
-        ),
+          : m
+        )
       )
 
       const result = await attendanceManager.enrollFaceForGroupPerson(
@@ -303,24 +286,22 @@ export function CameraQueue({
         currentMember.personId,
         blob,
         bestFace.bbox,
-        bestFace.landmarks_5,
+        bestFace.landmarks_5
       )
 
       if (!result.success) {
-        throw new Error(result.error || "Enrollment failed")
+        throw new Error(result.error || 'Enrollment failed')
       }
 
       const updatedQueue = memberQueue.map((m, idx) =>
         idx === currentIndex ?
           {
             ...m,
-            status: "completed" as CaptureStatus,
+            status: 'completed' as CaptureStatus,
             qualityWarning:
-              bestFace.confidence && bestFace.confidence < 0.8 ?
-                "Low confidence - consider retaking"
-              : undefined,
+              bestFace.confidence && bestFace.confidence < 0.8 ? 'Low confidence - consider retaking' : undefined
           }
-        : m,
+        : m
       )
       setMemberQueue(updatedQueue)
 
@@ -329,17 +310,17 @@ export function CameraQueue({
         setTimeout(() => setCurrentIndex(nextPending), 1000)
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Capture failed"
+      const message = err instanceof Error ? err.message : 'Capture failed'
       setMemberQueue((prev) =>
         prev.map((m, idx) =>
           idx === currentIndex ?
             {
               ...m,
-              status: "pending" as CaptureStatus,
-              error: message,
+              status: 'pending' as CaptureStatus,
+              error: message
             }
-          : m,
-        ),
+          : m
+        )
       )
       setError(message)
     } finally {
@@ -351,56 +332,54 @@ export function CameraQueue({
     const handleKeyPress = (e: KeyboardEvent) => {
       if (!currentMember || isQueueFinished) return
 
-      if (e.key === " " || e.key === "Enter") {
+      if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault()
         if (!isProcessing && isVideoReady) {
           void capturePhoto()
         }
-      } else if (e.key === "n" || e.key === "N" || e.key === "ArrowRight") {
+      } else if (e.key === 'n' || e.key === 'N' || e.key === 'ArrowRight') {
         e.preventDefault()
         // Next member
         if (currentIndex < memberQueue.length - 1) {
           setCurrentIndex((prev) => prev + 1)
           setError(null)
         }
-      } else if (e.key === "p" || e.key === "P" || e.key === "ArrowLeft") {
+      } else if (e.key === 'p' || e.key === 'P' || e.key === 'ArrowLeft') {
         e.preventDefault()
         // Previous member
         if (currentIndex > 0) {
           setCurrentIndex((prev) => prev - 1)
           setError(null)
         }
-      } else if (e.key === "r" || e.key === "R") {
+      } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault()
         // Retry current
         setMemberQueue((prev) =>
           prev.map((m, idx) =>
-            idx === currentIndex ?
-              { ...m, status: "pending" as CaptureStatus, error: undefined }
-            : m,
-          ),
+            idx === currentIndex ? { ...m, status: 'pending' as CaptureStatus, error: undefined } : m
+          )
         )
         setError(null)
-      } else if (e.key === "s" || e.key === "S") {
+      } else if (e.key === 's' || e.key === 'S') {
         e.preventDefault()
         // Skip current member
         const updatedQueue = memberQueue.map((m, idx) =>
-          idx === currentIndex ? { ...m, status: "skipped" as CaptureStatus } : m,
+          idx === currentIndex ? { ...m, status: 'skipped' as CaptureStatus } : m
         )
         setMemberQueue(updatedQueue)
         const nextPending = findNextPendingIndex(updatedQueue, currentIndex)
         if (nextPending !== -1) {
           setCurrentIndex(nextPending)
         }
-      } else if (e.key === "Escape") {
+      } else if (e.key === 'Escape') {
         e.preventDefault()
         e.stopImmediatePropagation()
         onClose?.()
       }
     }
 
-    window.addEventListener("keydown", handleKeyPress, true)
-    return () => window.removeEventListener("keydown", handleKeyPress, true)
+    window.addEventListener('keydown', handleKeyPress, true)
+    return () => window.removeEventListener('keydown', handleKeyPress, true)
   }, [
     currentMember,
     isProcessing,
@@ -411,7 +390,7 @@ export function CameraQueue({
     members,
     isQueueFinished,
     findNextPendingIndex,
-    onClose,
+    onClose
   ])
 
   // Automatically start camera in queue mode if queue is started and not already streaming
@@ -433,62 +412,62 @@ export function CameraQueue({
   useEffect(() => () => stopCamera(), [stopCamera])
 
   return (
-    <div className="flex h-full flex-col overflow-hidden text-white">
-      <div className="relative min-h-0 flex-1 overflow-hidden">
-        <AnimatePresence mode="wait">
+    <div className='flex h-full flex-col overflow-hidden text-white'>
+      <div className='relative min-h-0 flex-1 overflow-hidden'>
+        <AnimatePresence mode='wait'>
           {memberQueue.length === 0 ?
             <motion.div
-              key="no-members"
+              key='no-members'
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex h-full flex-col items-center justify-center p-6 text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5">
-                <Users className="size-8 text-white/20" />
+              className='flex h-full flex-col items-center justify-center p-6 text-center'>
+              <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5'>
+                <Users className='size-8 text-white/20' />
               </div>
-              <h3 className="mb-1 text-sm font-semibold text-white">No members selected</h3>
-              <p className="max-w-[200px] text-[11px] leading-relaxed text-white/45">
+              <h3 className='mb-1 text-sm font-semibold text-white'>No members selected</h3>
+              <p className='max-w-[200px] text-[11px] leading-relaxed text-white/45'>
                 Select group members from the list before starting the webcam enrollment.
               </p>
               <button
                 onClick={onClose}
-                className="mt-6 rounded-lg border border-white/10 bg-white/5 px-6 py-2 text-[11px] font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white">
+                className='mt-6 rounded-lg border border-white/10 bg-white/5 px-6 py-2 text-[11px] font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white'>
                 Back to list
               </button>
             </motion.div>
           : <motion.div
-              key="queue-active"
+              key='queue-active'
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-hidden p-6">
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className='absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-hidden p-6'>
               <div
                 ref={cameraContainerRef}
-                className="relative aspect-video min-h-0 w-full max-w-4xl shrink overflow-hidden rounded-xl">
+                className='relative aspect-video min-h-0 w-full max-w-4xl shrink overflow-hidden rounded-xl'>
                 {showCompletion ?
-                  <div className="animate-in fade-in absolute inset-0 z-30 flex flex-col items-center justify-center p-8 duration-300">
-                    <h3 className="mb-1 text-xl font-bold text-white">Queue completed</h3>
-                    <p className="mb-6 max-w-xs text-center text-[11px] text-white/55">
+                  <div className='animate-in fade-in absolute inset-0 z-30 flex flex-col items-center justify-center p-8 duration-300'>
+                    <h3 className='mb-1 text-xl font-bold text-white'>Queue completed</h3>
+                    <p className='mb-6 max-w-xs text-center text-[11px] text-white/55'>
                       All selected members have been processed.
                     </p>
 
                     {/* Summary counts - Calm design borderless typography */}
-                    <div className="mb-8 flex items-center gap-10">
-                      <div className="text-center">
-                        <div className="text-2xl font-black text-cyan-400">
-                          {memberQueue.filter((m) => m.status === "completed").length}
+                    <div className='mb-8 flex items-center gap-10'>
+                      <div className='text-center'>
+                        <div className='text-2xl font-black text-cyan-400'>
+                          {memberQueue.filter((m) => m.status === 'completed').length}
                         </div>
-                        <div className="mt-0.5 text-[9px] font-bold tracking-wider text-white/40 uppercase">
+                        <div className='mt-0.5 text-[9px] font-bold tracking-wider text-white/40 uppercase'>
                           Enrolled
                         </div>
                       </div>
-                      <div className="h-8 w-px bg-white/10" />
-                      <div className="text-center">
-                        <div className="text-2xl font-black text-white/60">
-                          {memberQueue.filter((m) => m.status === "skipped").length}
+                      <div className='h-8 w-px bg-white/10' />
+                      <div className='text-center'>
+                        <div className='text-2xl font-black text-white/60'>
+                          {memberQueue.filter((m) => m.status === 'skipped').length}
                         </div>
-                        <div className="mt-0.5 text-[9px] font-bold tracking-wider text-white/40 uppercase">
+                        <div className='mt-0.5 text-[9px] font-bold tracking-wider text-white/40 uppercase'>
                           Skipped
                         </div>
                       </div>
@@ -501,51 +480,49 @@ export function CameraQueue({
                       isVideoReady={isVideoReady}
                       onStart={startCamera}
                       onStop={stopCamera}
-                      source="live"
+                      source='live'
                       cameraDevices={cameraDevices}
                       selectedCamera={selectedCamera}
                       setSelectedCamera={setSelectedCamera}
                     />
 
                     {bboxStyle && (
-                      <div className="pointer-events-none absolute inset-0 z-10">
+                      <div className='pointer-events-none absolute inset-0 z-10'>
                         <div
-                          className="absolute border-2 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.45)]"
+                          className='absolute border-2 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.45)]'
                           style={bboxStyle}
                         />
                       </div>
                     )}
 
-                    <AnimatePresence mode="wait">
+                    <AnimatePresence mode='wait'>
                       {currentMember && (
                         <motion.div
-                          key={currentMember.personId || "current-member"}
+                          key={currentMember.personId || 'current-member'}
                           initial={{ opacity: 0, y: -8 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
-                          transition={{ duration: 0.22, ease: "easeOut" }}
-                          className="pointer-events-none absolute top-0 right-0 left-0 z-20 flex flex-col items-start bg-gradient-to-b from-black/80 via-black/40 to-transparent px-8 pt-6 pb-12">
-                          <span className="mb-0.5 text-[10px] font-bold tracking-[0.15em] text-cyan-400/80 uppercase">
+                          transition={{ duration: 0.22, ease: 'easeOut' }}
+                          className='pointer-events-none absolute top-0 right-0 left-0 z-20 flex flex-col items-start bg-gradient-to-b from-black/80 via-black/40 to-transparent px-8 pt-6 pb-12'>
+                          <span className='mb-0.5 text-[10px] font-bold tracking-[0.15em] text-cyan-400/80 uppercase'>
                             Queue ({currentIndex + 1} of {totalMembers})
                           </span>
-                          <h2 className="w-full max-w-[60%] truncate text-xl font-bold tracking-tight text-white sm:max-w-[70%] sm:text-2xl">
+                          <h2 className='w-full max-w-[60%] truncate text-xl font-bold tracking-tight text-white sm:max-w-[70%] sm:text-2xl'>
                             {currentMember.name}
                           </h2>
                           {currentMember.role && (
-                            <div className="text-[11px] font-medium text-white/55">
-                              {currentMember.role}
-                            </div>
+                            <div className='text-[11px] font-medium text-white/55'>{currentMember.role}</div>
                           )}
                         </motion.div>
                       )}
                     </AnimatePresence>
 
-                    <div className="absolute inset-y-0 left-2 z-10 flex items-center">
-                      <Tooltip content="Previous member">
-                        <span className="inline-flex">
+                    <div className='absolute inset-y-0 left-2 z-10 flex items-center'>
+                      <Tooltip content='Previous member'>
+                        <span className='inline-flex'>
                           <button
-                            type="button"
-                            aria-label="Previous member"
+                            type='button'
+                            aria-label='Previous member'
                             onClick={() => {
                               if (currentIndex > 0) {
                                 setCurrentIndex((prev) => prev - 1)
@@ -553,18 +530,18 @@ export function CameraQueue({
                               }
                             }}
                             disabled={currentIndex === 0}
-                            className="rounded-full border border-white/5 bg-white/5 p-2 text-white/65 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
-                            <ChevronLeft className="size-4" />
+                            className='rounded-full border border-white/5 bg-white/5 p-2 text-white/65 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30'>
+                            <ChevronLeft className='size-4' />
                           </button>
                         </span>
                       </Tooltip>
                     </div>
-                    <div className="absolute inset-y-0 right-2 z-10 flex items-center">
-                      <Tooltip content="Next member">
-                        <span className="inline-flex">
+                    <div className='absolute inset-y-0 right-2 z-10 flex items-center'>
+                      <Tooltip content='Next member'>
+                        <span className='inline-flex'>
                           <button
-                            type="button"
-                            aria-label="Next member"
+                            type='button'
+                            aria-label='Next member'
                             onClick={() => {
                               if (currentIndex < memberQueue.length - 1) {
                                 setCurrentIndex((prev) => prev + 1)
@@ -572,52 +549,46 @@ export function CameraQueue({
                               }
                             }}
                             disabled={currentIndex >= memberQueue.length - 1}
-                            className="rounded-full border border-white/5 bg-white/5 p-2 text-white/65 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30">
-                            <ChevronRight className="size-4" />
+                            className='rounded-full border border-white/5 bg-white/5 p-2 text-white/65 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30'>
+                            <ChevronRight className='size-4' />
                           </button>
                         </span>
                       </Tooltip>
                     </div>
 
                     <AnimatePresence>
-                      {currentMember &&
-                        currentMember.status !== "pending" &&
-                        currentMember.status !== "capturing" && (
+                      {currentMember && currentMember.status !== 'pending' && currentMember.status !== 'capturing' && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                          className='absolute inset-0 z-20 flex items-center justify-center bg-black/40'>
                           <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.9 }}
-                              transition={{ duration: 0.2, ease: "easeOut" }}
-                              className="flex flex-col items-center text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.85)] select-none">
-                              <div
-                                className={`mb-3 flex items-center justify-center ${
-                                  currentMember.status === "completed" ?
-                                    "text-cyan-400"
-                                  : "text-white/75"
-                                }`}>
-                                {currentMember.status === "completed" && (
-                                  <CheckCircle2 className="size-12 animate-pulse" />
-                                )}
-                                {currentMember.status === "skipped" && (
-                                  <FastForward className="size-12" />
-                                )}
-                              </div>
-                              <div className="text-xs font-black tracking-[0.2em] text-white uppercase">
-                                {currentMember.status === "completed" && "Enrolled"}
-                                {currentMember.status === "skipped" && "Skipped"}
-                              </div>
-                              <div className="mt-3 text-[9px] font-semibold tracking-[0.2em] text-white/40 uppercase">
-                                Retake: Press R
-                              </div>
-                            </motion.div>
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.2, ease: 'easeOut' }}
+                            className='flex flex-col items-center text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.85)] select-none'>
+                            <div
+                              className={`mb-3 flex items-center justify-center ${
+                                currentMember.status === 'completed' ? 'text-cyan-400' : 'text-white/75'
+                              }`}>
+                              {currentMember.status === 'completed' && (
+                                <CheckCircle2 className='size-12 animate-pulse' />
+                              )}
+                              {currentMember.status === 'skipped' && <FastForward className='size-12' />}
+                            </div>
+                            <div className='text-xs font-black tracking-[0.2em] text-white uppercase'>
+                              {currentMember.status === 'completed' && 'Enrolled'}
+                              {currentMember.status === 'skipped' && 'Skipped'}
+                            </div>
+                            <div className='mt-3 text-[9px] font-semibold tracking-[0.2em] text-white/40 uppercase'>
+                              Retake: Press R
+                            </div>
                           </motion.div>
-                        )}
+                        </motion.div>
+                      )}
                     </AnimatePresence>
 
                     {/* Sleek, non-blocking glassmorphic warning toast at the bottom center of viewport */}
@@ -627,9 +598,9 @@ export function CameraQueue({
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          transition={{ duration: 0.22, ease: "easeOut" }}
-                          className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[85%] -translate-x-1/2 items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/85 px-4 py-2.5 text-center text-[11px] font-medium text-red-200">
-                          <AlertCircle className="size-4 shrink-0 text-red-400" />
+                          transition={{ duration: 0.22, ease: 'easeOut' }}
+                          className='pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[85%] -translate-x-1/2 items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/85 px-4 py-2.5 text-center text-[11px] font-medium text-red-200'>
+                          <AlertCircle className='size-4 shrink-0 text-red-400' />
                           <span>{error}</span>
                         </motion.div>
                       )}
@@ -640,14 +611,14 @@ export function CameraQueue({
 
               {/* Bottom Control Bar */}
               {!isQueueFinished && (
-                <div className="flex w-full max-w-4xl items-center justify-between px-4">
+                <div className='flex w-full max-w-4xl items-center justify-between px-4'>
                   {/* Left: Skip Button */}
-                  <div className="w-40">
+                  <div className='w-40'>
                     <button
                       onClick={() => {
                         if (currentMember) {
                           const updatedQueue = memberQueue.map((m, idx) =>
-                            idx === currentIndex ? { ...m, status: "skipped" as CaptureStatus } : m,
+                            idx === currentIndex ? { ...m, status: 'skipped' as CaptureStatus } : m
                           )
                           setMemberQueue(updatedQueue)
                           const nextPending = findNextPendingIndex(updatedQueue, currentIndex)
@@ -657,27 +628,25 @@ export function CameraQueue({
                         }
                       }}
                       disabled={!currentMember || isProcessing}
-                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-bold tracking-wider text-white/65 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white disabled:opacity-40">
+                      className='rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-bold tracking-wider text-white/65 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white disabled:opacity-40'>
                       Skip
                     </button>
                   </div>
 
                   {/* Center: Circular Trigger */}
-                  <div className="flex flex-1 justify-center">
-                    <Tooltip content="Capture photo">
-                      <span className="inline-flex shrink-0">
+                  <div className='flex flex-1 justify-center'>
+                    <Tooltip content='Capture photo'>
+                      <span className='inline-flex shrink-0'>
                         <button
                           onClick={() => void capturePhoto()}
-                          disabled={
-                            !isVideoReady || isProcessing || !currentMember || !!cameraError
-                          }
-                          className="group flex h-16 w-16 items-center justify-center rounded-full bg-white/10 p-1 transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
-                          aria-label="Capture photo">
+                          disabled={!isVideoReady || isProcessing || !currentMember || !!cameraError}
+                          className='group flex h-16 w-16 items-center justify-center rounded-full bg-white/10 p-1 transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40'
+                          aria-label='Capture photo'>
                           {isProcessing ?
-                            <div className="flex h-full w-full items-center justify-center rounded-full bg-white/10">
-                              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                            <div className='flex h-full w-full items-center justify-center rounded-full bg-white/10'>
+                              <div className='h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white' />
                             </div>
-                          : <div className="h-full w-full rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-transform group-active:scale-90" />
+                          : <div className='h-full w-full rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-transform group-active:scale-90' />
                           }
                         </button>
                       </span>
@@ -685,43 +654,37 @@ export function CameraQueue({
                   </div>
 
                   {/* Right: Controls & Shortcuts Cluster */}
-                  <div className="flex w-40 items-center justify-end gap-3">
-                    <div className="flex flex-col items-end gap-1">
-                      {currentMember &&
-                        currentMember.status !== "pending" &&
-                        currentMember.status !== "capturing" && (
-                          <button
-                            onClick={() => {
-                              setMemberQueue((prev) =>
-                                prev.map((m, idx) =>
-                                  idx === currentIndex ?
-                                    { ...m, status: "pending" as CaptureStatus }
-                                  : m,
-                                ),
+                  <div className='flex w-40 items-center justify-end gap-3'>
+                    <div className='flex flex-col items-end gap-1'>
+                      {currentMember && currentMember.status !== 'pending' && currentMember.status !== 'capturing' && (
+                        <button
+                          onClick={() => {
+                            setMemberQueue((prev) =>
+                              prev.map((m, idx) =>
+                                idx === currentIndex ? { ...m, status: 'pending' as CaptureStatus } : m
                               )
-                              setError(null)
-                            }}
-                            className="text-[9px] font-semibold tracking-[0.2em] text-white/55 uppercase transition-colors hover:text-white">
-                            Retake
-                          </button>
-                        )}
+                            )
+                            setError(null)
+                          }}
+                          className='text-[9px] font-semibold tracking-[0.2em] text-white/55 uppercase transition-colors hover:text-white'>
+                          Retake
+                        </button>
+                      )}
                       {/* Keyboard shortcuts - Compact guide on the right side */}
-                      <div className="flex shrink-0 flex-col items-end gap-1 text-[9px] leading-tight font-medium text-white/45">
-                        <div className="flex items-center gap-1">
-                          <kbd className="rounded bg-white/10 px-1 py-0.5 text-white/65">Space</kbd>
+                      <div className='flex shrink-0 flex-col items-end gap-1 text-[9px] leading-tight font-medium text-white/45'>
+                        <div className='flex items-center gap-1'>
+                          <kbd className='rounded bg-white/10 px-1 py-0.5 text-white/65'>Space</kbd>
                           <span>Capture</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <kbd className="rounded bg-white/10 px-1 py-0.5 text-white/65">←</kbd>
-                          <kbd className="rounded bg-white/10 px-1 py-0.5 text-white/65">→</kbd>
+                        <div className='flex items-center gap-1'>
+                          <kbd className='rounded bg-white/10 px-1 py-0.5 text-white/65'>←</kbd>
+                          <kbd className='rounded bg-white/10 px-1 py-0.5 text-white/65'>→</kbd>
                           <span>Navigate</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <kbd className="rounded bg-white/10 px-1 py-0.5 text-white/65">S</kbd>
+                        <div className='flex items-center gap-1'>
+                          <kbd className='rounded bg-white/10 px-1 py-0.5 text-white/65'>S</kbd>
                           <span>Skip</span>
-                          <kbd className="ml-1 rounded bg-white/10 px-1 py-0.5 text-white/65">
-                            R
-                          </kbd>
+                          <kbd className='ml-1 rounded bg-white/10 px-1 py-0.5 text-white/65'>R</kbd>
                           <span>Reset</span>
                         </div>
                       </div>

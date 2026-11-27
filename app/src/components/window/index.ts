@@ -1,1 +1,1 @@
-export { default as WindowBar } from "@/components/window/WindowBar"
+export { default as WindowBar } from '@/components/window/WindowBar'

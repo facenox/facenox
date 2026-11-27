@@ -1,12 +1,11 @@
-import { useSyncExternalStore } from "react"
+import { useSyncExternalStore } from 'react'
 
-export type RemoteSyncConfig = Awaited<ReturnType<SyncAPI["getConfig"]>>
-export type CloudConfigStatus = "loading" | "ready" | "error"
+export type RemoteSyncConfig = Awaited<ReturnType<SyncAPI['getConfig']>>
+export type CloudConfigStatus = 'loading' | 'ready' | 'error'
 
 export function hasSavedCloudPairing(config: RemoteSyncConfig | null) {
   return Boolean(
-    config?.connected ||
-    (config?.wasEverPaired && config.organizationId && config.siteId && config.deviceId),
+    config?.connected || (config?.wasEverPaired && config.organizationId && config.siteId && config.deviceId)
   )
 }
 
@@ -16,7 +15,7 @@ interface CloudSyncSnapshot {
   error: string | null
 }
 
-const initialSnapshot: CloudSyncSnapshot = { config: null, status: "loading", error: null }
+const initialSnapshot: CloudSyncSnapshot = { config: null, status: 'loading', error: null }
 let snapshot = initialSnapshot
 let bridge: SyncAPI | undefined
 let unsubscribe: (() => void) | undefined
@@ -42,8 +41,8 @@ async function loadCounts(api: SyncAPI, request: number) {
       config: {
         ...snapshot.config,
         unsyncedRecordsCount: config.unsyncedRecordsCount,
-        unsyncedSessionsCount: config.unsyncedSessionsCount,
-      },
+        unsyncedSessionsCount: config.unsyncedSessionsCount
+      }
     })
   } catch {
     if (bridge !== api || revision !== request || !snapshot.config) return
@@ -52,8 +51,8 @@ async function loadCounts(api: SyncAPI, request: number) {
       config: {
         ...snapshot.config,
         unsyncedRecordsCount: undefined,
-        unsyncedSessionsCount: undefined,
-      },
+        unsyncedSessionsCount: undefined
+      }
     })
   }
 }
@@ -65,7 +64,7 @@ export async function refreshCloudSyncConfig() {
     unsubscribe?.()
     unsubscribe = undefined
     bridge = undefined
-    emit({ ...snapshot, status: "error", error: "Cloud sync is unavailable in this window." })
+    emit({ ...snapshot, status: 'error', error: 'Cloud sync is unavailable in this window.' })
     return
   }
   if (bridge !== api) {
@@ -76,12 +75,12 @@ export async function refreshCloudSyncConfig() {
       void refreshCloudSyncConfig()
     })
   }
-  if (snapshot.status === "error") emit({ ...snapshot, status: "loading", error: null })
+  if (snapshot.status === 'error') emit({ ...snapshot, status: 'loading', error: null })
   try {
     const config = await api.getConfig({ includeCounts: false })
     if (bridge !== api || revision !== request) return
     if (config.credentialError) {
-      emit({ config, status: "error", error: config.credentialError })
+      emit({ config, status: 'error', error: config.credentialError })
       return
     }
     const previous = snapshot.config
@@ -95,14 +94,12 @@ export async function refreshCloudSyncConfig() {
       config: {
         ...config,
         unsyncedRecordsCount:
-          config.unsyncedRecordsCount ??
-          (sameSnapshot ? previous?.unsyncedRecordsCount : undefined),
+          config.unsyncedRecordsCount ?? (sameSnapshot ? previous?.unsyncedRecordsCount : undefined),
         unsyncedSessionsCount:
-          config.unsyncedSessionsCount ??
-          (sameSnapshot ? previous?.unsyncedSessionsCount : undefined),
+          config.unsyncedSessionsCount ?? (sameSnapshot ? previous?.unsyncedSessionsCount : undefined)
       },
-      status: "ready",
-      error: null,
+      status: 'ready',
+      error: null
     })
     if (config.connected) void loadCounts(api, request)
     return config
@@ -110,8 +107,8 @@ export async function refreshCloudSyncConfig() {
     if (bridge !== api || revision !== request) return
     emit({
       ...snapshot,
-      status: "error",
-      error: error instanceof Error ? error.message : "Could not load Cloud sync settings.",
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Could not load Cloud sync settings.'
     })
   }
 }

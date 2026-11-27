@@ -1,28 +1,20 @@
-import { escapeCsvCell } from "../../shared/csv.js"
-import { app, Notification, powerSaveBlocker } from "electron"
-import path from "node:path"
-import fs from "node:fs/promises"
-import { createHash } from "node:crypto"
-import { backendService } from "../backendService.js"
-import { persistentStore } from "../persistentStore.js"
-import { withLocalBackendHeaders } from "../localBackendScope.js"
-import {
-  DEPARTURE_LABELS,
-  getSessionDepartureStatus,
-  type DepartureSession,
-} from "../../shared/departureStatus.js"
-import {
-  formatAttendanceTime,
-  formatAttendanceTimeInput,
-  getAttendanceDateString,
-} from "../../utils/attendanceTime.js"
-import { formatDuration } from "../../utils/dateUtils.js"
+import { escapeCsvCell } from '../../shared/csv.js'
+import { app, Notification, powerSaveBlocker } from 'electron'
+import path from 'node:path'
+import fs from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { backendService } from '../backendService.js'
+import { persistentStore } from '../persistentStore.js'
+import { withLocalBackendHeaders } from '../localBackendScope.js'
+import { DEPARTURE_LABELS, getSessionDepartureStatus, type DepartureSession } from '../../shared/departureStatus.js'
+import { formatAttendanceTime, formatAttendanceTimeInput, getAttendanceDateString } from '../../utils/attendanceTime.js'
+import { formatDuration } from '../../utils/dateUtils.js'
 
 export interface AutoExportConfig {
   enabled: boolean
   time: string
   directory: string
-  format: "individual_csvs" | "combined_csv"
+  format: 'individual_csvs' | 'combined_csv'
   lastExportedDate: string | null
 }
 
@@ -65,11 +57,11 @@ export interface ProcessedGroupData {
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
-  return withLocalBackendHeaders(token ? { "X-Facenox-Token": token, ...extra } : { ...extra })
+  return withLocalBackendHeaders(token ? { 'X-Facenox-Token': token, ...extra } : { ...extra })
 }
 
 function padZero(n: number, len = 2): string {
-  return String(n).padStart(len, "0")
+  return String(n).padStart(len, '0')
 }
 
 function formatLocalDate(d: Date): string {
@@ -77,14 +69,14 @@ function formatLocalDate(d: Date): string {
 }
 
 function individualExportFilename(group: GroupRecord, date: string): string {
-  const name = [...group.name.normalize("NFC").replace(/[\\/:*?"<>|]/g, "_")]
+  const name = [...group.name.normalize('NFC').replace(/[\\/:*?"<>|]/g, '_')]
     .filter((character) => character.charCodeAt(0) >= 32)
     .slice(0, 38)
-    .join("")
-    .replace(/[. ]+$/, "")
+    .join('')
+    .replace(/[. ]+$/, '')
     .trim()
-  const groupKey = createHash("sha256").update(group.id).digest("hex").slice(0, 20)
-  return `${name || "Group"} - Attendance (${date}) [${groupKey}].csv`
+  const groupKey = createHash('sha256').update(group.id).digest('hex').slice(0, 20)
+  return `${name || 'Group'} - Attendance (${date}) [${groupKey}].csv`
 }
 
 export class AutoExportManager {
@@ -92,25 +84,25 @@ export class AutoExportManager {
   private isExporting = false
 
   public getConfig(): AutoExportConfig {
-    const raw = persistentStore.get("autoExport") as AutoExportConfig | undefined
+    const raw = persistentStore.get('autoExport') as AutoExportConfig | undefined
     return {
       enabled: raw?.enabled ?? false,
-      time: raw?.time ?? "17:00",
+      time: raw?.time ?? '17:00',
       directory: raw?.directory || this.getDefaultExportDirectory(),
-      format: raw?.format === "individual_csvs" ? "individual_csvs" : "combined_csv",
-      lastExportedDate: raw?.lastExportedDate ?? null,
+      format: raw?.format === 'individual_csvs' ? 'individual_csvs' : 'combined_csv',
+      lastExportedDate: raw?.lastExportedDate ?? null
     }
   }
 
   public updateConfig(updates: Partial<AutoExportConfig>): AutoExportConfig {
     const current = this.getConfig()
     const updated = { ...current, ...updates }
-    persistentStore.set("autoExport", updated)
+    persistentStore.set('autoExport', updated)
     return updated
   }
 
   public getDefaultExportDirectory(): string {
-    return path.join(app.getPath("documents"), "Facenox_Reports")
+    return path.join(app.getPath('documents'), 'Facenox_Reports')
   }
 
   public start(): void {
@@ -150,10 +142,10 @@ export class AutoExportManager {
     let blockerId: number | null = null
     try {
       const backendUrl = backendService.getUrl()
-      if (!backendUrl) throw new Error("The local service is unavailable for automatic export.")
+      if (!backendUrl) throw new Error('The local service is unavailable for automatic export.')
       const settingsRes = await fetch(`${backendUrl}/attendance/settings`, {
         headers: authHeaders(),
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(15000)
       })
       if (!settingsRes.ok) {
         throw new Error(`Could not load attendance settings (${settingsRes.status}).`)
@@ -163,7 +155,7 @@ export class AutoExportManager {
       const now = new Date()
       const dateToExport = targetDate || getAttendanceDateString(now, attendanceTimeZone)
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateToExport)) {
-        throw new Error("Choose a valid attendance date.")
+        throw new Error('Choose a valid attendance date.')
       }
       const config = this.getConfig()
       if (
@@ -175,21 +167,17 @@ export class AutoExportManager {
         return false
       }
       try {
-        blockerId = powerSaveBlocker.start("prevent-app-suspension")
+        blockerId = powerSaveBlocker.start('prevent-app-suspension')
       } catch (blockerErr) {
-        console.warn("[AutoExportManager] Could not start power save blocker:", blockerErr)
+        console.warn('[AutoExportManager] Could not start power save blocker:', blockerErr)
       }
       const targetDir = config.directory?.trim() || this.getDefaultExportDirectory()
 
       await fs.mkdir(targetDir, { recursive: true })
 
-      const processedGroups = await this.fetchAndProcessAttendance(
-        backendUrl,
-        dateToExport,
-        attendanceTimeZone,
-      )
+      const processedGroups = await this.fetchAndProcessAttendance(backendUrl, dateToExport, attendanceTimeZone)
       if (processedGroups.length === 0) {
-        console.warn("[AutoExportManager] No groups or records found to export.")
+        console.warn('[AutoExportManager] No groups or records found to export.')
         this.updateConfig({ lastExportedDate: dateToExport })
         return true
       }
@@ -200,15 +188,15 @@ export class AutoExportManager {
 
       if (Notification.isSupported()) {
         new Notification({
-          title: "Facenox daily report exported",
+          title: 'Facenox daily report exported',
           body: `Attendance for ${dateToExport} saved to ${path.basename(targetDir)}.`,
-          silent: false,
+          silent: false
         }).show()
       }
 
       return true
     } catch (err) {
-      console.error("[AutoExportManager] Error during auto export:", err)
+      console.error('[AutoExportManager] Error during auto export:', err)
       return false
     } finally {
       if (blockerId !== null && powerSaveBlocker.isStarted(blockerId)) {
@@ -221,12 +209,12 @@ export class AutoExportManager {
   private async fetchAndProcessAttendance(
     backendUrl: string,
     dateStr: string,
-    attendanceTimeZone?: string | null,
+    attendanceTimeZone?: string | null
   ): Promise<ProcessedGroupData[]> {
     // 1. Fetch active groups
     const groupsRes = await fetch(`${backendUrl}/attendance/groups`, {
       headers: authHeaders(),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(15000)
     })
     if (!groupsRes.ok) throw new Error(`Could not load groups (${groupsRes.status}).`)
 
@@ -240,7 +228,7 @@ export class AutoExportManager {
         // Fetch members for this group
         const membersRes = await fetch(`${backendUrl}/attendance/groups/${group.id}/persons`, {
           headers: authHeaders(),
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(15000)
         })
         if (!membersRes.ok) throw new Error(`Could not load members (${membersRes.status}).`)
         const members = ((await membersRes.json()) as MemberRecord[]) || []
@@ -250,8 +238,8 @@ export class AutoExportManager {
           `${backendUrl}/attendance/sessions?group_id=${group.id}&start_date=${dateStr}&end_date=${dateStr}`,
           {
             headers: authHeaders(),
-            signal: AbortSignal.timeout(15000),
-          },
+            signal: AbortSignal.timeout(15000)
+          }
         )
         if (!sessionsRes.ok) throw new Error(`Could not load sessions (${sessionsRes.status}).`)
         const sessions = ((await sessionsRes.json()) as SessionRecord[]) || []
@@ -264,16 +252,16 @@ export class AutoExportManager {
         }
 
         const header = [
-          "Name",
-          "Date",
-          "Visit",
-          "Status",
-          "Time in",
-          "Time out",
-          "Departure",
-          "Total hours",
-          "Late (mins)",
-          "Notes",
+          'Name',
+          'Date',
+          'Visit',
+          'Status',
+          'Time in',
+          'Time out',
+          'Departure',
+          'Total hours',
+          'Late (mins)',
+          'Notes'
         ]
 
         const rows: string[][] = []
@@ -282,61 +270,55 @@ export class AutoExportManager {
           const visits = sessionMap.get(member.person_id) ?? []
           visits.sort((a, b) => (a.visit_number ?? 1) - (b.visit_number ?? 1))
           for (const session of visits.length ? visits : [undefined]) {
-            let status = "Absent"
+            let status = 'Absent'
             if (session) {
               if (session.is_late) {
-                status = "Late"
+                status = 'Late'
               } else if (session.status) {
                 status = session.status.charAt(0).toUpperCase() + session.status.slice(1)
               } else {
-                status = "Present"
+                status = 'Present'
               }
             }
 
-            let timeIn = ""
+            let timeIn = ''
             if (session?.check_in_time) {
               const d = new Date(session.check_in_time)
               if (!isNaN(d.getTime())) {
-                timeIn = formatAttendanceTime(
-                  d,
-                  session.check_in_time_timezone || attendanceTimeZone,
-                )
+                timeIn = formatAttendanceTime(d, session.check_in_time_timezone || attendanceTimeZone)
               }
             }
 
-            let timeOut = ""
+            let timeOut = ''
             if (session?.check_out_time) {
               const d = new Date(session.check_out_time)
               if (!isNaN(d.getTime())) {
-                timeOut = formatAttendanceTime(
-                  d,
-                  session.check_out_time_timezone || attendanceTimeZone,
-                )
+                timeOut = formatAttendanceTime(d, session.check_out_time_timezone || attendanceTimeZone)
               }
             }
 
-            let totalHoursStr = ""
-            if (typeof session?.total_hours === "number") {
+            let totalHoursStr = ''
+            if (typeof session?.total_hours === 'number') {
               totalHoursStr = formatDuration(Math.round(session.total_hours * 60))
             }
 
-            const lateMinutesStr = session?.late_minutes ? String(session.late_minutes) : ""
+            const lateMinutesStr = session?.late_minutes ? String(session.late_minutes) : ''
             const departureStatus = getSessionDepartureStatus(session, attendanceTimeZone)
-            const notesStr = session?.notes || ""
+            const notesStr = session?.notes || ''
 
             rows.push([
-              member.name || "Member",
+              member.name || 'Member',
               formatLocalDate(new Date(`${dateStr}T00:00:00`)),
-              group.settings?.attendance_mode === "visits" || visits.length > 1 ?
-                String(session?.visit_number ?? (session ? 1 : ""))
-              : "",
+              group.settings?.attendance_mode === 'visits' || visits.length > 1 ?
+                String(session?.visit_number ?? (session ? 1 : ''))
+              : '',
               status,
               timeIn,
               timeOut,
-              departureStatus ? DEPARTURE_LABELS[departureStatus] : "",
+              departureStatus ? DEPARTURE_LABELS[departureStatus] : '',
               totalHoursStr,
               lateMinutesStr,
-              notesStr,
+              notesStr
             ])
           }
         }
@@ -353,32 +335,30 @@ export class AutoExportManager {
   private async writeExportFiles(
     processedGroups: ProcessedGroupData[],
     dateStr: string,
-    format: AutoExportConfig["format"],
-    targetDir: string,
+    format: AutoExportConfig['format'],
+    targetDir: string
   ): Promise<void> {
-    if (format === "individual_csvs") {
+    if (format === 'individual_csvs') {
       for (const { group, header, rows } of processedGroups) {
-        const csvContent = [header, ...rows]
-          .map((row) => row.map(escapeCsvCell).join(","))
-          .join("\n")
+        const csvContent = [header, ...rows].map((row) => row.map(escapeCsvCell).join(',')).join('\n')
         const filename = individualExportFilename(group, dateStr)
         const filePath = path.join(targetDir, filename)
-        await fs.writeFile(filePath, csvContent, "utf8")
+        await fs.writeFile(filePath, csvContent, 'utf8')
       }
     } else {
       // Combined flat CSV
       const combinedHeader = [
-        "Group",
-        "Name",
-        "Date",
-        "Visit",
-        "Status",
-        "Time in",
-        "Time out",
-        "Departure",
-        "Total hours",
-        "Late (mins)",
-        "Notes",
+        'Group',
+        'Name',
+        'Date',
+        'Visit',
+        'Status',
+        'Time in',
+        'Time out',
+        'Departure',
+        'Total hours',
+        'Late (mins)',
+        'Notes'
       ]
       const combinedRows: string[][] = []
       for (const { group, rows } of processedGroups) {
@@ -386,12 +366,10 @@ export class AutoExportManager {
           combinedRows.push([group.name, ...row])
         }
       }
-      const csvContent = [combinedHeader, ...combinedRows]
-        .map((row) => row.map(escapeCsvCell).join(","))
-        .join("\n")
+      const csvContent = [combinedHeader, ...combinedRows].map((row) => row.map(escapeCsvCell).join(',')).join('\n')
       const filename = `All Groups Combined Attendance (${dateStr}).csv`
       const filePath = path.join(targetDir, filename)
-      await fs.writeFile(filePath, csvContent, "utf8")
+      await fs.writeFile(filePath, csvContent, 'utf8')
     }
   }
 }

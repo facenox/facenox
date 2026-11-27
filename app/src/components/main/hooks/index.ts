@@ -1,11 +1,11 @@
-export { useStreamState } from "@/components/main/hooks/useStreamState"
+export { useStreamState } from '@/components/main/hooks/useStreamState'
 
-export { useVideoStream } from "@/components/main/hooks/useVideoStream"
-export { useOverlayRendering } from "@/components/main/hooks/useOverlayRendering"
-export { useFaceDetection } from "@/components/main/hooks/useFaceDetection"
-export { useFaceRecognition } from "@/components/main/hooks/useFaceRecognition"
-export { useFaceTracking } from "@/components/main/hooks/useFaceTracking"
-export { useAttendanceGroups } from "@/components/main/hooks/useAttendanceGroups"
-export { useAttendanceBootstrap } from "@/components/main/hooks/useAttendanceBootstrap"
-export { useBackendService } from "@/components/main/hooks/useBackendService"
-export { useCameraControl } from "@/components/main/hooks/useCameraControl"
+export { useVideoStream } from '@/components/main/hooks/useVideoStream'
+export { useOverlayRendering } from '@/components/main/hooks/useOverlayRendering'
+export { useFaceDetection } from '@/components/main/hooks/useFaceDetection'
+export { useFaceRecognition } from '@/components/main/hooks/useFaceRecognition'
+export { useFaceTracking } from '@/components/main/hooks/useFaceTracking'
+export { useAttendanceGroups } from '@/components/main/hooks/useAttendanceGroups'
+export { useAttendanceBootstrap } from '@/components/main/hooks/useAttendanceBootstrap'
+export { useBackendService } from '@/components/main/hooks/useBackendService'
+export { useCameraControl } from '@/components/main/hooks/useCameraControl'

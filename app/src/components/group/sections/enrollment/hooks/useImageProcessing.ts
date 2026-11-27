@@ -1,5 +1,5 @@
-import { useCallback } from "react"
-import { makeId, readFileAsDataUrl, getImageDimensions } from "@/utils/imageHelpers"
+import { useCallback } from 'react'
+import { makeId, readFileAsDataUrl, getImageDimensions } from '@/utils/imageHelpers'
 
 export function useImageProcessing() {
   const processImageFile = useCallback(async (file: File) => {
@@ -12,6 +12,6 @@ export function useImageProcessing() {
     makeId,
     readFileAsDataUrl,
     getImageDimensions,
-    processImageFile,
+    processImageFile
   }
 }

@@ -1,9 +1,9 @@
-import { act, renderHook } from "@testing-library/react"
-import { afterEach, beforeEach, expect, it, vi } from "vitest"
-import { useCameraControl } from "./useCameraControl"
-import { useStreamState } from "./useStreamState"
-import type { WebSocketService } from "@/services/WebSocketService"
-import type { DetectionResult } from "@/components/main/types"
+import { act, renderHook } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { useCameraControl } from './useCameraControl'
+import { useStreamState } from './useStreamState'
+import type { WebSocketService } from '@/services/WebSocketService'
+import type { DetectionResult } from '@/components/main/types'
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -14,36 +14,34 @@ function deferred<T>() {
 }
 
 function makeStream() {
-  const track = { onended: null, stop: vi.fn(), readyState: "live" }
+  const track = { onended: null, stop: vi.fn(), readyState: 'live' }
   const stream = { active: true, getTracks: () => [track], getVideoTracks: () => [track] }
   track.stop.mockImplementation(() => {
-    track.readyState = "ended"
+    track.readyState = 'ended'
     stream.active = false
   })
   return { track, stream: stream as unknown as MediaStream }
 }
 
 function setup(width = 640) {
-  const video = document.createElement("video")
-  Object.defineProperty(video, "videoWidth", { configurable: true, value: width })
-  Object.defineProperty(video, "videoHeight", { configurable: true, value: width ? 480 : 0 })
+  const video = document.createElement('video')
+  Object.defineProperty(video, 'videoWidth', { configurable: true, value: width })
+  Object.defineProperty(video, 'videoHeight', { configurable: true, value: width ? 480 : 0 })
   video.play = vi.fn().mockResolvedValue(undefined)
   video.pause = vi.fn()
-  const devices = [
-    { deviceId: "cam-1", kind: "videoinput", label: "Camera", groupId: "g" },
-  ] as MediaDeviceInfo[]
+  const devices = [{ deviceId: 'cam-1', kind: 'videoinput', label: 'Camera', groupId: 'g' }] as MediaDeviceInfo[]
   const getUserMedia = vi.fn()
-  Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia } })
+  Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } })
   const options = {
     videoRef: { current: video },
     streamRef: { current: null as MediaStream | null },
     animationFrameRef: { current: undefined as number | undefined },
     webSocketServiceRef: {
       current: {
-        getWebSocketStatus: () => "connected",
+        getWebSocketStatus: () => 'connected',
         isWebSocketReady: () => true,
-        refreshActiveStream: vi.fn(),
-      } as unknown as WebSocketService,
+        refreshActiveStream: vi.fn()
+      } as unknown as WebSocketService
     },
     isStreamingRef: { current: false },
     isScanningRef: { current: false },
@@ -67,15 +65,15 @@ function setup(width = 640) {
     setCameraActive: vi.fn(),
     setSelectedCamera: vi.fn(),
     setError: vi.fn(),
-    selectedCamera: "cam-1" as string | null,
+    selectedCamera: 'cam-1' as string | null,
     cameraDevices: devices,
     initializeWebSocket: vi.fn(async () => {}),
-    getCameraDevices: vi.fn(async () => devices),
+    getCameraDevices: vi.fn(async () => devices)
   }
   return { options, getUserMedia, video }
 }
 
-function renderCamera(options: ReturnType<typeof setup>["options"]) {
+function renderCamera(options: ReturnType<typeof setup>['options']) {
   const isProcessingRef = { current: false }
   return renderHook(() => {
     useStreamState({ ...options, isProcessingRef })
@@ -85,14 +83,14 @@ function renderCamera(options: ReturnType<typeof setup>["options"]) {
 
 beforeEach(() => {
   vi.useFakeTimers()
-  vi.setSystemTime(new Date("2026-11-01T00:00:00Z"))
-  vi.spyOn(console, "error").mockImplementation(() => {})
+  vi.setSystemTime(new Date('2026-11-01T00:00:00Z'))
+  vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 afterEach(() => {
   vi.useRealTimers()
 })
 
-it("cancels startup before device enumeration completes", async () => {
+it('cancels startup before device enumeration completes', async () => {
   const { options, getUserMedia } = setup()
   const devices = deferred<MediaDeviceInfo[]>()
   options.getCameraDevices = vi.fn(() => devices.promise)
@@ -111,7 +109,7 @@ it("cancels startup before device enumeration completes", async () => {
   expect(options.isScanningRef.current).toBe(false)
 })
 
-it("does not let a cancelled acquisition overwrite a newer startup", async () => {
+it('does not let a cancelled acquisition overwrite a newer startup', async () => {
   const { options, getUserMedia, video } = setup()
   const oldAcquisition = deferred<MediaStream>()
   const older = makeStream()
@@ -138,7 +136,7 @@ it("does not let a cancelled acquisition overwrite a newer startup", async () =>
   expect(options.isScanningRef.current).toBe(true)
 })
 
-it("releases a late stream after unmount", async () => {
+it('releases a late stream after unmount', async () => {
   const { options, getUserMedia } = setup()
   const acquisition = deferred<MediaStream>()
   const { stream, track } = makeStream()
@@ -158,11 +156,9 @@ it("releases a late stream after unmount", async () => {
   expect(options.isScanningRef.current).toBe(false)
 })
 
-it("keeps an explicit camera selection when its constraints fail", async () => {
+it('keeps an explicit camera selection when its constraints fail', async () => {
   const { options, getUserMedia } = setup()
-  getUserMedia.mockRejectedValueOnce(
-    Object.assign(new Error("unsupported"), { name: "OverconstrainedError" }),
-  )
+  getUserMedia.mockRejectedValueOnce(Object.assign(new Error('unsupported'), { name: 'OverconstrainedError' }))
   const { result } = renderCamera(options)
   await act(async () => {
     await result.current.startCamera()
@@ -170,11 +166,11 @@ it("keeps an explicit camera selection when its constraints fail", async () => {
   expect(getUserMedia).toHaveBeenCalledTimes(1)
   expect(options.isScanningRef.current).toBe(false)
   expect(options.setError).toHaveBeenLastCalledWith(
-    "The selected camera could not be started. Select another camera or reconnect the device.",
+    'The selected camera could not be started. Select another camera or reconnect the device.'
   )
 })
 
-it("normal camera startup sends the first frame", async () => {
+it('normal camera startup sends the first frame', async () => {
   const { options, getUserMedia } = setup()
   const { stream } = makeStream()
   getUserMedia.mockResolvedValue(stream)
@@ -187,7 +183,7 @@ it("normal camera startup sends the first frame", async () => {
   act(() => result.current.stopCamera(true))
 })
 
-it("stops a late camera stream when acquisition was cancelled", async () => {
+it('stops a late camera stream when acquisition was cancelled', async () => {
   const { options, getUserMedia, video } = setup()
   const media = deferred<MediaStream>()
   const { stream, track } = makeStream()
@@ -213,7 +209,7 @@ it("stops a late camera stream when acquisition was cancelled", async () => {
   act(() => result.current.stopCamera(true))
 })
 
-it("releases the camera stream when video readiness times out", async () => {
+it('releases the camera stream when video readiness times out', async () => {
   const { options, getUserMedia, video } = setup(0)
   const { stream, track } = makeStream()
   getUserMedia.mockResolvedValue(stream)
@@ -227,9 +223,7 @@ it("releases the camera stream when video readiness times out", async () => {
     await vi.advanceTimersByTimeAsync(10_100)
     await pending
   })
-  expect(options.setError).toHaveBeenLastCalledWith(
-    "Camera did not deliver video within 10 seconds.",
-  )
+  expect(options.setError).toHaveBeenLastCalledWith('Camera did not deliver video within 10 seconds.')
   expect(options.isStreamingRef.current).toBe(false)
   expect(options.setCameraActive).toHaveBeenLastCalledWith(false)
   expect(options.streamRef.current).toBeNull()
@@ -239,14 +233,12 @@ it("releases the camera stream when video readiness times out", async () => {
   act(() => result.current.stopCamera(true))
 })
 
-it("starts detection after successful fallback camera acquisition", async () => {
+it('starts detection after successful fallback camera acquisition', async () => {
   const { options, getUserMedia } = setup()
   options.selectedCamera = null
   const { stream } = makeStream()
   getUserMedia
-    .mockRejectedValueOnce(
-      Object.assign(new Error("unsupported device"), { name: "OverconstrainedError" }),
-    )
+    .mockRejectedValueOnce(Object.assign(new Error('unsupported device'), { name: 'OverconstrainedError' }))
     .mockResolvedValueOnce(stream)
   const { result } = renderCamera(options)
   await act(async () => {
@@ -259,16 +251,14 @@ it("starts detection after successful fallback camera acquisition", async () => 
   act(() => result.current.stopCamera(true))
 })
 
-it("applies the readiness deadline to fallback startup even when play never settles", async () => {
+it('applies the readiness deadline to fallback startup even when play never settles', async () => {
   const { options, getUserMedia, video } = setup(0)
   options.selectedCamera = null
   const play = deferred<void>()
   video.play = vi.fn().mockReturnValue(play.promise)
   const { stream, track } = makeStream()
   getUserMedia
-    .mockRejectedValueOnce(
-      Object.assign(new Error("unsupported device"), { name: "OverconstrainedError" }),
-    )
+    .mockRejectedValueOnce(Object.assign(new Error('unsupported device'), { name: 'OverconstrainedError' }))
     .mockResolvedValueOnce(stream)
   const { result } = renderCamera(options)
   let settled = false
@@ -286,8 +276,6 @@ it("applies the readiness deadline to fallback startup even when play never sett
   await pending
   expect(track.stop).toHaveBeenCalledTimes(1)
   expect(video.srcObject).toBeNull()
-  expect(options.setError).toHaveBeenLastCalledWith(
-    "Camera did not deliver video within 10 seconds.",
-  )
+  expect(options.setError).toHaveBeenLastCalledWith('Camera did not deliver video within 10 seconds.')
   act(() => result.current.stopCamera(true))
 })

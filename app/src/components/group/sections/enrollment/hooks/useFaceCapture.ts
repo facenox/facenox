@@ -1,18 +1,18 @@
-import { useState, useCallback, useEffect } from "react"
-import { attendanceManager, backendService } from "@/services"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
-import type { DialogAPI } from "@/components/shared"
-import type { CapturedFrame } from "@/components/group/sections/enrollment/types"
-import { makeId } from "@/utils/imageHelpers"
-import { dataUrlToBlob } from "@/utils/dataUrl"
-import { isTechnicalErrorMessage } from "@/utils/errorText"
-import { validateAndGetBestFace } from "@/utils/faceValidation"
+import { useState, useCallback, useEffect } from 'react'
+import { attendanceManager, backendService } from '@/services'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
+import type { DialogAPI } from '@/components/shared'
+import type { CapturedFrame } from '@/components/group/sections/enrollment/types'
+import { makeId } from '@/utils/imageHelpers'
+import { dataUrlToBlob } from '@/utils/dataUrl'
+import { isTechnicalErrorMessage } from '@/utils/errorText'
+import { validateAndGetBestFace } from '@/utils/faceValidation'
 
 export function useFaceCapture(
   group: AttendanceGroup | null,
   members: AttendanceMember[],
   onRefresh?: () => Promise<void> | void,
-  dialog?: Pick<DialogAPI, "confirm">,
+  dialog?: Pick<DialogAPI, 'confirm'>
 ) {
   const [frames, setFrames] = useState<CapturedFrame[]>([])
   const [globalError, setGlobalError] = useState<string | null>(null)
@@ -32,12 +32,9 @@ export function useFaceCapture(
     setFrames([])
   }, [])
 
-  const updateFrame = useCallback(
-    (frameId: string, updater: (frame: CapturedFrame) => CapturedFrame) => {
-      setFrames((prev) => prev.map((frame) => (frame.id === frameId ? updater(frame) : frame)))
-    },
-    [],
-  )
+  const updateFrame = useCallback((frameId: string, updater: (frame: CapturedFrame) => CapturedFrame) => {
+    setFrames((prev) => prev.map((frame) => (frame.id === frameId ? updater(frame) : frame)))
+  }, [])
 
   const captureProcessedFrame = useCallback(
     async (angle: string, dataUrl: string, width: number, height: number) => {
@@ -56,53 +53,48 @@ export function useFaceCapture(
           dataUrl,
           width,
           height,
-          status: "processing",
-        },
+          status: 'processing'
+        }
       ])
 
       try {
         const blob = dataUrlToBlob(dataUrl)
 
         const detection = await backendService.detectFaces(blob, {
-          model_type: "face_detector",
-          enableLiveness: false, // Enrollment should not enforce liveness
+          model_type: 'face_detector',
+          enableLiveness: false // Enrollment should not enforce liveness
         })
 
         const bestFace = validateAndGetBestFace(detection)
 
         updateFrame(id, (frame) => ({
           ...frame,
-          status: "ready",
+          status: 'ready',
           confidence: bestFace.confidence,
           bbox: bestFace.bbox,
           landmarks_5: bestFace.landmarks_5,
-          error: undefined,
+          error: undefined
         }))
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Could not check the photo. Try again."
+        const message = error instanceof Error ? error.message : 'Could not check the photo. Try again.'
         setFrames((prev) => prev.filter((frame) => frame.id !== id))
         setGlobalError(message)
       }
     },
-    [updateFrame],
+    [updateFrame]
   )
 
   const handleEnroll = useCallback(
-    async (
-      selectedMemberId: string,
-      loadMemberStatus: () => Promise<void>,
-      memberStatus: Map<string, boolean>,
-    ) => {
+    async (selectedMemberId: string, loadMemberStatus: () => Promise<void>, memberStatus: Map<string, boolean>) => {
       if (!group) {
-        setGlobalError("No group selected.")
+        setGlobalError('No group selected.')
         return
       }
 
-      const frame = frames.find((f) => f.angle === "Front")
+      const frame = frames.find((f) => f.angle === 'Front')
 
-      if (frame?.status !== "ready" || !frame.bbox) {
-        setGlobalError("Capture a clear, front-facing photo.")
+      if (frame?.status !== 'ready' || !frame.bbox) {
+        setGlobalError('Capture a clear, front-facing photo.')
         return
       }
 
@@ -114,9 +106,7 @@ export function useFaceCapture(
         const blob = dataUrlToBlob(frame.dataUrl)
 
         if (frame.landmarks_5?.length !== 5) {
-          throw new Error(
-            "Facial features could not be detected. Capture a clear, front-facing photo.",
-          )
+          throw new Error('Facial features could not be detected. Capture a clear, front-facing photo.')
         }
 
         const result = await attendanceManager.enrollFaceForGroupPerson(
@@ -124,25 +114,23 @@ export function useFaceCapture(
           selectedMemberId,
           blob,
           frame.bbox,
-          frame.landmarks_5,
+          frame.landmarks_5
         )
 
         if (!result.success) {
-          throw new Error(result.error || "Enrollment failed.")
+          throw new Error(result.error || 'Enrollment failed.')
         }
 
         updateFrame(frame.id, (current) => ({
           ...current,
-          status: "enrolled",
+          status: 'enrolled'
         }))
 
         const isAlreadyEnrolled = memberStatus.get(selectedMemberId) ?? false
         const member = members.find((m) => m.person_id === selectedMemberId)
-        const memberName = member?.name || "Member"
+        const memberName = member?.name || 'Member'
 
-        setSuccessMessage(
-          isAlreadyEnrolled ? `${memberName} re-enrolled.` : `${memberName} enrolled.`,
-        )
+        setSuccessMessage(isAlreadyEnrolled ? `${memberName} re-enrolled.` : `${memberName} enrolled.`)
 
         await loadMemberStatus()
         if (onRefresh) await onRefresh()
@@ -156,57 +144,51 @@ export function useFaceCapture(
           // Sync trigger is best-effort
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Enrollment failed. Try again."
+        const message = error instanceof Error ? error.message : 'Enrollment failed. Try again.'
         setGlobalError(message)
       } finally {
         setIsEnrolling(false)
       }
     },
-    [group, frames, members, updateFrame, onRefresh],
+    [group, frames, members, updateFrame, onRefresh]
   )
 
   const handleRemoveFaceData = useCallback(
-    async (
-      member: AttendanceMember & { displayName?: string },
-      loadMemberStatus: () => Promise<void>,
-    ) => {
+    async (member: AttendanceMember & { displayName?: string }, loadMemberStatus: () => Promise<void>) => {
       if (!group) return
 
       const displayName = member.displayName || member.name
 
       if (dialog) {
         const ok = await dialog.confirm({
-          title: "Remove face enrollment",
+          title: 'Remove face enrollment',
           message: `Remove face enrollment for ${displayName}? They will need to re-enroll to be recognized.`,
-          confirmText: "Remove",
-          cancelText: "Cancel",
-          confirmVariant: "danger",
+          confirmText: 'Remove',
+          cancelText: 'Cancel',
+          confirmVariant: 'danger'
         })
         if (!ok) return
       } else {
         const confirmation = window.confirm(
-          `Remove face enrollment for ${displayName}? They will need to re-enroll to be recognized.`,
+          `Remove face enrollment for ${displayName}? They will need to re-enroll to be recognized.`
         )
         if (!confirmation) return
       }
 
       try {
-        const result = await attendanceManager.removeFaceDataForGroupPerson(
-          group.id,
-          member.person_id,
-        )
+        const result = await attendanceManager.removeFaceDataForGroupPerson(group.id, member.person_id)
         if (!result.success) {
-          throw new Error(result.error || "Could not remove face enrollment.")
+          throw new Error(result.error || 'Could not remove face enrollment.')
         }
         await loadMemberStatus()
         if (onRefresh) await onRefresh()
         setSuccessMessage(`Face enrollment removed for ${displayName}.`)
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to remove face data."
+        const message = error instanceof Error ? error.message : 'Failed to remove face data.'
         setGlobalError(message)
       }
     },
-    [group, onRefresh, dialog],
+    [group, onRefresh, dialog]
   )
 
   return {
@@ -219,6 +201,6 @@ export function useFaceCapture(
     resetFrames,
     captureProcessedFrame,
     handleEnroll,
-    handleRemoveFaceData,
+    handleRemoveFaceData
   }
 }

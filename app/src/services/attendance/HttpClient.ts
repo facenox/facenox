@@ -1,5 +1,5 @@
-import { fetchWithRetry } from "@/utils/http"
-import { withLocalBackendHeaders } from "../localBackendScope"
+import { fetchWithRetry } from '@/utils/http'
+import { withLocalBackendHeaders } from '../localBackendScope'
 
 export class HttpClient {
   private baseUrl: string
@@ -19,11 +19,11 @@ export class HttpClient {
     if (this.token) return this.token
     try {
       const t = await window.electronAPI?.backend?.getToken?.()
-      this.token = typeof t === "string" && t.length > 0 ? t : null
-      return this.token ?? ""
+      this.token = typeof t === 'string' && t.length > 0 ? t : null
+      return this.token ?? ''
     } catch {
       this.token = null
-      return ""
+      return ''
     }
   }
 
@@ -36,34 +36,26 @@ export class HttpClient {
     return
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-    retryWrite = false,
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}, retryWrite = false): Promise<T> {
     await this.ensureBackendReady()
 
     const url = `${this.baseUrl}${endpoint}`
-    const method = (options.method || "GET").toUpperCase()
+    const method = (options.method || 'GET').toUpperCase()
     const headers: Record<string, string> = {
-      ...(options.headers as Record<string, string>),
+      ...(options.headers as Record<string, string>)
     }
 
-    if ((method === "POST" || method === "PUT" || method === "PATCH") && !headers["Content-Type"]) {
-      headers["Content-Type"] = "application/json"
+    if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json'
     }
 
     const token = await this.getApiToken()
     if (token) {
-      headers["X-Facenox-Token"] = token
+      headers['X-Facenox-Token'] = token
     }
     const scopedHeaders = await withLocalBackendHeaders(headers)
 
-    const response = await fetchWithRetry(
-      url,
-      { ...options, headers: scopedHeaders },
-      { retryWrite },
-    )
+    const response = await fetchWithRetry(url, { ...options, headers: scopedHeaders }, { retryWrite })
 
     if (response.status === 401) {
       this.token = null
@@ -73,13 +65,11 @@ export class HttpClient {
       const errorData = await response.json().catch(() => ({}))
       const detail = (errorData as { detail?: unknown }).detail
       const normalizedDetail =
-        typeof detail === "string" ? detail
+        typeof detail === 'string' ? detail
         : detail ? JSON.stringify(detail)
         : undefined
       throw new Error(
-        normalizedDetail ||
-          (errorData as { error?: string }).error ||
-          `HTTP ${response.status}: ${response.statusText}`,
+        normalizedDetail || (errorData as { error?: string }).error || `HTTP ${response.status}: ${response.statusText}`
       )
     }
 
@@ -91,31 +81,27 @@ export class HttpClient {
     return this.request<T>(url)
   }
 
-  async post<T>(
-    endpoint: string,
-    data?: unknown,
-    { retryWrite = false }: { retryWrite?: boolean } = {},
-  ): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown, { retryWrite = false }: { retryWrite?: boolean } = {}): Promise<T> {
     return this.request<T>(
       endpoint,
       {
-        method: "POST",
-        body: data ? JSON.stringify(data) : undefined,
+        method: 'POST',
+        body: data ? JSON.stringify(data) : undefined
       },
-      retryWrite,
+      retryWrite
     )
   }
 
   async put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
-      method: "PUT",
-      body: data ? JSON.stringify(data) : undefined,
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined
     })
   }
 
   async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, {
-      method: "DELETE",
+      method: 'DELETE'
     })
   }
 
@@ -138,7 +124,7 @@ export class HttpClient {
               name: key,
               filename: value.name,
               path: electronFile.path,
-              mimeType: value.type,
+              mimeType: value.type
             })
           } else {
             const buffer = await value.arrayBuffer()
@@ -146,25 +132,25 @@ export class HttpClient {
               name: key,
               filename: value.name,
               buffer,
-              mimeType: value.type,
+              mimeType: value.type
             })
           }
-        } else if (typeof value !== "string") {
+        } else if (typeof value !== 'string') {
           const blob = value as unknown as Blob & { path?: string }
           if (blob.path) {
             files.push({
               name: key,
-              filename: "blob",
+              filename: 'blob',
               path: blob.path,
-              mimeType: blob.type,
+              mimeType: blob.type
             })
           } else {
             const buffer = await blob.arrayBuffer()
             files.push({
               name: key,
-              filename: "blob",
+              filename: 'blob',
               buffer,
-              mimeType: blob.type,
+              mimeType: blob.type
             })
           }
         } else {
@@ -178,14 +164,14 @@ export class HttpClient {
     const url = `${this.baseUrl}${endpoint}`
     const token = await this.getApiToken()
     const headers: Record<string, string> = {}
-    if (token) headers["X-Facenox-Token"] = token
+    if (token) headers['X-Facenox-Token'] = token
     const scopedHeaders = await withLocalBackendHeaders(headers)
 
     // Note: Don't set Content-Type for FormData, browser sets it with boundary
     const response = await fetchWithRetry(url, {
-      method: "POST",
+      method: 'POST',
       body: formData,
-      headers: scopedHeaders,
+      headers: scopedHeaders
     })
 
     if (response.status === 401) {
@@ -197,7 +183,7 @@ export class HttpClient {
       throw new Error(
         (errorData as { detail?: string }).detail ||
           (errorData as { error?: string }).error ||
-          `HTTP ${response.status}: ${response.statusText}`,
+          `HTTP ${response.status}: ${response.statusText}`
       )
     }
 
@@ -209,7 +195,7 @@ export class HttpClient {
     const url = `${this.baseUrl}${endpoint}`
     const token = await this.getApiToken()
     const headers: Record<string, string> = {}
-    if (token) headers["X-Facenox-Token"] = token
+    if (token) headers['X-Facenox-Token'] = token
     const scopedHeaders = await withLocalBackendHeaders(headers)
 
     const response = await fetchWithRetry(url, { headers: scopedHeaders })

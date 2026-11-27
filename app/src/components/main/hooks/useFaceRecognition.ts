@@ -1,14 +1,10 @@
-import { useCallback, useEffect, useRef } from "react"
-import { startTransition } from "react"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
-import type { DetectionResult } from "@/components/main/types"
-import type { ExtendedFaceRecognitionResponse } from "@/components/main/utils"
-import {
-  trimTrackingHistory,
-  areRecognitionMapsEqual,
-  getMemberFromCache,
-} from "@/components/main/utils"
-import { useDetectionStore } from "@/components/main/stores"
+import { useCallback, useEffect, useRef } from 'react'
+import { startTransition } from 'react'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
+import type { DetectionResult } from '@/components/main/types'
+import type { ExtendedFaceRecognitionResponse } from '@/components/main/utils'
+import { trimTrackingHistory, areRecognitionMapsEqual, getMemberFromCache } from '@/components/main/utils'
+import { useDetectionStore } from '@/components/main/stores'
 
 interface UseFaceRecognitionOptions {
   currentGroupRef: React.RefObject<AttendanceGroup | null>
@@ -19,7 +15,7 @@ interface UseFaceRecognitionOptions {
         timestamp: number
         bbox: { x: number; y: number; width: number; height: number }
         confidence: number
-      }[],
+      }[]
     ) => number
   >
 }
@@ -34,16 +30,10 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
     }
   }, [])
 
-  const { currentRecognitionResults, setCurrentRecognitionResults, setTrackedFaces } =
-    useDetectionStore()
+  const { currentRecognitionResults, setCurrentRecognitionResults, setTrackedFaces } = useDetectionStore()
 
   const upsertTrackedFace = useCallback(
-    (
-      trackIdStr: string,
-      face: DetectionResult["faces"][number],
-      personId?: string,
-      isLocked: boolean = false,
-    ) => {
+    (trackIdStr: string, face: DetectionResult['faces'][number], personId?: string, isLocked: boolean = false) => {
       const currentTime = Date.now()
       startTransition(() => {
         setTrackedFaces((prev) => {
@@ -56,7 +46,7 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
             existingTrack.trackingHistory.push({
               timestamp: currentTime,
               bbox: face.bbox,
-              confidence: face.confidence,
+              confidence: face.confidence
             })
             existingTrack.trackingHistory = trimTrackingHistory(existingTrack.trackingHistory)
             existingTrack.occlusionCount = 0
@@ -77,15 +67,15 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
                 {
                   timestamp: currentTime,
                   bbox: face.bbox,
-                  confidence: face.confidence,
-                },
+                  confidence: face.confidence
+                }
               ],
               isLocked,
               personId,
               occlusionCount: 0,
               angleConsistency: 1.0,
               livenessStatus: face.liveness?.status,
-              unknownFramesCount: 0,
+              unknownFramesCount: 0
             })
           }
 
@@ -93,7 +83,7 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
         })
       })
     },
-    [calculateAngleConsistencyRef, setTrackedFaces],
+    [calculateAngleConsistencyRef, setTrackedFaces]
   )
 
   const performFaceRecognition = useCallback(
@@ -131,24 +121,16 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
         }
 
         if (response.success && response.person_id) {
-          const memberResult = await getMemberFromCache(
-            response.person_id,
-            currentGroupValue,
-            memberCacheRef,
-          )
+          const memberResult = await getMemberFromCache(response.person_id, currentGroupValue, memberCacheRef)
           if (!isCurrentRequest()) return
           const memberName =
-            response.name ||
-            response.memberName ||
-            memberResult?.memberName ||
-            response.person_id ||
-            "Member"
+            response.name || response.memberName || memberResult?.memberName || response.person_id || 'Member'
 
           upsertTrackedFace(`track_${trackId}`, face, response.person_id ?? undefined, true)
           nextRecognitionResults.set(trackId, {
             ...response,
             name: memberName,
-            memberName,
+            memberName
           })
           continue
         }
@@ -165,12 +147,12 @@ export function useFaceRecognition(options: UseFaceRecognitionOptions) {
         return nextRecognitionResults
       })
     },
-    [currentGroupRef, memberCacheRef, setCurrentRecognitionResults, upsertTrackedFace],
+    [currentGroupRef, memberCacheRef, setCurrentRecognitionResults, upsertTrackedFace]
   )
 
   return {
     currentRecognitionResults,
     setCurrentRecognitionResults,
-    performFaceRecognition,
+    performFaceRecognition
   }
 }

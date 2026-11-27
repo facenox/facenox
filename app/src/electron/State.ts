@@ -1,4 +1,4 @@
-import { BrowserWindow, Tray } from "electron"
+import { BrowserWindow, Tray } from 'electron'
 
 type SplashProgressUpdate = {
   progress: number
@@ -13,7 +13,7 @@ export const state = {
   startupTotalSteps: 9,
   splashProgress: {
     progress: 0,
-    detail: "Starting",
+    detail: 'Starting'
   } as SplashProgressUpdate,
   pendingSplashProgress: [] as SplashProgressUpdate[],
   isSplashReady: false,
@@ -26,5 +26,5 @@ export const state = {
   pendingRevealAfterSplashRender: false,
   splashRevealTimeout: null as NodeJS.Timeout | null,
   splashRevealSafetyTimeout: null as NodeJS.Timeout | null,
-  rendererReadyTimeout: null as NodeJS.Timeout | null,
+  rendererReadyTimeout: null as NodeJS.Timeout | null
 }

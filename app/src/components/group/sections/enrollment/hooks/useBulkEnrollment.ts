@@ -1,16 +1,16 @@
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo } from 'react'
 
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
 import type {
   DetectedFace,
   BulkEnrollmentResult,
-  BulkEnrollResponseItem,
-} from "@/components/group/sections/enrollment/types"
-import { attendanceManager } from "@/services/AttendanceManager"
-import { makeId, readFileAsDataUrl } from "@/utils/imageHelpers"
-import { parsePhotoFilename } from "@/utils/filenameParser"
-import { useGroupStore } from "@/components/group/stores"
-import { useAttendanceStore } from "@/components/main/stores"
+  BulkEnrollResponseItem
+} from '@/components/group/sections/enrollment/types'
+import { attendanceManager } from '@/services/AttendanceManager'
+import { makeId, readFileAsDataUrl } from '@/utils/imageHelpers'
+import { parsePhotoFilename } from '@/utils/filenameParser'
+import { useGroupStore } from '@/components/group/stores'
+import { useAttendanceStore } from '@/components/main/stores'
 
 export interface PendingDuplicateFiles {
   duplicates: File[]
@@ -20,7 +20,7 @@ export interface PendingDuplicateFiles {
 export function useBulkEnrollment(
   group: AttendanceGroup,
   members: AttendanceMember[],
-  onRefresh?: () => Promise<void> | void,
+  onRefresh?: () => Promise<void> | void
 ) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [detectedFaces, setDetectedFaces] = useState<DetectedFace[]>([])
@@ -39,15 +39,13 @@ export function useBulkEnrollment(
   const createFacePreview = useCallback(
     async (
       imageDataUrl: string,
-      bbox:
-        { x: number; y: number; width: number; height: number } | [number, number, number, number],
+      bbox: { x: number; y: number; width: number; height: number } | [number, number, number, number]
     ): Promise<string> => {
       return new Promise((resolve) => {
         const img = new Image()
         img.onload = () => {
-          const canvas = document.createElement("canvas")
-          const [x, y, w, h] =
-            Array.isArray(bbox) ? bbox : [bbox.x, bbox.y, bbox.width, bbox.height]
+          const canvas = document.createElement('canvas')
+          const [x, y, w, h] = Array.isArray(bbox) ? bbox : [bbox.x, bbox.y, bbox.width, bbox.height]
 
           const padding = 20
           const desiredX = x - padding
@@ -68,10 +66,10 @@ export function useBulkEnrollment(
           canvas.width = desiredW
           canvas.height = desiredH
 
-          const ctx = canvas.getContext("2d")
+          const ctx = canvas.getContext('2d')
           if (ctx && cropW > 0 && cropH > 0) {
             ctx.drawImage(img, cropX, cropY, cropW, cropH, offsetX, offsetY, cropW, cropH)
-            resolve(canvas.toDataURL("image/jpeg", 0.9))
+            resolve(canvas.toDataURL('image/jpeg', 0.9))
           } else {
             resolve(imageDataUrl)
           }
@@ -79,14 +77,14 @@ export function useBulkEnrollment(
         img.src = imageDataUrl
       })
     },
-    [],
+    []
   )
 
   const handleDetectFaces = useCallback(
     async (filesToProcess?: File[], startIndex = 0) => {
       const files = filesToProcess || uploadedFiles
       if (files.length === 0) {
-        if (!filesToProcess) setError("Upload image files to begin face detection.")
+        if (!filesToProcess) setError('Upload image files to begin face detection.')
         return
       }
 
@@ -102,7 +100,7 @@ export function useBulkEnrollment(
             continue
           }
 
-          const imageIdx = parseInt(imageResult.image_id.replace("image_", ""))
+          const imageIdx = parseInt(imageResult.image_id.replace('image_', ''))
           const file = files[imageIdx]
           if (!file) {
             console.error(`No file found for image index ${imageIdx}`)
@@ -135,37 +133,31 @@ export function useBulkEnrollment(
               parsedRole,
               isAutoMatched: Boolean(matchedMember),
               isNewMember: !matchedMember,
-              customMemberName: matchedMember ? matchedMember.name : parsedName,
+              customMemberName: matchedMember ? matchedMember.name : parsedName
             })
           }
         }
 
-        setDetectedFaces((prev) =>
-          filesToProcess ? [...prev, ...allDetectedFaces] : allDetectedFaces,
-        )
+        setDetectedFaces((prev) => (filesToProcess ? [...prev, ...allDetectedFaces] : allDetectedFaces))
 
         if (allDetectedFaces.length === 0) {
-          setError(
-            filesToProcess ? "No new faces detected" : "No faces detected in uploaded images",
-          )
+          setError(filesToProcess ? 'No new faces detected' : 'No faces detected in uploaded images')
         }
       } catch (err) {
-        console.error("Face detection error:", err)
-        setError(err instanceof Error ? err.message : "Failed to detect faces")
+        console.error('Face detection error:', err)
+        setError(err instanceof Error ? err.message : 'Failed to detect faces')
       } finally {
         setIsDetecting(false)
       }
     },
-    [uploadedFiles, group.id, createFacePreview, members],
+    [uploadedFiles, group.id, createFacePreview, members]
   )
 
   const isFileDuplicate = useCallback(
     (file: File): boolean => {
-      return uploadedFiles.some(
-        (existing) => existing.name === file.name && existing.size === file.size,
-      )
+      return uploadedFiles.some((existing) => existing.name === file.name && existing.size === file.size)
     },
-    [uploadedFiles],
+    [uploadedFiles]
   )
 
   const processFiles = useCallback(
@@ -177,14 +169,14 @@ export function useBulkEnrollment(
 
       await handleDetectFaces(filesToProcess, startIndex)
     },
-    [handleDetectFaces, uploadedFiles.length],
+    [handleDetectFaces, uploadedFiles.length]
   )
 
   const handleFilesSelected = useCallback(
     async (files: FileList | null) => {
       if (!files) return
 
-      const imageFiles = Array.from(files).filter((file) => file.type.startsWith("image/"))
+      const imageFiles = Array.from(files).filter((file) => file.type.startsWith('image/'))
 
       if (imageFiles.length === 0) return
 
@@ -206,7 +198,7 @@ export function useBulkEnrollment(
 
       await processFiles(newFiles)
     },
-    [isFileDuplicate, processFiles],
+    [isFileDuplicate, processFiles]
   )
 
   const handleConfirmDuplicates = useCallback(async () => {
@@ -251,12 +243,12 @@ export function useBulkEnrollment(
             assignedPersonId: personId,
             isAutoMatched: false,
             isNewMember: false,
-            customMemberName: matched?.name || face.customMemberName,
+            customMemberName: matched?.name || face.customMemberName
           }
-        }),
+        })
       )
     },
-    [members],
+    [members]
   )
 
   const handleUnassign = useCallback((faceId: string) => {
@@ -267,9 +259,9 @@ export function useBulkEnrollment(
           ...face,
           assignedPersonId: null,
           isAutoMatched: false,
-          isNewMember: false,
+          isNewMember: false
         }
-      }),
+      })
     )
   }, [])
 
@@ -282,9 +274,9 @@ export function useBulkEnrollment(
           assignedPersonId: null,
           isAutoMatched: false,
           isNewMember: true,
-          customMemberName: name !== undefined ? name : face.customMemberName || face.parsedName,
+          customMemberName: name !== undefined ? name : face.customMemberName || face.parsedName
         }
-      }),
+      })
     )
   }, [])
 
@@ -294,19 +286,19 @@ export function useBulkEnrollment(
         if (face.faceId !== faceId) return face
         return {
           ...face,
-          customMemberName: newName,
+          customMemberName: newName
         }
-      }),
+      })
     )
   }, [])
 
   const handleBulkEnroll = useCallback(async () => {
     const facesToEnroll = detectedFaces.filter(
-      (f) => f.assignedPersonId || (f.isNewMember && (f.customMemberName || f.parsedName)?.trim()),
+      (f) => f.assignedPersonId || (f.isNewMember && (f.customMemberName || f.parsedName)?.trim())
     )
 
     if (facesToEnroll.length === 0) {
-      setError("Assign at least one face to a member or enter a name.")
+      setError('Assign at least one face to a member or enter a name.')
       return
     }
 
@@ -320,12 +312,12 @@ export function useBulkEnrollment(
       const newlyCreatedMembers: AttendanceMember[] = []
 
       for (const face of facesNeedingCreation) {
-        const memberName = (face.customMemberName || face.parsedName || "Member").trim()
+        const memberName = (face.customMemberName || face.parsedName || 'Member').trim()
         if (!memberName) continue
 
         try {
           const newMember = await attendanceManager.addMember(group.id, memberName, {
-            role: face.parsedRole || undefined,
+            role: face.parsedRole || undefined
           })
           face.assignedPersonId = newMember.person_id
           newlyCreatedMembers.push(newMember)
@@ -336,24 +328,22 @@ export function useBulkEnrollment(
 
       if (newlyCreatedMembers.length > 0) {
         useGroupStore.setState({
-          members: [...useGroupStore.getState().members, ...newlyCreatedMembers],
+          members: [...useGroupStore.getState().members, ...newlyCreatedMembers]
         })
         useAttendanceStore.setState({
-          groupMembers: [...useAttendanceStore.getState().groupMembers, ...newlyCreatedMembers],
+          groupMembers: [...useAttendanceStore.getState().groupMembers, ...newlyCreatedMembers]
         })
       }
 
       // 2. Enroll all assigned faces
       const readyFaces = facesToEnroll.filter((f) => f.assignedPersonId)
       if (readyFaces.length === 0) {
-        throw new Error("No members could be prepared for enrollment.")
+        throw new Error('No members could be prepared for enrollment.')
       }
 
-      const imageIndices = [
-        ...new Set(readyFaces.map((face) => Number(face.imageId.replace("image_", "")))),
-      ]
+      const imageIndices = [...new Set(readyFaces.map((face) => Number(face.imageId.replace('image_', ''))))]
       const enrollments = readyFaces.map((face) => {
-        const imageIdx = parseInt(face.imageId.replace("image_", ""))
+        const imageIdx = parseInt(face.imageId.replace('image_', ''))
         const file = uploadedFiles[imageIdx]
         return {
           person_id: face.assignedPersonId as string,
@@ -361,7 +351,7 @@ export function useBulkEnrollment(
           landmarks_5: face.landmarks_5 as number[][],
           skip_quality_check: false,
           filename: file.name,
-          image_index: imageIndices.indexOf(imageIdx),
+          image_index: imageIndices.indexOf(imageIdx)
         }
       })
 
@@ -370,16 +360,16 @@ export function useBulkEnrollment(
         enrollments,
         imageIndices.map((index) => ({
           file: uploadedFiles[index],
-          filename: uploadedFiles[index].name,
-        })),
+          filename: uploadedFiles[index].name
+        }))
       )
 
       const results: BulkEnrollmentResult[] = result.results.map((r: BulkEnrollResponseItem) => ({
         personId: r.person_id,
-        memberName: r.member_name || "",
+        memberName: r.member_name || '',
         success: r.success,
         error: r.error,
-        qualityWarning: r.quality_warning,
+        qualityWarning: r.quality_warning
       }))
 
       setEnrollmentResults(results)
@@ -387,8 +377,8 @@ export function useBulkEnrollment(
         await onRefresh()
       }
     } catch (err) {
-      console.error("Bulk enrollment error:", err)
-      setError(err instanceof Error ? err.message : "Failed to enroll members")
+      console.error('Bulk enrollment error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to enroll members')
     } finally {
       setIsEnrolling(false)
     }
@@ -413,6 +403,6 @@ export function useBulkEnrollment(
     handleSetNewMember,
     handleUpdateCustomName,
     handleBulkEnroll,
-    handleClearFiles,
+    handleClearFiles
   }
 }

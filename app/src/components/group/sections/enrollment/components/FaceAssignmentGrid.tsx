@@ -1,18 +1,10 @@
-import { useState, useRef, useEffect, useMemo, useLayoutEffect, useCallback } from "react"
-import { createPortal } from "react-dom"
-import { motion, AnimatePresence } from "framer-motion"
-import {
-  AlertTriangle,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  Plus,
-  Search,
-  UserPlus,
-} from "lucide-react"
-import type { AttendanceMember } from "@/types/recognition"
-import type { DetectedFace } from "@/components/group/sections/enrollment/types"
-import { createDisplayNameMap } from "@/utils/displayNameUtils"
+import { useState, useRef, useEffect, useMemo, useLayoutEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { AlertTriangle, Check, CheckCircle2, ChevronDown, Plus, Search, UserPlus } from 'lucide-react'
+import type { AttendanceMember } from '@/types/recognition'
+import type { DetectedFace } from '@/components/group/sections/enrollment/types'
+import { createDisplayNameMap } from '@/utils/displayNameUtils'
 
 interface MemberAssignComboboxProps {
   availableMembers: AttendanceMember[]
@@ -25,10 +17,10 @@ function MemberAssignCombobox({
   availableMembers,
   displayNameMap,
   totalMembersCount,
-  onSelect,
+  onSelect
 }: MemberAssignComboboxProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -82,10 +74,7 @@ function MemberAssignCombobox({
 
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
-      if (
-        !triggerRef.current?.contains(e.target as Node) &&
-        !menuRef.current?.contains(e.target as Node)
-      ) {
+      if (!triggerRef.current?.contains(e.target as Node) && !menuRef.current?.contains(e.target as Node)) {
         setIsOpen(false)
       }
     }
@@ -93,30 +82,30 @@ function MemberAssignCombobox({
       if (isOpen) updatePosition()
     }
     if (isOpen) {
-      document.addEventListener("mousedown", handleGlobalClick)
-      window.addEventListener("resize", handleScrollOrResize)
-      window.addEventListener("scroll", handleScrollOrResize, true)
+      document.addEventListener('mousedown', handleGlobalClick)
+      window.addEventListener('resize', handleScrollOrResize)
+      window.addEventListener('scroll', handleScrollOrResize, true)
     }
     return () => {
-      document.removeEventListener("mousedown", handleGlobalClick)
-      window.removeEventListener("resize", handleScrollOrResize)
-      window.removeEventListener("scroll", handleScrollOrResize, true)
+      document.removeEventListener('mousedown', handleGlobalClick)
+      window.removeEventListener('resize', handleScrollOrResize)
+      window.removeEventListener('scroll', handleScrollOrResize, true)
     }
   }, [isOpen, updatePosition])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+    if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
       e.preventDefault()
       e.stopPropagation()
       e.nativeEvent.stopImmediatePropagation()
       setIsOpen(false)
-    } else if (e.key === "ArrowDown") {
+    } else if (e.key === 'ArrowDown') {
       e.preventDefault()
       setActiveIndex((prev) => (prev + 1 < displayedMembers.length ? prev + 1 : prev))
-    } else if (e.key === "ArrowUp") {
+    } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setActiveIndex((prev) => (prev - 1 >= 0 ? prev - 1 : 0))
-    } else if (e.key === "Enter" && displayedMembers[activeIndex]) {
+    } else if (e.key === 'Enter' && displayedMembers[activeIndex]) {
       e.preventDefault()
       onSelect(displayedMembers[activeIndex].person_id)
       setIsOpen(false)
@@ -124,21 +113,19 @@ function MemberAssignCombobox({
   }
 
   return (
-    <div className="relative w-full">
+    <div className='relative w-full'>
       <button
         ref={triggerRef}
-        type="button"
+        type='button'
         onClick={() => {
           setIsOpen(!isOpen)
-          setSearch("")
+          setSearch('')
           setActiveIndex(0)
         }}
-        className="flex w-full items-center justify-between border-b border-white/10 bg-transparent py-1.5 text-left text-[11px] font-medium text-white/55 transition-colors hover:border-white/25 hover:text-white/80 focus:border-white/25 focus:text-white focus:outline-none">
-        <span className="truncate">Assign member…</span>
+        className='flex w-full items-center justify-between border-b border-white/10 bg-transparent py-1.5 text-left text-[11px] font-medium text-white/55 transition-colors hover:border-white/25 hover:text-white/80 focus:border-white/25 focus:text-white focus:outline-none'>
+        <span className='truncate'>Assign member…</span>
         <ChevronDown
-          className={`size-2.5 text-white/40 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`size-2.5 text-white/40 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -150,19 +137,19 @@ function MemberAssignCombobox({
               initial={{ opacity: 0, scale: 0.96, y: menuPos?.opensUp ? 4 : -4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
               style={{
-                top: menuPos ? `${menuPos.top}px` : "-9999px",
-                left: menuPos ? `${menuPos.left}px` : "-9999px",
-                width: menuPos ? `${menuPos.width}px` : "220px",
+                top: menuPos ? `${menuPos.top}px` : '-9999px',
+                left: menuPos ? `${menuPos.left}px` : '-9999px',
+                width: menuPos ? `${menuPos.width}px` : '220px'
               }}
-              className="fixed z-9999 flex max-h-[280px] flex-col overflow-hidden rounded-xl border border-white/10 bg-[#141518] shadow-2xl backdrop-blur-md">
+              className='fixed z-9999 flex max-h-[280px] flex-col overflow-hidden rounded-xl border border-white/10 bg-[#141518] shadow-2xl backdrop-blur-md'>
               {/* Search Bar */}
-              <div className="relative shrink-0 border-b border-white/10 p-2">
-                <Search className="absolute top-1/2 left-4 size-3 -translate-y-1/2 text-white/40" />
+              <div className='relative shrink-0 border-b border-white/10 p-2'>
+                <Search className='absolute top-1/2 left-4 size-3 -translate-y-1/2 text-white/40' />
                 <input
                   ref={inputRef}
-                  type="text"
+                  type='text'
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value)
@@ -172,32 +159,28 @@ function MemberAssignCombobox({
                   placeholder={
                     availableMembers.length > 50 ?
                       `Search ${availableMembers.length.toLocaleString()} members…`
-                    : "Search members…"
+                    : 'Search members…'
                   }
-                  className="w-full rounded-lg border border-white/10 bg-white/5 py-1.5 pr-3 pl-8 text-xs text-white placeholder-white/40 transition-colors focus:border-white/25 focus:bg-white/[0.08] focus:outline-none"
+                  className='w-full rounded-lg border border-white/10 bg-white/5 py-1.5 pr-3 pl-8 text-xs text-white placeholder-white/40 transition-colors focus:border-white/25 focus:bg-white/[0.08] focus:outline-none'
                 />
               </div>
 
               {/* Members List */}
-              <div className="custom-scroll flex-1 overflow-y-auto p-1">
+              <div className='custom-scroll flex-1 overflow-y-auto p-1'>
                 {displayedMembers.length === 0 ?
-                  <div className="px-3 py-4 text-center">
+                  <div className='px-3 py-4 text-center'>
                     {search.trim() ?
-                      <p className="text-[11px] text-white/40">
-                        No member matches &quot;{search}&quot;
-                      </p>
+                      <p className='text-[11px] text-white/40'>No member matches &quot;{search}&quot;</p>
                     : availableMembers.length === 0 ?
-                      <div className="space-y-1">
-                        <p className="text-[11px] font-medium text-amber-400/90">
-                          No available members
-                        </p>
-                        <p className="text-[10px] leading-relaxed text-white/40">
+                      <div className='space-y-1'>
+                        <p className='text-[11px] font-medium text-amber-400/90'>No available members</p>
+                        <p className='text-[10px] leading-relaxed text-white/40'>
                           {totalMembersCount > 0 ?
-                            "All members in this group are already assigned to photos."
-                          : "No members in this group."}
+                            'All members in this group are already assigned to photos.'
+                          : 'No members in this group.'}
                         </p>
                       </div>
-                    : <p className="text-[11px] text-white/40">No members available</p>}
+                    : <p className='text-[11px] text-white/40'>No members available</p>}
                   </div>
                 : <>
                     {displayedMembers.map((member, idx) => {
@@ -205,30 +188,26 @@ function MemberAssignCombobox({
                       return (
                         <button
                           key={member.person_id}
-                          type="button"
+                          type='button'
                           onClick={() => {
                             onSelect(member.person_id)
                             setIsOpen(false)
                           }}
                           onMouseEnter={() => setActiveIndex(idx)}
                           className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs transition-colors ${
-                            idx === activeIndex ?
-                              "bg-cyan-500/15 text-cyan-300"
-                            : "text-white/80 hover:bg-white/5 hover:text-white"
+                            idx === activeIndex ? 'bg-cyan-500/15 text-cyan-300' : (
+                              'text-white/80 hover:bg-white/5 hover:text-white'
+                            )
                           }`}>
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate font-medium">{displayName}</div>
-                            {member.role && (
-                              <div className="truncate text-[10px] text-white/40">
-                                {member.role}
-                              </div>
-                            )}
+                          <div className='min-w-0 flex-1'>
+                            <div className='truncate font-medium'>{displayName}</div>
+                            {member.role && <div className='truncate text-[10px] text-white/40'>{member.role}</div>}
                           </div>
                         </button>
                       )
                     })}
                     {filteredMembers.length > 50 && (
-                      <div className="py-2 text-center text-[10px] text-white/30">
+                      <div className='py-2 text-center text-[10px] text-white/30'>
                         Type to refine {filteredMembers.length.toLocaleString()} matches
                       </div>
                     )}
@@ -237,7 +216,7 @@ function MemberAssignCombobox({
               </div>
             </motion.div>
           </AnimatePresence>,
-          document.body,
+          document.body
         )}
     </div>
   )
@@ -262,105 +241,97 @@ export function FaceAssignmentGrid({
   onAssignMember,
   onUnassign,
   onUpdateCustomName,
-  onSetNewMember,
+  onSetNewMember
 }: FaceAssignmentGridProps) {
   const displayNameMap = useMemo(() => createDisplayNameMap(members), [members])
 
   const newMembersCount = useMemo(
     () =>
-      detectedFaces.filter(
-        (f) => f.isNewMember && !f.assignedPersonId && (f.customMemberName || f.parsedName)?.trim(),
-      ).length,
-    [detectedFaces],
+      detectedFaces.filter((f) => f.isNewMember && !f.assignedPersonId && (f.customMemberName || f.parsedName)?.trim())
+        .length,
+    [detectedFaces]
   )
 
   const autoMatchedCount = useMemo(
     () => detectedFaces.filter((f) => f.isAutoMatched && f.assignedPersonId).length,
-    [detectedFaces],
+    [detectedFaces]
   )
 
   const readyTotal = assignedCount + newMembersCount
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className='flex flex-col gap-6'>
       {/* Meta row */}
-      <div className="flex flex-wrap items-center gap-2.5 text-[11px]">
-        <div className="flex items-center gap-1.5">
-          <span className="font-semibold text-white">
+      <div className='flex flex-wrap items-center gap-2.5 text-[11px]'>
+        <div className='flex items-center gap-1.5'>
+          <span className='font-semibold text-white'>
             {readyTotal}
-            <span className="text-white/30">/{detectedFaces.length}</span>
+            <span className='text-white/30'>/{detectedFaces.length}</span>
           </span>
-          <span className="text-white/45">ready to enroll</span>
+          <span className='text-white/45'>ready to enroll</span>
         </div>
         {autoMatchedCount > 0 && (
-          <span className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-400">
-            <CheckCircle2 className="mr-1 inline size-3" />
+          <span className='rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-400'>
+            <CheckCircle2 className='mr-1 inline size-3' />
             {autoMatchedCount} auto-matched
           </span>
         )}
         {newMembersCount > 0 && (
-          <span className="rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 font-medium text-cyan-400">
-            <UserPlus className="mr-1 inline size-3" />
+          <span className='rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 font-medium text-cyan-400'>
+            <UserPlus className='mr-1 inline size-3' />
             {newMembersCount} new to create
           </span>
         )}
         {availableMembers.length > 0 && (
-          <span className="text-white/35">
-            {availableMembers.length} {availableMembers.length === 1 ? "member" : "members"} in this
-            group
+          <span className='text-white/35'>
+            {availableMembers.length} {availableMembers.length === 1 ? 'member' : 'members'} in this group
           </span>
         )}
       </div>
 
       {/* Face grid: auto-fill, cards fill available width */}
-      <div
-        className="grid gap-x-5 gap-y-7"
-        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))" }}>
+      <div className='grid gap-x-5 gap-y-7' style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
         {detectedFaces.map((face) => {
           const assignedMember =
-            face.assignedPersonId ?
-              members.find((m) => m.person_id === face.assignedPersonId)
-            : null
+            face.assignedPersonId ? members.find((m) => m.person_id === face.assignedPersonId) : null
           const assignedDisplayName =
-            assignedMember ?
-              displayNameMap.get(assignedMember.person_id) || assignedMember.name
-            : null
+            assignedMember ? displayNameMap.get(assignedMember.person_id) || assignedMember.name : null
 
           const isAssigned = Boolean(face.assignedPersonId)
           const isNew = Boolean(face.isNewMember && !face.assignedPersonId)
 
           return (
-            <div key={face.faceId} className="group flex flex-col gap-2">
+            <div key={face.faceId} className='group flex flex-col gap-2'>
               {/* Image: full bleed, rounded, no border */}
-              <div className="relative aspect-square overflow-hidden rounded-xl bg-white/[0.02]">
+              <div className='relative aspect-square overflow-hidden rounded-xl bg-white/[0.02]'>
                 <img
                   src={face.previewUrl}
-                  alt="Detected face"
+                  alt='Detected face'
                   className={`h-full w-full object-cover transition-all duration-300 ${
-                    isAssigned || isNew ? "brightness-95" : "brightness-75"
+                    isAssigned || isNew ? 'brightness-95' : 'brightness-75'
                   }`}
                 />
 
                 {/* Status Badges Overlay */}
                 {face.isAutoMatched && isAssigned && (
-                  <div className="absolute top-2 left-2 rounded-md bg-emerald-950/80 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300 backdrop-blur-sm">
-                    <Check className="mr-1 inline size-2.5" />
+                  <div className='absolute top-2 left-2 rounded-md bg-emerald-950/80 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300 backdrop-blur-sm'>
+                    <Check className='mr-1 inline size-2.5' />
                     Matched
                   </div>
                 )}
 
                 {isNew && (
-                  <div className="absolute top-2 left-2 rounded-md bg-cyan-950/80 px-1.5 py-0.5 text-[9px] font-semibold text-cyan-300 backdrop-blur-sm">
-                    <Plus className="mr-1 inline size-2.5" />
+                  <div className='absolute top-2 left-2 rounded-md bg-cyan-950/80 px-1.5 py-0.5 text-[9px] font-semibold text-cyan-300 backdrop-blur-sm'>
+                    <Plus className='mr-1 inline size-2.5' />
                     New
                   </div>
                 )}
 
                 {/* Quality warning: bottom overlay strip */}
                 {!face.isAcceptable && (
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-amber-950/90 to-transparent px-3 py-2.5">
-                    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-300">
-                      <AlertTriangle className="size-2.5" />
+                  <div className='absolute inset-x-0 bottom-0 bg-gradient-to-t from-amber-950/90 to-transparent px-3 py-2.5'>
+                    <div className='flex items-center gap-1.5 text-[10px] font-semibold text-amber-300'>
+                      <AlertTriangle className='size-2.5' />
                       Low quality
                     </div>
                   </div>
@@ -369,7 +340,7 @@ export function FaceAssignmentGrid({
                 {/* Change/Reassign on hover */}
                 {(isAssigned || isNew) && (
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => {
                       if (isAssigned) {
                         onUnassign(face.faceId)
@@ -377,8 +348,8 @@ export function FaceAssignmentGrid({
                         onUnassign(face.faceId)
                       }
                     }}
-                    className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/40 group-hover:opacity-100">
-                    <span className="rounded-md bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white/90 backdrop-blur-sm">
+                    className='absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/40 group-hover:opacity-100'>
+                    <span className='rounded-md bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white/90 backdrop-blur-sm'>
                       Change
                     </span>
                   </button>
@@ -387,31 +358,29 @@ export function FaceAssignmentGrid({
 
               {/* Assignment controls */}
               {isAssigned ?
-                <div className="flex items-center justify-between px-0.5">
-                  <span className="truncate text-[12px] font-semibold text-white">
-                    {assignedDisplayName}
-                  </span>
+                <div className='flex items-center justify-between px-0.5'>
+                  <span className='truncate text-[12px] font-semibold text-white'>{assignedDisplayName}</span>
                 </div>
               : isNew ?
-                <div className="flex flex-col gap-1">
+                <div className='flex flex-col gap-1'>
                   <input
-                    type="text"
-                    value={face.customMemberName || ""}
+                    type='text'
+                    value={face.customMemberName || ''}
                     onChange={(e) => onUpdateCustomName?.(face.faceId, e.target.value)}
-                    placeholder="Enter name"
-                    className="w-full rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-xs font-medium text-cyan-200 placeholder-white/30 transition-colors outline-none focus:border-cyan-400 focus:bg-cyan-500/20"
+                    placeholder='Enter name'
+                    className='w-full rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-xs font-medium text-cyan-200 placeholder-white/30 transition-colors outline-none focus:border-cyan-400 focus:bg-cyan-500/20'
                   />
-                  <div className="flex items-center justify-between px-0.5">
-                    <span className="text-[10px] text-white/35">Will be created</span>
+                  <div className='flex items-center justify-between px-0.5'>
+                    <span className='text-[10px] text-white/35'>Will be created</span>
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => onUnassign(face.faceId)}
-                      className="text-[10px] text-white/40 hover:text-white/70">
+                      className='text-[10px] text-white/40 hover:text-white/70'>
                       Pick existing
                     </button>
                   </div>
                 </div>
-              : <div className="flex flex-col gap-1.5">
+              : <div className='flex flex-col gap-1.5'>
                   <MemberAssignCombobox
                     availableMembers={availableMembers}
                     displayNameMap={displayNameMap}
@@ -420,9 +389,9 @@ export function FaceAssignmentGrid({
                   />
                   {face.parsedName && (
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => onSetNewMember?.(face.faceId, face.parsedName)}
-                      className="text-left text-[10px] text-cyan-400/80 hover:text-cyan-300">
+                      className='text-left text-[10px] text-cyan-400/80 hover:text-cyan-300'>
                       {`+ Create "${face.parsedName}"`}
                     </button>
                   )}

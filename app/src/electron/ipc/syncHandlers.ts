@@ -1,39 +1,37 @@
-import { ipcMain, dialog } from "electron"
-import fs from "node:fs/promises"
-import crypto from "node:crypto"
+import { ipcMain, dialog } from 'electron'
+import fs from 'node:fs/promises'
+import crypto from 'node:crypto'
 
-import { backendService } from "../backendService.js"
-import { withLocalBackendHeaders } from "../localBackendScope.js"
-import { syncManager } from "../managers/BackgroundSyncManager.js"
-import { persistentStore, requireSecretStorage } from "../persistentStore.js"
-import { getCurrentVersion } from "../updater.js"
-import { state } from "../State.js"
+import { backendService } from '../backendService.js'
+import { withLocalBackendHeaders } from '../localBackendScope.js'
+import { syncManager } from '../managers/BackgroundSyncManager.js'
+import { persistentStore, requireSecretStorage } from '../persistentStore.js'
+import { getCurrentVersion } from '../updater.js'
+import { state } from '../State.js'
 import {
   DEFAULT_REMOTE_BASE_URL,
   DEFAULT_SYNC_INTERVAL_MINUTES,
   OFFICIAL_REMOTE_BASE_URL,
-  isOfficialCloudUrl,
-} from "../../services/syncDefaults.js"
+  isOfficialCloudUrl
+} from '../../services/syncDefaults.js'
 
 function authHeaders(extra: Record<string, string> = {}) {
   const token = backendService.getToken()
-  return withLocalBackendHeaders(token ? { "X-Facenox-Token": token, ...extra } : { ...extra })
+  return withLocalBackendHeaders(token ? { 'X-Facenox-Token': token, ...extra } : { ...extra })
 }
 
 function normalizeRemoteBaseUrl(value: string): string {
   let url = value.trim()
-  if (!url) return ""
+  if (!url) return ''
 
-  url = url.replace(/^\/+/, "")
+  url = url.replace(/^\/+/, '')
 
   if (!/^https?:\/\//i.test(url)) {
-    const isLocal = /^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1]))/i.test(
-      url,
-    )
-    url = (isLocal ? "http://" : "https://") + url
+    const isLocal = /^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1]))/i.test(url)
+    url = (isLocal ? 'http://' : 'https://') + url
   }
-  url = url.replace(/^(https?:\/\/)\/+/, "$1")
-  url = url.replace(/\/+$/, "")
+  url = url.replace(/^(https?:\/\/)\/+/, '$1')
+  url = url.replace(/\/+$/, '')
   return url
 }
 
@@ -45,79 +43,70 @@ function resolveRemoteBaseUrl(value: string): string {
   return normalized
 }
 
-const DIRECT_PAIRING_ATTEMPT = "sync.directPairingAttempt"
+const DIRECT_PAIRING_ATTEMPT = 'sync.directPairingAttempt'
 const PAIRING_ATTEMPT_LIFETIME_MS = 24 * 60 * 60 * 1000
 
 function getDirectPairingRecoveryKey(remoteBaseUrl: string, pairingCode: string) {
   const identity = crypto
-    .createHash("sha256")
+    .createHash('sha256')
     .update(JSON.stringify([remoteBaseUrl, pairingCode]))
-    .digest("hex")
+    .digest('hex')
   const stored = persistentStore.get(DIRECT_PAIRING_ATTEMPT)
-  if (typeof stored === "string" && stored) {
+  if (typeof stored === 'string' && stored) {
     const attempt = JSON.parse(stored) as { identity: string; key: string; expiresAt: number }
     if (attempt.identity === identity && attempt.expiresAt > Date.now()) return attempt.key
   }
 
-  const key = crypto.randomBytes(32).toString("hex")
+  const key = crypto.randomBytes(32).toString('hex')
   persistentStore.set(
     DIRECT_PAIRING_ATTEMPT,
     JSON.stringify({
       identity,
       key,
-      expiresAt: Date.now() + PAIRING_ATTEMPT_LIFETIME_MS,
-    }),
+      expiresAt: Date.now() + PAIRING_ATTEMPT_LIFETIME_MS
+    })
   )
   return key
 }
 
 function getRemoteSyncStatus() {
-  const remoteBaseUrl = resolveRemoteBaseUrl(
-    (persistentStore.get("sync.remoteBaseUrl") as string) || "",
-  )
-  const organizationId = (persistentStore.get("sync.organizationId") as string) || ""
-  const organizationName = (persistentStore.get("sync.organizationName") as string) || ""
-  const siteId = (persistentStore.get("sync.siteId") as string) || ""
-  const siteName = (persistentStore.get("sync.siteName") as string) || ""
-  const deviceId = (persistentStore.get("sync.deviceId") as string) || ""
-  const deviceName = (persistentStore.get("sync.deviceName") as string) || ""
-  let deviceToken = ""
+  const remoteBaseUrl = resolveRemoteBaseUrl((persistentStore.get('sync.remoteBaseUrl') as string) || '')
+  const organizationId = (persistentStore.get('sync.organizationId') as string) || ''
+  const organizationName = (persistentStore.get('sync.organizationName') as string) || ''
+  const siteId = (persistentStore.get('sync.siteId') as string) || ''
+  const siteName = (persistentStore.get('sync.siteName') as string) || ''
+  const deviceId = (persistentStore.get('sync.deviceId') as string) || ''
+  const deviceName = (persistentStore.get('sync.deviceName') as string) || ''
+  let deviceToken = ''
   let credentialError: string | null = null
   try {
-    deviceToken = (persistentStore.get("sync.deviceToken") as string) || ""
+    deviceToken = (persistentStore.get('sync.deviceToken') as string) || ''
   } catch (error) {
-    credentialError = error instanceof Error ? error.message : "Cloud credentials are unavailable."
+    credentialError = error instanceof Error ? error.message : 'Cloud credentials are unavailable.'
   }
-  const enabled = Boolean(persistentStore.get("sync.enabled"))
-  const intervalMinutes =
-    (persistentStore.get("sync.intervalMinutes") as number) || DEFAULT_SYNC_INTERVAL_MINUTES
-  const lastSyncedAt = (persistentStore.get("sync.lastSyncedAt") as string | null) || null
-  const lastSyncStatus = ((persistentStore.get("sync.lastSyncStatus") as
-    "idle" | "success" | "error" | undefined) ?? "idle") as "idle" | "success" | "error"
-  const lastSyncMessage = (persistentStore.get("sync.lastSyncMessage") as string | null) || null
+  const enabled = Boolean(persistentStore.get('sync.enabled'))
+  const intervalMinutes = (persistentStore.get('sync.intervalMinutes') as number) || DEFAULT_SYNC_INTERVAL_MINUTES
+  const lastSyncedAt = (persistentStore.get('sync.lastSyncedAt') as string | null) || null
+  const lastSyncStatus = ((persistentStore.get('sync.lastSyncStatus') as 'idle' | 'success' | 'error' | undefined) ??
+    'idle') as 'idle' | 'success' | 'error'
+  const lastSyncMessage = (persistentStore.get('sync.lastSyncMessage') as string | null) || null
   const paired = Boolean(organizationId && siteId && deviceId)
-  const forceLiveness = persistentStore.get("sync.policy.forceLiveness")
+  const forceLiveness = persistentStore.get('sync.policy.forceLiveness')
 
   return {
     credentialError,
     forceLiveness: paired && forceLiveness === true,
-    policyReady: !paired || typeof forceLiveness === "boolean",
+    policyReady: !paired || typeof forceLiveness === 'boolean',
     policyOverrides:
       paired ?
         {
-          trackCheckout: persistentStore.get("sync.policy.trackCheckout") as boolean | undefined,
-          lateThresholdEnabled: persistentStore.get("sync.policy.lateThresholdEnabled") as
-            boolean | undefined,
-          lateThresholdMinutes: persistentStore.get("sync.policy.lateThresholdMinutes") as
-            number | undefined,
-          attendanceCooldownSeconds: persistentStore.get(
-            "sync.policy.attendanceCooldownSeconds",
-          ) as number | undefined,
-          minCheckoutDelayMinutes: persistentStore.get("sync.policy.minCheckoutDelayMinutes") as
-            number | undefined,
-          dataRetentionDays: persistentStore.get("sync.policy.dataRetentionDays") as
-            number | undefined,
-          peopleLimit: persistentStore.get("sync.policy.peopleLimit") as number | undefined,
+          trackCheckout: persistentStore.get('sync.policy.trackCheckout') as boolean | undefined,
+          lateThresholdEnabled: persistentStore.get('sync.policy.lateThresholdEnabled') as boolean | undefined,
+          lateThresholdMinutes: persistentStore.get('sync.policy.lateThresholdMinutes') as number | undefined,
+          attendanceCooldownSeconds: persistentStore.get('sync.policy.attendanceCooldownSeconds') as number | undefined,
+          minCheckoutDelayMinutes: persistentStore.get('sync.policy.minCheckoutDelayMinutes') as number | undefined,
+          dataRetentionDays: persistentStore.get('sync.policy.dataRetentionDays') as number | undefined,
+          peopleLimit: persistentStore.get('sync.policy.peopleLimit') as number | undefined
         }
       : {},
     enabled,
@@ -130,58 +119,57 @@ function getRemoteSyncStatus() {
     deviceName,
     intervalMinutes,
     lastSyncedAt,
-    lastSyncStatus: credentialError ? ("error" as const) : lastSyncStatus,
+    lastSyncStatus: credentialError ? ('error' as const) : lastSyncStatus,
     lastSyncMessage: credentialError ?? lastSyncMessage,
-    allowKioskDirectoryManagement:
-      persistentStore.get("sync.policy.allowKioskDirectoryManagement") !== false,
+    allowKioskDirectoryManagement: persistentStore.get('sync.policy.allowKioskDirectoryManagement') !== false,
     connected: Boolean(remoteBaseUrl && organizationId && siteId && deviceId && deviceToken),
-    wasEverPaired: Boolean(persistentStore.get("sync.dataOrigin")),
+    wasEverPaired: Boolean(persistentStore.get('sync.dataOrigin'))
   }
 }
 
 function clearLocalSyncMetadata() {
-  persistentStore.delete("sync.dataOrigin")
-  persistentStore.delete("sync.pendingUpload")
-  persistentStore.delete("sync.pendingAcknowledgements")
-  persistentStore.set("sync.lastSyncedAt", null)
+  persistentStore.delete('sync.dataOrigin')
+  persistentStore.delete('sync.pendingUpload')
+  persistentStore.delete('sync.pendingAcknowledgements')
+  persistentStore.set('sync.lastSyncedAt', null)
 }
 
 async function readBackendErrorMessage(response: Response, fallback: string): Promise<string> {
-  const raw = await response.text().catch(() => "")
+  const raw = await response.text().catch(() => '')
   if (!raw) return fallback
   try {
     const parsed = JSON.parse(raw) as { detail?: unknown; error?: unknown; message?: unknown }
     const detail = parsed.detail ?? parsed.error ?? parsed.message
-    if (typeof detail === "string" && detail.trim()) return detail.trim()
+    if (typeof detail === 'string' && detail.trim()) return detail.trim()
   } catch {
     const trimmed = raw.trim()
-    if (trimmed && trimmed.length < 200 && !trimmed.startsWith("<")) return trimmed
+    if (trimmed && trimmed.length < 200 && !trimmed.startsWith('<')) return trimmed
   }
   return fallback
 }
 
 function clearRemoteConnection() {
-  persistentStore.set("sync.enabled", false)
-  persistentStore.set("sync.organizationId", "")
-  persistentStore.set("sync.organizationName", "")
-  persistentStore.set("sync.siteId", "")
-  persistentStore.set("sync.siteName", "")
-  persistentStore.set("sync.deviceId", "")
-  persistentStore.set("sync.deviceToken", "")
-  persistentStore.set("sync.encryptionKey", "")
-  persistentStore.set("sync.lastSyncedAt", null)
-  persistentStore.set("sync.pendingAcknowledgements", null)
-  persistentStore.set("sync.pendingUpload", null)
-  persistentStore.delete("sync.policy.forceLiveness")
-  persistentStore.delete("sync.policy.trackCheckout")
-  persistentStore.delete("sync.policy.lateThresholdEnabled")
-  persistentStore.delete("sync.policy.lateThresholdMinutes")
-  persistentStore.delete("sync.policy.attendanceCooldownSeconds")
-  persistentStore.delete("sync.policy.minCheckoutDelayMinutes")
-  persistentStore.delete("sync.policy.dataRetentionDays")
-  persistentStore.delete("sync.policy.peopleLimit")
-  persistentStore.delete("sync.policy.allowKioskDirectoryManagement")
-  persistentStore.delete("sync.policy.faceTemplateSync")
+  persistentStore.set('sync.enabled', false)
+  persistentStore.set('sync.organizationId', '')
+  persistentStore.set('sync.organizationName', '')
+  persistentStore.set('sync.siteId', '')
+  persistentStore.set('sync.siteName', '')
+  persistentStore.set('sync.deviceId', '')
+  persistentStore.set('sync.deviceToken', '')
+  persistentStore.set('sync.encryptionKey', '')
+  persistentStore.set('sync.lastSyncedAt', null)
+  persistentStore.set('sync.pendingAcknowledgements', null)
+  persistentStore.set('sync.pendingUpload', null)
+  persistentStore.delete('sync.policy.forceLiveness')
+  persistentStore.delete('sync.policy.trackCheckout')
+  persistentStore.delete('sync.policy.lateThresholdEnabled')
+  persistentStore.delete('sync.policy.lateThresholdMinutes')
+  persistentStore.delete('sync.policy.attendanceCooldownSeconds')
+  persistentStore.delete('sync.policy.minCheckoutDelayMinutes')
+  persistentStore.delete('sync.policy.dataRetentionDays')
+  persistentStore.delete('sync.policy.peopleLimit')
+  persistentStore.delete('sync.policy.allowKioskDirectoryManagement')
+  persistentStore.delete('sync.policy.faceTemplateSync')
 }
 
 async function validatePairingDestination(
@@ -191,11 +179,10 @@ async function validatePairingDestination(
     siteId?: unknown
     deviceToken?: unknown
     deviceId?: unknown
-  },
+  }
 ) {
-  if (getRemoteSyncStatus().connected)
-    throw new Error("Disconnect the current device before pairing again.")
-  const origin = persistentStore.get("sync.dataOrigin") as
+  if (getRemoteSyncStatus().connected) throw new Error('Disconnect the current device before pairing again.')
+  const origin = persistentStore.get('sync.dataOrigin') as
     { organizationId: string; siteId: string; remoteBaseUrl: string } | undefined
   if (
     origin &&
@@ -204,85 +191,81 @@ async function validatePairingDestination(
       origin.remoteBaseUrl !== remoteBaseUrl)
   ) {
     const response = await fetch(`${backendService.getUrl()}/attendance/export`, {
-      method: "POST",
+      method: 'POST',
       headers: authHeaders(),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(30000)
     })
-    if (!response.ok) throw new Error("Could not verify the local directory before pairing.")
+    if (!response.ok) throw new Error('Could not verify the local directory before pairing.')
     const data = (await response.json()) as Record<string, unknown[]>
-    if (["groups", "members", "records", "sessions"].some((key) => data[key]?.length)) {
+    if (['groups', 'members', 'records', 'sessions'].some((key) => data[key]?.length)) {
       await fetch(`${remoteBaseUrl}/api/device/unpair`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${payload.deviceToken}`,
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${payload.deviceToken}`
         },
         body: JSON.stringify({ device_id: payload.deviceId }),
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(10000)
       }).catch(() => undefined)
       throw new Error(
-        "This local directory belongs to another Cloud location. Reconnect to its original location or use a separate local data profile.",
+        'This local directory belongs to another Cloud location. Reconnect to its original location or use a separate local data profile.'
       )
     }
   }
 }
 
-async function finalizeDevicePairing(
-  remoteBaseUrl: string,
-  deviceName: string,
-  payload: Record<string, unknown>,
-) {
+async function finalizeDevicePairing(remoteBaseUrl: string, deviceName: string, payload: Record<string, unknown>) {
   await validatePairingDestination(remoteBaseUrl, payload)
-  const previousOrigin = persistentStore.get("sync.dataOrigin")
+  const previousOrigin = persistentStore.get('sync.dataOrigin')
 
   try {
-    persistentStore.set("sync.remoteBaseUrl", remoteBaseUrl)
-    persistentStore.set("sync.organizationId", String(payload.organizationId ?? ""))
-    persistentStore.set("sync.organizationName", String(payload.organizationName ?? ""))
-    persistentStore.set("sync.siteId", String(payload.siteId ?? ""))
-    persistentStore.set("sync.siteName", String(payload.siteName ?? ""))
-    persistentStore.set("sync.deviceId", String(payload.deviceId ?? ""))
-    persistentStore.set("sync.deviceName", deviceName)
-    persistentStore.set("sync.deviceToken", String(payload.deviceToken ?? ""))
-    persistentStore.set("sync.encryptionKey", String(payload.encryptionKey ?? ""))
-    persistentStore.set("sync.enabled", true)
-    persistentStore.set("sync.lastSyncedAt", null)
-    persistentStore.set("sync.lastSyncStatus", "idle")
-    persistentStore.set("sync.lastSyncMessage", "Device connected. Starting initial sync…")
+    persistentStore.set('sync.remoteBaseUrl', remoteBaseUrl)
+    persistentStore.set('sync.organizationId', String(payload.organizationId ?? ''))
+    persistentStore.set('sync.organizationName', String(payload.organizationName ?? ''))
+    persistentStore.set('sync.siteId', String(payload.siteId ?? ''))
+    persistentStore.set('sync.siteName', String(payload.siteName ?? ''))
+    persistentStore.set('sync.deviceId', String(payload.deviceId ?? ''))
+    persistentStore.set('sync.deviceName', deviceName)
+    persistentStore.set('sync.deviceToken', String(payload.deviceToken ?? ''))
+    persistentStore.set('sync.encryptionKey', String(payload.encryptionKey ?? ''))
+    persistentStore.set('sync.enabled', true)
+    persistentStore.set('sync.lastSyncedAt', null)
+    persistentStore.set('sync.lastSyncStatus', 'idle')
+    persistentStore.set('sync.lastSyncMessage', 'Device connected. Starting initial sync…')
 
     const assignUrl = `${backendService.getUrl()}/attendance/groups/assign-org-id`
     const assignResponse = await fetch(assignUrl, {
-      method: "POST",
-      headers: authHeaders({ "Content-Type": "application/json" }),
-      signal: AbortSignal.timeout(10000),
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      signal: AbortSignal.timeout(10000)
     })
     if (!assignResponse.ok) {
       throw new Error(`Could not assign the local directory (HTTP ${assignResponse.status}).`)
     }
     const assignCounts = await assignResponse.json()
-    console.log("[Sync] Successfully assigned organization ID to offline records:", assignCounts)
+    console.log('[Sync] Successfully assigned organization ID to offline records:', assignCounts)
 
-    persistentStore.set("sync.dataOrigin", {
+    persistentStore.set('sync.dataOrigin', {
       organizationId: payload.organizationId,
       siteId: payload.siteId,
-      remoteBaseUrl,
+      remoteBaseUrl
     })
   } catch (err) {
     clearRemoteConnection()
     if (previousOrigin !== undefined) {
-      persistentStore.set("sync.dataOrigin", previousOrigin)
+      persistentStore.set('sync.dataOrigin', previousOrigin)
     } else {
-      persistentStore.delete("sync.dataOrigin")
+      persistentStore.delete('sync.dataOrigin')
     }
     if (payload.deviceToken && payload.deviceId) {
       await fetch(`${remoteBaseUrl}/api/device/unpair`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${String(payload.deviceToken)}`,
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${String(payload.deviceToken)}`
         },
         body: JSON.stringify({ device_id: String(payload.deviceId) }),
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(10000)
       }).catch(() => undefined)
     }
     throw err
@@ -290,13 +273,13 @@ async function finalizeDevicePairing(
 }
 
 // Cryptographic Constants
-const FACENOX_MAGIC = Buffer.from("FACENOX\x00\x01")
+const FACENOX_MAGIC = Buffer.from('FACENOX\x00\x01')
 const SALT_SIZE = 16
 const IV_SIZE = 12
 const TAG_SIZE = 16
 const KEY_SIZE = 32 // AES-256
 const PBKDF2_ITERS = 480_000
-const PBKDF2_DIGEST = "sha256"
+const PBKDF2_DIGEST = 'sha256'
 
 // Key Derivation
 function deriveKey(password: string, salt: Buffer): Buffer {
@@ -309,7 +292,7 @@ function encryptBackup(plaintext: Buffer, password: string): Buffer {
   const iv = crypto.randomBytes(IV_SIZE)
   const key = deriveKey(password, salt)
 
-  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv)
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
   const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()])
   const tag = cipher.getAuthTag() // 16 bytes
 
@@ -323,12 +306,12 @@ function decryptBackup(blob: Buffer, password: string): Buffer {
   const minLen = magicLen + SALT_SIZE + IV_SIZE + TAG_SIZE + 1
 
   if (blob.length < minLen) {
-    throw new Error("Invalid or incomplete .facenox backup file.")
+    throw new Error('Invalid or incomplete .facenox backup file.')
   }
 
   const magic = blob.subarray(0, magicLen)
   if (!crypto.timingSafeEqual(magic, FACENOX_MAGIC)) {
-    throw new Error("Invalid backup file. Select a valid .facenox backup.")
+    throw new Error('Invalid backup file. Select a valid .facenox backup.')
   }
 
   const salt = blob.subarray(magicLen, magicLen + SALT_SIZE)
@@ -340,7 +323,7 @@ function decryptBackup(blob: Buffer, password: string): Buffer {
   try {
     const ciphertext = payload.subarray(0, payload.length - TAG_SIZE)
     const tag = payload.subarray(payload.length - TAG_SIZE)
-    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv)
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv)
     decipher.setAuthTag(tag)
     return Buffer.concat([decipher.update(ciphertext), decipher.final()])
   } catch {
@@ -348,11 +331,11 @@ function decryptBackup(blob: Buffer, password: string): Buffer {
     try {
       const tag = payload.subarray(0, TAG_SIZE)
       const ciphertext = payload.subarray(TAG_SIZE)
-      const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv)
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv)
       decipher.setAuthTag(tag)
       return Buffer.concat([decipher.update(ciphertext), decipher.final()])
     } catch {
-      throw new Error("Decryption failed. The password is incorrect or the file is corrupted.")
+      throw new Error('Decryption failed. The password is incorrect or the file is corrupted.')
     }
   }
 }
@@ -367,9 +350,9 @@ async function getExtendedSyncStatus() {
         `${backendService.getUrl()}/attendance/stats?last_synced_at=${encodeURIComponent(status.lastSyncedAt)}`
       : `${backendService.getUrl()}/attendance/stats`
     const response = await fetch(statsUrl, {
-      method: "GET",
+      method: 'GET',
       headers: authHeaders(),
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(5000)
     })
     if (response.ok) {
       const stats = (await response.json()) as {
@@ -378,26 +361,26 @@ async function getExtendedSyncStatus() {
       }
       const records = stats.unsynced_records_count
       const sessions = stats.unsynced_sessions_count
-      if (typeof records === "number" && Number.isSafeInteger(records) && records >= 0) {
+      if (typeof records === 'number' && Number.isSafeInteger(records) && records >= 0) {
         unsyncedRecordsCount = records
       }
-      if (typeof sessions === "number" && Number.isSafeInteger(sessions) && sessions >= 0) {
+      if (typeof sessions === 'number' && Number.isSafeInteger(sessions) && sessions >= 0) {
         unsyncedSessionsCount = sessions
       }
     }
   } catch (err) {
-    console.warn("[Sync] Failed to fetch unsynced counts:", err)
+    console.warn('[Sync] Failed to fetch unsynced counts:', err)
   }
   return {
     ...status,
     unsyncedRecordsCount,
-    unsyncedSessionsCount,
+    unsyncedSessionsCount
   }
 }
 
 // IPC Registration
 export function registerSyncHandlers() {
-  ipcMain.handle("sync:restart-manager", async () => {
+  ipcMain.handle('sync:restart-manager', async () => {
     const status = getRemoteSyncStatus()
     if (status.enabled && status.connected) {
       syncManager.start()
@@ -406,49 +389,47 @@ export function registerSyncHandlers() {
     }
     return {
       success: true,
-      config: await getExtendedSyncStatus(),
+      config: await getExtendedSyncStatus()
     }
   })
 
-  ipcMain.handle("sync:trigger-now", async () => {
+  ipcMain.handle('sync:trigger-now', async () => {
     return await syncManager.performSync()
   })
 
-  ipcMain.handle("sync:trigger-debounced", () => {
+  ipcMain.handle('sync:trigger-debounced', () => {
     syncManager.triggerDebouncedSync()
   })
 
-  ipcMain.handle("sync:get-config", async (_event, options?: { includeCounts?: boolean }) => {
+  ipcMain.handle('sync:get-config', async (_event, options?: { includeCounts?: boolean }) => {
     return options?.includeCounts === false ? getRemoteSyncStatus() : await getExtendedSyncStatus()
   })
 
-  ipcMain.handle("sync:update-config", async (_event, updates: Record<string, unknown> = {}) => {
-    if (typeof updates.remoteBaseUrl === "string") {
-      const currentUrl = resolveRemoteBaseUrl(
-        (persistentStore.get("sync.remoteBaseUrl") as string) || "",
-      )
+  ipcMain.handle('sync:update-config', async (_event, updates: Record<string, unknown> = {}) => {
+    if (typeof updates.remoteBaseUrl === 'string') {
+      const currentUrl = resolveRemoteBaseUrl((persistentStore.get('sync.remoteBaseUrl') as string) || '')
       const requestedUrl = resolveRemoteBaseUrl(updates.remoteBaseUrl)
-      if (persistentStore.get("sync.deviceId") && requestedUrl !== currentUrl) {
-        throw new Error("Disconnect before changing the Cloud server.")
+      if (persistentStore.get('sync.deviceId') && requestedUrl !== currentUrl) {
+        throw new Error('Disconnect before changing the Cloud server.')
       }
       const trimmed = updates.remoteBaseUrl.trim()
       if (!trimmed || isOfficialCloudUrl(trimmed) || trimmed === DEFAULT_REMOTE_BASE_URL) {
-        persistentStore.set("sync.remoteBaseUrl", "")
+        persistentStore.set('sync.remoteBaseUrl', '')
       } else {
-        persistentStore.set("sync.remoteBaseUrl", normalizeRemoteBaseUrl(trimmed))
+        persistentStore.set('sync.remoteBaseUrl', normalizeRemoteBaseUrl(trimmed))
       }
     }
 
-    if (typeof updates.deviceName === "string") {
-      persistentStore.set("sync.deviceName", updates.deviceName.trim())
+    if (typeof updates.deviceName === 'string') {
+      persistentStore.set('sync.deviceName', updates.deviceName.trim())
     }
 
-    if (typeof updates.intervalMinutes === "number" && Number.isFinite(updates.intervalMinutes)) {
-      persistentStore.set("sync.intervalMinutes", Math.max(1, Math.round(updates.intervalMinutes)))
+    if (typeof updates.intervalMinutes === 'number' && Number.isFinite(updates.intervalMinutes)) {
+      persistentStore.set('sync.intervalMinutes', Math.max(1, Math.round(updates.intervalMinutes)))
     }
 
-    if (typeof updates.enabled === "boolean") {
-      persistentStore.set("sync.enabled", updates.enabled)
+    if (typeof updates.enabled === 'boolean') {
+      persistentStore.set('sync.enabled', updates.enabled)
     }
 
     const status = getRemoteSyncStatus()
@@ -458,36 +439,36 @@ export function registerSyncHandlers() {
       syncManager.stop()
     }
 
-    state.mainWindow?.webContents.send("sync:data-changed")
+    state.mainWindow?.webContents.send('sync:data-changed')
 
     return await getExtendedSyncStatus()
   })
 
   ipcMain.handle(
-    "sync:pair-device",
+    'sync:pair-device',
     async (
       _event,
       input: {
         remoteBaseUrl?: string
         pairingCode?: string
         deviceName?: string
-      } = {},
+      } = {}
     ) => {
-      const remoteBaseUrl = resolveRemoteBaseUrl(input.remoteBaseUrl || "")
-      const pairingCode = (input.pairingCode || "").trim().toUpperCase()
-      const deviceName = (input.deviceName || "").trim() || "Facenox Desktop"
+      const remoteBaseUrl = resolveRemoteBaseUrl(input.remoteBaseUrl || '')
+      const pairingCode = (input.pairingCode || '').trim().toUpperCase()
+      const deviceName = (input.deviceName || '').trim() || 'Facenox Desktop'
 
       if (!pairingCode) {
         return {
           success: false,
-          error: "Pairing code is required.",
+          error: 'Pairing code is required.'
         }
       }
 
       if (pairingCode.length < 6) {
         return {
           success: false,
-          error: "Pairing code must be at least 6 characters.",
+          error: 'Pairing code must be at least 6 characters.'
         }
       }
 
@@ -495,19 +476,19 @@ export function registerSyncHandlers() {
         requireSecretStorage()
         const recoveryKey = getDirectPairingRecoveryKey(remoteBaseUrl, pairingCode)
         const response = await fetch(`${remoteBaseUrl}/api/device/pair`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "X-Facenox-Version": getCurrentVersion(),
-            "User-Agent": "Facenox-Desktop-Pair",
+            'Content-Type': 'application/json',
+            'X-Facenox-Version': getCurrentVersion(),
+            'User-Agent': 'Facenox-Desktop-Pair'
           },
           body: JSON.stringify({
             pairing_code: pairingCode,
             recovery_key: recoveryKey,
             device_name: deviceName,
-            app_version: getCurrentVersion(),
+            app_version: getCurrentVersion()
           }),
-          signal: AbortSignal.timeout(30000),
+          signal: AbortSignal.timeout(30000)
         })
 
         const responseText = await response.text()
@@ -524,20 +505,18 @@ export function registerSyncHandlers() {
           return {
             success: false,
             error:
-              typeof payload?.error === "string" ?
-                payload.error
-              : `Connection failed with HTTP ${response.status}.`,
+              typeof payload?.error === 'string' ? payload.error : `Connection failed with HTTP ${response.status}.`
           }
         }
 
-        if (!payload) throw new Error("Invalid pairing response.")
+        if (!payload) throw new Error('Invalid pairing response.')
         await finalizeDevicePairing(remoteBaseUrl, deviceName, payload)
 
         persistentStore.delete(DIRECT_PAIRING_ATTEMPT)
         syncManager.start({ skipCatchUp: true })
         const initialSyncResult = await syncManager.performSync()
 
-        state.mainWindow?.webContents.send("sync:data-changed")
+        state.mainWindow?.webContents.send('sync:data-changed')
 
         return {
           success: true,
@@ -545,55 +524,55 @@ export function registerSyncHandlers() {
           initialSyncSucceeded: initialSyncResult.success,
           message:
             initialSyncResult.success ?
-              "Device connected and initial sync completed."
-            : "Device connected, but the initial sync failed. Check the sync log for details.",
+              'Device connected and initial sync completed.'
+            : 'Device connected, but the initial sync failed. Check the sync log for details.'
         }
       } catch (error) {
-        state.mainWindow?.webContents.send("sync:data-changed")
+        state.mainWindow?.webContents.send('sync:data-changed')
         return {
           success: false,
-          error: error instanceof Error ? error.message : "Connection failed.",
+          error: error instanceof Error ? error.message : 'Connection failed.'
         }
       }
-    },
+    }
   )
 
   ipcMain.handle(
-    "sync:initiate-reverse-pairing",
+    'sync:initiate-reverse-pairing',
     async (
       _event,
       input: {
         remoteBaseUrl?: string
         deviceName?: string
-      } = {},
+      } = {}
     ) => {
-      const remoteBaseUrl = resolveRemoteBaseUrl(input.remoteBaseUrl || "")
-      const deviceName = (input.deviceName || "").trim() || "Facenox Desktop"
+      const remoteBaseUrl = resolveRemoteBaseUrl(input.remoteBaseUrl || '')
+      const deviceName = (input.deviceName || '').trim() || 'Facenox Desktop'
 
       try {
         if (getRemoteSyncStatus().connected) {
-          return { success: false, error: "This device is already connected to Cloud." }
+          return { success: false, error: 'This device is already connected to Cloud.' }
         }
         requireSecretStorage()
         const response = await fetch(`${remoteBaseUrl}/api/device/code`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "X-Facenox-Version": getCurrentVersion(),
-            "User-Agent": "Facenox-Desktop-ReversePair",
+            'Content-Type': 'application/json',
+            'X-Facenox-Version': getCurrentVersion(),
+            'User-Agent': 'Facenox-Desktop-ReversePair'
           },
           body: JSON.stringify({
             device_name: deviceName,
             app_version: getCurrentVersion(),
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
           }),
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(15000)
         })
 
         if (!response.ok) {
           let errorDetail = `HTTP ${response.status}`
-          const contentType = response.headers.get("content-type") || ""
-          if (contentType.includes("application/json")) {
+          const contentType = response.headers.get('content-type') || ''
+          if (contentType.includes('application/json')) {
             try {
               const errJson = (await response.json()) as { message?: string; error?: string }
               errorDetail = errJson.message || errJson.error || errorDetail
@@ -601,18 +580,18 @@ export function registerSyncHandlers() {
               // ignore
             }
           } else {
-            const text = await response.text().catch(() => "")
-            if (text && text.length < 120 && !text.includes("<") && !text.includes("{")) {
+            const text = await response.text().catch(() => '')
+            if (text && text.length < 120 && !text.includes('<') && !text.includes('{')) {
               errorDetail = `${errorDetail}: ${text.trim()}`
             } else if (response.status === 404) {
               errorDetail = `Endpoint not found (HTTP 404 at ${remoteBaseUrl})`
             } else {
-              errorDetail = `Server returned HTTP ${response.status} (${response.statusText || "Error"})`
+              errorDetail = `Server returned HTTP ${response.status} (${response.statusText || 'Error'})`
             }
           }
           return {
             success: false,
-            error: `Failed to initiate pairing: ${errorDetail}`,
+            error: `Failed to initiate pairing: ${errorDetail}`
           }
         }
 
@@ -633,20 +612,20 @@ export function registerSyncHandlers() {
             verificationUri: data.verification_uri,
             verificationUriComplete: data.verification_uri_complete,
             expiresIn: data.expires_in,
-            interval: data.interval || 3,
-          },
+            interval: data.interval || 3
+          }
         }
       } catch (error) {
         return {
           success: false,
-          error: error instanceof Error ? error.message : "Could not connect to Facenox Cloud.",
+          error: error instanceof Error ? error.message : 'Could not connect to Facenox Cloud.'
         }
       }
-    },
+    }
   )
 
   interface DeviceTokenPollPayload {
-    status?: "pending" | "approved" | "expired" | "denied" | "error" | "network_error"
+    status?: 'pending' | 'approved' | 'expired' | 'denied' | 'error' | 'network_error'
     error?: string
     message?: string
     deviceId?: string
@@ -659,212 +638,199 @@ export function registerSyncHandlers() {
   }
 
   ipcMain.handle(
-    "sync:poll-device-authorization",
+    'sync:poll-device-authorization',
     async (
       _event,
       input: {
         remoteBaseUrl?: string
         deviceCode: string
         deviceName?: string
-      },
+      }
     ) => {
-      const remoteBaseUrl = resolveRemoteBaseUrl(input.remoteBaseUrl || "")
-      const deviceCode = (input.deviceCode || "").trim()
-      const deviceName = (input.deviceName || "").trim() || "Facenox Desktop"
+      const remoteBaseUrl = resolveRemoteBaseUrl(input.remoteBaseUrl || '')
+      const deviceCode = (input.deviceCode || '').trim()
+      const deviceName = (input.deviceName || '').trim() || 'Facenox Desktop'
 
       if (!deviceCode) {
-        return { status: "error", error: "deviceCode is required." }
+        return { status: 'error', error: 'deviceCode is required.' }
       }
 
       try {
         const response = await fetch(`${remoteBaseUrl}/api/device/token`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "X-Facenox-Version": getCurrentVersion(),
-            "User-Agent": "Facenox-Desktop-ReversePair",
+            'Content-Type': 'application/json',
+            'X-Facenox-Version': getCurrentVersion(),
+            'User-Agent': 'Facenox-Desktop-ReversePair'
           },
           body: JSON.stringify({ device_code: deviceCode }),
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(15000)
         })
 
         const payload = (await response.json().catch(() => null)) as DeviceTokenPollPayload | null
 
         if (!response.ok) {
-          if (payload?.error === "authorization_pending") {
-            return { status: "pending" }
+          if (payload?.error === 'authorization_pending') {
+            return { status: 'pending' }
           }
-          if (payload?.error === "slow_down") {
-            return { status: "pending", slowDown: true }
+          if (payload?.error === 'slow_down') {
+            return { status: 'pending', slowDown: true }
           }
-          if (payload?.error === "expired_token") {
-            return { status: "expired", error: "Pairing code expired." }
+          if (payload?.error === 'expired_token') {
+            return { status: 'expired', error: 'Pairing code expired.' }
           }
-          if (payload?.error === "access_denied") {
-            return { status: "denied", error: "Device pairing was denied by admin." }
+          if (payload?.error === 'access_denied') {
+            return { status: 'denied', error: 'Device pairing was denied by admin.' }
           }
           return {
-            status: "error",
-            error: payload?.message || payload?.error || `HTTP ${response.status}`,
+            status: 'error',
+            error: payload?.message || payload?.error || `HTTP ${response.status}`
           }
         }
 
-        if (payload?.status === "pending") {
-          return { status: "pending" }
+        if (payload?.status === 'pending') {
+          return { status: 'pending' }
         }
 
-        if (payload?.status === "approved" && payload.deviceToken) {
+        if (payload?.status === 'approved' && payload.deviceToken) {
           try {
-            await finalizeDevicePairing(
-              remoteBaseUrl,
-              deviceName,
-              payload as Record<string, unknown>,
-            )
+            await finalizeDevicePairing(remoteBaseUrl, deviceName, payload as Record<string, unknown>)
           } catch (finalizeError) {
-            state.mainWindow?.webContents.send("sync:data-changed")
+            state.mainWindow?.webContents.send('sync:data-changed')
             return {
-              status: "error",
-              error:
-                finalizeError instanceof Error ?
-                  finalizeError.message
-                : "Could not finalize device pairing.",
+              status: 'error',
+              error: finalizeError instanceof Error ? finalizeError.message : 'Could not finalize device pairing.'
             }
           }
 
           syncManager.start({ skipCatchUp: true })
           const initialSyncResult = await syncManager.performSync()
-          state.mainWindow?.webContents.send("sync:data-changed")
+          state.mainWindow?.webContents.send('sync:data-changed')
 
           return {
-            status: "approved",
+            status: 'approved',
             success: true,
             config: await getExtendedSyncStatus(),
             initialSyncSucceeded: initialSyncResult.success,
             message:
               initialSyncResult.success ?
-                "Device connected and initial sync completed."
-              : "Device connected, but the initial sync failed. Check the sync log for details.",
+                'Device connected and initial sync completed.'
+              : 'Device connected, but the initial sync failed. Check the sync log for details.'
           }
         }
 
-        return { status: payload?.status || "pending" }
+        return { status: payload?.status || 'pending' }
       } catch (error) {
         return {
-          status: "network_error",
-          error: error instanceof Error ? error.message : "Polling connection error.",
+          status: 'network_error',
+          error: error instanceof Error ? error.message : 'Polling connection error.'
         }
       }
-    },
+    }
   )
 
-  ipcMain.handle(
-    "sync:disconnect-device",
-    async (_event, options?: { clearLocalData?: boolean }) => {
-      const clearLocalData = Boolean(options?.clearLocalData)
-      const status = getRemoteSyncStatus()
-      let warning: string | null =
-        !status.connected && status.organizationId && status.siteId && status.deviceId ?
-          "The saved Cloud credential could not be used, so this device may still be paired in Cloud. Check Cloud > Devices and remove it there if needed before pairing again."
-        : null
-      await syncManager.suspend()
-      try {
-        if (clearLocalData) {
-          const wipeRes = await fetch(`${backendService.getUrl()}/attendance/wipe?hard=true`, {
-            method: "POST",
-            headers: authHeaders(),
-            signal: AbortSignal.timeout(30000),
-          })
-          if (!wipeRes.ok) {
-            throw new Error(
-              `Could not clear the local directory (HTTP ${wipeRes.status}). Your connection has been retained.`,
-            )
-          }
-        }
-        const local = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
-          method: "POST",
-          headers: authHeaders(),
-          signal: AbortSignal.timeout(10000),
-        })
-        if (!local.ok)
-          throw new Error(
-            `Could not disconnect the local database (HTTP ${local.status}). Your connection has been retained.`,
-          )
-      } catch (error) {
-        syncManager.start({ skipCatchUp: true })
-        throw error
-      }
-      if (status.connected && !clearLocalData) {
-        persistentStore.set("sync.dataOrigin", {
-          organizationId: status.organizationId,
-          siteId: status.siteId,
-          remoteBaseUrl: status.remoteBaseUrl,
-        })
-      }
-      if (status.connected) {
-        try {
-          const response = await fetch(`${status.remoteBaseUrl}/api/device/unpair`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${persistentStore.get("sync.deviceToken") as string}`,
-              "X-Facenox-Version": getCurrentVersion(),
-              "User-Agent": "Facenox-Desktop-Unpair",
-            },
-            body: JSON.stringify({
-              device_id: status.deviceId,
-            }),
-            signal: AbortSignal.timeout(30000),
-          })
-
-          if (response.status === 401) {
-            warning =
-              "Cloud rejected the saved device credential. Check Cloud > Devices and remove this device there if it is still paired."
-          } else if (!response.ok && response.status !== 404) {
-            const text = await response.text()
-            warning = text || `Remote disconnect returned HTTP ${response.status}.`
-          }
-        } catch (error) {
-          warning = error instanceof Error ? error.message : "Remote disconnect failed."
-        }
-      }
-
-      clearRemoteConnection()
+  ipcMain.handle('sync:disconnect-device', async (_event, options?: { clearLocalData?: boolean }) => {
+    const clearLocalData = Boolean(options?.clearLocalData)
+    const status = getRemoteSyncStatus()
+    let warning: string | null =
+      !status.connected && status.organizationId && status.siteId && status.deviceId ?
+        'The saved Cloud credential could not be used, so this device may still be paired in Cloud. Check Cloud > Devices and remove it there if needed before pairing again.'
+      : null
+    await syncManager.suspend()
+    try {
       if (clearLocalData) {
-        clearLocalSyncMetadata()
+        const wipeRes = await fetch(`${backendService.getUrl()}/attendance/wipe?hard=true`, {
+          method: 'POST',
+          headers: authHeaders(),
+          signal: AbortSignal.timeout(30000)
+        })
+        if (!wipeRes.ok) {
+          throw new Error(
+            `Could not clear the local directory (HTTP ${wipeRes.status}). Your connection has been retained.`
+          )
+        }
       }
-      persistentStore.set("sync.lastSyncStatus", "idle")
-      persistentStore.set(
-        "sync.lastSyncMessage",
-        warning ? `Disconnected locally. Remote warning: ${warning}`
-        : clearLocalData ? "Device unpaired and local directory cleared."
-        : "Device disconnected from Facenox Cloud.",
-      )
-      syncManager.stop()
+      const local = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
+        method: 'POST',
+        headers: authHeaders(),
+        signal: AbortSignal.timeout(10000)
+      })
+      if (!local.ok)
+        throw new Error(
+          `Could not disconnect the local database (HTTP ${local.status}). Your connection has been retained.`
+        )
+    } catch (error) {
+      syncManager.start({ skipCatchUp: true })
+      throw error
+    }
+    if (status.connected && !clearLocalData) {
+      persistentStore.set('sync.dataOrigin', {
+        organizationId: status.organizationId,
+        siteId: status.siteId,
+        remoteBaseUrl: status.remoteBaseUrl
+      })
+    }
+    if (status.connected) {
+      try {
+        const response = await fetch(`${status.remoteBaseUrl}/api/device/unpair`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${persistentStore.get('sync.deviceToken') as string}`,
+            'X-Facenox-Version': getCurrentVersion(),
+            'User-Agent': 'Facenox-Desktop-Unpair'
+          },
+          body: JSON.stringify({
+            device_id: status.deviceId
+          }),
+          signal: AbortSignal.timeout(30000)
+        })
 
-      state.mainWindow?.webContents.send("sync:data-changed")
-
-      return {
-        success: true,
-        warning,
-        config: await getExtendedSyncStatus(),
+        if (response.status === 401) {
+          warning =
+            'Cloud rejected the saved device credential. Check Cloud > Devices and remove this device there if it is still paired.'
+        } else if (!response.ok && response.status !== 404) {
+          const text = await response.text()
+          warning = text || `Remote disconnect returned HTTP ${response.status}.`
+        }
+      } catch (error) {
+        warning = error instanceof Error ? error.message : 'Remote disconnect failed.'
       }
-    },
-  )
+    }
 
-  ipcMain.handle("sync:get-local-directory-summary", async () => {
+    clearRemoteConnection()
+    if (clearLocalData) {
+      clearLocalSyncMetadata()
+    }
+    persistentStore.set('sync.lastSyncStatus', 'idle')
+    persistentStore.set(
+      'sync.lastSyncMessage',
+      warning ? `Disconnected locally. Remote warning: ${warning}`
+      : clearLocalData ? 'Device unpaired and local directory cleared.'
+      : 'Device disconnected from Facenox Cloud.'
+    )
+    syncManager.stop()
+
+    state.mainWindow?.webContents.send('sync:data-changed')
+
+    return {
+      success: true,
+      warning,
+      config: await getExtendedSyncStatus()
+    }
+  })
+
+  ipcMain.handle('sync:get-local-directory-summary', async () => {
     try {
       const response = await fetch(`${backendService.getUrl()}/attendance/export`, {
-        method: "POST",
+        method: 'POST',
         headers: authHeaders(),
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(15000)
       })
       if (!response.ok) {
         return {
           success: false,
-          error: await readBackendErrorMessage(
-            response,
-            `Could not inspect local directory (HTTP ${response.status}).`,
-          ),
+          error: await readBackendErrorMessage(response, `Could not inspect local directory (HTTP ${response.status}).`)
         }
       }
       const data = (await response.json()) as Record<string, unknown>
@@ -872,113 +838,108 @@ export function registerSyncHandlers() {
       return {
         success: true,
         counts: {
-          groups: countOf("groups"),
-          members: countOf("members"),
-          records: countOf("records"),
-          sessions: countOf("sessions"),
-        },
+          groups: countOf('groups'),
+          members: countOf('members'),
+          records: countOf('records'),
+          sessions: countOf('sessions')
+        }
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Could not inspect local directory.",
+        error: error instanceof Error ? error.message : 'Could not inspect local directory.'
       }
     }
   })
 
-  ipcMain.handle("sync:migrate-local-directory", async () => {
+  ipcMain.handle('sync:migrate-local-directory', async () => {
     const status = getRemoteSyncStatus()
     if (status.connected) {
-      throw new Error("Disconnect the current device before migrating the local directory.")
+      throw new Error('Disconnect the current device before migrating the local directory.')
     }
     await syncManager.suspend()
     if (status.organizationId || status.deviceId) {
       const unpairRes = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
-        method: "POST",
+        method: 'POST',
         headers: authHeaders(),
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(10000)
       }).catch(() => null)
       if (unpairRes && !unpairRes.ok) {
         throw new Error(
           await readBackendErrorMessage(
             unpairRes,
-            `Could not prepare local directory for migration (HTTP ${unpairRes.status}).`,
-          ),
+            `Could not prepare local directory for migration (HTTP ${unpairRes.status}).`
+          )
         )
       }
       clearRemoteConnection()
     }
 
     clearLocalSyncMetadata()
-    persistentStore.set("sync.lastSyncStatus", "idle")
-    persistentStore.set("sync.lastSyncMessage", null)
+    persistentStore.set('sync.lastSyncStatus', 'idle')
+    persistentStore.set('sync.lastSyncMessage', null)
     syncManager.stop()
 
-    state.mainWindow?.webContents.send("sync:data-changed")
+    state.mainWindow?.webContents.send('sync:data-changed')
 
     return {
       success: true,
-      config: await getExtendedSyncStatus(),
+      config: await getExtendedSyncStatus()
     }
   })
 
-  ipcMain.handle("sync:reset-local-directory", async () => {
+  ipcMain.handle('sync:reset-local-directory', async () => {
     const status = getRemoteSyncStatus()
     if (status.connected) {
-      throw new Error("Disconnect the current device before resetting the local directory.")
+      throw new Error('Disconnect the current device before resetting the local directory.')
     }
     await syncManager.suspend()
     const wipeRes = await fetch(`${backendService.getUrl()}/attendance/wipe?hard=true`, {
-      method: "POST",
+      method: 'POST',
       headers: authHeaders(),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(30000)
     })
     if (!wipeRes.ok) {
-      throw new Error(
-        await readBackendErrorMessage(
-          wipeRes,
-          `Could not clear local data (HTTP ${wipeRes.status}).`,
-        ),
-      )
+      throw new Error(await readBackendErrorMessage(wipeRes, `Could not clear local data (HTTP ${wipeRes.status}).`))
     }
 
     if (status.organizationId || status.deviceId) {
       const unpairRes = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
-        method: "POST",
+        method: 'POST',
         headers: authHeaders(),
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(10000)
       }).catch(() => null)
       if (unpairRes && !unpairRes.ok) {
         throw new Error(
           await readBackendErrorMessage(
             unpairRes,
-            `Could not finish clearing local pairing (HTTP ${unpairRes.status}).`,
-          ),
+            `Could not finish clearing local pairing (HTTP ${unpairRes.status}).`
+          )
         )
       }
       clearRemoteConnection()
     }
 
     clearLocalSyncMetadata()
-    persistentStore.set("sync.lastSyncStatus", "idle")
-    persistentStore.set("sync.lastSyncMessage", null)
+    persistentStore.set('sync.lastSyncStatus', 'idle')
+    persistentStore.set('sync.lastSyncMessage', null)
     syncManager.stop()
 
-    state.mainWindow?.webContents.send("sync:data-changed")
+    state.mainWindow?.webContents.send('sync:data-changed')
 
     return {
       success: true,
-      config: await getExtendedSyncStatus(),
+      config: await getExtendedSyncStatus()
     }
   })
 
-  ipcMain.handle("sync:pick-import-file", async () => {
+  ipcMain.handle('sync:pick-import-file', async () => {
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
-        title: "Open Facenox backup",
-        filters: [{ name: "Facenox Backup", extensions: ["facenox"] }],
-        properties: ["openFile"],
-        buttonLabel: "Open backup",
+        title: 'Open Facenox backup',
+        filters: [{ name: 'Facenox Backup', extensions: ['facenox'] }],
+        properties: ['openFile'],
+        buttonLabel: 'Open backup'
       })
 
       if (canceled || filePaths.length === 0) {
@@ -987,25 +948,25 @@ export function registerSyncHandlers() {
 
       return { canceled: false, filePath: filePaths[0] }
     } catch (error) {
-      console.error("[Backup] Picking file failed:", error)
+      console.error('[Backup] Picking file failed:', error)
       return {
         canceled: true,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error)
       }
     }
   })
 
-  ipcMain.handle("sync:export-data", async (_event, password?: string) => {
+  ipcMain.handle('sync:export-data', async (_event, password?: string) => {
     try {
       if (!password) {
-        throw new Error("Password is required to export a backup.")
+        throw new Error('Password is required to export a backup.')
       }
 
       const exportUrl = `${backendService.getUrl()}/backup/export`
       const exportRes = await fetch(exportUrl, {
-        method: "POST",
-        headers: authHeaders({ "Content-Type": "application/json" }),
-        signal: AbortSignal.timeout(60_000),
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        signal: AbortSignal.timeout(60_000)
       })
 
       if (!exportRes.ok) {
@@ -1016,87 +977,84 @@ export function registerSyncHandlers() {
       const backupPayload = await exportRes.json()
 
       const { canceled, filePath } = await dialog.showSaveDialog({
-        title: "Save Facenox backup",
+        title: 'Save Facenox backup',
         defaultPath: `facenox-backup-${new Date().toISOString().slice(0, 10)}.facenox`,
-        filters: [{ name: "Facenox Backup", extensions: ["facenox"] }],
-        buttonLabel: "Save backup",
+        filters: [{ name: 'Facenox Backup', extensions: ['facenox'] }],
+        buttonLabel: 'Save backup'
       })
 
       if (canceled || !filePath) return { success: false, canceled: true }
 
-      const plaintext = Buffer.from(JSON.stringify(backupPayload), "utf-8")
+      const plaintext = Buffer.from(JSON.stringify(backupPayload), 'utf-8')
       const encrypted = encryptBackup(plaintext, password)
       await fs.writeFile(filePath, encrypted)
 
       return { success: true, filePath }
     } catch (error) {
-      console.error("[Backup] Export failed:", error)
+      console.error('[Backup] Export failed:', error)
       return {
         success: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error)
       }
     }
   })
 
-  ipcMain.handle(
-    "sync:import-data",
-    async (_event, password?: string, filePath?: string, overwrite = false) => {
+  ipcMain.handle('sync:import-data', async (_event, password?: string, filePath?: string, overwrite = false) => {
+    try {
+      if (!password) {
+        throw new Error('Password is required to restore a backup.')
+      }
+
+      if (!filePath) {
+        throw new Error('File path is required to restore a backup.')
+      }
+
+      // 3. Read encrypted file and decrypt
+      const encryptedBlob = await fs.readFile(filePath)
+      let plaintext: Buffer
       try {
-        if (!password) {
-          throw new Error("Password is required to restore a backup.")
-        }
-
-        if (!filePath) {
-          throw new Error("File path is required to restore a backup.")
-        }
-
-        // 3. Read encrypted file and decrypt
-        const encryptedBlob = await fs.readFile(filePath)
-        let plaintext: Buffer
-        try {
-          plaintext = decryptBackup(encryptedBlob, password)
-        } catch (decryptErr) {
-          return {
-            success: false,
-            error: decryptErr instanceof Error ? decryptErr.message : "Decryption failed.",
-          }
-        }
-
-        // 4. Parse backup structure
-        const backupPayload = JSON.parse(plaintext.toString("utf-8"))
-
-        // 5. Send to Python backend for full restoration (attendance + biometrics)
-        const importUrl = `${backendService.getUrl()}/backup/import`
-        const importRes = await fetch(importUrl, {
-          method: "POST",
-          headers: authHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({
-            version: backupPayload.version ?? 1,
-            exported_at: backupPayload.exported_at,
-            attendance: {
-              data: backupPayload.attendance,
-              overwrite_existing: overwrite,
-            },
-            biometrics: backupPayload.biometrics ?? [],
-          }),
-          signal: AbortSignal.timeout(120_000),
-        })
-
-        if (!importRes.ok) {
-          const err = await importRes.text()
-          throw new Error(`Import failed: ${err}`)
-        }
-
-        const result = (await importRes.json()) as { message?: string }
-        syncManager.triggerDebouncedSync(1000)
-        return { success: true, message: result.message }
-      } catch (error) {
-        console.error("[Backup] Import failed:", error)
+        plaintext = decryptBackup(encryptedBlob, password)
+      } catch (decryptErr) {
         return {
           success: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: decryptErr instanceof Error ? decryptErr.message : 'Decryption failed.'
         }
       }
-    },
-  )
+
+      // 4. Parse backup structure
+      const backupPayload = JSON.parse(plaintext.toString('utf-8'))
+
+      // 5. Send to Python backend for full restoration (attendance + biometrics)
+      const importUrl = `${backendService.getUrl()}/backup/import`
+      const importRes = await fetch(importUrl, {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          version: backupPayload.version ?? 1,
+          exported_at: backupPayload.exported_at,
+          attendance: {
+            data: backupPayload.attendance,
+            overwrite_existing: overwrite
+          },
+          biometrics: backupPayload.biometrics ?? []
+        }),
+        signal: AbortSignal.timeout(120_000)
+      })
+
+      if (!importRes.ok) {
+        const err = await importRes.text()
+        throw new Error(`Import failed: ${err}`)
+      }
+
+      const result = (await importRes.json()) as { message?: string }
+      syncManager.triggerDebouncedSync(1000)
+      return { success: true, message: result.message }
+    } catch (error) {
+      console.error('[Backup] Import failed:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      }
+    }
+  })
 }

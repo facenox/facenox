@@ -1,6 +1,6 @@
-import type { Mock } from "vitest"
-import { vi } from "vitest"
-import { DEFAULT_REMOTE_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from "@/services/syncDefaults"
+import type { Mock } from 'vitest'
+import { vi } from 'vitest'
+import { DEFAULT_REMOTE_BASE_URL, DEFAULT_SYNC_INTERVAL_MINUTES } from '@/services/syncDefaults'
 
 export interface MockSyncConfig {
   enabled: boolean
@@ -13,7 +13,7 @@ export interface MockSyncConfig {
   deviceName: string
   intervalMinutes: number
   lastSyncedAt: string | null
-  lastSyncStatus: "idle" | "success" | "error"
+  lastSyncStatus: 'idle' | 'success' | 'error'
   lastSyncMessage: string | null
   connected: boolean
   wasEverPaired?: boolean
@@ -21,7 +21,7 @@ export interface MockSyncConfig {
   credentialError?: string | null
   forceLiveness?: boolean
   policyReady?: boolean
-  policyOverrides?: Awaited<ReturnType<SyncAPI["getConfig"]>>["policyOverrides"]
+  policyOverrides?: Awaited<ReturnType<SyncAPI['getConfig']>>['policyOverrides']
   unsyncedRecordsCount?: number
   unsyncedSessionsCount?: number
 }
@@ -123,22 +123,22 @@ export function createSyncConfig(overrides: Partial<MockSyncConfig> = {}): MockS
   return {
     enabled: false,
     remoteBaseUrl: DEFAULT_REMOTE_BASE_URL,
-    organizationId: "",
-    organizationName: "",
-    siteId: "",
-    siteName: "",
-    deviceId: "",
-    deviceName: "Facenox Desktop",
+    organizationId: '',
+    organizationName: '',
+    siteId: '',
+    siteName: '',
+    deviceId: '',
+    deviceName: 'Facenox Desktop',
     intervalMinutes: DEFAULT_SYNC_INTERVAL_MINUTES,
     lastSyncedAt: null,
-    lastSyncStatus: "idle",
+    lastSyncStatus: 'idle',
     lastSyncMessage: null,
     connected,
     // A connected device was necessarily paired; default false for fresh/disconnected installs
     wasEverPaired: connected,
     unsyncedRecordsCount: 0,
     unsyncedSessionsCount: 0,
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -154,142 +154,142 @@ export function createElectronAPIMock(): MockElectronAPI {
   return {
     invoke: vi.fn(),
     backend_ready: {
-      isReady: vi.fn().mockResolvedValue(true),
+      isReady: vi.fn().mockResolvedValue(true)
     },
     backend: {
       checkAvailability: vi.fn().mockResolvedValue({ available: true }),
       checkReadiness: vi.fn().mockResolvedValue({ ready: true, modelsLoaded: true }),
-      getToken: vi.fn().mockResolvedValue("test-token"),
+      getToken: vi.fn().mockResolvedValue('test-token'),
       getModels: vi.fn().mockResolvedValue({}),
       getFaceStats: vi.fn().mockResolvedValue({ total_persons: 0, persons: [] }),
-      removePerson: vi.fn().mockResolvedValue({ success: true, message: "Removed" }),
+      removePerson: vi.fn().mockResolvedValue({ success: true, message: 'Removed' }),
       updatePerson: vi.fn().mockResolvedValue({
         success: true,
-        message: "Updated",
-        updated_records: 0,
+        message: 'Updated',
+        updated_records: 0
       }),
       getAllPersons: vi.fn().mockResolvedValue({ success: true, persons: [], total_count: 0 }),
       setThreshold: vi.fn().mockResolvedValue({
         success: true,
-        message: "Threshold updated",
-        threshold: 0.6,
+        message: 'Threshold updated',
+        threshold: 0.6
       }),
       clearDatabase: vi.fn().mockResolvedValue({
         success: true,
-        message: "Cleared",
-        total_persons: 0,
+        message: 'Cleared',
+        total_persons: 0
       }),
-      postMultipart: vi.fn().mockResolvedValue({ success: true }),
+      postMultipart: vi.fn().mockResolvedValue({ success: true })
     },
-    saveFaceDatabase: vi.fn().mockResolvedValue({ success: true, message: "Saved" }),
-    loadFaceDatabase: vi.fn().mockResolvedValue({ success: true, message: "Loaded" }),
-    removeFacePerson: vi.fn().mockResolvedValue({ success: true, message: "Removed" }),
+    saveFaceDatabase: vi.fn().mockResolvedValue({ success: true, message: 'Saved' }),
+    loadFaceDatabase: vi.fn().mockResolvedValue({ success: true, message: 'Loaded' }),
+    removeFacePerson: vi.fn().mockResolvedValue({ success: true, message: 'Removed' }),
     getAllFacePersons: vi.fn().mockResolvedValue({ success: true, persons: [], total_count: 0 }),
     store: {
       get: vi.fn().mockResolvedValue(undefined),
       set: vi.fn().mockResolvedValue(true),
       delete: vi.fn().mockResolvedValue(true),
       getAll: vi.fn().mockResolvedValue({}),
-      reset: vi.fn().mockResolvedValue(true),
+      reset: vi.fn().mockResolvedValue(true)
     },
     updater: {
       checkForUpdates: vi.fn().mockResolvedValue({
-        currentVersion: "1.0.0-beta.1",
-        latestVersion: "1.0.0-beta.1",
+        currentVersion: '1.0.0-beta.1',
+        latestVersion: '1.0.0-beta.1',
         hasUpdate: false,
-        releaseUrl: "https://github.com/facenox/facenox/releases/latest",
-        releaseNotes: "",
-        publishedAt: "",
-        downloadUrl: null,
+        releaseUrl: 'https://github.com/facenox/facenox/releases/latest',
+        releaseNotes: '',
+        publishedAt: '',
+        downloadUrl: null
       }),
-      getVersion: vi.fn().mockResolvedValue("1.0.0-beta.1"),
+      getVersion: vi.fn().mockResolvedValue('1.0.0-beta.1'),
       openReleasePage: vi.fn().mockResolvedValue(true),
-      onUpdateAvailable: vi.fn().mockReturnValue(() => undefined),
+      onUpdateAvailable: vi.fn().mockReturnValue(() => undefined)
     },
     assets: {
-      listRecognitionSounds: vi.fn().mockResolvedValue([]),
+      listRecognitionSounds: vi.fn().mockResolvedValue([])
     },
     sync: {
       getConfig: vi.fn().mockResolvedValue(defaultSyncConfig),
       updateConfig: vi.fn().mockResolvedValue(defaultSyncConfig),
       pairDevice: vi.fn().mockResolvedValue({
         success: true,
-        message: "Device connected.",
+        message: 'Device connected.',
         initialSyncSucceeded: true,
-        config: createSyncConfig({ connected: true }),
+        config: createSyncConfig({ connected: true })
       }),
       initiateReversePairing: vi.fn().mockResolvedValue({
         success: true,
         data: {
-          deviceCode: "mock-device-code",
-          userCode: "749120",
-          verificationUri: "https://facenox.com/pair",
-          verificationUriComplete: "https://facenox.com/pair?code=749120",
+          deviceCode: 'mock-device-code',
+          userCode: '749120',
+          verificationUri: 'https://facenox.com/pair',
+          verificationUriComplete: 'https://facenox.com/pair?code=749120',
           expiresIn: 900,
-          interval: 3,
-        },
+          interval: 3
+        }
       }),
       pollDeviceAuthorization: vi.fn().mockResolvedValue({
-        status: "pending",
+        status: 'pending'
       }),
       disconnectDevice: vi.fn().mockResolvedValue({
         success: true,
         warning: null,
-        config: defaultSyncConfig,
+        config: defaultSyncConfig
       }),
       getLocalDirectorySummary: vi.fn().mockResolvedValue({
         success: true,
-        counts: { groups: 0, members: 0, records: 0, sessions: 0 },
+        counts: { groups: 0, members: 0, records: 0, sessions: 0 }
       }),
       migrateLocalDirectory: vi.fn().mockResolvedValue({
         success: true,
         config: {
           enabled: false,
-          remoteBaseUrl: "https://app.facenox.com",
-          organizationId: "",
-          organizationName: "",
-          siteId: "",
-          siteName: "",
-          deviceId: "",
-          deviceName: "Facenox Desktop",
+          remoteBaseUrl: 'https://app.facenox.com',
+          organizationId: '',
+          organizationName: '',
+          siteId: '',
+          siteName: '',
+          deviceId: '',
+          deviceName: 'Facenox Desktop',
           intervalMinutes: 15,
           lastSyncedAt: null,
-          lastSyncStatus: "idle",
+          lastSyncStatus: 'idle',
           lastSyncMessage: null,
-          connected: false,
-        },
+          connected: false
+        }
       }),
       resetLocalDirectory: vi.fn().mockResolvedValue({
         success: true,
-        config: defaultSyncConfig,
+        config: defaultSyncConfig
       }),
-      exportData: vi.fn().mockResolvedValue({ success: true, filePath: "backup.facenox" }),
+      exportData: vi.fn().mockResolvedValue({ success: true, filePath: 'backup.facenox' }),
       pickImportFile: vi.fn().mockResolvedValue({ canceled: true }),
-      importData: vi.fn().mockResolvedValue({ success: true, message: "Imported" }),
+      importData: vi.fn().mockResolvedValue({ success: true, message: 'Imported' }),
       restartManager: vi.fn().mockResolvedValue({ success: true, config: defaultSyncConfig }),
-      triggerNow: vi.fn().mockResolvedValue({ success: true, message: "Synced now" }),
+      triggerNow: vi.fn().mockResolvedValue({ success: true, message: 'Synced now' }),
       triggerDebouncedSync: vi.fn().mockResolvedValue(undefined),
-      onDataChanged: vi.fn().mockReturnValue(() => undefined),
+      onDataChanged: vi.fn().mockReturnValue(() => undefined)
     },
     autoExport: {
       getConfig: vi.fn().mockResolvedValue({
         enabled: false,
-        time: "17:00",
-        directory: "",
-        format: "combined_csv",
-        lastExportedDate: null,
+        time: '17:00',
+        directory: '',
+        format: 'combined_csv',
+        lastExportedDate: null
       }),
       updateConfig: vi.fn().mockResolvedValue({
         enabled: false,
-        time: "17:00",
-        directory: "",
-        format: "combined_csv",
-        lastExportedDate: null,
+        time: '17:00',
+        directory: '',
+        format: 'combined_csv',
+        lastExportedDate: null
       }),
       triggerNow: vi.fn().mockResolvedValue(true),
       selectDirectory: vi.fn().mockResolvedValue({ canceled: true, path: null }),
-      openDirectory: vi.fn().mockResolvedValue({ success: true, path: "" }),
-    },
+      openDirectory: vi.fn().mockResolvedValue({ success: true, path: '' })
+    }
   }
 }
 
@@ -301,8 +301,8 @@ export function createElectronAPIMock(): MockElectronAPI {
  */
 export function createFacenoxElectronMock(): MockFacenoxElectronAPI {
   return {
-    platform: "linux",
-    desktopEnv: "gnome",
+    platform: 'linux',
+    desktopEnv: 'gnome',
     minimize: vi.fn().mockResolvedValue(true),
     maximize: vi.fn().mockResolvedValue(true),
     close: vi.fn().mockResolvedValue(true),
@@ -316,14 +316,14 @@ export function createFacenoxElectronMock(): MockFacenoxElectronAPI {
     onSystemResume: vi.fn().mockReturnValue(() => undefined),
     getSystemStats: vi.fn().mockResolvedValue({
       cpu: 0,
-      memory: { total: 0, free: 0, appUsage: 0 },
+      memory: { total: 0, free: 0, appUsage: 0 }
     }),
-    exportHealth: vi.fn().mockResolvedValue({ success: true, path: "/mock/health.zip" }),
-    getVersion: vi.fn().mockResolvedValue("1.0.0-beta.1"),
-    openDataDir: vi.fn().mockResolvedValue({ success: true, path: "/mock/data" }),
-    openInstallDir: vi.fn().mockResolvedValue({ success: true, path: "/mock/install" }),
-    openLogFile: vi.fn().mockResolvedValue({ success: true, path: "/mock/log.txt" }),
-    onAppReady: vi.fn(),
+    exportHealth: vi.fn().mockResolvedValue({ success: true, path: '/mock/health.zip' }),
+    getVersion: vi.fn().mockResolvedValue('1.0.0-beta.1'),
+    openDataDir: vi.fn().mockResolvedValue({ success: true, path: '/mock/data' }),
+    openInstallDir: vi.fn().mockResolvedValue({ success: true, path: '/mock/install' }),
+    openLogFile: vi.fn().mockResolvedValue({ success: true, path: '/mock/log.txt' }),
+    onAppReady: vi.fn()
   }
 }
 

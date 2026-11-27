@@ -1,7 +1,7 @@
-import { useState } from "react"
-import { AlertTriangle } from "lucide-react"
-import type { AttendanceGroup } from "@/components/main/types"
-import { Modal } from "@/components/common"
+import { useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
+import type { AttendanceGroup } from '@/components/main/types'
+import { Modal } from '@/components/common'
 
 interface DeleteConfirmationModalProps {
   showDeleteConfirmation: boolean
@@ -15,70 +15,69 @@ export function DeleteConfirmationModal({
   showDeleteConfirmation,
   groupToDelete,
   cancelDeleteGroup,
-  confirmDeleteGroup,
+  confirmDeleteGroup
 }: DeleteConfirmationModalProps) {
-  const [confirmationInput, setConfirmationInput] = useState("")
+  const [confirmationInput, setConfirmationInput] = useState('')
   const [groupSnapshot, setGroupSnapshot] = useState<AttendanceGroup | null>(null)
 
   if (groupToDelete && groupToDelete !== groupSnapshot) {
     setGroupSnapshot(groupToDelete)
   }
 
-  const isConfirmationMatch = confirmationInput.trim() === (groupSnapshot?.name ?? "")
+  const isConfirmationMatch = confirmationInput.trim() === (groupSnapshot?.name ?? '')
 
   return (
     <Modal
       isOpen={showDeleteConfirmation}
       onClose={() => {
-        setConfirmationInput("")
+        setConfirmationInput('')
         cancelDeleteGroup()
       }}
-      title={groupSnapshot ? `Delete ${groupSnapshot.name}` : "Delete group"}
-      icon={<AlertTriangle className="size-4 text-red-400" />}
-      maxWidth="sm">
+      title={groupSnapshot ? `Delete ${groupSnapshot.name}` : 'Delete group'}
+      icon={<AlertTriangle className='size-4 text-red-400' />}
+      maxWidth='sm'>
       {!groupSnapshot ? null : (
         <>
-          <div className="space-y-4">
-            <p className="text-xs leading-relaxed text-white/60">
-              This removes the group, its member profiles, and enrolled face templates. Existing
-              attendance history is retained. Paired computers sync these removals to Cloud.
+          <div className='space-y-4'>
+            <p className='text-xs leading-relaxed text-white/60'>
+              This removes the group, its member profiles, and enrolled face templates. Existing attendance history is
+              retained. Paired computers sync these removals to Cloud.
             </p>
 
-            <div className="space-y-1.5 pt-1">
-              <label htmlFor="confirm-group-name" className="text-xs font-medium text-white/60">
-                To confirm, type{" "}
-                <span className="font-mono font-semibold text-white/90">{groupSnapshot.name}</span>
+            <div className='space-y-1.5 pt-1'>
+              <label htmlFor='confirm-group-name' className='text-xs font-medium text-white/60'>
+                To confirm, type <span className='font-mono font-semibold text-white/90'>{groupSnapshot.name}</span>
               </label>
               <input
-                id="confirm-group-name"
-                type="text"
+                id='confirm-group-name'
+                type='text'
                 autoFocus
                 value={confirmationInput}
                 onChange={(e) => setConfirmationInput(e.target.value)}
                 aria-label={`Confirm deletion of ${groupSnapshot.name}`}
-                className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none focus:border-white/30 focus:bg-white/[0.08] focus:outline-none"
+                className='w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none focus:border-white/30 focus:bg-white/[0.08] focus:outline-none'
               />
             </div>
           </div>
 
-          <div className="mt-8 flex justify-end gap-3">
+          <div className='mt-8 flex justify-end gap-3'>
             <button
-              type="button"
+              type='button'
               onClick={() => {
-                setConfirmationInput("")
+                setConfirmationInput('')
                 cancelDeleteGroup()
               }}
-              className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
+              className='rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]'>
               Cancel
             </button>
             <button
-              type="button"
+              type='button'
               onClick={() => {
-                setConfirmationInput("")
+                setConfirmationInput('')
                 confirmDeleteGroup()
               }}
               disabled={!isConfirmationMatch}
-              className="rounded-lg bg-rose-600 px-6 py-2 text-[11px] font-bold tracking-wider text-white shadow-sm transition-all duration-200 hover:bg-rose-500 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
+              className='rounded-lg bg-rose-600 px-6 py-2 text-[11px] font-bold tracking-wider text-white shadow-sm transition-all duration-200 hover:bg-rose-500 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30'>
               Delete group
             </button>
           </div>

@@ -1,48 +1,44 @@
-import { act, fireEvent, render, screen } from "@testing-library/react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
-import WindowBar from "@/components/window/WindowBar"
-import {
-  createFacenoxElectronMock,
-  createSyncConfig,
-  getElectronAPIMock,
-} from "@/test/mocks/electron"
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import WindowBar from '@/components/window/WindowBar'
+import { createFacenoxElectronMock, createSyncConfig, getElectronAPIMock } from '@/test/mocks/electron'
 
-describe("WindowBar", () => {
-  it("does not advertise a connection before the saved Cloud status loads", async () => {
+describe('WindowBar', () => {
+  it('does not advertise a connection before the saved Cloud status loads', async () => {
     let resolve!: (config: ReturnType<typeof createSyncConfig>) => void
     getElectronAPIMock().sync.getConfig.mockReturnValue(
       new Promise<ReturnType<typeof createSyncConfig>>((complete) => {
         resolve = complete
-      }),
+      })
     )
     render(<WindowBar />)
-    expect(screen.getByText("Loading Cloud status…")).toBeInTheDocument()
-    expect(screen.queryByText("Connect Facenox Cloud")).not.toBeInTheDocument()
+    expect(screen.getByText('Loading Cloud status…')).toBeInTheDocument()
+    expect(screen.queryByText('Connect Facenox Cloud')).not.toBeInTheDocument()
     await act(async () => {
       resolve(createSyncConfig({ connected: true }))
     })
-    expect(screen.queryByText("Loading Cloud status…")).not.toBeInTheDocument()
-    expect(screen.queryByText("Connect Facenox Cloud")).not.toBeInTheDocument()
+    expect(screen.queryByText('Loading Cloud status…')).not.toBeInTheDocument()
+    expect(screen.queryByText('Connect Facenox Cloud')).not.toBeInTheDocument()
   })
 
   it.each([
-    [undefined, undefined, null, "Waiting for sync"],
-    [0, 0, "2026-10-23T02:00:00Z", "Last sync completed"],
-    [2, 0, "2026-10-23T02:00:00Z", "Sync pending"],
-  ] as const)("renders queue state %s / %s", async (records, sessions, timestamp, label) => {
+    [undefined, undefined, null, 'Waiting for sync'],
+    [0, 0, '2026-10-23T02:00:00Z', 'Last sync completed'],
+    [2, 0, '2026-10-23T02:00:00Z', 'Sync pending']
+  ] as const)('renders queue state %s / %s', async (records, sessions, timestamp, label) => {
     getElectronAPIMock().sync.getConfig.mockResolvedValue(
       createSyncConfig({
         connected: true,
         enabled: true,
         lastSyncedAt: timestamp,
-        lastSyncStatus: timestamp ? "success" : "idle",
+        lastSyncStatus: timestamp ? 'success' : 'idle',
         unsyncedRecordsCount: records,
-        unsyncedSessionsCount: sessions,
-      }),
+        unsyncedSessionsCount: sessions
+      })
     )
     render(<WindowBar />)
     expect(await screen.findByText(label)).toBeInTheDocument()
-    expect(screen.queryByText("All records up to date.")).not.toBeInTheDocument()
+    expect(screen.queryByText('All records up to date.')).not.toBeInTheDocument()
   })
   let bridge: ReturnType<typeof createFacenoxElectronMock>
   beforeEach(() => {
@@ -50,12 +46,12 @@ describe("WindowBar", () => {
     window.facenoxElectron = bridge
   })
 
-  it("wires the window action buttons to the Electron bridge", () => {
+  it('wires the window action buttons to the Electron bridge', () => {
     render(<WindowBar />)
 
-    for (const name of ["Minimize", "Maximize", "Close"]) {
-      const button = screen.getByRole("button", { name })
-      expect(button).toHaveAttribute("title", name)
+    for (const name of ['Minimize', 'Maximize', 'Close']) {
+      const button = screen.getByRole('button', { name })
+      expect(button).toHaveAttribute('title', name)
       fireEvent.click(button)
     }
 
@@ -64,7 +60,7 @@ describe("WindowBar", () => {
     expect(bridge.close).toHaveBeenCalledTimes(1)
   })
 
-  it("updates the maximize button label from bridge events and cleans up listeners", () => {
+  it('updates the maximize button label from bridge events and cleans up listeners', () => {
     const cleanupMaximize = vi.fn()
     const cleanupUnmaximize = vi.fn()
     let handleMaximize: (() => void) | undefined
@@ -81,21 +77,21 @@ describe("WindowBar", () => {
 
     const { unmount } = render(<WindowBar />)
 
-    expect(screen.getByRole("button", { name: "Maximize" })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Maximize' })).toBeInTheDocument()
 
     act(() => {
       handleMaximize?.()
     })
-    expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Restore" })).toHaveAttribute("title", "Restore")
+    expect(screen.getByRole('button', { name: 'Restore' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Restore' })).toHaveAttribute('title', 'Restore')
 
     act(() => {
       handleUnmaximize?.()
     })
-    expect(screen.getByRole("button", { name: "Maximize" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Maximize" })).toHaveAttribute("title", "Maximize")
+    expect(screen.getByRole('button', { name: 'Maximize' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Maximize' })).toHaveAttribute('title', 'Maximize')
 
-    fireEvent.click(screen.getByRole("button", { name: "Maximize" }))
+    fireEvent.click(screen.getByRole('button', { name: 'Maximize' }))
     expect(bridge.maximize).toHaveBeenCalledTimes(1)
 
     unmount()
@@ -104,38 +100,38 @@ describe("WindowBar", () => {
     expect(cleanupUnmaximize).toHaveBeenCalledTimes(1)
   })
 
-  it("shows Sync paused instead of Connect Facenox Cloud when a saved pairing has a credential error", async () => {
+  it('shows Sync paused instead of Connect Facenox Cloud when a saved pairing has a credential error', async () => {
     getElectronAPIMock().sync.getConfig.mockResolvedValue(
       createSyncConfig({
         connected: false,
         wasEverPaired: true,
-        organizationId: "org-1",
-        siteId: "site-1",
-        deviceId: "dev-1",
-        credentialError: "System credential storage is unavailable.",
-        lastSyncStatus: "error",
-        lastSyncMessage: "System credential storage is unavailable.",
-      }),
+        organizationId: 'org-1',
+        siteId: 'site-1',
+        deviceId: 'dev-1',
+        credentialError: 'System credential storage is unavailable.',
+        lastSyncStatus: 'error',
+        lastSyncMessage: 'System credential storage is unavailable.'
+      })
     )
 
     render(<WindowBar />)
 
-    expect(await screen.findByText("Sync paused")).toBeInTheDocument()
-    expect(screen.queryByText("Connect Facenox Cloud")).not.toBeInTheDocument()
+    expect(await screen.findByText('Sync paused')).toBeInTheDocument()
+    expect(screen.queryByText('Connect Facenox Cloud')).not.toBeInTheDocument()
   })
 
-  it("shows calm Offline badge for network errors instead of Sync paused", async () => {
+  it('shows calm Offline badge for network errors instead of Sync paused', async () => {
     getElectronAPIMock().sync.getConfig.mockResolvedValue(
       createSyncConfig({
         connected: true,
-        lastSyncStatus: "error",
-        lastSyncMessage: "TypeError: fetch failed",
-      }),
+        lastSyncStatus: 'error',
+        lastSyncMessage: 'TypeError: fetch failed'
+      })
     )
 
     render(<WindowBar />)
 
-    expect(await screen.findByText("Offline")).toBeInTheDocument()
-    expect(screen.queryByText("Sync paused")).not.toBeInTheDocument()
+    expect(await screen.findByText('Offline')).toBeInTheDocument()
+    expect(screen.queryByText('Sync paused')).not.toBeInTheDocument()
   })
 })

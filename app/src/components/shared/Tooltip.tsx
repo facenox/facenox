@@ -1,15 +1,8 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  type ReactNode,
-  type ReactElement,
-} from "react"
-import { createPortal } from "react-dom"
-import { motion, AnimatePresence } from "framer-motion"
+import React, { useState, useRef, useEffect, useCallback, type ReactNode, type ReactElement } from 'react'
+import { createPortal } from 'react-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 
-type TooltipPosition = "top" | "bottom" | "left" | "right"
+type TooltipPosition = 'top' | 'bottom' | 'left' | 'right'
 
 interface TooltipProps {
   content: ReactNode
@@ -37,7 +30,7 @@ function computeCoords(
   tw: number,
   th: number,
   preferred: TooltipPosition,
-  offset: number,
+  offset: number
 ): { top: number; left: number; actualPosition: TooltipPosition } {
   const { innerWidth: vw, innerHeight: vh } = window
   const midX = triggerRect.left + triggerRect.width / 2
@@ -46,30 +39,30 @@ function computeCoords(
   const slots: Record<TooltipPosition, { top: number; left: number }> = {
     top: {
       top: triggerRect.top - th - offset - ARROW_SIZE,
-      left: midX - tw / 2,
+      left: midX - tw / 2
     },
     bottom: {
       top: triggerRect.bottom + offset + ARROW_SIZE,
-      left: midX - tw / 2,
+      left: midX - tw / 2
     },
     left: {
       top: midY - th / 2,
-      left: triggerRect.left - tw - offset - ARROW_SIZE,
+      left: triggerRect.left - tw - offset - ARROW_SIZE
     },
     right: {
       top: midY - th / 2,
-      left: triggerRect.right + offset + ARROW_SIZE,
-    },
+      left: triggerRect.right + offset + ARROW_SIZE
+    }
   }
 
   const fits: Record<TooltipPosition, boolean> = {
     top: slots.top.top >= SCREEN_PADDING,
     bottom: slots.bottom.top + th <= vh - SCREEN_PADDING,
     left: slots.left.left >= SCREEN_PADDING,
-    right: slots.right.left + tw <= vw - SCREEN_PADDING,
+    right: slots.right.left + tw <= vw - SCREEN_PADDING
   }
 
-  const order: TooltipPosition[] = [preferred, "top", "bottom", "left", "right"]
+  const order: TooltipPosition[] = [preferred, 'top', 'bottom', 'left', 'right']
   const actual = order.find((p) => fits[p]) ?? preferred
 
   let { top, left } = slots[actual]
@@ -83,74 +76,74 @@ function buildArrowStyle(
   actual: TooltipPosition,
   triggerRect: DOMRect,
   tooltipLeft: number,
-  tooltipTop: number,
+  tooltipTop: number
 ): React.CSSProperties {
   const midX = triggerRect.left + triggerRect.width / 2
   const midY = triggerRect.top + triggerRect.height / 2
   const solidDark = `${ARROW_SIZE}px solid #141518`
   const transparent = `${ARROW_SIZE}px solid transparent`
 
-  if (actual === "top") {
+  if (actual === 'top') {
     return {
-      position: "absolute",
-      top: "100%",
+      position: 'absolute',
+      top: '100%',
       left: Math.max(8, midX - tooltipLeft),
-      transform: "translateX(-50%)",
+      transform: 'translateX(-50%)',
       borderLeft: transparent,
       borderRight: transparent,
       borderTop: solidDark,
-      borderBottom: "none",
+      borderBottom: 'none',
       width: 0,
-      height: 0,
+      height: 0
     }
   }
-  if (actual === "bottom") {
+  if (actual === 'bottom') {
     return {
-      position: "absolute",
-      bottom: "100%",
+      position: 'absolute',
+      bottom: '100%',
       left: Math.max(8, midX - tooltipLeft),
-      transform: "translateX(-50%)",
+      transform: 'translateX(-50%)',
       borderLeft: transparent,
       borderRight: transparent,
       borderBottom: solidDark,
-      borderTop: "none",
+      borderTop: 'none',
       width: 0,
-      height: 0,
+      height: 0
     }
   }
-  if (actual === "left") {
+  if (actual === 'left') {
     return {
-      position: "absolute",
-      left: "100%",
+      position: 'absolute',
+      left: '100%',
       top: Math.max(8, midY - tooltipTop),
-      transform: "translateY(-50%)",
+      transform: 'translateY(-50%)',
       borderTop: transparent,
       borderBottom: transparent,
       borderLeft: solidDark,
-      borderRight: "none",
+      borderRight: 'none',
       width: 0,
-      height: 0,
+      height: 0
     }
   }
   // right
   return {
-    position: "absolute",
-    right: "100%",
+    position: 'absolute',
+    right: '100%',
     top: Math.max(8, midY - tooltipTop),
-    transform: "translateY(-50%)",
+    transform: 'translateY(-50%)',
     borderTop: transparent,
     borderBottom: transparent,
     borderRight: solidDark,
-    borderLeft: "none",
+    borderLeft: 'none',
     width: 0,
-    height: 0,
+    height: 0
   }
 }
 
 function assignRef(ref: unknown, value: HTMLElement | null) {
-  if (typeof ref === "function") {
+  if (typeof ref === 'function') {
     ref(value)
-  } else if (ref && typeof ref === "object" && "current" in ref) {
+  } else if (ref && typeof ref === 'object' && 'current' in ref) {
     ;(ref as React.MutableRefObject<HTMLElement | null>).current = value
   }
 }
@@ -188,20 +181,20 @@ function TooltipChildWrapper({
     onFocus,
     onBlur,
     onClick,
-    onKeyDown,
+    onKeyDown
   })
 }
-TooltipChildWrapper.displayName = "TooltipChildWrapper"
+TooltipChildWrapper.displayName = 'TooltipChildWrapper'
 
 export function Tooltip({
   content,
   children,
-  position = "top",
+  position = 'top',
   delay = 200,
   disabled = false,
   offset = TOOLTIP_OFFSET,
-  className = "",
-  onlyWhenTruncated = false,
+  className = '',
+  onlyWhenTruncated = false
 }: TooltipProps) {
   const [visible, setVisible] = useState(false)
   const [coords, setCoords] = useState<TooltipCoords | null>(null)
@@ -226,11 +219,10 @@ export function Tooltip({
 
     if (onlyWhenTruncated && triggerRef.current) {
       const el = triggerRef.current
-      const isSelfTruncated =
-        el.scrollWidth - el.clientWidth > 1 || el.scrollHeight - el.clientHeight > 1
-      const isChildTruncated = Array.from(
-        el.querySelectorAll<HTMLElement>(".truncate, [class*='truncate']"),
-      ).some((child) => child.scrollWidth - child.clientWidth > 1)
+      const isSelfTruncated = el.scrollWidth - el.clientWidth > 1 || el.scrollHeight - el.clientHeight > 1
+      const isChildTruncated = Array.from(el.querySelectorAll<HTMLElement>(".truncate, [class*='truncate']")).some(
+        (child) => child.scrollWidth - child.clientWidth > 1
+      )
 
       if (!isSelfTruncated && !isChildTruncated) {
         return
@@ -247,13 +239,13 @@ export function Tooltip({
       lastWindowFocusTime.current = Date.now()
     }
 
-    window.addEventListener("blur", handleWindowBlur)
-    window.addEventListener("focus", handleWindowFocus)
+    window.addEventListener('blur', handleWindowBlur)
+    window.addEventListener('focus', handleWindowFocus)
 
     return () => {
       clearTimer()
-      window.removeEventListener("blur", handleWindowBlur)
-      window.removeEventListener("focus", handleWindowFocus)
+      window.removeEventListener('blur', handleWindowBlur)
+      window.removeEventListener('focus', handleWindowFocus)
     }
   }, [hide, clearTimer])
 
@@ -282,13 +274,13 @@ export function Tooltip({
     rafId = requestAnimationFrame(measure)
 
     // Also re-measure on window scroll/resize to keep it attached if the user moves things
-    window.addEventListener("scroll", measure, true)
-    window.addEventListener("resize", measure)
+    window.addEventListener('scroll', measure, true)
+    window.addEventListener('resize', measure)
 
     return () => {
       cancelAnimationFrame(rafId)
-      window.removeEventListener("scroll", measure, true)
-      window.removeEventListener("resize", measure)
+      window.removeEventListener('scroll', measure, true)
+      window.removeEventListener('resize', measure)
     }
   }, [visible, position, content, offset])
 
@@ -298,11 +290,8 @@ export function Tooltip({
   // Safely grab the child's ref if it exists
   const childRef =
     isChildValid ?
-      (
-        child as React.ReactElement<
-          React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<unknown> }
-        >
-      ).props.ref || (child as unknown as { ref?: React.Ref<unknown> }).ref
+      (child as React.ReactElement<React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<unknown> }>).props.ref ||
+      (child as unknown as { ref?: React.Ref<unknown> }).ref
     : null
 
   const mergedRef = useCallback(
@@ -310,15 +299,13 @@ export function Tooltip({
       triggerRef.current = node
       assignRef(childRef, node)
     },
-    [childRef],
+    [childRef]
   )
 
   // Early returns must happen AFTER hooks
   if (!content || disabled) return children
 
-  const childElement = child as React.ReactElement<
-    React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<unknown> }
-  >
+  const childElement = child as React.ReactElement<React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<unknown> }>
   const childProps = childElement.props
 
   const handleMouseEnter = (e: React.MouseEvent) => {
@@ -345,7 +332,7 @@ export function Tooltip({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape" && (visible || timerRef.current !== null)) {
+    if (e.key === 'Escape' && (visible || timerRef.current !== null)) {
       hide()
       e.stopPropagation()
     }
@@ -369,16 +356,16 @@ export function Tooltip({
           {visible && (
             <motion.div
               ref={tooltipRef}
-              role="tooltip"
+              role='tooltip'
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.94 }}
-              transition={{ duration: 0.1, ease: "easeOut" }}
-              className="pointer-events-none fixed z-99999"
+              transition={{ duration: 0.1, ease: 'easeOut' }}
+              className='pointer-events-none fixed z-99999'
               style={{
                 top: coords?.top ?? -9999,
                 left: coords?.left ?? -9999,
-                visibility: coords ? "visible" : "hidden",
+                visibility: coords ? 'visible' : 'hidden'
               }}>
               <div
                 className={`relative max-w-[260px] rounded-md border border-white/10 bg-[#141518] px-2.5 py-1 text-[10px] leading-snug font-medium [overflow-wrap:anywhere] break-words whitespace-normal text-white/90 ${className}`}>
@@ -388,7 +375,7 @@ export function Tooltip({
             </motion.div>
           )}
         </AnimatePresence>,
-        document.body,
+        document.body
       )}
     </>
   )

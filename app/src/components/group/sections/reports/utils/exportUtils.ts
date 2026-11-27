@@ -1,11 +1,11 @@
-import { escapeCsvCell } from "@/shared/csv"
-import type { RowData, ColumnKey } from "@/components/group/sections/reports/types"
-import { parseLocalDate, generateDateRange, createDisplayNameMap, formatDuration } from "@/utils"
-import { attendanceManager } from "@/services/AttendanceManager"
-import type { AttendanceGroup, AttendanceSession } from "@/types/recognition"
-import { DEPARTURE_LABELS, getSessionDepartureStatus } from "@/shared/departureStatus"
-import { formatAttendanceTime, getAttendanceDateString } from "@/utils/attendanceTime"
-import { compareReportRows } from "./reportOrdering"
+import { escapeCsvCell } from '@/shared/csv'
+import type { RowData, ColumnKey } from '@/components/group/sections/reports/types'
+import { parseLocalDate, generateDateRange, createDisplayNameMap, formatDuration } from '@/utils'
+import { attendanceManager } from '@/services/AttendanceManager'
+import type { AttendanceGroup, AttendanceSession } from '@/types/recognition'
+import { DEPARTURE_LABELS, getSessionDepartureStatus } from '@/shared/departureStatus'
+import { formatAttendanceTime, getAttendanceDateString } from '@/utils/attendanceTime'
+import { compareReportRows } from './reportOrdering'
 
 export function exportReportToCSV(
   groupedRows: Record<string, RowData[]>,
@@ -14,58 +14,56 @@ export function exportReportToCSV(
   groupName: string,
   startDate: string,
   endDate: string,
-  attendanceTimeZone?: string | null,
+  attendanceTimeZone?: string | null
 ) {
   try {
-    const pad = (n: number, len = 2) => String(n).padStart(len, "0")
+    const pad = (n: number, len = 2) => String(n).padStart(len, '0')
     const formatDateOnly = (d: Date): string => {
       return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`
     }
-    const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, "_").trim()
+    const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, '_').trim()
 
     const cols = allColumns.filter((c) => visibleColumns.includes(c.key))
     // CSV lateness remains numeric minutes, unlike the table's formatted duration.
-    const header = cols.map((c) => (c.key === "late_minutes" ? "Late (mins)" : c.label))
+    const header = cols.map((c) => (c.key === 'late_minutes' ? 'Late (mins)' : c.label))
     const rows: string[][] = []
     Object.values(groupedRows).forEach((groupArr) => {
       groupArr.forEach((r) => {
         const row = cols.map((c) => {
           const v = r[c.key]
 
-          if (c.key === "total_hours" && typeof v === "number") {
+          if (c.key === 'total_hours' && typeof v === 'number') {
             return formatDuration(Math.round(v * 60))
           }
 
-          if (c.key === "departure_status") {
-            return r.departure_status ? DEPARTURE_LABELS[r.departure_status] : ""
+          if (c.key === 'departure_status') {
+            return r.departure_status ? DEPARTURE_LABELS[r.departure_status] : ''
           }
 
-          if (c.key === "date" && typeof v === "string") {
+          if (c.key === 'date' && typeof v === 'string') {
             return formatDateOnly(parseLocalDate(v))
           }
 
-          if ((c.key === "check_in_time" || c.key === "check_out_time") && v instanceof Date) {
+          if ((c.key === 'check_in_time' || c.key === 'check_out_time') && v instanceof Date) {
             const capturedTimeZone =
-              c.key === "check_in_time" ?
-                r.session?.check_in_time_timezone
-              : r.session?.check_out_time_timezone
+              c.key === 'check_in_time' ? r.session?.check_in_time_timezone : r.session?.check_out_time_timezone
             return formatAttendanceTime(v, capturedTimeZone || attendanceTimeZone)
           }
 
-          if (typeof v === "boolean") return v ? "true" : "false"
-          if (typeof v === "number") return String(v)
+          if (typeof v === 'boolean') return v ? 'true' : 'false'
+          if (typeof v === 'number') return String(v)
           if (v instanceof Date) return formatDateOnly(v)
-          return v ?? ""
+          return v ?? ''
         })
         rows.push(row)
       })
     })
 
-    const csvContent = [header, ...rows].map((row) => row.map(escapeCsvCell).join(",")).join("\n")
+    const csvContent = [header, ...rows].map((row) => row.map(escapeCsvCell).join(',')).join('\n')
 
-    const blob = new Blob([csvContent], { type: "text/csv" })
+    const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
-    const anchor = document.createElement("a")
+    const anchor = document.createElement('a')
     let appended = false
 
     try {
@@ -73,7 +71,7 @@ export function exportReportToCSV(
 
       const formatDateForFilename = (dateString: string): string => {
         const date = parseLocalDate(dateString)
-        const month = date.toLocaleString("en-US", { month: "long" })
+        const month = date.toLocaleString('en-US', { month: 'long' })
         const day = date.getDate()
         const year = date.getFullYear()
         return `${month} ${day}, ${year}`
@@ -82,8 +80,7 @@ export function exportReportToCSV(
       const formattedStartDate = formatDateForFilename(startDate)
       const formattedEndDate = formatDateForFilename(endDate)
 
-      const dateRange =
-        startDate === endDate ? formattedStartDate : `${formattedStartDate} to ${formattedEndDate}`
+      const dateRange = startDate === endDate ? formattedStartDate : `${formattedStartDate} to ${formattedEndDate}`
 
       anchor.download = sanitizeFilename(`${groupName} (${dateRange}).csv`)
       document.body.appendChild(anchor)
@@ -97,7 +94,7 @@ export function exportReportToCSV(
     }
     return { success: true }
   } catch (err) {
-    console.error("Error exporting view:", err)
+    console.error('Error exporting view:', err)
     return { success: false, error: err }
   }
 }
@@ -110,16 +107,16 @@ interface ProcessedGroupReportData {
 
 function escapeXml(unsafe: string): string {
   return String(unsafe)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;")
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
 }
 
 function triggerDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
-  const anchor = document.createElement("a")
+  const anchor = document.createElement('a')
   let appended = false
   try {
     anchor.href = url
@@ -137,7 +134,7 @@ function triggerDownload(blob: Blob, filename: string) {
 
 function formatDateForFilename(dateString: string): string {
   const date = parseLocalDate(dateString)
-  const month = date.toLocaleString("en-US", { month: "long" })
+  const month = date.toLocaleString('en-US', { month: 'long' })
   const day = date.getDate()
   const year = date.getFullYear()
   return `${month} ${day}, ${year}`
@@ -153,16 +150,16 @@ async function fetchAllGroupsProcessedData(
   groups: AttendanceGroup[],
   startDate: string,
   endDate: string,
-  attendanceTimeZone?: string | null,
+  attendanceTimeZone?: string | null
 ): Promise<ProcessedGroupReportData[]> {
-  const pad = (n: number, len = 2) => String(n).padStart(len, "0")
+  const pad = (n: number, len = 2) => String(n).padStart(len, '0')
   const formatDateOnly = (d: Date): string => {
     return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`
   }
   const allDates = generateDateRange(startDate, endDate)
   const todayStr = getAttendanceDateString(new Date(), attendanceTimeZone)
 
-  const validGroups = groups.filter((g) => g.id !== "all")
+  const validGroups = groups.filter((g) => g.id !== 'all')
   const groupDataPromises = validGroups.map(async (group) => {
     const [members, sessions] = await Promise.all([
       attendanceManager.getGroupMembers(group.id, { throwOnError: true }),
@@ -170,10 +167,10 @@ async function fetchAllGroupsProcessedData(
         {
           group_id: group.id,
           start_date: startDate,
-          end_date: endDate,
+          end_date: endDate
         },
-        { throwOnError: true },
-      ),
+        { throwOnError: true }
+      )
     ])
     return { group, members, sessions }
   })
@@ -192,22 +189,21 @@ async function fetchAllGroupsProcessedData(
     })
 
     const includeVisitColumn =
-      group.settings?.attendance_mode === "visits" ||
+      group.settings?.attendance_mode === 'visits' ||
       sessions.some(
-        (session) =>
-          (session.visit_number || 1) > 1 || session.applied_schedule?.attendance_mode === "visits",
+        (session) => (session.visit_number || 1) > 1 || session.applied_schedule?.attendance_mode === 'visits'
       )
     const header = [
-      "Name",
-      "Date",
-      ...(includeVisitColumn ? ["Visit"] : []),
-      "Status",
-      "Time in",
-      "Time out",
-      "Departure",
-      "Total hours",
-      "Late (mins)",
-      "Notes",
+      'Name',
+      'Date',
+      ...(includeVisitColumn ? ['Visit'] : []),
+      'Status',
+      'Time in',
+      'Time out',
+      'Departure',
+      'Total hours',
+      'Late (mins)',
+      'Notes'
     ]
     const orderedRows: {
       date: string
@@ -222,8 +218,8 @@ async function fetchAllGroupsProcessedData(
       const rawJoinedAt = member.joined_at as unknown
       if (rawJoinedAt instanceof Date) {
         memberJoinedStr = getAttendanceDateString(rawJoinedAt, attendanceTimeZone)
-      } else if (typeof rawJoinedAt === "string") {
-        memberJoinedStr = rawJoinedAt.split("T")[0]
+      } else if (typeof rawJoinedAt === 'string') {
+        memberJoinedStr = rawJoinedAt.split('T')[0]
       }
 
       for (const date of allDates) {
@@ -240,57 +236,50 @@ async function fetchAllGroupsProcessedData(
 
           let status: string
           if (shouldShowNoRecords) {
-            status = "No Records"
+            status = 'No Records'
           } else if (!exportSession) {
-            status = "Absent"
+            status = 'Absent'
           } else if (exportSession.is_late) {
-            status = "Late"
+            status = 'Late'
           } else {
             status =
               exportSession.status ?
                 exportSession.status.charAt(0).toUpperCase() + exportSession.status.slice(1)
-              : "Present"
+              : 'Present'
           }
 
-          let timeIn = ""
+          let timeIn = ''
           if (exportSession?.check_in_time) {
             const d =
               exportSession.check_in_time instanceof Date ?
                 exportSession.check_in_time
               : new Date(exportSession.check_in_time)
             if (!isNaN(d.getTime())) {
-              timeIn = formatAttendanceTime(
-                d,
-                exportSession.check_in_time_timezone || attendanceTimeZone,
-              )
+              timeIn = formatAttendanceTime(d, exportSession.check_in_time_timezone || attendanceTimeZone)
             }
           }
 
-          let timeOut = ""
+          let timeOut = ''
           if (exportSession?.check_out_time) {
             const d =
               exportSession.check_out_time instanceof Date ?
                 exportSession.check_out_time
               : new Date(exportSession.check_out_time)
             if (!isNaN(d.getTime())) {
-              timeOut = formatAttendanceTime(
-                d,
-                exportSession.check_out_time_timezone || attendanceTimeZone,
-              )
+              timeOut = formatAttendanceTime(d, exportSession.check_out_time_timezone || attendanceTimeZone)
             }
           }
 
-          let totalHoursStr = ""
-          if (typeof exportSession?.total_hours === "number") {
+          let totalHoursStr = ''
+          if (typeof exportSession?.total_hours === 'number') {
             totalHoursStr = formatDuration(Math.round(exportSession.total_hours * 60))
           }
 
-          const lateMinutesStr =
-            exportSession?.late_minutes ? String(exportSession.late_minutes) : ""
+          const lateMinutesStr = exportSession?.late_minutes ? String(exportSession.late_minutes) : ''
           const departureStatus = getSessionDepartureStatus(exportSession, attendanceTimeZone)
-          const notesStr = exportSession?.notes || ""
+          const notesStr = exportSession?.notes || ''
 
-          const name = displayNameMap.get(member.person_id) || member.name || "Member"
+          const name = displayNameMap.get(member.person_id) || member.name || 'Member'
           orderedRows.push({
             date,
             name,
@@ -299,17 +288,15 @@ async function fetchAllGroupsProcessedData(
             cells: [
               name,
               formatDateOnly(parseLocalDate(date)),
-              ...(includeVisitColumn ?
-                [exportSession ? String(exportSession.visit_number || 1) : ""]
-              : []),
+              ...(includeVisitColumn ? [exportSession ? String(exportSession.visit_number || 1) : ''] : []),
               status,
               timeIn,
               timeOut,
-              departureStatus ? DEPARTURE_LABELS[departureStatus] : "",
+              departureStatus ? DEPARTURE_LABELS[departureStatus] : '',
               totalHoursStr,
               lateMinutesStr,
-              notesStr,
-            ],
+              notesStr
+            ]
           })
         }
       }
@@ -318,7 +305,7 @@ async function fetchAllGroupsProcessedData(
     processedGroups.push({
       group,
       header,
-      rows: orderedRows.sort(compareReportRows).map((row) => row.cells),
+      rows: orderedRows.sort(compareReportRows).map((row) => row.cells)
     })
   }
 
@@ -333,16 +320,11 @@ export async function exportAllGroupsReportToExcel(
   groups: AttendanceGroup[],
   startDate: string,
   endDate: string,
-  attendanceTimeZone?: string | null,
+  attendanceTimeZone?: string | null
 ) {
   try {
-    const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, "_").trim()
-    const processedGroups = await fetchAllGroupsProcessedData(
-      groups,
-      startDate,
-      endDate,
-      attendanceTimeZone,
-    )
+    const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, '_').trim()
+    const processedGroups = await fetchAllGroupsProcessedData(groups, startDate, endDate, attendanceTimeZone)
     if (processedGroups.length === 0) return { success: true }
 
     const usedSheetNames = new Set<string>()
@@ -350,9 +332,9 @@ export async function exportAllGroupsReportToExcel(
       .map(({ group, header, rows }) => {
         const cleanName =
           group.name
-            .replace(/[\\/?*:[\]]/g, "_")
+            .replace(/[\\/?*:[\]]/g, '_')
             .trim()
-            .slice(0, 31) || "Group"
+            .slice(0, 31) || 'Group'
         let uniqueName = cleanName
         let counter = 1
         while (usedSheetNames.has(uniqueName.toLowerCase())) {
@@ -363,16 +345,16 @@ export async function exportAllGroupsReportToExcel(
         usedSheetNames.add(uniqueName.toLowerCase())
 
         const headerRowXml = `   <Row ss:StyleID="Header">
-${header.map((h) => `    <Cell><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join("\n")}
+${header.map((h) => `    <Cell><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('\n')}
    </Row>`
 
         const dataRowsXml = rows
           .map(
             (row) => `   <Row>
-${row.map((cell) => `    <Cell><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join("\n")}
-   </Row>`,
+${row.map((cell) => `    <Cell><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join('\n')}
+   </Row>`
           )
-          .join("\n")
+          .join('\n')
 
         return ` <Worksheet ss:Name="${escapeXml(uniqueName)}">
   <Table>
@@ -389,7 +371,7 @@ ${dataRowsXml}
   </Table>
  </Worksheet>`
       })
-      .join("\n")
+      .join('\n')
 
     const excelXml = `<?xml version="1.0" encoding="UTF-8"?>
 <?mso-application progid="Excel.Sheet"?>
@@ -418,11 +400,11 @@ ${worksheetsXml}
 
     const dateRange = getDateRangeFilenameLabel(startDate, endDate)
     const filename = sanitizeFilename(`All Groups Attendance (${dateRange}).xls`)
-    const blob = new Blob([excelXml], { type: "application/vnd.ms-excel;charset=utf-8" })
+    const blob = new Blob([excelXml], { type: 'application/vnd.ms-excel;charset=utf-8' })
     triggerDownload(blob, filename)
     return { success: true }
   } catch (err) {
-    console.error("Error exporting all groups to Excel:", err)
+    console.error('Error exporting all groups to Excel:', err)
     return { success: false, error: err }
   }
 }
@@ -434,23 +416,18 @@ export async function exportAllGroupsReportToIndividualCSVs(
   groups: AttendanceGroup[],
   startDate: string,
   endDate: string,
-  attendanceTimeZone?: string | null,
+  attendanceTimeZone?: string | null
 ) {
   try {
-    const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, "_").trim()
-    const processedGroups = await fetchAllGroupsProcessedData(
-      groups,
-      startDate,
-      endDate,
-      attendanceTimeZone,
-    )
+    const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, '_').trim()
+    const processedGroups = await fetchAllGroupsProcessedData(groups, startDate, endDate, attendanceTimeZone)
     const dateRange = getDateRangeFilenameLabel(startDate, endDate)
 
     for (let i = 0; i < processedGroups.length; i++) {
       const { group, header, rows } = processedGroups[i]
-      const csvContent = [header, ...rows].map((row) => row.map(escapeCsvCell).join(",")).join("\n")
+      const csvContent = [header, ...rows].map((row) => row.map(escapeCsvCell).join(',')).join('\n')
 
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const filename = sanitizeFilename(`${group.name} - Attendance (${dateRange}).csv`)
 
       // Small delay between multiple browser downloads to prevent browser throttling
@@ -462,7 +439,7 @@ export async function exportAllGroupsReportToIndividualCSVs(
 
     return { success: true }
   } catch (err) {
-    console.error("Error exporting individual group CSVs:", err)
+    console.error('Error exporting individual group CSVs:', err)
     return { success: false, error: err }
   }
 }
@@ -474,53 +451,43 @@ export async function exportAllGroupsReportToCSV(
   groups: AttendanceGroup[],
   startDate: string,
   endDate: string,
-  attendanceTimeZone?: string | null,
+  attendanceTimeZone?: string | null
 ) {
   try {
-    const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, "_").trim()
-    const processedGroups = await fetchAllGroupsProcessedData(
-      groups,
-      startDate,
-      endDate,
-      attendanceTimeZone,
-    )
+    const sanitizeFilename = (name: string): string => name.replace(/[\\/:*?"<>|]/g, '_').trim()
+    const processedGroups = await fetchAllGroupsProcessedData(groups, startDate, endDate, attendanceTimeZone)
 
     const combinedHeader = [
-      "Group",
-      "Name",
-      "Date",
-      "Visit",
-      "Status",
-      "Time in",
-      "Time out",
-      "Departure",
-      "Total hours",
-      "Late (mins)",
-      "Notes",
+      'Group',
+      'Name',
+      'Date',
+      'Visit',
+      'Status',
+      'Time in',
+      'Time out',
+      'Departure',
+      'Total hours',
+      'Late (mins)',
+      'Notes'
     ]
 
     const combinedRows: string[][] = []
     for (const { group, header, rows } of processedGroups) {
       const columnIndexes = combinedHeader.slice(1).map((label) => header.indexOf(label))
       for (const row of rows) {
-        combinedRows.push([
-          group.name,
-          ...columnIndexes.map((index) => (index >= 0 ? row[index] : "")),
-        ])
+        combinedRows.push([group.name, ...columnIndexes.map((index) => (index >= 0 ? row[index] : ''))])
       }
     }
 
-    const csvContent = [combinedHeader, ...combinedRows]
-      .map((row) => row.map(escapeCsvCell).join(","))
-      .join("\n")
+    const csvContent = [combinedHeader, ...combinedRows].map((row) => row.map(escapeCsvCell).join(',')).join('\n')
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const dateRange = getDateRangeFilenameLabel(startDate, endDate)
     const filename = sanitizeFilename(`All Groups Combined Attendance (${dateRange}).csv`)
     triggerDownload(blob, filename)
     return { success: true }
   } catch (err) {
-    console.error("Error exporting all groups report:", err)
+    console.error('Error exporting all groups report:', err)
     return { success: false, error: err }
   }
 }

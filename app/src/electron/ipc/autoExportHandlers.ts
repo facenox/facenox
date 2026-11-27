@@ -1,32 +1,31 @@
-import { ipcMain, dialog, shell, type OpenDialogOptions } from "electron"
-import { autoExportManager, type AutoExportConfig } from "../managers/AutoExportManager.js"
-import { state } from "../State.js"
+import { ipcMain, dialog, shell, type OpenDialogOptions } from 'electron'
+import { autoExportManager, type AutoExportConfig } from '../managers/AutoExportManager.js'
+import { state } from '../State.js'
 
 export function registerAutoExportHandlers() {
-  ipcMain.handle("auto-export:get-config", () => {
+  ipcMain.handle('auto-export:get-config', () => {
     return autoExportManager.getConfig()
   })
 
-  ipcMain.handle("auto-export:update-config", (_event, updates: Partial<AutoExportConfig>) => {
+  ipcMain.handle('auto-export:update-config', (_event, updates: Partial<AutoExportConfig>) => {
     return autoExportManager.updateConfig(updates)
   })
 
-  ipcMain.handle("auto-export:trigger-now", async (_event, targetDate?: string) => {
+  ipcMain.handle('auto-export:trigger-now', async (_event, targetDate?: string) => {
     return autoExportManager.triggerExport(targetDate)
   })
 
-  ipcMain.handle("auto-export:select-directory", async () => {
+  ipcMain.handle('auto-export:select-directory', async () => {
     const window = state.mainWindow
     const currentConfig = autoExportManager.getConfig()
     const defaultPath = currentConfig.directory || autoExportManager.getDefaultExportDirectory()
 
     const options: OpenDialogOptions = {
-      title: "Select directory for scheduled reports",
+      title: 'Select directory for scheduled reports',
       defaultPath,
-      properties: ["openDirectory", "createDirectory"],
+      properties: ['openDirectory', 'createDirectory']
     }
-    const result =
-      window ? await dialog.showOpenDialog(window, options) : await dialog.showOpenDialog(options)
+    const result = window ? await dialog.showOpenDialog(window, options) : await dialog.showOpenDialog(options)
 
     if (result.canceled || result.filePaths.length === 0) {
       return { canceled: true, path: null }
@@ -37,7 +36,7 @@ export function registerAutoExportHandlers() {
     return { canceled: false, path: selectedPath }
   })
 
-  ipcMain.handle("auto-export:open-directory", async () => {
+  ipcMain.handle('auto-export:open-directory', async () => {
     const config = autoExportManager.getConfig()
     const targetDir = config.directory || autoExportManager.getDefaultExportDirectory()
     await shell.openPath(targetDir)

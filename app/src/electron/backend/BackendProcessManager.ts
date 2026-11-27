@@ -1,11 +1,11 @@
-import { spawn, exec, execSync, execFile, type ChildProcess } from "child_process"
-import { randomBytes } from "crypto"
-import { app } from "electron"
-import path from "path"
-import fs from "fs"
-import { promisify } from "util"
-import isDev from "../util.js"
-import { getDataDirectory, getLegacyDataDirectory, getLogDirectory } from "../paths.js"
+import { spawn, exec, execSync, execFile, type ChildProcess } from 'child_process'
+import { randomBytes } from 'crypto'
+import { app } from 'electron'
+import path from 'path'
+import fs from 'fs'
+import { promisify } from 'util'
+import isDev from '../util.js'
+import { getDataDirectory, getLegacyDataDirectory, getLogDirectory } from '../paths.js'
 
 const sleep = promisify(setTimeout)
 const execAsync = promisify(exec)
@@ -42,16 +42,16 @@ export class BackendProcessManager {
   private healthCheckTimer: NodeJS.Timeout | null = null
   private startupPromise: Promise<void> | null = null
   /** Session token injected into the Python process via FACENOX_API_TOKEN. */
-  private token: string = ""
-  private stdoutBuffer = ""
+  private token: string = ''
+  private stdoutBuffer = ''
   private startupProgressListeners = new Set<(update: BackendStartupProgress) => void>()
   private isStoppingManually = false
   private crashTimestamps: number[] = []
   private readonly MAX_CRASHES_PER_WINDOW = 5
   private readonly CRASH_WINDOW_MS = 60_000
   private logStream: fs.WriteStream | null = null
-  private logFilePath: string = ""
-  private logOldFilePath: string = ""
+  private logFilePath: string = ''
+  private logOldFilePath: string = ''
   private currentLogSizeBytes = 0
   private readonly MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
   private isRotating = false
@@ -60,7 +60,7 @@ export class BackendProcessManager {
   private hasCompletedStartup = false
   private logWriteQueue: string[] = []
   private lastStartupActivityTime = 0
-  private startupErrorBuffer = ""
+  private startupErrorBuffer = ''
 
   constructor(config: BackendConfig, status: BackendStatus) {
     this.config = config
@@ -84,7 +84,7 @@ export class BackendProcessManager {
   }
 
   private isStartupProgressLine(line: string): boolean {
-    return line.trim().startsWith("FACENOX_STARTUP_PROGRESS:")
+    return line.trim().startsWith('FACENOX_STARTUP_PROGRESS:')
   }
 
   private writeToBackendLog(text: string): void {
@@ -93,7 +93,7 @@ export class BackendProcessManager {
       return
     }
 
-    const textBytes = Buffer.byteLength(text, "utf8")
+    const textBytes = Buffer.byteLength(text, 'utf8')
     if (this.currentLogSizeBytes + textBytes > this.MAX_LOG_SIZE_BYTES) {
       this.logWriteQueue.push(text)
       this.rotateBackendLog()
@@ -120,29 +120,26 @@ export class BackendProcessManager {
           fs.renameSync(this.logFilePath, this.logOldFilePath)
         }
       } catch (err) {
-        console.error("[BackendProcessManager] Failed to rotate log file:", err)
+        console.error('[BackendProcessManager] Failed to rotate log file:', err)
       }
 
       try {
         if (this.logFilePath) {
           const rotationNotice = `[${new Date().toISOString()}] Log rotated (5 MB limit reached)\n`
           fs.writeFileSync(this.logFilePath, rotationNotice)
-          this.logStream = fs.createWriteStream(this.logFilePath, { flags: "a" })
-          this.currentLogSizeBytes = Buffer.byteLength(rotationNotice, "utf8")
+          this.logStream = fs.createWriteStream(this.logFilePath, { flags: 'a' })
+          this.currentLogSizeBytes = Buffer.byteLength(rotationNotice, 'utf8')
 
           while (this.logWriteQueue.length > 0) {
             const item = this.logWriteQueue.shift()
             if (item && this.logStream) {
               this.logStream.write(item)
-              this.currentLogSizeBytes += Buffer.byteLength(item, "utf8")
+              this.currentLogSizeBytes += Buffer.byteLength(item, 'utf8')
             }
           }
         }
       } catch (err) {
-        console.error(
-          "[BackendProcessManager] Failed to re-initialize log stream after rotation:",
-          err,
-        )
+        console.error('[BackendProcessManager] Failed to re-initialize log stream after rotation:', err)
       } finally {
         this.isRotating = false
       }
@@ -157,7 +154,7 @@ export class BackendProcessManager {
           clearTimeout(this.rotationTimeout)
           this.rotationTimeout = null
         }
-        streamToClose.removeListener("close", runOnce)
+        streamToClose.removeListener('close', runOnce)
         this.rotationCancel = null
         performRotation()
       }
@@ -167,10 +164,10 @@ export class BackendProcessManager {
           clearTimeout(this.rotationTimeout)
           this.rotationTimeout = null
         }
-        streamToClose.removeListener("close", runOnce)
+        streamToClose.removeListener('close', runOnce)
       }
       streamToClose.end()
-      streamToClose.once("close", runOnce)
+      streamToClose.once('close', runOnce)
       this.rotationTimeout = setTimeout(() => {
         if (this.isRotating && !this.logStream) {
           runOnce()
@@ -184,7 +181,7 @@ export class BackendProcessManager {
   private handleStdoutChunk(chunk: string): void {
     this.stdoutBuffer += chunk
     const lines = this.stdoutBuffer.split(/\r?\n/)
-    this.stdoutBuffer = lines.pop() ?? ""
+    this.stdoutBuffer = lines.pop() ?? ''
 
     for (const line of lines) {
       this.writeToBackendLog(`[STDOUT] ${line}\n`)
@@ -197,7 +194,7 @@ export class BackendProcessManager {
 
   private handleStdoutLine(line: string): void {
     const trimmedLine = line.trim()
-    const prefix = "FACENOX_STARTUP_PROGRESS:"
+    const prefix = 'FACENOX_STARTUP_PROGRESS:'
 
     if (!trimmedLine.startsWith(prefix)) {
       return
@@ -215,10 +212,10 @@ export class BackendProcessManager {
         step: parsed.step,
         totalSteps: parsed.total_steps,
         progress: parsed.progress,
-        detail: parsed.detail,
+        detail: parsed.detail
       })
     } catch (error) {
-      console.warn("[BackendProcessManager] Failed to parse startup progress:", error)
+      console.warn('[BackendProcessManager] Failed to parse startup progress:', error)
     }
   }
 
@@ -231,10 +228,10 @@ export class BackendProcessManager {
   private async _start(): Promise<void> {
     this.isStoppingManually = false
     if (this.status.isRunning) return
-    this.startupErrorBuffer = ""
+    this.startupErrorBuffer = ''
 
     // Generate a fresh per-session token before spawning the backend.
-    this.token = randomBytes(32).toString("hex")
+    this.token = randomBytes(32).toString('hex')
 
     await this.killAllBackendProcesses()
 
@@ -245,16 +242,16 @@ export class BackendProcessManager {
 
       if (isDev()) {
         command = await this.findPythonExecutable()
-        args = [executablePath, "--port", this.config.port.toString(), "--host", this.config.host]
+        args = [executablePath, '--port', this.config.port.toString(), '--host', this.config.host]
       } else {
         command = executablePath
-        args = ["--port", this.config.port.toString(), "--host", this.config.host]
+        args = ['--port', this.config.port.toString(), '--host', this.config.host]
       }
 
       const env: Record<string, string | undefined> = {
         ...process.env,
-        ENVIRONMENT: isDev() ? "development" : "production",
-        FACENOX_API_TOKEN: this.token,
+        ENVIRONMENT: isDev() ? 'development' : 'production',
+        FACENOX_API_TOKEN: this.token
       }
 
       const logDir = getLogDirectory()
@@ -269,25 +266,20 @@ export class BackendProcessManager {
       }
 
       this.process = spawn(command, args, {
-        stdio: "pipe",
+        stdio: 'pipe',
         detached: false,
         windowsHide: true,
-        env,
+        env
       })
 
-      this.logFilePath = path.join(logDir, "facenox.log")
-      this.logOldFilePath = path.join(logDir, "facenox.old.log")
-      const logFileLegacy = path.join(logDir, "backend-startup.log")
-      const logFileOldBackend = path.join(logDir, "backend.log")
+      this.logFilePath = path.join(logDir, 'facenox.log')
+      this.logOldFilePath = path.join(logDir, 'facenox.old.log')
+      const logFileLegacy = path.join(logDir, 'backend-startup.log')
+      const logFileOldBackend = path.join(logDir, 'backend.log')
       try {
         if (!isDev()) {
-          const oldLogDir = app.getPath("userData")
-          for (const fileName of [
-            "facenox.log",
-            "facenox.old.log",
-            "backend-startup.log",
-            "backend.log",
-          ]) {
+          const oldLogDir = app.getPath('userData')
+          for (const fileName of ['facenox.log', 'facenox.old.log', 'backend-startup.log', 'backend.log']) {
             const oldPath = path.join(oldLogDir, fileName)
             const newPath = path.join(logDir, fileName)
             if (fs.existsSync(oldPath) && !fs.existsSync(newPath)) {
@@ -323,17 +315,17 @@ export class BackendProcessManager {
 
       const startupNotice = `[${new Date().toISOString()}] Facenox starting...\n`
       fs.appendFileSync(this.logFilePath, startupNotice)
-      this.logStream = fs.createWriteStream(this.logFilePath, { flags: "a" })
+      this.logStream = fs.createWriteStream(this.logFilePath, { flags: 'a' })
       this.currentLogSizeBytes = fs.statSync(this.logFilePath).size
 
       this.lastStartupActivityTime = Date.now()
 
-      this.process.stdout?.on("data", (data) => {
+      this.process.stdout?.on('data', (data) => {
         this.lastStartupActivityTime = Date.now()
         this.handleStdoutChunk(data.toString())
       })
 
-      this.process.stderr?.on("data", (data) => {
+      this.process.stderr?.on('data', (data) => {
         this.lastStartupActivityTime = Date.now()
         const msg = data.toString()
         this.startupErrorBuffer = (this.startupErrorBuffer + msg).slice(-4000)
@@ -374,16 +366,14 @@ export class BackendProcessManager {
   private setupProcessHandlers(): void {
     if (!this.process) return
 
-    this.process.on("error", (error) => {
+    this.process.on('error', (error) => {
       console.error(`[BackendProcessManager] Process error: ${error.message}`)
       this.status.error = error.message
       this.status.isRunning = false
     })
 
-    this.process.on("exit", (code, signal) => {
-      console.log(
-        `[BackendProcessManager] Process exited with code ${code}${signal ? ` and signal ${signal}` : ""}`,
-      )
+    this.process.on('exit', (code, signal) => {
+      console.log(`[BackendProcessManager] Process exited with code ${code}${signal ? ` and signal ${signal}` : ''}`)
       this.status.isRunning = false
       if (this.process !== null) this.cleanup()
 
@@ -394,22 +384,18 @@ export class BackendProcessManager {
 
         if (this.crashTimestamps.length <= this.MAX_CRASHES_PER_WINDOW) {
           const delay = Math.min(10000, Math.pow(2, this.crashTimestamps.length) * 500)
-          console.warn(
-            `[BackendProcessManager] Unexpected crash detected. Auto-restarting in ${delay}ms...`,
-          )
+          console.warn(`[BackendProcessManager] Unexpected crash detected. Auto-restarting in ${delay}ms...`)
           setTimeout(async () => {
             if (!this.isStoppingManually && !this.status.isRunning) {
               const pid = await this.findListeningPid()
               if (pid) await this.terminatePid(pid)
               void this.start().catch((err) => {
-                console.error("[BackendProcessManager] Auto-restart failed:", err)
+                console.error('[BackendProcessManager] Auto-restart failed:', err)
               })
             }
           }, delay)
         } else {
-          console.error(
-            "[BackendProcessManager] Crash loop limit reached (>5 crashes in 60s). Halting auto-restart.",
-          )
+          console.error('[BackendProcessManager] Crash loop limit reached (>5 crashes in 60s). Halting auto-restart.')
         }
       }
     })
@@ -430,7 +416,7 @@ export class BackendProcessManager {
         const diagnostic = this.startupErrorBuffer.trim()
         throw new Error(
           `Backend process exited unexpectedly with code ${this.process.exitCode}` +
-            (diagnostic ? `\n\n${diagnostic}` : ""),
+            (diagnostic ? `\n\n${diagnostic}` : '')
         )
       }
 
@@ -450,8 +436,8 @@ export class BackendProcessManager {
   private async healthCheck(): Promise<boolean> {
     try {
       const response = await fetch(`http://${this.config.host}:${this.config.port}/`, {
-        method: "GET",
-        signal: AbortSignal.timeout(5000),
+        method: 'GET',
+        signal: AbortSignal.timeout(5000)
       })
 
       if (response.ok) {
@@ -533,13 +519,13 @@ export class BackendProcessManager {
 
   private async terminatePid(pid: number): Promise<void> {
     try {
-      if (process.platform === "win32") {
+      if (process.platform === 'win32') {
         await execAsync(`taskkill /F /PID ${pid} /T`)
         return
       }
 
       try {
-        process.kill(pid, "SIGTERM")
+        process.kill(pid, 'SIGTERM')
       } catch {
         return
       }
@@ -547,14 +533,14 @@ export class BackendProcessManager {
       const exited = await this.waitForPidExit(pid, 1500)
       if (!exited) {
         try {
-          process.kill(pid, "SIGKILL")
+          process.kill(pid, 'SIGKILL')
         } catch {
           /* silent */
         }
       }
     } catch (error: unknown) {
       const err = error as { message?: string }
-      if (!err?.message?.includes("not found")) {
+      if (!err?.message?.includes('not found')) {
         console.error(`[BackendProcessManager] Failed to terminate PID ${pid}:`, error)
       }
     }
@@ -562,16 +548,16 @@ export class BackendProcessManager {
 
   private terminatePidSync(pid: number): void {
     try {
-      if (process.platform === "win32") {
+      if (process.platform === 'win32') {
         execSync(`taskkill /F /PID ${pid} /T`, {
-          stdio: "ignore",
-          timeout: 3000,
+          stdio: 'ignore',
+          timeout: 3000
         })
         return
       }
 
       try {
-        process.kill(pid, "SIGTERM")
+        process.kill(pid, 'SIGTERM')
       } catch {
         return
       }
@@ -583,7 +569,7 @@ export class BackendProcessManager {
 
       if (this.isPidAlive(pid)) {
         try {
-          process.kill(pid, "SIGKILL")
+          process.kill(pid, 'SIGKILL')
         } catch {
           /* silent */
         }
@@ -613,8 +599,8 @@ export class BackendProcessManager {
 
   private async findListeningPid(): Promise<number | null> {
     try {
-      if (process.platform === "win32") {
-        const { stdout } = await execAsync("netstat -ano -p TCP")
+      if (process.platform === 'win32') {
+        const { stdout } = await execAsync('netstat -ano -p TCP')
         return this.parseWindowsNetstatPid(stdout)
       }
 
@@ -632,24 +618,24 @@ export class BackendProcessManager {
 
   private findListeningPidSync(): number | null {
     try {
-      if (process.platform === "win32") {
-        const stdout = execSync("netstat -ano -p TCP", {
-          encoding: "utf8",
-          timeout: 3000,
+      if (process.platform === 'win32') {
+        const stdout = execSync('netstat -ano -p TCP', {
+          encoding: 'utf8',
+          timeout: 3000
         })
         return this.parseWindowsNetstatPid(stdout)
       }
 
       try {
         const stdout = execSync(`lsof -nP -iTCP:${this.config.port} -sTCP:LISTEN -t`, {
-          encoding: "utf8",
-          timeout: 3000,
+          encoding: 'utf8',
+          timeout: 3000
         })
         return this.parseFirstPid(stdout)
       } catch {
         const stdout = execSync(`ss -ltnp 'sport = :${this.config.port}'`, {
-          encoding: "utf8",
-          timeout: 3000,
+          encoding: 'utf8',
+          timeout: 3000
         })
         return this.parseUnixSocketPid(stdout)
       }
@@ -667,7 +653,7 @@ export class BackendProcessManager {
       if (parts.length < 5) continue
 
       const [protocol, localAddress, , state, pidText] = parts
-      if (protocol !== "TCP" || state !== "LISTENING" || !localAddress.endsWith(portSuffix)) {
+      if (protocol !== 'TCP' || state !== 'LISTENING' || !localAddress.endsWith(portSuffix)) {
         continue
       }
 
@@ -705,7 +691,7 @@ export class BackendProcessManager {
     this.hasCompletedStartup = false
     this.rotationCancel?.()
     this.rotationCancel = null
-    this.stdoutBuffer = ""
+    this.stdoutBuffer = ''
     this.logWriteQueue = []
     this.isRotating = false
     if (this.logStream) {
@@ -716,60 +702,60 @@ export class BackendProcessManager {
 
   private getBackendExecutablePath(): string {
     if (isDev()) {
-      return path.join(app.getAppPath(), "..", "server", "run.py")
+      return path.join(app.getAppPath(), '..', 'server', 'run.py')
     }
 
     const platform = process.platform
-    const executableName = platform === "win32" ? "server.exe" : "server"
+    const executableName = platform === 'win32' ? 'server.exe' : 'server'
     const possiblePaths = [
-      path.join(process.resourcesPath, "server", executableName),
+      path.join(process.resourcesPath, 'server', executableName),
       path.join(process.resourcesPath, executableName),
-      path.join(app.getAppPath(), "server", executableName),
-      path.join(app.getAppPath(), "resources", "server", executableName),
+      path.join(app.getAppPath(), 'server', executableName),
+      path.join(app.getAppPath(), 'resources', 'server', executableName)
     ]
 
     for (const execPath of possiblePaths) {
       if (fs.existsSync(execPath)) return execPath
     }
 
-    throw new Error(`Server executable not found. Searched paths: ${possiblePaths.join(", ")}`)
+    throw new Error(`Server executable not found. Searched paths: ${possiblePaths.join(', ')}`)
   }
 
   private async findPythonExecutable(): Promise<string> {
     const possiblePaths = [
       // Support virtual environments at the project root folder for standard monorepos.
-      path.join(process.cwd(), "..", "venv", "Scripts", "python.exe"),
-      path.join(process.cwd(), "..", "venv", "bin", "python"),
-      path.join(process.cwd(), "venv", "Scripts", "python.exe"),
-      path.join(process.cwd(), "venv", "bin", "python"),
+      path.join(process.cwd(), '..', 'venv', 'Scripts', 'python.exe'),
+      path.join(process.cwd(), '..', 'venv', 'bin', 'python'),
+      path.join(process.cwd(), 'venv', 'Scripts', 'python.exe'),
+      path.join(process.cwd(), 'venv', 'bin', 'python'),
 
       // Support virtual environments inside the server subdirectory to prevent crashes if the developer ran local build scripts beforehand.
-      path.join(process.cwd(), "..", "server", "venv", "Scripts", "python.exe"),
-      path.join(process.cwd(), "..", "server", "venv", "bin", "python"),
-      path.join(process.cwd(), "server", "venv", "Scripts", "python.exe"),
-      path.join(process.cwd(), "server", "venv", "bin", "python"),
+      path.join(process.cwd(), '..', 'server', 'venv', 'Scripts', 'python.exe'),
+      path.join(process.cwd(), '..', 'server', 'venv', 'bin', 'python'),
+      path.join(process.cwd(), 'server', 'venv', 'Scripts', 'python.exe'),
+      path.join(process.cwd(), 'server', 'venv', 'bin', 'python'),
 
-      "python",
-      "python3",
-      "python.exe",
-      "C:\\Python39\\python.exe",
-      "C:\\Python310\\python.exe",
-      "C:\\Python311\\python.exe",
-      "C:\\Python312\\python.exe",
-      "/usr/bin/python3",
-      "/usr/local/bin/python3",
-      "/opt/homebrew/bin/python3",
+      'python',
+      'python3',
+      'python.exe',
+      'C:\\Python39\\python.exe',
+      'C:\\Python310\\python.exe',
+      'C:\\Python311\\python.exe',
+      'C:\\Python312\\python.exe',
+      '/usr/bin/python3',
+      '/usr/local/bin/python3',
+      '/opt/homebrew/bin/python3'
     ]
 
     for (const p of possiblePaths) {
       try {
         if (fs.existsSync(p)) {
-          const result = await execFileAsync(p, ["--version"])
-          if (result.stdout.includes("Python")) return p
-        } else if (!p.includes("\\") && !p.includes("/")) {
+          const result = await execFileAsync(p, ['--version'])
+          if (result.stdout.includes('Python')) return p
+        } else if (!p.includes('\\') && !p.includes('/')) {
           try {
-            const result = await execFileAsync(p, ["--version"])
-            if (result.stdout.includes("Python")) return p
+            const result = await execFileAsync(p, ['--version'])
+            if (result.stdout.includes('Python')) return p
           } catch {
             /* silent */
           }
@@ -779,9 +765,7 @@ export class BackendProcessManager {
       }
     }
 
-    throw new Error(
-      "Python executable not found. Ensure Python is installed and accessible in system PATH.",
-    )
+    throw new Error('Python executable not found. Ensure Python is installed and accessible in system PATH.')
   }
 
   getUrl(): string {

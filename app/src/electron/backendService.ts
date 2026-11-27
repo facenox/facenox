@@ -2,9 +2,9 @@ import {
   BackendProcessManager,
   type BackendConfig,
   type BackendStartupProgress,
-  type BackendStatus,
-} from "./backend/BackendProcessManager.js"
-import { BackendClient, type ModelsResponse } from "./backend/BackendClient.js"
+  type BackendStatus
+} from './backend/BackendProcessManager.js'
+import { BackendClient, type ModelsResponse } from './backend/BackendClient.js'
 
 export type { BackendConfig, BackendStatus, ModelsResponse, BackendStartupProgress }
 
@@ -17,22 +17,22 @@ export class BackendService {
   constructor(config: Partial<BackendConfig> = {}) {
     this.config = {
       port: 7400,
-      host: "127.0.0.1",
+      host: '127.0.0.1',
       timeout: 60000,
       maxRetries: 3,
       healthCheckInterval: 10000,
-      ...config,
+      ...config
     }
 
     this.status = {
       isRunning: false,
-      port: this.config.port,
+      port: this.config.port
     }
 
     this.processManager = new BackendProcessManager(this.config, this.status)
     this.client = new BackendClient(
       () => this.getUrl(),
-      () => this.getToken(),
+      () => this.getToken()
     )
   }
 

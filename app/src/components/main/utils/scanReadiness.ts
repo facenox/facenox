@@ -1,4 +1,4 @@
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
 
 interface ScanDataState {
   isShellReady: boolean
@@ -11,8 +11,7 @@ interface ScanDataState {
   groupMembers: AttendanceMember[]
 }
 
-type ScanReadinessReason =
-  "ready" | "loading" | "error" | "no_groups" | "no_selection" | "no_faces" | "no_camera"
+type ScanReadinessReason = 'ready' | 'loading' | 'error' | 'no_groups' | 'no_selection' | 'no_faces' | 'no_camera'
 export interface ScanReadiness {
   canStart: boolean
   reason: ScanReadinessReason
@@ -21,38 +20,37 @@ export interface ScanReadiness {
 
 export function getScanReadiness(state: ScanDataState, hasCameraDevices: boolean): ScanReadiness {
   if (state.shellBootstrapError || state.panelDataError) {
-    return { canStart: false, reason: "error", tooltip: "Attendance data couldn't be loaded" }
+    return { canStart: false, reason: 'error', tooltip: "Attendance data couldn't be loaded" }
   }
   if (!state.isShellReady) {
-    return { canStart: false, reason: "loading", tooltip: "Loading groups and settings" }
+    return { canStart: false, reason: 'loading', tooltip: 'Loading groups and settings' }
   }
   if (!state.attendanceGroups.length) {
-    return { canStart: false, reason: "no_groups", tooltip: "Create a group to start scanning" }
+    return { canStart: false, reason: 'no_groups', tooltip: 'Create a group to start scanning' }
   }
   if (!state.currentGroup) {
-    return { canStart: false, reason: "no_selection", tooltip: "Select a group to start scanning" }
+    return { canStart: false, reason: 'no_selection', tooltip: 'Select a group to start scanning' }
   }
   if (state.isPanelLoading || state.isPanelSwitchPending) {
-    return { canStart: false, reason: "loading", tooltip: "Loading group members" }
+    return { canStart: false, reason: 'loading', tooltip: 'Loading group members' }
   }
   const groupId = state.currentGroup.id
-  const isAllGroups = groupId === "all"
+  const isAllGroups = groupId === 'all'
   const hasEnrolledFaces = state.groupMembers.some(
-    (member) =>
-      member.is_active && member.has_face_data && (isAllGroups || member.group_id === groupId),
+    (member) => member.is_active && member.has_face_data && (isAllGroups || member.group_id === groupId)
   )
   if (!hasEnrolledFaces) {
     return {
       canStart: false,
-      reason: "no_faces",
+      reason: 'no_faces',
       tooltip:
         isAllGroups ?
-          "Enroll at least one member to start scanning"
-        : "Enroll at least one member in this group to start scanning",
+          'Enroll at least one member to start scanning'
+        : 'Enroll at least one member in this group to start scanning'
     }
   }
   if (!hasCameraDevices) {
-    return { canStart: false, reason: "no_camera", tooltip: "No camera detected" }
+    return { canStart: false, reason: 'no_camera', tooltip: 'No camera detected' }
   }
-  return { canStart: true, reason: "ready" }
+  return { canStart: true, reason: 'ready' }
 }

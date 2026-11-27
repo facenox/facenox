@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
+import { useEffect, useRef } from 'react'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
 
-import { useGroupStore } from "@/components/group/stores"
+import { useGroupStore } from '@/components/group/stores'
 
 interface UseGroupDataOptions {
   isEmbedded?: boolean
@@ -13,10 +13,7 @@ interface UseGroupDataOptions {
  * Hook that provides access to group data from Zustand store
  * Handles initialization and side effects
  */
-export function useGroupData(
-  initialGroup?: AttendanceGroup | null,
-  options: UseGroupDataOptions = {},
-) {
+export function useGroupData(initialGroup?: AttendanceGroup | null, options: UseGroupDataOptions = {}) {
   const { isEmbedded = false, embeddedGroups = [], embeddedMembers = [] } = options
   const selectedGroup = useGroupStore((state) => state.selectedGroup)
   const groups = useGroupStore((state) => state.groups)
@@ -46,8 +43,7 @@ export function useGroupData(
   // Sync initialGroup with store, but skip if it doesn't exist in groups (was deleted)
   useEffect(() => {
     if (isEmbedded) {
-      const nextSelected =
-        initialGroup ? (embeddedGroups.find((g) => g.id === initialGroup.id) ?? initialGroup) : null
+      const nextSelected = initialGroup ? (embeddedGroups.find((g) => g.id === initialGroup.id) ?? initialGroup) : null
 
       if (!nextSelected) {
         if (selectedGroup !== null) {
@@ -73,8 +69,7 @@ export function useGroupData(
     }
 
     // Check if initialGroup exists in current groups
-    const initialGroupExists =
-      initialGroup ? currentGroups.some((g) => g.id === initialGroup.id) : false
+    const initialGroupExists = initialGroup ? currentGroups.some((g) => g.id === initialGroup.id) : false
 
     // Don't sync deleted groups
     if (initialGroup && !initialGroupExists) {
@@ -83,11 +78,7 @@ export function useGroupData(
     }
 
     // Don't restore if group was just deleted
-    if (
-      selectedGroup === null &&
-      initialGroup &&
-      (lastDeletedGroupId === initialGroup.id || !initialGroupExists)
-    ) {
+    if (selectedGroup === null && initialGroup && (lastDeletedGroupId === initialGroup.id || !initialGroupExists)) {
       lastProcessedRef.current = stateKey
       return
     }
@@ -102,14 +93,7 @@ export function useGroupData(
     }
 
     lastProcessedRef.current = stateKey
-  }, [
-    isEmbedded,
-    embeddedGroups,
-    initialGroup,
-    selectedGroup,
-    setSelectedGroup,
-    lastDeletedGroupId,
-  ])
+  }, [isEmbedded, embeddedGroups, initialGroup, selectedGroup, setSelectedGroup, lastDeletedGroupId])
 
   useEffect(() => {
     if (!isEmbedded) return
@@ -120,10 +104,7 @@ export function useGroupData(
       return
     }
 
-    if (
-      embeddedMembers.length > 0 &&
-      embeddedMembers.every((m) => m.group_id === selectedGroupId)
-    ) {
+    if (embeddedMembers.length > 0 && embeddedMembers.every((m) => m.group_id === selectedGroupId)) {
       setMembers(embeddedMembers)
     } else {
       fetchGroupDetails(selectedGroupId)
@@ -167,6 +148,6 @@ export function useGroupData(
     fetchGroups,
     fetchGroupDetails,
     deleteGroup,
-    exportData,
+    exportData
   }
 }

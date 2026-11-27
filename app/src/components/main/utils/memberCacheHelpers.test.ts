@@ -1,47 +1,47 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { getMemberFromCache } from "./memberCacheHelpers"
-import { attendanceManager } from "@/services"
-import { ALL_GROUPS_ID } from "../hooks/useAttendanceGroups"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { getMemberFromCache } from './memberCacheHelpers'
+import { attendanceManager } from '@/services'
+import { ALL_GROUPS_ID } from '../hooks/useAttendanceGroups'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
 
-vi.mock("@/services", () => ({
+vi.mock('@/services', () => ({
   attendanceManager: {
-    getMember: vi.fn(),
-  },
+    getMember: vi.fn()
+  }
 }))
 
-describe("getMemberFromCache", () => {
+describe('getMemberFromCache', () => {
   const memberCacheRef = { current: new Map<string, AttendanceMember | null>() }
   const mockGroup: AttendanceGroup = {
-    id: "group-1",
-    name: "Group 1",
+    id: 'group-1',
+    name: 'Group 1',
     created_at: new Date(),
     is_active: true,
-    settings: {},
+    settings: {}
   }
   const otherGroup: AttendanceGroup = {
-    id: "group-2",
-    name: "Group 2",
+    id: 'group-2',
+    name: 'Group 2',
     created_at: new Date(),
     is_active: true,
-    settings: {},
+    settings: {}
   }
   const allGroupsVirtual: AttendanceGroup = {
     id: ALL_GROUPS_ID,
-    name: "All Groups",
+    name: 'All Groups',
     created_at: new Date(),
     is_active: true,
-    settings: {},
+    settings: {}
   }
   const mockMember: AttendanceMember = {
-    id: "mem-1",
-    person_id: "person-1",
-    name: "Alice",
-    group_id: "group-1",
-    role: "student",
+    id: 'mem-1',
+    person_id: 'person-1',
+    name: 'Alice',
+    group_id: 'group-1',
+    role: 'student',
     has_face_data: true,
     is_active: true,
-    joined_at: new Date(),
+    joined_at: new Date()
   }
 
   beforeEach(() => {
@@ -49,59 +49,59 @@ describe("getMemberFromCache", () => {
     memberCacheRef.current = new Map()
   })
 
-  it("retries fetching member metadata after enrollment instead of staying locked", async () => {
+  it('retries fetching member metadata after enrollment instead of staying locked', async () => {
     // First call: member does not exist in DB yet
     vi.mocked(attendanceManager.getMember).mockResolvedValueOnce(undefined)
 
-    const result1 = await getMemberFromCache("person-1", mockGroup, memberCacheRef)
+    const result1 = await getMemberFromCache('person-1', mockGroup, memberCacheRef)
     expect(result1).toBeNull()
     expect(attendanceManager.getMember).toHaveBeenCalledTimes(1)
 
     // Second call: member was enrolled/created in DB
     vi.mocked(attendanceManager.getMember).mockResolvedValueOnce(mockMember)
 
-    const result2 = await getMemberFromCache("person-1", mockGroup, memberCacheRef)
+    const result2 = await getMemberFromCache('person-1', mockGroup, memberCacheRef)
     expect(attendanceManager.getMember).toHaveBeenCalledTimes(2)
     expect(result2).toEqual({
       member: mockMember,
-      memberName: "Alice",
+      memberName: 'Alice'
     })
 
     // Third call: should read from cache without extra API calls
-    const result3 = await getMemberFromCache("person-1", mockGroup, memberCacheRef)
+    const result3 = await getMemberFromCache('person-1', mockGroup, memberCacheRef)
     expect(attendanceManager.getMember).toHaveBeenCalledTimes(2)
-    expect(result3?.memberName).toBe("Alice")
+    expect(result3?.memberName).toBe('Alice')
   })
 
-  it("All Groups mode (ALL_GROUPS_ID) resolves members from any group", async () => {
+  it('All Groups mode (ALL_GROUPS_ID) resolves members from any group', async () => {
     vi.mocked(attendanceManager.getMember).mockResolvedValueOnce(mockMember)
 
-    const result = await getMemberFromCache("person-1", allGroupsVirtual, memberCacheRef)
+    const result = await getMemberFromCache('person-1', allGroupsVirtual, memberCacheRef)
     expect(result).toEqual({
       member: mockMember,
-      memberName: "Alice",
+      memberName: 'Alice'
     })
   })
 
-  it("filters out members not belonging to active group in single group mode", async () => {
+  it('filters out members not belonging to active group in single group mode', async () => {
     vi.mocked(attendanceManager.getMember).mockResolvedValueOnce(mockMember)
 
-    const result = await getMemberFromCache("person-1", otherGroup, memberCacheRef)
+    const result = await getMemberFromCache('person-1', otherGroup, memberCacheRef)
     expect(result).toBeNull()
   })
 
-  it("does not insert a pending old lookup into a refreshed member cache", async () => {
+  it('does not insert a pending old lookup into a refreshed member cache', async () => {
     let finishLookup!: (member: AttendanceMember) => void
     vi.mocked(attendanceManager.getMember).mockReturnValueOnce(
       new Promise((resolve) => {
         finishLookup = resolve
-      }),
+      })
     )
-    const pending = getMemberFromCache("person-1", mockGroup, memberCacheRef)
-    const updatedMember = { ...mockMember, name: "Updated Alice" }
-    memberCacheRef.current = new Map([["person-1", updatedMember]])
+    const pending = getMemberFromCache('person-1', mockGroup, memberCacheRef)
+    const updatedMember = { ...mockMember, name: 'Updated Alice' }
+    memberCacheRef.current = new Map([['person-1', updatedMember]])
     finishLookup(mockMember)
     await pending
-    expect(memberCacheRef.current.get("person-1")).toEqual(updatedMember)
+    expect(memberCacheRef.current.get('person-1')).toEqual(updatedMember)
   })
 })

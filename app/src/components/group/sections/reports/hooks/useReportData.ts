@@ -1,18 +1,13 @@
-import { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react"
-import { attendanceManager } from "@/services"
-import { getLocalDateString, parseLocalDate } from "@/utils"
-import type {
-  AttendanceGroup,
-  AttendanceReport,
-  AttendanceSession,
-  AttendanceMember,
-} from "@/types/recognition"
+import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { attendanceManager } from '@/services'
+import { getLocalDateString, parseLocalDate } from '@/utils'
+import type { AttendanceGroup, AttendanceReport, AttendanceSession, AttendanceMember } from '@/types/recognition'
 
 export function useReportData(
   group: AttendanceGroup,
   initialMembers: AttendanceMember[],
   startDateStr: string,
-  endDateStr: string,
+  endDateStr: string
 ) {
   const [report, setReport] = useState<AttendanceReport | null>(null)
   const [sessions, setSessions] = useState<AttendanceSession[]>([])
@@ -68,9 +63,7 @@ export function useReportData(
     if (!isMountedRef.current || activeQueryRef.current !== queryKey) return
     const requestId = ++requestIdRef.current
     const isCurrentRequest = () =>
-      isMountedRef.current &&
-      requestId === requestIdRef.current &&
-      activeQueryRef.current === queryKey
+      isMountedRef.current && requestId === requestIdRef.current && activeQueryRef.current === queryKey
     const startDate = parseLocalDate(startDateStr)
     const endDate = parseLocalDate(endDateStr)
 
@@ -81,7 +74,7 @@ export function useReportData(
       endDate.getFullYear() < 2000
     ) {
       if (isCurrentRequest()) {
-        setError("Select a valid report date range.")
+        setError('Select a valid report date range.')
         setLoading(false)
         setSettledQueryKey(queryKey)
       }
@@ -90,7 +83,7 @@ export function useReportData(
 
     if (startDate > endDate) {
       if (isCurrentRequest()) {
-        setError("The start date must be on or before the end date.")
+        setError('The start date must be on or before the end date.')
         setLoading(false)
         setSettledQueryKey(queryKey)
       }
@@ -107,13 +100,13 @@ export function useReportData(
           {
             group_id: group.id,
             start_date: getLocalDateString(startDate),
-            end_date: getLocalDateString(endDate),
+            end_date: getLocalDateString(endDate)
           },
-          { throwOnError: true },
+          { throwOnError: true }
         ),
         initialMembersRef.current.length > 0 ?
           Promise.resolve(initialMembersRef.current)
-        : attendanceManager.getGroupMembers(group.id, { throwOnError: true }),
+        : attendanceManager.getGroupMembers(group.id, { throwOnError: true })
       ])
       if (!isCurrentRequest()) return
       setReport(generatedReport)
@@ -121,8 +114,8 @@ export function useReportData(
       setMembers(loadedMembers)
     } catch (err) {
       if (!isCurrentRequest()) return
-      console.error("Error generating report:", err)
-      setError(err instanceof Error ? err.message : "Failed to generate report")
+      console.error('Error generating report:', err)
+      setError(err instanceof Error ? err.message : 'Failed to generate report')
     } finally {
       if (isCurrentRequest()) {
         setLoading(false)
@@ -137,6 +130,6 @@ export function useReportData(
     members,
     loading: loading || settledQueryKey !== queryKey,
     error: settledQueryKey === queryKey ? error : null,
-    generateReport,
+    generateReport
   }
 }

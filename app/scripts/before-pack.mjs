@@ -1,32 +1,32 @@
-import { execFileSync } from "node:child_process"
-import fs from "node:fs"
-import path from "node:path"
-import { fileURLToPath } from "node:url"
+import { execFileSync } from 'node:child_process'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const backendDir = fileURLToPath(new URL("../../server/", import.meta.url))
+const backendDir = fileURLToPath(new URL('../../server/', import.meta.url))
 
 export default function beforePack(context) {
-  const layout = process.env.FACENOX_BACKEND_LAYOUT ?? "onefile"
-  if (layout !== "onefile" && layout !== "onedir") {
+  const layout = process.env.FACENOX_BACKEND_LAYOUT ?? 'onefile'
+  if (layout !== 'onefile' && layout !== 'onedir') {
     throw new Error(`Unknown Facenox backend layout: ${layout}`)
   }
 
-  const windows = context.electronPlatformName === "win32"
-  const executableName = windows ? "server.exe" : "server"
-  const distDir = path.join(backendDir, "dist")
-  const stage = path.join(distDir, "electron-backend")
-  const onedir = layout === "onedir"
-  const source = onedir ? path.join(distDir, "server-onedir") : distDir
+  const windows = context.electronPlatformName === 'win32'
+  const executableName = windows ? 'server.exe' : 'server'
+  const distDir = path.join(backendDir, 'dist')
+  const stage = path.join(distDir, 'electron-backend')
+  const onedir = layout === 'onedir'
+  const source = onedir ? path.join(distDir, 'server-onedir') : distDir
   const executable = path.join(source, executableName)
-  const contents = path.join(source, "_internal")
+  const contents = path.join(source, '_internal')
 
   if (!fs.statSync(executable, { throwIfNoEntry: false })?.isFile()) {
-    if (process.env.FACENOX_PREBUILT_BACKEND === "1") {
+    if (process.env.FACENOX_PREBUILT_BACKEND === '1') {
       throw new Error(`The ${layout} backend artifact is missing: ${executable}`)
     }
-    const args = ["build_backend.py"]
-    if (onedir) args.push("--onedir")
-    execFileSync("python", args, { cwd: backendDir, stdio: "inherit" })
+    const args = ['build_backend.py']
+    if (onedir) args.push('--onedir')
+    execFileSync('python', args, { cwd: backendDir, stdio: 'inherit' })
   }
   if (!fs.statSync(executable, { throwIfNoEntry: false })?.isFile()) {
     throw new Error(`The backend executable is missing: ${executable}`)

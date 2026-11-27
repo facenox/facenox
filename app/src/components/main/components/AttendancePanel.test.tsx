@@ -1,50 +1,42 @@
-import { act, fireEvent, screen } from "@testing-library/react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
-import { AttendancePanel } from "@/components/main/components/AttendancePanel"
-import { useAttendanceStore, useUIStore } from "@/components/main/stores"
-import {
-  createAttendanceGroup,
-  createAttendanceMember,
-  createAttendanceRecord,
-} from "@/test/fixtures"
-import { renderWithProviders } from "@/test/utils/renderWithProviders"
-import { attendanceDateTimeToDate } from "@/utils/attendanceTime"
+import { act, fireEvent, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { AttendancePanel } from '@/components/main/components/AttendancePanel'
+import { useAttendanceStore, useUIStore } from '@/components/main/stores'
+import { createAttendanceGroup, createAttendanceMember, createAttendanceRecord } from '@/test/fixtures'
+import { renderWithProviders } from '@/test/utils/renderWithProviders'
+import { attendanceDateTimeToDate } from '@/utils/attendanceTime'
 
-vi.mock("@/components/shared", () => ({
+vi.mock('@/components/shared', () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   MemberTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Dropdown: ({
     options,
     value,
     onChange,
-    placeholder = "Select…",
+    placeholder = 'Select…'
   }: {
     options: { value: string | number; label: string }[]
     value: string | number | null | undefined
     onChange: (value: string | null) => void
     placeholder?: string
   }) => (
-    <select
-      data-testid="mock-dropdown"
-      value={value ?? ""}
-      onChange={(event) => onChange(event.target.value || null)}>
-      <option value="">{placeholder}</option>
+    <select data-testid='mock-dropdown' value={value ?? ''} onChange={(event) => onChange(event.target.value || null)}>
+      <option value=''>{placeholder}</option>
       {options.map((option) => (
         <option key={String(option.value)} value={String(option.value)}>
           {option.label}
         </option>
       ))}
     </select>
-  ),
+  )
 }))
 
-vi.mock("@/components/main/components/ManualEntryModal", () => ({
-  ManualEntryModal: ({ isOpen }: { isOpen: boolean }) =>
-    isOpen ? <div>Manual attendance dialog</div> : null,
+vi.mock('@/components/main/components/ManualEntryModal', () => ({
+  ManualEntryModal: ({ isOpen }: { isOpen: boolean }) => (isOpen ? <div>Manual attendance dialog</div> : null)
 }))
 
-vi.mock("@/components/main/components/ManualCorrectionModal", () => ({
-  ManualCorrectionModal: () => null,
+vi.mock('@/components/main/components/ManualCorrectionModal', () => ({
+  ManualCorrectionModal: () => null
 }))
 
 function resetStores() {
@@ -62,13 +54,13 @@ function resetStores() {
     showGroupManagement: false,
     showDeleteConfirmation: false,
     groupToDelete: null,
-    newGroupName: "",
+    newGroupName: '',
     persistentCooldowns: new Map(),
     attendanceCooldownSeconds: 8,
     attendanceTimezone: null,
     enableSpoofDetection: true,
     maxRecognitionFacesPerFrame: 6,
-    dataRetentionDays: 0,
+    dataRetentionDays: 0
   })
 
   useUIStore.setState({
@@ -84,67 +76,60 @@ function resetStores() {
     sidebarWidth: 300,
     quickSettings: {
       cameraMirrored: true,
-      showRecognitionNames: true,
+      showRecognitionNames: true
     },
     audioSettings: {
       recognitionSoundEnabled: true,
-      recognitionSoundUrl: "./assets/sounds/Recognition_Success.wav",
+      recognitionSoundUrl: './assets/sounds/Recognition_Success.wav'
     },
     adminPinEnabled: false,
     isPinPromptOpen: false,
-    pendingPinCallback: null,
+    pendingPinCallback: null
   })
 }
 
-describe("AttendancePanel", () => {
+describe('AttendancePanel', () => {
   beforeEach(() => {
     resetStores()
   })
 
-  it("requires the configured admin PIN before opening manual attendance", () => {
+  it('requires the configured admin PIN before opening manual attendance', () => {
     const group = createAttendanceGroup()
     useAttendanceStore.setState({ attendanceGroups: [group], currentGroup: group })
-    useUIStore.setState({ adminPinEnabled: true, adminPin: "2468" })
-    renderWithProviders(
-      <AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn()} />,
-      { withDialogProvider: false },
-    )
+    useUIStore.setState({ adminPinEnabled: true, adminPin: '2468' })
+    renderWithProviders(<AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn()} />, {
+      withDialogProvider: false
+    })
 
-    fireEvent.click(screen.getByRole("button", { name: "Members" }))
+    fireEvent.click(screen.getByRole('button', { name: 'Members' }))
     expect(useUIStore.getState().isPinPromptOpen).toBe(true)
-    expect(screen.queryByText("Manual attendance dialog")).not.toBeInTheDocument()
+    expect(screen.queryByText('Manual attendance dialog')).not.toBeInTheDocument()
 
-    act(() => useUIStore.getState().verifyPin("2468"))
-    expect(screen.getByText("Manual attendance dialog")).toBeInTheDocument()
+    act(() => useUIStore.getState().verifyPin('2468'))
+    expect(screen.getByText('Manual attendance dialog')).toBeInTheDocument()
   })
 
-  it("renders the shell skeleton when the shell is not ready", () => {
+  it('renders the shell skeleton when the shell is not ready', () => {
     useAttendanceStore.setState({ isShellReady: false })
 
     renderWithProviders(
-      <AttendancePanel
-        handleSelectGroup={vi.fn()}
-        refreshAttendanceData={vi.fn().mockResolvedValue(undefined)}
-      />,
-      { withDialogProvider: false },
+      <AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn().mockResolvedValue(undefined)} />,
+      { withDialogProvider: false }
     )
 
-    expect(screen.getByTestId("attendance-panel-shell-skeleton")).toBeInTheDocument()
+    expect(screen.getByTestId('attendance-panel-shell-skeleton')).toBeInTheDocument()
   })
 
-  it("shows the no groups empty state", () => {
+  it('shows the no groups empty state', () => {
     renderWithProviders(
-      <AttendancePanel
-        handleSelectGroup={vi.fn()}
-        refreshAttendanceData={vi.fn().mockResolvedValue(undefined)}
-      />,
-      { withDialogProvider: false },
+      <AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn().mockResolvedValue(undefined)} />,
+      { withDialogProvider: false }
     )
 
-    expect(screen.getByText("No groups created")).toBeInTheDocument()
+    expect(screen.getByText('No groups created')).toBeInTheDocument()
   })
 
-  it("shows a no results state after an unmatched search", async () => {
+  it('shows a no results state after an unmatched search', async () => {
     const group = createAttendanceGroup()
     useAttendanceStore.setState({
       attendanceGroups: [group],
@@ -152,145 +137,130 @@ describe("AttendancePanel", () => {
       groupMembers: [createAttendanceMember()],
       recentAttendance: [
         createAttendanceRecord({
-          id: "record-1",
-          person_id: "person-1",
-          timestamp: new Date("2026-04-01T08:00:00.000Z"),
-        }),
-      ],
+          id: 'record-1',
+          person_id: 'person-1',
+          timestamp: new Date('2026-04-01T08:00:00.000Z')
+        })
+      ]
     })
 
     renderWithProviders(
-      <AttendancePanel
-        handleSelectGroup={vi.fn()}
-        refreshAttendanceData={vi.fn().mockResolvedValue(undefined)}
-      />,
-      { withDialogProvider: false },
+      <AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn().mockResolvedValue(undefined)} />,
+      { withDialogProvider: false }
     )
 
-    fireEvent.change(screen.getByPlaceholderText("Search name…"), {
-      target: { value: "Bob" },
+    fireEvent.change(screen.getByPlaceholderText('Search name…'), {
+      target: { value: 'Bob' }
     })
 
     expect(await screen.findByText('No results for "Bob"')).toBeInTheDocument()
   })
 
-  it("shows captured attendance time after the computer timezone changes", () => {
+  it('shows captured attendance time after the computer timezone changes', () => {
     const group = createAttendanceGroup()
     const now = new Date()
-    const attendanceDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+    const attendanceDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     useAttendanceStore.setState({
-      attendanceTimezone: "Asia/Manila",
+      attendanceTimezone: 'Asia/Manila',
       attendanceGroups: [group],
       currentGroup: group,
-      groupMembers: [createAttendanceMember({ person_id: "person-1", name: "Alice" })],
+      groupMembers: [createAttendanceMember({ person_id: 'person-1', name: 'Alice' })],
       recentAttendance: [
         createAttendanceRecord({
-          id: "record-1",
-          person_id: "person-1",
-          timestamp: attendanceDateTimeToDate(attendanceDate, "08:30", "America/Toronto"),
-          timestamp_timezone: "America/Toronto",
-        }),
-      ],
+          id: 'record-1',
+          person_id: 'person-1',
+          timestamp: attendanceDateTimeToDate(attendanceDate, '08:30', 'America/Toronto'),
+          timestamp_timezone: 'America/Toronto'
+        })
+      ]
     })
 
     renderWithProviders(
-      <AttendancePanel
-        handleSelectGroup={vi.fn()}
-        refreshAttendanceData={vi.fn().mockResolvedValue(undefined)}
-      />,
-      { withDialogProvider: false },
+      <AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn().mockResolvedValue(undefined)} />,
+      { withDialogProvider: false }
     )
 
-    expect(screen.getByText("8:30 AM")).toBeInTheDocument()
+    expect(screen.getByText('8:30 AM')).toBeInTheDocument()
   })
 
-  it("reveals additional records after clicking Load More", async () => {
+  it('reveals additional records after clicking Load More', async () => {
     const group = createAttendanceGroup()
     const now = new Date()
-    const baseDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+    const baseDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     const members = Array.from({ length: 25 }, (_, index) =>
       createAttendanceMember({
         person_id: `person-${index + 1}`,
-        name: `Member ${String(index + 1).padStart(2, "0")}`,
-      }),
+        name: `Member ${String(index + 1).padStart(2, '0')}`
+      })
     )
     const records = members.map((member, index) =>
       createAttendanceRecord({
         id: `record-${index + 1}`,
         person_id: member.person_id,
-        timestamp: new Date(`${baseDate}T${String(8 + (index % 10)).padStart(2, "0")}:00:00`),
-      }),
+        timestamp: new Date(`${baseDate}T${String(8 + (index % 10)).padStart(2, '0')}:00:00`)
+      })
     )
 
     useAttendanceStore.setState({
       attendanceGroups: [group],
       currentGroup: group,
       groupMembers: members,
-      recentAttendance: records,
+      recentAttendance: records
     })
 
     renderWithProviders(
-      <AttendancePanel
-        handleSelectGroup={vi.fn()}
-        refreshAttendanceData={vi.fn().mockResolvedValue(undefined)}
-      />,
-      { withDialogProvider: false },
+      <AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn().mockResolvedValue(undefined)} />,
+      { withDialogProvider: false }
     )
 
-    expect(screen.getByRole("button", { name: /Load more \(5 remaining\)/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Load more \(5 remaining\)/ })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: /Load more \(5 remaining\)/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Load more \(5 remaining\)/ }))
 
-    expect(screen.queryByRole("button", { name: /Load more/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Load more/ })).not.toBeInTheDocument()
   })
 
-  it("routes the no-members empty state to settings enrollment", async () => {
+  it('routes the no-members empty state to settings enrollment', async () => {
     const group = createAttendanceGroup()
     useAttendanceStore.setState({
       attendanceGroups: [group],
       currentGroup: group,
       groupMembers: [],
-      recentAttendance: [],
+      recentAttendance: []
     })
 
     const { user } = renderWithProviders(
-      <AttendancePanel
-        handleSelectGroup={vi.fn()}
-        refreshAttendanceData={vi.fn().mockResolvedValue(undefined)}
-      />,
-      { withDialogProvider: false },
+      <AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn().mockResolvedValue(undefined)} />,
+      { withDialogProvider: false }
     )
 
-    expect(screen.getByText("This group has no members")).toBeInTheDocument()
+    expect(screen.getByText('This group has no members')).toBeInTheDocument()
 
-    await user.click(screen.getByRole("button", { name: "Add member" }))
+    await user.click(screen.getByRole('button', { name: 'Add member' }))
 
     expect(useUIStore.getState().showSettings).toBe(true)
-    expect(useUIStore.getState().groupInitialSection).toBe("members")
+    expect(useUIStore.getState().groupInitialSection).toBe('members')
   })
 
-  it("routes the no-face-data empty state to settings enrollment", async () => {
+  it('routes the no-face-data empty state to settings enrollment', async () => {
     const group = createAttendanceGroup()
     useAttendanceStore.setState({
       attendanceGroups: [group],
       currentGroup: group,
       groupMembers: [createAttendanceMember({ has_face_data: false })],
-      recentAttendance: [],
+      recentAttendance: []
     })
 
     const { user } = renderWithProviders(
-      <AttendancePanel
-        handleSelectGroup={vi.fn()}
-        refreshAttendanceData={vi.fn().mockResolvedValue(undefined)}
-      />,
-      { withDialogProvider: false },
+      <AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn().mockResolvedValue(undefined)} />,
+      { withDialogProvider: false }
     )
 
-    expect(screen.getByText("No enrolled members")).toBeInTheDocument()
+    expect(screen.getByText('No enrolled members')).toBeInTheDocument()
 
-    await user.click(screen.getByRole("button", { name: "Enroll member" }))
+    await user.click(screen.getByRole('button', { name: 'Enroll member' }))
 
     expect(useUIStore.getState().showSettings).toBe(true)
-    expect(useUIStore.getState().groupInitialSection).toBe("members")
+    expect(useUIStore.getState().groupInitialSection).toBe('members')
   })
 })

@@ -1,13 +1,13 @@
-import type { DetectionResult } from "@/components/main/types"
-import type { ExtendedFaceRecognitionResponse } from "@/components/main/utils/recognitionHelpers"
+import type { DetectionResult } from '@/components/main/types'
+import type { ExtendedFaceRecognitionResponse } from '@/components/main/utils/recognitionHelpers'
 
-type Face = DetectionResult["faces"][number]
-type FaceBbox = Face["bbox"]
+type Face = DetectionResult['faces'][number]
+type FaceBbox = Face['bbox']
 
 export interface OverlayGuidance {
   label: string
   subLabel?: string
-  tone: "warning" | "failure"
+  tone: 'warning' | 'failure'
   isLowLight?: boolean
 }
 
@@ -45,12 +45,11 @@ const DEFAULT_MIN_FRAMES = 2
 const DEFAULT_MIN_DURATION_MS = 250
 const DEFAULT_VERIFYING_HINT_MIN_DURATION_MS = 2000
 
-const hasPositiveTrackId = (trackId: number | undefined): boolean =>
-  typeof trackId === "number" && trackId > 0
+const hasPositiveTrackId = (trackId: number | undefined): boolean => typeof trackId === 'number' && trackId > 0
 
 const getRecognitionResult = (
   face: Face,
-  currentRecognitionResults: Map<number, ExtendedFaceRecognitionResponse>,
+  currentRecognitionResults: Map<number, ExtendedFaceRecognitionResponse>
 ): ExtendedFaceRecognitionResponse | null => {
   const trackId = face.track_id
   if (trackId === undefined) {
@@ -62,11 +61,9 @@ const getRecognitionResult = (
 const isRecognizedLiveFace = (
   face: Face,
   recognitionEnabled: boolean,
-  recognitionResult: ExtendedFaceRecognitionResponse | null,
+  recognitionResult: ExtendedFaceRecognitionResponse | null
 ): boolean => {
-  return Boolean(
-    recognitionEnabled && recognitionResult?.person_id && face.liveness?.status === "real",
-  )
+  return Boolean(recognitionEnabled && recognitionResult?.person_id && face.liveness?.status === 'real')
 }
 
 const getBoundingBoxIoU = (a: FaceBbox, b: FaceBbox): number => {
@@ -90,17 +87,17 @@ const getBoundingBoxIoU = (a: FaceBbox, b: FaceBbox): number => {
 
 const hasHigherPriorityGuidance = (face: Face): boolean => {
   const status = face.liveness?.status
-  return status === "center_face" || status === "move_closer" || status === "look_at_camera"
+  return status === 'center_face' || status === 'move_closer' || status === 'look_at_camera'
 }
 
 const isVerifyingStatus = (status: string | undefined) =>
-  status === "spoof" || status === "candidate_real" || status === "unknown"
+  status === 'spoof' || status === 'candidate_real' || status === 'unknown'
 
 const isHoldStillCandidate = (
   face: Face,
   currentRecognitionResults: Map<number, ExtendedFaceRecognitionResponse>,
   recognitionEnabled: boolean,
-  enableSpoofDetection: boolean,
+  enableSpoofDetection: boolean
 ): boolean => {
   if (!enableSpoofDetection) {
     return false
@@ -118,11 +115,7 @@ const isHoldStillCandidate = (
   return !hasPositiveTrackId(face.track_id)
 }
 
-const findBestCacheKey = (
-  face: Face,
-  cache: Map<string, { bbox: FaceBbox }>,
-  usedKeys: Set<string>,
-): string | null => {
+const findBestCacheKey = (face: Face, cache: Map<string, { bbox: FaceBbox }>, usedKeys: Set<string>): string | null => {
   if (hasPositiveTrackId(face.track_id)) {
     return `track-${face.track_id}`
   }
@@ -152,19 +145,19 @@ const findBestCacheKey = (
 const buildPersistenceCacheEntry = (
   face: Face,
   previousEntry: HoldStillCacheEntry | VerifyingHintCacheEntry | undefined,
-  now: number,
+  now: number
 ): HoldStillCacheEntry | VerifyingHintCacheEntry => ({
   bbox: face.bbox,
   firstSeenAt: previousEntry?.firstSeenAt ?? now,
   lastSeenAt: now,
-  consecutiveFrames: (previousEntry?.consecutiveFrames ?? 0) + 1,
+  consecutiveFrames: (previousEntry?.consecutiveFrames ?? 0) + 1
 })
 
 const isVerifyingHintCandidate = (
   face: Face,
   currentRecognitionResults: Map<number, ExtendedFaceRecognitionResponse>,
   recognitionEnabled: boolean,
-  enableSpoofDetection: boolean,
+  enableSpoofDetection: boolean
 ): boolean => {
   if (!enableSpoofDetection) {
     return false
@@ -187,7 +180,7 @@ export const updateHoldStillCache = (
   previousCache: Map<string, HoldStillCacheEntry>,
   now: number,
   nextAnonymousSeed: number,
-  options: HoldStillCacheOptions,
+  options: HoldStillCacheOptions
 ): {
   nextCache: Map<string, HoldStillCacheEntry>
   activeKeys: Set<string>
@@ -199,7 +192,7 @@ export const updateHoldStillCache = (
     recognitionEnabled,
     currentRecognitionResults,
     minFrames = DEFAULT_MIN_FRAMES,
-    minDurationMs = DEFAULT_MIN_DURATION_MS,
+    minDurationMs = DEFAULT_MIN_DURATION_MS
   } = options
 
   if (!enableSpoofDetection || faces.length === 0) {
@@ -207,7 +200,7 @@ export const updateHoldStillCache = (
       nextCache: new Map(),
       activeKeys: new Set(),
       faceKeyByIndex: new Map(),
-      nextAnonymousSeed,
+      nextAnonymousSeed
     }
   }
 
@@ -217,14 +210,7 @@ export const updateHoldStillCache = (
   const usedKeys = new Set<string>()
 
   faces.forEach((face, index) => {
-    if (
-      !isHoldStillCandidate(
-        face,
-        currentRecognitionResults,
-        recognitionEnabled,
-        enableSpoofDetection,
-      )
-    ) {
+    if (!isHoldStillCandidate(face, currentRecognitionResults, recognitionEnabled, enableSpoofDetection)) {
       return
     }
 
@@ -246,7 +232,7 @@ export const updateHoldStillCache = (
     nextCache,
     activeKeys,
     faceKeyByIndex,
-    nextAnonymousSeed,
+    nextAnonymousSeed
   }
 }
 
@@ -255,7 +241,7 @@ export const updateVerifyingHintCache = (
   previousCache: Map<string, VerifyingHintCacheEntry>,
   now: number,
   nextAnonymousSeed: number,
-  options: VerifyingHintCacheOptions,
+  options: VerifyingHintCacheOptions
 ): {
   nextCache: Map<string, VerifyingHintCacheEntry>
   activeKeys: Set<string>
@@ -266,7 +252,7 @@ export const updateVerifyingHintCache = (
     enableSpoofDetection,
     recognitionEnabled,
     currentRecognitionResults,
-    minDurationMs = DEFAULT_VERIFYING_HINT_MIN_DURATION_MS,
+    minDurationMs = DEFAULT_VERIFYING_HINT_MIN_DURATION_MS
   } = options
 
   if (!enableSpoofDetection || faces.length === 0) {
@@ -274,7 +260,7 @@ export const updateVerifyingHintCache = (
       nextCache: new Map(),
       activeKeys: new Set(),
       faceKeyByIndex: new Map(),
-      nextAnonymousSeed,
+      nextAnonymousSeed
     }
   }
 
@@ -284,25 +270,14 @@ export const updateVerifyingHintCache = (
   const usedKeys = new Set<string>()
 
   faces.forEach((face, index) => {
-    if (
-      !isVerifyingHintCandidate(
-        face,
-        currentRecognitionResults,
-        recognitionEnabled,
-        enableSpoofDetection,
-      )
-    ) {
+    if (!isVerifyingHintCandidate(face, currentRecognitionResults, recognitionEnabled, enableSpoofDetection)) {
       return
     }
 
     const matchedKey = findBestCacheKey(face, previousCache, usedKeys)
     const key = matchedKey ?? `verify-${nextAnonymousSeed++}`
     const previousEntry = matchedKey ? previousCache.get(matchedKey) : undefined
-    const nextEntry = buildPersistenceCacheEntry(
-      face,
-      previousEntry,
-      now,
-    ) as VerifyingHintCacheEntry
+    const nextEntry = buildPersistenceCacheEntry(face, previousEntry, now) as VerifyingHintCacheEntry
 
     nextCache.set(key, nextEntry)
     usedKeys.add(key)
@@ -317,7 +292,7 @@ export const updateVerifyingHintCache = (
     nextCache,
     activeKeys,
     faceKeyByIndex,
-    nextAnonymousSeed,
+    nextAnonymousSeed
   }
 }
 
@@ -329,15 +304,9 @@ export const getOverlayGuidance = (
     recognitionResult: ExtendedFaceRecognitionResponse | null
     holdStillActive: boolean
     verifyingHintActive: boolean
-  },
+  }
 ): OverlayGuidance | null => {
-  const {
-    enableSpoofDetection,
-    recognitionEnabled,
-    recognitionResult,
-    holdStillActive,
-    verifyingHintActive,
-  } = options
+  const { enableSpoofDetection, recognitionEnabled, recognitionResult, holdStillActive, verifyingHintActive } = options
 
   if (!enableSpoofDetection) {
     return null
@@ -349,101 +318,101 @@ export const getOverlayGuidance = (
 
   if (recognitionEnabled && recognitionResult && !recognitionResult.person_id) {
     return {
-      label: "Verifying...",
-      subLabel: face.low_light ? "Low light detected" : undefined,
-      tone: "warning",
-      isLowLight: face.low_light,
+      label: 'Verifying...',
+      subLabel: face.low_light ? 'Low light detected' : undefined,
+      tone: 'warning',
+      isLowLight: face.low_light
     }
   }
 
   const status = face.liveness?.status
 
-  if (status === "center_face") {
+  if (status === 'center_face') {
     return {
-      label: "Center face",
-      subLabel: face.low_light ? "Low light detected" : undefined,
-      tone: "warning",
-      isLowLight: face.low_light,
+      label: 'Center face',
+      subLabel: face.low_light ? 'Low light detected' : undefined,
+      tone: 'warning',
+      isLowLight: face.low_light
     }
   }
 
-  if (status === "move_closer") {
+  if (status === 'move_closer') {
     return {
-      label: "Move closer",
-      subLabel: face.low_light ? "Low light detected" : undefined,
-      tone: "warning",
-      isLowLight: face.low_light,
+      label: 'Move closer',
+      subLabel: face.low_light ? 'Low light detected' : undefined,
+      tone: 'warning',
+      isLowLight: face.low_light
     }
   }
 
-  if (status === "glare") {
+  if (status === 'glare') {
     return {
-      label: "Too bright",
-      subLabel: "Avoid direct light",
-      tone: "warning",
-      isLowLight: face.low_light,
+      label: 'Too bright',
+      subLabel: 'Avoid direct light',
+      tone: 'warning',
+      isLowLight: face.low_light
     }
   }
 
-  if (status === "too_dark") {
+  if (status === 'too_dark') {
     return {
-      label: "Too dark",
-      subLabel: "Step into light",
-      tone: "warning",
-      isLowLight: true,
+      label: 'Too dark',
+      subLabel: 'Step into light',
+      tone: 'warning',
+      isLowLight: true
     }
   }
 
-  if (status === "look_at_camera") {
+  if (status === 'look_at_camera') {
     return {
-      label: "Look at camera",
-      subLabel: "Keep face upright",
-      tone: "warning",
-      isLowLight: face.low_light,
+      label: 'Look at camera',
+      subLabel: 'Keep face upright',
+      tone: 'warning',
+      isLowLight: face.low_light
     }
   }
 
   if (holdStillActive) {
     return {
-      label: "Hold still",
-      subLabel: face.low_light ? "Low light detected" : undefined,
-      tone: "warning",
-      isLowLight: face.low_light,
+      label: 'Hold still',
+      subLabel: face.low_light ? 'Low light detected' : undefined,
+      tone: 'warning',
+      isLowLight: face.low_light
     }
   }
 
   // Active 3D Challenge: Suppress forehead badge while head turn is requested.
   // The dedicated floating 3D HUD card at the bottom of the screen handles guidance,
   // preventing visual clutter and text jitter while the head is in motion.
-  const livenessMessage = face.liveness?.message?.toLowerCase() ?? ""
-  if (status === "candidate_real" && livenessMessage.includes("turn")) {
+  const livenessMessage = face.liveness?.message?.toLowerCase() ?? ''
+  if (status === 'candidate_real' && livenessMessage.includes('turn')) {
     return null
   }
 
-  if (status === "spoof" || status === "candidate_real" || status === "unknown") {
+  if (status === 'spoof' || status === 'candidate_real' || status === 'unknown') {
     if (verifyingHintActive) {
       return {
-        label: "Verifying...",
-        subLabel: "Slowly turn head",
-        tone: "warning",
-        isLowLight: face.low_light,
+        label: 'Verifying...',
+        subLabel: 'Slowly turn head',
+        tone: 'warning',
+        isLowLight: face.low_light
       }
     }
 
     return {
-      label: "Verifying...",
-      subLabel: face.low_light ? "Low light detected" : undefined,
-      tone: "warning",
-      isLowLight: face.low_light,
+      label: 'Verifying...',
+      subLabel: face.low_light ? 'Low light detected' : undefined,
+      tone: 'warning',
+      isLowLight: face.low_light
     }
   }
 
   if (face.low_light) {
     return {
-      label: "Poor lighting detected",
-      subLabel: "Step into light",
-      tone: "warning",
-      isLowLight: true,
+      label: 'Poor lighting detected',
+      subLabel: 'Step into light',
+      tone: 'warning',
+      isLowLight: true
     }
   }
 

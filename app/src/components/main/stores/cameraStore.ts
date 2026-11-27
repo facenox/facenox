@@ -1,11 +1,11 @@
-import { create } from "zustand"
-import { persistentSettings } from "@/services/PersistentSettingsService"
+import { create } from 'zustand'
+import { persistentSettings } from '@/services/PersistentSettingsService'
 
 interface CameraState {
   isStreaming: boolean
   isVideoLoading: boolean
   cameraActive: boolean
-  websocketStatus: "disconnected" | "connecting" | "connected" | "error"
+  websocketStatus: 'disconnected' | 'connecting' | 'connected' | 'error'
   cameraDevices: MediaDeviceInfo[]
   selectedCamera: string // The ACTIVE camera
   preferredCameraId: string | null // The USER'S CHOICE (persisted)
@@ -14,7 +14,7 @@ interface CameraState {
   setIsStreaming: (value: boolean) => void
   setIsVideoLoading: (value: boolean) => void
   setCameraActive: (value: boolean) => void
-  setWebsocketStatus: (status: "disconnected" | "connecting" | "connected" | "error") => void
+  setWebsocketStatus: (status: 'disconnected' | 'connecting' | 'connected' | 'error') => void
   setCameraDevices: (devices: MediaDeviceInfo[]) => void
   setSelectedCamera: (deviceId: string) => void
 }
@@ -23,9 +23,9 @@ export const useCameraStore = create<CameraState>((set, get) => ({
   isStreaming: false,
   isVideoLoading: false,
   cameraActive: false,
-  websocketStatus: "disconnected",
+  websocketStatus: 'disconnected',
   cameraDevices: [],
-  selectedCamera: "",
+  selectedCamera: '',
   preferredCameraId: null,
   preferredCameraLabel: null,
   isPreferredCameraMissing: false,
@@ -50,7 +50,7 @@ export const useCameraStore = create<CameraState>((set, get) => ({
       if (selectedCamera !== preferredCameraId) {
         set({
           selectedCamera: preferredCameraId,
-          isPreferredCameraMissing: false,
+          isPreferredCameraMissing: false
         })
       } else {
         set({ isPreferredCameraMissing: false })
@@ -67,7 +67,7 @@ export const useCameraStore = create<CameraState>((set, get) => ({
         set({
           selectedCamera: newId,
           preferredCameraId: newId,
-          isPreferredCameraMissing: false,
+          isPreferredCameraMissing: false
         })
         persistentSettings.setUIState({ selectedCamera: newId }).catch(console.error)
         return
@@ -80,7 +80,7 @@ export const useCameraStore = create<CameraState>((set, get) => ({
       if (selectedCamera !== fallbackId) {
         set({
           selectedCamera: fallbackId,
-          isPreferredCameraMissing: true,
+          isPreferredCameraMissing: true
         })
       } else {
         set({ isPreferredCameraMissing: true })
@@ -104,26 +104,26 @@ export const useCameraStore = create<CameraState>((set, get) => ({
       selectedCamera: deviceId,
       preferredCameraId: deviceId,
       preferredCameraLabel: label,
-      isPreferredCameraMissing: false,
+      isPreferredCameraMissing: false
     })
     // Save preference to store
     persistentSettings
       .setUIState({
         selectedCamera: deviceId,
-        selectedCameraLabel: label,
+        selectedCameraLabel: label
       })
       .catch(console.error)
-  },
+  }
 }))
 
 // Load selectedCamera from store on initialization
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   persistentSettings.getUIState().then((uiState) => {
     if (uiState.selectedCamera) {
       useCameraStore.setState({
         selectedCamera: uiState.selectedCamera,
         preferredCameraId: uiState.selectedCamera,
-        preferredCameraLabel: uiState.selectedCameraLabel,
+        preferredCameraLabel: uiState.selectedCameraLabel
       })
     }
   })

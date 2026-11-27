@@ -1,10 +1,6 @@
-import { useState, useEffect } from "react"
-import { persistentSettings } from "@/services/PersistentSettingsService"
-import type {
-  ColumnKey,
-  GroupByKey,
-  ReportStatusFilter,
-} from "@/components/group/sections/reports/types"
+import { useState, useEffect } from 'react'
+import { persistentSettings } from '@/services/PersistentSettingsService'
+import type { ColumnKey, GroupByKey, ReportStatusFilter } from '@/components/group/sections/reports/types'
 
 const areColumnsEqual = (left: ColumnKey[], right: ColumnKey[]) =>
   left.length === right.length && left.every((column, index) => column === right[index])
@@ -13,13 +9,13 @@ export function useReportViews(
   groupId: string,
   defaultColumns: ColumnKey[],
   defaultColumnPresets: ColumnKey[][] = [defaultColumns],
-  defaultPageSize = 25,
+  defaultPageSize = 25
 ) {
   // Current settings state
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(defaultColumns)
-  const [groupBy, setGroupBy] = useState<GroupByKey>("none")
-  const [statusFilter, setStatusFilter] = useState<ReportStatusFilter>("all")
-  const [search, setSearch] = useState<string>("")
+  const [groupBy, setGroupBy] = useState<GroupByKey>('none')
+  const [statusFilter, setStatusFilter] = useState<ReportStatusFilter>('all')
+  const [search, setSearch] = useState<string>('')
   const [pageSize, setPageSize] = useState(defaultPageSize)
   const [columnsFollowDefault, setColumnsFollowDefault] = useState(true)
 
@@ -42,9 +38,8 @@ export function useReportViews(
         if (s) {
           const savedColumns = Array.isArray(s.columns) ? (s.columns as ColumnKey[]) : null
           const inferredFollowDefault =
-            typeof s.columnsFollowDefault === "boolean" ? s.columnsFollowDefault
-            : savedColumns ?
-              defaultColumnPresets.some((preset) => areColumnsEqual(savedColumns, preset))
+            typeof s.columnsFollowDefault === 'boolean' ? s.columnsFollowDefault
+            : savedColumns ? defaultColumnPresets.some((preset) => areColumnsEqual(savedColumns, preset))
             : true
 
           setColumnsFollowDefault(inferredFollowDefault)
@@ -61,10 +56,10 @@ export function useReportViews(
         } else {
           setColumnsFollowDefault(true)
           setVisibleColumns(defaultColumns)
-          setGroupBy("none")
+          setGroupBy('none')
         }
       } catch (err) {
-        console.error("Failed to load report settings:", err)
+        console.error('Failed to load report settings:', err)
       } finally {
         setIsInitializing(false)
       }
@@ -80,7 +75,7 @@ export function useReportViews(
           columns: visibleColumns,
           groupBy,
           pageSize,
-          columnsFollowDefault,
+          columnsFollowDefault
           // We don't persist statusFilter or search as they should be ephemeral
         })
         .catch(console.error)
@@ -102,6 +97,6 @@ export function useReportViews(
     search,
     setSearch,
     pageSize,
-    setPageSize,
+    setPageSize
   }
 }

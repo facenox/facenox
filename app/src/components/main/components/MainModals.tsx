@@ -1,12 +1,12 @@
-import { useCallback } from "react"
-import { AnimatePresence } from "framer-motion"
-import { useAttendanceStore, useUIStore } from "@/components/main/stores"
-import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
-import { attendanceManager } from "@/services"
-import { PinPromptModal } from "@/components/common"
-import { CreateGroup } from "@/components/group/modals/CreateGroup"
-import { DeleteConfirmationModal } from "./DeleteConfirmationModal"
-import { Settings } from "@/components/settings"
+import { useCallback } from 'react'
+import { AnimatePresence } from 'framer-motion'
+import { useAttendanceStore, useUIStore } from '@/components/main/stores'
+import { useGroupStore, useGroupUIStore } from '@/components/group/stores'
+import { attendanceManager } from '@/services'
+import { PinPromptModal } from '@/components/common'
+import { CreateGroup } from '@/components/group/modals/CreateGroup'
+import { DeleteConfirmationModal } from './DeleteConfirmationModal'
+import { Settings } from '@/components/settings'
 
 interface MainModalsProps {
   /** Callback to run the deletion sequence on the selected group. */
@@ -29,7 +29,7 @@ export function MainModals({
   confirmDeleteGroup,
   cancelDeleteGroup,
   loadAttendanceDataRef,
-  streamRef,
+  streamRef
 }: MainModalsProps) {
   const {
     currentGroup,
@@ -50,7 +50,7 @@ export function MainModals({
     maxRecognitionFacesPerFrame,
     setMaxRecognitionFacesPerFrame,
     dataRetentionDays,
-    setDataRetentionDays,
+    setDataRetentionDays
   } = useAttendanceStore()
 
   const {
@@ -63,7 +63,7 @@ export function MainModals({
     quickSettings,
     setQuickSettings,
     audioSettings,
-    setAudioSettings,
+    setAudioSettings
   } = useUIStore()
 
   const { resetEnrollment } = useGroupUIStore.getState()
@@ -75,12 +75,12 @@ export function MainModals({
       if (!updatedGroup) return
 
       // "All Groups" is a selection, not a persisted group.
-      if (updatedGroup.id !== "all") {
+      if (updatedGroup.id !== 'all') {
         const exists = attendanceGroups.some((g) => g.id === updatedGroup.id)
         setAttendanceGroups(
           exists ?
             attendanceGroups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g))
-          : [...attendanceGroups, updatedGroup],
+          : [...attendanceGroups, updatedGroup]
         )
       }
       useGroupStore.getState().setSelectedGroup(updatedGroup)
@@ -89,7 +89,7 @@ export function MainModals({
         void loadAttendanceDataRef.current().catch(console.error)
       }
     },
-    [attendanceGroups, setAttendanceGroups, setCurrentGroup, loadAttendanceDataRef],
+    [attendanceGroups, setAttendanceGroups, setCurrentGroup, loadAttendanceDataRef]
   )
 
   return (
@@ -113,7 +113,7 @@ export function MainModals({
       <AnimatePresence>
         {showSettings && (
           <Settings
-            key="settings-modal"
+            key='settings-modal'
             onBack={() => {
               setShowSettings(false)
               setGroupInitialSection(undefined)
@@ -130,24 +130,22 @@ export function MainModals({
             attendanceSettings={{
               attendanceTimezone,
               lateThresholdEnabled:
-                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
-                  ?.late_threshold_enabled ?? false,
+                (currentGroup?.id !== 'all' ? currentGroup : attendanceGroups[0])?.settings?.late_threshold_enabled ??
+                false,
               lateThresholdMinutes:
-                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
-                  ?.late_threshold_minutes ?? 15,
+                (currentGroup?.id !== 'all' ? currentGroup : attendanceGroups[0])?.settings?.late_threshold_minutes ??
+                15,
               classStartTime:
-                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
-                  ?.class_start_time ?? "08:00",
+                (currentGroup?.id !== 'all' ? currentGroup : attendanceGroups[0])?.settings?.class_start_time ??
+                '08:00',
               classEndTime:
-                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
-                  ?.class_end_time ?? null,
+                (currentGroup?.id !== 'all' ? currentGroup : attendanceGroups[0])?.settings?.class_end_time ?? null,
               attendanceCooldownSeconds: attendanceCooldownSeconds,
               enableSpoofDetection: enableSpoofDetection,
               maxRecognitionFacesPerFrame: maxRecognitionFacesPerFrame,
               trackCheckout:
-                (currentGroup?.id !== "all" ? currentGroup : attendanceGroups[0])?.settings
-                  ?.track_checkout ?? false,
-              dataRetentionDays: dataRetentionDays,
+                (currentGroup?.id !== 'all' ? currentGroup : attendanceGroups[0])?.settings?.track_checkout ?? false,
+              dataRetentionDays: dataRetentionDays
             }}
             onAttendanceSettingsChange={async (updates) => {
               if (updates.attendanceTimezone) {
@@ -162,24 +160,23 @@ export function MainModals({
                 setMaxRecognitionFacesPerFrame(updates.maxRecognitionFacesPerFrame)
               }
 
-              const editableGroup =
-                currentGroup && currentGroup.id !== "all" ? currentGroup : attendanceGroups[0]
+              const editableGroup = currentGroup && currentGroup.id !== 'all' ? currentGroup : attendanceGroups[0]
 
               if (updates.trackCheckout !== undefined && editableGroup) {
                 const updatedSettings = {
                   ...editableGroup.settings,
-                  track_checkout: updates.trackCheckout,
+                  track_checkout: updates.trackCheckout
                 }
                 try {
                   await attendanceManager.updateGroup(editableGroup.id, {
-                    settings: updatedSettings,
+                    settings: updatedSettings
                   })
                   syncUpdatedGroupLocally({
                     ...editableGroup,
-                    settings: updatedSettings,
+                    settings: updatedSettings
                   })
                 } catch (error) {
-                  console.error("Failed to update track checkout setting:", error)
+                  console.error('Failed to update track checkout setting:', error)
                 }
               }
 
@@ -187,10 +184,10 @@ export function MainModals({
                 setAttendanceCooldownSeconds(updates.attendanceCooldownSeconds)
                 try {
                   await attendanceManager.updateSettings({
-                    attendance_cooldown_seconds: updates.attendanceCooldownSeconds,
+                    attendance_cooldown_seconds: updates.attendanceCooldownSeconds
                   })
                 } catch (error) {
-                  console.error("Failed to update cooldown setting:", error)
+                  console.error('Failed to update cooldown setting:', error)
                 }
               }
 
@@ -198,10 +195,10 @@ export function MainModals({
                 setDataRetentionDays(updates.dataRetentionDays)
                 try {
                   await attendanceManager.updateSettings({
-                    data_retention_days: updates.dataRetentionDays,
+                    data_retention_days: updates.dataRetentionDays
                   })
                 } catch (error) {
-                  console.error("Failed to update data retention setting:", error)
+                  console.error('Failed to update data retention setting:', error)
                 }
               }
 
@@ -215,36 +212,34 @@ export function MainModals({
                 const updatedSettings = {
                   ...editableGroup.settings,
                   ...(updates.lateThresholdEnabled !== undefined && {
-                    late_threshold_enabled: updates.lateThresholdEnabled,
+                    late_threshold_enabled: updates.lateThresholdEnabled
                   }),
                   ...(updates.lateThresholdMinutes !== undefined && {
-                    late_threshold_minutes: updates.lateThresholdMinutes,
+                    late_threshold_minutes: updates.lateThresholdMinutes
                   }),
                   ...(updates.classStartTime !== undefined && {
-                    class_start_time: updates.classStartTime,
+                    class_start_time: updates.classStartTime
                   }),
                   ...(updates.classEndTime !== undefined && {
-                    class_end_time: updates.classEndTime,
-                  }),
+                    class_end_time: updates.classEndTime
+                  })
                 }
                 try {
                   await attendanceManager.updateGroup(editableGroup.id, {
-                    settings: updatedSettings,
+                    settings: updatedSettings
                   })
                   syncUpdatedGroupLocally({
                     ...editableGroup,
-                    settings: updatedSettings,
+                    settings: updatedSettings
                   })
                 } catch (error) {
-                  console.error("Failed to update attendance settings:", error)
+                  console.error('Failed to update attendance settings:', error)
                 }
               }
             }}
             initialGroupSection={groupInitialSection}
             initialSection={settingsInitialSection}
-            currentGroup={
-              currentGroup && currentGroup.id !== "all" ? currentGroup : attendanceGroups[0] || null
-            }
+            currentGroup={currentGroup && currentGroup.id !== 'all' ? currentGroup : attendanceGroups[0] || null}
             currentGroupMembers={groupMembers}
             onGroupSelect={syncUpdatedGroupLocally}
             onGroupsChanged={() => loadAttendanceDataRef.current()}

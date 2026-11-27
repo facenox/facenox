@@ -1,41 +1,28 @@
-import { useState, useMemo, useEffect, memo, useCallback } from "react"
-import type { ReactNode } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import {
-  Trash2,
-  Plus,
-  Users,
-  Calendar,
-  FolderOpen,
-  Clock,
-  Search,
-  UserPlus,
-  Layers,
-} from "lucide-react"
-import { createDisplayNameMap, formatDuration, generateGroupDisplayNames } from "@/utils"
+import { useState, useMemo, useEffect, memo, useCallback } from 'react'
+import type { ReactNode } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Trash2, Plus, Users, Calendar, FolderOpen, Clock, Search, UserPlus, Layers } from 'lucide-react'
+import { createDisplayNameMap, formatDuration, generateGroupDisplayNames } from '@/utils'
 import {
   attendanceDateTimeToDate,
   formatAttendanceTime,
   formatAttendanceTimeInput,
-  getAttendanceDateString,
-} from "@/utils/attendanceTime"
-import { Dropdown, Tooltip, MemberTooltip } from "@/components/shared"
-import type { AttendanceGroup, AttendanceRecord, AttendanceMember } from "@/components/main/types"
+  getAttendanceDateString
+} from '@/utils/attendanceTime'
+import { Dropdown, Tooltip, MemberTooltip } from '@/components/shared'
+import type { AttendanceGroup, AttendanceRecord, AttendanceMember } from '@/components/main/types'
 import {
   buildRecordCheckInStatusMap,
   limitAttendanceRecords,
   processAttendanceRecords,
-  type AttendanceRecordScope,
-} from "@/components/main/components/attendancePanelUtils"
+  type AttendanceRecordScope
+} from '@/components/main/components/attendancePanelUtils'
 
-import { useAttendanceStore, useUIStore } from "@/components/main/stores"
-import {
-  ALL_GROUPS_ID,
-  createAllGroupsVirtualGroup,
-} from "@/components/main/hooks/useAttendanceGroups"
-import { ManualEntryModal } from "./ManualEntryModal"
-import { ManualCorrectionModal } from "./ManualCorrectionModal"
-import { useCloudSyncStatus } from "@/components/common/useCloudSyncStatus"
+import { useAttendanceStore, useUIStore } from '@/components/main/stores'
+import { ALL_GROUPS_ID, createAllGroupsVirtualGroup } from '@/components/main/hooks/useAttendanceGroups'
+import { ManualEntryModal } from './ManualEntryModal'
+import { ManualCorrectionModal } from './ManualCorrectionModal'
+import { useCloudSyncStatus } from '@/components/common/useCloudSyncStatus'
 
 interface AttendancePanelProps {
   handleSelectGroup: (group: AttendanceGroup) => void
@@ -43,58 +30,50 @@ interface AttendancePanelProps {
 }
 
 const sidebarActionButtonClassName =
-  "flex h-9 w-9 shrink-0 items-center justify-center border border-white/5 bg-white/5 text-white/65 transition-all duration-200 hover:bg-white/[0.08] hover:text-white focus:border-white/20 focus:text-white focus:outline-none active:scale-95"
+  'flex h-9 w-9 shrink-0 items-center justify-center border border-white/5 bg-white/5 text-white/65 transition-all duration-200 hover:bg-white/[0.08] hover:text-white focus:border-white/20 focus:text-white focus:outline-none active:scale-95'
 
 const ScrollCenteredEmptyState = memo(function ScrollCenteredEmptyState({
   children,
-  className = "",
+  className = ''
 }: {
   children: ReactNode
   className?: string
 }) {
-  return (
-    <div className={`flex min-h-full flex-1 items-center justify-center ${className}`}>
-      {children}
-    </div>
-  )
+  return <div className={`flex min-h-full flex-1 items-center justify-center ${className}`}>{children}</div>
 })
 
 const SidebarTopSkeleton = memo(function SidebarTopSkeleton() {
   return (
-    <div className="shrink-0 px-2 pt-2 pb-1" data-testid="attendance-panel-shell-skeleton">
-      <div className="flex items-center gap-0">
-        <div className="h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/5" />
-        <div className="h-9 w-9 border border-r-0 border-white/10 bg-white/5" />
-        <div className="h-9 w-9 rounded-r-lg border border-white/10 bg-white/5" />
+    <div className='shrink-0 px-2 pt-2 pb-1' data-testid='attendance-panel-shell-skeleton'>
+      <div className='flex items-center gap-0'>
+        <div className='h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/5' />
+        <div className='h-9 w-9 border border-r-0 border-white/10 bg-white/5' />
+        <div className='h-9 w-9 rounded-r-lg border border-white/10 bg-white/5' />
       </div>
     </div>
   )
 })
 
-const AttendanceListSkeleton = memo(function AttendanceListSkeleton({
-  showSearch = false,
-}: {
-  showSearch?: boolean
-}) {
+const AttendanceListSkeleton = memo(function AttendanceListSkeleton({ showSearch = false }: { showSearch?: boolean }) {
   return (
     <>
       {showSearch && (
-        <div className="shrink-0 px-2 pb-1.5" data-testid="attendance-panel-search-skeleton">
-          <div className="flex items-center">
-            <div className="h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/4" />
-            <div className="h-9 w-9 border border-r-0 border-white/10 bg-white/4" />
-            <div className="h-9 w-9 rounded-r-lg border border-white/10 bg-white/4" />
+        <div className='shrink-0 px-2 pb-1.5' data-testid='attendance-panel-search-skeleton'>
+          <div className='flex items-center'>
+            <div className='h-9 flex-1 rounded-l-lg border border-r-0 border-white/10 bg-white/4' />
+            <div className='h-9 w-9 border border-r-0 border-white/10 bg-white/4' />
+            <div className='h-9 w-9 rounded-r-lg border border-white/10 bg-white/4' />
           </div>
         </div>
       )}
 
-      <div className="hover-scrollbar flex min-h-0 flex-1 flex-col space-y-0.5 overflow-y-auto pr-0 pl-2">
+      <div className='hover-scrollbar flex min-h-0 flex-1 flex-col space-y-0.5 overflow-y-auto pr-0 pl-2'>
         {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index} className="flex items-center justify-between rounded-lg px-2.5 py-1.5">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <div className="h-3.5 flex-1 rounded bg-white/7" />
-              <div className="h-5 w-16 rounded-full border border-white/10 bg-white/5" />
-              <div className="h-3 w-12 rounded bg-white/7" />
+          <div key={index} className='flex items-center justify-between rounded-lg px-2.5 py-1.5'>
+            <div className='flex min-w-0 flex-1 items-center gap-3'>
+              <div className='h-3.5 flex-1 rounded bg-white/7' />
+              <div className='h-5 w-16 rounded-full border border-white/10 bg-white/5' />
+              <div className='h-3 w-12 rounded bg-white/7' />
             </div>
           </div>
         ))}
@@ -116,7 +95,7 @@ const AttendanceRecordItem = memo(
     isAllGroupsMode = false,
     groupName,
     attendanceTimeZone,
-    onVoidManual,
+    onVoidManual
   }: {
     record: AttendanceRecord
     displayName: string
@@ -137,18 +116,17 @@ const AttendanceRecordItem = memo(
       try {
         if (!classStartTime && !record.event_type) return null
 
-        const effectiveEventType =
-          record.event_type || (hasCheckedInEarlier ? "check_out" : "check_in")
+        const effectiveEventType = record.event_type || (hasCheckedInEarlier ? 'check_out' : 'check_in')
 
-        if (trackCheckoutEnabled && effectiveEventType === "check_out") {
+        if (trackCheckoutEnabled && effectiveEventType === 'check_out') {
           return {
-            status: "check-out",
+            status: 'check-out',
             minutes: 0,
-            label: "TIME OUT",
-            color: "text-cyan-400",
-            pillColor: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-            borderColor: "border-l-cyan-500",
-            avatarColor: "bg-cyan-500/10 text-cyan-400",
+            label: 'TIME OUT',
+            color: 'text-cyan-400',
+            pillColor: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+            borderColor: 'border-l-cyan-500',
+            avatarColor: 'bg-cyan-500/10 text-cyan-400'
           }
         }
 
@@ -166,48 +144,47 @@ const AttendanceRecordItem = memo(
           if (diffMinutes > lateThresholdMinutes) {
             const minutesLate = diffMinutes
             return {
-              status: minutesLate > severeLateThreshold ? "severe-late" : "late",
+              status: minutesLate > severeLateThreshold ? 'severe-late' : 'late',
               minutes: minutesLate,
               label: `${formatDuration(minutesLate)} LATE`,
-              color: minutesLate > severeLateThreshold ? "text-red-400" : "text-orange-400",
+              color: minutesLate > severeLateThreshold ? 'text-red-400' : 'text-orange-400',
               pillColor:
                 minutesLate > severeLateThreshold ?
-                  "bg-red-500/10 text-red-400/90"
-                : "bg-orange-500/10 text-orange-400/90",
-              borderColor:
-                minutesLate > severeLateThreshold ? "border-l-red-500" : "border-l-orange-500",
+                  'bg-red-500/10 text-red-400/90'
+                : 'bg-orange-500/10 text-orange-400/90',
+              borderColor: minutesLate > severeLateThreshold ? 'border-l-red-500' : 'border-l-orange-500',
               avatarColor:
                 minutesLate > severeLateThreshold ?
-                  "bg-red-500/10 text-red-500/70"
-                : "bg-orange-500/10 text-orange-500/70",
+                  'bg-red-500/10 text-red-500/70'
+                : 'bg-orange-500/10 text-orange-500/70'
             }
           }
 
           if (diffMinutes < earlyThreshold) {
             const minutesEarly = Math.abs(diffMinutes)
             return {
-              status: "early",
+              status: 'early',
               minutes: minutesEarly,
               label: `${formatDuration(minutesEarly)} EARLY`,
-              color: "text-cyan-400/80",
-              pillColor: "bg-cyan-500/10 text-cyan-400/90",
-              borderColor: "border-l-transparent",
-              avatarColor: "bg-cyan-500/10 text-cyan-400",
+              color: 'text-cyan-400/80',
+              pillColor: 'bg-cyan-500/10 text-cyan-400/90',
+              borderColor: 'border-l-transparent',
+              avatarColor: 'bg-cyan-500/10 text-cyan-400'
             }
           }
         }
 
         return {
-          status: "on-time",
+          status: 'on-time',
           minutes: 0,
           label:
-            trackCheckoutEnabled ? "TIME IN"
-            : lateThresholdEnabled ? "ON TIME"
-            : "",
-          color: "text-white/55",
-          pillColor: "bg-white/5 text-white/45",
-          borderColor: "border-l-transparent",
-          avatarColor: "bg-white/5 text-white/45",
+            trackCheckoutEnabled ? 'TIME IN'
+            : lateThresholdEnabled ? 'ON TIME'
+            : '',
+          color: 'text-white/55',
+          pillColor: 'bg-white/5 text-white/45',
+          borderColor: 'border-l-transparent',
+          avatarColor: 'bg-white/5 text-white/45'
         }
       } catch {
         return null
@@ -224,31 +201,31 @@ const AttendanceRecordItem = memo(
           }
         }}
         onMouseLeave={() => setIsHovered(false)}
-        className="group relative flex items-center justify-between rounded-lg px-2.5 py-1.5 transition-colors hover:bg-white/[0.04]">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
+        className='group relative flex items-center justify-between rounded-lg px-2.5 py-1.5 transition-colors hover:bg-white/[0.04]'>
+        <div className='flex min-w-0 flex-1 items-center gap-3'>
+          <div className='flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden'>
             <MemberTooltip
               member={member}
               displayName={displayName}
-              position="top"
+              position='top'
               showEnrollment={false}
-              role={record.event_type === "check_out" ? "Exiting" : "Present"}>
-              <span className="min-w-0 flex-1 cursor-help truncate text-[13px] font-medium text-white/90 hover:text-white">
+              role={record.event_type === 'check_out' ? 'Exiting' : 'Present'}>
+              <span className='min-w-0 flex-1 cursor-help truncate text-[13px] font-medium text-white/90 hover:text-white'>
                 {displayName}
               </span>
             </MemberTooltip>
             {isAllGroupsMode && groupName && (
-              <Tooltip content={groupName} position="top" delay={250}>
+              <Tooltip content={groupName} position='top' delay={250}>
                 <span
                   aria-label={`Group: ${groupName}`}
-                  className="inline-flex size-5 shrink-0 cursor-help items-center justify-center rounded text-white/45 transition-colors hover:bg-white/8 hover:text-white/70">
-                  <Layers aria-hidden="true" className="size-3" />
+                  className='inline-flex size-5 shrink-0 cursor-help items-center justify-center rounded text-white/45 transition-colors hover:bg-white/8 hover:text-white/70'>
+                  <Layers aria-hidden='true' className='size-3' />
                 </span>
               </Tooltip>
             )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className='flex shrink-0 items-center gap-2'>
             {timeStatus?.label && (
               <span
                 className={`rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider uppercase ${timeStatus.pillColor}`}>
@@ -256,38 +233,35 @@ const AttendanceRecordItem = memo(
               </span>
             )}
 
-            <div className="relative flex h-6 w-[54px] shrink-0 items-center justify-end overflow-hidden">
+            <div className='relative flex h-6 w-[54px] shrink-0 items-center justify-end overflow-hidden'>
               <AnimatePresence initial={false}>
                 {isHovered && onVoidManual ?
                   <motion.div
-                    key="trash-btn"
+                    key='trash-btn'
                     initial={{ opacity: 0, scale: 0.9, y: 8 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 8 }}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute right-0 flex h-6 w-6 items-center justify-center">
+                    className='absolute right-0 flex h-6 w-6 items-center justify-center'>
                     <button
-                      type="button"
+                      type='button'
                       onClick={(event) => {
                         event.stopPropagation()
                         onVoidManual(record)
                       }}
-                      className="flex h-6 w-6 items-center justify-center rounded-full border-none bg-transparent p-0 text-red-500/50 shadow-none transition-all outline-none hover:bg-red-500/15 hover:text-red-400"
+                      className='flex h-6 w-6 items-center justify-center rounded-full border-none bg-transparent p-0 text-red-500/50 shadow-none transition-all outline-none hover:bg-red-500/15 hover:text-red-400'
                       aria-label={`Void manual attendance for ${displayName}`}>
-                      <Trash2 className="size-3" />
+                      <Trash2 className='size-3' />
                     </button>
                   </motion.div>
                 : <motion.span
-                    key="time-text"
+                    key='time-text'
                     initial={{ opacity: 0, scale: 0.95, y: -8 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -8 }}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute right-0 block w-full text-right font-mono text-[11px] text-white/55 tabular-nums">
-                    {formatAttendanceTime(
-                      record.timestamp,
-                      record.timestamp_timezone || attendanceTimeZone,
-                    )}
+                    className='absolute right-0 block w-full text-right font-mono text-[11px] text-white/55 tabular-nums'>
+                    {formatAttendanceTime(record.timestamp, record.timestamp_timezone || attendanceTimeZone)}
                   </motion.span>
                 }
               </AnimatePresence>
@@ -296,14 +270,14 @@ const AttendanceRecordItem = memo(
         </div>
       </div>
     )
-  },
+  }
 )
 
-AttendanceRecordItem.displayName = "AttendanceRecordItem"
+AttendanceRecordItem.displayName = 'AttendanceRecordItem'
 
 export const AttendancePanel = memo(function AttendancePanel({
   handleSelectGroup,
-  refreshAttendanceData,
+  refreshAttendanceData
 }: AttendancePanelProps) {
   const {
     attendanceGroups,
@@ -317,7 +291,7 @@ export const AttendancePanel = memo(function AttendancePanel({
     panelDataError,
     shellBootstrapError,
     setShowGroupManagement,
-    attendanceTimezone,
+    attendanceTimezone
   } = useAttendanceStore()
 
   const { requestOpenSettings, openPinPrompt } = useUIStore()
@@ -331,12 +305,8 @@ export const AttendancePanel = memo(function AttendancePanel({
 
     recentAttendance.forEach((record) => {
       const recordTimeZone = record.timestamp_timezone || attendanceTimezone
-      if (record.is_voided || getAttendanceDateString(record.timestamp, recordTimeZone) !== today)
-        return
-      todayRecordsByPerson.set(
-        record.person_id,
-        (todayRecordsByPerson.get(record.person_id) ?? 0) + 1,
-      )
+      if (record.is_voided || getAttendanceDateString(record.timestamp, recordTimeZone) !== today) return
+      todayRecordsByPerson.set(record.person_id, (todayRecordsByPerson.get(record.person_id) ?? 0) + 1)
     })
 
     return new Set(
@@ -351,11 +321,11 @@ export const AttendancePanel = memo(function AttendancePanel({
             : currentGroup
           const attendanceMode =
             memberGroup?.settings?.attendance_mode ??
-            (memberGroup?.settings?.track_checkout ? "work_hours" : "attendance")
+            (memberGroup?.settings?.track_checkout ? 'work_hours' : 'attendance')
 
-          return attendanceMode === "visits" ? recordCount % 2 === 1 : true
+          return attendanceMode === 'visits' ? recordCount % 2 === 1 : true
         })
-        .map((member) => member.person_id),
+        .map((member) => member.person_id)
     )
   }, [attendanceGroups, attendanceTimezone, currentGroup, groupMembers, recentAttendance])
 
@@ -364,7 +334,7 @@ export const AttendancePanel = memo(function AttendancePanel({
       return {
         lateThresholdEnabled: false,
         lateThresholdMinutes: 5,
-        classStartTime: formatAttendanceTimeInput(new Date(), attendanceTimezone),
+        classStartTime: formatAttendanceTimeInput(new Date(), attendanceTimezone)
       }
     }
 
@@ -372,8 +342,7 @@ export const AttendancePanel = memo(function AttendancePanel({
       lateThresholdEnabled: currentGroup.settings.late_threshold_enabled ?? false,
       lateThresholdMinutes: currentGroup.settings.late_threshold_minutes ?? 5,
       classStartTime:
-        currentGroup.settings.class_start_time ??
-        formatAttendanceTimeInput(new Date(), attendanceTimezone),
+        currentGroup.settings.class_start_time ?? formatAttendanceTimeInput(new Date(), attendanceTimezone)
     }
   }, [attendanceTimezone, currentGroup])
 
@@ -382,7 +351,7 @@ export const AttendancePanel = memo(function AttendancePanel({
 
   const handleOpenSettingsForEnrollment = useCallback(() => {
     // Force active settings tab to "group" (Group Management) to override cached history
-    requestOpenSettings("group", "members")
+    requestOpenSettings('group', 'members')
   }, [requestOpenSettings])
 
   const unenrolledMembersCount = useMemo(() => {
@@ -393,11 +362,10 @@ export const AttendancePanel = memo(function AttendancePanel({
     return groupMembers.some((m) => m.is_active && m.has_face_data)
   }, [groupMembers])
 
-  const [searchQuery, setSearchQuery] = useState("")
-  const [recordScope, setRecordScope] = useState<AttendanceRecordScope>("today")
+  const [searchQuery, setSearchQuery] = useState('')
+  const [recordScope, setRecordScope] = useState<AttendanceRecordScope>('today')
   const [displayLimit, setDisplayLimit] = useState(20)
-  const effectiveRecordScope: AttendanceRecordScope =
-    recentAttendance.length === 0 ? "all" : recordScope
+  const effectiveRecordScope: AttendanceRecordScope = recentAttendance.length === 0 ? 'all' : recordScope
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
@@ -429,8 +397,8 @@ export const AttendancePanel = memo(function AttendancePanel({
       displayNameMap,
       recordScope: effectiveRecordScope,
       searchQuery,
-      sortField: "time",
-      sortOrder: "desc",
+      sortField: 'time',
+      sortOrder: 'desc'
     })
   }, [recentAttendance, displayNameMap, effectiveRecordScope, searchQuery])
 
@@ -448,15 +416,13 @@ export const AttendancePanel = memo(function AttendancePanel({
   if (!isShellReady) {
     if (shellBootstrapError) {
       return (
-        <div
-          role="alert"
-          className="flex flex-1 items-center justify-center px-6 text-center text-xs text-white/65">
+        <div role='alert' className='flex flex-1 items-center justify-center px-6 text-center text-xs text-white/65'>
           {shellBootstrapError}
         </div>
       )
     }
     return (
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className='flex flex-1 flex-col overflow-hidden'>
         <SidebarTopSkeleton />
         <AttendanceListSkeleton />
       </div>
@@ -464,11 +430,11 @@ export const AttendancePanel = memo(function AttendancePanel({
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className='flex flex-1 flex-col overflow-hidden'>
       {attendanceGroups.length > 0 ?
-        <div className="shrink-0 px-2 pt-2 pb-1">
-          <div className="flex items-center">
-            <div className="min-w-30 flex-1">
+        <div className='shrink-0 px-2 pt-2 pb-1'>
+          <div className='flex items-center'>
+            <div className='min-w-30 flex-1'>
               <Dropdown
                 options={[
                   ...(attendanceGroups.length > 1 ?
@@ -476,14 +442,14 @@ export const AttendancePanel = memo(function AttendancePanel({
                       {
                         value: ALL_GROUPS_ID,
                         label: `All Groups (${attendanceGroups.length})`,
-                        dividerBelow: true,
-                      },
+                        dividerBelow: true
+                      }
                     ]
                   : []),
                   ...generateGroupDisplayNames(attendanceGroups).map((group) => ({
                     value: group.id,
-                    label: group.displayName,
-                  })),
+                    label: group.displayName
+                  }))
                 ]}
                 value={
                   currentGroup?.id === ALL_GROUPS_ID ? ALL_GROUPS_ID
@@ -499,30 +465,30 @@ export const AttendancePanel = memo(function AttendancePanel({
                     if (group) handleSelectGroup(group)
                   }
                 }}
-                placeholder="Select group…"
-                emptyMessage="No groups available"
+                placeholder='Select group…'
+                emptyMessage='No groups available'
                 maxHeight={256}
-                buttonClassName="text-xs h-9 !bg-white/5 hover:!bg-white/[0.08] !border-white/5 border-r-0 rounded-r-none focus:ring-0! focus:border-white/20!"
-                optionClassName="text-xs py-1.5"
+                buttonClassName='text-xs h-9 !bg-white/5 hover:!bg-white/[0.08] !border-white/5 border-r-0 rounded-r-none focus:ring-0! focus:border-white/20!'
+                optionClassName='text-xs py-1.5'
                 allowClear={false}
                 showPlaceholderOption={false}
               />
             </div>
-            <Tooltip content="Create group" position="top">
+            <Tooltip content='Create group' position='top'>
               <button
                 onClick={() => setShowGroupManagement(true)}
                 className={`${sidebarActionButtonClassName} rounded-none border-r-0`}
-                aria-label="Create group">
-                <Plus className="size-3.5" />
+                aria-label='Create group'>
+                <Plus className='size-3.5' />
               </button>
             </Tooltip>
-            <Tooltip content="Members" position="top">
+            <Tooltip content='Members' position='top'>
               <button
                 disabled={isPanelLoading || isPanelSwitchPending || Boolean(panelDataError)}
                 onClick={() => openPinPrompt(() => setShowManualEntry(true))}
                 className={`${sidebarActionButtonClassName} rounded-l-none rounded-r-lg`}
-                aria-label="Members">
-                <Users className="size-3.5" />
+                aria-label='Members'>
+                <Users className='size-3.5' />
               </button>
             </Tooltip>
           </div>
@@ -537,29 +503,29 @@ export const AttendancePanel = memo(function AttendancePanel({
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3 py-1.5 text-xs">
-                <div className="flex min-w-0 items-center">
-                  <span className="truncate text-[11.5px] font-medium text-amber-300/90">
+                className='mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3 py-1.5 text-xs'>
+                <div className='flex min-w-0 items-center'>
+                  <span className='truncate text-[11.5px] font-medium text-amber-300/90'>
                     {unenrolledMembersCount} member
-                    {unenrolledMembersCount === 1 ? " needs" : "s need"} face enrollment
+                    {unenrolledMembersCount === 1 ? ' needs' : 's need'} face enrollment
                   </span>
                 </div>
                 <button
                   onClick={handleOpenSettingsForEnrollment}
-                  className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/15 px-2.5 py-0.5 text-[10.5px] font-bold tracking-wider text-amber-300 uppercase transition-all duration-150 hover:border-amber-500/50 hover:bg-amber-500/25 active:scale-95">
+                  className='shrink-0 rounded-md border border-amber-500/30 bg-amber-500/15 px-2.5 py-0.5 text-[10.5px] font-bold tracking-wider text-amber-300 uppercase transition-all duration-150 hover:border-amber-500/50 hover:bg-amber-500/25 active:scale-95'>
                   Enroll
                 </button>
               </motion.div>
             )}
         </div>
       : !panelDataError && (
-          <div className="flex min-h-0 flex-1 items-center justify-center">
-            <div className="flex flex-col items-center justify-center space-y-3">
-              <div className="text-center text-xs text-white/55">No groups created</div>
+          <div className='flex min-h-0 flex-1 items-center justify-center'>
+            <div className='flex flex-col items-center justify-center space-y-3'>
+              <div className='text-center text-xs text-white/55'>No groups created</div>
               <button
                 onClick={() => setShowGroupManagement(true)}
-                className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
-                <Plus className="size-3.5" />
+                className='flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white'>
+                <Plus className='size-3.5' />
                 Create group
               </button>
             </div>
@@ -569,62 +535,62 @@ export const AttendancePanel = memo(function AttendancePanel({
 
       {panelDataError && (
         <div
-          role="alert"
-          className="mx-2 mt-2 flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-200/90">
+          role='alert'
+          className='mx-2 mt-2 flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-200/90'>
           <span>{panelDataError}</span>
           <button
-            type="button"
+            type='button'
             disabled={isPanelRefreshing}
             onClick={() => void refreshAttendanceData()}
-            className="shrink-0 rounded px-2 py-1 font-semibold hover:bg-white/5 disabled:opacity-40">
+            className='shrink-0 rounded px-2 py-1 font-semibold hover:bg-white/5 disabled:opacity-40'>
             Retry
           </button>
         </div>
       )}
 
       {!isPanelLoading && !isPanelSwitchPending && recentAttendance.length > 0 && (
-        <div className="shrink-0 px-2 pb-1.5">
-          <div className="group/bar flex min-w-0 flex-1 items-center">
-            <div className="relative flex-1">
-              <Search className="absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45" />
+        <div className='shrink-0 px-2 pb-1.5'>
+          <div className='group/bar flex min-w-0 flex-1 items-center'>
+            <div className='relative flex-1'>
+              <Search className='absolute top-1/2 left-3.5 size-3.5 -translate-y-1/2 text-white/25 transition-colors group-focus-within/bar:text-white/45' />
               <input
-                type="text"
-                placeholder="Search name…"
+                type='text'
+                placeholder='Search name…'
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/bar:border-white/20 placeholder:text-white/35 focus:bg-white/[0.08]"
+                className='h-9 w-full rounded-l-lg rounded-r-none border border-r-0 border-white/5 bg-white/5 py-2 pr-3 pl-9 text-xs font-medium text-white transition-all duration-300 outline-none group-focus-within/bar:border-white/20 placeholder:text-white/35 focus:bg-white/[0.08]'
               />
             </div>
 
-            <div className="shrink-0">
+            <div className='shrink-0'>
               <Tooltip
                 content={`Show: ${
-                  recordScope === "today" ? "Today"
-                  : recordScope === "yesterday" ? "Yesterday"
-                  : recordScope === "week" ? "This week"
-                  : "All records"
+                  recordScope === 'today' ? 'Today'
+                  : recordScope === 'yesterday' ? 'Yesterday'
+                  : recordScope === 'week' ? 'This week'
+                  : 'All records'
                 }`}
-                position="top">
+                position='top'>
                 <Dropdown
-                  className="w-9"
+                  className='w-9'
                   options={[
-                    { value: "today", label: "Today" },
-                    { value: "yesterday", label: "Yesterday" },
-                    { value: "week", label: "This week" },
-                    { value: "all", label: "All" },
+                    { value: 'today', label: 'Today' },
+                    { value: 'yesterday', label: 'Yesterday' },
+                    { value: 'week', label: 'This week' },
+                    { value: 'all', label: 'All' }
                   ]}
                   value={recordScope}
                   onChange={(val) => handleRecordScopeChange(val as AttendanceRecordScope)}
                   showChevron={false}
                   trigger={
-                    <span className="flex items-center justify-center">
-                      <Calendar aria-hidden="true" className="size-3.5 text-current" />
-                      <span className="sr-only">Filter attendance by date</span>
+                    <span className='flex items-center justify-center'>
+                      <Calendar aria-hidden='true' className='size-3.5 text-current' />
+                      <span className='sr-only'>Filter attendance by date</span>
                     </span>
                   }
                   menuWidth={120}
                   buttonClassName={`h-9 w-full !border-white/5 !bg-white/5 group-focus-within/bar:!border-white/20 border border-l-0 rounded-l-none rounded-r-lg !px-0 text-white/65 transition-colors duration-200 hover:!bg-white/[0.08] hover:text-white focus:!border-white/20 focus:text-white focus:outline-none`}
-                  optionClassName="text-xs py-1.5"
+                  optionClassName='text-xs py-1.5'
                   showPlaceholderOption={false}
                   allowClear={false}
                 />
@@ -637,20 +603,20 @@ export const AttendancePanel = memo(function AttendancePanel({
       {attendanceGroups.length > 0 &&
         !(panelDataError && recentAttendance.length === 0) &&
         (isPanelLoading ? <AttendanceListSkeleton showSearch={Boolean(currentGroup)} />
-        : isPanelSwitchPending ? <div className="flex min-h-0 flex-1" />
+        : isPanelSwitchPending ? <div className='flex min-h-0 flex-1' />
         : <div
-            className="hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto pr-0 pl-2"
+            className='hover-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto pr-0 pl-2'
             style={{
               maskImage:
                 visibleRecords.length > 0 ?
-                  "linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)"
+                  'linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)'
                 : undefined,
               WebkitMaskImage:
                 visibleRecords.length > 0 ?
-                  "linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)"
-                : undefined,
+                  'linear-gradient(to bottom, black calc(100% - 40px), transparent 100%)'
+                : undefined
             }}>
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode='wait'>
               {visibleRecords.length > 0 ?
                 <motion.div
                   key={`records-${recordScope}`}
@@ -658,33 +624,25 @@ export const AttendancePanel = memo(function AttendancePanel({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="space-y-0.5">
+                  className='space-y-0.5'>
                   {(() => {
                     const recordCheckInStatus = buildRecordCheckInStatusMap(processedRecords)
 
                     return visibleRecords.map((record, idx) => {
                       const member = memberMap.get(record.person_id)
-                      const displayName =
-                        displayNameMap.get(record.person_id) || member?.name || "Member"
+                      const displayName = displayNameMap.get(record.person_id) || member?.name || 'Member'
                       const hasCheckedInEarlier = recordCheckInStatus.get(record.id) ?? false
 
                       const memberGroup =
-                        member?.group_id ?
-                          attendanceGroups.find((g) => g.id === member.group_id)
-                        : currentGroup
+                        member?.group_id ? attendanceGroups.find((g) => g.id === member.group_id) : currentGroup
                       const effectiveStartTime =
-                        memberGroup?.settings?.class_start_time ||
-                        lateTrackingSettings.classStartTime
+                        memberGroup?.settings?.class_start_time || lateTrackingSettings.classStartTime
                       const effectiveLateThreshold =
-                        memberGroup?.settings?.late_threshold_minutes ??
-                        lateTrackingSettings.lateThresholdMinutes
+                        memberGroup?.settings?.late_threshold_minutes ?? lateTrackingSettings.lateThresholdMinutes
                       const effectiveLateEnabled =
-                        memberGroup?.settings?.late_threshold_enabled ??
-                        lateTrackingSettings.lateThresholdEnabled
+                        memberGroup?.settings?.late_threshold_enabled ?? lateTrackingSettings.lateThresholdEnabled
                       const effectiveTrackCheckout =
-                        memberGroup?.settings?.track_checkout ??
-                        currentGroup?.settings?.track_checkout ??
-                        false
+                        memberGroup?.settings?.track_checkout ?? currentGroup?.settings?.track_checkout ?? false
 
                       return (
                         <AttendanceRecordItem
@@ -712,10 +670,10 @@ export const AttendancePanel = memo(function AttendancePanel({
                   })()}
 
                   {hasMore && (
-                    <div className="py-2">
+                    <div className='py-2'>
                       <button
                         onClick={handleLoadMore}
-                        className="w-full rounded-lg border border-white/5 bg-white/5 py-2 text-xs font-semibold text-white/80 transition-all hover:border-white/10 hover:bg-white/[0.08] active:scale-[0.99]">
+                        className='w-full rounded-lg border border-white/5 bg-white/5 py-2 text-xs font-semibold text-white/80 transition-all hover:border-white/10 hover:bg-white/[0.08] active:scale-[0.99]'>
                         Load more ({processedRecords.length - displayLimit} remaining)
                       </button>
                     </div>
@@ -723,48 +681,48 @@ export const AttendancePanel = memo(function AttendancePanel({
                 </motion.div>
               : searchQuery ?
                 <motion.div
-                  key="empty-search"
+                  key='empty-search'
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex min-h-full flex-1 flex-col">
+                  className='flex min-h-full flex-1 flex-col'>
                   <ScrollCenteredEmptyState>
-                    <div className="max-w-full px-4 text-center text-sm [overflow-wrap:anywhere] break-all text-white/65">
+                    <div className='max-w-full px-4 text-center text-sm [overflow-wrap:anywhere] break-all text-white/65'>
                       No results for &quot;{searchQuery}&quot;
                     </div>
                   </ScrollCenteredEmptyState>
                 </motion.div>
               : <motion.div
-                  key="empty-other"
+                  key='empty-other'
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex min-h-full flex-1 flex-col">
+                  className='flex min-h-full flex-1 flex-col'>
                   {!currentGroup ?
                     <ScrollCenteredEmptyState>
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <FolderOpen className="mb-2 size-5 text-white/20" />
-                        <p className="text-xs text-white/50">Select a group to view records</p>
+                      <div className='flex flex-col items-center justify-center text-center'>
+                        <FolderOpen className='mb-2 size-5 text-white/20' />
+                        <p className='text-xs text-white/50'>Select a group to view records</p>
                       </div>
                     </ScrollCenteredEmptyState>
-                  : effectiveRecordScope === "today" ?
+                  : effectiveRecordScope === 'today' ?
                     <ScrollCenteredEmptyState>
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <Clock className="mb-2 size-5 text-white/20" />
-                        <p className="text-xs text-white/50">No records today</p>
+                      <div className='flex flex-col items-center justify-center text-center'>
+                        <Clock className='mb-2 size-5 text-white/20' />
+                        <p className='text-xs text-white/50'>No records today</p>
                       </div>
                     </ScrollCenteredEmptyState>
                   : groupMembers.length === 0 ?
                     <ScrollCenteredEmptyState>
-                      <div className="flex flex-col items-center justify-center space-y-3 text-center">
-                        <p className="text-xs text-white/50">This group has no members</p>
+                      <div className='flex flex-col items-center justify-center space-y-3 text-center'>
+                        <p className='text-xs text-white/50'>This group has no members</p>
                         {!isDirectoryLocked && (
                           <button
                             onClick={handleOpenSettingsForEnrollment}
-                            className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
-                            <UserPlus className="size-3.5" />
+                            className='flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white'>
+                            <UserPlus className='size-3.5' />
                             Add member
                           </button>
                         )}
@@ -772,20 +730,20 @@ export const AttendancePanel = memo(function AttendancePanel({
                     </ScrollCenteredEmptyState>
                   : !groupMembers.some((m) => m.has_face_data) ?
                     <ScrollCenteredEmptyState>
-                      <div className="flex flex-col items-center justify-center space-y-3 p-4 text-center">
-                        <p className="text-xs text-white/50">No enrolled members</p>
+                      <div className='flex flex-col items-center justify-center space-y-3 p-4 text-center'>
+                        <p className='text-xs text-white/50'>No enrolled members</p>
                         <button
                           onClick={handleOpenSettingsForEnrollment}
-                          className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white">
-                          <UserPlus className="size-3.5" />
+                          className='flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white'>
+                          <UserPlus className='size-3.5' />
                           Enroll member
                         </button>
                       </div>
                     </ScrollCenteredEmptyState>
                   : <ScrollCenteredEmptyState>
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <Calendar className="mb-2 size-5 text-white/20" />
-                        <p className="text-xs text-white/50">No records for this period</p>
+                      <div className='flex flex-col items-center justify-center text-center'>
+                        <Calendar className='mb-2 size-5 text-white/20' />
+                        <p className='text-xs text-white/50'>No records for this period</p>
                       </div>
                     </ScrollCenteredEmptyState>
                   }
@@ -806,7 +764,7 @@ export const AttendancePanel = memo(function AttendancePanel({
         <ManualCorrectionModal
           isOpen={isManualCorrectionOpen}
           record={recordToVoid}
-          displayName={displayNameMap.get(recordToVoid.person_id) || "Member"}
+          displayName={displayNameMap.get(recordToVoid.person_id) || 'Member'}
           onClose={() => {
             setIsManualCorrectionOpen(false)
             setTimeout(() => {

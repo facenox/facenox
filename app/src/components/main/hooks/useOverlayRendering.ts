@@ -1,25 +1,20 @@
-import { useRef, useCallback, useEffect } from "react"
-import type { DetectionResult } from "@/components/main/types"
-import { drawOverlays, clearOverlayRendererCache } from "@/components/main/utils"
+import { useRef, useCallback, useEffect } from 'react'
+import type { DetectionResult } from '@/components/main/types'
+import { drawOverlays, clearOverlayRendererCache } from '@/components/main/utils'
 import {
   getOverlayGuidance,
   updateHoldStillCache,
   updateVerifyingHintCache,
   type HoldStillCacheEntry,
-  type VerifyingHintCacheEntry,
-} from "@/components/main/utils/overlayGuidance"
-import {
-  useDetectionStore,
-  useCameraStore,
-  useAttendanceStore,
-  useUIStore,
-} from "@/components/main/stores"
+  type VerifyingHintCacheEntry
+} from '@/components/main/utils/overlayGuidance'
+import { useDetectionStore, useCameraStore, useAttendanceStore, useUIStore } from '@/components/main/stores'
 
 const BOX_OPACITY_LERP = 0.38
 const BOX_MISSING_HOLD_MS = 90
 const BOX_MIN_OPACITY = 0.04
 
-type DetectionFace = DetectionResult["faces"][number]
+type DetectionFace = DetectionResult['faces'][number]
 
 interface VisibleFaceState {
   key: string
@@ -38,8 +33,7 @@ interface UseOverlayRenderingOptions {
 }
 
 export function useOverlayRendering(options: UseOverlayRenderingOptions) {
-  const { videoRef, overlayCanvasRef, animationFrameRef, videoRectRef, lastVideoRectUpdateRef } =
-    options
+  const { videoRef, overlayCanvasRef, animationFrameRef, videoRectRef, lastVideoRectUpdateRef } = options
 
   const { currentDetections, currentRecognitionResults } = useDetectionStore()
   const { isStreaming } = useCameraStore()
@@ -48,11 +42,11 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
 
   const lastCanvasSizeRef = useRef<{ width: number; height: number }>({
     width: 0,
-    height: 0,
+    height: 0
   })
   const lastVideoSizeRef = useRef<{ width: number; height: number }>({
     width: 0,
-    height: 0,
+    height: 0
   })
   const lastFitCoverRef = useRef<boolean | undefined>(undefined)
   const scaleFactorsRef = useRef<{
@@ -83,8 +77,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
 
     const now = Date.now()
     if (!videoRectRef.current || now - (lastVideoRectUpdateRef.current ?? 0) > 200) {
-      ;(videoRectRef as React.MutableRefObject<DOMRect | null>).current =
-        video.getBoundingClientRect()
+      ;(videoRectRef as React.MutableRefObject<DOMRect | null>).current = video.getBoundingClientRect()
       ;(lastVideoRectUpdateRef as React.MutableRefObject<number>).current = now
     }
 
@@ -112,11 +105,11 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
 
     lastVideoSizeRef.current = {
       width: currentVideoWidth,
-      height: currentVideoHeight,
+      height: currentVideoHeight
     }
     lastCanvasSizeRef.current = {
       width: overlayCanvas.width,
-      height: overlayCanvas.height,
+      height: overlayCanvas.height
     }
     lastFitCoverRef.current = quickSettings.cameraFitCover
 
@@ -177,7 +170,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
         enableSpoofDetection,
         getVideoRect,
         calculateScaleFactors,
-        currentGroupId: currentGroup?.id,
+        currentGroupId: currentGroup?.id
       })
     },
     [
@@ -190,8 +183,8 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
       getVideoRect,
       calculateScaleFactors,
       videoRef,
-      overlayCanvasRef,
-    ],
+      overlayCanvasRef
+    ]
   )
 
   const animate = useCallback(() => {
@@ -200,8 +193,8 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
 
     if (!overlayCanvas || !isStreaming) {
       if (overlayCanvas && overlayCanvas.width > 0 && overlayCanvas.height > 0) {
-        const ctx = overlayCanvas.getContext("2d", {
-          willReadFrequently: false,
+        const ctx = overlayCanvas.getContext('2d', {
+          willReadFrequently: false
         })
         if (ctx) {
           ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height)
@@ -235,7 +228,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
             face,
             opacity: 0,
             targetOpacity: 1,
-            lastSeenAt: now,
+            lastSeenAt: now
           })
         }
       })
@@ -257,7 +250,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
 
       renderedFaces.push({
         ...visibleFace.face,
-        renderOpacity: visibleFace.opacity,
+        renderOpacity: visibleFace.opacity
       })
     }
 
@@ -270,8 +263,8 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
         {
           enableSpoofDetection,
           recognitionEnabled: true,
-          currentRecognitionResults,
-        },
+          currentRecognitionResults
+        }
       )
 
       holdStillCacheRef.current = nextCache
@@ -281,7 +274,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
         nextCache: nextVerifyingHintCache,
         activeKeys: activeVerifyingHintKeys,
         faceKeyByIndex: verifyingHintKeyByIndex,
-        nextAnonymousSeed: nextVerifyingAnonymousSeed,
+        nextAnonymousSeed: nextVerifyingAnonymousSeed
       } = updateVerifyingHintCache(
         renderedFaces,
         verifyingHintCacheRef.current,
@@ -290,8 +283,8 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
         {
           enableSpoofDetection,
           recognitionEnabled: true,
-          currentRecognitionResults,
-        },
+          currentRecognitionResults
+        }
       )
 
       verifyingHintCacheRef.current = nextVerifyingHintCache
@@ -300,9 +293,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
       const guidedFaces = renderedFaces.map((face, index) => {
         const trackId = face.track_id
         const recognitionResult =
-          (trackId !== undefined ? currentRecognitionResults.get(trackId) : undefined) ??
-          face.recognition ??
-          null
+          (trackId !== undefined ? currentRecognitionResults.get(trackId) : undefined) ?? face.recognition ?? null
         const holdStillKey = faceKeyByIndex.get(index)
         const verifyingHintKey = verifyingHintKeyByIndex.get(index)
         const overlayGuidance = getOverlayGuidance(face, {
@@ -310,8 +301,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
           recognitionEnabled: true,
           recognitionResult,
           holdStillActive: holdStillKey ? activeKeys.has(holdStillKey) : false,
-          verifyingHintActive:
-            verifyingHintKey ? activeVerifyingHintKeys.has(verifyingHintKey) : false,
+          verifyingHintActive: verifyingHintKey ? activeVerifyingHintKeys.has(verifyingHintKey) : false
         })
 
         if (!overlayGuidance) {
@@ -320,18 +310,18 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
 
         return {
           ...face,
-          overlayGuidance,
+          overlayGuidance
         }
       })
 
       handleDrawOverlays({
         faces: guidedFaces,
-        model_used: detectionsToRender?.model_used ?? "current",
+        model_used: detectionsToRender?.model_used ?? 'current'
       })
     } else {
       holdStillCacheRef.current.clear()
       verifyingHintCacheRef.current.clear()
-      const ctx = overlayCanvas.getContext("2d", { willReadFrequently: false })
+      const ctx = overlayCanvas.getContext('2d', { willReadFrequently: false })
       if (ctx && overlayCanvas.width > 0 && overlayCanvas.height > 0) {
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height)
       }
@@ -348,7 +338,7 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     enableSpoofDetection,
     getFaceKey,
     overlayCanvasRef,
-    animationFrameRef,
+    animationFrameRef
   ])
 
   useEffect(() => {
@@ -378,6 +368,6 @@ export function useOverlayRendering(options: UseOverlayRenderingOptions) {
     getVideoRect,
     calculateScaleFactors,
     animate,
-    resetOverlayRefs,
+    resetOverlayRefs
   }
 }

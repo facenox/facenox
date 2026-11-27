@@ -1,17 +1,12 @@
-import type { QuickSettings } from "@/components/settings/types"
-import { defaultSettings, type PersistentSettingsSchema } from "./persistentSettingsDefaults"
+import type { QuickSettings } from '@/components/settings/types'
+import { defaultSettings, type PersistentSettingsSchema } from './persistentSettingsDefaults'
 
 class PersistentSettingsService {
   private scope: string | null = null
-  private readonly scopedKeys = new Set([
-    "attendance",
-    "reportViews",
-    "reportScratchpad",
-    "reportDefaultViewNames",
-  ])
+  private readonly scopedKeys = new Set(['attendance', 'reportViews', 'reportScratchpad', 'reportDefaultViewNames'])
 
   private getStoreAPI(): StoreAPI | null {
-    if (typeof window === "undefined") return null
+    if (typeof window === 'undefined') return null
     // Type assertion for window.electronAPI (defined in global.d.ts)
     const electronAPI = (window as Window & { electronAPI?: { store?: StoreAPI } }).electronAPI
     return electronAPI?.store || null
@@ -29,8 +24,8 @@ class PersistentSettingsService {
     const store = this.getStoreAPI()
     if (!store) return null
 
-    const organizationId = await store.get("sync.organizationId")
-    if (typeof organizationId !== "string") {
+    const organizationId = await store.get('sync.organizationId')
+    if (typeof organizationId !== 'string') {
       return null
     }
 
@@ -72,10 +67,10 @@ class PersistentSettingsService {
   }
 
   async getQuickSettings(): Promise<QuickSettings> {
-    const settings = await this.get<QuickSettings>("quickSettings")
+    const settings = await this.get<QuickSettings>('quickSettings')
 
     if (!settings) {
-      await this.set("quickSettings", defaultSettings.quickSettings)
+      await this.set('quickSettings', defaultSettings.quickSettings)
       return defaultSettings.quickSettings
     }
 
@@ -84,14 +79,14 @@ class PersistentSettingsService {
   }
 
   async setQuickSettings(settings: QuickSettings): Promise<void> {
-    await this.set("quickSettings", settings)
+    await this.set('quickSettings', settings)
   }
 
-  async getAudioSettings(): Promise<PersistentSettingsSchema["audio"]> {
-    const settings = await this.get<PersistentSettingsSchema["audio"]>("audio")
+  async getAudioSettings(): Promise<PersistentSettingsSchema['audio']> {
+    const settings = await this.get<PersistentSettingsSchema['audio']>('audio')
 
     if (!settings) {
-      await this.set("audio", defaultSettings.audio)
+      await this.set('audio', defaultSettings.audio)
       return defaultSettings.audio
     }
 
@@ -99,34 +94,34 @@ class PersistentSettingsService {
     const merged = { ...defaultSettings.audio, ...settings }
     if (
       !merged.recognitionSoundUrl ||
-      merged.recognitionSoundUrl.includes("Default.mp3") ||
-      merged.recognitionSoundUrl.includes("Recognition_Success.mp3") ||
-      merged.recognitionSoundUrl === "/assets/sounds/Recognition_Success.wav"
+      merged.recognitionSoundUrl.includes('Default.mp3') ||
+      merged.recognitionSoundUrl.includes('Recognition_Success.mp3') ||
+      merged.recognitionSoundUrl === '/assets/sounds/Recognition_Success.wav'
     ) {
-      merged.recognitionSoundUrl = "./assets/sounds/Recognition_Success.wav"
-      await this.set("audio", merged) // Save the corrected path
+      merged.recognitionSoundUrl = './assets/sounds/Recognition_Success.wav'
+      await this.set('audio', merged) // Save the corrected path
     }
 
     return merged
   }
 
-  async setAudioSettings(settings: Partial<PersistentSettingsSchema["audio"]>): Promise<void> {
+  async setAudioSettings(settings: Partial<PersistentSettingsSchema['audio']>): Promise<void> {
     const current = await this.getAudioSettings()
-    await this.set("audio", { ...current, ...settings })
+    await this.set('audio', { ...current, ...settings })
   }
 
   async getAttendanceSettings() {
-    const settings = await this.get<typeof defaultSettings.attendance>("attendance")
+    const settings = await this.get<typeof defaultSettings.attendance>('attendance')
 
     // If no settings exist (first start), initialize with current time
     if (!settings) {
       const now = new Date()
-      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
       const initialSettings = {
         ...defaultSettings.attendance,
-        classStartTime: currentTime,
+        classStartTime: currentTime
       }
-      await this.set("attendance", initialSettings)
+      await this.set('attendance', initialSettings)
       return initialSettings
     }
 
@@ -139,18 +134,18 @@ class PersistentSettingsService {
       lateThresholdMinutes: number
       classStartTime: string
       attendanceCooldownSeconds: number
-    }>,
+    }>
   ): Promise<void> {
     const current = await this.getAttendanceSettings()
-    await this.set("attendance", { ...current, ...settings })
+    await this.set('attendance', { ...current, ...settings })
   }
 
-  async getUIState(): Promise<PersistentSettingsSchema["ui"]> {
-    const state = await this.get<PersistentSettingsSchema["ui"]>("ui")
+  async getUIState(): Promise<PersistentSettingsSchema['ui']> {
+    const state = await this.get<PersistentSettingsSchema['ui']>('ui')
 
     if (!state) {
       // Match AttendanceSettings pattern: Write defaults if missing to ensure key exists
-      await this.set("ui", defaultSettings.ui)
+      await this.set('ui', defaultSettings.ui)
       return defaultSettings.ui
     }
 
@@ -158,7 +153,7 @@ class PersistentSettingsService {
     return { ...defaultSettings.ui, ...state }
   }
 
-  async setUIState(state: Partial<PersistentSettingsSchema["ui"]>): Promise<void> {
+  async setUIState(state: Partial<PersistentSettingsSchema['ui']>): Promise<void> {
     // electron-store supports dot notation for nested updates
     const updates = Object.entries(state).map(([key, value]) => {
       return this.set(`ui.${key}`, value)
@@ -168,58 +163,58 @@ class PersistentSettingsService {
   }
 
   async getReportViews(groupId: string): Promise<unknown[]> {
-    const views = await this.get<Record<string, unknown[]>>("reportViews")
+    const views = await this.get<Record<string, unknown[]>>('reportViews')
     return views?.[groupId] || []
   }
 
   async setReportViews(groupId: string, views: unknown[]): Promise<void> {
-    const allViews = (await this.get<Record<string, unknown[]>>("reportViews")) || {}
-    await this.set("reportViews", { ...allViews, [groupId]: views })
+    const allViews = (await this.get<Record<string, unknown[]>>('reportViews')) || {}
+    await this.set('reportViews', { ...allViews, [groupId]: views })
   }
 
   async getReportScratchpad(groupId: string): Promise<unknown> {
-    const scratchpad = (await this.get<Record<string, unknown>>("reportScratchpad")) || {}
+    const scratchpad = (await this.get<Record<string, unknown>>('reportScratchpad')) || {}
     return scratchpad[groupId]
   }
 
   async setReportScratchpad(groupId: string, config: unknown): Promise<void> {
-    const scratchpad = (await this.get<Record<string, unknown>>("reportScratchpad")) || {}
+    const scratchpad = (await this.get<Record<string, unknown>>('reportScratchpad')) || {}
     scratchpad[groupId] = config
-    await this.set("reportScratchpad", scratchpad)
+    await this.set('reportScratchpad', scratchpad)
   }
 
   async getReportDefaultViewName(groupId: string): Promise<string | null> {
-    const names = await this.get<Record<string, string>>("reportDefaultViewNames")
+    const names = await this.get<Record<string, string>>('reportDefaultViewNames')
     return names?.[groupId] || null
   }
 
   async setReportDefaultViewName(groupId: string, name: string | null): Promise<void> {
-    const allNames = (await this.get<Record<string, string>>("reportDefaultViewNames")) || {}
+    const allNames = (await this.get<Record<string, string>>('reportDefaultViewNames')) || {}
     if (name === null) {
       // Remove the groupId key by creating a new object without it
       const rest = { ...allNames }
       delete rest[groupId]
-      await this.set("reportDefaultViewNames", rest)
+      await this.set('reportDefaultViewNames', rest)
     } else {
-      await this.set("reportDefaultViewNames", {
+      await this.set('reportDefaultViewNames', {
         ...allNames,
-        [groupId]: name,
+        [groupId]: name
       })
     }
   }
 
-  async getUpdaterInfo(): Promise<PersistentSettingsSchema["updater"]> {
-    const info = await this.get<PersistentSettingsSchema["updater"]>("updater")
+  async getUpdaterInfo(): Promise<PersistentSettingsSchema['updater']> {
+    const info = await this.get<PersistentSettingsSchema['updater']>('updater')
     return info || defaultSettings.updater
   }
 
-  async setUpdaterInfo(info: Partial<PersistentSettingsSchema["updater"]>): Promise<void> {
+  async setUpdaterInfo(info: Partial<PersistentSettingsSchema['updater']>): Promise<void> {
     const current = await this.getUpdaterInfo()
-    await this.set("updater", { ...current, ...info })
+    await this.set('updater', { ...current, ...info })
   }
 
-  async getSyncSettings(): Promise<PersistentSettingsSchema["sync"]> {
-    const settings = await this.get<PersistentSettingsSchema["sync"]>("sync")
+  async getSyncSettings(): Promise<PersistentSettingsSchema['sync']> {
+    const settings = await this.get<PersistentSettingsSchema['sync']>('sync')
 
     if (!settings) {
       return defaultSettings.sync
@@ -228,32 +223,30 @@ class PersistentSettingsService {
     return { ...defaultSettings.sync, ...settings }
   }
 
-  async setSyncSettings(settings: Partial<PersistentSettingsSchema["sync"]>): Promise<void> {
+  async setSyncSettings(settings: Partial<PersistentSettingsSchema['sync']>): Promise<void> {
     // Connection identity, credentials and policies are main-process-owned.
     await window.electronAPI?.sync.updateConfig({
       enabled: settings.enabled,
       remoteBaseUrl: settings.remoteBaseUrl,
       deviceName: settings.deviceName,
-      intervalMinutes: settings.intervalMinutes,
+      intervalMinutes: settings.intervalMinutes
     })
   }
 
-  async getSecuritySettings(): Promise<PersistentSettingsSchema["security"]> {
-    const settings = await this.get<PersistentSettingsSchema["security"]>("security")
+  async getSecuritySettings(): Promise<PersistentSettingsSchema['security']> {
+    const settings = await this.get<PersistentSettingsSchema['security']>('security')
 
     if (!settings) {
-      await this.set("security", defaultSettings.security)
+      await this.set('security', defaultSettings.security)
       return defaultSettings.security
     }
 
     return { ...defaultSettings.security, ...settings }
   }
 
-  async setSecuritySettings(
-    settings: Partial<PersistentSettingsSchema["security"]>,
-  ): Promise<void> {
+  async setSecuritySettings(settings: Partial<PersistentSettingsSchema['security']>): Promise<void> {
     const current = await this.getSecuritySettings()
-    await this.set("security", { ...current, ...settings })
+    await this.set('security', { ...current, ...settings })
   }
 }
 

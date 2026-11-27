@@ -1,9 +1,9 @@
-import { create } from "zustand"
-import type { AudioSettings, QuickSettings } from "@/components/settings"
-import type { GroupSection } from "@/components/group"
-import { persistentSettings } from "@/services/PersistentSettingsService"
-import { isTechnicalErrorMessage } from "@/utils/errorText"
-import { compareRecoveryKeys, generateRecoveryKey } from "@/utils/recoveryKey"
+import { create } from 'zustand'
+import type { AudioSettings, QuickSettings } from '@/components/settings'
+import type { GroupSection } from '@/components/group'
+import { persistentSettings } from '@/services/PersistentSettingsService'
+import { isTechnicalErrorMessage } from '@/utils/errorText'
+import { compareRecoveryKeys, generateRecoveryKey } from '@/utils/recoveryKey'
 
 interface UIState {
   // Error state
@@ -61,11 +61,7 @@ interface UIState {
   resetPinLockout: () => void
   verifyRecoveryKey: (enteredKey: string) => boolean
   regenerateRecoveryKey: () => string
-  setAdminPinSettings: (settings: {
-    adminPinEnabled?: boolean
-    adminPin?: string
-    recoveryKey?: string
-  }) => void
+  setAdminPinSettings: (settings: { adminPinEnabled?: boolean; adminPin?: string; recoveryKey?: string }) => void
   setGroupInitialSection: (section: GroupSection | undefined) => void
   setSettingsInitialSection: (section: string | undefined) => void
   setLastSettingsSection: (section: string) => void
@@ -78,7 +74,7 @@ interface UIState {
   setSidebarWidth: (width: number) => void
   setQuickSettings: (settings: QuickSettings | ((prev: QuickSettings) => QuickSettings)) => void
   setAudioSettings: (
-    settings: AudioSettings | ((prev: AudioSettings) => AudioSettings) | Partial<AudioSettings>,
+    settings: AudioSettings | ((prev: AudioSettings) => AudioSettings) | Partial<AudioSettings>
   ) => void
   setIsHydrated: (isHydrated: boolean) => void
 }
@@ -88,14 +84,14 @@ const loadInitialSettings = async () => {
     persistentSettings.getQuickSettings(),
     persistentSettings.getAudioSettings(),
     persistentSettings.getUIState(),
-    persistentSettings.getSecuritySettings(),
+    persistentSettings.getSecuritySettings()
   ])
 
   return {
     quickSettings,
     audioSettings,
     adminPinEnabled: security.adminPinEnabled ?? false,
-    adminPin: security.adminPin ?? "1234",
+    adminPin: security.adminPin ?? '1234',
     recoveryKey: security.recoveryKey || generateRecoveryKey(),
     pinLockoutUntil: security.lockoutUntil ?? 0,
     pinFailedAttempts: security.failedAttempts ?? 0,
@@ -103,7 +99,7 @@ const loadInitialSettings = async () => {
     antiSpoofDetectionInfoDismissed: uiState.antiSpoofDetectionInfoDismissed,
     enrollmentInfoDismissed: uiState.enrollmentInfoDismissed,
     sidebarCollapsed: uiState.sidebarCollapsed,
-    sidebarWidth: uiState.sidebarWidth,
+    sidebarWidth: uiState.sidebarWidth
   }
 }
 
@@ -118,8 +114,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   warning: null,
 
   adminPinEnabled: false,
-  adminPin: "1234",
-  recoveryKey: "",
+  adminPin: '1234',
+  recoveryKey: '',
   pinLockoutUntil: 0,
   pinFailedAttempts: 0,
   isPinPromptOpen: false,
@@ -130,8 +126,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   showSettings: false,
   groupInitialSection: undefined,
   settingsInitialSection: undefined,
-  lastSettingsSection: "attendance",
-  lastGroupInitialSection: "overview" as GroupSection,
+  lastSettingsSection: 'attendance',
+  lastGroupInitialSection: 'overview' as GroupSection,
   lastGroupId: null,
   hasSeenIntro: false,
   antiSpoofDetectionInfoDismissed: false,
@@ -146,12 +142,12 @@ export const useUIStore = create<UIState>((set, get) => ({
     showRecognitionNames: true,
     showTrackingBoxes: true,
     cameraFitCover: false,
-    showDetectionPanel: true,
+    showDetectionPanel: true
   },
 
   audioSettings: {
     recognitionSoundEnabled: true,
-    recognitionSoundUrl: "./assets/sounds/Recognition_Success.wav",
+    recognitionSoundUrl: './assets/sounds/Recognition_Success.wav'
   },
 
   // Actions
@@ -185,15 +181,15 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (adminPinEnabled) {
       set({
         isPinPromptOpen: true,
-        pendingSettingsSection: section || (groupSection ? "group" : undefined),
+        pendingSettingsSection: section || (groupSection ? 'group' : undefined),
         pendingGroupSection: groupSection,
-        pendingPinCallback: null,
+        pendingPinCallback: null
       })
     } else {
       set({
-        settingsInitialSection: section || (groupSection ? "group" : undefined),
+        settingsInitialSection: section || (groupSection ? 'group' : undefined),
         groupInitialSection: groupSection,
-        showSettings: true,
+        showSettings: true
       })
     }
   },
@@ -205,7 +201,7 @@ export const useUIStore = create<UIState>((set, get) => ({
         isPinPromptOpen: true,
         pendingPinCallback: onSuccess,
         pendingSettingsSection: undefined,
-        pendingGroupSection: undefined,
+        pendingGroupSection: undefined
       })
     } else {
       onSuccess()
@@ -217,18 +213,12 @@ export const useUIStore = create<UIState>((set, get) => ({
       isPinPromptOpen: false,
       pendingSettingsSection: undefined,
       pendingGroupSection: undefined,
-      pendingPinCallback: null,
+      pendingPinCallback: null
     })
   },
 
   verifyPin: (enteredPin: string) => {
-    const {
-      adminPin,
-      pinLockoutUntil,
-      pendingSettingsSection,
-      pendingGroupSection,
-      pendingPinCallback,
-    } = get()
+    const { adminPin, pinLockoutUntil, pendingSettingsSection, pendingGroupSection, pendingPinCallback } = get()
 
     // Enforce persistent lockout timer
     if (pinLockoutUntil && Date.now() < pinLockoutUntil) {
@@ -238,23 +228,22 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (enteredPin === adminPin) {
       set({
         pinLockoutUntil: 0,
-        pinFailedAttempts: 0,
+        pinFailedAttempts: 0
       })
       if (pendingPinCallback) {
         pendingPinCallback()
       } else {
         set({
-          settingsInitialSection:
-            pendingSettingsSection || (pendingGroupSection ? "group" : undefined),
+          settingsInitialSection: pendingSettingsSection || (pendingGroupSection ? 'group' : undefined),
           groupInitialSection: pendingGroupSection,
-          showSettings: true,
+          showSettings: true
         })
       }
       set({
         isPinPromptOpen: false,
         pendingSettingsSection: undefined,
         pendingGroupSection: undefined,
-        pendingPinCallback: null,
+        pendingPinCallback: null
       })
       return true
     }
@@ -277,7 +266,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     const lockoutUntil = lockoutSecs > 0 ? Date.now() + lockoutSecs * 1000 : 0
     set({
       pinFailedAttempts: nextAttempts,
-      pinLockoutUntil: lockoutUntil,
+      pinLockoutUntil: lockoutUntil
     })
     return { attempts: nextAttempts, lockoutSeconds: lockoutSecs, lockoutUntil }
   },
@@ -285,7 +274,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   resetPinLockout: () => {
     set({
       pinLockoutUntil: 0,
-      pinFailedAttempts: 0,
+      pinFailedAttempts: 0
     })
   },
 
@@ -293,12 +282,12 @@ export const useUIStore = create<UIState>((set, get) => ({
     const { recoveryKey } = get()
     if (compareRecoveryKeys(enteredKey, recoveryKey)) {
       set({
-        adminPin: "1234",
+        adminPin: '1234',
         adminPinEnabled: false,
         pinLockoutUntil: 0,
         pinFailedAttempts: 0,
         isPinPromptOpen: false,
-        showSettings: true,
+        showSettings: true
       })
       return true
     }
@@ -315,7 +304,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     set((state) => ({
       adminPinEnabled: settings.adminPinEnabled ?? state.adminPinEnabled,
       adminPin: settings.adminPin ?? state.adminPin,
-      recoveryKey: settings.recoveryKey ?? state.recoveryKey,
+      recoveryKey: settings.recoveryKey ?? state.recoveryKey
     }))
   },
 
@@ -326,28 +315,27 @@ export const useUIStore = create<UIState>((set, get) => ({
   setLastGroupId: (id) => set({ lastGroupId: id }),
 
   setHasSeenIntro: (seen) => set({ hasSeenIntro: seen }),
-  setAntiSpoofDetectionInfoDismissed: (dismissed) =>
-    set({ antiSpoofDetectionInfoDismissed: dismissed }),
+  setAntiSpoofDetectionInfoDismissed: (dismissed) => set({ antiSpoofDetectionInfoDismissed: dismissed }),
   setEnrollmentInfoDismissed: (dismissed) => set({ enrollmentInfoDismissed: dismissed }),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
   setSidebarWidth: (width) => set({ sidebarWidth: width }),
 
   setQuickSettings: (settings) => {
     set((state) => ({
-      quickSettings: typeof settings === "function" ? settings(state.quickSettings) : settings,
+      quickSettings: typeof settings === 'function' ? settings(state.quickSettings) : settings
     }))
   },
 
   setAudioSettings: (settings) => {
     set((state) => ({
       audioSettings:
-        typeof settings === "function" ?
+        typeof settings === 'function' ?
           settings(state.audioSettings)
-        : { ...state.audioSettings, ...(settings as Partial<AudioSettings>) },
+        : { ...state.audioSettings, ...(settings as Partial<AudioSettings>) }
     }))
   },
 
-  setIsHydrated: (isHydrated: boolean) => set({ isHydrated }),
+  setIsHydrated: (isHydrated: boolean) => set({ isHydrated })
 }))
 
 useUIStore.subscribe((state, prevState) => {
@@ -360,7 +348,7 @@ useUIStore.subscribe((state, prevState) => {
   if (state.antiSpoofDetectionInfoDismissed !== prevState.antiSpoofDetectionInfoDismissed) {
     persistentSettings
       .setUIState({
-        antiSpoofDetectionInfoDismissed: state.antiSpoofDetectionInfoDismissed,
+        antiSpoofDetectionInfoDismissed: state.antiSpoofDetectionInfoDismissed
       })
       .catch(console.error)
   }
@@ -368,7 +356,7 @@ useUIStore.subscribe((state, prevState) => {
   if (state.enrollmentInfoDismissed !== prevState.enrollmentInfoDismissed) {
     persistentSettings
       .setUIState({
-        enrollmentInfoDismissed: state.enrollmentInfoDismissed,
+        enrollmentInfoDismissed: state.enrollmentInfoDismissed
       })
       .catch(console.error)
   }
@@ -402,14 +390,14 @@ useUIStore.subscribe((state, prevState) => {
         adminPin: state.adminPin,
         recoveryKey: state.recoveryKey,
         lockoutUntil: state.pinLockoutUntil,
-        failedAttempts: state.pinFailedAttempts,
+        failedAttempts: state.pinFailedAttempts
       })
       .catch(console.error)
   }
 })
 
 // Load Settings from store on initialization
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   loadInitialSettings()
     .then(
       ({
@@ -424,13 +412,13 @@ if (typeof window !== "undefined") {
         antiSpoofDetectionInfoDismissed,
         enrollmentInfoDismissed,
         sidebarCollapsed,
-        sidebarWidth,
+        sidebarWidth
       }) => {
         useUIStore.setState({
           quickSettings,
           audioSettings,
           adminPinEnabled: adminPinEnabled ?? false,
-          adminPin: adminPin ?? "1234",
+          adminPin: adminPin ?? '1234',
           recoveryKey: recoveryKey || generateRecoveryKey(),
           pinLockoutUntil: pinLockoutUntil ?? 0,
           pinFailedAttempts: pinFailedAttempts ?? 0,
@@ -439,9 +427,9 @@ if (typeof window !== "undefined") {
           enrollmentInfoDismissed,
           sidebarCollapsed: sidebarCollapsed ?? false,
           sidebarWidth: sidebarWidth ?? 300,
-          isHydrated: true,
+          isHydrated: true
         })
-      },
+      }
     )
     .catch(() => {
       useUIStore.setState({ isHydrated: true })
@@ -450,7 +438,7 @@ if (typeof window !== "undefined") {
   if (window.electronAPI?.security?.onPinReset) {
     window.electronAPI.security.onPinReset((data) => {
       useUIStore.setState({
-        adminPin: data?.adminPin ?? "1234",
+        adminPin: data?.adminPin ?? '1234',
         adminPinEnabled: data?.adminPinEnabled ?? false,
         pinLockoutUntil: 0,
         pinFailedAttempts: 0,
@@ -458,7 +446,7 @@ if (typeof window !== "undefined") {
         pendingSettingsSection: undefined,
         pendingGroupSection: undefined,
         pendingPinCallback: null,
-        success: "Admin PIN was reset remotely from Cloud.",
+        success: 'Admin PIN was reset remotely from Cloud.'
       })
     })
   }

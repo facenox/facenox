@@ -3,10 +3,10 @@
  * to optimize rendering cycles and avoid redundant IPC/API database roundtrips.
  */
 
-import type { RefObject } from "react"
-import { attendanceManager } from "@/services"
-import { ALL_GROUPS_ID } from "@/components/main/hooks/useAttendanceGroups"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
+import type { RefObject } from 'react'
+import { attendanceManager } from '@/services'
+import { ALL_GROUPS_ID } from '@/components/main/hooks/useAttendanceGroups'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
 
 /**
  * Retrieves a member's metadata from cache, falling back to a database lookup if not yet loaded.
@@ -22,8 +22,7 @@ export async function getMemberFromCache(
   personId: string,
   currentGroup: AttendanceGroup | null,
   memberCacheRef:
-    | RefObject<Map<string, AttendanceMember | null>>
-    | { current: Map<string, AttendanceMember | null> | null },
+    RefObject<Map<string, AttendanceMember | null>> | { current: Map<string, AttendanceMember | null> | null }
 ): Promise<{ member: AttendanceMember | null; memberName: string } | null> {
   try {
     const cache = memberCacheRef.current
@@ -41,7 +40,7 @@ export async function getMemberFromCache(
       return null
     }
 
-    if (currentGroup && currentGroup.id !== ALL_GROUPS_ID && currentGroup.id !== "all") {
+    if (currentGroup && currentGroup.id !== ALL_GROUPS_ID && currentGroup.id !== 'all') {
       if (member.group_id !== currentGroup.id) {
         return null
       }

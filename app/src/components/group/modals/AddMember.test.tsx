@@ -1,148 +1,122 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { AddMember } from "./AddMember"
-import { attendanceManager } from "@/services"
-import { createSyncConfig, getElectronAPIMock } from "@/test/mocks/electron"
-import { useAttendanceStore } from "@/components/main/stores"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { AddMember } from './AddMember'
+import { attendanceManager } from '@/services'
+import { createSyncConfig, getElectronAPIMock } from '@/test/mocks/electron'
+import { useAttendanceStore } from '@/components/main/stores'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
 
-vi.mock("@/services", () => ({
+vi.mock('@/services', () => ({
   attendanceManager: {
     addMember: vi.fn(),
     addMembersBulk: vi.fn(),
-    enrollFaceForGroupPerson: vi.fn(),
+    enrollFaceForGroupPerson: vi.fn()
   },
   backendService: {
-    detectFaces: vi.fn(),
+    detectFaces: vi.fn()
   },
   persistentSettings: {
     getUIState: vi.fn().mockResolvedValue({}),
-    setUIState: vi.fn().mockResolvedValue(undefined),
-  },
+    setUIState: vi.fn().mockResolvedValue(undefined)
+  }
 }))
 
-vi.mock("@/components/group/sections/enrollment/hooks/useCamera", async () => {
-  const { useRef, useCallback } = await import("react")
+vi.mock('@/components/group/sections/enrollment/hooks/useCamera', async () => {
+  const { useRef, useCallback } = await import('react')
   return {
     useCamera: () => ({
       videoRef: useRef<HTMLVideoElement | null>(null),
       cameraDevices: [],
-      selectedCamera: "",
+      selectedCamera: '',
       setSelectedCamera: vi.fn(),
       isStreaming: false,
       isVideoReady: false,
       isRecovering: false,
       cameraError: null,
       startCamera: useCallback(async () => {}, []),
-      stopCamera: useCallback(() => {}, []),
-    }),
+      stopCamera: useCallback(() => {}, [])
+    })
   }
 })
 
 const mockGroup: AttendanceGroup = {
-  id: "group-1",
-  name: "Grade 10 - Rizal",
-  created_at: new Date("2026-10-08T00:00:00Z"),
+  id: 'group-1',
+  name: 'Grade 10 - Rizal',
+  created_at: new Date('2026-10-08T00:00:00Z'),
   is_active: true,
-  settings: {},
+  settings: {}
 }
 
-describe("AddMember Modal", () => {
+describe('AddMember Modal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it("renders Name, Role, Face Enrollment section, and action buttons in Single mode", () => {
-    render(
-      <AddMember
-        isOpen={true}
-        group={mockGroup}
-        existingMembers={[]}
-        onClose={vi.fn()}
-        onSuccess={vi.fn()}
-      />,
-    )
+  it('renders Name, Role, Face Enrollment section, and action buttons in Single mode', () => {
+    render(<AddMember isOpen={true} group={mockGroup} existingMembers={[]} onClose={vi.fn()} onSuccess={vi.fn()} />)
 
-    expect(screen.getByText("Add members")).toBeInTheDocument()
-    expect(screen.getByPlaceholderText("Name")).toBeInTheDocument()
-    expect(screen.getByPlaceholderText("Role (optional)")).toBeInTheDocument()
-    expect(screen.getByText("Face enrollment")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Add member/i })).toBeInTheDocument()
+    expect(screen.getByText('Add members')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Name')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Role (optional)')).toBeInTheDocument()
+    expect(screen.getByText('Face enrollment')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Add member/i })).toBeInTheDocument()
   })
 
-  it("adds member successfully and closes modal", async () => {
+  it('adds member successfully and closes modal', async () => {
     const onSuccess = vi.fn()
     const onClose = vi.fn()
 
     const mockCreatedMember: AttendanceMember = {
-      id: "mem-1",
-      person_id: "person-1",
-      name: "Juan Dela Cruz",
-      role: "Student",
-      group_id: "group-1",
+      id: 'mem-1',
+      person_id: 'person-1',
+      name: 'Juan Dela Cruz',
+      role: 'Student',
+      group_id: 'group-1',
       joined_at: new Date(),
       is_active: true,
-      has_face_data: false,
+      has_face_data: false
     }
 
     vi.mocked(attendanceManager.addMember).mockResolvedValueOnce(mockCreatedMember)
 
-    render(
-      <AddMember
-        isOpen={true}
-        group={mockGroup}
-        existingMembers={[]}
-        onClose={onClose}
-        onSuccess={onSuccess}
-      />,
-    )
+    render(<AddMember isOpen={true} group={mockGroup} existingMembers={[]} onClose={onClose} onSuccess={onSuccess} />)
 
-    const inputs = screen.getAllByRole("textbox")
+    const inputs = screen.getAllByRole('textbox')
     const nameInput = inputs[0]
     const roleInput = inputs[1]
 
-    fireEvent.change(nameInput, { target: { value: "Juan Dela Cruz" } })
-    fireEvent.change(roleInput, { target: { value: "Student" } })
+    fireEvent.change(nameInput, { target: { value: 'Juan Dela Cruz' } })
+    fireEvent.change(roleInput, { target: { value: 'Student' } })
 
-    const addMemberBtn = screen.getByRole("button", { name: /Add Member/i })
+    const addMemberBtn = screen.getByRole('button', { name: /Add Member/i })
     fireEvent.click(addMemberBtn)
 
     await waitFor(() => {
-      expect(attendanceManager.addMember).toHaveBeenCalledWith("group-1", "Juan Dela Cruz", {
-        role: "Student",
-        creationId: expect.any(String),
+      expect(attendanceManager.addMember).toHaveBeenCalledWith('group-1', 'Juan Dela Cruz', {
+        role: 'Student',
+        creationId: expect.any(String)
       })
       expect(onSuccess).toHaveBeenCalled()
       expect(onClose).toHaveBeenCalled()
     })
   })
 
-  it("shows a non-blocking Cloud capacity warning when active members reach peopleLimit", async () => {
+  it('shows a non-blocking Cloud capacity warning when active members reach peopleLimit', async () => {
     getElectronAPIMock().sync.getConfig.mockResolvedValue(
       createSyncConfig({
         connected: true,
-        policyOverrides: { peopleLimit: 10 },
-      }),
+        policyOverrides: { peopleLimit: 10 }
+      })
     )
     useAttendanceStore.setState({
-      systemStats: { totalPersons: 10, totalMembers: 10, lastUpdated: "" },
+      systemStats: { totalPersons: 10, totalMembers: 10, lastUpdated: '' }
     })
 
-    render(
-      <AddMember
-        isOpen={true}
-        group={mockGroup}
-        existingMembers={[]}
-        onClose={vi.fn()}
-        onSuccess={vi.fn()}
-      />,
-    )
+    render(<AddMember isOpen={true} group={mockGroup} existingMembers={[]} onClose={vi.fn()} onSuccess={vi.fn()} />)
 
-    expect(
-      await screen.findByText(/Your Cloud plan includes 10 active members\./i),
-    ).toBeInTheDocument()
-    fireEvent.change(screen.getByPlaceholderText("Name"), { target: { value: "Maria" } })
-    expect(screen.getByRole("button", { name: /Add member/i })).toBeEnabled()
+    expect(await screen.findByText(/Your Cloud plan includes 10 active members\./i)).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'Maria' } })
+    expect(screen.getByRole('button', { name: /Add member/i })).toBeEnabled()
   })
 })

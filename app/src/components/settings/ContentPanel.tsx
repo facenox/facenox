@@ -1,43 +1,33 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import {
-  UserPlus,
-  Plus,
-  ArrowLeft,
-  FileSpreadsheet,
-  Layers,
-  Download,
-  Check,
-  X,
-  Pencil,
-} from "lucide-react"
-import { Display } from "@/components/settings/sections/Display"
-import { DataStorage } from "@/components/settings/sections/DataStorage"
-import { Groups } from "@/components/settings/sections/Groups"
-import { CreateGroup } from "@/components/group/modals/CreateGroup"
-import { ClockHealth } from "@/components/settings/sections/ClockHealth"
-import { Attendance } from "@/components/settings/sections/Attendance"
-import { About } from "@/components/settings/sections/About"
-import { Sync } from "@/components/settings/sections/Sync"
-import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
-import { isNetworkSyncError, isQuotaSyncError } from "@/components/settings/sections/syncErrorUtils"
-import { AntiSpoofDetectionModal } from "@/components/settings/AntiSpoofDetectionModal"
-import { AuditLogExportModal } from "@/components/settings/AuditLogExportModal"
-import { GroupPanel, type GroupSection } from "@/components/group"
-import { SectionHeader } from "./components/SectionHeader"
-import { useGroupUIStore } from "@/components/group/stores"
-import { useUIStore } from "@/components/main/stores"
-import { attendanceManager } from "@/services"
-import { Tooltip, Dropdown } from "@/components/shared"
-import { isOfficialCloudUrl } from "@/services/syncDefaults"
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { UserPlus, Plus, ArrowLeft, FileSpreadsheet, Layers, Download, Check, X, Pencil } from 'lucide-react'
+import { Display } from '@/components/settings/sections/Display'
+import { DataStorage } from '@/components/settings/sections/DataStorage'
+import { Groups } from '@/components/settings/sections/Groups'
+import { CreateGroup } from '@/components/group/modals/CreateGroup'
+import { ClockHealth } from '@/components/settings/sections/ClockHealth'
+import { Attendance } from '@/components/settings/sections/Attendance'
+import { About } from '@/components/settings/sections/About'
+import { Sync } from '@/components/settings/sections/Sync'
+import { hasSavedCloudPairing, useCloudSyncConfig } from '@/services/cloudSyncState'
+import { isNetworkSyncError, isQuotaSyncError } from '@/components/settings/sections/syncErrorUtils'
+import { AntiSpoofDetectionModal } from '@/components/settings/AntiSpoofDetectionModal'
+import { AuditLogExportModal } from '@/components/settings/AuditLogExportModal'
+import { GroupPanel, type GroupSection } from '@/components/group'
+import { SectionHeader } from './components/SectionHeader'
+import { useGroupUIStore } from '@/components/group/stores'
+import { useUIStore } from '@/components/main/stores'
+import { attendanceManager } from '@/services'
+import { Tooltip, Dropdown } from '@/components/shared'
+import { isOfficialCloudUrl } from '@/services/syncDefaults'
 import type {
   QuickSettings,
   AttendanceSettings,
   AudioSettings,
   SettingsOverview,
-  TimeHealthOverview,
-} from "@/components/settings/types"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
+  TimeHealthOverview
+} from '@/components/settings/types'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
 
 interface ContentPanelProps {
   onCreateGroup?: () => void
@@ -51,10 +41,7 @@ interface ContentPanelProps {
   deselectMemberTrigger: number
   setDeselectMemberTrigger: (trigger: number) => void
   setHasSelectedMember: (hasSelected: boolean) => void
-  handleExportHandlersReady: (handlers: {
-    exportCSV: () => void
-    exportAllGroupsCSV?: () => void
-  }) => void
+  handleExportHandlersReady: (handlers: { exportCSV: () => void; exportAllGroupsCSV?: () => void }) => void
   handleAddMemberHandlerReady: (handler: () => void) => void
   handleGroupsChanged: (newGroup?: AttendanceGroup) => void
   handleGroupBack: () => void
@@ -125,19 +112,19 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   addMemberHandler,
   dropdownGroups,
   groupSections,
-  setActiveSection,
+  setActiveSection
 }) => {
   const enrollmentMode = useGroupUIStore((state) => state.lastEnrollmentMode)
   const resetEnrollment = useGroupUIStore((state) => state.resetEnrollment)
 
   const [isEditingGroupName, setIsEditingGroupName] = useState(false)
-  const [groupNameInput, setGroupNameInput] = useState("")
+  const [groupNameInput, setGroupNameInput] = useState('')
   const [isSavingGroupName, setIsSavingGroupName] = useState(false)
   const groupNameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (isEditingGroupName) {
-      setGroupNameInput(validInitialGroup?.name || "")
+      setGroupNameInput(validInitialGroup?.name || '')
       const timer = setTimeout(() => {
         groupNameInputRef.current?.focus()
         groupNameInputRef.current?.select()
@@ -160,22 +147,22 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     }
 
     if (trimmed.length > 100) {
-      setError("Group name cannot exceed 100 characters.")
+      setError('Group name cannot exceed 100 characters.')
       return
     }
 
     setIsSavingGroupName(true)
     try {
       await attendanceManager.updateGroup(validInitialGroup.id, {
-        name: trimmed,
+        name: trimmed
       })
       setIsEditingGroupName(false)
       const updatedGroup = { ...validInitialGroup, name: trimmed }
       handleGroupsChanged(updatedGroup)
-      setSuccess("Group name updated.")
+      setSuccess('Group name updated.')
     } catch (err) {
-      console.error("Failed to update group name:", err)
-      setError(err instanceof Error ? err.message : "Failed to update group name")
+      console.error('Failed to update group name:', err)
+      setError(err instanceof Error ? err.message : 'Failed to update group name')
     } finally {
       setIsSavingGroupName(false)
     }
@@ -183,14 +170,14 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
 
   const handleCancelGroupNameEdit = useCallback(() => {
     setIsEditingGroupName(false)
-    setGroupNameInput(validInitialGroup?.name || "")
+    setGroupNameInput(validInitialGroup?.name || '')
   }, [validInitialGroup?.name])
 
   useEffect(() => {
     if (!isEditingGroupName) return
 
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+      if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
         e.preventDefault()
         e.stopPropagation()
         e.stopImmediatePropagation()
@@ -198,15 +185,11 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
       }
     }
 
-    window.addEventListener("keydown", handleGlobalKeyDown, true)
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown, true)
+    window.addEventListener('keydown', handleGlobalKeyDown, true)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown, true)
   }, [isEditingGroupName, handleCancelGroupNameEdit])
-  const antiSpoofDetectionInfoDismissed = useUIStore(
-    (state) => state.antiSpoofDetectionInfoDismissed,
-  )
-  const setAntiSpoofDetectionInfoDismissed = useUIStore(
-    (state) => state.setAntiSpoofDetectionInfoDismissed,
-  )
+  const antiSpoofDetectionInfoDismissed = useUIStore((state) => state.antiSpoofDetectionInfoDismissed)
+  const setAntiSpoofDetectionInfoDismissed = useUIStore((state) => state.setAntiSpoofDetectionInfoDismissed)
   const setSuccess = useUIStore((state) => state.setSuccess)
   const setError = useUIStore((state) => state.setError)
   const [isAntiSpoofModalOpen, setIsAntiSpoofModalOpen] = useState(false)
@@ -216,13 +199,10 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   const isPaired = hasSavedCloudPairing(syncConfig)
   const hasCachedPolicy = isPaired && Boolean(syncConfig?.credentialError)
   const isDirectoryLocked =
-    (cloudConfigStatus === "error" && !hasCachedPolicy) ||
-    Boolean(
-      isPaired &&
-      (syncConfig?.policyReady === false || syncConfig?.allowKioskDirectoryManagement === false),
-    )
+    (cloudConfigStatus === 'error' && !hasCachedPolicy) ||
+    Boolean(isPaired && (syncConfig?.policyReady === false || syncConfig?.allowKioskDirectoryManagement === false))
   const canManageGroups =
-    (cloudConfigStatus === "ready" || hasCachedPolicy) &&
+    (cloudConfigStatus === 'ready' || hasCachedPolicy) &&
     syncConfig?.policyReady !== false &&
     Boolean(syncConfig) &&
     (!isPaired || syncConfig?.allowKioskDirectoryManagement !== false)
@@ -235,204 +215,185 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     async (startDate?: string, endDate?: string) => {
       try {
         await attendanceManager.downloadAuditLog(startDate, endDate)
-        setSuccess("Audit log downloaded.")
+        setSuccess('Audit log downloaded.')
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to export audit log.")
+        setError(err instanceof Error ? err.message : 'Failed to export audit log.')
       }
     },
-    [setSuccess, setError],
+    [setSuccess, setError]
   )
 
   const handleLoadRecentAuditLogs = useCallback(() => attendanceManager.getAuditLogs(), [])
 
   // Dynamic Header Logic
   const headerProps = useMemo(() => {
-    const isGroupSection = activeSection === "group"
+    const isGroupSection = activeSection === 'group'
 
     const generalTitles: Record<string, string> = {
-      groups: "Groups",
-      attendance: "General",
-      display: "Display & audio",
-      notifications: "Display & audio",
-      database: "Data & storage",
-      "remote-sync": "Cloud sync",
-      about: "About",
+      groups: 'Groups',
+      attendance: 'General',
+      display: 'Display & audio',
+      notifications: 'Display & audio',
+      database: 'Data & storage',
+      'remote-sync': 'Cloud sync',
+      about: 'About'
     }
     if (isGroupSection) {
-      const groupName = validInitialGroup?.name || "Group management"
+      const groupName = validInitialGroup?.name || 'Group management'
 
       const sectionLabel =
-        groupInitialSection ?
-          groupSections.find((s) => s.id === groupInitialSection)?.label
-        : "Overview"
+        groupInitialSection ? groupSections.find((s) => s.id === groupInitialSection)?.label : 'Overview'
 
       // Actions
       let actions: React.ReactNode = null
-      if (
-        groupInitialSection === "members" &&
-        validInitialGroup &&
-        members.length > 0 &&
-        !enrollmentMode
-      ) {
+      if (groupInitialSection === 'members' && validInitialGroup && members.length > 0 && !enrollmentMode) {
         actions = (
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <button
               onClick={() => addMemberHandler?.()}
               disabled={!addMemberHandler || isDirectoryLocked}
-              className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-50">
-              <UserPlus className="size-3" />
+              className='flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-50'>
+              <UserPlus className='size-3' />
               Add member
             </button>
           </div>
         )
-      } else if (groupInitialSection === "members" && enrollmentMode) {
+      } else if (groupInitialSection === 'members' && enrollmentMode) {
         actions = (
           <button
             onClick={resetEnrollment}
-            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
-            <ArrowLeft className="size-3" />
+            className='flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]'>
+            <ArrowLeft className='size-3' />
             Back to members
           </button>
         )
-      } else if (groupInitialSection === "reports") {
+      } else if (groupInitialSection === 'reports') {
         actions =
           dropdownGroups.length > 1 ?
             <Dropdown
               options={[
                 {
-                  value: "current",
-                  label: "Export current group",
-                  icon: <FileSpreadsheet className="size-3.5" />,
+                  value: 'current',
+                  label: 'Export current group',
+                  icon: <FileSpreadsheet className='size-3.5' />
                 },
                 {
-                  value: "all",
-                  label: "Export all groups",
-                  icon: <Layers className="size-3.5" />,
-                },
+                  value: 'all',
+                  label: 'Export all groups',
+                  icon: <Layers className='size-3.5' />
+                }
               ]}
               value={null}
               onChange={(val) => {
-                if (val === "current") {
+                if (val === 'current') {
                   reportsExportHandlers?.exportCSV()
-                } else if (val === "all") {
+                } else if (val === 'all') {
                   reportsExportHandlers?.exportAllGroupsCSV?.()
                 }
               }}
               showPlaceholderOption={false}
               allowClear={false}
-              align="right"
+              align='right'
               menuWidth={180}
               fit
               disabled={!reportsExportHandlers}
-              className="inline-flex items-center"
-              buttonClassName="!gap-1.5 !border-white/10 !px-3 !py-1.5 !text-[11px] !font-medium !tracking-wide !text-white/80 hover:!border-white/20 hover:!bg-white/10 hover:!text-white disabled:!opacity-40"
+              className='inline-flex items-center'
+              buttonClassName='!gap-1.5 !border-white/10 !px-3 !py-1.5 !text-[11px] !font-medium !tracking-wide !text-white/80 hover:!border-white/20 hover:!bg-white/10 hover:!text-white disabled:!opacity-40'
               trigger={
-                <span className="flex items-center gap-1.5">
-                  <FileSpreadsheet aria-hidden="true" className="size-3 shrink-0" />
+                <span className='flex items-center gap-1.5'>
+                  <FileSpreadsheet aria-hidden='true' className='size-3 shrink-0' />
                   <span>Export</span>
                 </span>
               }
             />
-          : <Tooltip content="Export CSV for this group" position="bottom">
+          : <Tooltip content='Export CSV for this group' position='bottom'>
               <button
-                type="button"
+                type='button'
                 onClick={() => reportsExportHandlers?.exportCSV()}
                 disabled={!reportsExportHandlers}
-                className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white/80 transition-all duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40">
-                <FileSpreadsheet aria-hidden="true" className="size-3" />
+                className='flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white/80 transition-all duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40'>
+                <FileSpreadsheet aria-hidden='true' className='size-3' />
                 Export CSV
               </button>
             </Tooltip>
       }
 
-      const isOverview = !groupInitialSection || groupInitialSection === "overview"
+      const isOverview = !groupInitialSection || groupInitialSection === 'overview'
 
       return {
-        title: sectionLabel || "Overview",
+        title: sectionLabel || 'Overview',
         eyebrow: groupName,
-        eyebrowColor: "text-white/45",
-        onEyebrowClick: isOverview ? undefined : () => setGroupInitialSection("overview"),
+        eyebrowColor: 'text-white/45',
+        onEyebrowClick: isOverview ? undefined : () => setGroupInitialSection('overview'),
         actions,
-        isGroupSection: true,
+        isGroupSection: true
       }
     }
 
     return {
-      title:
-        generalTitles[activeSection] ||
-        activeSection.charAt(0).toUpperCase() + activeSection.slice(1),
-      eyebrow:
-        activeSection === "groups" || activeSection === "remote-sync" ? "Manage" : "Settings",
-      eyebrowColor: "text-white/45",
+      title: generalTitles[activeSection] || activeSection.charAt(0).toUpperCase() + activeSection.slice(1),
+      eyebrow: activeSection === 'groups' || activeSection === 'remote-sync' ? 'Manage' : 'Settings',
+      eyebrowColor: 'text-white/45',
       actions:
-        activeSection === "groups" ?
+        activeSection === 'groups' ?
           <button
             onClick={onCreateGroup ?? openCreateGroup}
             disabled={!canManageGroups}
-            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-50">
-            <Plus aria-hidden="true" className="size-3" />
+            className='flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97] disabled:opacity-50'>
+            <Plus aria-hidden='true' className='size-3' />
             Create group
           </button>
-        : activeSection === "database" ?
+        : activeSection === 'database' ?
           <button
             onClick={() => setIsAuditLogModalOpen(true)}
-            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]">
-            <Download className="size-3" />
+            className='flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/70 transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-[0.97]'>
+            <Download className='size-3' />
             Audit log
           </button>
         : (
-          activeSection === "remote-sync" &&
-          (cloudConfigStatus === "ready" || hasCachedPolicy) &&
+          activeSection === 'remote-sync' &&
+          (cloudConfigStatus === 'ready' || hasCachedPolicy) &&
           isPaired &&
           syncConfig
         ) ?
           (() => {
-            const hasError =
-              syncConfig.lastSyncStatus === "error" || Boolean(syncConfig.credentialError)
-            const isQuota =
-              !syncConfig.credentialError && isQuotaSyncError(syncConfig.lastSyncMessage)
-            const isOffline =
-              hasError &&
-              !syncConfig.credentialError &&
-              isNetworkSyncError(syncConfig.lastSyncMessage)
+            const hasError = syncConfig.lastSyncStatus === 'error' || Boolean(syncConfig.credentialError)
+            const isQuota = !syncConfig.credentialError && isQuotaSyncError(syncConfig.lastSyncMessage)
+            const isOffline = hasError && !syncConfig.credentialError && isNetworkSyncError(syncConfig.lastSyncMessage)
 
-            const pendingUpdates =
-              (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
+            const pendingUpdates = (syncConfig.unsyncedRecordsCount ?? 0) + (syncConfig.unsyncedSessionsCount ?? 0)
             const isRetrying =
-              syncConfig.lastSyncStatus === "idle" &&
-              Boolean(syncConfig.lastSyncMessage?.includes("Retrying automatically"))
+              syncConfig.lastSyncStatus === 'idle' &&
+              Boolean(syncConfig.lastSyncMessage?.includes('Retrying automatically'))
             const badgeStyle =
               hasError ?
-                isOffline ? "border-white/15 bg-white/[0.04] text-white/60"
-                : "border-amber-500/20 bg-amber-500/10 text-amber-400"
-              : isRetrying ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
-              : pendingUpdates > 0 || !syncConfig.lastSyncedAt ?
-                "border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
-              : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                isOffline ? 'border-white/15 bg-white/[0.04] text-white/60'
+                : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
+              : isRetrying ? 'border-amber-500/20 bg-amber-500/10 text-amber-300'
+              : pendingUpdates > 0 || !syncConfig.lastSyncedAt ? 'border-cyan-500/20 bg-cyan-500/10 text-cyan-300'
+              : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
             const badgeLabel =
               hasError ?
-                isOffline ? "Offline"
-                : isQuota ? "Plan limit"
-                : "Sync paused"
-              : isRetrying ? "Retrying"
-              : pendingUpdates > 0 ? "Sync pending"
-              : !syncConfig.lastSyncedAt ? "Waiting for sync"
-              : "Synced"
+                isOffline ? 'Offline'
+                : isQuota ? 'Plan limit'
+                : 'Sync paused'
+              : isRetrying ? 'Retrying'
+              : pendingUpdates > 0 ? 'Sync pending'
+              : !syncConfig.lastSyncedAt ? 'Waiting for sync'
+              : 'Synced'
 
             return (
-              <div className="flex items-center gap-2">
+              <div className='flex items-center gap-2'>
                 {!isOfficialCloudUrl(syncConfig.remoteBaseUrl) && (
-                  <Tooltip
-                    content={`Custom sync destination: ${syncConfig.remoteBaseUrl}`}
-                    position="bottom">
-                    <span className="text-[9px] font-extrabold tracking-widest text-white/45 uppercase select-none">
+                  <Tooltip content={`Custom sync destination: ${syncConfig.remoteBaseUrl}`} position='bottom'>
+                    <span className='text-[9px] font-extrabold tracking-widest text-white/45 uppercase select-none'>
                       Custom server
                     </span>
                   </Tooltip>
                 )}
                 <Tooltip
-                  content={`Linked to ${syncConfig.organizationName || "Facenox Cloud"} • Location: ${syncConfig.siteName || "Default Branch"}`}
-                  position="bottom">
+                  content={`Linked to ${syncConfig.organizationName || 'Facenox Cloud'} • Location: ${syncConfig.siteName || 'Default Branch'}`}
+                  position='bottom'>
                   <div
                     className={`cursor-help rounded border px-2 py-0.5 text-[9px] font-extrabold tracking-widest uppercase transition-all duration-200 ${badgeStyle}`}>
                     {badgeLabel}
@@ -442,7 +403,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             )
           })()
         : null,
-      isGroupSection: false,
+      isGroupSection: false
     }
   }, [
     activeSection,
@@ -463,7 +424,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     isDirectoryLocked,
     canManageGroups,
     openCreateGroup,
-    onCreateGroup,
+    onCreateGroup
   ])
 
   const handleSpoofDetectionToggle = (enabled: boolean) => {
@@ -490,39 +451,39 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     initial: { opacity: 0, scale: 0.995 },
     animate: { opacity: 1, scale: 1 },
     exit: { opacity: 0, scale: 0.995 },
-    transition: { duration: 0.18, ease: "easeOut" as const },
+    transition: { duration: 0.18, ease: 'easeOut' as const }
   }
 
   return (
     <>
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[var(--bg-secondary)]">
+      <div className='flex min-w-0 flex-1 flex-col overflow-hidden bg-[var(--bg-secondary)]'>
         <SectionHeader>
           <SectionHeader.Breadcrumbs>
             {headerProps.isGroupSection ?
               <>
-                <AnimatePresence mode="wait" initial={false}>
+                <AnimatePresence mode='wait' initial={false}>
                   {isEditingGroupName ?
                     <motion.div
-                      key="editing-group-name"
+                      key='editing-group-name'
                       initial={{ opacity: 0, scale: 0.96, x: -4 }}
                       animate={{ opacity: 1, scale: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.96, x: -4 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="flex max-w-full min-w-0 items-center gap-1.5">
+                      transition={{ duration: 0.15, ease: 'easeOut' }}
+                      className='flex max-w-full min-w-0 items-center gap-1.5'>
                       <input
                         ref={groupNameInputRef}
-                        type="text"
+                        type='text'
                         maxLength={100}
                         size={Math.max(8, groupNameInput.length + 1)}
-                        style={{ fieldSizing: "content" } as React.CSSProperties}
+                        style={{ fieldSizing: 'content' } as React.CSSProperties}
                         value={groupNameInput}
                         onChange={(e) => setGroupNameInput(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.keyCode === 13) {
+                          if (e.key === 'Enter' || e.keyCode === 13) {
                             e.preventDefault()
                             e.stopPropagation()
                             handleSaveGroupName()
-                          } else if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+                          } else if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
                             e.preventDefault()
                             e.stopPropagation()
                             e.nativeEvent.stopImmediatePropagation()
@@ -530,105 +491,97 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                           }
                         }}
                         disabled={isSavingGroupName}
-                        className="w-auto max-w-full min-w-[120px] shrink rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[13px] font-semibold tracking-wide text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-200 outline-none placeholder:text-white/35 focus:border-white/25 focus:bg-white/[0.08]"
+                        className='w-auto max-w-full min-w-[120px] shrink rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[13px] font-semibold tracking-wide text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-200 outline-none placeholder:text-white/35 focus:border-white/25 focus:bg-white/[0.08]'
                       />
-                      <Tooltip content="Save (Enter)" position="bottom" offset={6}>
+                      <Tooltip content='Save (Enter)' position='bottom' offset={6}>
                         <button
-                          type="button"
+                          type='button'
                           onClick={handleSaveGroupName}
                           disabled={!groupNameInput.trim() || isSavingGroupName}
-                          aria-label="Save name"
-                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded border-none bg-transparent p-0 text-cyan-400/80 transition-all duration-150 hover:bg-cyan-500/10 hover:text-cyan-300 focus:outline-none active:scale-95 disabled:opacity-30">
-                          <Check className="size-3" />
+                          aria-label='Save name'
+                          className='flex h-5 w-5 shrink-0 items-center justify-center rounded border-none bg-transparent p-0 text-cyan-400/80 transition-all duration-150 hover:bg-cyan-500/10 hover:text-cyan-300 focus:outline-none active:scale-95 disabled:opacity-30'>
+                          <Check className='size-3' />
                         </button>
                       </Tooltip>
-                      <Tooltip content="Cancel (Esc)" position="bottom" offset={6}>
+                      <Tooltip content='Cancel (Esc)' position='bottom' offset={6}>
                         <button
-                          type="button"
+                          type='button'
                           onClick={handleCancelGroupNameEdit}
                           disabled={isSavingGroupName}
-                          aria-label="Cancel"
-                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded border-none bg-transparent p-0 text-white/35 transition-all duration-150 hover:bg-white/5 hover:text-white/75 focus:outline-none active:scale-95">
-                          <X className="size-3" />
+                          aria-label='Cancel'
+                          className='flex h-5 w-5 shrink-0 items-center justify-center rounded border-none bg-transparent p-0 text-white/35 transition-all duration-150 hover:bg-white/5 hover:text-white/75 focus:outline-none active:scale-95'>
+                          <X className='size-3' />
                         </button>
                       </Tooltip>
                     </motion.div>
                   : <motion.div
-                      key="viewing-group-name"
+                      key='viewing-group-name'
                       initial={{ opacity: 0, scale: 0.98 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.98 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="group/group-title flex min-w-0 items-center gap-1.5 overflow-hidden">
-                      <Tooltip
-                        content={validInitialGroup?.name || "Group management"}
-                        position="bottom"
-                        offset={6}>
+                      transition={{ duration: 0.15, ease: 'easeOut' }}
+                      className='group/group-title flex min-w-0 items-center gap-1.5 overflow-hidden'>
+                      <Tooltip content={validInitialGroup?.name || 'Group management'} position='bottom' offset={6}>
                         <SectionHeader.Breadcrumb
-                          key="group-name"
-                          active={!groupInitialSection || groupInitialSection === "overview"}
+                          key='group-name'
+                          active={!groupInitialSection || groupInitialSection === 'overview'}
                           onClick={
-                            !groupInitialSection || groupInitialSection === "overview" ?
+                            !groupInitialSection || groupInitialSection === 'overview' ?
                               undefined
-                            : () => setGroupInitialSection("overview")
+                            : () => setGroupInitialSection('overview')
                           }>
-                          {validInitialGroup?.name || "Group management"}
+                          {validInitialGroup?.name || 'Group management'}
                         </SectionHeader.Breadcrumb>
                       </Tooltip>
                       {validInitialGroup &&
                         !isDirectoryLocked &&
-                        (!groupInitialSection || groupInitialSection === "overview") && (
-                          <Tooltip content="Edit group name" position="bottom" offset={6}>
+                        (!groupInitialSection || groupInitialSection === 'overview') && (
+                          <Tooltip content='Edit group name' position='bottom' offset={6}>
                             <button
-                              type="button"
+                              type='button'
                               onClick={() => {
-                                setGroupNameInput(validInitialGroup?.name || "")
+                                setGroupNameInput(validInitialGroup?.name || '')
                                 setIsEditingGroupName(true)
                               }}
-                              aria-label="Edit group name"
-                              className="flex h-5 w-5 shrink-0 items-center justify-center border-none bg-transparent p-0 text-white/35 transition-colors duration-150 hover:text-cyan-400 focus:outline-none active:scale-95">
-                              <Pencil className="size-2.5" />
+                              aria-label='Edit group name'
+                              className='flex h-5 w-5 shrink-0 items-center justify-center border-none bg-transparent p-0 text-white/35 transition-colors duration-150 hover:text-cyan-400 focus:outline-none active:scale-95'>
+                              <Pencil className='size-2.5' />
                             </button>
                           </Tooltip>
                         )}
                     </motion.div>
                   }
                 </AnimatePresence>
-                <AnimatePresence mode="popLayout">
-                  {groupInitialSection && groupInitialSection !== "overview" && (
+                <AnimatePresence mode='popLayout'>
+                  {groupInitialSection && groupInitialSection !== 'overview' && (
                     <motion.div
                       key={groupInitialSection}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 8 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="inline-flex shrink-0 items-center gap-2">
+                      transition={{ duration: 0.15, ease: 'easeOut' }}
+                      className='inline-flex shrink-0 items-center gap-2'>
                       <SectionHeader.Separator />
                       <SectionHeader.Breadcrumb active>
-                        {groupSections.find((s) => s.id === groupInitialSection)?.label ||
-                          "Overview"}
+                        {groupSections.find((s) => s.id === groupInitialSection)?.label || 'Overview'}
                       </SectionHeader.Breadcrumb>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </>
             : <>
-                <SectionHeader.Breadcrumb key="settings-label">
-                  {headerProps.eyebrow}
-                </SectionHeader.Breadcrumb>
-                <AnimatePresence mode="popLayout">
+                <SectionHeader.Breadcrumb key='settings-label'>{headerProps.eyebrow}</SectionHeader.Breadcrumb>
+                <AnimatePresence mode='popLayout'>
                   {
                     <motion.div
                       key={activeSection}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 8 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="inline-flex shrink-0 items-center gap-2">
+                      transition={{ duration: 0.15, ease: 'easeOut' }}
+                      className='inline-flex shrink-0 items-center gap-2'>
                       <SectionHeader.Separator />
-                      <SectionHeader.Breadcrumb active>
-                        {headerProps.title}
-                      </SectionHeader.Breadcrumb>
+                      <SectionHeader.Breadcrumb active>{headerProps.title}</SectionHeader.Breadcrumb>
                     </motion.div>
                   }
                 </AnimatePresence>
@@ -639,7 +592,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
           <SectionHeader.Actions>
             {headerProps.actions && (
               <motion.div
-                key={headerProps.title + "-actions"}
+                key={headerProps.title + '-actions'}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
@@ -651,14 +604,14 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         </SectionHeader>
 
         {/* Section Content */}
-        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-          <AnimatePresence mode="wait">
-            {activeSection === "group" && (
+        <div className='relative flex min-h-0 flex-1 flex-col overflow-hidden'>
+          <AnimatePresence mode='wait'>
+            {activeSection === 'group' && (
               <motion.div
-                key="group"
+                key='group'
                 {...motionProps}
-                className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden">
-                <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+                className='relative flex min-h-0 w-full flex-1 flex-col overflow-hidden'>
+                <div className='relative flex min-h-0 w-full flex-1 flex-col overflow-hidden'>
                   <GroupPanel
                     onBack={handleGroupBack}
                     initialSection={groupInitialSection}
@@ -678,11 +631,11 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               </motion.div>
             )}
 
-            {(activeSection === "display" || activeSection === "notifications") && (
+            {(activeSection === 'display' || activeSection === 'notifications') && (
               <motion.div
-                key="display"
+                key='display'
                 {...motionProps}
-                className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
+                className='custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto'>
                 <Display
                   quickSettings={quickSettings}
                   toggleQuickSetting={toggleQuickSetting}
@@ -693,41 +646,37 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               </motion.div>
             )}
 
-            {activeSection === "attendance" && (
+            {activeSection === 'attendance' && (
               <motion.div
-                key="attendance"
+                key='attendance'
                 {...motionProps}
-                className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
+                className='custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto'>
                 <Attendance
                   attendanceSettings={attendanceSettings}
-                  onOpenCloudSync={() => setActiveSection("remote-sync")}
+                  onOpenCloudSync={() => setActiveSection('remote-sync')}
                   onSpoofDetectionToggle={handleSpoofDetectionToggle}
                   onMaxRecognitionFacesChange={(count) =>
                     updateAttendanceSetting({ maxRecognitionFacesPerFrame: count })
                   }
-                  onDataRetentionChange={(days) =>
-                    updateAttendanceSetting({ dataRetentionDays: days })
-                  }
+                  onDataRetentionChange={(days) => updateAttendanceSetting({ dataRetentionDays: days })}
                   isPaired={isPaired}
                 />
                 <ClockHealth
                   timeHealthState={timeHealthState}
                   onRefreshTimeHealth={verifyTimeOnline}
                   attendanceTimeZone={attendanceSettings.attendanceTimezone}
-                  onAttendanceTimezoneChange={(timeZone) =>
-                    updateAttendanceSetting({ attendanceTimezone: timeZone })
-                  }
+                  onAttendanceTimezoneChange={(timeZone) => updateAttendanceSetting({ attendanceTimezone: timeZone })}
                   isPaired={isPaired}
                   cloudConfigStatus={cloudConfigStatus}
                 />
               </motion.div>
             )}
 
-            {activeSection === "groups" && (
+            {activeSection === 'groups' && (
               <motion.div
-                key="groups"
+                key='groups'
                 {...motionProps}
-                className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
+                className='custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto'>
                 <Groups
                   groups={groups}
                   onOpenGroup={onOpenGroup}
@@ -739,17 +688,17 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               </motion.div>
             )}
 
-            {activeSection === "database" && (
+            {activeSection === 'database' && (
               <motion.div
-                key="database"
+                key='database'
                 {...motionProps}
-                className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
+                className='custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto'>
                 <DataStorage
                   systemData={systemData}
                   groups={groups}
                   isLoading={isLoading}
                   onClearDatabase={handleClearDatabase}
-                  onNavigateToSync={() => setActiveSection("remote-sync")}
+                  onNavigateToSync={() => setActiveSection('remote-sync')}
                   onGroupsChanged={() => {
                     loadSystemData()
                     if (onGroupsChanged) onGroupsChanged()
@@ -758,27 +707,27 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               </motion.div>
             )}
 
-            {activeSection === "remote-sync" && (
+            {activeSection === 'remote-sync' && (
               <motion.div
-                key="remote-sync"
+                key='remote-sync'
                 {...motionProps}
-                className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
-                <Sync onNavigateToDB={() => setActiveSection("database")} />
+                className='custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto'>
+                <Sync onNavigateToDB={() => setActiveSection('database')} />
               </motion.div>
             )}
 
-            {activeSection === "about" && (
+            {activeSection === 'about' && (
               <motion.div
-                key="about"
+                key='about'
                 {...motionProps}
-                className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
+                className='custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto'>
                 <About />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
-      {activeSection === "groups" && (
+      {activeSection === 'groups' && (
         <CreateGroup
           isOpen={showCreateGroupModal}
           existingGroups={groups}
@@ -786,7 +735,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
           onSuccess={() => {
             loadSystemData()
             onGroupsChanged?.()
-            setSuccess("Group created successfully.")
+            setSuccess('Group created successfully.')
           }}
         />
       )}

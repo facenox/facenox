@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { AlertTriangle, ChevronDown, Clock, Loader2, Lock } from "lucide-react"
-import { Dropdown, InfoPopover, Switch } from "@/components/shared"
-import { AttendanceModeInfoPopover } from "@/components/group/shared"
-import { attendanceManager } from "@/services"
-import { useGroupStore } from "@/components/group/stores"
-import { ErrorMessage, useCloudSyncStatus } from "@/components/common"
-import { DeleteConfirmationModal } from "@/components/main/components/DeleteConfirmationModal"
-import type { AttendanceGroup, AttendanceMode } from "@/types/recognition"
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { AlertTriangle, ChevronDown, Clock, Loader2, Lock } from 'lucide-react'
+import { Dropdown, InfoPopover, Switch } from '@/components/shared'
+import { AttendanceModeInfoPopover } from '@/components/group/shared'
+import { attendanceManager } from '@/services'
+import { useGroupStore } from '@/components/group/stores'
+import { ErrorMessage, useCloudSyncStatus } from '@/components/common'
+import { DeleteConfirmationModal } from '@/components/main/components/DeleteConfirmationModal'
+import type { AttendanceGroup, AttendanceMode } from '@/types/recognition'
 
 interface GroupSettingsProps {
   group: AttendanceGroup
@@ -18,17 +18,17 @@ const SETTINGS_STATUS_SWAP_DURATION = 0.14
 const SETTINGS_PANEL_ANIMATION_DURATION = 0.18
 
 const formatTimeDisplay = (time?: string | null) => {
-  if (!time) return { time: "08:00", period: "AM" }
+  if (!time) return { time: '08:00', period: 'AM' }
   try {
-    const [hours, minutes] = time.split(":").map(Number)
-    const period = hours >= 12 ? "PM" : "AM"
+    const [hours, minutes] = time.split(':').map(Number)
+    const period = hours >= 12 ? 'PM' : 'AM'
     const displayHours = hours % 12 || 12
     return {
-      time: `${displayHours}:${String(minutes).padStart(2, "0")}`,
-      period,
+      time: `${displayHours}:${String(minutes).padStart(2, '0')}`,
+      period
     }
   } catch {
-    return { time: time || "08:00", period: "" }
+    return { time: time || '08:00', period: '' }
   }
 }
 
@@ -42,24 +42,19 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDangerZoneOpen, setIsDangerZoneOpen] = useState(false)
 
-  const [lateThresholdEnabled, setLateThresholdEnabled] = useState(
-    Boolean(group.settings?.late_threshold_enabled),
-  )
-  const [classStartTime, setClassStartTime] = useState(group.settings?.class_start_time || "08:00")
-  const [classEndTime, setClassEndTime] = useState(group.settings?.class_end_time || "17:00")
-  const [lateThresholdMinutes, setLateThresholdMinutes] = useState(
-    group.settings?.late_threshold_minutes ?? 15,
-  )
+  const [lateThresholdEnabled, setLateThresholdEnabled] = useState(Boolean(group.settings?.late_threshold_enabled))
+  const [classStartTime, setClassStartTime] = useState(group.settings?.class_start_time || '08:00')
+  const [classEndTime, setClassEndTime] = useState(group.settings?.class_end_time || '17:00')
+  const [lateThresholdMinutes, setLateThresholdMinutes] = useState(group.settings?.late_threshold_minutes ?? 15)
   const [trackCheckout, setTrackCheckout] = useState(Boolean(group.settings?.track_checkout))
   const [minCheckoutDelayMinutes, setMinCheckoutDelayMinutes] = useState(
-    group.settings?.min_checkout_delay_minutes ?? 15,
+    group.settings?.min_checkout_delay_minutes ?? 15
   )
   const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>(
-    group.settings?.attendance_mode ??
-      (group.settings?.track_checkout ? "work_hours" : "attendance"),
+    group.settings?.attendance_mode ?? (group.settings?.track_checkout ? 'work_hours' : 'attendance')
   )
   const showsLateTracking = true
-  const showsDepartureRules = attendanceMode === "work_hours"
+  const showsDepartureRules = attendanceMode === 'work_hours'
   const [saveError, setSaveError] = useState<string | null>(null)
   const currentGroupIdRef = useRef(group.id)
   useEffect(() => {
@@ -70,7 +65,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
     groupId: group.id,
     confirmed: group,
     revision: 0,
-    pending: null as Promise<void> | null,
+    pending: null as Promise<void> | null
   })
 
   useEffect(() => {
@@ -82,14 +77,13 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
 
   const applySettings = useCallback((savedGroup: AttendanceGroup) => {
     setLateThresholdEnabled(Boolean(savedGroup.settings?.late_threshold_enabled))
-    setClassStartTime(savedGroup.settings?.class_start_time || "08:00")
-    setClassEndTime(savedGroup.settings?.class_end_time || "17:00")
+    setClassStartTime(savedGroup.settings?.class_start_time || '08:00')
+    setClassEndTime(savedGroup.settings?.class_end_time || '17:00')
     setLateThresholdMinutes(savedGroup.settings?.late_threshold_minutes ?? 15)
     setTrackCheckout(Boolean(savedGroup.settings?.track_checkout))
     setMinCheckoutDelayMinutes(savedGroup.settings?.min_checkout_delay_minutes ?? 15)
     setAttendanceMode(
-      savedGroup.settings?.attendance_mode ??
-        (savedGroup.settings?.track_checkout ? "work_hours" : "attendance"),
+      savedGroup.settings?.attendance_mode ?? (savedGroup.settings?.track_checkout ? 'work_hours' : 'attendance')
     )
   }, [])
 
@@ -101,7 +95,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       setIsDeleteModalOpen(false)
       onGroupsChanged?.()
     } catch (err) {
-      console.error("Failed to delete group:", err)
+      console.error('Failed to delete group:', err)
     } finally {
       setIsDeleting(false)
     }
@@ -119,7 +113,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
   }, [group, applySettings])
 
   const saveSettings = useCallback(
-    (newSettings: NonNullable<AttendanceGroup["settings"]>) => {
+    (newSettings: NonNullable<AttendanceGroup['settings']>) => {
       const context = saveContextRef.current
       const revision = ++context.revision
       setSaveError(null)
@@ -131,21 +125,21 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       const persist = async () => {
         try {
           const saved = await attendanceManager.updateGroup(context.groupId, {
-            settings: newSettings,
+            settings: newSettings
           })
-          if (saved === false) throw new Error("Group rules were not saved.")
+          if (saved === false) throw new Error('Group rules were not saved.')
           context.confirmed = { ...context.confirmed, settings: newSettings }
           if (isCurrent()) {
             setSelectedGroup(context.confirmed)
             onGroupsChanged?.(context.confirmed)
           }
         } catch (err) {
-          console.error("Failed to save group settings:", err)
+          console.error('Failed to save group settings:', err)
           if (isCurrent()) {
             applySettings(context.confirmed)
             setSelectedGroup(context.confirmed)
             onGroupsChanged?.(context.confirmed)
-            setSaveError("Could not save group rules. Last saved settings restored. Try again.")
+            setSaveError('Could not save group rules. Last saved settings restored. Try again.')
           }
         }
       }
@@ -156,7 +150,7 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       context.pending = pending
       return pending
     },
-    [onGroupsChanged, setSelectedGroup, applySettings],
+    [onGroupsChanged, setSelectedGroup, applySettings]
   )
 
   const handleLateToggle = (enabled: boolean) => {
@@ -165,11 +159,11 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       ...group.settings,
       late_threshold_enabled: enabled,
       class_start_time: classStartTime,
-      class_end_time: attendanceMode === "work_hours" ? classEndTime : null,
+      class_end_time: attendanceMode === 'work_hours' ? classEndTime : null,
       attendance_mode: attendanceMode,
       late_threshold_minutes: lateThresholdMinutes,
       track_checkout: trackCheckout,
-      min_checkout_delay_minutes: minCheckoutDelayMinutes,
+      min_checkout_delay_minutes: minCheckoutDelayMinutes
     })
   }
 
@@ -179,11 +173,11 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       ...group.settings,
       late_threshold_enabled: lateThresholdEnabled,
       class_start_time: time,
-      class_end_time: attendanceMode === "work_hours" ? classEndTime : null,
+      class_end_time: attendanceMode === 'work_hours' ? classEndTime : null,
       attendance_mode: attendanceMode,
       late_threshold_minutes: lateThresholdMinutes,
       track_checkout: trackCheckout,
-      min_checkout_delay_minutes: minCheckoutDelayMinutes,
+      min_checkout_delay_minutes: minCheckoutDelayMinutes
     })
   }
 
@@ -193,11 +187,11 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       ...group.settings,
       late_threshold_enabled: lateThresholdEnabled,
       class_start_time: classStartTime,
-      class_end_time: attendanceMode === "work_hours" ? classEndTime : null,
+      class_end_time: attendanceMode === 'work_hours' ? classEndTime : null,
       attendance_mode: attendanceMode,
       late_threshold_minutes: mins,
       track_checkout: trackCheckout,
-      min_checkout_delay_minutes: minCheckoutDelayMinutes,
+      min_checkout_delay_minutes: minCheckoutDelayMinutes
     })
   }
 
@@ -207,11 +201,11 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       ...group.settings,
       late_threshold_enabled: lateThresholdEnabled,
       class_start_time: classStartTime,
-      class_end_time: attendanceMode === "work_hours" ? time : null,
+      class_end_time: attendanceMode === 'work_hours' ? time : null,
       attendance_mode: attendanceMode,
       late_threshold_minutes: lateThresholdMinutes,
       track_checkout: trackCheckout,
-      min_checkout_delay_minutes: minCheckoutDelayMinutes,
+      min_checkout_delay_minutes: minCheckoutDelayMinutes
     })
   }
 
@@ -221,88 +215,82 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
       ...group.settings,
       late_threshold_enabled: lateThresholdEnabled,
       class_start_time: classStartTime,
-      class_end_time: attendanceMode === "work_hours" ? classEndTime : null,
+      class_end_time: attendanceMode === 'work_hours' ? classEndTime : null,
       attendance_mode: attendanceMode,
       late_threshold_minutes: lateThresholdMinutes,
       track_checkout: trackCheckout,
-      min_checkout_delay_minutes: minutes,
+      min_checkout_delay_minutes: minutes
     })
   }
 
   const handleAttendanceModeChange = (mode: AttendanceMode) => {
     setAttendanceMode(mode)
-    const tracksTimeOut = mode !== "attendance"
+    const tracksTimeOut = mode !== 'attendance'
     setTrackCheckout(tracksTimeOut)
     saveSettings({
       ...group.settings,
       attendance_mode: mode,
       track_checkout: tracksTimeOut,
-      class_end_time: mode === "work_hours" ? classEndTime : null,
+      class_end_time: mode === 'work_hours' ? classEndTime : null,
       late_threshold_enabled: lateThresholdEnabled,
       class_start_time: classStartTime,
       late_threshold_minutes: lateThresholdMinutes,
-      min_checkout_delay_minutes: minCheckoutDelayMinutes,
+      min_checkout_delay_minutes: minCheckoutDelayMinutes
     })
   }
 
   return (
-    <div className="custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto">
-      <div className="mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10">
+    <div className='custom-scroll relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto'>
+      <div className='mx-auto w-full max-w-[900px] space-y-6 px-10 pt-8 pb-10'>
         {saveError && <ErrorMessage message={saveError} />}
-        <div className="overflow-hidden">
-          <div className="pt-6 pb-2">
-            <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
+        <div className='overflow-hidden'>
+          <div className='pt-6 pb-2'>
+            <h3 className='text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase'>
               Schedule & attendance rules
             </h3>
           </div>
 
-          <div className="py-2">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-4 py-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <div className="text-sm font-medium text-white/90">Attendance mode</div>
+          <div className='py-2'>
+            <div className='flex flex-col'>
+              <div className='flex items-center gap-4 py-4'>
+                <div className='min-w-0 flex-1'>
+                  <div className='flex items-center gap-1.5'>
+                    <div className='text-sm font-medium text-white/90'>Attendance mode</div>
                     <AttendanceModeInfoPopover />
                   </div>
-                  <div className="text-xs font-normal text-white/65">
-                    Choose what to record for this group.
-                  </div>
+                  <div className='text-xs font-normal text-white/65'>Choose what to record for this group.</div>
                 </div>
-                <div className="flex w-[180px] shrink-0 justify-end">
+                <div className='flex w-[180px] shrink-0 justify-end'>
                   <Dropdown
                     fit
                     options={[
-                      { value: "attendance", label: "Attendance" },
-                      { value: "work_hours", label: "Time in & time out" },
-                      { value: "visits", label: "Visits" },
+                      { value: 'attendance', label: 'Attendance' },
+                      { value: 'work_hours', label: 'Time in & time out' },
+                      { value: 'visits', label: 'Visits' }
                     ]}
                     value={attendanceMode}
-                    onChange={(value) =>
-                      value && handleAttendanceModeChange(value as AttendanceMode)
-                    }
+                    onChange={(value) => value && handleAttendanceModeChange(value as AttendanceMode)}
                     allowClear={false}
                     menuWidth={180}
-                    buttonClassName="h-8 !border-white/10 !bg-white/5 px-2.5 text-xs font-medium text-white/90 hover:!border-white/20 hover:!bg-white/[0.08]"
-                    optionClassName="text-xs"
+                    buttonClassName='h-8 !border-white/10 !bg-white/5 px-2.5 text-xs font-medium text-white/90 hover:!border-white/20 hover:!bg-white/[0.08]'
+                    optionClassName='text-xs'
                   />
                 </div>
               </div>
 
-              <div className="relative flex items-center gap-4 py-2.5 pl-4">
-                <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
-                <div className="relative min-h-4 min-w-0 flex-1 text-xs text-white/60">
-                  <AnimatePresence initial={false} mode="wait">
+              <div className='relative flex items-center gap-4 py-2.5 pl-4'>
+                <div className='pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10' />
+                <div className='relative min-h-4 min-w-0 flex-1 text-xs text-white/60'>
+                  <AnimatePresence initial={false} mode='wait'>
                     <motion.div
                       key={attendanceMode}
                       initial={{ opacity: 0, y: -2 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 2 }}
                       transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}>
-                      {attendanceMode === "attendance" &&
-                        "Marks a member present on the first valid scan."}
-                      {attendanceMode === "work_hours" &&
-                        "Records Time in and Time out from member scans."}
-                      {attendanceMode === "visits" && "Records each visit separately."}
+                      {attendanceMode === 'attendance' && 'Marks a member present on the first valid scan.'}
+                      {attendanceMode === 'work_hours' && 'Records Time in and Time out from member scans.'}
+                      {attendanceMode === 'visits' && 'Records each visit separately.'}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -310,110 +298,106 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
 
               {showsLateTracking && (
                 <>
-                  <div className="mt-2 h-px w-full bg-white/8" />
-                  <div className="flex items-center gap-4 py-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <div className="text-sm font-medium text-white/90">Late tracking</div>
+                  <div className='mt-2 h-px w-full bg-white/8' />
+                  <div className='flex items-center gap-4 py-4'>
+                    <div className='min-w-0 flex-1'>
+                      <div className='flex items-center gap-1.5'>
+                        <div className='text-sm font-medium text-white/90'>Late tracking</div>
                         <InfoPopover
-                          title="Late tracking"
-                          description="Flag arrivals after the scheduled start time and grace period."
+                          title='Late tracking'
+                          description='Flag arrivals after the scheduled start time and grace period.'
                           details={[
-                            "Set the start time and grace period for this group.",
-                            "Late status appears in the overview, member history, and CSV reports.",
+                            'Set the start time and grace period for this group.',
+                            'Late status appears in the overview, member history, and CSV reports.'
                           ]}
-                          side="right"
+                          side='right'
                         />
                       </div>
-                      <div className="relative min-h-4">
-                        <AnimatePresence mode="wait">
+                      <div className='relative min-h-4'>
+                        <AnimatePresence mode='wait'>
                           <motion.div
                             key={String(lateThresholdEnabled)}
                             initial={{ opacity: 0, y: -2 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 2 }}
                             transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                            className="text-xs font-normal text-white/65">
+                            className='text-xs font-normal text-white/65'>
                             {lateThresholdEnabled ?
-                              "Flag arrivals after the scheduled start time and grace period."
-                            : "Late tracking is disabled."}
+                              'Flag arrivals after the scheduled start time and grace period.'
+                            : 'Late tracking is disabled.'}
                           </motion.div>
                         </AnimatePresence>
                       </div>
                     </div>
 
-                    <Switch
-                      checked={lateThresholdEnabled}
-                      onChange={handleLateToggle}
-                      ariaLabel="Late tracking"
-                    />
+                    <Switch checked={lateThresholdEnabled} onChange={handleLateToggle} ariaLabel='Late tracking' />
                   </div>
 
                   <AnimatePresence>
                     {lateThresholdEnabled && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
+                        animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{
                           duration: SETTINGS_PANEL_ANIMATION_DURATION,
-                          ease: "easeOut",
+                          ease: 'easeOut'
                         }}
-                        className="overflow-hidden">
-                        <div className="flex flex-col">
+                        className='overflow-hidden'>
+                        <div className='flex flex-col'>
                           {/* Scheduled Start Time */}
-                          <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
-                            <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10" />
-                            <div className="pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10" />
+                          <div className='relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4'>
+                            <div className='pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10' />
+                            <div className='pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10' />
 
-                            <div className="min-w-0 flex-1">
-                              <div className="text-xs text-white/65">Scheduled start time:</div>
+                            <div className='min-w-0 flex-1'>
+                              <div className='text-xs text-white/65'>Scheduled start time:</div>
                             </div>
-                            <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                              <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
-                              <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
+                            <div className='group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8'>
+                              <Clock className='mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70' />
+                              <div className='flex items-baseline gap-1 font-mono text-xs font-bold text-white/90'>
                                 <span>{formatTimeDisplay(classStartTime).time}</span>
-                                <span className="text-[10px] font-medium text-white/55">
+                                <span className='text-[10px] font-medium text-white/55'>
                                   {formatTimeDisplay(classStartTime).period}
                                 </span>
                               </div>
                               <input
-                                type="time"
-                                title=""
-                                aria-label="Scheduled start time"
-                                value={classStartTime || "08:00"}
+                                type='time'
+                                title=''
+                                aria-label='Scheduled start time'
+                                value={classStartTime || '08:00'}
                                 onChange={(e) => handleStartTimeChange(e.target.value)}
                                 onClick={(e) => e.currentTarget.showPicker?.()}
-                                className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
+                                className='absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden'
                               />
                             </div>
                           </div>
 
                           {/* Late Threshold */}
-                          <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
-                            <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+                          <div className='relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4'>
+                            <div className='pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10' />
 
-                            <div className="min-w-0 flex-1">
-                              <div className="text-xs text-white/65">Grace period:</div>
+                            <div className='min-w-0 flex-1'>
+                              <div className='text-xs text-white/65'>Grace period:</div>
                             </div>
 
-                            <div className="ml-auto flex shrink-0 items-center gap-3.5">
+                            <div className='ml-auto flex shrink-0 items-center gap-3.5'>
                               {([0, 5, 10, 15, 30, 45, 60] as const).map((mins) => (
                                 <button
                                   key={mins}
-                                  type="button"
+                                  type='button'
                                   onClick={() => handleLateThresholdChange(mins)}
                                   className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
-                                    lateThresholdMinutes === mins ? "text-cyan-400" : (
-                                      "text-white/40 hover:text-white/70"
+                                    lateThresholdMinutes === mins ? 'text-cyan-400' : (
+                                      'text-white/40 hover:text-white/70'
                                     )
                                   }`}>
-                                  {mins === 0 ? "Exact" : `${mins}m`}
+                                  {mins === 0 ? 'Exact' : `${mins}m`}
                                   {lateThresholdMinutes === mins && (
                                     <motion.div
-                                      layoutId="lateUnderline"
-                                      className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
-                                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                      layoutId='lateUnderline'
+                                      className='absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400'
+                                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                                     />
                                   )}
                                 </button>
@@ -428,47 +412,45 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
               )}
             </div>
 
-            <AnimatePresence initial={false} mode="wait">
+            <AnimatePresence initial={false} mode='wait'>
               <motion.div
                 key={attendanceMode}
                 initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
+                animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
-                className="overflow-hidden">
-                {showsDepartureRules && <div className="h-px w-full bg-white/8" />}
+                transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: 'easeOut' }}
+                className='overflow-hidden'>
+                {showsDepartureRules && <div className='h-px w-full bg-white/8' />}
 
                 {showsDepartureRules && (
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-4 py-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <div className="text-sm font-medium text-white/90">
-                            Time in &amp; time out
-                          </div>
+                  <div className='flex flex-col'>
+                    <div className='flex items-center gap-4 py-4'>
+                      <div className='min-w-0 flex-1'>
+                        <div className='flex items-center gap-1.5'>
+                          <div className='text-sm font-medium text-white/90'>Time in &amp; time out</div>
                           <InfoPopover
-                            title="Time in & time out"
-                            description="Records Time in and Time out from member scans."
+                            title='Time in & time out'
+                            description='Records Time in and Time out from member scans.'
                             details={[
-                              "The first valid scan records Time in.",
-                              "The next eligible scan records Time out after the minimum time below.",
-                              "After Time out, additional scans are ignored until the next day.",
-                              "Calculates total hours between Time in and Time out.",
-                              "Compares Time out with the scheduled end time to show Undertime or Overtime.",
-                              "The scheduled end time does not record Time out automatically.",
+                              'The first valid scan records Time in.',
+                              'The next eligible scan records Time out after the minimum time below.',
+                              'After Time out, additional scans are ignored until the next day.',
+                              'Calculates total hours between Time in and Time out.',
+                              'Compares Time out with the scheduled end time to show Undertime or Overtime.',
+                              'The scheduled end time does not record Time out automatically.'
                             ]}
-                            side="right"
+                            side='right'
                           />
                         </div>
-                        <div className="relative min-h-4">
-                          <AnimatePresence mode="wait">
+                        <div className='relative min-h-4'>
+                          <AnimatePresence mode='wait'>
                             <motion.div
-                              key="work-hours-description"
+                              key='work-hours-description'
                               initial={{ opacity: 0, y: -2 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 2 }}
                               transition={{ duration: SETTINGS_STATUS_SWAP_DURATION }}
-                              className="text-xs font-normal text-white/65">
+                              className='text-xs font-normal text-white/65'>
                               Records Time in and Time out from member scans.
                             </motion.div>
                           </AnimatePresence>
@@ -480,62 +462,60 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                       {showsDepartureRules && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
+                          animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{
                             duration: SETTINGS_PANEL_ANIMATION_DURATION,
-                            ease: "easeOut",
+                            ease: 'easeOut'
                           }}
-                          className="overflow-hidden">
-                          <div className="flex flex-col">
+                          className='overflow-hidden'>
+                          <div className='flex flex-col'>
                             {/* Scheduled End Time */}
-                            <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
-                              <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+                            <div className='relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4'>
+                              <div className='pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10' />
 
-                              <div className="min-w-0 flex-1">
-                                <div className="text-xs text-white/65">Scheduled end time:</div>
+                              <div className='min-w-0 flex-1'>
+                                <div className='text-xs text-white/65'>Scheduled end time:</div>
                               </div>
-                              <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                                <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
-                                <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
-                                  <span>{formatTimeDisplay(classEndTime || "17:00").time}</span>
-                                  <span className="text-[10px] font-medium text-white/55">
-                                    {formatTimeDisplay(classEndTime || "17:00").period}
+                              <div className='group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8'>
+                                <Clock className='mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70' />
+                                <div className='flex items-baseline gap-1 font-mono text-xs font-bold text-white/90'>
+                                  <span>{formatTimeDisplay(classEndTime || '17:00').time}</span>
+                                  <span className='text-[10px] font-medium text-white/55'>
+                                    {formatTimeDisplay(classEndTime || '17:00').period}
                                   </span>
                                 </div>
                                 <input
-                                  type="time"
-                                  title=""
-                                  aria-label="Scheduled end time"
-                                  value={classEndTime || "17:00"}
+                                  type='time'
+                                  title=''
+                                  aria-label='Scheduled end time'
+                                  value={classEndTime || '17:00'}
                                   onChange={(e) => handleEndTimeChange(e.target.value)}
                                   onClick={(e) => e.currentTarget.showPicker?.()}
-                                  className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
+                                  className='absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden'
                                 />
                               </div>
                             </div>
-                            <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
-                              <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
-                              <div className="min-w-0 flex-1 text-xs text-white/65">
-                                Minimum time before Time out:
-                              </div>
-                              <div className="ml-auto flex shrink-0 items-center gap-3.5">
+                            <div className='relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4'>
+                              <div className='pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10' />
+                              <div className='min-w-0 flex-1 text-xs text-white/65'>Minimum time before Time out:</div>
+                              <div className='ml-auto flex shrink-0 items-center gap-3.5'>
                                 {([5, 15, 30, 60] as const).map((minutes) => (
                                   <button
                                     key={minutes}
-                                    type="button"
+                                    type='button'
                                     onClick={() => handleMinCheckoutDelayChange(minutes)}
                                     className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
-                                      minCheckoutDelayMinutes === minutes ? "text-cyan-400" : (
-                                        "text-white/40 hover:text-white/70"
+                                      minCheckoutDelayMinutes === minutes ? 'text-cyan-400' : (
+                                        'text-white/40 hover:text-white/70'
                                       )
                                     }`}>
                                     {minutes}m
                                     {minCheckoutDelayMinutes === minutes && (
                                       <motion.div
-                                        layoutId="checkoutDelayUnderline"
-                                        className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
-                                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                        layoutId='checkoutDelayUnderline'
+                                        className='absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400'
+                                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                                       />
                                     )}
                                   </button>
@@ -549,51 +529,49 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                   </div>
                 )}
 
-                {attendanceMode === "visits" && (
+                {attendanceMode === 'visits' && (
                   <>
-                    <div className="mt-2 h-px w-full bg-white/8" />
-                    <div className="flex items-center gap-4 py-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <div className="text-sm font-medium text-white/90">Visit rules</div>
+                    <div className='mt-2 h-px w-full bg-white/8' />
+                    <div className='flex items-center gap-4 py-4'>
+                      <div className='min-w-0 flex-1'>
+                        <div className='flex items-center gap-1.5'>
+                          <div className='text-sm font-medium text-white/90'>Visit rules</div>
                           <InfoPopover
-                            title="Visit rules"
-                            description="Set the minimum time before ending a visit."
+                            title='Visit rules'
+                            description='Set the minimum time before ending a visit.'
                             details={[
-                              "The first scan starts a visit.",
-                              "The next eligible scan ends the visit.",
-                              "An eligible later scan starts the next visit on the same day.",
+                              'The first scan starts a visit.',
+                              'The next eligible scan ends the visit.',
+                              'An eligible later scan starts the next visit on the same day.'
                             ]}
-                            side="right"
+                            side='right'
                           />
                         </div>
-                        <div className="text-xs font-normal text-white/65">
+                        <div className='text-xs font-normal text-white/65'>
                           Set the minimum time before ending a visit.
                         </div>
                       </div>
                     </div>
-                    <div className="relative flex items-center gap-4 py-2.5 pl-4">
-                      <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
-                      <div className="min-w-0 flex-1 text-xs text-white/65">
-                        Minimum visit duration:
-                      </div>
-                      <div className="ml-auto flex shrink-0 items-center gap-3.5">
+                    <div className='relative flex items-center gap-4 py-2.5 pl-4'>
+                      <div className='pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10' />
+                      <div className='min-w-0 flex-1 text-xs text-white/65'>Minimum visit duration:</div>
+                      <div className='ml-auto flex shrink-0 items-center gap-3.5'>
                         {([5, 15, 30, 60] as const).map((minutes) => (
                           <button
                             key={minutes}
-                            type="button"
+                            type='button'
                             onClick={() => handleMinCheckoutDelayChange(minutes)}
                             className={`relative min-w-[20px] py-1 text-center text-[11px] font-extrabold tracking-wider transition-all duration-150 ${
-                              minCheckoutDelayMinutes === minutes ? "text-cyan-400" : (
-                                "text-white/40 hover:text-white/70"
+                              minCheckoutDelayMinutes === minutes ? 'text-cyan-400' : (
+                                'text-white/40 hover:text-white/70'
                               )
                             }`}>
                             {minutes}m
                             {minCheckoutDelayMinutes === minutes && (
                               <motion.div
-                                layoutId="visitDurationUnderline"
-                                className="absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400"
-                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                layoutId='visitDurationUnderline'
+                                className='absolute right-1.5 bottom-[-3px] left-1.5 h-[2px] rounded-[1px] bg-cyan-400'
+                                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                               />
                             )}
                           </button>
@@ -607,21 +585,21 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
           </div>
         </div>
 
-        <span className="sr-only">Danger zone toggle</span>
+        <span className='sr-only'>Danger zone toggle</span>
         {/* Danger Zone */}
-        <section className="relative flex w-full flex-col items-center overflow-hidden pt-8 pb-2">
+        <section className='relative flex w-full flex-col items-center overflow-hidden pt-8 pb-2'>
           {/* Sleek fading gradient divider to match the centered design */}
-          <div className="absolute top-0 right-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/20 to-transparent" />
+          <div className='absolute top-0 right-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/20 to-transparent' />
           {/* Sleek centered trigger */}
           <button
-            type="button"
+            type='button'
             onClick={() => setIsDangerZoneOpen(!isDangerZoneOpen)}
-            className="group flex items-center gap-2.5 rounded-md border-0 bg-transparent px-5 py-2 text-[11px] font-extrabold tracking-[0.2em] text-red-500/40 uppercase shadow-none transition-all duration-300 outline-none hover:bg-red-500/[0.04] hover:text-red-400 focus:outline-none active:scale-95">
-            <AlertTriangle className="size-3 opacity-60 transition-transform group-hover:scale-110" />
+            className='group flex items-center gap-2.5 rounded-md border-0 bg-transparent px-5 py-2 text-[11px] font-extrabold tracking-[0.2em] text-red-500/40 uppercase shadow-none transition-all duration-300 outline-none hover:bg-red-500/[0.04] hover:text-red-400 focus:outline-none active:scale-95'>
+            <AlertTriangle className='size-3 opacity-60 transition-transform group-hover:scale-110' />
             <span>Danger zone</span>
             <ChevronDown
               className={`inline-block size-3 opacity-50 transition-transform duration-200 ${
-                isDangerZoneOpen ? "rotate-180" : ""
+                isDangerZoneOpen ? 'rotate-180' : ''
               }`}
             />
           </button>
@@ -630,25 +608,23 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
             {isDangerZoneOpen && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
+                animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: "easeOut" }}
-                className="w-full overflow-hidden">
-                <div className="w-full divide-y divide-red-500/5 pt-4 pb-8">
-                  <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
-                    <div className="min-w-0 flex-1 text-left">
-                      <h4 className="text-[15px] font-semibold text-red-400/80">
-                        Delete this group
-                      </h4>
-                      <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                        Remove this group, its member profiles, and enrolled face templates.
-                        Attendance history is retained.
-                        <span className="mt-1 block text-[12px] font-medium text-red-400/85">
+                transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: 'easeOut' }}
+                className='w-full overflow-hidden'>
+                <div className='w-full divide-y divide-red-500/5 pt-4 pb-8'>
+                  <div className='flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between'>
+                    <div className='min-w-0 flex-1 text-left'>
+                      <h4 className='text-[15px] font-semibold text-red-400/80'>Delete this group</h4>
+                      <p className='mt-1.5 text-[13px] leading-relaxed text-white/65'>
+                        Remove this group, its member profiles, and enrolled face templates. Attendance history is
+                        retained.
+                        <span className='mt-1 block text-[12px] font-medium text-red-400/85'>
                           This action cannot be undone.
                         </span>
                         {isReady && isPaired && !allowKioskDirectoryManagement && (
-                          <span className="mt-1 block font-medium text-amber-400/80">
-                            <Lock className="mr-1 inline size-3" />
+                          <span className='mt-1 block font-medium text-amber-400/80'>
+                            <Lock className='mr-1 inline size-3' />
                             Your organization has disabled group deletion on this computer.
                           </span>
                         )}
@@ -656,11 +632,11 @@ export function GroupSettings({ group, onGroupsChanged }: GroupSettingsProps) {
                     </div>
 
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => setIsDeleteModalOpen(true)}
                       disabled={isDeleteDisabled || isDeleting}
-                      className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
-                      {isDeleting && <Loader2 className="size-3.5 animate-spin" />}
+                      className='flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center'>
+                      {isDeleting && <Loader2 className='size-3.5 animate-spin' />}
                       <span>Delete group</span>
                     </button>
                   </div>

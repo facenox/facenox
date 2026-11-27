@@ -1,14 +1,14 @@
-import { useEffect, useRef, useCallback, memo } from "react"
-import { AnimatePresence } from "framer-motion"
+import { useEffect, useRef, useCallback, memo } from 'react'
+import { AnimatePresence } from 'framer-motion'
 
-export type { GroupSection } from "@/components/group/types"
-import type { GroupPanelProps } from "@/components/group/types"
-import type { AttendanceGroup } from "@/types/recognition"
+export type { GroupSection } from '@/components/group/types'
+import type { GroupPanelProps } from '@/components/group/types'
+import type { AttendanceGroup } from '@/types/recognition'
 
-import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
-import { useGroupData } from "@/components/group/hooks"
-import { FloatingAlert } from "@/components/common"
-import { GroupContent, GroupModals, GroupSidebar } from "@/components/group/components"
+import { useGroupStore, useGroupUIStore } from '@/components/group/stores'
+import { useGroupData } from '@/components/group/hooks'
+import { FloatingAlert } from '@/components/common'
+import { GroupContent, GroupModals, GroupSidebar } from '@/components/group/components'
 
 function GroupPanelComponent({
   onBack,
@@ -24,7 +24,7 @@ function GroupPanelComponent({
   onDaysTrackedChange,
   onExportHandlersReady,
   onAddMemberHandlerReady,
-  onSectionChange,
+  onSectionChange
 }: GroupPanelProps) {
   const selectedGroup = useGroupStore((state) => state.selectedGroup)
   const error = useGroupStore((state) => state.error)
@@ -39,14 +39,14 @@ function GroupPanelComponent({
   useGroupData(initialGroup, {
     isEmbedded,
     embeddedGroups,
-    embeddedMembers,
+    embeddedMembers
   })
 
   const notifyParentDataChanged = useCallback(
     (newGroup?: AttendanceGroup) => {
       onGroupsChanged?.(newGroup)
     },
-    [onGroupsChanged],
+    [onGroupsChanged]
   )
 
   const handleMemberSuccess = useCallback(() => {
@@ -66,7 +66,7 @@ function GroupPanelComponent({
 
       notifyParentDataChanged(newGroup)
     },
-    [fetchGroups, setSelectedGroup, notifyParentDataChanged],
+    [fetchGroups, setSelectedGroup, notifyParentDataChanged]
   )
 
   const handleMembersChange = useCallback(() => {
@@ -113,15 +113,13 @@ function GroupPanelComponent({
   if (isEmbedded) {
     return (
       <>
-        <div className="pointer-events-none fixed bottom-12 left-1/2 z-50 flex -translate-x-1/2 items-center justify-center px-4">
+        <div className='pointer-events-none fixed bottom-12 left-1/2 z-50 flex -translate-x-1/2 items-center justify-center px-4'>
           <AnimatePresence>
-            {error && (
-              <FloatingAlert message={error} variant="error" onDismiss={() => setError(null)} />
-            )}
+            {error && <FloatingAlert message={error} variant='error' onDismiss={() => setError(null)} />}
           </AnimatePresence>
         </div>
 
-        <div className="flex h-full flex-col overflow-hidden">
+        <div className='flex h-full flex-col overflow-hidden'>
           <GroupContent
             onMembersChange={handleMembersChange}
             deselectMemberTrigger={deselectMemberTrigger}
@@ -141,18 +139,16 @@ function GroupPanelComponent({
   }
 
   return (
-    <div className="flex h-full overflow-hidden bg-[var(--bg-primary)] text-white">
-      <div className="pointer-events-none fixed bottom-12 left-1/2 z-50 flex -translate-x-1/2 items-center justify-center px-4">
+    <div className='flex h-full overflow-hidden bg-[var(--bg-primary)] text-white'>
+      <div className='pointer-events-none fixed bottom-12 left-1/2 z-50 flex -translate-x-1/2 items-center justify-center px-4'>
         <AnimatePresence>
-          {error && (
-            <FloatingAlert message={error} variant="error" onDismiss={() => setError(null)} />
-          )}
+          {error && <FloatingAlert message={error} variant='error' onDismiss={() => setError(null)} />}
         </AnimatePresence>
       </div>
 
       <GroupSidebar onBack={onBack} />
 
-      <main className="relative flex h-full flex-1 flex-col overflow-hidden bg-[var(--bg-primary)]">
+      <main className='relative flex h-full flex-1 flex-col overflow-hidden bg-[var(--bg-primary)]'>
         <GroupContent
           onMembersChange={handleMembersChange}
           deselectMemberTrigger={deselectMemberTrigger}
@@ -162,11 +158,7 @@ function GroupPanelComponent({
         />
       </main>
 
-      <GroupModals
-        isEmbedded={isEmbedded}
-        onMemberSuccess={handleMemberSuccess}
-        onGroupSuccess={handleGroupSuccess}
-      />
+      <GroupModals isEmbedded={isEmbedded} onMemberSuccess={handleMemberSuccess} onGroupSuccess={handleGroupSuccess} />
     </div>
   )
 }

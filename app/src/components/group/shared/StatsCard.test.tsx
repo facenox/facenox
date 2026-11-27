@@ -1,20 +1,18 @@
-import type { HTMLAttributes, ReactNode } from "react"
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { StatsCard } from "./StatsCard"
+import type { HTMLAttributes, ReactNode } from 'react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { StatsCard } from './StatsCard'
 
-vi.mock("framer-motion", () => ({
+vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: ReactNode }) => children,
   motion: {
-    div: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => (
-      <div {...props}>{children}</div>
-    ),
-  },
+    div: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>
+  }
 }))
 
-describe("StatsCard", () => {
+describe('StatsCard', () => {
   beforeEach(() => {
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
       width: 80,
       height: 32,
       top: 100,
@@ -23,71 +21,69 @@ describe("StatsCard", () => {
       bottom: 132,
       x: 100,
       y: 100,
-      toJSON: () => ({}),
+      toJSON: () => ({})
     } as DOMRect)
-    vi.spyOn(window, "requestAnimationFrame").mockImplementation(
-      (callback: FrameRequestCallback) => {
-        callback(0)
-        return 0
-      },
-    )
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
+      callback(0)
+      return 0
+    })
   })
 
   afterEach(() => {
     vi.useRealTimers()
   })
 
-  it("renders value and label correctly", () => {
-    render(<StatsCard type="late" value={3} label="Late arrivals" />)
+  it('renders value and label correctly', () => {
+    render(<StatsCard type='late' value={3} label='Late arrivals' />)
 
-    expect(screen.getByText("Late arrivals")).toBeInTheDocument()
-    expect(screen.getByText("3")).toBeInTheDocument()
+    expect(screen.getByText('Late arrivals')).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
   })
 
-  it("shows tooltipText when hovered and not disabled", async () => {
+  it('shows tooltipText when hovered and not disabled', async () => {
     render(
       <StatsCard
-        type="late"
+        type='late'
         value={0}
-        label="Late arrivals"
+        label='Late arrivals'
         tooltipText={<span>Late arrivals today. Resets at midnight.</span>}
-      />,
+      />
     )
 
-    const card = screen.getByText("Late arrivals").closest("div")
+    const card = screen.getByText('Late arrivals').closest('div')
     expect(card).toBeInTheDocument()
     if (card) {
       fireEvent.mouseEnter(card)
     }
 
     await waitFor(() => {
-      expect(screen.getByText("Late arrivals today. Resets at midnight.")).toBeInTheDocument()
+      expect(screen.getByText('Late arrivals today. Resets at midnight.')).toBeInTheDocument()
     })
   })
 
-  it("shows disabledTooltipText and disabled badge when disabled", async () => {
+  it('shows disabledTooltipText and disabled badge when disabled', async () => {
     render(
       <StatsCard
-        type="late"
+        type='late'
         value={0}
-        label="Late arrivals"
+        label='Late arrivals'
         disabled
         disabledTooltipText={<span>Late tracking is disabled.</span>}
         tooltipText={<span>Late arrivals today.</span>}
-      />,
+      />
     )
 
-    expect(screen.getByText("Disabled")).toBeInTheDocument()
-    expect(screen.getByText("-")).toBeInTheDocument()
+    expect(screen.getByText('Disabled')).toBeInTheDocument()
+    expect(screen.getByText('-')).toBeInTheDocument()
 
-    const card = screen.getByText("Late arrivals").closest("div")
+    const card = screen.getByText('Late arrivals').closest('div')
     if (card) {
       fireEvent.mouseEnter(card)
     }
 
     await waitFor(() => {
-      expect(screen.getByText("Late tracking is disabled.")).toBeInTheDocument()
-      expect(screen.queryByText("Late arrivals today.")).not.toBeInTheDocument()
+      expect(screen.getByText('Late tracking is disabled.')).toBeInTheDocument()
+      expect(screen.queryByText('Late arrivals today.')).not.toBeInTheDocument()
     })
   })
 })

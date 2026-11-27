@@ -5,7 +5,7 @@ interface ReportOrderFields {
   visit_number?: number
 }
 
-const nameCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" })
+const nameCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
 function compareText(a: string, b: string): number {
   return (

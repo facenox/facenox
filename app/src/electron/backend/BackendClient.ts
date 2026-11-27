@@ -53,7 +53,7 @@ export class BackendClient {
 
   private authHeaders(): Record<string, string> {
     const token = this.getToken()
-    return token ? { "X-Facenox-Token": token } : {}
+    return token ? { 'X-Facenox-Token': token } : {}
   }
 
   async checkAvailability(): Promise<{
@@ -62,40 +62,38 @@ export class BackendClient {
     error?: string
   }> {
     try {
-      const response = await fetch(this.getUrl("/"), {
-        method: "GET",
-        signal: AbortSignal.timeout(5000),
+      const response = await fetch(this.getUrl('/'), {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000)
       })
       return { available: response.ok, status: response.status }
     } catch (error) {
       return {
         available: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error)
       }
     }
   }
 
   async getModels(): Promise<ModelsResponse> {
-    const response = await fetch(this.getUrl("/models"), {
-      method: "GET",
+    const response = await fetch(this.getUrl('/models'), {
+      method: 'GET',
       headers: this.authHeaders(),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(10000)
     })
 
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     return (await response.json()) as ModelsResponse
   }
 
-  async checkReadiness(
-    isRunning: boolean,
-  ): Promise<{ ready: boolean; modelsLoaded: boolean; error?: string }> {
+  async checkReadiness(isRunning: boolean): Promise<{ ready: boolean; modelsLoaded: boolean; error?: string }> {
     try {
       const health = await this.checkAvailability()
       if (!health.available) {
         return {
           ready: false,
           modelsLoaded: false,
-          error: isRunning ? "Backend health check failed" : "Backend service not started",
+          error: isRunning ? 'Backend health check failed' : 'Backend service not started'
         }
       }
 
@@ -107,13 +105,13 @@ export class BackendClient {
       return {
         ready: modelsLoaded,
         modelsLoaded,
-        error: modelsLoaded ? undefined : "Face recognition models not fully loaded",
+        error: modelsLoaded ? undefined : 'Face recognition models not fully loaded'
       }
     } catch (error) {
       return {
         ready: false,
         modelsLoaded: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error)
       }
     }
   }

@@ -1,7 +1,7 @@
-import type { CooldownInfo } from "@/components/main/types"
-import { AnimatePresence, motion } from "framer-motion"
-import { useState, useEffect } from "react"
-import { Check } from "lucide-react"
+import type { CooldownInfo } from '@/components/main/types'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { Check } from 'lucide-react'
 
 interface CooldownOverlayProps {
   persistentCooldowns: Map<string, CooldownInfo>
@@ -32,10 +32,7 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
 
   for (const [key, info] of persistentCooldowns.entries()) {
     const elapsed = now - info.startTime
-    const visualThreshold = Math.min(
-      info.cooldownDurationSeconds * 1000,
-      MAX_CHIP_DISPLAY_DURATION_MS,
-    )
+    const visualThreshold = Math.min(info.cooldownDurationSeconds * 1000, MAX_CHIP_DISPLAY_DURATION_MS)
     const isVisuallyActive = (elapsed >= 0 && elapsed < visualThreshold) || elapsed < 0
 
     if (isVisuallyActive) {
@@ -51,8 +48,8 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
     .slice(0, 3)
 
   return (
-    <div className="pointer-events-none absolute top-6 left-6 z-100 flex flex-col gap-2">
-      <AnimatePresence mode="popLayout">
+    <div className='pointer-events-none absolute top-6 left-6 z-100 flex flex-col gap-2'>
+      <AnimatePresence mode='popLayout'>
         {activeItems.map(({ key, info }) => (
           <motion.div
             layout
@@ -62,18 +59,18 @@ export function CooldownOverlay({ persistentCooldowns }: CooldownOverlayProps) {
             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
             transition={{
               duration: 0.3,
-              ease: "easeOut",
-              layout: { duration: 0.2 },
+              ease: 'easeOut',
+              layout: { duration: 0.2 }
             }}
-            className="group relative">
-            <div className="relative flex items-center gap-2 rounded-full border border-white/[0.04] bg-black/60 px-3 py-1.5 pr-4 shadow-[0_8px_30px_rgba(0,0,0,0.5)]">
-              <Check className="size-3.5 shrink-0 stroke-[2.5] text-cyan-400" />
-              <h4 className="max-w-[140px] truncate text-xs font-medium text-white/95">
-                {info.memberName || "Authorized"}
+            className='group relative'>
+            <div className='relative flex items-center gap-2 rounded-full border border-white/[0.04] bg-black/60 px-3 py-1.5 pr-4 shadow-[0_8px_30px_rgba(0,0,0,0.5)]'>
+              <Check className='size-3.5 shrink-0 stroke-[2.5] text-cyan-400' />
+              <h4 className='max-w-[140px] truncate text-xs font-medium text-white/95'>
+                {info.memberName || 'Authorized'}
               </h4>
             </div>
 
-            <div className="absolute -inset-0.5 rounded-full bg-cyan-500/10 opacity-0 blur-md transition-opacity group-hover:opacity-100" />
+            <div className='absolute -inset-0.5 rounded-full bg-cyan-500/10 opacity-0 blur-md transition-opacity group-hover:opacity-100' />
           </motion.div>
         ))}
       </AnimatePresence>

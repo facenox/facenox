@@ -1,4 +1,4 @@
-import type { FaceRecognitionResponse } from "@/types/recognition"
+import type { FaceRecognitionResponse } from '@/types/recognition'
 
 export interface ExtendedFaceRecognitionResponse extends FaceRecognitionResponse {
   memberName?: string
@@ -15,7 +15,7 @@ export const trimTrackingHistory = <T>(history: T[]): T[] => {
 
 const isRecognitionResponseEqual = (
   a: ExtendedFaceRecognitionResponse | undefined,
-  b: ExtendedFaceRecognitionResponse | undefined,
+  b: ExtendedFaceRecognitionResponse | undefined
 ): boolean => {
   if (a === b) return true
   if (!a || !b) return false
@@ -32,7 +32,7 @@ const isRecognitionResponseEqual = (
 
 export const areRecognitionMapsEqual = (
   prev: Map<number, ExtendedFaceRecognitionResponse>,
-  next: Map<number, ExtendedFaceRecognitionResponse>,
+  next: Map<number, ExtendedFaceRecognitionResponse>
 ): boolean => {
   if (prev === next) return true
   if (prev.size !== next.size) return false

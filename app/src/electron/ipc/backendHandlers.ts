@@ -1,8 +1,8 @@
-import { ipcMain } from "electron"
-import fs from "node:fs"
-import path from "node:path"
-import { backendService } from "../backendService.js"
-import { withLocalBackendHeaders } from "../localBackendScope.js"
+import { ipcMain } from 'electron'
+import fs from 'node:fs'
+import path from 'node:path'
+import { backendService } from '../backendService.js'
+import { withLocalBackendHeaders } from '../localBackendScope.js'
 
 function isSafePath(filePath: string): boolean {
   try {
@@ -11,33 +11,33 @@ function isSafePath(filePath: string): boolean {
       return false
     }
     const parts = resolved.split(path.sep)
-    if (parts.some((part) => part.startsWith(".") && part !== "." && part !== "..")) {
+    if (parts.some((part) => part.startsWith('.') && part !== '.' && part !== '..')) {
       return false
     }
     const systemDirs = [
-      "/etc",
-      "/var",
-      "/boot",
-      "/sys",
-      "/proc",
-      "/dev",
-      "/run",
-      "/bin",
-      "/sbin",
-      "/lib",
-      "/lib64",
-      "/usr/lib",
-      "/usr/lib64",
-      "/usr/local/lib",
-      "/usr/local/sbin",
-      "/root",
+      '/etc',
+      '/var',
+      '/boot',
+      '/sys',
+      '/proc',
+      '/dev',
+      '/run',
+      '/bin',
+      '/sbin',
+      '/lib',
+      '/lib64',
+      '/usr/lib',
+      '/usr/lib64',
+      '/usr/local/lib',
+      '/usr/local/sbin',
+      '/root'
     ]
     if (systemDirs.some((dir) => resolved === dir || resolved.startsWith(dir + path.sep))) {
       return false
     }
-    if (process.platform === "win32") {
+    if (process.platform === 'win32') {
       const lowerResolved = resolved.toLowerCase()
-      if (lowerResolved.startsWith("c:\\windows") || lowerResolved.startsWith("c:\\system32")) {
+      if (lowerResolved.startsWith('c:\\windows') || lowerResolved.startsWith('c:\\system32')) {
         return false
       }
     }
@@ -54,104 +54,100 @@ function isSafePath(filePath: string): boolean {
 /** Build auth headers for all direct fetch calls to the local backend. */
 function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const token = backendService.getToken()
-  return withLocalBackendHeaders(token ? { "X-Facenox-Token": token, ...extra } : { ...extra })
+  return withLocalBackendHeaders(token ? { 'X-Facenox-Token': token, ...extra } : { ...extra })
 }
 
 export function registerBackendHandlers() {
-  ipcMain.handle("backend:get-token", () => {
+  ipcMain.handle('backend:get-token', () => {
     return backendService.getToken()
   })
 
-  ipcMain.handle("backend:check-availability", async () => {
+  ipcMain.handle('backend:check-availability', async () => {
     try {
       return await backendService.checkAvailability()
     } catch (error) {
       return {
         available: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error)
       }
     }
   })
 
-  ipcMain.handle("backend:check-readiness", async () => {
+  ipcMain.handle('backend:check-readiness', async () => {
     try {
       return await backendService.checkReadiness()
     } catch (error) {
       return {
         ready: false,
         modelsLoaded: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error.message : String(error)
       }
     }
   })
 
-  ipcMain.handle("backend:get-models", async () => {
+  ipcMain.handle('backend:get-models', async () => {
     try {
       return await backendService.getModels()
     } catch (error) {
-      throw new Error(
-        `Failed to get models: ${error instanceof Error ? error.message : String(error)}`,
-        { cause: error },
-      )
+      throw new Error(`Failed to get models: ${error instanceof Error ? error.message : String(error)}`, {
+        cause: error
+      })
     }
   })
 
-  ipcMain.handle("backend:get-face-stats", async () => {
+  ipcMain.handle('backend:get-face-stats', async () => {
     const response = await fetch(`${backendService.getUrl()}/face/stats`, {
-      headers: authHeaders(),
+      headers: authHeaders()
     })
-    if (!response.ok) throw new Error("Failed to get stats")
+    if (!response.ok) throw new Error('Failed to get stats')
     return await response.json()
   })
 
-  ipcMain.handle("backend:remove-person", async (_event, personId: string) => {
-    const response = await fetch(
-      `${backendService.getUrl()}/face/person/${encodeURIComponent(personId)}`,
-      { method: "DELETE", headers: authHeaders() },
-    )
+  ipcMain.handle('backend:remove-person', async (_event, personId: string) => {
+    const response = await fetch(`${backendService.getUrl()}/face/person/${encodeURIComponent(personId)}`, {
+      method: 'DELETE',
+      headers: authHeaders()
+    })
     return await response.json()
   })
 
-  ipcMain.handle(
-    "backend:update-person",
-    async (_event, oldPersonId: string, newPersonId: string) => {
-      const response = await fetch(`${backendService.getUrl()}/face/person`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({
-          old_person_id: oldPersonId,
-          new_person_id: newPersonId,
-        }),
+  ipcMain.handle('backend:update-person', async (_event, oldPersonId: string, newPersonId: string) => {
+    const response = await fetch(`${backendService.getUrl()}/face/person`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({
+        old_person_id: oldPersonId,
+        new_person_id: newPersonId
       })
-      return await response.json()
-    },
-  )
+    })
+    return await response.json()
+  })
 
-  ipcMain.handle("backend:get-all-persons", async () => {
+  ipcMain.handle('backend:get-all-persons', async () => {
     const response = await fetch(`${backendService.getUrl()}/face/persons`, {
-      headers: authHeaders(),
+      headers: authHeaders()
     })
     return await response.json()
   })
 
-  ipcMain.handle("backend:set-threshold", async (_event, threshold: number) => {
+  ipcMain.handle('backend:set-threshold', async (_event, threshold: number) => {
     const response = await fetch(`${backendService.getUrl()}/face/threshold`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ threshold }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ threshold })
     })
     return await response.json()
   })
 
-  ipcMain.handle("backend:clear-database", async () => {
+  ipcMain.handle('backend:clear-database', async () => {
     const response = await fetch(`${backendService.getUrl()}/face/database`, {
-      method: "DELETE",
-      headers: authHeaders(),
+      method: 'DELETE',
+      headers: authHeaders()
     })
     return await response.json()
   })
 
-  ipcMain.handle("backend:is-ready", async () => {
+  ipcMain.handle('backend:is-ready', async () => {
     try {
       const result = await backendService.checkReadiness()
       return result.ready && result.modelsLoaded
@@ -161,7 +157,7 @@ export function registerBackendHandlers() {
   })
 
   ipcMain.handle(
-    "backend:post-multipart",
+    'backend:post-multipart',
     async (
       _event,
       endpoint: string,
@@ -172,7 +168,7 @@ export function registerBackendHandlers() {
         buffer?: ArrayBuffer
         mimeType: string
       }[],
-      extraFields?: Record<string, string>,
+      extraFields?: Record<string, string>
     ) => {
       try {
         const formData = new FormData()
@@ -198,22 +194,18 @@ export function registerBackendHandlers() {
         }
 
         const response = await fetch(`${backendService.getUrl()}${endpoint}`, {
-          method: "POST",
+          method: 'POST',
           body: formData,
-          headers: authHeaders(),
+          headers: authHeaders()
         })
 
         if (!response.ok) {
           const errorData: unknown = await response.json().catch(() => null)
           let message = `HTTP ${response.status}: ${response.statusText}`
-          if (errorData && typeof errorData === "object") {
-            if ("detail" in errorData && typeof errorData.detail === "string" && errorData.detail) {
+          if (errorData && typeof errorData === 'object') {
+            if ('detail' in errorData && typeof errorData.detail === 'string' && errorData.detail) {
               message = errorData.detail
-            } else if (
-              "error" in errorData &&
-              typeof errorData.error === "string" &&
-              errorData.error
-            ) {
+            } else if ('error' in errorData && typeof errorData.error === 'string' && errorData.error) {
               message = errorData.error
             }
           }
@@ -222,9 +214,9 @@ export function registerBackendHandlers() {
 
         return await response.json()
       } catch (handlerError) {
-        console.error("Error inside backend:post-multipart IPC handler:", handlerError)
+        console.error('Error inside backend:post-multipart IPC handler:', handlerError)
         throw handlerError
       }
-    },
+    }
   )
 }

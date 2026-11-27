@@ -4,12 +4,12 @@ import type {
   PersonUpdateResponse,
   SimilarityThresholdResponse,
   DatabaseStatsResponse,
-  PersonInfo,
-} from "@/types/recognition"
+  PersonInfo
+} from '@/types/recognition'
 
-import { ElectronAdapter } from "./adapters/ElectronAdapter"
-import { withLocalBackendHeaders } from "./localBackendScope"
-import { dataUrlToBlob } from "@/utils/dataUrl"
+import { ElectronAdapter } from './adapters/ElectronAdapter'
+import { withLocalBackendHeaders } from './localBackendScope'
+import { dataUrlToBlob } from '@/utils/dataUrl'
 
 interface DetectionResponse {
   faces: {
@@ -40,10 +40,10 @@ export class BackendService {
 
   constructor(config?: Partial<BackendConfig>) {
     this.config = {
-      baseUrl: "http://127.0.0.1:7400",
+      baseUrl: 'http://127.0.0.1:7400',
       timeout: 30000,
       retryAttempts: 3,
-      ...config,
+      ...config
     }
 
     this.adapter = new ElectronAdapter()
@@ -53,9 +53,9 @@ export class BackendService {
     if (this.token !== null) return this.token
     try {
       const t = await window.electronAPI?.backend?.getToken?.()
-      this.token = typeof t === "string" ? t : ""
+      this.token = typeof t === 'string' ? t : ''
     } catch {
-      this.token = ""
+      this.token = ''
     }
     return this.token
   }
@@ -63,8 +63,8 @@ export class BackendService {
   async isBackendAvailable(): Promise<boolean> {
     try {
       const response = await fetch(`${this.config.baseUrl}/`, {
-        method: "GET",
-        signal: AbortSignal.timeout(5000),
+        method: 'GET',
+        signal: AbortSignal.timeout(5000)
       })
       return response.ok
     } catch {
@@ -83,14 +83,14 @@ export class BackendService {
         return {
           ready: false,
           modelsLoaded: false,
-          error: "Backend not available",
+          error: 'Backend not available'
         }
       }
 
       const models = await this.getAvailableModels()
-      const requiredModels = ["face_detector", "face_recognizer"]
+      const requiredModels = ['face_detector', 'face_recognizer']
       const loadedModels = Object.keys(models).filter((key) =>
-        requiredModels.some((required) => key.toLowerCase().includes(required.toLowerCase())),
+        requiredModels.some((required) => key.toLowerCase().includes(required.toLowerCase()))
       )
 
       const modelsLoaded = loadedModels.length >= requiredModels.length
@@ -98,14 +98,14 @@ export class BackendService {
       return {
         ready: modelsLoaded,
         modelsLoaded,
-        error: modelsLoaded ? undefined : "Required face recognition models not loaded",
+        error: modelsLoaded ? undefined : 'Required face recognition models not loaded'
       }
     } catch (error) {
-      console.error("Failed to check backend readiness:", error)
+      console.error('Failed to check backend readiness:', error)
       return {
         ready: false,
         modelsLoaded: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : 'Unknown error'
       }
     }
   }
@@ -114,12 +114,12 @@ export class BackendService {
     try {
       const token = await this.getApiToken()
       const headers: Record<string, string> = {}
-      if (token) headers["X-Facenox-Token"] = token
+      if (token) headers['X-Facenox-Token'] = token
 
       const response = await fetch(`${this.config.baseUrl}/models`, {
-        method: "GET",
+        method: 'GET',
         headers: await withLocalBackendHeaders(headers),
-        signal: AbortSignal.timeout(this.config.timeout),
+        signal: AbortSignal.timeout(this.config.timeout)
       })
 
       if (!response.ok) {
@@ -128,7 +128,7 @@ export class BackendService {
 
       return await response.json()
     } catch (error) {
-      console.error("Failed to get available models:", error)
+      console.error('Failed to get available models:', error)
       throw error
     }
   }
@@ -140,34 +140,33 @@ export class BackendService {
       confidence_threshold?: number
       nms_threshold?: number
       enableLiveness?: boolean
-    } = {},
+    } = {}
   ): Promise<DetectionResponse> {
     try {
       let imageBlob: Blob
-      if (typeof imageData === "string") {
-        const dataUrl =
-          imageData.startsWith("data:") ? imageData : `data:image/jpeg;base64,${imageData}`
+      if (typeof imageData === 'string') {
+        const dataUrl = imageData.startsWith('data:') ? imageData : `data:image/jpeg;base64,${imageData}`
         imageBlob = dataUrlToBlob(dataUrl)
       } else {
         imageBlob = imageData
       }
 
       const formData = new FormData()
-      formData.append("image", imageBlob, "face.jpg")
-      formData.append("model_type", options.model_type || "face_detector")
-      formData.append("confidence_threshold", (options.confidence_threshold ?? 0.8).toString())
-      formData.append("nms_threshold", (options.nms_threshold ?? 0.3).toString())
-      formData.append("enable_liveness_detection", (options.enableLiveness ?? false).toString())
+      formData.append('image', imageBlob, 'face.jpg')
+      formData.append('model_type', options.model_type || 'face_detector')
+      formData.append('confidence_threshold', (options.confidence_threshold ?? 0.8).toString())
+      formData.append('nms_threshold', (options.nms_threshold ?? 0.3).toString())
+      formData.append('enable_liveness_detection', (options.enableLiveness ?? false).toString())
 
       const token = await this.getApiToken()
       const headers: Record<string, string> = {}
-      if (token) headers["X-Facenox-Token"] = token
+      if (token) headers['X-Facenox-Token'] = token
 
       const response = await fetch(`${this.config.baseUrl}/detect`, {
-        method: "POST",
+        method: 'POST',
         body: formData,
         headers: await withLocalBackendHeaders(headers),
-        signal: AbortSignal.timeout(this.config.timeout),
+        signal: AbortSignal.timeout(this.config.timeout)
       })
 
       if (!response.ok) {
@@ -177,7 +176,7 @@ export class BackendService {
 
       return await response.json()
     } catch (error) {
-      console.error("Face detection failed:", error)
+      console.error('Face detection failed:', error)
       throw error
     }
   }
@@ -189,31 +188,31 @@ export class BackendService {
     bbox: number[],
     groupId: string,
     landmarks_5: number[][],
-    enableLiveness: boolean = true,
+    enableLiveness: boolean = true
   ): Promise<FaceRecognitionResponse> {
     try {
       const formData = new FormData()
-      const blob = new Blob([imageData], { type: "image/jpeg" })
-      formData.append("image", blob, "face.jpg")
+      const blob = new Blob([imageData], { type: 'image/jpeg' })
+      formData.append('image', blob, 'face.jpg')
       formData.append(
-        "metadata",
+        'metadata',
         JSON.stringify({
           bbox,
           landmarks_5,
           group_id: groupId,
-          enable_liveness_detection: enableLiveness,
-        }),
+          enable_liveness_detection: enableLiveness
+        })
       )
 
       const token = await this.getApiToken()
       const headers: Record<string, string> = {}
-      if (token) headers["X-Facenox-Token"] = token
+      if (token) headers['X-Facenox-Token'] = token
 
       const response = await fetch(`${this.config.baseUrl}/face/recognize`, {
-        method: "POST",
+        method: 'POST',
         body: formData,
         headers: await withLocalBackendHeaders(headers),
-        signal: AbortSignal.timeout(this.config.timeout),
+        signal: AbortSignal.timeout(this.config.timeout)
       })
 
       if (!response.ok) {
@@ -223,7 +222,7 @@ export class BackendService {
 
       return await response.json()
     } catch (error) {
-      console.error("Face recognition failed:", error)
+      console.error('Face recognition failed:', error)
       throw error
     }
   }
@@ -232,7 +231,7 @@ export class BackendService {
     try {
       return await this.adapter.removePerson(personId)
     } catch (error) {
-      console.error("Person removal failed:", error)
+      console.error('Person removal failed:', error)
       throw error
     }
   }
@@ -241,7 +240,7 @@ export class BackendService {
     try {
       return await this.adapter.updatePerson(oldPersonId, newPersonId)
     } catch (error) {
-      console.error("Person update failed:", error)
+      console.error('Person update failed:', error)
       throw error
     }
   }
@@ -251,7 +250,7 @@ export class BackendService {
       const result = await this.adapter.getAllPersons()
       return result.persons || []
     } catch (error) {
-      console.error("Failed to get persons:", error)
+      console.error('Failed to get persons:', error)
       throw error
     }
   }
@@ -260,7 +259,7 @@ export class BackendService {
     try {
       return await this.adapter.setThreshold(threshold)
     } catch (error) {
-      console.error("Failed to set similarity threshold:", error)
+      console.error('Failed to set similarity threshold:', error)
       throw error
     }
   }
@@ -269,7 +268,7 @@ export class BackendService {
     try {
       return await this.adapter.clearDatabase()
     } catch (error) {
-      console.error("Failed to clear database:", error)
+      console.error('Failed to clear database:', error)
       throw error
     }
   }
@@ -278,14 +277,14 @@ export class BackendService {
     try {
       const token = await this.getApiToken()
       const headers: Record<string, string> = {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json'
       }
-      if (token) headers["X-Facenox-Token"] = token
+      if (token) headers['X-Facenox-Token'] = token
 
       const response = await fetch(`${this.config.baseUrl}/face/cache/invalidate`, {
-        method: "POST",
+        method: 'POST',
         headers: await withLocalBackendHeaders(headers),
-        signal: AbortSignal.timeout(this.config.timeout),
+        signal: AbortSignal.timeout(this.config.timeout)
       })
 
       if (!response.ok) {
@@ -295,13 +294,13 @@ export class BackendService {
       const result = await response.json()
       return {
         success: true,
-        message: typeof result?.message === "string" ? result.message : "Cache invalidated",
+        message: typeof result?.message === 'string' ? result.message : 'Cache invalidated'
       }
     } catch (error) {
-      console.error("Failed to clear cache:", error)
+      console.error('Failed to clear cache:', error)
       return {
         success: false,
-        message: `Failed to clear cache: ${error}`,
+        message: `Failed to clear cache: ${error}`
       }
     }
   }
@@ -310,7 +309,7 @@ export class BackendService {
     try {
       return await this.adapter.getFaceStats()
     } catch (error) {
-      console.error("Failed to get database stats:", error)
+      console.error('Failed to get database stats:', error)
       throw error
     }
   }

@@ -5,7 +5,7 @@
 export function isTechnicalErrorMessage(message: string): boolean {
   return (
     /^\s*(?:HTTP\s+\d{3}\b|(?:TypeError:\s*)?(?:fetch failed|failed to fetch)\b|(?:Connection|Backup export) failed:\s*HTTP\b|Backend (?:not available|service not started)\b)/i.test(
-      message,
+      message
     ) || /^\s*<(?:!doctype|html|head)\b/i.test(message)
   )
 }

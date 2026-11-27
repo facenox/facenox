@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react"
-import { Tooltip } from "@/components/shared/Tooltip"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState, useEffect } from 'react'
+import { Tooltip } from '@/components/shared/Tooltip'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   AlertTriangle,
   Loader2,
@@ -18,18 +18,18 @@ import {
   Shield,
   Eye,
   EyeOff,
-  CloudUpload,
-} from "lucide-react"
-import type { SettingsOverview } from "@/components/settings/types"
-import type { AttendanceGroup } from "@/types/recognition"
-import { useDatabaseManagement } from "@/components/settings/sections/hooks/useDatabaseManagement"
-import { DatabaseStats } from "@/components/settings/sections/components/DatabaseStats"
-import { useDialog, Switch } from "@/components/shared"
-import { Modal } from "@/components/common/Modal"
-import { useUIStore } from "@/components/main/stores"
-import { useCloudSyncStatus } from "@/components/common/useCloudSyncStatus"
+  CloudUpload
+} from 'lucide-react'
+import type { SettingsOverview } from '@/components/settings/types'
+import type { AttendanceGroup } from '@/types/recognition'
+import { useDatabaseManagement } from '@/components/settings/sections/hooks/useDatabaseManagement'
+import { DatabaseStats } from '@/components/settings/sections/components/DatabaseStats'
+import { useDialog, Switch } from '@/components/shared'
+import { Modal } from '@/components/common/Modal'
+import { useUIStore } from '@/components/main/stores'
+import { useCloudSyncStatus } from '@/components/common/useCloudSyncStatus'
 
-type BackupStatus = { type: "idle" } | { type: "loading"; action: "export" | "import" }
+type BackupStatus = { type: 'idle' } | { type: 'loading'; action: 'export' | 'import' }
 
 interface DataStorageProps {
   systemData: SettingsOverview
@@ -46,30 +46,28 @@ export function DataStorage({
   isLoading,
   onClearDatabase,
   onGroupsChanged,
-  onNavigateToSync,
+  onNavigateToSync
 }: DataStorageProps) {
   const dialog = useDialog()
-  const { handleClearAllGroups, handlePurgeHistory, isPurgingHistory, deletingGroup } =
-    useDatabaseManagement(groups, onGroupsChanged, dialog, false)
+  const { handleClearAllGroups, handlePurgeHistory, isPurgingHistory, deletingGroup } = useDatabaseManagement(
+    groups,
+    onGroupsChanged,
+    dialog,
+    false
+  )
 
-  const {
-    isReady,
-    isPaired,
-    allowKioskDirectoryManagement,
-    status: cloudStatus,
-    refresh,
-  } = useCloudSyncStatus()
+  const { isReady, isPaired, allowKioskDirectoryManagement, status: cloudStatus, refresh } = useCloudSyncStatus()
 
   const { setError, setSuccess } = useUIStore()
 
-  const [status, setStatus] = useState<BackupStatus>({ type: "idle" })
+  const [status, setStatus] = useState<BackupStatus>({ type: 'idle' })
   const [passwordModal, setPasswordModal] = useState<{
     isOpen: boolean
-    action: "export" | "import"
+    action: 'export' | 'import'
     overwrite?: boolean
-  }>({ isOpen: false, action: "export" })
+  }>({ isOpen: false, action: 'export' })
   const [importFilePath, setImportFilePath] = useState<string | null>(null)
-  const [passwordInput, setPasswordInput] = useState("")
+  const [passwordInput, setPasswordInput] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isDangerZoneOpen, setIsDangerZoneOpen] = useState(false)
 
@@ -78,14 +76,14 @@ export function DataStorage({
     enabled: boolean
     time: string
     directory: string
-    format: "individual_csvs" | "combined_csv"
+    format: 'individual_csvs' | 'combined_csv'
     lastExportedDate: string | null
   }>({
     enabled: false,
-    time: "17:00",
-    directory: "",
-    format: "combined_csv",
-    lastExportedDate: null,
+    time: '17:00',
+    directory: '',
+    format: 'combined_csv',
+    lastExportedDate: null
   })
   const [isTriggeringAutoExport, setIsTriggeringAutoExport] = useState(false)
   const [autoExportLoaded, setAutoExportLoaded] = useState(false)
@@ -95,7 +93,7 @@ export function DataStorage({
   useEffect(() => {
     let active = true
     if (!window.electronAPI?.autoExport) {
-      setAutoExportError("Scheduled reports are unavailable in this window.")
+      setAutoExportError('Scheduled reports are unavailable in this window.')
       return
     }
     window.electronAPI.autoExport
@@ -106,7 +104,7 @@ export function DataStorage({
         setAutoExportLoaded(true)
       })
       .catch(() => {
-        if (active) setAutoExportError("Could not load scheduled reports.")
+        if (active) setAutoExportError('Could not load scheduled reports.')
       })
     return () => {
       active = false
@@ -118,15 +116,15 @@ export function DataStorage({
       enabled: boolean
       time: string
       directory: string
-      format: "individual_csvs" | "combined_csv"
-    }>,
+      format: 'individual_csvs' | 'combined_csv'
+    }>
   ) => {
     if (!window.electronAPI?.autoExport) return
     try {
       const updated = await window.electronAPI.autoExport.updateConfig(updates)
       setAutoExportConfig(updated)
     } catch (err) {
-      console.error("Failed to update auto export config:", err)
+      console.error('Failed to update auto export config:', err)
       setError("Facenox couldn't save the auto-export setting. Try again.")
     }
   }
@@ -135,13 +133,13 @@ export function DataStorage({
     if (!window.electronAPI?.autoExport) return
     try {
       const res = await window.electronAPI.autoExport.selectDirectory()
-      if (!res.canceled && typeof res.path === "string") {
+      if (!res.canceled && typeof res.path === 'string') {
         const selectedDir = res.path
         setAutoExportConfig((prev) => ({ ...prev, directory: selectedDir }))
         setSuccess(`Export directory set to: ${selectedDir}`)
       }
     } catch (err) {
-      console.error("Failed to select directory:", err)
+      console.error('Failed to select directory:', err)
       setError("Facenox couldn't open the folder picker. Try again.")
     }
   }
@@ -151,7 +149,7 @@ export function DataStorage({
     try {
       await window.electronAPI.autoExport.openDirectory()
     } catch (err) {
-      console.error("Failed to open directory:", err)
+      console.error('Failed to open directory:', err)
       setError("Facenox couldn't open that folder. Check that it still exists.")
     }
   }
@@ -162,7 +160,7 @@ export function DataStorage({
     try {
       const success = await window.electronAPI.autoExport.triggerNow()
       if (success) {
-        setSuccess("Daily attendance report exported.")
+        setSuccess('Daily attendance report exported.')
         const updated = await window.electronAPI.autoExport.getConfig()
         setAutoExportConfig(updated)
       } else {
@@ -176,69 +174,60 @@ export function DataStorage({
   }
 
   const formatTimeDisplay = (timeStr: string) => {
-    if (!timeStr) return { time: "--:--", period: "AM" }
-    const [hStr, mStr] = timeStr.split(":")
+    if (!timeStr) return { time: '--:--', period: 'AM' }
+    const [hStr, mStr] = timeStr.split(':')
     const h = parseInt(hStr, 10)
-    const period = h >= 12 ? "PM" : "AM"
+    const period = h >= 12 ? 'PM' : 'AM'
     const displayHours = h % 12 || 12
     return { time: `${displayHours}:${mStr}`, period }
   }
   const handleExport = async (password: string) => {
-    setStatus({ type: "loading", action: "export" })
+    setStatus({ type: 'loading', action: 'export' })
     try {
       const result = await window.electronAPI.sync.exportData(password)
       if (result.canceled) {
-        setStatus({ type: "idle" })
+        setStatus({ type: 'idle' })
         return
       }
       if (result.success) {
         setSuccess(`Backup saved to: ${result.filePath}`)
-        setStatus({ type: "idle" })
+        setStatus({ type: 'idle' })
       } else {
         setError(result.error ?? "Facenox couldn't create the backup. Try again.")
-        setStatus({ type: "idle" })
+        setStatus({ type: 'idle' })
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Facenox couldn't create the backup. Try again.",
-      )
-      setStatus({ type: "idle" })
+      setError(err instanceof Error ? err.message : "Facenox couldn't create the backup. Try again.")
+      setStatus({ type: 'idle' })
     }
   }
 
   const handleImport = async (password: string, overwriteAttr = false) => {
     if (!importFilePath || !isReady || (isPaired && !allowKioskDirectoryManagement)) return
 
-    setStatus({ type: "loading", action: "import" })
+    setStatus({ type: 'loading', action: 'import' })
     try {
-      const result = await window.electronAPI.sync.importData(
-        password,
-        importFilePath,
-        overwriteAttr,
-      )
+      const result = await window.electronAPI.sync.importData(password, importFilePath, overwriteAttr)
       if (result.canceled) {
-        setStatus({ type: "idle" })
+        setStatus({ type: 'idle' })
         return
       }
       if (result.success) {
-        setSuccess(result.message ?? "Restore complete.")
-        setStatus({ type: "idle" })
+        setSuccess(result.message ?? 'Restore complete.')
+        setStatus({ type: 'idle' })
         setImportFilePath(null)
         if (onGroupsChanged) onGroupsChanged()
       } else {
-        setError(
-          result.error ??
-            "Facenox couldn't restore the backup. Check the file and password, then try again.",
-        )
-        setStatus({ type: "idle" })
+        setError(result.error ?? "Facenox couldn't restore the backup. Check the file and password, then try again.")
+        setStatus({ type: 'idle' })
       }
     } catch (err) {
       setError(
         err instanceof Error ?
           err.message
-        : "Facenox couldn't restore the backup. Check the file and password, then try again.",
+        : "Facenox couldn't restore the backup. Check the file and password, then try again."
       )
-      setStatus({ type: "idle" })
+      setStatus({ type: 'idle' })
     }
   }
 
@@ -251,21 +240,21 @@ export function DataStorage({
       setImportFilePath(result.filePath)
       setPasswordModal({
         isOpen: true,
-        action: "import",
-        overwrite: false,
+        action: 'import',
+        overwrite: false
       })
     } catch {
       setError("Facenox couldn't open the file picker. Try again.")
     }
   }
 
-  const isBackingUp = status.type === "loading"
+  const isBackingUp = status.type === 'loading'
 
   return (
     <motion.div
-      layout="position"
+      layout='position'
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="mx-auto flex w-full max-w-[900px] flex-col space-y-16 px-10 pt-8 pb-20">
+      className='mx-auto flex w-full max-w-[900px] flex-col space-y-16 px-10 pt-8 pb-20'>
       {/* Statistics Overview */}
       <section>
         <DatabaseStats
@@ -276,54 +265,51 @@ export function DataStorage({
       </section>
 
       {/* Backup & Export */}
-      <section className="space-y-8">
-        <div className="pt-2 pb-2">
-          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            Backup & export
-          </h3>
+      <section className='space-y-8'>
+        <div className='pt-2 pb-2'>
+          <h3 className='text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase'>Backup & export</h3>
         </div>
 
-        <div className="space-y-10">
+        <div className='space-y-10'>
           {/* Export */}
-          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-            <div className="min-w-0 flex-1">
-              <h4 className="text-[15px] font-semibold text-white/90">Create backup</h4>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                Save an encrypted{" "}
-                <code className="rounded-sm bg-white/5 px-1.5 py-0.5 font-mono text-[11px] text-cyan-400/60">
+          <div className='flex flex-col gap-6 md:flex-row md:items-start md:justify-between'>
+            <div className='min-w-0 flex-1'>
+              <h4 className='text-[15px] font-semibold text-white/90'>Create backup</h4>
+              <p className='mt-1.5 text-[13px] leading-relaxed text-white/65'>
+                Save an encrypted{' '}
+                <code className='rounded-sm bg-white/5 px-1.5 py-0.5 font-mono text-[11px] text-cyan-400/60'>
                   .facenox
-                </code>{" "}
+                </code>{' '}
                 file containing all members, attendance records, and enrolled face data.
               </p>
             </div>
             <button
-              onClick={() => setPasswordModal({ isOpen: true, action: "export" })}
+              onClick={() => setPasswordModal({ isOpen: true, action: 'export' })}
               disabled={isBackingUp}
-              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40">
-              {status.type === "loading" && status.action === "export" ?
-                <Loader2 className="size-3 animate-spin" />
-              : <FileUp className="size-3 text-white/50" />}
+              className='flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40'>
+              {status.type === 'loading' && status.action === 'export' ?
+                <Loader2 className='size-3 animate-spin' />
+              : <FileUp className='size-3 text-white/50' />}
               <span>Create</span>
             </button>
           </div>
 
           {/* Import */}
-          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-            <div className="min-w-0 flex-1">
-              <h4 className="text-[15px] font-semibold text-white/90">Restore backup</h4>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                Restore a backup using its original encryption password. Existing groups, members,
-                and attendance records are kept; the restore adds missing records and skips items
-                that already exist.
+          <div className='flex flex-col gap-6 md:flex-row md:items-start md:justify-between'>
+            <div className='min-w-0 flex-1'>
+              <h4 className='text-[15px] font-semibold text-white/90'>Restore backup</h4>
+              <p className='mt-1.5 text-[13px] leading-relaxed text-white/65'>
+                Restore a backup using its original encryption password. Existing groups, members, and attendance
+                records are kept; the restore adds missing records and skips items that already exist.
                 {isPaired &&
                   (!allowKioskDirectoryManagement ?
-                    <span className="mt-1 block font-medium text-amber-400/80">
-                      <Lock className="mr-1 inline size-3" />
-                      Your organization has disabled directory restoration on this computer. Manage
-                      groups in Facenox Cloud.
+                    <span className='mt-1 block font-medium text-amber-400/80'>
+                      <Lock className='mr-1 inline size-3' />
+                      Your organization has disabled directory restoration on this computer. Manage groups in Facenox
+                      Cloud.
                     </span>
-                  : <span className="mt-1 block font-medium text-amber-500/80">
-                      <Info className="mr-1 inline size-3" />
+                  : <span className='mt-1 block font-medium text-amber-500/80'>
+                      <Info className='mr-1 inline size-3' />
                       Restored groups and members will sync to Facenox Cloud.
                     </span>)}
               </p>
@@ -331,38 +317,34 @@ export function DataStorage({
             <button
               onClick={startImportFlow}
               disabled={isBackingUp || !isReady || (isPaired && !allowKioskDirectoryManagement)}
-              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40">
-              {status.type === "loading" && status.action === "import" ?
-                <Loader2 className="size-3 animate-spin" />
-              : <FileDown className="size-3 text-white/50" />}
+              className='flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97] disabled:opacity-40'>
+              {status.type === 'loading' && status.action === 'import' ?
+                <Loader2 className='size-3 animate-spin' />
+              : <FileDown className='size-3 text-white/50' />}
               <span>Restore</span>
             </button>
           </div>
 
           {/* Subtle contextual bridge when operating standalone */}
           {isReady && !isPaired && onNavigateToSync && (
-            <div className="flex items-center justify-between rounded-lg border border-white/6 bg-white/[0.02] px-4 py-3">
-              <div className="flex items-center gap-2.5 text-xs text-white/65">
-                <Cloud className="size-3 text-emerald-400" />
+            <div className='flex items-center justify-between rounded-lg border border-white/6 bg-white/[0.02] px-4 py-3'>
+              <div className='flex items-center gap-2.5 text-xs text-white/65'>
+                <Cloud className='size-3 text-emerald-400' />
                 <span>Want to review synced records from a browser?</span>
               </div>
               <button
-                type="button"
+                type='button'
                 onClick={onNavigateToSync}
-                className="group flex items-center gap-1.5 text-xs font-semibold text-cyan-400 transition-colors hover:text-cyan-300">
+                className='group flex items-center gap-1.5 text-xs font-semibold text-cyan-400 transition-colors hover:text-cyan-300'>
                 <span>Set up Facenox Cloud sync</span>
-                <ArrowRight className="size-2.5 transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight className='size-2.5 transition-transform group-hover:translate-x-0.5' />
               </button>
             </div>
           )}
-          {cloudStatus === "error" && (
-            <div
-              role="status"
-              className="flex items-center justify-between gap-3 text-xs text-white/65">
-              <span>
-                Cloud connection status is unavailable. Restricted actions remain disabled.
-              </span>
-              <button type="button" onClick={() => void refresh()} className="text-cyan-400">
+          {cloudStatus === 'error' && (
+            <div role='status' className='flex items-center justify-between gap-3 text-xs text-white/65'>
+              <span>Cloud connection status is unavailable. Restricted actions remain disabled.</span>
+              <button type='button' onClick={() => void refresh()} className='text-cyan-400'>
                 Retry
               </button>
             </div>
@@ -371,35 +353,33 @@ export function DataStorage({
       </section>
 
       {/* Scheduled Daily Reports (Offline Auto-Export) */}
-      <section className="space-y-8">
-        <div className="pt-2 pb-2">
-          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            Scheduled reports
-          </h3>
+      <section className='space-y-8'>
+        <div className='pt-2 pb-2'>
+          <h3 className='text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase'>Scheduled reports</h3>
         </div>
 
-        <div className="space-y-6">
-          <div className="flex flex-col">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div className="min-w-0 flex-1">
-                <h4 className="text-[15px] font-semibold text-white/90">Daily auto-export</h4>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                  Export daily attendance reports to a local or network folder at the scheduled time
-                  while Facenox is running.
+        <div className='space-y-6'>
+          <div className='flex flex-col'>
+            <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
+              <div className='min-w-0 flex-1'>
+                <h4 className='text-[15px] font-semibold text-white/90'>Daily auto-export</h4>
+                <p className='mt-1.5 text-[13px] leading-relaxed text-white/65'>
+                  Export daily attendance reports to a local or network folder at the scheduled time while Facenox is
+                  running.
                 </p>
               </div>
               {autoExportLoaded ?
                 <Switch
                   checked={autoExportConfig.enabled}
                   onChange={(enabled) => handleUpdateAutoExport({ enabled })}
-                  ariaLabel="Enable daily auto-export"
+                  ariaLabel='Enable daily auto-export'
                 />
               : autoExportError ?
-                <div role="status" className="text-xs text-white/65">
-                  <span>{autoExportError}</span>{" "}
+                <div role='status' className='text-xs text-white/65'>
+                  <span>{autoExportError}</span>{' '}
                   <button
-                    type="button"
-                    className="text-cyan-400"
+                    type='button'
+                    className='text-cyan-400'
                     onClick={() => {
                       setAutoExportError(null)
                       setAutoExportLoadAttempt((value) => value + 1)
@@ -407,8 +387,8 @@ export function DataStorage({
                     Retry
                   </button>
                 </div>
-              : <span role="status" className="flex items-center gap-2 text-xs text-white/55">
-                  <Loader2 aria-hidden="true" className="size-3 animate-spin" /> Loading schedule…
+              : <span role='status' className='flex items-center gap-2 text-xs text-white/55'>
+                  <Loader2 aria-hidden='true' className='size-3 animate-spin' /> Loading schedule…
                 </span>
               }
             </div>
@@ -417,72 +397,70 @@ export function DataStorage({
               {autoExportLoaded && autoExportConfig.enabled && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
+                  animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="overflow-hidden">
-                  <div className="flex flex-col pt-3">
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  className='overflow-hidden'>
+                  <div className='flex flex-col pt-3'>
                     {/* Export Time */}
-                    <div className="relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4">
-                      <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10" />
-                      <div className="pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10" />
+                    <div className='relative flex items-center gap-4 pt-2.5 pb-2.5 pl-4'>
+                      <div className='pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10' />
+                      <div className='pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10' />
 
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs text-white/65">Scheduled time:</div>
+                      <div className='min-w-0 flex-1'>
+                        <div className='text-xs text-white/65'>Scheduled time:</div>
                       </div>
-                      <div className="group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8">
-                        <Clock className="mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70" />
-                        <div className="flex items-baseline gap-1 font-mono text-xs font-bold text-white/90">
+                      <div className='group relative flex shrink-0 items-center overflow-hidden rounded-md border border-white/10 bg-white/5 px-2.5 py-1 transition-all duration-150 focus-within:border-white/20 focus-within:ring-1 focus-within:ring-white/20 hover:border-white/20 hover:bg-white/8'>
+                        <Clock className='mr-2 size-3 text-white/40 transition-colors group-hover:text-white/70' />
+                        <div className='flex items-baseline gap-1 font-mono text-xs font-bold text-white/90'>
                           <span>{formatTimeDisplay(autoExportConfig.time).time}</span>
-                          <span className="text-[10px] font-medium text-white/55">
+                          <span className='text-[10px] font-medium text-white/55'>
                             {formatTimeDisplay(autoExportConfig.time).period}
                           </span>
                         </div>
                         <input
-                          type="time"
-                          title=""
+                          type='time'
+                          title=''
                           value={autoExportConfig.time}
                           onChange={(e) => handleUpdateAutoExport({ time: e.target.value })}
                           onClick={(e) => e.currentTarget.showPicker?.()}
-                          aria-label="Auto export time"
-                          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden"
+                          aria-label='Auto export time'
+                          className='absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:hidden'
                         />
                       </div>
                     </div>
 
                     {/* Export Format */}
-                    <div className="relative flex flex-wrap items-center justify-between gap-3 pt-2.5 pb-2.5 pl-4">
-                      <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10" />
-                      <div className="pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10" />
+                    <div className='relative flex flex-wrap items-center justify-between gap-3 pt-2.5 pb-2.5 pl-4'>
+                      <div className='pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10' />
+                      <div className='pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10' />
 
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs text-white/65">Report format:</div>
+                      <div className='min-w-0 flex-1'>
+                        <div className='text-xs text-white/65'>Report format:</div>
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-3">
+                      <div className='flex shrink-0 items-center gap-3'>
                         {[
-                          { id: "combined_csv", label: "Combined CSV" },
-                          { id: "individual_csvs", label: "Per-group CSV" },
+                          { id: 'combined_csv', label: 'Combined CSV' },
+                          { id: 'individual_csvs', label: 'Per-group CSV' }
                         ].map((fmt) => (
                           <button
                             key={fmt.id}
-                            type="button"
+                            type='button'
                             onClick={() =>
                               handleUpdateAutoExport({
-                                format: fmt.id as "individual_csvs" | "combined_csv",
+                                format: fmt.id as 'individual_csvs' | 'combined_csv'
                               })
                             }
                             className={`relative py-1 text-center text-[11px] font-bold tracking-wider transition-all duration-150 ${
-                              autoExportConfig.format === fmt.id ?
-                                "text-cyan-400"
-                              : "text-white/40 hover:text-white/70"
+                              autoExportConfig.format === fmt.id ? 'text-cyan-400' : 'text-white/40 hover:text-white/70'
                             }`}>
                             {fmt.label}
                             {autoExportConfig.format === fmt.id && (
                               <motion.div
-                                layoutId="exportFormatUnderline"
-                                className="absolute right-0 bottom-[-3px] left-0 h-[2px] rounded-[1px] bg-cyan-400"
-                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                layoutId='exportFormatUnderline'
+                                className='absolute right-0 bottom-[-3px] left-0 h-[2px] rounded-[1px] bg-cyan-400'
+                                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                               />
                             )}
                           </button>
@@ -491,44 +469,44 @@ export function DataStorage({
                     </div>
 
                     {/* Destination Folder */}
-                    <div className="relative flex flex-col gap-2 pt-2.5 pb-2.5 pl-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10" />
-                      <div className="pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10" />
+                    <div className='relative flex flex-col gap-2 pt-2.5 pb-2.5 pl-4 sm:flex-row sm:items-center sm:justify-between'>
+                      <div className='pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-white/10' />
+                      <div className='pointer-events-none absolute top-1/2 left-0 h-px w-3 -translate-y-1/2 bg-white/10' />
 
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs text-white/65">Save location:</div>
-                        <div className="mt-0.5 truncate font-mono text-[11px] text-white/45 select-all">
-                          {autoExportConfig.directory || "Documents/Facenox_Reports"}
+                      <div className='min-w-0 flex-1'>
+                        <div className='text-xs text-white/65'>Save location:</div>
+                        <div className='mt-0.5 truncate font-mono text-[11px] text-white/45 select-all'>
+                          {autoExportConfig.directory || 'Documents/Facenox_Reports'}
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-2">
+                      <div className='flex shrink-0 items-center gap-2'>
                         <button
-                          type="button"
+                          type='button'
                           onClick={handleSelectExportDirectory}
-                          className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
-                          <Folder className="size-3 text-white/50" />
+                          className='flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]'>
+                          <Folder className='size-3 text-white/50' />
                           <span>Change</span>
                         </button>
                         <button
-                          type="button"
+                          type='button'
                           onClick={handleOpenExportDirectory}
-                          className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
-                          <FolderOpen className="size-3 text-white/50" />
+                          className='flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-[11px] font-medium text-white/75 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]'>
+                          <FolderOpen className='size-3 text-white/50' />
                           <span>Open folder</span>
                         </button>
                       </div>
                     </div>
 
                     {/* Status & Export Now */}
-                    <div className="relative flex flex-wrap items-center justify-between gap-3 pt-2.5 pb-2.5 pl-4">
-                      <div className="pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10" />
+                    <div className='relative flex flex-wrap items-center justify-between gap-3 pt-2.5 pb-2.5 pl-4'>
+                      <div className='pointer-events-none absolute top-0 bottom-1/2 left-0 w-3 rounded-bl-sm border-b border-l border-white/10' />
 
-                      <div className="min-w-0 flex-1 text-[11px] text-white/45">
+                      <div className='min-w-0 flex-1 text-[11px] text-white/45'>
                         {autoExportConfig.lastExportedDate ?
                           <span>
-                            Last export:{" "}
-                            <span className="font-mono font-medium text-white/65">
+                            Last export:{' '}
+                            <span className='font-mono font-medium text-white/65'>
                               {autoExportConfig.lastExportedDate}
                             </span>
                           </span>
@@ -536,14 +514,14 @@ export function DataStorage({
                       </div>
 
                       <button
-                        type="button"
+                        type='button'
                         onClick={handleTriggerAutoExportNow}
                         disabled={isTriggeringAutoExport}
-                        className="flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-[11px] font-medium text-white/80 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40">
+                        className='flex h-7 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-[11px] font-medium text-white/80 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-[0.97] disabled:opacity-40'>
                         {isTriggeringAutoExport ?
-                          <Loader2 className="size-3 animate-spin text-[10px]" />
-                        : <FileUp className="size-3" />}
-                        <span>{isTriggeringAutoExport ? "Exporting…" : "Export now"}</span>
+                          <Loader2 className='size-3 animate-spin text-[10px]' />
+                        : <FileUp className='size-3' />}
+                        <span>{isTriggeringAutoExport ? 'Exporting…' : 'Export now'}</span>
                       </button>
                     </div>
                   </div>
@@ -555,28 +533,24 @@ export function DataStorage({
       </section>
 
       {/* Local Storage */}
-      <section className="space-y-8">
-        <div className="pt-2 pb-2">
-          <h3 className="text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase">
-            Local storage
-          </h3>
+      <section className='space-y-8'>
+        <div className='pt-2 pb-2'>
+          <h3 className='text-[10px] font-extrabold tracking-[0.2em] text-white/55 uppercase'>Local storage</h3>
         </div>
 
-        <div className="space-y-10">
+        <div className='space-y-10'>
           {/* Data Folder */}
-          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-            <div className="min-w-0 flex-1">
-              <h4 className="text-[15px] font-semibold text-white/90">
-                Local data and system logs
-              </h4>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
+          <div className='flex flex-col gap-6 md:flex-row md:items-start md:justify-between'>
+            <div className='min-w-0 flex-1'>
+              <h4 className='text-[15px] font-semibold text-white/90'>Local data and system logs</h4>
+              <p className='mt-1.5 text-[13px] leading-relaxed text-white/65'>
                 Access local database files, diagnostic logs, and enrolled face data on this device.
               </p>
             </div>
-            <div className="flex shrink-0 flex-wrap gap-2 self-start md:self-auto">
+            <div className='flex shrink-0 flex-wrap gap-2 self-start md:self-auto'>
               <button
-                type="button"
-                aria-label="Open data folder"
+                type='button'
+                aria-label='Open data folder'
                 onClick={async () => {
                   try {
                     const result = await window.facenoxElectron?.openDataDir()
@@ -587,13 +561,13 @@ export function DataStorage({
                     setError("Facenox couldn't open the data folder.")
                   }
                 }}
-                className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
-                <FolderOpen className="size-3 text-white/50" />
+                className='flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]'>
+                <FolderOpen className='size-3 text-white/50' />
                 <span>Open folder</span>
               </button>
               <button
-                type="button"
-                aria-label="View system log"
+                type='button'
+                aria-label='View system log'
                 onClick={async () => {
                   try {
                     const result = await window.facenoxElectron?.openLogFile()
@@ -604,56 +578,54 @@ export function DataStorage({
                     setError("Facenox couldn't open the system log.")
                   }
                 }}
-                className="flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
-                <FileText className="size-3 text-white/50" />
+                className='flex h-8 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]'>
+                <FileText className='size-3 text-white/50' />
                 <span>View log</span>
               </button>
             </div>
           </div>
 
           {/* Install Folder */}
-          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-            <div className="min-w-0 flex-1">
-              <h4 className="text-[15px] font-semibold text-white/90">Installation directory</h4>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
+          <div className='flex flex-col gap-6 md:flex-row md:items-start md:justify-between'>
+            <div className='min-w-0 flex-1'>
+              <h4 className='text-[15px] font-semibold text-white/90'>Installation directory</h4>
+              <p className='mt-1.5 text-[13px] leading-relaxed text-white/65'>
                 Open the folder where Facenox is installed.
               </p>
-              <div className="mt-1.5 flex items-center gap-1.5 text-[11px] leading-tight text-amber-500/80">
-                <AlertTriangle className="size-3 shrink-0" />
+              <div className='mt-1.5 flex items-center gap-1.5 text-[11px] leading-tight text-amber-500/80'>
+                <AlertTriangle className='size-3 shrink-0' />
                 <span>Modifying these files is not recommended.</span>
               </div>
             </div>
             <button
-              type="button"
-              aria-label="Open installation directory"
+              type='button'
+              aria-label='Open installation directory'
               onClick={async () => {
                 await window.facenoxElectron?.openInstallDir()
               }}
-              className="flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]">
-              <FolderOpen className="size-3 text-white/50" />
+              className='flex h-8 shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-xs font-medium text-white/75 transition-all duration-150 hover:border-white/20 hover:bg-white/[0.08] hover:text-white active:scale-[0.97]'>
+              <FolderOpen className='size-3 text-white/50' />
               <span>Open folder</span>
             </button>
           </div>
         </div>
       </section>
 
-      <span className="sr-only">Danger zone toggle</span>
+      <span className='sr-only'>Danger zone toggle</span>
       {/* Danger Zone */}
       <motion.section
-        layout="position"
-        className="relative flex w-full flex-col items-center overflow-hidden pt-8 pb-2">
+        layout='position'
+        className='relative flex w-full flex-col items-center overflow-hidden pt-8 pb-2'>
         {/* Sleek fading gradient divider to match the centered design */}
-        <div className="absolute top-0 right-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/20 to-transparent" />
+        <div className='absolute top-0 right-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/20 to-transparent' />
         {/* Sleek centered trigger */}
         <button
           onClick={() => setIsDangerZoneOpen(!isDangerZoneOpen)}
-          className="group flex items-center gap-2.5 rounded-md border-0 bg-transparent px-5 py-2 text-[11px] font-extrabold tracking-[0.2em] text-red-500/40 uppercase shadow-none transition-all duration-300 outline-none hover:bg-red-500/[0.04] hover:text-red-400 focus:outline-none active:scale-95">
-          <AlertTriangle className="size-2.5 opacity-60 transition-transform group-hover:scale-110" />
+          className='group flex items-center gap-2.5 rounded-md border-0 bg-transparent px-5 py-2 text-[11px] font-extrabold tracking-[0.2em] text-red-500/40 uppercase shadow-none transition-all duration-300 outline-none hover:bg-red-500/[0.04] hover:text-red-400 focus:outline-none active:scale-95'>
+          <AlertTriangle className='size-2.5 opacity-60 transition-transform group-hover:scale-110' />
           <span>Danger zone</span>
-          <motion.span
-            animate={{ rotate: isDangerZoneOpen ? 180 : 0 }}
-            transition={{ duration: 0.2 }}>
-            <ChevronDown className="size-2.5 opacity-50" />
+          <motion.span animate={{ rotate: isDangerZoneOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown className='size-2.5 opacity-50' />
           </motion.span>
         </button>
 
@@ -661,30 +633,27 @@ export function DataStorage({
           {isDangerZoneOpen && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
+              animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="w-full overflow-hidden">
-              <div className="w-full divide-y divide-red-500/5 pt-4 pb-8">
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className='w-full overflow-hidden'>
+              <div className='w-full divide-y divide-red-500/5 pt-4 pb-8'>
                 {/* Action 1: Delete Group Directory */}
-                <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
-                  <div className="min-w-0 flex-1 text-left">
-                    <h4 className="text-[15px] font-semibold text-red-400/80">
-                      Delete group directory
-                    </h4>
-                    <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Delete all groups, member profiles, and enrolled face templates from this
-                      directory. Existing attendance history is retained. Members must be added and
-                      enrolled again to use face recognition.
+                <div className='flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between'>
+                  <div className='min-w-0 flex-1 text-left'>
+                    <h4 className='text-[15px] font-semibold text-red-400/80'>Delete group directory</h4>
+                    <p className='mt-1.5 text-[13px] leading-relaxed text-white/65'>
+                      Delete all groups, member profiles, and enrolled face templates from this directory. Existing
+                      attendance history is retained. Members must be added and enrolled again to use face recognition.
                       {isPaired &&
                         (!allowKioskDirectoryManagement ?
-                          <span className="mt-1 block font-medium text-amber-400/80">
-                            <Lock className="mr-1 inline size-3" />
-                            Your organization has disabled directory deletion on this computer.
-                            Manage groups in Facenox Cloud.
+                          <span className='mt-1 block font-medium text-amber-400/80'>
+                            <Lock className='mr-1 inline size-3' />
+                            Your organization has disabled directory deletion on this computer. Manage groups in Facenox
+                            Cloud.
                           </span>
-                        : <span className="mt-1 block font-medium text-amber-400/80">
-                            <CloudUpload className="mr-1 inline size-3" />
+                        : <span className='mt-1 block font-medium text-amber-400/80'>
+                            <CloudUpload className='mr-1 inline size-3' />
                             These removals will sync to Facenox Cloud.
                           </span>)}
                     </p>
@@ -694,32 +663,31 @@ export function DataStorage({
                     disabled={
                       isLoading ||
                       !isReady ||
-                      deletingGroup === "all" ||
+                      deletingGroup === 'all' ||
                       groups.length === 0 ||
                       (isPaired && !allowKioskDirectoryManagement)
                     }
-                    className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
-                    {deletingGroup === "all" && <Loader2 className="size-3 animate-spin" />}
+                    className='flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center'>
+                    {deletingGroup === 'all' && <Loader2 className='size-3 animate-spin' />}
                     Delete directory
                   </button>
                 </div>
 
                 {/* Action 2: Clear Face Data */}
-                <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
-                  <div className="min-w-0 flex-1 text-left">
-                    <h4 className="text-[15px] font-semibold text-red-400/80">Clear face data</h4>
-                    <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Clear all enrolled face templates. Members will need to enroll again to use
-                      face recognition.
+                <div className='flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between'>
+                  <div className='min-w-0 flex-1 text-left'>
+                    <h4 className='text-[15px] font-semibold text-red-400/80'>Clear face data</h4>
+                    <p className='mt-1.5 text-[13px] leading-relaxed text-white/65'>
+                      Clear all enrolled face templates. Members will need to enroll again to use face recognition.
                       {isPaired &&
                         (!allowKioskDirectoryManagement ?
-                          <span className="mt-1 block font-medium text-amber-400/80">
-                            <Lock className="mr-1 inline size-3" />
-                            Your organization has disabled face-data clearing on this computer.
-                            Contact your administrator.
+                          <span className='mt-1 block font-medium text-amber-400/80'>
+                            <Lock className='mr-1 inline size-3' />
+                            Your organization has disabled face-data clearing on this computer. Contact your
+                            administrator.
                           </span>
-                        : <span className="mt-1 block font-medium text-amber-400/80">
-                            <CloudUpload className="mr-1 inline size-3" />
+                        : <span className='mt-1 block font-medium text-amber-400/80'>
+                            <CloudUpload className='mr-1 inline size-3' />
                             Face-template removals will sync to Facenox Cloud.
                           </span>)}
                     </p>
@@ -727,23 +695,21 @@ export function DataStorage({
                   <button
                     onClick={() => onClearDatabase(false)}
                     disabled={isLoading || !isReady || (isPaired && !allowKioskDirectoryManagement)}
-                    className="flex shrink-0 items-center justify-center self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
+                    className='flex shrink-0 items-center justify-center self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center'>
                     Clear face data
                   </button>
                 </div>
 
                 {/* Action 3: Purge Attendance History */}
-                <div className="flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between">
-                  <div className="min-w-0 flex-1 text-left">
-                    <h4 className="text-[15px] font-semibold text-red-400/80">
-                      Delete local attendance history
-                    </h4>
-                    <p className="mt-1.5 text-[13px] leading-relaxed text-white/65">
-                      Delete attendance records and sessions from this computer. Groups, member
-                      profiles, and face templates are unchanged. This cannot be undone.
+                <div className='flex flex-col gap-6 py-6 md:flex-row md:items-center md:justify-between'>
+                  <div className='min-w-0 flex-1 text-left'>
+                    <h4 className='text-[15px] font-semibold text-red-400/80'>Delete local attendance history</h4>
+                    <p className='mt-1.5 text-[13px] leading-relaxed text-white/65'>
+                      Delete attendance records and sessions from this computer. Groups, member profiles, and face
+                      templates are unchanged. This cannot be undone.
                       {isPaired && (
-                        <span className="mt-1 block font-medium text-white/50">
-                          <Cloud className="mr-1 inline size-3" />
+                        <span className='mt-1 block font-medium text-white/50'>
+                          <Cloud className='mr-1 inline size-3' />
                           Clears history on this device only. Cloud records are unchanged.
                         </span>
                       )}
@@ -752,8 +718,8 @@ export function DataStorage({
                   <button
                     onClick={() => handlePurgeHistory(false)}
                     disabled={isLoading || isPurgingHistory}
-                    className="flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center">
-                    {isPurgingHistory && <Loader2 className="size-3 animate-spin" />}
+                    className='flex shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-rose-500/25 bg-rose-500/10 px-5 py-2 text-[12px] font-bold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/20 active:scale-95 disabled:opacity-20 md:self-center'>
+                    {isPurgingHistory && <Loader2 className='size-3 animate-spin' />}
                     Delete history
                   </button>
                 </div>
@@ -768,101 +734,99 @@ export function DataStorage({
         isOpen={passwordModal.isOpen}
         onClose={() => {
           setPasswordModal({ ...passwordModal, isOpen: false })
-          setPasswordInput("")
+          setPasswordInput('')
           setShowPassword(false)
         }}
-        title={passwordModal.action === "export" ? "Set backup password" : "Restore backup"}
+        title={passwordModal.action === 'export' ? 'Set backup password' : 'Restore backup'}
         icon={
-          passwordModal.action === "export" ?
-            <Shield className="size-4 text-cyan-400" />
-          : <Lock className="size-4 text-cyan-400" />
+          passwordModal.action === 'export' ?
+            <Shield className='size-4 text-cyan-400' />
+          : <Lock className='size-4 text-cyan-400' />
         }>
-        <div className="space-y-4">
-          <p className="text-xs leading-relaxed text-white/65">
-            {passwordModal.action === "export" ?
-              "Choose a strong password to encrypt backups. This password is required to restore data later."
+        <div className='space-y-4'>
+          <p className='text-xs leading-relaxed text-white/65'>
+            {passwordModal.action === 'export' ?
+              'Choose a strong password to encrypt backups. This password is required to restore data later.'
             : `Enter the password for ${
-                importFilePath?.split(/[\\/]/).pop() || "this backup"
+                importFilePath?.split(/[\\/]/).pop() || 'this backup'
               } to decrypt and restore data.`
             }
           </p>
-          {passwordModal.action === "import" && (
-            <p className="text-[11px] leading-relaxed text-white/50">
-              Existing groups, members, and attendance records are kept. Only missing records are
-              restored.
+          {passwordModal.action === 'import' && (
+            <p className='text-[11px] leading-relaxed text-white/50'>
+              Existing groups, members, and attendance records are kept. Only missing records are restored.
             </p>
           )}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-white/55">Backup password</label>
-            <div className="relative">
+          <div className='space-y-1.5'>
+            <label className='text-xs font-medium text-white/55'>Backup password</label>
+            <div className='relative'>
               <input
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 autoFocus
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && passwordInput) {
+                  if (e.key === 'Enter' && passwordInput) {
                     const pass = passwordInput
-                    setPasswordInput("")
+                    setPasswordInput('')
                     setShowPassword(false)
                     setPasswordModal({ ...passwordModal, isOpen: false })
-                    if (passwordModal.action === "export") {
+                    if (passwordModal.action === 'export') {
                       handleExport(pass)
                     } else {
                       handleImport(pass, passwordModal.overwrite)
                     }
                   }
                 }}
-                placeholder="Enter password…"
-                className="w-full rounded-lg border border-white/10 bg-white/[0.04] py-2 pr-10 pl-3 text-xs text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none focus:border-white/25 focus:bg-white/[0.08]"
+                placeholder='Enter password…'
+                className='w-full rounded-lg border border-white/10 bg-white/[0.04] py-2 pr-10 pl-3 text-xs text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none focus:border-white/25 focus:bg-white/[0.08]'
               />
-              <Tooltip content={showPassword ? "Hide password" : "Show password"}>
+              <Tooltip content={showPassword ? 'Hide password' : 'Show password'}>
                 <button
-                  type="button"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  type='button'
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 border-none bg-transparent p-0 text-white/55 shadow-none transition-colors hover:text-white/65 focus-visible:outline focus-visible:outline-white/50">
+                  className='absolute top-1/2 right-3 -translate-y-1/2 border-none bg-transparent p-0 text-white/55 shadow-none transition-colors hover:text-white/65 focus-visible:outline focus-visible:outline-white/50'>
                   {showPassword ?
-                    <EyeOff className="size-3 text-white/55" />
-                  : <Eye className="size-3 text-white/55" />}
+                    <EyeOff className='size-3 text-white/55' />
+                  : <Eye className='size-3 text-white/55' />}
                 </button>
               </Tooltip>
             </div>
-            {passwordModal.action === "export" && (
-              <div className="flex items-start gap-1.5 pt-1 text-[11px] leading-tight text-amber-500/80">
-                <AlertTriangle className="mt-0.5 size-3 shrink-0" />
+            {passwordModal.action === 'export' && (
+              <div className='flex items-start gap-1.5 pt-1 text-[11px] leading-tight text-amber-500/80'>
+                <AlertTriangle className='mt-0.5 size-3 shrink-0' />
                 <span>
-                  Save this password securely. It is required to restore data and cannot be reset if
-                  forgotten.
+                  Save this password securely. It is required to restore data and cannot be reset if forgotten.
                 </span>
               </div>
             )}
           </div>
-          <div className="mt-6 flex justify-end gap-3">
+          <div className='mt-6 flex justify-end gap-3'>
             <button
               onClick={() => {
                 setPasswordModal({ ...passwordModal, isOpen: false })
-                setPasswordInput("")
+                setPasswordInput('')
                 setShowPassword(false)
               }}
-              className="rounded-lg border-0 bg-transparent px-4 py-2 text-[11px] font-medium text-white/65 shadow-none transition-colors hover:text-white active:scale-95">
+              className='rounded-lg border-0 bg-transparent px-4 py-2 text-[11px] font-medium text-white/65 shadow-none transition-colors hover:text-white active:scale-95'>
               Cancel
             </button>
             <button
               disabled={!passwordInput}
               onClick={() => {
                 const pass = passwordInput
-                setPasswordInput("")
+                setPasswordInput('')
                 setShowPassword(false)
                 setPasswordModal({ ...passwordModal, isOpen: false })
-                if (passwordModal.action === "export") {
+                if (passwordModal.action === 'export') {
                   handleExport(pass)
                 } else {
                   handleImport(pass, passwordModal.overwrite)
                 }
               }}
-              className="min-w-25 rounded-lg border-0 bg-cyan-500/10 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 shadow-none transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-50">
-              {passwordModal.action === "export" ? "Create" : "Restore"}
+              className='min-w-25 rounded-lg border-0 bg-cyan-500/10 px-6 py-2 text-[11px] font-bold tracking-wider text-cyan-400 shadow-none transition-all hover:bg-cyan-500/20 active:scale-95 disabled:opacity-50'>
+              {passwordModal.action === 'export' ? 'Create' : 'Restore'}
             </button>
           </div>
         </div>

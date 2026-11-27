@@ -1,4 +1,4 @@
-import type { BulkMemberCreationResponse } from "@/services/attendance/MemberManager"
+import type { BulkMemberCreationResponse } from '@/services/attendance/MemberManager'
 
 export interface BulkMemberImportRow {
   name: string
@@ -17,14 +17,14 @@ export function createBulkMemberCheckpoint(): BulkMemberImportCheckpoint {
   return { pending: [], completed: [] }
 }
 
-function rowKey(row: Omit<BulkMemberImportRow, "creationId">) {
-  return JSON.stringify([row.name, row.role || "", row.email || "", row.personId || ""])
+function rowKey(row: Omit<BulkMemberImportRow, 'creationId'>) {
+  return JSON.stringify([row.name, row.role || '', row.email || '', row.personId || ''])
 }
 
 export function reconcileBulkMemberRows(
   checkpoint: BulkMemberImportCheckpoint,
-  input: Array<Omit<BulkMemberImportRow, "creationId">>,
-  includesCompleted = false,
+  input: Array<Omit<BulkMemberImportRow, 'creationId'>>,
+  includesCompleted = false
 ): BulkMemberImportRow[] {
   const available = new Map<string, BulkMemberImportRow[]>()
   for (const row of [...checkpoint.pending, ...(includesCompleted ? checkpoint.completed : [])]) {
@@ -48,15 +48,14 @@ export function reconcileBulkMemberRows(
     matches.filter((match) => !match).length > remaining.length
   ) {
     throw new Error(
-      "Previously added entries cannot be changed in a resumed file import. Edit those members in Members, or start a new import for new entries.",
+      'Previously added entries cannot be changed in a resumed file import. Edit those members in Members, or start a new import for new entries.'
     )
   }
   const completed = new Set(checkpoint.completed.map((row) => row.creationId))
   checkpoint.pending = input
     .map((row, index) => ({
       ...row,
-      creationId:
-        matches[index]?.creationId ?? remaining.shift()?.creationId ?? crypto.randomUUID(),
+      creationId: matches[index]?.creationId ?? remaining.shift()?.creationId ?? crypto.randomUUID()
     }))
     .filter((row) => !completed.has(row.creationId))
   return checkpoint.pending
@@ -65,14 +64,12 @@ export function reconcileBulkMemberRows(
 export function checkpointBulkMemberResponse(
   checkpoint: BulkMemberImportCheckpoint,
   chunk: BulkMemberImportRow[],
-  response: BulkMemberCreationResponse,
+  response: BulkMemberCreationResponse
 ) {
   let successful: Set<string>
   if (response.results?.length) {
     successful = new Set(
-      response.results
-        .filter((row) => row.success && row.creation_id)
-        .map((row) => row.creation_id!),
+      response.results.filter((row) => row.success && row.creation_id).map((row) => row.creation_id!)
     )
   } else if (response.success_count === chunk.length && response.error_count === 0) {
     successful = new Set(chunk.map((row) => row.creationId))
@@ -80,9 +77,7 @@ export function checkpointBulkMemberResponse(
     const members = [...response.members]
     successful = new Set<string>()
     for (const row of chunk) {
-      const index = members.findIndex(
-        (member) => member.name === row.name && (member.role || "") === (row.role || ""),
-      )
+      const index = members.findIndex((member) => member.name === row.name && (member.role || '') === (row.role || ''))
       if (index >= 0) {
         successful.add(row.creationId)
         members.splice(index, 1)
@@ -101,7 +96,5 @@ export function checkpointBulkMemberResponse(
 
 export function remainingBulkMemberText(checkpoint: BulkMemberImportCheckpoint, invalid: string[]) {
   // Tabs preserve commas/semicolons in names on the next parse, including an empty role.
-  return [...checkpoint.pending.map((row) => `${row.name}\t${row.role ?? ""}`), ...invalid].join(
-    "\n",
-  )
+  return [...checkpoint.pending.map((row) => `${row.name}\t${row.role ?? ''}`), ...invalid].join('\n')
 }

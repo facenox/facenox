@@ -3,8 +3,8 @@ import type {
   PersonUpdateResponse,
   SimilarityThresholdResponse,
   DatabaseStatsResponse,
-  PersonInfo,
-} from "@/types/recognition"
+  PersonInfo
+} from '@/types/recognition'
 
 export class ElectronAdapter {
   async removePerson(personId: string): Promise<PersonRemovalResponse> {

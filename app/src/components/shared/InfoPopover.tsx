@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from "react"
-import { createPortal } from "react-dom"
-import { motion, AnimatePresence } from "framer-motion"
-import { HelpCircle, Info } from "lucide-react"
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { HelpCircle, Info } from 'lucide-react'
 
 interface InfoPopoverProps {
   /** Short label shown in the header of the popover */
@@ -18,12 +18,12 @@ interface InfoPopoverProps {
    * Future: pass a video src for Anti-Spoof demo, etc.
    */
   media?: {
-    type: "image" | "video"
+    type: 'image' | 'video'
     src: string
     alt?: string
   }
   /** Preferred side to open. Defaults to "right" (good for inline settings). */
-  side?: "top" | "bottom" | "left" | "right"
+  side?: 'top' | 'bottom' | 'left' | 'right'
   /** Custom width class. Defaults to "w-84" (336px). */
   widthClass?: string
 }
@@ -39,8 +39,8 @@ export function InfoPopover({
   details,
   detailsNode,
   media,
-  side = "right",
-  widthClass = "w-84",
+  side = 'right',
+  widthClass = 'w-84'
 }: InfoPopoverProps) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
@@ -59,12 +59,12 @@ export function InfoPopover({
     let top = tr.top + tr.height / 2 - ph / 2
     let left = tr.right + OFFSET
 
-    if (side === "left") left = tr.left - pw - OFFSET
-    if (side === "top") {
+    if (side === 'left') left = tr.left - pw - OFFSET
+    if (side === 'top') {
       top = tr.top - ph - OFFSET
       left = tr.left + tr.width / 2 - pw / 2
     }
-    if (side === "bottom") {
+    if (side === 'bottom') {
       top = tr.bottom + OFFSET
       left = tr.left + tr.width / 2 - pw / 2
     }
@@ -81,25 +81,25 @@ export function InfoPopover({
       lastWindowFocusTime.current = Date.now()
     }
 
-    window.addEventListener("blur", handleWindowBlur)
-    window.addEventListener("focus", handleWindowFocus)
+    window.addEventListener('blur', handleWindowBlur)
+    window.addEventListener('focus', handleWindowFocus)
 
     if (!open) {
       return () => {
-        window.removeEventListener("blur", handleWindowBlur)
-        window.removeEventListener("focus", handleWindowFocus)
+        window.removeEventListener('blur', handleWindowBlur)
+        window.removeEventListener('focus', handleWindowFocus)
       }
     }
 
     const id = requestAnimationFrame(measure)
-    window.addEventListener("scroll", measure, true)
-    window.addEventListener("resize", measure)
+    window.addEventListener('scroll', measure, true)
+    window.addEventListener('resize', measure)
     return () => {
       cancelAnimationFrame(id)
-      window.removeEventListener("scroll", measure, true)
-      window.removeEventListener("resize", measure)
-      window.removeEventListener("blur", handleWindowBlur)
-      window.removeEventListener("focus", handleWindowFocus)
+      window.removeEventListener('scroll', measure, true)
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('blur', handleWindowBlur)
+      window.removeEventListener('focus', handleWindowFocus)
     }
   }, [open, measure])
 
@@ -123,7 +123,7 @@ export function InfoPopover({
     <>
       <button
         ref={triggerRef}
-        type="button"
+        type='button'
         onMouseEnter={show}
         onMouseLeave={hide}
         onFocus={() => {
@@ -132,9 +132,9 @@ export function InfoPopover({
           show()
         }}
         onBlur={hide}
-        className="m-0 inline-flex cursor-default items-center border-none bg-transparent p-0 leading-none text-white/20 shadow-none transition-colors duration-150 outline-none hover:text-cyan-400/70 focus:outline-none"
+        className='m-0 inline-flex cursor-default items-center border-none bg-transparent p-0 leading-none text-white/20 shadow-none transition-colors duration-150 outline-none hover:text-cyan-400/70 focus:outline-none'
         aria-label={`More info about ${title}`}>
-        <HelpCircle className="size-3 leading-none" aria-hidden="true" />
+        <HelpCircle className='size-3 leading-none' aria-hidden='true' />
       </button>
 
       {createPortal(
@@ -142,71 +142,59 @@ export function InfoPopover({
           {open && (
             <motion.div
               ref={popoverRef}
-              role="tooltip"
+              role='tooltip'
               initial={{ opacity: 0, scale: 0.96, y: 4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 4 }}
-              transition={{ duration: POPOVER_ANIMATION_DURATION, ease: "easeOut" }}
+              transition={{ duration: POPOVER_ANIMATION_DURATION, ease: 'easeOut' }}
               className={`pointer-events-auto fixed z-99999 ${widthClass}`}
               onMouseEnter={cancelHide}
               onMouseLeave={hide}
               style={{
                 top: pos?.top ?? -9999,
                 left: pos?.left ?? -9999,
-                visibility: pos ? "visible" : "hidden",
+                visibility: pos ? 'visible' : 'hidden'
               }}>
-              <div className="overflow-hidden rounded-xl border border-white/10 bg-[#141518]">
+              <div className='overflow-hidden rounded-xl border border-white/10 bg-[#141518]'>
                 {media && (
-                  <div className="relative w-full overflow-hidden bg-black/40">
-                    {media.type === "image" ?
-                      <img
-                        src={media.src}
-                        alt={media.alt ?? title}
-                        className="h-32 w-full object-cover opacity-80"
-                      />
+                  <div className='relative w-full overflow-hidden bg-black/40'>
+                    {media.type === 'image' ?
+                      <img src={media.src} alt={media.alt ?? title} className='h-32 w-full object-cover opacity-80' />
                     : <video
                         src={media.src}
                         autoPlay
                         loop
                         muted
                         playsInline
-                        className="h-32 w-full object-cover opacity-80"
+                        className='h-32 w-full object-cover opacity-80'
                       />
                     }
-                    <div className="absolute inset-0 bg-linear-to-t from-[#141518] to-transparent" />
+                    <div className='absolute inset-0 bg-linear-to-t from-[#141518] to-transparent' />
                   </div>
                 )}
 
-                <div className="space-y-2 px-3.5 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <Info className="size-3 text-cyan-400/60" />
-                    <span className="text-[11px] font-semibold tracking-wide text-cyan-400/80">
-                      {title}
-                    </span>
+                <div className='space-y-2 px-3.5 py-3'>
+                  <div className='flex items-center gap-1.5'>
+                    <Info className='size-3 text-cyan-400/60' />
+                    <span className='text-[11px] font-semibold tracking-wide text-cyan-400/80'>{title}</span>
                   </div>
 
-                  <p className="text-xs leading-relaxed text-white/70">{description}</p>
+                  <p className='text-xs leading-relaxed text-white/70'>{description}</p>
 
                   {(details && details.length > 0) || (detailsNode && detailsNode.length > 0) ?
-                    <ul className="space-y-1 pt-1.5">
+                    <ul className='space-y-1 pt-1.5'>
                       {details?.map((detail, index) => (
-                        <li
-                          key={index}
-                          className="flex items-start gap-1.5 text-[10.5px] text-white/65">
-                          <span className="shrink-0 text-white/35" aria-hidden="true">
+                        <li key={index} className='flex items-start gap-1.5 text-[10.5px] text-white/65'>
+                          <span className='shrink-0 text-white/35' aria-hidden='true'>
                             –
                           </span>
                           <span>{detail}</span>
                         </li>
                       ))}
                       {detailsNode?.map((node, index) => (
-                        <li
-                          key={`node-${index}`}
-                          className="flex items-start gap-1.5 text-[10.5px] text-white/65">
-                          {!(node as { props?: Record<string, unknown> })?.props?.[
-                            "data-hide-chevron"
-                          ] && (
-                            <span className="shrink-0 text-white/35" aria-hidden="true">
+                        <li key={`node-${index}`} className='flex items-start gap-1.5 text-[10.5px] text-white/65'>
+                          {!(node as { props?: Record<string, unknown> })?.props?.['data-hide-chevron'] && (
+                            <span className='shrink-0 text-white/35' aria-hidden='true'>
                               –
                             </span>
                           )}
@@ -220,7 +208,7 @@ export function InfoPopover({
             </motion.div>
           )}
         </AnimatePresence>,
-        document.body,
+        document.body
       )}
     </>
   )

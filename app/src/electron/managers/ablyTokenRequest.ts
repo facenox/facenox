@@ -1,5 +1,5 @@
-import { z } from "zod"
-import type { TokenRequest } from "ably"
+import { z } from 'zod'
+import type { TokenRequest } from 'ably'
 
 const tokenRequestSchema = z.object({
   capability: z.string().min(1),
@@ -8,12 +8,12 @@ const tokenRequestSchema = z.object({
   nonce: z.string().min(16),
   timestamp: z.number().int().nonnegative(),
   clientId: z.string().optional(),
-  ttl: z.number().int().positive().optional(),
+  ttl: z.number().int().positive().optional()
 })
 
 /** Validate the network response before handing it to the realtime SDK. */
 export function parseAblyTokenRequest(value: unknown): TokenRequest {
   const result = tokenRequestSchema.safeParse(value)
-  if (!result.success) throw new Error("Cloud returned an invalid realtime token request.")
+  if (!result.success) throw new Error('Cloud returned an invalid realtime token request.')
   return result.data
 }

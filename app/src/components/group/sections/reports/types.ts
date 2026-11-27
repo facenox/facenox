@@ -1,22 +1,22 @@
-import type { AttendanceSession } from "@/types/recognition"
-import type { DepartureStatus } from "@/shared/departureStatus"
+import type { AttendanceSession } from '@/types/recognition'
+import type { DepartureStatus } from '@/shared/departureStatus'
 
 export type ColumnKey =
-  | "name"
-  | "date"
-  | "visit_number"
-  | "check_in_time"
-  | "check_out_time"
-  | "departure_status"
-  | "total_hours"
-  | "status"
-  | "is_late"
-  | "late_minutes"
-  | "notes"
+  | 'name'
+  | 'date'
+  | 'visit_number'
+  | 'check_in_time'
+  | 'check_out_time'
+  | 'departure_status'
+  | 'total_hours'
+  | 'status'
+  | 'is_late'
+  | 'late_minutes'
+  | 'notes'
 
-export type GroupByKey = "none" | "person" | "date"
+export type GroupByKey = 'none' | 'person' | 'date'
 
-export type ReportStatusFilter = "all" | "present" | "late" | "absent" | "no_records"
+export type ReportStatusFilter = 'all' | 'present' | 'late' | 'absent' | 'no_records'
 
 export interface SavedViewConfig {
   name: string

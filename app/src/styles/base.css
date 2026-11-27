@@ -21,15 +21,15 @@ body {
 }
 
 /* Suppress Chromium native calendar/time picker indicator and its built-in tooltip */
-input[type="time"]::-webkit-calendar-picker-indicator,
-input[type="date"]::-webkit-calendar-picker-indicator {
+input[type='time']::-webkit-calendar-picker-indicator,
+input[type='date']::-webkit-calendar-picker-indicator {
   display: none !important;
   background: none !important;
   -webkit-appearance: none !important;
 }
 
 /* Add breathing room and pointer cursor to native search clear button */
-input[type="search"]::-webkit-search-cancel-button {
+input[type='search']::-webkit-search-cancel-button {
   margin-left: 8px;
   cursor: pointer;
 }

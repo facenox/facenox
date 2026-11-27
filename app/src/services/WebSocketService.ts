@@ -1,11 +1,11 @@
 import type {
   WebSocketDetectionResponse,
   WebSocketConnectionMessage,
-  WebSocketErrorMessage,
-} from "@/components/main/types"
-import { appendOrganizationId } from "./localBackendScope"
+  WebSocketErrorMessage
+} from '@/components/main/types'
+import { appendOrganizationId } from './localBackendScope'
 
-export type WebSocketStatus = "disconnected" | "connecting" | "connected" | "error"
+export type WebSocketStatus = 'disconnected' | 'connecting' | 'connected' | 'error'
 type StatusChangeHandler = (status: WebSocketStatus) => void
 
 export interface WebSocketEventMap {
@@ -14,7 +14,7 @@ export interface WebSocketEventMap {
   error: WebSocketErrorMessage
   config_ack: { success: boolean; timestamp: number }
   pong: { client_id: string; timestamp: number }
-  attendance_event: import("../components/main/types").AttendanceEvent
+  attendance_event: import('../components/main/types').AttendanceEvent
 }
 
 let activeWebSocketServiceInstance: WebSocketService | null = null
@@ -30,7 +30,7 @@ interface WebSocketConfig {
 export class WebSocketService {
   private config: WebSocketConfig
   private ws: WebSocket | null = null
-  private wsStatus: WebSocketStatus = "disconnected"
+  private wsStatus: WebSocketStatus = 'disconnected'
   private connectPromise: Promise<void> | null = null
   private pendingLiveConfig: {
     enableLivenessDetection?: boolean
@@ -46,8 +46,8 @@ export class WebSocketService {
 
   constructor(config?: Partial<WebSocketConfig>) {
     this.config = {
-      baseUrl: "http://127.0.0.1:7400",
-      ...config,
+      baseUrl: 'http://127.0.0.1:7400',
+      ...config
     }
     this.clientId = `client_${crypto.randomUUID()}`
   }
@@ -73,29 +73,29 @@ export class WebSocketService {
       try {
         handler(status)
       } catch (error) {
-        console.error("Error in WebSocket status handler:", error)
+        console.error('Error in WebSocket status handler:', error)
       }
     })
   }
 
   isWebSocketReady(): boolean {
-    return this.wsStatus === "connected" && this.ws?.readyState === WebSocket.OPEN
+    return this.wsStatus === 'connected' && this.ws?.readyState === WebSocket.OPEN
   }
 
   private async getApiToken(): Promise<string> {
     if (this.token) return this.token
     try {
       const t = await window.electronAPI?.backend?.getToken?.()
-      this.token = typeof t === "string" && t.length > 0 ? t : null
-      return this.token ?? ""
+      this.token = typeof t === 'string' && t.length > 0 ? t : null
+      return this.token ?? ''
     } catch {
       this.token = null
-      return ""
+      return ''
     }
   }
 
   async connectWebSocket(): Promise<void> {
-    if (this.wsStatus === "connected") {
+    if (this.wsStatus === 'connected') {
       return
     }
 
@@ -103,7 +103,7 @@ export class WebSocketService {
       return this.connectPromise
     }
 
-    this.setWebSocketStatus("connecting")
+    this.setWebSocketStatus('connecting')
     const currentPromise = new Promise<void>((resolve, reject) => {
       void (async () => {
         try {
@@ -112,11 +112,11 @@ export class WebSocketService {
             resolve()
             return
           }
-          const wsBaseUrl = this.config.baseUrl.replace(/^http/, "ws")
+          const wsBaseUrl = this.config.baseUrl.replace(/^http/, 'ws')
           const wsUrl = new URL(`/ws/detect/${this.clientId}`, `${wsBaseUrl}/`)
           await appendOrganizationId(wsUrl)
           if (token) {
-            wsUrl.searchParams.set("token", token)
+            wsUrl.searchParams.set('token', token)
           }
           if (this.connectPromise !== currentPromise) {
             resolve()
@@ -125,7 +125,7 @@ export class WebSocketService {
 
           const socket = new WebSocket(wsUrl.toString())
           this.ws = socket
-          socket.binaryType = "arraybuffer"
+          socket.binaryType = 'arraybuffer'
           let settled = false
 
           const cleanupTimeout = () => {
@@ -141,10 +141,10 @@ export class WebSocketService {
               return
             }
             settled = true
-            this.setWebSocketStatus("error")
+            this.setWebSocketStatus('error')
             this.token = null
             this.connectPromise = null
-            reject(new Error("Timed out opening websocket connection"))
+            reject(new Error('Timed out opening websocket connection'))
             socket.close()
           }, 10000)
 
@@ -174,10 +174,10 @@ export class WebSocketService {
             }
             // eslint-disable-next-line @typescript-eslint/no-this-alias
             activeWebSocketServiceInstance = this
-            this.setWebSocketStatus("connected")
-            this.notifyHandlers("connection", {
-              status: "connected",
-              message: "Connected to detector",
+            this.setWebSocketStatus('connected')
+            this.notifyHandlers('connection', {
+              status: 'connected',
+              message: 'Connected to detector'
             })
             if (this.pendingLiveConfig) {
               this.emitLiveConfig(this.pendingLiveConfig)
@@ -195,10 +195,10 @@ export class WebSocketService {
                 this.notifyHandlers(data.type, data)
               } else if (data.faces || data.model_used) {
                 // Legacy/Direct detection response
-                this.notifyHandlers("detection_response", data)
+                this.notifyHandlers('detection_response', data)
               }
             } catch (e) {
-              console.error("Failed to parse WebSocket message:", e)
+              console.error('Failed to parse WebSocket message:', e)
             }
           }
 
@@ -211,20 +211,20 @@ export class WebSocketService {
               activeWebSocketServiceInstance = null
             }
             const prevStatus = this.wsStatus
-            this.setWebSocketStatus("disconnected")
+            this.setWebSocketStatus('disconnected')
             this.ws = null
             this.connectPromise = null
-            if (!settled && prevStatus === "connecting") {
+            if (!settled && prevStatus === 'connecting') {
               rejectOnce(
                 new Error(
-                  `WebSocket closed before opening (code ${event.code}${event.reason ? `: ${event.reason}` : ""})`,
-                ),
+                  `WebSocket closed before opening (code ${event.code}${event.reason ? `: ${event.reason}` : ''})`
+                )
               )
             }
-            if (prevStatus !== "disconnected") {
-              this.notifyHandlers("connection", {
-                status: "disconnected",
-                message: "Disconnected from detector",
+            if (prevStatus !== 'disconnected') {
+              this.notifyHandlers('connection', {
+                status: 'disconnected',
+                message: 'Disconnected from detector'
               })
             }
           }
@@ -237,18 +237,18 @@ export class WebSocketService {
             if (activeWebSocketServiceInstance === this) {
               activeWebSocketServiceInstance = null
             }
-            this.setWebSocketStatus("error")
+            this.setWebSocketStatus('error')
             this.token = null
             this.connectPromise = null
-            this.notifyHandlers("error", { message: "WebSocket error occurred" })
-            rejectOnce(new Error("WebSocket transport error"))
+            this.notifyHandlers('error', { message: 'WebSocket error occurred' })
+            rejectOnce(new Error('WebSocket transport error'))
           }
         } catch (error) {
           if (this.connectTimeoutId !== null) {
             window.clearTimeout(this.connectTimeoutId)
             this.connectTimeoutId = null
           }
-          this.setWebSocketStatus("error")
+          this.setWebSocketStatus('error')
           this.connectPromise = null
           reject(error)
         }
@@ -272,27 +272,21 @@ export class WebSocketService {
     if (this.ws) {
       const socket = this.ws
       this.ws = null
-      this.setWebSocketStatus("disconnected")
+      this.setWebSocketStatus('disconnected')
       socket.close()
     } else {
-      this.setWebSocketStatus("disconnected")
+      this.setWebSocketStatus('disconnected')
     }
   }
 
-  onMessage<K extends keyof WebSocketEventMap>(
-    topic: K,
-    handler: (data: WebSocketEventMap[K]) => void,
-  ): void {
+  onMessage<K extends keyof WebSocketEventMap>(topic: K, handler: (data: WebSocketEventMap[K]) => void): void {
     if (!this.messageHandlers.has(topic)) {
       this.messageHandlers.set(topic, new Set())
     }
     this.messageHandlers.get(topic)!.add(handler as (data: unknown) => void)
   }
 
-  offMessage<K extends keyof WebSocketEventMap>(
-    topic: K,
-    handler?: (data: WebSocketEventMap[K]) => void,
-  ): void {
+  offMessage<K extends keyof WebSocketEventMap>(topic: K, handler?: (data: WebSocketEventMap[K]) => void): void {
     if (!handler) {
       this.messageHandlers.delete(topic)
     } else {
@@ -306,17 +300,14 @@ export class WebSocketService {
     }
   }
 
-  private notifyHandlers<K extends keyof WebSocketEventMap>(
-    topic: K,
-    data: WebSocketEventMap[K],
-  ): void {
+  private notifyHandlers<K extends keyof WebSocketEventMap>(topic: K, data: WebSocketEventMap[K]): void {
     const handlers = this.messageHandlers.get(topic)
     if (handlers) {
       handlers.forEach((handler) => {
         try {
           handler(data)
         } catch (e) {
-          console.error("Error in WebSocket handler for %s:", topic, e)
+          console.error('Error in WebSocket handler for %s:', topic, e)
         }
       })
     }
@@ -324,7 +315,7 @@ export class WebSocketService {
 
   async sendDetectionRequest(frameData: ArrayBuffer): Promise<void> {
     if (!this.isWebSocketReady()) {
-      throw new Error("WebSocket not ready")
+      throw new Error('WebSocket not ready')
     }
 
     this.ws!.send(frameData)
@@ -342,18 +333,18 @@ export class WebSocketService {
 
     this.ws!.send(
       JSON.stringify({
-        type: "config",
+        type: 'config',
         ...(config.enableLivenessDetection !== undefined && {
-          enable_liveness_detection: config.enableLivenessDetection,
+          enable_liveness_detection: config.enableLivenessDetection
         }),
         ...(config.groupId !== undefined && {
-          group_id: config.groupId,
+          group_id: config.groupId
         }),
         ...(config.maxRecognitionFacesPerFrame !== undefined && {
-          max_recognition_faces_per_frame: config.maxRecognitionFacesPerFrame,
+          max_recognition_faces_per_frame: config.maxRecognitionFacesPerFrame
         }),
-        ...(config.deviceId !== undefined && { device_id: config.deviceId }),
-      }),
+        ...(config.deviceId !== undefined && { device_id: config.deviceId })
+      })
     )
   }
 
@@ -365,7 +356,7 @@ export class WebSocketService {
   }): void {
     this.pendingLiveConfig = {
       ...(this.pendingLiveConfig ?? {}),
-      ...config,
+      ...config
     }
 
     if (this.isWebSocketReady()) {

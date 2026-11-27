@@ -1,18 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react"
-import { useUIStore } from "@/components/main/stores/uiStore"
-import { Modal, QRCodeView, Spinner } from "@/components/common"
-import { ErrorText } from "@/components/common/ErrorText"
-import { Tooltip } from "@/components/shared/Tooltip"
-import { motion, AnimatePresence } from "framer-motion"
-import { Check, Copy, ExternalLink, RotateCw, Wifi, AlertCircle } from "lucide-react"
-import { useCloudSyncConfig, refreshCloudSyncConfig } from "@/services/cloudSyncState"
-import { getEffectiveRemoteUrl, useCloudPairing } from "@/hooks/useCloudPairing"
-import { isOfflineError } from "@/components/settings/sections/syncErrorUtils"
-import {
-  LOCAL_DEV_REMOTE_BASE_URL,
-  OFFICIAL_REMOTE_BASE_URL,
-  isOfficialCloudUrl,
-} from "@/services/syncDefaults"
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useUIStore } from '@/components/main/stores/uiStore'
+import { Modal, QRCodeView, Spinner } from '@/components/common'
+import { ErrorText } from '@/components/common/ErrorText'
+import { Tooltip } from '@/components/shared/Tooltip'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Check, Copy, ExternalLink, RotateCw, Wifi, AlertCircle } from 'lucide-react'
+import { useCloudSyncConfig, refreshCloudSyncConfig } from '@/services/cloudSyncState'
+import { getEffectiveRemoteUrl, useCloudPairing } from '@/hooks/useCloudPairing'
+import { isOfflineError } from '@/components/settings/sections/syncErrorUtils'
+import { LOCAL_DEV_REMOTE_BASE_URL, OFFICIAL_REMOTE_BASE_URL, isOfficialCloudUrl } from '@/services/syncDefaults'
 
 interface IntroModalProps {
   initialStep?: number
@@ -26,24 +22,16 @@ interface IntroModalProps {
  */
 export function IntroModal({ initialStep = 0 }: IntroModalProps) {
   const { setHasSeenIntro } = useUIStore()
-  const {
-    config: cloudConfig,
-    status: cloudConfigStatus,
-    error: cloudConfigError,
-  } = useCloudSyncConfig()
+  const { config: cloudConfig, status: cloudConfigStatus, error: cloudConfigError } = useCloudSyncConfig()
   const [step, setStep] = useState(initialStep)
   const [isOpen, setIsOpen] = useState(true)
   const [showManualInput, setShowManualInput] = useState(false)
   const [showDevEndpoint, setShowDevEndpoint] = useState(false)
   const [devClickCount, setDevClickCount] = useState(0)
-  const [customEndpoint, setCustomEndpoint] = useState("")
-  const [busyAction, setBusyAction] = useState<
-    "saving" | "pairing" | "disconnecting" | "syncing" | null
-  >(null)
+  const [customEndpoint, setCustomEndpoint] = useState('')
+  const [busyAction, setBusyAction] = useState<'saving' | 'pairing' | 'disconnecting' | 'syncing' | null>(null)
   const [pairError, setPairError] = useState<string | null>(null)
-  const [mismatchAction, setMismatchAction] = useState<"idle" | "backup" | "reset" | "migrate">(
-    "idle",
-  )
+  const [mismatchAction, setMismatchAction] = useState<'idle' | 'backup' | 'reset' | 'migrate'>('idle')
   const [directorySummary, setDirectorySummary] = useState<{
     groups: number
     members: number
@@ -51,10 +39,10 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     sessions: number
   } | null>(null)
   const [migrateConfirmed, setMigrateConfirmed] = useState(false)
-  const [backupPassword, setBackupPassword] = useState("")
+  const [backupPassword, setBackupPassword] = useState('')
   const [backupFeedback, setBackupFeedback] = useState<{
     message: string
-    tone: "success" | "error" | "muted"
+    tone: 'success' | 'error' | 'muted'
   } | null>(null)
   const [pendingRepairAfterReset, setPendingRepairAfterReset] = useState(false)
   const [copiedPin, setCopiedPin] = useState(false)
@@ -76,35 +64,35 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     if (saved && !isOfficialCloudUrl(saved)) {
       setCustomEndpoint(saved)
     } else {
-      setCustomEndpoint("")
+      setCustomEndpoint('')
     }
   }, [isDevBuild, cloudConfig?.remoteBaseUrl])
 
   useEffect(() => {
     if (!isDevBuild) return
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "D" || e.key === "d")) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
         e.preventDefault()
         setShowDevEndpoint((prev) => !prev)
       }
     }
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isDevBuild])
 
   const applyEndpointOverride = useCallback(async (nextUrl: string) => {
     setPairError(null)
-    setMismatchAction("idle")
+    setMismatchAction('idle')
     setMigrateConfirmed(false)
     setBackupFeedback(null)
-    setBusyAction("saving")
+    setBusyAction('saving')
     try {
       await window.electronAPI.sync.updateConfig({
-        remoteBaseUrl: nextUrl.trim(),
+        remoteBaseUrl: nextUrl.trim()
       })
       await refreshCloudSyncConfig()
     } catch (err) {
-      setPairError(err instanceof Error ? err.message : "Could not switch Cloud endpoint.")
+      setPairError(err instanceof Error ? err.message : 'Could not switch Cloud endpoint.')
     } finally {
       setBusyAction(null)
     }
@@ -119,7 +107,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
 
   const handlePairingWarningOrError = useCallback((msg: string | null) => {
     setPairError(msg)
-    if (msg && msg.toLowerCase().includes("sync failed")) {
+    if (msg && msg.toLowerCase().includes('sync failed')) {
       useUIStore.getState().setError(msg)
     }
   }, [])
@@ -133,7 +121,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     pairingCode,
     setPairingCode,
     startReversePairing,
-    handlePair,
+    handlePair
   } = useCloudPairing({
     enabled: step === 2,
     remoteBaseUrl: effectiveRemoteBaseUrl,
@@ -143,7 +131,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     busyAction,
     setBusyAction,
     onError: handlePairingWarningOrError,
-    onConnected: completeOnboarding,
+    onConnected: completeOnboarding
   })
 
   useEffect(() => {
@@ -151,16 +139,10 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     setPendingRepairAfterReset(false)
     isInitiatingRef.current = false
     void startReversePairing(effectiveRemoteBaseUrl)
-  }, [
-    pendingRepairAfterReset,
-    busyAction,
-    startReversePairing,
-    effectiveRemoteBaseUrl,
-    isInitiatingRef,
-  ])
+  }, [pendingRepairAfterReset, busyAction, startReversePairing, effectiveRemoteBaseUrl, isInitiatingRef])
 
   const isDirectoryOriginMismatchError = (msg: string | null) =>
-    Boolean(msg && msg.includes("belongs to another Cloud location"))
+    Boolean(msg && msg.includes('belongs to another Cloud location'))
 
   const showManualResetPrompt = isDirectoryOriginMismatchError(pairError)
   const showInitiateResetPrompt =
@@ -169,9 +151,9 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
 
   useEffect(() => {
     if (!isMismatchPromptVisible) {
-      setMismatchAction("idle")
+      setMismatchAction('idle')
       setMigrateConfirmed(false)
-      setBackupPassword("")
+      setBackupPassword('')
       setBackupFeedback(null)
       setDirectorySummary(null)
       return
@@ -191,41 +173,39 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
   }, [isMismatchPromptVisible])
 
   const formatSummaryText = () => {
-    if (!directorySummary) return "existing people, groups, and attendance logs"
+    if (!directorySummary) return 'existing people, groups, and attendance logs'
     const parts: string[] = []
     if (directorySummary.members > 0) {
-      parts.push(
-        `${directorySummary.members} ${directorySummary.members === 1 ? "member" : "members"}`,
-      )
+      parts.push(`${directorySummary.members} ${directorySummary.members === 1 ? 'member' : 'members'}`)
     }
     if (directorySummary.groups > 0) {
-      parts.push(`${directorySummary.groups} ${directorySummary.groups === 1 ? "group" : "groups"}`)
+      parts.push(`${directorySummary.groups} ${directorySummary.groups === 1 ? 'group' : 'groups'}`)
     }
     const logCount = directorySummary.records + directorySummary.sessions
     if (logCount > 0) {
-      parts.push(`${logCount} ${logCount === 1 ? "attendance log" : "attendance logs"}`)
+      parts.push(`${logCount} ${logCount === 1 ? 'attendance log' : 'attendance logs'}`)
     }
-    return parts.length > 0 ? parts.join(", ") : "existing local directory data"
+    return parts.length > 0 ? parts.join(', ') : 'existing local directory data'
   }
 
   const handleResetLocalDirectory = async () => {
     setPairError(null)
-    setBusyAction("disconnecting")
+    setBusyAction('disconnecting')
     try {
       const result = await window.electronAPI.sync.resetLocalDirectory()
       if (!result.success) {
-        setPairError(result.error || "Could not clear local directory.")
+        setPairError(result.error || 'Could not clear local directory.')
         return
       }
       await refreshCloudSyncConfig()
       setShowManualInput(false)
-      setPairingCode("")
-      setMismatchAction("idle")
+      setPairingCode('')
+      setMismatchAction('idle')
       setMigrateConfirmed(false)
       setBackupFeedback(null)
       setPendingRepairAfterReset(true)
     } catch (err) {
-      setPairError(err instanceof Error ? err.message : "Could not clear local directory.")
+      setPairError(err instanceof Error ? err.message : 'Could not clear local directory.')
     } finally {
       setBusyAction(null)
     }
@@ -233,24 +213,22 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
 
   const handleMigrateLocalDirectory = async () => {
     setPairError(null)
-    setBusyAction("disconnecting")
+    setBusyAction('disconnecting')
     try {
       const result = await window.electronAPI.sync.migrateLocalDirectory()
       if (!result.success) {
-        setPairError(result.error || "Could not prepare local directory for migration.")
+        setPairError(result.error || 'Could not prepare local directory for migration.')
         return
       }
       await refreshCloudSyncConfig()
       setShowManualInput(false)
-      setPairingCode("")
-      setMismatchAction("idle")
+      setPairingCode('')
+      setMismatchAction('idle')
       setMigrateConfirmed(false)
       setBackupFeedback(null)
       setPendingRepairAfterReset(true)
     } catch (err) {
-      setPairError(
-        err instanceof Error ? err.message : "Could not prepare local directory for migration.",
-      )
+      setPairError(err instanceof Error ? err.message : 'Could not prepare local directory for migration.')
     } finally {
       setBusyAction(null)
     }
@@ -258,179 +236,172 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
 
   const handleBackupBeforeSwitch = async () => {
     if (!backupPassword.trim()) {
-      setBackupFeedback({ message: "Enter a password to encrypt the backup.", tone: "error" })
+      setBackupFeedback({ message: 'Enter a password to encrypt the backup.', tone: 'error' })
       return
     }
     setBackupFeedback(null)
-    setBusyAction("saving")
+    setBusyAction('saving')
     try {
       const result = await window.electronAPI.sync.exportData(backupPassword)
       if (result.canceled) {
-        setBackupFeedback({ message: "Backup canceled.", tone: "muted" })
+        setBackupFeedback({ message: 'Backup canceled.', tone: 'muted' })
       } else if (result.success) {
-        setBackupPassword("")
-        setMismatchAction("idle")
-        setBackupFeedback({ message: "Backup saved.", tone: "success" })
+        setBackupPassword('')
+        setMismatchAction('idle')
+        setBackupFeedback({ message: 'Backup saved.', tone: 'success' })
       } else {
-        setBackupFeedback({ message: result.error || "Backup export failed.", tone: "error" })
+        setBackupFeedback({ message: result.error || 'Backup export failed.', tone: 'error' })
       }
     } catch (err) {
       setBackupFeedback({
-        message: err instanceof Error ? err.message : "Backup export failed.",
-        tone: "error",
+        message: err instanceof Error ? err.message : 'Backup export failed.',
+        tone: 'error'
       })
     } finally {
       setBusyAction(null)
     }
   }
 
-  const renderResetDirectoryPrompt = (align: "center" | "left" = "center") => (
+  const renderResetDirectoryPrompt = (align: 'center' | 'left' = 'center') => (
     <div
       className={`w-full max-w-sm space-y-3 ${
-        align === "left" ? "border-t border-white/10 pt-3 text-left" : "text-center"
+        align === 'left' ? 'border-t border-white/10 pt-3 text-left' : 'text-center'
       }`}>
-      <p className="text-[11px] leading-relaxed text-white/60">
-        {mismatchAction === "reset" ?
+      <p className='text-[11px] leading-relaxed text-white/60'>
+        {mismatchAction === 'reset' ?
           `This will permanently delete ${formatSummaryText()} stored on this device so it can pair here.`
-        : mismatchAction === "migrate" ?
+        : mismatchAction === 'migrate' ?
           `This will attach ${formatSummaryText()} to your new Cloud location on the next sync.`
-        : mismatchAction === "backup" ?
+        : mismatchAction === 'backup' ?
           `Save an encrypted .facenox backup of ${formatSummaryText()} before switching.`
-        : `This device holds ${formatSummaryText()} from another Cloud location.`
-        }
+        : `This device holds ${formatSummaryText()} from another Cloud location.`}
       </p>
 
       {backupFeedback && (
         <p
           className={`text-[11px] ${
-            backupFeedback.tone === "success" ? "text-emerald-300/90"
-            : backupFeedback.tone === "error" ? "text-rose-400"
-            : "text-white/60"
+            backupFeedback.tone === 'success' ? 'text-emerald-300/90'
+            : backupFeedback.tone === 'error' ? 'text-rose-400'
+            : 'text-white/60'
           }`}>
           {backupFeedback.message}
         </p>
       )}
 
-      {mismatchAction === "reset" && (
-        <div
-          className={`flex items-center gap-2 ${align === "center" ? "justify-center" : ""}`}>
+      {mismatchAction === 'reset' && (
+        <div className={`flex items-center gap-2 ${align === 'center' ? 'justify-center' : ''}`}>
           <button
-            type="button"
+            type='button'
             disabled={busyAction !== null}
             onClick={() => void handleResetLocalDirectory()}
-            className="flex items-center gap-1.5 rounded border border-rose-500/35 bg-rose-500/15 px-3 py-1.5 text-[11px] font-medium text-rose-200 transition hover:bg-rose-500/25 disabled:opacity-40">
-            {busyAction === "disconnecting" && <Spinner size="xs" color="white" />}
+            className='flex items-center gap-1.5 rounded border border-rose-500/35 bg-rose-500/15 px-3 py-1.5 text-[11px] font-medium text-rose-200 transition hover:bg-rose-500/25 disabled:opacity-40'>
+            {busyAction === 'disconnecting' && <Spinner size='xs' color='white' />}
             Yes, clear local data
           </button>
           <button
-            type="button"
+            type='button'
             disabled={busyAction !== null}
-            onClick={() => setMismatchAction("idle")}
-            className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+            onClick={() => setMismatchAction('idle')}
+            className='rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40'>
             Cancel
           </button>
         </div>
       )}
 
-      {mismatchAction === "migrate" && (
-        <div className="space-y-2.5 text-left">
-          <label className="flex cursor-pointer items-start gap-2 text-[11px] text-white/75">
+      {mismatchAction === 'migrate' && (
+        <div className='space-y-2.5 text-left'>
+          <label className='flex cursor-pointer items-start gap-2 text-[11px] text-white/75'>
             <input
-              type="checkbox"
+              type='checkbox'
               checked={migrateConfirmed}
               onChange={(e) => setMigrateConfirmed(e.target.checked)}
-              className="mt-0.5 accent-cyan-400"
+              className='mt-0.5 accent-cyan-400'
             />
             <span>I confirm these local members and logs belong to this new Cloud location.</span>
           </label>
-          <div
-            className={`flex items-center gap-2 ${align === "center" ? "justify-center" : ""}`}>
+          <div className={`flex items-center gap-2 ${align === 'center' ? 'justify-center' : ''}`}>
             <button
-              type="button"
+              type='button'
               disabled={busyAction !== null || !migrateConfirmed}
               onClick={() => void handleMigrateLocalDirectory()}
-              className="flex items-center gap-1.5 rounded border border-white/20 bg-white px-3 py-1.5 text-[11px] font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-40">
-              {busyAction === "disconnecting" && <Spinner size="xs" color="white" />}
+              className='flex items-center gap-1.5 rounded border border-white/20 bg-white px-3 py-1.5 text-[11px] font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-40'>
+              {busyAction === 'disconnecting' && <Spinner size='xs' color='white' />}
               Yes, migrate &amp; pair
             </button>
             <button
-              type="button"
+              type='button'
               disabled={busyAction !== null}
               onClick={() => {
-                setMismatchAction("idle")
+                setMismatchAction('idle')
                 setMigrateConfirmed(false)
               }}
-              className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+              className='rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40'>
               Cancel
             </button>
           </div>
         </div>
       )}
 
-      {mismatchAction === "backup" && (
-        <div className="space-y-2.5">
+      {mismatchAction === 'backup' && (
+        <div className='space-y-2.5'>
           <input
-            type="password"
-            placeholder="Backup encryption password"
+            type='password'
+            placeholder='Backup encryption password'
             value={backupPassword}
             onChange={(e) => setBackupPassword(e.target.value)}
-            className="h-8 w-full rounded border border-white/10 bg-black/25 px-3 text-[11px] text-white outline-none placeholder:text-white/40 focus:border-white/25"
+            className='h-8 w-full rounded border border-white/10 bg-black/25 px-3 text-[11px] text-white outline-none placeholder:text-white/40 focus:border-white/25'
           />
-          <div
-            className={`flex items-center gap-2 ${align === "center" ? "justify-center" : ""}`}>
+          <div className={`flex items-center gap-2 ${align === 'center' ? 'justify-center' : ''}`}>
             <button
-              type="button"
+              type='button'
               disabled={busyAction !== null}
               onClick={() => void handleBackupBeforeSwitch()}
-              className="flex items-center gap-1.5 rounded border border-white/20 bg-white px-3 py-1.5 text-[11px] font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-40">
-              {busyAction === "saving" && <Spinner size="xs" color="white" />}
+              className='flex items-center gap-1.5 rounded border border-white/20 bg-white px-3 py-1.5 text-[11px] font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-40'>
+              {busyAction === 'saving' && <Spinner size='xs' color='white' />}
               Save .facenox backup
             </button>
             <button
-              type="button"
+              type='button'
               disabled={busyAction !== null}
               onClick={() => {
-                setMismatchAction("idle")
-                setBackupPassword("")
+                setMismatchAction('idle')
+                setBackupPassword('')
                 setBackupFeedback(null)
               }}
-              className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+              className='rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40'>
               Cancel
             </button>
           </div>
         </div>
       )}
 
-      {mismatchAction === "idle" && (
-        <div
-          className={`flex flex-wrap items-center gap-2 ${
-            align === "center" ? "justify-center" : ""
-          }`}>
+      {mismatchAction === 'idle' && (
+        <div className={`flex flex-wrap items-center gap-2 ${align === 'center' ? 'justify-center' : ''}`}>
           <button
-            type="button"
+            type='button'
             disabled={busyAction !== null}
             onClick={() => {
               setBackupFeedback(null)
-              setMismatchAction("reset")
+              setMismatchAction('reset')
             }}
-            className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/85 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+            className='rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/85 transition hover:bg-white/10 hover:text-white disabled:opacity-40'>
             Clear local data & switch location
           </button>
           <button
-            type="button"
+            type='button'
             disabled={busyAction !== null}
             onClick={() => {
               setBackupFeedback(null)
-              setMismatchAction("migrate")
+              setMismatchAction('migrate')
             }}
-            className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/85 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+            className='rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/85 transition hover:bg-white/10 hover:text-white disabled:opacity-40'>
             Migrate local data
           </button>
           <button
-            type="button"
+            type='button'
             disabled={busyAction !== null}
-            onClick={() => setMismatchAction("backup")}
-            className="rounded border border-white/10 bg-transparent px-3 py-1.5 text-[11px] font-medium text-white/60 transition hover:border-white/20 hover:bg-white/5 hover:text-white/90 disabled:opacity-40">
+            onClick={() => setMismatchAction('backup')}
+            className='rounded border border-white/10 bg-transparent px-3 py-1.5 text-[11px] font-medium text-white/60 transition hover:border-white/20 hover:bg-white/5 hover:text-white/90 disabled:opacity-40'>
             Export backup
           </button>
         </div>
@@ -453,54 +424,52 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     <AnimatePresence initial={false}>
       {isDevBuild && showDevEndpoint && (
         <motion.div
-          key="dev-endpoint"
+          key='dev-endpoint'
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-2 rounded-lg border border-white/10 bg-white/[0.02] p-3 text-left">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-bold tracking-wider text-white/50 uppercase">
-              Dev endpoint
-            </span>
-            <div className="flex items-center gap-1.5">
+          className='space-y-2 rounded-lg border border-white/10 bg-white/[0.02] p-3 text-left'>
+          <div className='flex items-center justify-between gap-2'>
+            <span className='text-[10px] font-bold tracking-wider text-white/50 uppercase'>Dev endpoint</span>
+            <div className='flex items-center gap-1.5'>
               <button
-                type="button"
+                type='button'
                 disabled={busyAction !== null}
                 onClick={() => void applyEndpointOverride(OFFICIAL_REMOTE_BASE_URL)}
                 className={`rounded px-2 py-0.5 text-[10px] font-medium transition ${
-                  isOfficialCloudUrl(cloudConfig?.remoteBaseUrl) ? "bg-white/15 text-white" : (
-                    "bg-white/5 text-white/50 hover:text-white"
+                  isOfficialCloudUrl(cloudConfig?.remoteBaseUrl) ? 'bg-white/15 text-white' : (
+                    'bg-white/5 text-white/50 hover:text-white'
                   )
                 }`}>
                 Production
               </button>
               <button
-                type="button"
+                type='button'
                 disabled={busyAction !== null}
                 onClick={() => void applyEndpointOverride(LOCAL_DEV_REMOTE_BASE_URL)}
                 className={`rounded px-2 py-0.5 text-[10px] font-medium transition ${
                   cloudConfig?.remoteBaseUrl?.trim() === LOCAL_DEV_REMOTE_BASE_URL ?
-                    "bg-white/15 text-white"
-                  : "bg-white/5 text-white/50 hover:text-white"
+                    'bg-white/15 text-white'
+                  : 'bg-white/5 text-white/50 hover:text-white'
                 }`}>
                 Localhost
               </button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <input
-              type="url"
+              type='url'
               placeholder={OFFICIAL_REMOTE_BASE_URL}
               value={customEndpoint}
               onChange={(e) => setCustomEndpoint(e.target.value)}
-              className="h-7 flex-1 rounded border border-white/10 bg-black/20 px-2.5 text-[11px] text-white outline-none focus:border-white/25"
+              className='h-7 flex-1 rounded border border-white/10 bg-black/20 px-2.5 text-[11px] text-white outline-none focus:border-white/25'
             />
             <button
-              type="button"
+              type='button'
               disabled={busyAction !== null}
               onClick={() => void applyEndpointOverride(customEndpoint)}
-              className="h-7 rounded border border-white/10 bg-white/5 px-2.5 text-[11px] font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
+              className='h-7 rounded border border-white/10 bg-white/5 px-2.5 text-[11px] font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-40'>
               Apply
             </button>
           </div>
@@ -509,68 +478,66 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     </AnimatePresence>
   )
 
-  const manualCodeSection = cloudConfigStatus === "ready" && !cloudConfig?.connected && (
-    <div className="pt-1">
-      <AnimatePresence mode="wait" initial={false}>
+  const manualCodeSection = cloudConfigStatus === 'ready' && !cloudConfig?.connected && (
+    <div className='pt-1'>
+      <AnimatePresence mode='wait' initial={false}>
         {!showManualInput ?
           <motion.button
-            key="manual-toggle"
-            type="button"
+            key='manual-toggle'
+            type='button'
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.16, ease: "easeOut" }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
             onClick={() => setShowManualInput(true)}
-            className="text-[11px] text-white/40 transition-colors hover:text-white/75">
+            className='text-[11px] text-white/40 transition-colors hover:text-white/75'>
             Have a pairing code already? Enter it here →
           </motion.button>
         : <motion.div
-            key="manual-form"
+            key='manual-form'
             initial={{ opacity: 0, y: 6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full space-y-2 pt-1 text-left">
-            <label className="block text-[11px] font-medium text-white/55">
+            className='w-full space-y-2 pt-1 text-left'>
+            <label className='block text-[11px] font-medium text-white/55'>
               Pairing code from Facenox Cloud → Devices
             </label>
-            <div className="flex items-center gap-2">
+            <div className='flex items-center gap-2'>
               <input
-                type="text"
-                placeholder="ABCD2345"
+                type='text'
+                placeholder='ABCD2345'
                 value={pairingCode}
                 onChange={(e) => {
                   setPairError(null)
                   setPairingCode(e.target.value.toUpperCase())
                 }}
-                className="h-8 flex-1 rounded border border-white/10 bg-transparent px-3 font-mono text-xs font-semibold tracking-widest text-white uppercase outline-none focus:border-white/25"
+                className='h-8 flex-1 rounded border border-white/10 bg-transparent px-3 font-mono text-xs font-semibold tracking-widest text-white uppercase outline-none focus:border-white/25'
                 autoFocus
               />
               <button
-                type="button"
+                type='button'
                 onClick={() => void handlePair()}
                 disabled={busyAction !== null || !pairingCode}
-                className="flex h-8 items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3 text-xs font-medium text-white transition hover:bg-white/10 disabled:opacity-40">
-                {busyAction === "pairing" && <Spinner size="xs" color="white" />}
+                className='flex h-8 items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3 text-xs font-medium text-white transition hover:bg-white/10 disabled:opacity-40'>
+                {busyAction === 'pairing' && <Spinner size='xs' color='white' />}
                 Connect
               </button>
               <button
-                type="button"
+                type='button'
                 onClick={() => {
                   setShowManualInput(false)
-                  setPairingCode("")
+                  setPairingCode('')
                   setPairError(null)
-                  setMismatchAction("idle")
+                  setMismatchAction('idle')
                   setMigrateConfirmed(false)
                 }}
-                className="px-1.5 text-xs text-white/40 transition hover:text-white/75">
+                className='px-1.5 text-xs text-white/40 transition hover:text-white/75'>
                 Cancel
               </button>
             </div>
-            {pairError && !showManualResetPrompt && (
-              <p className="text-left text-[11px] text-rose-400">{pairError}</p>
-            )}
-            {showManualResetPrompt && renderResetDirectoryPrompt("left")}
+            {pairError && !showManualResetPrompt && <p className='text-left text-[11px] text-rose-400'>{pairError}</p>}
+            {showManualResetPrompt && renderResetDirectoryPrompt('left')}
           </motion.div>
         }
       </AnimatePresence>
@@ -578,87 +545,87 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
   )
 
   const hasSplitPairingView =
-    cloudConfigStatus !== "error" &&
+    cloudConfigStatus !== 'error' &&
     !cloudConfig?.connected &&
     !initiateError &&
-    (cloudConfigStatus === "loading" || Boolean(reversePairing) || isInitiating)
+    (cloudConfigStatus === 'loading' || Boolean(reversePairing) || isInitiating)
 
   const steps = [
     {
-      title: "Welcome to Facenox",
+      title: 'Welcome to Facenox',
       content: (
-        <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-white/80">
-            Facenox runs face detection, tracking, liveness verification, and recognition directly{" "}
+        <div className='space-y-4'>
+          <p className='text-sm leading-relaxed text-white/80'>
+            Facenox runs face detection, tracking, liveness verification, and recognition directly{' '}
             <strong>on this computer</strong>.
           </p>
-          <p className="text-xs leading-relaxed text-white/65">
-            Attendance continues working even during internet disruptions. Once connected, records
-            and policies sync automatically with your Facenox Cloud workspace.
+          <p className='text-xs leading-relaxed text-white/65'>
+            Attendance continues working even during internet disruptions. Once connected, records and policies sync
+            automatically with your Facenox Cloud workspace.
           </p>
         </div>
-      ),
+      )
     },
     {
-      title: "Encrypted face templates",
+      title: 'Encrypted face templates',
       content: (
-        <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-white/80">
-            Facenox stores <strong>encrypted numerical face templates</strong>, never member photos.
-            Biometric data cannot be reconstructed into an image.
+        <div className='space-y-4'>
+          <p className='text-sm leading-relaxed text-white/80'>
+            Facenox stores <strong>encrypted numerical face templates</strong>, never member photos. Biometric data
+            cannot be reconstructed into an image.
           </p>
-          <p className="text-xs leading-relaxed text-white/65">
-            Designed for strict biometric data privacy compliance. The{" "}
+          <p className='text-xs leading-relaxed text-white/65'>
+            Designed for strict biometric data privacy compliance. The{' '}
             <a
-              href="https://github.com/facenox/facenox"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded px-0.5 text-cyan-400/80 underline decoration-cyan-400/30 underline-offset-4 transition-colors hover:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500/30 focus-visible:outline-none">
+              href='https://github.com/facenox/facenox'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='rounded px-0.5 text-cyan-400/80 underline decoration-cyan-400/30 underline-offset-4 transition-colors hover:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500/30 focus-visible:outline-none'>
               source code
-            </a>{" "}
+            </a>{' '}
             is open and verifiable.
           </p>
 
-          <div className="border-t border-white/5 pt-2 text-center">
+          <div className='border-t border-white/5 pt-2 text-center'>
             <a
-              href="https://github.com/facenox/facenox/blob/main/docs/PRIVACY.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded px-0.5 text-[11px] text-white/55 underline decoration-white/10 underline-offset-2 transition-colors hover:text-white/65 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
+              href='https://github.com/facenox/facenox/blob/main/docs/PRIVACY.md'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='rounded px-0.5 text-[11px] text-white/55 underline decoration-white/10 underline-offset-2 transition-colors hover:text-white/65 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none'>
               View full privacy manual
             </a>
           </div>
         </div>
-      ),
+      )
     },
     {
-      title: "Connect to Facenox Cloud",
+      title: 'Connect to Facenox Cloud',
       content: (
-        <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence mode='wait' initial={false}>
           {hasSplitPairingView ?
             <motion.div
-              key="step3-split"
+              key='step3-split'
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="grid grid-cols-1 items-center gap-8 sm:grid-cols-[1fr_auto]">
-              <div className="min-w-0 space-y-4 text-left">
-                <div className="space-y-3">
+              className='grid grid-cols-1 items-center gap-8 sm:grid-cols-[1fr_auto]'>
+              <div className='min-w-0 space-y-4 text-left'>
+                <div className='space-y-3'>
                   <h2
                     onClick={handleDevHeadingClick}
-                    className="text-2xl font-bold tracking-tight text-white select-none">
+                    className='text-2xl font-bold tracking-tight text-white select-none'>
                     Connect to Facenox Cloud
                   </h2>
-                  <p className="text-xs leading-relaxed text-white/70">
-                    Sign in once to link this computer to your organization. Afterward, the app
-                    works offline and syncs automatically whenever you&apos;re back online.
+                  <p className='text-xs leading-relaxed text-white/70'>
+                    Sign in once to link this computer to your organization. Afterward, the app works offline and syncs
+                    automatically whenever you&apos;re back online.
                   </p>
                 </div>
 
                 {devEndpointPanel}
 
-                <AnimatePresence mode="wait" initial={false}>
+                <AnimatePresence mode='wait' initial={false}>
                   {reversePairing ?
                     <motion.a
                       key={`signin-${reversePairing.deviceCode}`}
@@ -666,23 +633,21 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
                       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                      href={
-                        reversePairing.verificationUriComplete || reversePairing.verificationUri
-                      }
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-[38px] w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 text-xs font-bold tracking-wide text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.98]">
+                      href={reversePairing.verificationUriComplete || reversePairing.verificationUri}
+                      target='_blank'
+                      rel='noreferrer'
+                      className='inline-flex h-[38px] w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-5 text-xs font-bold tracking-wide text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all hover:from-cyan-300 hover:to-cyan-400 active:scale-[0.98]'>
                       <span>Sign in</span>
-                      <ExternalLink className="size-3" />
+                      <ExternalLink className='size-3' />
                     </motion.a>
                   : <motion.div
-                      key="signin-loading"
+                      key='signin-loading'
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.18, ease: "easeOut" }}
-                      className="inline-flex h-[38px] w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-5 text-xs font-medium text-white/55">
-                      <Spinner size="xs" color="cyan" />
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      className='inline-flex h-[38px] w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-5 text-xs font-medium text-white/55'>
+                      <Spinner size='xs' color='cyan' />
                       <span>Preparing sign-in link…</span>
                     </motion.div>
                   }
@@ -691,8 +656,8 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                 {manualCodeSection}
               </div>
 
-              <div className="flex min-h-[252px] w-full shrink-0 flex-col items-center justify-center text-center sm:w-[210px]">
-                <AnimatePresence mode="wait" initial={false}>
+              <div className='flex min-h-[252px] w-full shrink-0 flex-col items-center justify-center text-center sm:w-[210px]'>
+                <AnimatePresence mode='wait' initial={false}>
                   {reversePairing ?
                     <motion.div
                       key={`qr-${reversePairing.deviceCode}`}
@@ -700,60 +665,57 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.96 }}
                       transition={{ duration: 0.36, ease: [0.16, 1, 0.3, 1] }}
-                      className="flex flex-col items-center space-y-2.5 text-center">
-                      <div className="transition-transform duration-200 hover:scale-[1.02]">
+                      className='flex flex-col items-center space-y-2.5 text-center'>
+                      <div className='transition-transform duration-200 hover:scale-[1.02]'>
                         <QRCodeView value={reversePairing.verificationUriComplete} size={160} />
                       </div>
                       <motion.div
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.08, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                        className="flex flex-col items-center space-y-2">
-                        <p className="text-[11px] text-white/55">Or scan QR &amp; verify code:</p>
-                        <div className="flex items-center gap-1.5">
-                          <div className="inline-flex items-center gap-2 rounded-md bg-white/[0.05] px-3 py-1.5 font-mono text-base font-bold tracking-[0.2em] text-white select-all">
+                        className='flex flex-col items-center space-y-2'>
+                        <p className='text-[11px] text-white/55'>Or scan QR &amp; verify code:</p>
+                        <div className='flex items-center gap-1.5'>
+                          <div className='inline-flex items-center gap-2 rounded-md bg-white/[0.05] px-3 py-1.5 font-mono text-base font-bold tracking-[0.2em] text-white select-all'>
                             <span>{reversePairing.userCode.slice(0, 3)}</span>
                             <span>{reversePairing.userCode.slice(3, 6)}</span>
                           </div>
-                          <Tooltip content={copiedPin ? "Copied" : "Copy code"} position="top">
+                          <Tooltip content={copiedPin ? 'Copied' : 'Copy code'} position='top'>
                             <button
-                              type="button"
-                              aria-label="Copy code"
+                              type='button'
+                              aria-label='Copy code'
                               onClick={() => {
                                 void navigator.clipboard.writeText(reversePairing.userCode)
                                 setCopiedPin(true)
                                 if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
                                 copyTimerRef.current = setTimeout(() => setCopiedPin(false), 2000)
                               }}
-                              className="flex size-8 items-center justify-center rounded-md text-white/40 transition hover:bg-white/[0.06] hover:text-white">
+                              className='flex size-8 items-center justify-center rounded-md text-white/40 transition hover:bg-white/[0.06] hover:text-white'>
                               {copiedPin ?
-                                <Check className="size-3.5 text-emerald-400" />
-                              : <Copy className="size-3.5" />}
+                                <Check className='size-3.5 text-emerald-400' />
+                              : <Copy className='size-3.5' />}
                             </button>
                           </Tooltip>
                         </div>
-                        <p className="text-[11px] text-white/40">
+                        <p className='text-[11px] text-white/40'>
                           Waiting for authorization (
-                          <span className="font-mono">
-                            {Math.floor(secondsLeft / 60)}:
-                            {(secondsLeft % 60).toString().padStart(2, "0")}
+                          <span className='font-mono'>
+                            {Math.floor(secondsLeft / 60)}:{(secondsLeft % 60).toString().padStart(2, '0')}
                           </span>
                           )
                         </p>
                       </motion.div>
                     </motion.div>
                   : <motion.div
-                      key="qr-initiating"
+                      key='qr-initiating'
                       initial={{ opacity: 0, scale: 0.97 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.97 }}
-                      transition={{ duration: 0.25, ease: "easeOut" }}
-                      className="flex flex-col items-center justify-center gap-3 text-center">
-                      <Spinner size="md" color="cyan" />
-                      <p className="text-[11px] font-medium text-white/55">
-                        {cloudConfigStatus === "loading" ?
-                          "Checking Cloud connection…"
-                        : "Generating device code…"}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                      className='flex flex-col items-center justify-center gap-3 text-center'>
+                      <Spinner size='md' color='cyan' />
+                      <p className='text-[11px] font-medium text-white/55'>
+                        {cloudConfigStatus === 'loading' ? 'Checking Cloud connection…' : 'Generating device code…'}
                       </p>
                     </motion.div>
                   }
@@ -761,138 +723,136 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
               </div>
             </motion.div>
           : <motion.div
-              key="step3-status"
+              key='step3-status'
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-4">
-              <h2
-                onClick={handleDevHeadingClick}
-                className="text-2xl font-bold tracking-tight text-white select-none">
+              className='space-y-4'>
+              <h2 onClick={handleDevHeadingClick} className='text-2xl font-bold tracking-tight text-white select-none'>
                 Connect to Facenox Cloud
               </h2>
-              <p className="text-xs leading-relaxed text-white/70">
-                Sign in once to link this computer to your organization. Afterward, the app works
-                offline and syncs automatically whenever you&apos;re back online.
+              <p className='text-xs leading-relaxed text-white/70'>
+                Sign in once to link this computer to your organization. Afterward, the app works offline and syncs
+                automatically whenever you&apos;re back online.
               </p>
 
               {devEndpointPanel}
 
-              <AnimatePresence mode="wait" initial={false}>
-                {cloudConfigStatus === "loading" ?
+              <AnimatePresence mode='wait' initial={false}>
+                {cloudConfigStatus === 'loading' ?
                   <motion.div
-                    key="cfg-loading"
+                    key='cfg-loading'
                     initial={{ opacity: 0, scale: 0.97 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.97 }}
-                    transition={{ duration: 0.22, ease: "easeOut" }}
-                    className="flex min-h-[180px] flex-col items-center justify-center gap-3 text-center">
-                    <Spinner size="md" color="cyan" />
-                    <p className="text-xs text-white/60">Checking Cloud connection…</p>
+                    transition={{ duration: 0.22, ease: 'easeOut' }}
+                    className='flex min-h-[180px] flex-col items-center justify-center gap-3 text-center'>
+                    <Spinner size='md' color='cyan' />
+                    <p className='text-xs text-white/60'>Checking Cloud connection…</p>
                   </motion.div>
-                : cloudConfigStatus === "error" ?
+                : cloudConfigStatus === 'error' ?
                   <motion.div
-                    key="cfg-error"
+                    key='cfg-error'
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.22, ease: "easeOut" }}
-                    className="flex min-h-[180px] flex-col items-center justify-center gap-3 text-center">
-                    <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-                      <AlertCircle className="size-4" />
+                    transition={{ duration: 0.22, ease: 'easeOut' }}
+                    className='flex min-h-[180px] flex-col items-center justify-center gap-3 text-center'>
+                    <div className='flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400'>
+                      <AlertCircle className='size-4' />
                     </div>
-                    <p className="max-w-xs text-xs text-white/70">
-                      {cloudConfigError || "Could not load Cloud connection settings."}
+                    <p className='max-w-xs text-xs text-white/70'>
+                      {cloudConfigError || 'Could not load Cloud connection settings.'}
                     </p>
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => void refreshCloudSyncConfig()}
-                      className="flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
-                      <RotateCw className="size-3" />
+                      className='flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10'>
+                      <RotateCw className='size-3' />
                       Retry
                     </button>
                   </motion.div>
                 : cloudConfig?.connected ?
                   <motion.div
-                    key="cfg-connected"
+                    key='cfg-connected'
                     initial={{ opacity: 0, scale: 0.96 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.96 }}
                     transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                    className="flex min-h-[180px] flex-col items-center justify-center gap-3 text-center">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
-                      <Check className="size-5" />
+                    className='flex min-h-[180px] flex-col items-center justify-center gap-3 text-center'>
+                    <div className='flex size-10 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400'>
+                      <Check className='size-5' />
                     </div>
-                    <p className="text-sm font-semibold text-white">Connected to Facenox Cloud</p>
+                    <p className='text-sm font-semibold text-white'>Connected to Facenox Cloud</p>
                     <button
-                      type="button"
+                      type='button'
                       onClick={completeOnboarding}
-                      className="mt-1 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-xs font-bold tracking-wider text-slate-950 transition hover:from-cyan-300 hover:to-cyan-400">
+                      className='mt-1 rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-xs font-bold tracking-wider text-slate-950 transition hover:from-cyan-300 hover:to-cyan-400'>
                       Continue
                     </button>
                   </motion.div>
                 : initiateError ?
                   <motion.div
-                    key="cfg-initiate-error"
+                    key='cfg-initiate-error'
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.22, ease: "easeOut" }}
-                    className="flex min-h-[180px] flex-col items-center justify-center gap-3 text-center">
+                    transition={{ duration: 0.22, ease: 'easeOut' }}
+                    className='flex min-h-[180px] flex-col items-center justify-center gap-3 text-center'>
                     {isOfflineError(initiateError) ?
                       <>
-                        <div className="flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/50">
-                          <Wifi className="size-4 text-white/40" />
+                        <div className='flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/50'>
+                          <Wifi className='size-4 text-white/40' />
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-xs font-semibold text-white/90">Device is offline</p>
-                          <p className="max-w-xs text-[11px] leading-relaxed text-white/50">
+                        <div className='space-y-1'>
+                          <p className='text-xs font-semibold text-white/90'>Device is offline</p>
+                          <p className='max-w-xs text-[11px] leading-relaxed text-white/50'>
                             Connect to the internet once to sign in and link this computer.
                           </p>
                         </div>
                       </>
                     : showInitiateResetPrompt ?
                       <>
-                        <div className="flex size-9 items-center justify-center rounded-full bg-amber-500/10 text-amber-400">
-                          <AlertCircle className="size-4" />
+                        <div className='flex size-9 items-center justify-center rounded-full bg-amber-500/10 text-amber-400'>
+                          <AlertCircle className='size-4' />
                         </div>
-                        <p className="text-xs font-semibold text-white/90">
+                        <p className='text-xs font-semibold text-white/90'>
                           Directory belongs to another Cloud location
                         </p>
-                        {renderResetDirectoryPrompt("center")}
+                        {renderResetDirectoryPrompt('center')}
                       </>
                     : <>
-                        <div className="flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-                          <AlertCircle className="size-4" />
+                        <div className='flex size-9 items-center justify-center rounded-full bg-red-500/10 text-red-400'>
+                          <AlertCircle className='size-4' />
                         </div>
-                        <div className="max-w-sm text-[11px] break-words text-white/60">
+                        <div className='max-w-sm text-[11px] break-words text-white/60'>
                           <ErrorText message={initiateError} />
                         </div>
                       </>
                     }
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => {
-                        setMismatchAction("idle")
+                        setMismatchAction('idle')
                         setMigrateConfirmed(false)
                         isInitiatingRef.current = false
                         void startReversePairing(effectiveRemoteBaseUrl)
                       }}
-                      className="flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10">
-                      <RotateCw className="size-3" />
+                      className='flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10'>
+                      <RotateCw className='size-3' />
                       Retry connection
                     </button>
                   </motion.div>
                 : null}
               </AnimatePresence>
 
-              <div className="flex flex-col items-center text-center">{manualCodeSection}</div>
+              <div className='flex flex-col items-center text-center'>{manualCodeSection}</div>
             </motion.div>
           }
         </AnimatePresence>
-      ),
-    },
+      )
+    }
   ]
 
   const handleNext = () => {
@@ -915,49 +875,45 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
       isOpen={isOpen}
       maxWidth={
         hasSplitPairingView && isLastStep ?
-          "max-w-[680px] transition-[max-width] duration-300 ease-out"
-        : "max-w-[540px] transition-[max-width] duration-300 ease-out"
+          'max-w-[680px] transition-[max-width] duration-300 ease-out'
+        : 'max-w-[540px] transition-[max-width] duration-300 ease-out'
       }
       hideCloseButton={true}>
-      <div className="relative -m-5 overflow-hidden bg-[var(--bg-secondary)]">
-        <div className="p-8 sm:p-10">
-          <div className="mb-6 overflow-hidden">
-            <AnimatePresence mode="wait">
+      <div className='relative -m-5 overflow-hidden bg-[var(--bg-secondary)]'>
+        <div className='p-8 sm:p-10'>
+          <div className='mb-6 overflow-hidden'>
+            <AnimatePresence mode='wait'>
               <motion.div
                 key={step}
                 initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-                style={{ willChange: "opacity, transform" }}>
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                style={{ willChange: 'opacity, transform' }}>
                 {!isLastStep && (
-                  <h2 className="mb-4 text-2xl font-bold tracking-tight text-white select-none">
-                    {currentStep.title}
-                  </h2>
+                  <h2 className='mb-4 text-2xl font-bold tracking-tight text-white select-none'>{currentStep.title}</h2>
                 )}
-                <div className="flex min-h-[140px] flex-col justify-center">
-                  {currentStep.content}
-                </div>
+                <div className='flex min-h-[140px] flex-col justify-center'>{currentStep.content}</div>
               </motion.div>
             </AnimatePresence>
           </div>
 
-          <div className="relative mt-6 flex items-center justify-between">
+          <div className='relative mt-6 flex items-center justify-between'>
             <button
               onClick={handleBack}
               disabled={step === 0}
               className={`rounded-lg border-none! bg-transparent! px-0 py-1.5 text-xs font-medium shadow-none! transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none ${
-                step === 0 ? "pointer-events-none opacity-0" : "text-white/55 hover:text-white"
+                step === 0 ? 'pointer-events-none opacity-0' : 'text-white/55 hover:text-white'
               }`}>
               Back
             </button>
 
-            <div className="pointer-events-none absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2">
+            <div className='pointer-events-none absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2'>
               {steps.map((_, i) => (
                 <div
                   key={i}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                    i === step ? "w-6 bg-cyan-400" : "w-1.5 bg-white/15"
+                    i === step ? 'w-6 bg-cyan-400' : 'w-1.5 bg-white/15'
                   }`}
                 />
               ))}
@@ -965,9 +921,9 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
 
             {!isLastStep && (
               <button
-                type="button"
+                type='button'
                 onClick={handleNext}
-                className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-7 py-2 text-xs font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
+                className='rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-7 py-2 text-xs font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]'>
                 Next
               </button>
             )}

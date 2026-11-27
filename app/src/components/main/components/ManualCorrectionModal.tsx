@@ -1,13 +1,13 @@
-import { useState } from "react"
+import { useState } from 'react'
 
-import { ErrorMessage, Modal } from "@/components/common"
-import { InfoPopover, Tooltip } from "@/components/shared"
-import { attendanceManager } from "@/services/AttendanceManager"
-import { useAttendanceStore, useUIStore } from "@/components/main/stores"
-import { useGroupStore } from "@/components/group/stores"
-import { getActiveWebSocketService } from "@/services/WebSocketService"
-import { getAttendanceDateString } from "@/utils/attendanceTime"
-import type { AttendanceRecord } from "@/components/main/types"
+import { ErrorMessage, Modal } from '@/components/common'
+import { InfoPopover, Tooltip } from '@/components/shared'
+import { attendanceManager } from '@/services/AttendanceManager'
+import { useAttendanceStore, useUIStore } from '@/components/main/stores'
+import { useGroupStore } from '@/components/group/stores'
+import { getActiveWebSocketService } from '@/services/WebSocketService'
+import { getAttendanceDateString } from '@/utils/attendanceTime'
+import type { AttendanceRecord } from '@/components/main/types'
 
 interface ManualCorrectionModalProps {
   isOpen: boolean
@@ -17,21 +17,15 @@ interface ManualCorrectionModalProps {
   onVoided: () => void | Promise<void>
 }
 
-export function ManualCorrectionModal({
-  isOpen,
-  record,
-  displayName,
-  onClose,
-  onVoided,
-}: ManualCorrectionModalProps) {
+export function ManualCorrectionModal({ isOpen, record, displayName, onClose, onVoided }: ManualCorrectionModalProps) {
   const { setSuccess } = useUIStore()
-  const [reason, setReason] = useState("")
+  const [reason, setReason] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const trimmedReason = reason.trim()
 
   const handleClose = () => {
-    setReason("")
+    setReason('')
     setError(null)
     setIsSubmitting(false)
     onClose()
@@ -40,7 +34,7 @@ export function ManualCorrectionModal({
   const handleSubmit = async () => {
     if (!trimmedReason || isSubmitting) {
       if (!trimmedReason) {
-        setError("Enter a reason before voiding this attendance entry.")
+        setError('Enter a reason before voiding this attendance entry.')
       }
       return
     }
@@ -49,7 +43,7 @@ export function ManualCorrectionModal({
     setError(null)
 
     try {
-      await attendanceManager.voidRecord(record.id, trimmedReason, "desktop_admin")
+      await attendanceManager.voidRecord(record.id, trimmedReason, 'desktop_admin')
       const store = useAttendanceStore.getState()
       store.setRecentAttendance(store.recentAttendance.filter((item) => item.id !== record.id))
 
@@ -66,7 +60,7 @@ export function ManualCorrectionModal({
 
         // Dynamic Backend Cooldown Reset: Trigger config reload over the active socket to wipe the Python cache
         const activeSocket = getActiveWebSocketService()
-        if (activeSocket && activeSocket.isWebSocketReady() && targetGroupId !== "all") {
+        if (activeSocket && activeSocket.isWebSocketReady() && targetGroupId !== 'all') {
           activeSocket.updateLiveConfig({ groupId: targetGroupId })
         }
       }
@@ -82,7 +76,7 @@ export function ManualCorrectionModal({
 
       handleClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to void attendance entry.")
+      setError(err instanceof Error ? err.message : 'Failed to void attendance entry.')
     } finally {
       setIsSubmitting(false)
     }
@@ -96,23 +90,21 @@ export function ManualCorrectionModal({
       }}
       title={
         <div>
-          <h3 className="text-base font-semibold text-white">Void attendance</h3>
-          <p className="mt-0.5 text-xs text-white/40">
-            Voiding entry for <span className="font-medium text-white/60">{displayName}</span>
+          <h3 className='text-base font-semibold text-white'>Void attendance</h3>
+          <p className='mt-0.5 text-xs text-white/40'>
+            Voiding entry for <span className='font-medium text-white/60'>{displayName}</span>
           </p>
         </div>
       }
-      maxWidth="sm">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-1.5">
-            <label className="text-[10px] font-bold tracking-wide text-white/55 uppercase">
-              Reason required
-            </label>
+      maxWidth='sm'>
+      <div className='space-y-4'>
+        <div className='space-y-2'>
+          <div className='flex items-center gap-1.5'>
+            <label className='text-[10px] font-bold tracking-wide text-white/55 uppercase'>Reason required</label>
             <InfoPopover
-              title="Reason required"
-              description="Add a short note explaining why this attendance entry should be voided."
-              side="top"
+              title='Reason required'
+              description='Add a short note explaining why this attendance entry should be voided.'
+              side='top'
             />
           </div>
           <textarea
@@ -123,30 +115,30 @@ export function ManualCorrectionModal({
                 setError(null)
               }
             }}
-            placeholder="Reason for void"
+            placeholder='Reason for void'
             rows={4}
             disabled={isSubmitting}
-            className="custom-scroll min-h-24 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs leading-relaxed text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all outline-none placeholder:text-white/35 focus:border-amber-400/80 focus:bg-white/[0.08]"
+            className='custom-scroll min-h-24 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs leading-relaxed text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all outline-none placeholder:text-white/35 focus:border-amber-400/80 focus:bg-white/[0.08]'
           />
         </div>
 
         {error && <ErrorMessage message={error} />}
 
-        <div className="flex justify-end gap-3 pt-1">
+        <div className='flex justify-end gap-3 pt-1'>
           <button
-            type="button"
+            type='button'
             onClick={handleClose}
             disabled={isSubmitting}
-            className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
+            className='rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30'>
             Cancel
           </button>
-          <Tooltip content="Marks this entry invalid without deleting it." position="top">
+          <Tooltip content='Marks this entry invalid without deleting it.' position='top'>
             <button
-              type="button"
+              type='button'
               onClick={() => void handleSubmit()}
               disabled={isSubmitting || !trimmedReason}
-              className="rounded-lg bg-amber-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 transition-all duration-200 hover:bg-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30">
-              {isSubmitting ? "Voiding…" : "Void entry"}
+              className='rounded-lg bg-amber-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 transition-all duration-200 hover:bg-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-30'>
+              {isSubmitting ? 'Voiding…' : 'Void entry'}
             </button>
           </Tooltip>
         </div>

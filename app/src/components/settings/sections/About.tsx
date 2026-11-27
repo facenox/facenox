@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from "react"
-import { updaterService } from "@/services"
-import type { UpdateInfo } from "@/types/updater"
-import { Modal, Spinner } from "@/components/common"
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { updaterService } from '@/services'
+import type { UpdateInfo } from '@/types/updater'
+import { Modal, Spinner } from '@/components/common'
 
 interface PrivacyModalProps {
   isOpen: boolean
@@ -10,82 +10,72 @@ interface PrivacyModalProps {
 
 const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      maxWidth="max-w-[520px]"
-      title="Privacy & data handling">
-      <div className="space-y-5 pt-2">
-        <p className="text-[12px] leading-relaxed text-white/65">
-          Facenox processes faces on this computer and encrypts stored templates. Here is what stays
-          local and what can sync with Facenox Cloud:
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth='max-w-[520px]' title='Privacy & data handling'>
+      <div className='space-y-5 pt-2'>
+        <p className='text-[12px] leading-relaxed text-white/65'>
+          Facenox processes faces on this computer and encrypts stored templates. Here is what stays local and what can
+          sync with Facenox Cloud:
         </p>
 
-        <div className="custom-scroll max-h-[50vh] space-y-5 overflow-y-auto pr-1 text-xs">
-          <div className="space-y-1">
-            <div className="text-[13px] font-semibold text-white/90">
-              Local storage and recognition
-            </div>
-            <p className="text-[11px] leading-relaxed text-white/50">
-              Biometric templates, attendance records, and app settings are stored locally on this
-              computer. Face matching and liveness checks run on this computer.
+        <div className='custom-scroll max-h-[50vh] space-y-5 overflow-y-auto pr-1 text-xs'>
+          <div className='space-y-1'>
+            <div className='text-[13px] font-semibold text-white/90'>Local storage and recognition</div>
+            <p className='text-[11px] leading-relaxed text-white/50'>
+              Biometric templates, attendance records, and app settings are stored locally on this computer. Face
+              matching and liveness checks run on this computer.
             </p>
           </div>
 
-          <div className="space-y-1">
-            <div className="text-[13px] font-semibold text-white/90">No behavioral analytics</div>
-            <p className="text-[11px] leading-relaxed text-white/50">
-              Facenox Desktop does not include ads, behavioral analytics, session recording, or
-              automatic diagnostic uploads. It checks GitHub for updates. Facenox Cloud and its
-              notification service connect only after pairing. The online clock check runs only when
-              you select Check now and does not send attendance or biometric data.
+          <div className='space-y-1'>
+            <div className='text-[13px] font-semibold text-white/90'>No behavioral analytics</div>
+            <p className='text-[11px] leading-relaxed text-white/50'>
+              Facenox Desktop does not include ads, behavioral analytics, session recording, or automatic diagnostic
+              uploads. It checks GitHub for updates. Facenox Cloud and its notification service connect only after
+              pairing. The online clock check runs only when you select Check now and does not send attendance or
+              biometric data.
             </p>
           </div>
 
-          <div className="space-y-1">
-            <div className="text-[13px] font-semibold text-white/90">Offline capability</div>
-            <p className="text-[11px] leading-relaxed text-white/50">
-              Face recognition and liveness checks continue on this computer without an internet
-              connection.
+          <div className='space-y-1'>
+            <div className='text-[13px] font-semibold text-white/90'>Offline capability</div>
+            <p className='text-[11px] leading-relaxed text-white/50'>
+              Face recognition and liveness checks continue on this computer without an internet connection.
             </p>
           </div>
 
-          <div className="space-y-1">
-            <div className="text-[13px] font-semibold text-white/90">What syncs with Cloud</div>
-            <p className="text-[11px] leading-relaxed text-white/50">
-              Connecting Facenox Cloud syncs directory and attendance data for browser access and
-              reporting. Cloud can also sync encrypted face templates and manage template keys. Face
-              recognition remains on paired computers, and raw camera frames are not saved or
-              uploaded.
+          <div className='space-y-1'>
+            <div className='text-[13px] font-semibold text-white/90'>What syncs with Cloud</div>
+            <p className='text-[11px] leading-relaxed text-white/50'>
+              Connecting Facenox Cloud syncs directory and attendance data for browser access and reporting. Cloud can
+              also sync encrypted face templates and manage template keys. Face recognition remains on paired computers,
+              and raw camera frames are not saved or uploaded.
             </p>
           </div>
 
-          <div className="space-y-1">
-            <div className="text-[13px] font-semibold text-white/90">Privacy responsibilities</div>
-            <p className="text-[11px] leading-relaxed text-white/50">
-              Before enrolling members, determine who can access their records, provide required
-              notices, and set appropriate retention practices.
+          <div className='space-y-1'>
+            <div className='text-[13px] font-semibold text-white/90'>Privacy responsibilities</div>
+            <p className='text-[11px] leading-relaxed text-white/50'>
+              Before enrolling members, determine who can access their records, provide required notices, and set
+              appropriate retention practices.
             </p>
-            <p className="pt-1 text-[11px] leading-relaxed text-white/35">
+            <p className='pt-1 text-[11px] leading-relaxed text-white/35'>
               Product controls do not by themselves establish legal compliance.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-t border-white/5 pt-4">
+        <div className='flex items-center justify-between border-t border-white/5 pt-4'>
           <button
             onClick={() =>
-              updaterService.openReleasePage(
-                "https://github.com/facenox/facenox/blob/main/docs/PRIVACY.md",
-              )
+              updaterService.openReleasePage('https://github.com/facenox/facenox/blob/main/docs/PRIVACY.md')
             }
-            className="rounded bg-white/5 px-2.5 py-1 text-[9px] font-semibold text-white/55 transition-all hover:bg-white/10 hover:text-white/70 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none active:scale-95">
+            className='rounded bg-white/5 px-2.5 py-1 text-[9px] font-semibold text-white/55 transition-all hover:bg-white/10 hover:text-white/70 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none active:scale-95'>
             Privacy documentation
           </button>
 
           <button
             onClick={onClose}
-            className="rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
+            className='rounded-lg bg-gradient-to-b from-cyan-400 to-cyan-500 px-6 py-2 text-[11px] font-bold tracking-wider text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-200 hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]'>
             Close
           </button>
         </div>
@@ -109,36 +99,36 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
   showSuccess,
   lastChecked,
   onCheck,
-  onDownload,
+  onDownload
 }) => {
   const formatLastChecked = (date: Date) => {
     return date.toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
     })
   }
 
   if (updateInfo?.isOffline) {
-    return <span className="text-xs text-amber-400/70">No internet</span>
+    return <span className='text-xs text-amber-400/70'>No internet</span>
   }
 
   if (updateInfo?.hasUpdate) {
     return (
-      <div className="flex flex-col items-end gap-1.5">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold tracking-wide text-cyan-400">
+      <div className='flex flex-col items-end gap-1.5'>
+        <div className='flex items-center gap-2'>
+          <span className='text-xs font-bold tracking-wide text-cyan-400'>
             Update available (v{updateInfo.latestVersion})
           </span>
           <button
             onClick={onDownload}
-            className="rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-semibold text-black shadow-sm transition-all hover:bg-cyan-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
+            className='rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-semibold text-black shadow-sm transition-all hover:bg-cyan-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95'>
             Download
           </button>
         </div>
         {lastChecked && (
-          <span className="text-[10px] whitespace-nowrap text-white/20">
+          <span className='text-[10px] whitespace-nowrap text-white/20'>
             Last checked: {formatLastChecked(lastChecked)}
           </span>
         )}
@@ -148,13 +138,13 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
 
   if (updateInfo?.error) {
     return (
-      <div className="flex flex-col items-end gap-1.5">
-        <div className="flex items-center gap-3">
-          <span className="text-xs whitespace-nowrap text-red-400/50">Update check failed</span>
+      <div className='flex flex-col items-end gap-1.5'>
+        <div className='flex items-center gap-3'>
+          <span className='text-xs whitespace-nowrap text-red-400/50'>Update check failed</span>
           <button
             onClick={onCheck}
             disabled={isChecking}
-            className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/65 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none">
+            className='rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/65 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none'>
             Retry
           </button>
         </div>
@@ -163,27 +153,27 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
   }
 
   return (
-    <div className="flex flex-col items-end gap-1.5">
-      <div className="flex items-center gap-3">
-        {showSuccess && <span className="text-xs font-medium text-emerald-400">Up to date</span>}
+    <div className='flex flex-col items-end gap-1.5'>
+      <div className='flex items-center gap-3'>
+        {showSuccess && <span className='text-xs font-medium text-emerald-400'>Up to date</span>}
         <button
           onClick={onCheck}
           disabled={isChecking}
           className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none ${
             isChecking ?
-              "border-white/10 bg-white/[0.04] text-white/55"
-            : "border-transparent bg-transparent text-white/65 hover:border-white/10 hover:bg-white/[0.06] hover:text-white"
+              'border-white/10 bg-white/[0.04] text-white/55'
+            : 'border-transparent bg-transparent text-white/65 hover:border-white/10 hover:bg-white/[0.06] hover:text-white'
           } disabled:opacity-50`}>
           {isChecking ?
-            <div className="flex items-center gap-2">
-              <Spinner size="xs" color="white" className="opacity-60" />
+            <div className='flex items-center gap-2'>
+              <Spinner size='xs' color='white' className='opacity-60' />
               <span>Checking…</span>
             </div>
-          : "Check for updates"}
+          : 'Check for updates'}
         </button>
       </div>
       {lastChecked && !isChecking && (
-        <span className="text-[10px] whitespace-nowrap text-white/20">
+        <span className='text-[10px] whitespace-nowrap text-white/20'>
           Last checked: {formatLastChecked(lastChecked)}
         </span>
       )}
@@ -192,7 +182,7 @@ const UpdateStatus: React.FC<UpdateStatusProps> = ({
 }
 
 export const About: React.FC = () => {
-  const [version, setVersion] = useState<string>("")
+  const [version, setVersion] = useState<string>('')
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [isChecking, setIsChecking] = useState(false)
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
@@ -206,7 +196,7 @@ export const About: React.FC = () => {
     try {
       await window.facenoxElectron?.exportHealth()
     } catch (error) {
-      console.error("Export health failed:", error)
+      console.error('Export health failed:', error)
     } finally {
       setIsExporting(false)
     }
@@ -272,38 +262,32 @@ export const About: React.FC = () => {
   }, [])
 
   const handleDownload = useCallback(() => {
-    updaterService.openReleasePage("https://facenox.com/download")
+    updaterService.openReleasePage('https://facenox.com/download')
   }, [])
 
   const openLink = (url: string) => () => updaterService.openReleasePage(url)
 
   return (
-    <div className="relative w-full">
+    <div className='relative w-full'>
       <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
 
-      <div className="mx-auto w-full max-w-2xl px-10 pt-8 pb-12">
-        <div className="space-y-8">
-          <div className="flex items-center justify-center gap-4.5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center">
-              <img
-                src="./icons/logo-transparent.png"
-                alt="Facenox logo"
-                className="h-full w-full object-contain"
-              />
+      <div className='mx-auto w-full max-w-2xl px-10 pt-8 pb-12'>
+        <div className='space-y-8'>
+          <div className='flex items-center justify-center gap-4.5'>
+            <div className='flex h-16 w-16 shrink-0 items-center justify-center'>
+              <img src='./icons/logo-transparent.png' alt='Facenox logo' className='h-full w-full object-contain' />
             </div>
-            <div className="flex flex-col items-start">
-              <h1 className="text-4xl leading-tight font-black tracking-[-0.04em] text-white">
-                Facenox
-              </h1>
-              <span className="mt-0.5 font-mono text-[12px] leading-none tracking-[0.02em] text-white/55">
-                {version || "-"}
+            <div className='flex flex-col items-start'>
+              <h1 className='text-4xl leading-tight font-black tracking-[-0.04em] text-white'>Facenox</h1>
+              <span className='mt-0.5 font-mono text-[12px] leading-none tracking-[0.02em] text-white/55'>
+                {version || '-'}
               </span>
             </div>
           </div>
 
-          <div className="w-full space-y-1 text-left">
-            <div className="flex items-center justify-between border-b border-white/5 py-3">
-              <span className="text-[11px] font-medium text-white/55">Updates</span>
+          <div className='w-full space-y-1 text-left'>
+            <div className='flex items-center justify-between border-b border-white/5 py-3'>
+              <span className='text-[11px] font-medium text-white/55'>Updates</span>
               <UpdateStatus
                 updateInfo={updateInfo}
                 isChecking={isChecking}
@@ -314,45 +298,45 @@ export const About: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between border-b border-white/5 py-3">
-              <span className="text-[11px] font-medium text-white/55">License</span>
+            <div className='flex items-center justify-between border-b border-white/5 py-3'>
+              <span className='text-[11px] font-medium text-white/55'>License</span>
               <button
-                onClick={openLink("https://www.gnu.org/licenses/agpl-3.0.html")}
-                className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/55 transition-all hover:border-white/10 hover:bg-white/[0.06] hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
+                onClick={openLink('https://www.gnu.org/licenses/agpl-3.0.html')}
+                className='rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/55 transition-all hover:border-white/10 hover:bg-white/[0.06] hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95'>
                 View GNU AGPL v3
               </button>
             </div>
 
-            <div className="flex items-center justify-between border-b border-white/5 py-3">
-              <span className="text-[11px] font-medium text-white/55">Source code</span>
+            <div className='flex items-center justify-between border-b border-white/5 py-3'>
+              <span className='text-[11px] font-medium text-white/55'>Source code</span>
               <button
-                onClick={openLink("https://github.com/facenox/facenox")}
-                className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/55 transition-all hover:border-white/10 hover:bg-white/[0.06] hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
+                onClick={openLink('https://github.com/facenox/facenox')}
+                className='rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/55 transition-all hover:border-white/10 hover:bg-white/[0.06] hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95'>
                 View repository
               </button>
             </div>
 
-            <div className="flex items-center justify-between border-b border-white/5 py-3">
-              <span className="text-[11px] font-medium text-white/55">Privacy & data</span>
+            <div className='flex items-center justify-between border-b border-white/5 py-3'>
+              <span className='text-[11px] font-medium text-white/55'>Privacy & data</span>
               <button
                 onClick={() => setShowPrivacyModal(true)}
-                className="rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/65 transition-all hover:border-cyan-500/10 hover:bg-cyan-500/10 hover:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95">
+                className='rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/65 transition-all hover:border-cyan-500/10 hover:bg-cyan-500/10 hover:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95'>
                 View privacy details
               </button>
             </div>
 
-            <div className="flex items-center justify-between border-b border-white/5 py-3">
-              <div className="flex flex-col text-left">
-                <span className="text-[11px] font-medium text-white/55">Diagnostics</span>
-                <span className="mt-0.5 text-[9px] text-white/55">System health & error logs</span>
+            <div className='flex items-center justify-between border-b border-white/5 py-3'>
+              <div className='flex flex-col text-left'>
+                <span className='text-[11px] font-medium text-white/55'>Diagnostics</span>
+                <span className='mt-0.5 text-[9px] text-white/55'>System health & error logs</span>
               </div>
               <button
                 disabled={isExporting}
                 onClick={handleExportHealth}
-                className="group flex items-center gap-2 rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/65 transition-all hover:border-white/10 hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95 disabled:opacity-50">
+                className='group flex items-center gap-2 rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-white/65 transition-all hover:border-white/10 hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-95 disabled:opacity-50'>
                 {isExporting ?
                   <>
-                    <Spinner size="xs" color="white" className="opacity-60" />
+                    <Spinner size='xs' color='white' className='opacity-60' />
                     <span>Exporting…</span>
                   </>
                 : <span>Export health data</span>}
@@ -360,25 +344,25 @@ export const About: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-6 pb-2 text-center">
-            <div className="mb-4 flex items-center justify-center gap-6">
+          <div className='pt-6 pb-2 text-center'>
+            <div className='mb-4 flex items-center justify-center gap-6'>
               <button
-                onClick={openLink("https://github.com/facenox/facenox/releases")}
-                className="w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
+                onClick={openLink('https://github.com/facenox/facenox/releases')}
+                className='w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none'>
                 Releases
               </button>
               <button
-                onClick={openLink("https://github.com/facenox/facenox/issues")}
-                className="w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
+                onClick={openLink('https://github.com/facenox/facenox/issues')}
+                className='w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none'>
                 Support
               </button>
               <button
-                onClick={openLink("https://github.com/facenox/facenox#readme")}
-                className="w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none">
+                onClick={openLink('https://github.com/facenox/facenox#readme')}
+                className='w-20 rounded px-1 text-center text-[11px] font-semibold text-white/65 transition-colors hover:text-white/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none'>
                 Docs
               </button>
             </div>
-            <p className="text-center text-[11px] font-medium text-white/55">© 2026 Facenox</p>
+            <p className='text-center text-[11px] font-medium text-white/55'>© 2026 Facenox</p>
           </div>
         </div>
       </div>

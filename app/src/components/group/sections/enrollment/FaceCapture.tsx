@@ -1,19 +1,19 @@
-import { useState, useEffect, useMemo, useCallback } from "react"
-import { AlertCircle, Camera, Check, Image, X } from "lucide-react"
-import { useGroupUIStore } from "@/components/group/stores"
-import { Modal } from "@/components/common"
-import { ErrorText } from "@/components/common/ErrorText"
-import { motion, AnimatePresence } from "framer-motion"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
-import { useCamera } from "@/components/group/sections/enrollment/hooks/useCamera"
-import { useFaceCapture } from "@/components/group/sections/enrollment/hooks/useFaceCapture"
-import { useDialog, Tooltip } from "@/components/shared"
-import { CameraFeed } from "@/components/group/sections/enrollment/components/CameraFeed"
-import { UploadArea } from "@/components/group/sections/enrollment/components/UploadArea"
-import { ResultView } from "@/components/group/sections/enrollment/components/ResultView"
-import { useUIStore } from "@/components/main/stores"
-import { EnrollmentInfoModal } from "@/components/group/sections/enrollment/components/EnrollmentInfoModal"
-import type { CaptureSource } from "./types"
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { AlertCircle, Camera, Check, Image, X } from 'lucide-react'
+import { useGroupUIStore } from '@/components/group/stores'
+import { Modal } from '@/components/common'
+import { ErrorText } from '@/components/common/ErrorText'
+import { motion, AnimatePresence } from 'framer-motion'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
+import { useCamera } from '@/components/group/sections/enrollment/hooks/useCamera'
+import { useFaceCapture } from '@/components/group/sections/enrollment/hooks/useFaceCapture'
+import { useDialog, Tooltip } from '@/components/shared'
+import { CameraFeed } from '@/components/group/sections/enrollment/components/CameraFeed'
+import { UploadArea } from '@/components/group/sections/enrollment/components/UploadArea'
+import { ResultView } from '@/components/group/sections/enrollment/components/ResultView'
+import { useUIStore } from '@/components/main/stores'
+import { EnrollmentInfoModal } from '@/components/group/sections/enrollment/components/EnrollmentInfoModal'
+import type { CaptureSource } from './types'
 
 interface FaceCaptureProps {
   group: AttendanceGroup
@@ -30,15 +30,15 @@ export function FaceCapture({
   onRefresh,
   initialSource,
   deselectMemberTrigger,
-  onHasSelectedMemberChange: onSelectedMemberChange,
+  onHasSelectedMemberChange: onSelectedMemberChange
 }: FaceCaptureProps) {
   const dialog = useDialog()
 
   const preSelectedId = useGroupUIStore((state) => state.preSelectedMemberId)
   const resetEnrollment = useGroupUIStore((state) => state.resetEnrollment)
 
-  const [source, setSource] = useState<CaptureSource>(initialSource ?? "live")
-  const [selectedMemberId, setSelectedMemberId] = useState(preSelectedId ?? "")
+  const [source, setSource] = useState<CaptureSource>(initialSource ?? 'live')
+  const [selectedMemberId, setSelectedMemberId] = useState(preSelectedId ?? '')
 
   const enrollmentInfoDismissed = useUIStore((state) => state.enrollmentInfoDismissed)
   const setEnrollmentInfoDismissed = useUIStore((state) => state.setEnrollmentInfoDismissed)
@@ -63,7 +63,7 @@ export function FaceCapture({
     selectedCamera,
     setSelectedCamera,
     startCamera,
-    stopCamera,
+    stopCamera
   } = useCamera()
 
   const {
@@ -75,15 +75,15 @@ export function FaceCapture({
     setGlobalError,
     captureProcessedFrame,
     handleEnroll,
-    resetFrames,
+    resetFrames
   } = useFaceCapture(group, members, onRefresh, dialog)
 
-  const framesReady = frames.some((f) => f.status === "ready" || f.status === "enrolled")
-  const isProcessing = frames.some((f) => f.status === "processing")
-  const visibleError = globalError || (source === "live" ? cameraError : null)
+  const framesReady = frames.some((f) => f.status === 'ready' || f.status === 'enrolled')
+  const isProcessing = frames.some((f) => f.status === 'processing')
+  const visibleError = globalError || (source === 'live' ? cameraError : null)
 
   useEffect(() => {
-    if (source !== "live" || !selectedMemberId || showInfoModal || framesReady || successMessage) {
+    if (source !== 'live' || !selectedMemberId || showInfoModal || framesReady || successMessage) {
       stopCamera()
     }
   }, [source, selectedMemberId, showInfoModal, framesReady, successMessage, stopCamera])
@@ -101,7 +101,7 @@ export function FaceCapture({
   useEffect(() => {
     let active = true
     if (
-      source === "live" &&
+      source === 'live' &&
       selectedMemberId &&
       !showInfoModal &&
       !isStreaming &&
@@ -117,16 +117,7 @@ export function FaceCapture({
     return () => {
       active = false
     }
-  }, [
-    source,
-    selectedMemberId,
-    showInfoModal,
-    isStreaming,
-    cameraError,
-    framesReady,
-    successMessage,
-    startCamera,
-  ])
+  }, [source, selectedMemberId, showInfoModal, isStreaming, cameraError, framesReady, successMessage, startCamera])
 
   useEffect(() => {
     if (onSelectedMemberChange) {
@@ -140,7 +131,7 @@ export function FaceCapture({
 
   useEffect(() => {
     if (deselectMemberTrigger) {
-      setTimeout(() => setSelectedMemberId(""), 0)
+      setTimeout(() => setSelectedMemberId(''), 0)
     }
   }, [deselectMemberTrigger])
 
@@ -158,7 +149,7 @@ export function FaceCapture({
     if (successCountdown === null) return
     if (successCountdown <= 0) {
       setSuccessMessage(null)
-      setSelectedMemberId("")
+      setSelectedMemberId('')
       resetFrames()
       resetEnrollment()
       return
@@ -171,10 +162,10 @@ export function FaceCapture({
 
   const handleCaptureFromCamera = useCallback(() => {
     if (!videoRef.current || !selectedMemberId) return
-    const canvas = document.createElement("canvas")
+    const canvas = document.createElement('canvas')
     canvas.width = videoRef.current.videoWidth
     canvas.height = videoRef.current.videoHeight
-    const ctx = canvas.getContext("2d")
+    const ctx = canvas.getContext('2d')
     if (!ctx) return
 
     // Flip the capture to match the mirrored video preview
@@ -182,8 +173,8 @@ export function FaceCapture({
     ctx.scale(-1, 1)
 
     ctx.drawImage(videoRef.current, 0, 0)
-    const url = canvas.toDataURL("image/jpeg", 0.95)
-    captureProcessedFrame("Front", url, canvas.width, canvas.height)
+    const url = canvas.toDataURL('image/jpeg', 0.95)
+    captureProcessedFrame('Front', url, canvas.width, canvas.height)
   }, [videoRef, selectedMemberId, captureProcessedFrame])
 
   const handleWrapperEnroll = useCallback(async () => {
@@ -193,7 +184,7 @@ export function FaceCapture({
 
   const resetWorkflow = useCallback(() => {
     resetFrames()
-    if (source === "live" && !showInfoModal) {
+    if (source === 'live' && !showInfoModal) {
       startCamera()
     }
   }, [resetFrames, source, startCamera, showInfoModal])
@@ -207,7 +198,7 @@ export function FaceCapture({
 
   const handleCloseInfoModal = useCallback(() => {
     setShowInfoModal(false)
-    setSelectedMemberId("")
+    setSelectedMemberId('')
     resetEnrollment()
   }, [resetEnrollment])
 
@@ -215,31 +206,31 @@ export function FaceCapture({
     const handleKeyPress = (e: KeyboardEvent) => {
       if (!selectedMemberId) return
 
-      if (e.key === " " || e.key === "Space") {
-        if (source === "live" && isStreaming && isVideoReady && !isProcessing) {
+      if (e.key === ' ' || e.key === 'Space') {
+        if (source === 'live' && isStreaming && isVideoReady && !isProcessing) {
           e.preventDefault()
           handleCaptureFromCamera()
         }
-      } else if (e.key === "r" || e.key === "R") {
+      } else if (e.key === 'r' || e.key === 'R') {
         if (framesReady) {
           e.preventDefault()
           resetWorkflow()
         }
-      } else if (e.key === "Enter") {
+      } else if (e.key === 'Enter') {
         if (framesReady && !isEnrolling) {
           e.preventDefault()
           void handleWrapperEnroll()
         }
-      } else if (e.key === "Escape") {
+      } else if (e.key === 'Escape') {
         e.preventDefault()
         e.stopImmediatePropagation()
-        setSelectedMemberId("")
+        setSelectedMemberId('')
         resetEnrollment()
       }
     }
 
-    window.addEventListener("keydown", handleKeyPress, true)
-    return () => window.removeEventListener("keydown", handleKeyPress, true)
+    window.addEventListener('keydown', handleKeyPress, true)
+    return () => window.removeEventListener('keydown', handleKeyPress, true)
   }, [
     selectedMemberId,
     source,
@@ -251,48 +242,48 @@ export function FaceCapture({
     handleCaptureFromCamera,
     resetWorkflow,
     handleWrapperEnroll,
-    resetEnrollment,
+    resetEnrollment
   ])
 
   const selectedMemberName = useMemo(() => {
     const m = members.find((m) => m.person_id === selectedMemberId)
-    return m ? m.name || "Member" : ""
+    return m ? m.name || 'Member' : ''
   }, [members, selectedMemberId])
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
+    <div className='relative flex h-full flex-col overflow-hidden'>
       <Modal
         isOpen={!!successMessage}
         onClose={() => {
           setSuccessMessage(null)
-          setSelectedMemberId("")
+          setSelectedMemberId('')
           resetFrames()
           // Close the overlay entirely, go back to the main members list
           resetEnrollment()
         }}
-        title="Success"
-        maxWidth="sm"
+        title='Success'
+        maxWidth='sm'
         hideCloseButton={true}>
-        <div className="flex flex-col items-center gap-3 py-2">
-          <Check className="size-8 text-cyan-400" />
-          <p className="text-center text-sm font-medium text-white/85">{successMessage}</p>
+        <div className='flex flex-col items-center gap-3 py-2'>
+          <Check className='size-8 text-cyan-400' />
+          <p className='text-center text-sm font-medium text-white/85'>{successMessage}</p>
 
-          <div className="mt-6 flex w-full items-center justify-between">
+          <div className='mt-6 flex w-full items-center justify-between'>
             {/* Subtle countdown text on the left */}
-            <div className="flex items-center gap-1 text-[10px] font-medium text-white/30 select-none">
+            <div className='flex items-center gap-1 text-[10px] font-medium text-white/30 select-none'>
               <span>Closing in</span>
-              <span className="font-bold text-white/50 tabular-nums">{successCountdown}s</span>
+              <span className='font-bold text-white/50 tabular-nums'>{successCountdown}s</span>
             </div>
 
             <button
               onClick={() => {
                 setSuccessMessage(null)
-                setSelectedMemberId("")
+                setSelectedMemberId('')
                 resetFrames()
                 // Close the overlay entirely, go back to the main members list
                 resetEnrollment()
               }}
-              className="rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-5 py-1.5 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/30">
+              className='rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-5 py-1.5 text-[11px] font-bold tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/30'>
               Done
             </button>
           </div>
@@ -307,40 +298,38 @@ export function FaceCapture({
         onDontShowAgainChange={setDontShowAgainChecked}
       />
 
-      <div className="relative min-h-0 flex-1 overflow-hidden">
-        <AnimatePresence mode="wait">
+      <div className='relative min-h-0 flex-1 overflow-hidden'>
+        <AnimatePresence mode='wait'>
           {!selectedMemberId ?
             <motion.div
-              key="select-member"
+              key='select-member'
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-xs font-medium text-white/55">
-                Select a member to begin enrollment
-              </div>
+              className='absolute inset-0 flex items-center justify-center'>
+              <div className='text-center text-xs font-medium text-white/55'>Select a member to begin enrollment</div>
             </motion.div>
           : <motion.div
-              key="camera-viewport"
+              key='camera-viewport'
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-hidden p-6">
-              <div className="relative aspect-video min-h-0 w-full max-w-4xl shrink overflow-hidden rounded-xl">
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className='absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-hidden p-6'>
+              <div className='relative aspect-video min-h-0 w-full max-w-4xl shrink overflow-hidden rounded-xl'>
                 {/* Floating Header Overlay */}
-                <div className="pointer-events-none absolute top-0 right-0 left-0 z-20 flex flex-col items-start bg-gradient-to-b from-black/80 via-black/40 to-transparent px-8 pt-6 pb-12">
-                  <span className="mb-0.5 text-[10px] font-bold tracking-[0.15em] text-cyan-400/80 uppercase">
+                <div className='pointer-events-none absolute top-0 right-0 left-0 z-20 flex flex-col items-start bg-gradient-to-b from-black/80 via-black/40 to-transparent px-8 pt-6 pb-12'>
+                  <span className='mb-0.5 text-[10px] font-bold tracking-[0.15em] text-cyan-400/80 uppercase'>
                     Member
                   </span>
-                  <h2 className="w-full max-w-[60%] truncate text-xl font-bold tracking-tight text-white sm:max-w-[70%] sm:text-2xl">
+                  <h2 className='w-full max-w-[60%] truncate text-xl font-bold tracking-tight text-white sm:max-w-[70%] sm:text-2xl'>
                     {selectedMemberName}
                   </h2>
                 </div>
 
                 {!framesReady ?
-                  source === "live" ?
+                  source === 'live' ?
                     <CameraFeed
                       videoRef={videoRef}
                       isStreaming={isStreaming}
@@ -353,9 +342,7 @@ export function FaceCapture({
                       setSelectedCamera={setSelectedCamera}
                     />
                   : <UploadArea
-                      onFileProcessed={(url: string, w: number, h: number) =>
-                        captureProcessedFrame("Front", url, w, h)
-                      }
+                      onFileProcessed={(url: string, w: number, h: number) => captureProcessedFrame('Front', url, w, h)}
                       onError={setGlobalError}
                     />
 
@@ -373,27 +360,27 @@ export function FaceCapture({
                 <AnimatePresence>
                   {visibleError && (
                     <motion.div
-                      role="alert"
+                      role='alert'
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.22, ease: "easeOut" }}
-                      className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[85%] -translate-x-1/2 items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/85 px-4 py-2.5 text-center text-[11px] font-medium text-red-200">
-                      <AlertCircle className="size-4 shrink-0 text-red-400" />
+                      transition={{ duration: 0.22, ease: 'easeOut' }}
+                      className='pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[85%] -translate-x-1/2 items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/85 px-4 py-2.5 text-center text-[11px] font-medium text-red-200'>
+                      <AlertCircle className='size-4 shrink-0 text-red-400' />
                       <ErrorText message={visibleError} />
                       {!globalError && cameraError ?
                         <button
-                          type="button"
+                          type='button'
                           onClick={() => void startCamera()}
-                          className="shrink-0 rounded px-2 py-1 text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2">
+                          className='shrink-0 rounded px-2 py-1 text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2'>
                           Retry camera
                         </button>
                       : <button
-                          type="button"
-                          aria-label="Dismiss error"
+                          type='button'
+                          aria-label='Dismiss error'
                           onClick={() => setGlobalError(null)}
-                          className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2">
-                          <X className="size-4" aria-hidden="true" />
+                          className='shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2'>
+                          <X className='size-4' aria-hidden='true' />
                         </button>
                       }
                     </motion.div>
@@ -403,36 +390,33 @@ export function FaceCapture({
 
               {/* Bottom Control Bar */}
               {!framesReady && (
-                <div className="flex w-full max-w-4xl items-center justify-between px-4">
-                  <div className="w-32">
-                    <Tooltip
-                      content={source === "live" ? "Switch to file upload" : "Switch to camera"}>
+                <div className='flex w-full max-w-4xl items-center justify-between px-4'>
+                  <div className='w-32'>
+                    <Tooltip content={source === 'live' ? 'Switch to file upload' : 'Switch to camera'}>
                       <button
-                        onClick={() => setSource(source === "live" ? "upload" : "live")}
-                        className="group flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium text-white/65 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white"
-                        aria-label={
-                          source === "live" ? "Switch to file upload" : "Switch to camera"
-                        }>
-                        {source === "live" ?
-                          <Image className="size-4" />
-                        : <Camera className="size-4" />}
-                        <span>{source === "live" ? "Upload" : "Camera"}</span>
+                        onClick={() => setSource(source === 'live' ? 'upload' : 'live')}
+                        className='group flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium text-white/65 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white'
+                        aria-label={source === 'live' ? 'Switch to file upload' : 'Switch to camera'}>
+                        {source === 'live' ?
+                          <Image className='size-4' />
+                        : <Camera className='size-4' />}
+                        <span>{source === 'live' ? 'Upload' : 'Camera'}</span>
                       </button>
                     </Tooltip>
                   </div>
 
-                  <div className="flex flex-1 justify-center">
-                    {source === "live" && isStreaming && (
-                      <Tooltip content="Capture photo">
-                        <span className="inline-flex shrink-0">
+                  <div className='flex flex-1 justify-center'>
+                    {source === 'live' && isStreaming && (
+                      <Tooltip content='Capture photo'>
+                        <span className='inline-flex shrink-0'>
                           <button
                             onClick={handleCaptureFromCamera}
                             disabled={!isVideoReady || !!cameraError || isProcessing}
-                            className="group flex h-16 w-16 items-center justify-center rounded-full bg-white/10 p-1 transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
-                            aria-label="Capture photo">
+                            className='group flex h-16 w-16 items-center justify-center rounded-full bg-white/10 p-1 transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40'
+                            aria-label='Capture photo'>
                             {isProcessing ?
-                              <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                            : <div className="h-full w-full rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-transform group-active:scale-90" />
+                              <div className='h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white' />
+                            : <div className='h-full w-full rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-transform group-active:scale-90' />
                             }
                           </button>
                         </span>
@@ -441,14 +425,14 @@ export function FaceCapture({
                   </div>
 
                   {/* Empty div for right side balance */}
-                  <div className="flex w-32 items-center justify-end">
-                    <div className="flex flex-col items-end gap-1 text-[9px] leading-tight font-medium text-white/45">
-                      <div className="flex items-center gap-1">
-                        <kbd className="rounded bg-white/10 px-1 py-0.5 text-white/65">Space</kbd>
+                  <div className='flex w-32 items-center justify-end'>
+                    <div className='flex flex-col items-end gap-1 text-[9px] leading-tight font-medium text-white/45'>
+                      <div className='flex items-center gap-1'>
+                        <kbd className='rounded bg-white/10 px-1 py-0.5 text-white/65'>Space</kbd>
                         <span>Capture</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <kbd className="rounded bg-white/10 px-1 py-0.5 text-white/65">R</kbd>
+                      <div className='flex items-center gap-1'>
+                        <kbd className='rounded bg-white/10 px-1 py-0.5 text-white/65'>R</kbd>
                         <span>Retake</span>
                       </div>
                     </div>

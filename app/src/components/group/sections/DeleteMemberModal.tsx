@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react"
-import { AlertTriangle } from "lucide-react"
-import type { AttendanceMember } from "@/types/recognition"
-import { Modal } from "@/components/common"
+import { useState, useEffect } from 'react'
+import { AlertTriangle } from 'lucide-react'
+import type { AttendanceMember } from '@/types/recognition'
+import { Modal } from '@/components/common'
 
 interface DeleteMemberModalProps {
   isOpen: boolean
@@ -11,9 +11,7 @@ interface DeleteMemberModalProps {
 }
 
 export function DeleteMemberModal({ isOpen, member, onClose, onConfirm }: DeleteMemberModalProps) {
-  const [memberSnapshot, setMemberSnapshot] = useState<
-    (AttendanceMember & { displayName?: string }) | null
-  >(member)
+  const [memberSnapshot, setMemberSnapshot] = useState<(AttendanceMember & { displayName?: string }) | null>(member)
 
   useEffect(() => {
     if (member) {
@@ -30,26 +28,26 @@ export function DeleteMemberModal({ isOpen, member, onClose, onConfirm }: Delete
       isOpen={isOpen}
       onClose={onClose}
       title={`Remove ${memberDisplayName}`}
-      icon={<AlertTriangle className="size-5 text-red-400" />}
-      maxWidth="sm">
-      <div className="space-y-4">
-        <p className="text-xs leading-relaxed text-white/60">
-          This removes the member from this group and deletes their enrolled face template. Existing
-          attendance history is retained. Paired computers sync the removal to Cloud.
+      icon={<AlertTriangle className='size-5 text-red-400' />}
+      maxWidth='sm'>
+      <div className='space-y-4'>
+        <p className='text-xs leading-relaxed text-white/60'>
+          This removes the member from this group and deletes their enrolled face template. Existing attendance history
+          is retained. Paired computers sync the removal to Cloud.
         </p>
       </div>
 
-      <div className="mt-8 flex justify-end gap-3">
+      <div className='mt-8 flex justify-end gap-3'>
         <button
-          type="button"
+          type='button'
           onClick={onClose}
-          className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
+          className='rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]'>
           Cancel
         </button>
         <button
-          type="button"
+          type='button'
           onClick={onConfirm}
-          className="rounded-lg bg-rose-600 px-6 py-2 text-[11px] font-bold tracking-wider text-white shadow-sm transition-all duration-200 hover:bg-rose-500 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]">
+          className='rounded-lg bg-rose-600 px-6 py-2 text-[11px] font-bold tracking-wider text-white shadow-sm transition-all duration-200 hover:bg-rose-500 focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97]'>
           Remove member
         </button>
       </div>

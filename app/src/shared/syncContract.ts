@@ -1,31 +1,31 @@
-import { z } from "zod"
+import { z } from 'zod'
 
-export const attendanceStatusSchema = z.enum(["present", "absent"])
+export const attendanceStatusSchema = z.enum(['present', 'absent'])
 
 const captureTimezoneSchema = z
   .string()
   .max(100)
   .refine((value) => {
     try {
-      new Intl.DateTimeFormat("en", { timeZone: value })
+      new Intl.DateTimeFormat('en', { timeZone: value })
       return true
     } catch {
       return false
     }
-  }, "Invalid capture timezone")
+  }, 'Invalid capture timezone')
   .nullable()
   .optional()
 const captureOffsetSchema = z.number().int().min(-86399).max(86399).nullable().optional()
 
 export const groupSettingsSchema = z.object({
-  attendance_mode: z.enum(["attendance", "work_hours", "visits"]).default("attendance"),
+  attendance_mode: z.enum(['attendance', 'work_hours', 'visits']).default('attendance'),
   late_threshold_minutes: z.number().nullable().optional(),
   late_threshold_enabled: z.boolean().default(false),
   class_start_time: z.string().nullable().optional(),
   class_end_time: z.string().nullable().optional(),
   track_checkout: z.boolean().default(false),
   min_checkout_delay_minutes: z.number().nullable().optional(),
-  scan_behavior: z.enum(["automatic", "entry_only", "exit_only"]).default("automatic"),
+  scan_behavior: z.enum(['automatic', 'entry_only', 'exit_only']).default('automatic')
 })
 
 export const attendanceGroupSchema = z.object({
@@ -37,7 +37,7 @@ export const attendanceGroupSchema = z.object({
   created_at: z.string().datetime(),
   is_active: z.boolean(),
   settings: groupSettingsSchema,
-  remote_id: z.string().nullable().optional(),
+  remote_id: z.string().nullable().optional()
 })
 
 export const attendanceMemberSchema = z.object({
@@ -49,10 +49,10 @@ export const attendanceMemberSchema = z.object({
   group_id: z.string().min(1),
   name: z.string().min(1),
   role: z.string().nullable().optional(),
-  email: z.string().email().nullable().optional().or(z.literal("")),
+  email: z.string().email().nullable().optional().or(z.literal('')),
   joined_at: z.string().datetime(),
   is_active: z.boolean(),
-  remote_id: z.string().nullable().optional(),
+  remote_id: z.string().nullable().optional()
 })
 
 export const attendanceRecordSchema = z.object({
@@ -66,14 +66,14 @@ export const attendanceRecordSchema = z.object({
   confidence: z.number(),
   location: z.string().nullable().optional(),
   device_id: z.string().nullable().optional(),
-  event_type: z.enum(["check_in", "check_out"]).nullable().optional(),
+  event_type: z.enum(['check_in', 'check_out']).nullable().optional(),
   notes: z.string().nullable().optional(),
   is_manual: z.boolean(),
   created_by: z.string().nullable().optional(),
   is_voided: z.boolean().default(false),
   voided_at: z.string().datetime().nullable().optional(),
   voided_by: z.string().nullable().optional(),
-  void_reason: z.string().nullable().optional(),
+  void_reason: z.string().nullable().optional()
 })
 
 export const attendanceSessionSchema = z
@@ -86,9 +86,9 @@ export const attendanceSessionSchema = z
         class_end_time: z.string().nullable().optional(),
         late_threshold_enabled: z.boolean().nullable().optional(),
         late_threshold_minutes: z.number().int().nonnegative().nullable().optional(),
-        attendance_mode: z.enum(["attendance", "work_hours", "visits"]),
-        scan_behavior: z.enum(["automatic", "entry_only", "exit_only"]).nullable().optional(),
-        min_checkout_delay_minutes: z.number().nonnegative().nullable().optional(),
+        attendance_mode: z.enum(['attendance', 'work_hours', 'visits']),
+        scan_behavior: z.enum(['automatic', 'entry_only', 'exit_only']).nullable().optional(),
+        min_checkout_delay_minutes: z.number().nonnegative().nullable().optional()
       })
       .nullable()
       .optional(),
@@ -107,7 +107,7 @@ export const attendanceSessionSchema = z
     status: attendanceStatusSchema,
     is_late: z.boolean(),
     late_minutes: z.number().nullable().optional(),
-    notes: z.string().nullable().optional(),
+    notes: z.string().nullable().optional()
   })
   .refine(
     (session) =>
@@ -118,7 +118,7 @@ export const attendanceSessionSchema = z
         session.check_out_time_offset_seconds != null &&
         new Date(session.check_out_time).getTime() < new Date(session.check_in_time).getTime()
       ),
-    "Check-out must not precede check-in.",
+    'Check-out must not precede check-in.'
   )
 
 export const faceEmbeddingSchema = z.object({
@@ -128,7 +128,7 @@ export const faceEmbeddingSchema = z.object({
   person_id: z.string().min(1),
   embedding_encrypted: z.string(),
   is_deleted: z.boolean().default(false),
-  embedding_dimension: z.number().default(512),
+  embedding_dimension: z.number().default(512)
 })
 export type FaceEmbedding = z.infer<typeof faceEmbeddingSchema>
 
@@ -140,7 +140,7 @@ export const attendanceSettingsSchema = z.object({
   relog_cooldown_seconds: z.number(),
   enable_liveness_detection: z.boolean(),
   max_recognition_faces_per_frame: z.number(),
-  data_retention_days: z.number(),
+  data_retention_days: z.number()
 })
 
 export const attendanceExportSchema = z.object({
@@ -154,13 +154,13 @@ export const attendanceExportSchema = z.object({
         id: z.string().min(1),
         person_id: z.string().min(1),
         group_id: z.string().min(1),
-        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      }),
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
+      })
     )
     .optional(),
   settings: attendanceSettingsSchema,
   face_embeddings: z.array(faceEmbeddingSchema).optional(),
-  exported_at: z.string().datetime(),
+  exported_at: z.string().datetime()
 })
 
 export const syncPushSchema = z.object({
@@ -170,7 +170,7 @@ export const syncPushSchema = z.object({
   site_id: z.string().min(1),
   app_version: z.string().min(1),
   exported_at: z.string().datetime(),
-  attendance_export: attendanceExportSchema,
+  attendance_export: attendanceExportSchema
 })
 
 export type SyncPushPayload = z.infer<typeof syncPushSchema>

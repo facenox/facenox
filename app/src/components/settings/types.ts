@@ -1,4 +1,4 @@
-import type { AttendanceTimeHealth } from "@/types/recognition"
+import type { AttendanceTimeHealth } from '@/types/recognition'
 
 // Settings types
 

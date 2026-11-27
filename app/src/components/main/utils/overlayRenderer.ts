@@ -1,6 +1,6 @@
-import type { DetectionResult } from "@/components/main/types"
-import type { ExtendedFaceRecognitionResponse } from "./recognitionHelpers"
-import type { QuickSettings } from "@/components/settings"
+import type { DetectionResult } from '@/components/main/types'
+import type { ExtendedFaceRecognitionResponse } from './recognitionHelpers'
+import type { QuickSettings } from '@/components/settings'
 
 // Module-level cache to track sub-label opacity per face track_id for smooth transitions
 const subLabelOpacityCache = new Map<number, number>()
@@ -13,18 +13,16 @@ const getFaceColor = (
   recognitionResult: ExtendedFaceRecognitionResponse | null,
   recognitionEnabled: boolean,
   enableSpoofDetection: boolean,
-  livenessStatus?: string,
+  livenessStatus?: string
 ) => {
   const isRecognized =
-    recognitionEnabled &&
-    recognitionResult?.person_id &&
-    (!enableSpoofDetection || livenessStatus === "real")
+    recognitionEnabled && recognitionResult?.person_id && (!enableSpoofDetection || livenessStatus === 'real')
 
   if (isRecognized) {
-    return "#22d3ee"
+    return '#22d3ee'
   }
 
-  return "#94a3b8"
+  return '#94a3b8'
 }
 
 const drawRoundedRect = (
@@ -33,7 +31,7 @@ const drawRoundedRect = (
   y: number,
   width: number,
   height: number,
-  radius: number,
+  radius: number
 ) => {
   ctx.beginPath()
   ctx.moveTo(x + radius, y)
@@ -48,13 +46,7 @@ const drawRoundedRect = (
   ctx.closePath()
 }
 
-const drawBoundingBox = (
-  ctx: CanvasRenderingContext2D,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-) => {
+const drawBoundingBox = (ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) => {
   const width = x2 - x1
   const height = y2 - y1
   const cornerRadius = 8
@@ -73,8 +65,8 @@ const setupCanvasContext = (ctx: CanvasRenderingContext2D, color: string) => {
   ctx.lineWidth = 2
   ctx.shadowColor = color
   ctx.shadowBlur = 8
-  ctx.lineCap = "round"
-  ctx.lineJoin = "round"
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
 }
 
 interface DrawOverlaysParams {
@@ -116,17 +108,17 @@ export const drawOverlays = ({
   quickSettings,
   enableSpoofDetection,
   getVideoRect,
-  calculateScaleFactors,
+  calculateScaleFactors
 }: DrawOverlaysParams) => {
   const video = videoRef.current
   const overlayCanvas = overlayCanvasRef.current
 
   if (!video || !overlayCanvas || !currentDetections) return
 
-  const ctx = overlayCanvas.getContext("2d", {
+  const ctx = overlayCanvas.getContext('2d', {
     alpha: true,
     willReadFrequently: false,
-    desynchronized: true,
+    desynchronized: true
   })
   if (!ctx) return
 
@@ -149,10 +141,7 @@ export const drawOverlays = ({
   if (currentWidth !== displayWidth || currentHeight !== displayHeight) {
     overlayCanvas.width = displayWidth
     overlayCanvas.height = displayHeight
-    if (
-      overlayCanvas.style.width !== `${displayWidth}px` ||
-      overlayCanvas.style.height !== `${displayHeight}px`
-    ) {
+    if (overlayCanvas.style.width !== `${displayWidth}px` || overlayCanvas.style.height !== `${displayHeight}px`) {
       overlayCanvas.style.width = `${displayWidth}px`
       overlayCanvas.style.height = `${displayHeight}px`
     }
@@ -171,14 +160,7 @@ export const drawOverlays = ({
   currentDetections.faces.forEach((face) => {
     const { bbox } = face
 
-    if (
-      !bbox ||
-      !isFinite(bbox.x) ||
-      !isFinite(bbox.y) ||
-      !isFinite(bbox.width) ||
-      !isFinite(bbox.height)
-    )
-      return
+    if (!bbox || !isFinite(bbox.x) || !isFinite(bbox.y) || !isFinite(bbox.width) || !isFinite(bbox.height)) return
 
     const x1 =
       quickSettings.cameraMirrored ?
@@ -203,13 +185,11 @@ export const drawOverlays = ({
       recognitionResult || null,
       recognitionEnabled,
       enableSpoofDetection,
-      face.liveness?.status,
+      face.liveness?.status
     )
 
     const isRecognized =
-      recognitionEnabled &&
-      recognitionResult?.person_id &&
-      (!enableSpoofDetection || face.liveness?.status === "real")
+      recognitionEnabled && recognitionResult?.person_id && (!enableSpoofDetection || face.liveness?.status === 'real')
 
     ctx.save()
     ctx.globalAlpha = face.renderOpacity ?? 1
@@ -220,30 +200,30 @@ export const drawOverlays = ({
     }
 
     const isActuallyRecognized = isRecognized && !!recognitionResult?.person_id
-    let label = ""
+    let label = ''
     let shouldShowLabel = false
-    let labelTone: "recognition" | "guidance-warning" | "guidance-failure" = "recognition"
+    let labelTone: 'recognition' | 'guidance-warning' | 'guidance-failure' = 'recognition'
 
     if (isActuallyRecognized && recognitionResult && quickSettings.showRecognitionNames) {
-      label = recognitionResult.name || recognitionResult.person_id || ""
+      label = recognitionResult.name || recognitionResult.person_id || ''
       shouldShowLabel = !!label
     }
 
     if (!shouldShowLabel && enableSpoofDetection && face.overlayGuidance) {
       label = face.overlayGuidance.label
-      labelTone = face.overlayGuidance.tone === "failure" ? "guidance-failure" : "guidance-warning"
+      labelTone = face.overlayGuidance.tone === 'failure' ? 'guidance-failure' : 'guidance-warning'
       shouldShowLabel = true
     }
 
     if (shouldShowLabel) {
       // Sequential smoothly-fading dots animation loop
-      const isVerifyingState = label === "Verifying..."
+      const isVerifyingState = label === 'Verifying...'
       const text = label
 
-      ctx.font = "bold 12px system-ui, sans-serif"
+      ctx.font = 'bold 12px system-ui, sans-serif'
 
       // Measure text width to prevent layout overflow
-      const measureText = isVerifyingState ? "Verifying..." : text
+      const measureText = isVerifyingState ? 'Verifying...' : text
       const textWidth = ctx.measureText(measureText).width
       const paddingH = 10
       const badgeW = textWidth + paddingH * 2
@@ -255,23 +235,23 @@ export const drawOverlays = ({
       // Premium Minimalist Floating Design:
       // All guidance and warning prompts float in a clean, solid white (#f8fafc) to reduce visual clutter.
       // Cyan is strictly reserved for successfully verified member names, keeping the viewport calm and premium.
-      const textColor = labelTone === "recognition" ? color : "#f8fafc"
+      const textColor = labelTone === 'recognition' ? color : '#f8fafc'
 
-      ctx.textBaseline = "middle"
+      ctx.textBaseline = 'middle'
 
       // Enforce high-readability drop shadow for weightless floating text
-      ctx.shadowColor = "rgba(0, 0, 0, 0.9)"
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.9)'
       ctx.shadowBlur = 4
       ctx.shadowOffsetX = 0
       ctx.shadowOffsetY = 1
 
       if (isVerifyingState) {
         const textStartX = badgeX + badgeW / 2 - textWidth / 2
-        ctx.textAlign = "left"
+        ctx.textAlign = 'left'
         ctx.fillStyle = textColor
-        ctx.fillText("Verifying", textStartX, badgeY + badgeH / 2)
+        ctx.fillText('Verifying', textStartX, badgeY + badgeH / 2)
 
-        const baseTextWidth = ctx.measureText("Verifying").width
+        const baseTextWidth = ctx.measureText('Verifying').width
         const dotSpacing = 3.5
 
         // Cycle parameters: 1.8s per sequential loop
@@ -302,11 +282,11 @@ export const drawOverlays = ({
           }
 
           ctx.fillStyle = `rgba(248, 250, 252, ${opacity})`
-          ctx.fillText(".", dotX, badgeY + badgeH / 2)
+          ctx.fillText('.', dotX, badgeY + badgeH / 2)
         }
       } else {
         ctx.fillStyle = textColor
-        ctx.textAlign = "center"
+        ctx.textAlign = 'center'
         ctx.fillText(text, badgeX + badgeW / 2, badgeY + badgeH / 2)
       }
 
@@ -326,13 +306,13 @@ export const drawOverlays = ({
       if (subCurrentOpacity > 0.01 && subLabelText) {
         ctx.save()
         ctx.globalAlpha = (face.renderOpacity ?? 1) * subCurrentOpacity
-        ctx.font = "normal 10px system-ui, sans-serif"
-        ctx.fillStyle = "#cbd5e1" // slate-300 for premium low-fatigue subtitle
-        ctx.textAlign = "center"
-        ctx.textBaseline = "middle"
+        ctx.font = 'normal 10px system-ui, sans-serif'
+        ctx.fillStyle = '#cbd5e1' // slate-300 for premium low-fatigue subtitle
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
 
         // Enforce high-readability drop shadow
-        ctx.shadowColor = "rgba(0, 0, 0, 0.9)"
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)'
         ctx.shadowBlur = 4
         ctx.shadowOffsetX = 0
         ctx.shadowOffsetY = 1
@@ -341,7 +321,7 @@ export const drawOverlays = ({
 
         // When "Slowly turn head" is active, the dedicated floating 3D HUD card handles the guidance.
         // For other guidance cues (e.g. "Step into light", "Keep face upright"), render the subtitle text here.
-        if (subLabelText !== "Slowly turn head") {
+        if (subLabelText !== 'Slowly turn head') {
           ctx.fillText(subLabelText, x1 + width / 2, subLabelY)
         }
         ctx.restore()
@@ -349,7 +329,7 @@ export const drawOverlays = ({
     }
 
     ctx.shadowBlur = 0
-    ctx.shadowColor = "transparent"
+    ctx.shadowColor = 'transparent'
     ctx.restore()
   })
 

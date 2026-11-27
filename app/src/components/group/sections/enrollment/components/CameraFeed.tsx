@@ -1,7 +1,7 @@
-import { Video } from "lucide-react"
-import { Dropdown } from "@/components/shared"
-import type { CaptureSource } from "@/components/group/sections/enrollment/types"
-import { formatCameraDevices } from "@/utils/cameraConstraints"
+import { Video } from 'lucide-react'
+import { Dropdown } from '@/components/shared'
+import type { CaptureSource } from '@/components/group/sections/enrollment/types'
+import { formatCameraDevices } from '@/utils/cameraConstraints'
 
 interface CameraFeedProps {
   videoRef: React.RefObject<HTMLVideoElement | null>
@@ -25,22 +25,22 @@ export function CameraFeed({
   source,
   cameraDevices,
   selectedCamera,
-  setSelectedCamera,
+  setSelectedCamera
 }: CameraFeedProps) {
-  if (source !== "live") return null
+  if (source !== 'live') return null
 
   return (
-    <div className="group/feed relative h-full w-full">
+    <div className='group/feed relative h-full w-full'>
       <video
         ref={videoRef}
-        className="h-full w-full scale-x-[-1] bg-[var(--bg-canvas)] object-contain"
+        className='h-full w-full scale-x-[-1] bg-[var(--bg-canvas)] object-contain'
         playsInline
         muted
       />
 
       {/* Compact Camera Selection Overlay (Only shown when multiple cameras exist) */}
       {cameraDevices.length > 1 && (
-        <div className="absolute top-4 right-4 z-30 w-64">
+        <div className='absolute top-4 right-4 z-30 w-64'>
           <Dropdown
             options={formatCameraDevices(cameraDevices)}
             value={selectedCamera}
@@ -53,11 +53,11 @@ export function CameraFeed({
                 }
               }
             }}
-            placeholder="Select camera…"
-            emptyMessage="No cameras available"
+            placeholder='Select camera…'
+            emptyMessage='No cameras available'
             disabled={false}
             maxHeight={256}
-            buttonClassName="text-[11px] px-3 py-1.5 bg-[#141518] border border-white/10 hover:bg-[#1a1c20] transition-all font-medium"
+            buttonClassName='text-[11px] px-3 py-1.5 bg-[#141518] border border-white/10 hover:bg-[#1a1c20] transition-all font-medium'
             showPlaceholderOption={false}
             allowClear={false}
           />
@@ -65,16 +65,16 @@ export function CameraFeed({
       )}
 
       {!isStreaming && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-          <div className="relative flex flex-col items-center justify-center opacity-20">
-            <Video className="h-10 w-10 animate-pulse text-white" strokeWidth={1.5} />
+        <div className='absolute inset-0 flex items-center justify-center bg-black/20'>
+          <div className='relative flex flex-col items-center justify-center opacity-20'>
+            <Video className='h-10 w-10 animate-pulse text-white' strokeWidth={1.5} />
           </div>
         </div>
       )}
 
       {isStreaming && !isVideoReady && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-cyan-400" />
+        <div className='absolute inset-0 flex items-center justify-center bg-black/40'>
+          <div className='h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-cyan-400' />
         </div>
       )}
     </div>

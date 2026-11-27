@@ -4,25 +4,25 @@ export interface ReleaseAsset {
 }
 
 export function extractSemverLikeVersion(input: string): string | null {
-  const trimmed = (input || "").trim()
+  const trimmed = (input || '').trim()
   if (!trimmed) return null
 
   const match = /v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/.exec(trimmed)
   if (!match) return null
 
-  return match[0].replace(/^v/, "")
+  return match[0].replace(/^v/, '')
 }
 
 function getVersionParts(version: string): {
   numeric: number[]
   pre: string | null
 } {
-  const [v, ...preParts] = version.split("-")
+  const [v, ...preParts] = version.split('-')
   const numeric = v
-    .replace(/^v/, "")
-    .split(".")
+    .replace(/^v/, '')
+    .split('.')
     .map((part) => parseInt(part, 10) || 0)
-  const pre = preParts.length > 0 ? preParts.join("-") : null
+  const pre = preParts.length > 0 ? preParts.join('-') : null
   return { numeric, pre }
 }
 
@@ -42,8 +42,8 @@ export function compareVersions(a: string, b: string): number {
   if (partsA.pre && !partsB.pre) return -1
 
   if (partsA.pre && partsB.pre) {
-    const segA = partsA.pre.split(".")
-    const segB = partsB.pre.split(".")
+    const segA = partsA.pre.split('.')
+    const segB = partsB.pre.split('.')
     const maxLen = Math.max(segA.length, segB.length)
 
     for (let i = 0; i < maxLen; i++) {
@@ -75,12 +75,12 @@ export function compareVersions(a: string, b: string): number {
 
 export function getDownloadUrlForPlatform(
   assets: ReleaseAsset[],
-  platform: NodeJS.Platform = process.platform,
+  platform: NodeJS.Platform = process.platform
 ): string | null {
   const patterns: Record<NodeJS.Platform | string, RegExp[]> = {
     win32: [/\.exe$/i, /\.msi$/i, /portable.*\.exe$/i],
     darwin: [/\.dmg$/i, /\.pkg$/i],
-    linux: [/\.AppImage$/i, /\.deb$/i, /\.rpm$/i],
+    linux: [/\.AppImage$/i, /\.deb$/i, /\.rpm$/i]
   }
 
   const platformPatterns = patterns[platform] || []
@@ -95,29 +95,29 @@ export function getDownloadUrlForPlatform(
   return null
 }
 
-export const FACENOX_DOWNLOAD_PAGE = "https://facenox.com/download"
+export const FACENOX_DOWNLOAD_PAGE = 'https://facenox.com/download'
 
 const officialLinks = new Set([
   FACENOX_DOWNLOAD_PAGE,
-  "https://github.com/facenox/facenox",
-  "https://github.com/facenox/facenox#readme",
-  "https://github.com/facenox/facenox/issues",
-  "https://github.com/facenox/facenox/releases",
-  "https://github.com/facenox/facenox/releases/latest",
-  "https://github.com/facenox/facenox/blob/main/docs/PRIVACY.md",
-  "https://www.gnu.org/licenses/agpl-3.0.html",
+  'https://github.com/facenox/facenox',
+  'https://github.com/facenox/facenox#readme',
+  'https://github.com/facenox/facenox/issues',
+  'https://github.com/facenox/facenox/releases',
+  'https://github.com/facenox/facenox/releases/latest',
+  'https://github.com/facenox/facenox/blob/main/docs/PRIVACY.md',
+  'https://www.gnu.org/licenses/agpl-3.0.html'
 ])
 
 export function safeUpdaterLink(input: string | undefined): string {
   if (!input) return FACENOX_DOWNLOAD_PAGE
   try {
     const url = new URL(input)
-    if (url.username || url.password || url.protocol !== "https:" || url.search || url.port) {
+    if (url.username || url.password || url.protocol !== 'https:' || url.search || url.port) {
       return FACENOX_DOWNLOAD_PAGE
     }
     if (officialLinks.has(url.href)) return url.href
     if (
-      url.hostname === "github.com" &&
+      url.hostname === 'github.com' &&
       !url.hash &&
       /^\/facenox\/facenox\/releases\/tag\/[A-Za-z0-9._%+-]+$/.test(url.pathname)
     ) {

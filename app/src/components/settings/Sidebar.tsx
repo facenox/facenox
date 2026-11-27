@@ -1,12 +1,12 @@
-import React from "react"
-import { motion } from "framer-motion"
-import { Plus } from "lucide-react"
-import { Dropdown, Tooltip } from "@/components/shared"
-import { generateGroupDisplayNames } from "@/utils"
-import type { AttendanceGroup } from "@/types/recognition"
-import type { GroupSection } from "@/components/group/types"
-import { updaterService } from "@/services"
-import { useCloudSyncConfig } from "@/services/cloudSyncState"
+import React from 'react'
+import { motion } from 'framer-motion'
+import { Plus } from 'lucide-react'
+import { Dropdown, Tooltip } from '@/components/shared'
+import { generateGroupDisplayNames } from '@/utils'
+import type { AttendanceGroup } from '@/types/recognition'
+import type { GroupSection } from '@/components/group/types'
+import { updaterService } from '@/services'
+import { useCloudSyncConfig } from '@/services/cloudSyncState'
 
 interface SidebarProps {
   activeSection: string
@@ -18,10 +18,7 @@ interface SidebarProps {
   onGroupSelect?: (group: AttendanceGroup) => void
   onCreateGroup: () => void
   setTriggerCreateGroup: (trigger: number) => void
-  setEnrollmentState: (
-    source: "upload" | "camera" | null,
-    mode: "single" | "bulk" | "queue" | null,
-  ) => void
+  setEnrollmentState: (source: 'upload' | 'camera' | null, mode: 'single' | 'bulk' | 'queue' | null) => void
   sections: {
     id: string
     label: string
@@ -46,10 +43,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setTriggerCreateGroup,
   setEnrollmentState,
   sections,
-  groupSections,
+  groupSections
 }) => {
   const { config: syncStatus, status: cloudConfigStatus } = useCloudSyncConfig()
-  const [appVersion, setAppVersion] = React.useState<string>("")
+  const [appVersion, setAppVersion] = React.useState<string>('')
 
   React.useEffect(() => {
     updaterService
@@ -59,15 +56,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [])
 
   return (
-    <div className="settings-sidebar flex w-[200px] shrink-0 flex-col border-r border-white/5 bg-[var(--bg-primary)] sm:w-[220px] lg:w-[240px]">
+    <div className='settings-sidebar flex w-[200px] shrink-0 flex-col border-r border-white/5 bg-[var(--bg-primary)] sm:w-[220px] lg:w-[240px]'>
       {/* Workspace Switcher Header */}
-      <div className="pt-6 pr-[16px] pb-2 pl-[16px]">
-        <div className="flex items-center gap-1">
-          <div className="min-w-0 flex-1" key={dropdownGroups.length}>
+      <div className='pt-6 pr-[16px] pb-2 pl-[16px]'>
+        <div className='flex items-center gap-1'>
+          <div className='min-w-0 flex-1' key={dropdownGroups.length}>
             <Dropdown
               options={generateGroupDisplayNames(dropdownGroups).map((group) => ({
                 value: group.id,
-                label: group.displayName,
+                label: group.displayName
               }))}
               value={dropdownValue}
               onChange={(groupId) => {
@@ -76,88 +73,80 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   if (group && onGroupSelect) onGroupSelect(group)
                 } else {
                   window.dispatchEvent(
-                    new CustomEvent("selectGroup", {
-                      detail: { group: null },
-                    }),
+                    new CustomEvent('selectGroup', {
+                      detail: { group: null }
+                    })
                   )
                 }
               }}
-              placeholder={dropdownGroups.length === 0 ? "No groups yet" : "Select group…"}
+              placeholder={dropdownGroups.length === 0 ? 'No groups yet' : 'Select group…'}
               disabled={dropdownGroups.length === 0}
-              emptyMessage="No groups available"
+              emptyMessage='No groups available'
               maxHeight={256}
-              buttonClassName="!h-8 !w-full !rounded-md !border-white/5 !bg-white/5 !px-3.5 !text-xs !font-bold !tracking-wide !text-white/80 !transition-colors hover:!bg-white/[0.08] hover:!border-white/10 focus:!border-white/20 dropdown-trigger !shadow-none"
-              optionClassName="text-xs py-1.5"
+              buttonClassName='!h-8 !w-full !rounded-md !border-white/5 !bg-white/5 !px-3.5 !text-xs !font-bold !tracking-wide !text-white/80 !transition-colors hover:!bg-white/[0.08] hover:!border-white/10 focus:!border-white/20 dropdown-trigger !shadow-none'
+              optionClassName='text-xs py-1.5'
               showPlaceholderOption={false}
               menuWidth={220}
-              align="center"
-              alignToSelector=".settings-sidebar"
+              align='center'
+              alignToSelector='.settings-sidebar'
             />
           </div>
-          <Tooltip content="Create group" position="bottom">
+          <Tooltip content='Create group' position='bottom'>
             <button
-              aria-label="Create group"
+              aria-label='Create group'
               onClick={onCreateGroup}
               disabled={
-                cloudConfigStatus !== "ready" ||
+                cloudConfigStatus !== 'ready' ||
                 syncStatus?.policyReady === false ||
                 !syncStatus ||
                 (syncStatus.connected && syncStatus.allowKioskDirectoryManagement === false)
               }
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/5 bg-white/5 text-white/65 transition-all hover:border-white/10 hover:bg-white/[0.08] hover:text-white active:scale-95">
-              <Plus className="size-3" />
+              className='flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/5 bg-white/5 text-white/65 transition-all hover:border-white/10 hover:bg-white/[0.08] hover:text-white active:scale-95'>
+              <Plus className='size-3' />
             </button>
           </Tooltip>
         </div>
       </div>
 
-      <div className="hover-scrollbar settings-sidebar-scroll flex-1 space-y-6 overflow-y-auto pt-4 pr-[6px] pb-6 pl-[16px]">
+      <div className='hover-scrollbar settings-sidebar-scroll flex-1 space-y-6 overflow-y-auto pt-4 pr-[6px] pb-6 pl-[16px]'>
         <section>
-          <div className="mb-3 px-3">
-            <h2 className="text-[10px] font-bold tracking-[0.15em] text-white/55 uppercase">
-              Group
-            </h2>
+          <div className='mb-3 px-3'>
+            <h2 className='text-[10px] font-bold tracking-[0.15em] text-white/55 uppercase'>Group</h2>
           </div>
 
-          <div className="space-y-3">
-            <div
-              className={`space-y-1 ${!dropdownValue ? "pointer-events-none opacity-40 grayscale" : ""}`}>
+          <div className='space-y-3'>
+            <div className={`space-y-1 ${!dropdownValue ? 'pointer-events-none opacity-40 grayscale' : ''}`}>
               {groupSections.map((subsection) => {
-                const isActive =
-                  !!dropdownValue &&
-                  activeSection === "group" &&
-                  groupInitialSection === subsection.id
+                const isActive = !!dropdownValue && activeSection === 'group' && groupInitialSection === subsection.id
                 return (
                   <button
                     key={subsection.id}
                     disabled={!dropdownValue}
                     onClick={() => {
-                      setActiveSection("group")
+                      setActiveSection('group')
                       setGroupInitialSection(subsection.id)
                       setEnrollmentState(null, null)
                       setTriggerCreateGroup(0)
                     }}
                     className={`group/item relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-all duration-150 ${
                       isActive ?
-                        "bg-gradient-to-r from-cyan-500/25 to-transparent font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)]"
-                      : "font-medium text-white/70 hover:bg-white/5 hover:text-white"
+                        'bg-gradient-to-r from-cyan-500/25 to-transparent font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)]'
+                      : 'font-medium text-white/70 hover:bg-white/5 hover:text-white'
                     }`}>
                     {isActive && (
                       <motion.div
-                        layoutId="active-settings-sidebar-pill"
-                        className="absolute left-[-16px] h-5 w-[3px] rounded-r-[2px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        layoutId='active-settings-sidebar-pill'
+                        className='absolute left-[-16px] h-5 w-[3px] rounded-r-[2px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]'
+                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                       />
                     )}
                     <subsection.icon
                       className={`size-4 shrink-0 transition-all duration-150 ${
-                        isActive ?
-                          "scale-[1.06] text-cyan-400"
-                        : "text-white/55 group-hover/item:text-white/75"
+                        isActive ? 'scale-[1.06] text-cyan-400' : 'text-white/55 group-hover/item:text-white/75'
                       }`}
-                      fill={isActive ? "rgba(34,211,238,0.22)" : "none"}
+                      fill={isActive ? 'rgba(34,211,238,0.22)' : 'none'}
                     />
-                    <span className="flex-1 truncate">{subsection.label}</span>
+                    <span className='flex-1 truncate'>{subsection.label}</span>
                   </button>
                 )
               })}
@@ -165,20 +154,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </section>
 
-        {(["Manage", "Settings"] as const).map((category) => (
+        {(['Manage', 'Settings'] as const).map((category) => (
           <section key={category}>
-            <div className="mb-3 px-3">
-              <h2 className="text-[10px] font-bold tracking-[0.15em] text-white/55 uppercase">
-                {category}
-              </h2>
+            <div className='mb-3 px-3'>
+              <h2 className='text-[10px] font-bold tracking-[0.15em] text-white/55 uppercase'>{category}</h2>
             </div>
 
-            <div className="space-y-1">
+            <div className='space-y-1'>
               {sections
                 .filter((section) =>
-                  category === "Manage" ?
-                    section.id === "groups" || section.id === "remote-sync"
-                  : section.id !== "groups" && section.id !== "remote-sync",
+                  category === 'Manage' ?
+                    section.id === 'groups' || section.id === 'remote-sync'
+                  : section.id !== 'groups' && section.id !== 'remote-sync'
                 )
                 .map((section) => {
                   const isActive = activeSection === section.id
@@ -188,26 +175,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       onClick={() => setActiveSection(section.id)}
                       className={`group/item relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-all duration-150 ${
                         isActive ?
-                          "bg-gradient-to-r from-cyan-500/25 to-transparent font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)]"
-                        : "font-medium text-white/70 hover:bg-white/5 hover:text-white"
+                          'bg-gradient-to-r from-cyan-500/25 to-transparent font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)]'
+                        : 'font-medium text-white/70 hover:bg-white/5 hover:text-white'
                       }`}>
                       {isActive && (
                         <motion.div
-                          layoutId="active-settings-sidebar-pill"
-                          className="absolute left-[-16px] h-5 w-[3px] rounded-r-[2px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
-                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                          layoutId='active-settings-sidebar-pill'
+                          className='absolute left-[-16px] h-5 w-[3px] rounded-r-[2px] bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]'
+                          transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                         />
                       )}
                       <section.icon
                         className={`size-4 shrink-0 transition-all duration-150 ${
-                          isActive ? "scale-[1.06] text-cyan-400"
-                          : section.id === "remote-sync" && syncStatus?.connected ?
-                            "text-emerald-400"
-                          : "text-white/55 group-hover/item:text-white/75"
+                          isActive ? 'scale-[1.06] text-cyan-400'
+                          : section.id === 'remote-sync' && syncStatus?.connected ? 'text-emerald-400'
+                          : 'text-white/55 group-hover/item:text-white/75'
                         }`}
-                        fill={isActive ? "rgba(34,211,238,0.22)" : "none"}
+                        fill={isActive ? 'rgba(34,211,238,0.22)' : 'none'}
                       />
-                      <span className="flex-1 truncate">{section.label}</span>
+                      <span className='flex-1 truncate'>{section.label}</span>
                     </button>
                   )
                 })}
@@ -217,14 +203,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {appVersion && (
-        <div className="shrink-0 px-4 py-3">
-          <div className="flex items-center justify-center gap-1.5 opacity-35 select-none">
+        <div className='shrink-0 px-4 py-3'>
+          <div className='flex items-center justify-center gap-1.5 opacity-35 select-none'>
             <img
-              src="./icons/logo-transparent.png"
-              alt="Facenox"
-              className="pointer-events-none h-3.5 w-3.5 object-contain"
+              src='./icons/logo-transparent.png'
+              alt='Facenox'
+              className='pointer-events-none h-3.5 w-3.5 object-contain'
             />
-            <span className="font-mono text-[10px] tracking-wide text-white">v{appVersion}</span>
+            <span className='font-mono text-[10px] tracking-wide text-white'>v{appVersion}</span>
           </div>
         </div>
       )}

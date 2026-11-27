@@ -1,14 +1,14 @@
-import { memo, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import type { RefObject } from "react"
-import { SlidersHorizontal, Video } from "lucide-react"
-import { Spinner } from "@/components/common"
-import { Tooltip } from "@/components/shared"
-import { ActiveHeadTurnGuide } from "./ActiveHeadTurnGuide"
-import { useDetectionStore, useUIStore } from "@/components/main/stores"
-import { ALL_GROUPS_ID } from "@/components/main/hooks/useAttendanceGroups"
-import type { QuickSettings } from "@/components/settings"
-import type { AttendanceGroup } from "@/types/recognition"
+import { memo, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import type { RefObject } from 'react'
+import { SlidersHorizontal, Video } from 'lucide-react'
+import { Spinner } from '@/components/common'
+import { Tooltip } from '@/components/shared'
+import { ActiveHeadTurnGuide } from './ActiveHeadTurnGuide'
+import { useDetectionStore, useUIStore } from '@/components/main/stores'
+import { ALL_GROUPS_ID } from '@/components/main/hooks/useAttendanceGroups'
+import type { QuickSettings } from '@/components/settings'
+import type { AttendanceGroup } from '@/types/recognition'
 
 interface VideoCanvasProps {
   videoRef: RefObject<HTMLVideoElement | null>
@@ -50,7 +50,7 @@ export const VideoCanvas = memo(function VideoCanvas({
   classStartTime = null,
   currentGroup = null,
   enableSpoofDetection = false,
-  maxRecognitionFacesPerFrame = 5,
+  maxRecognitionFacesPerFrame = 5
 }: VideoCanvasProps) {
   const [showSettings, setShowSettings] = useState(false)
   const currentDetections = useDetectionStore((s) => s.currentDetections)
@@ -62,16 +62,15 @@ export const VideoCanvas = memo(function VideoCanvas({
     currentDetections?.faces?.some(
       (f) =>
         !f.liveness?.is_real &&
-        (f.overlayGuidance?.subLabel === "Slowly turn head" ||
-          (f.liveness?.status === "candidate_real" &&
-            f.liveness?.message?.toLowerCase().includes("turn"))),
-    ),
+        (f.overlayGuidance?.subLabel === 'Slowly turn head' ||
+          (f.liveness?.status === 'candidate_real' && f.liveness?.message?.toLowerCase().includes('turn')))
+    )
   )
 
   const isTimeOutdated = (): boolean => {
     try {
       if (!lateTrackingEnabled || !classStartTime) return false
-      const [hours, minutes] = classStartTime.split(":").map(Number)
+      const [hours, minutes] = classStartTime.split(':').map(Number)
       const now = new Date()
       const setTime = new Date()
       setTime.setHours(hours, minutes, 0, 0)
@@ -87,66 +86,63 @@ export const VideoCanvas = memo(function VideoCanvas({
   const outdated = isTimeOutdated()
 
   const format12hTime = (timeStr?: string | null) => {
-    if (!timeStr) return "08:00 AM"
+    if (!timeStr) return '08:00 AM'
     try {
-      const [hours, minutes] = timeStr.split(":").map(Number)
-      const period = hours >= 12 ? "PM" : "AM"
+      const [hours, minutes] = timeStr.split(':').map(Number)
+      const period = hours >= 12 ? 'PM' : 'AM'
       const displayHours = hours % 12 || 12
-      return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`
+      return `${displayHours}:${String(minutes).padStart(2, '0')} ${period}`
     } catch {
       return timeStr
     }
   }
 
-  const isAllGroups = currentGroup?.id === ALL_GROUPS_ID || currentGroup?.id === "all"
+  const isAllGroups = currentGroup?.id === ALL_GROUPS_ID || currentGroup?.id === 'all'
   const attendanceMode =
-    currentGroup?.settings?.attendance_mode ??
-    (currentGroup?.settings?.track_checkout ? "work_hours" : "attendance")
+    currentGroup?.settings?.attendance_mode ?? (currentGroup?.settings?.track_checkout ? 'work_hours' : 'attendance')
   const attendanceModeLabel =
-    attendanceMode === "work_hours" ? "Time in & time out"
-    : attendanceMode === "visits" ? "Visits"
-    : "Attendance"
+    attendanceMode === 'work_hours' ? 'Time in & time out'
+    : attendanceMode === 'visits' ? 'Visits'
+    : 'Attendance'
 
   const tooltipContent =
     currentGroup ?
-      <div className="flex min-w-[250px] flex-col text-[11px] select-none">
+      <div className='flex min-w-[250px] flex-col text-[11px] select-none'>
         {/* Header */}
-        <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <SlidersHorizontal className="size-3 text-cyan-400" />
-            <span className="text-[10px] font-bold tracking-wider text-white/50 uppercase">
-              Active Rules
-            </span>
+        <div className='mb-2 flex items-center justify-between'>
+          <div className='flex items-center gap-1.5'>
+            <SlidersHorizontal className='size-3 text-cyan-400' />
+            <span className='text-[10px] font-bold tracking-wider text-white/50 uppercase'>Active Rules</span>
           </div>
-          <span className="max-w-[120px] truncate rounded bg-white/5 px-1.5 py-0.5 text-[9.5px] font-medium text-white/50">
-            {isAllGroups ? "All Groups" : currentGroup.name}
+          <span className='max-w-[120px] truncate rounded bg-white/5 px-1.5 py-0.5 text-[9.5px] font-medium text-white/50'>
+            {isAllGroups ? 'All Groups' : currentGroup.name}
           </span>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        <div className='flex flex-col gap-1.5'>
           {/* 1. Late Tracking */}
-          <div className="flex items-center justify-between gap-4 py-0.5">
-            <span className="text-white/60">Late tracking</span>
-            <span className="text-right font-medium">
+          <div className='flex items-center justify-between gap-4 py-0.5'>
+            <span className='text-white/60'>Late tracking</span>
+            <span className='text-right font-medium'>
               {isAllGroups ?
-                <span className="text-white/70">Per-group</span>
+                <span className='text-white/70'>Per-group</span>
               : currentGroup.settings?.late_threshold_enabled ?
-                <span className="font-mono text-[10.5px] text-white/90">
+                <span className='font-mono text-[10.5px] text-white/90'>
                   {(currentGroup.settings?.late_threshold_minutes ?? 0) > 0 ?
                     `${format12hTime(currentGroup.settings?.class_start_time)} (+${currentGroup.settings?.late_threshold_minutes}m)`
                   : `${format12hTime(currentGroup.settings?.class_start_time)} (Exact)`}
                 </span>
-              : <span className="text-white/40">Disabled</span>}
+              : <span className='text-white/40'>Disabled</span>}
             </span>
           </div>
 
           {/* 2. Attendance mode */}
-          <div className="flex items-center justify-between gap-4 py-0.5">
-            <span className="text-white/60">Mode</span>
-            <span className="text-right font-medium">
+          <div className='flex items-center justify-between gap-4 py-0.5'>
+            <span className='text-white/60'>Mode</span>
+            <span className='text-right font-medium'>
               {isAllGroups ?
-                <span className="text-white/70">Per-group</span>
-              : <span className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-semibold text-white/85">
+                <span className='text-white/70'>Per-group</span>
+              : <span className='rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-semibold text-white/85'>
                   {attendanceModeLabel}
                 </span>
               }
@@ -154,57 +150,55 @@ export const VideoCanvas = memo(function VideoCanvas({
           </div>
 
           {/* 3. Mode-specific timing */}
-          <div className="flex items-center justify-between gap-4 py-0.5">
-            <span className="text-white/60">
+          <div className='flex items-center justify-between gap-4 py-0.5'>
+            <span className='text-white/60'>
               {isAllGroups ?
-                "Time in & time out"
-              : attendanceMode === "visits" ?
-                "Min. visit duration"
-              : "Time in & time out"}
+                'Time in & time out'
+              : attendanceMode === 'visits' ?
+                'Min. visit duration'
+              : 'Time in & time out'}
             </span>
-            <span className="text-right font-medium">
+            <span className='text-right font-medium'>
               {isAllGroups ?
-                <span className="text-white/70">Per-group</span>
-              : attendanceMode === "work_hours" ?
-                <span className="font-mono text-[10.5px] text-white/90">
+                <span className='text-white/70'>Per-group</span>
+              : attendanceMode === 'work_hours' ?
+                <span className='font-mono text-[10.5px] text-white/90'>
                   {currentGroup.settings?.class_end_time ?
                     `Enabled (${format12hTime(currentGroup.settings.class_end_time)})`
-                  : "Enabled"}
+                  : 'Enabled'}
                 </span>
-              : attendanceMode === "visits" ?
-                <span className="font-mono text-[10.5px] text-white/85">
+              : attendanceMode === 'visits' ?
+                <span className='font-mono text-[10.5px] text-white/85'>
                   {currentGroup.settings?.min_checkout_delay_minutes ?? 15}m minimum
                 </span>
-              : <span className="text-white/40">Not used</span>}
+              : <span className='text-white/40'>Not used</span>}
             </span>
           </div>
 
-          {attendanceMode === "work_hours" && !isAllGroups && (
-            <div className="flex items-center justify-between gap-4 py-0.5">
-              <span className="text-white/60">Min. before time out</span>
-              <span className="text-right font-mono text-[10.5px] font-medium text-white/85">
+          {attendanceMode === 'work_hours' && !isAllGroups && (
+            <div className='flex items-center justify-between gap-4 py-0.5'>
+              <span className='text-white/60'>Min. before time out</span>
+              <span className='text-right font-mono text-[10.5px] font-medium text-white/85'>
                 {currentGroup.settings?.min_checkout_delay_minutes ?? 15}m
               </span>
             </div>
           )}
 
           {/* 4. Recognition Limit */}
-          <div className="flex items-center justify-between gap-4 py-0.5">
-            <span className="text-white/60">Face limit</span>
-            <span className="text-right font-mono text-[10.5px] font-medium text-white/85">
-              {maxRecognitionFacesPerFrame > 0 ?
-                `${maxRecognitionFacesPerFrame} faces`
-              : "Unlimited"}
+          <div className='flex items-center justify-between gap-4 py-0.5'>
+            <span className='text-white/60'>Face limit</span>
+            <span className='text-right font-mono text-[10.5px] font-medium text-white/85'>
+              {maxRecognitionFacesPerFrame > 0 ? `${maxRecognitionFacesPerFrame} faces` : 'Unlimited'}
             </span>
           </div>
 
           {/* 5. Anti-Spoofing */}
-          <div className="flex items-center justify-between gap-4 py-0.5">
-            <span className="text-white/60">Anti-spoofing</span>
-            <span className="text-right font-medium">
+          <div className='flex items-center justify-between gap-4 py-0.5'>
+            <span className='text-white/60'>Anti-spoofing</span>
+            <span className='text-right font-medium'>
               {enableSpoofDetection ?
-                <span className="text-[10.5px] font-semibold text-emerald-400">Enabled</span>
-              : <span className="text-white/40">Disabled</span>}
+                <span className='text-[10.5px] font-semibold text-emerald-400'>Enabled</span>
+              : <span className='text-white/40'>Disabled</span>}
             </span>
           </div>
         </div>
@@ -216,74 +210,74 @@ export const VideoCanvas = memo(function VideoCanvas({
     : !isShellReady || isGroupDataLoading ? null
     : hasSelectedGroup ?
       !hasMembers ?
-        isAllGroups ? "Add and enroll at least one member to start scanning."
-        : "Add and enroll at least one member in this group to start scanning."
+        isAllGroups ? 'Add and enroll at least one member to start scanning.'
+        : 'Add and enroll at least one member in this group to start scanning.'
       : !hasEnrolledFaces ?
-        isAllGroups ? "Enroll at least one member to start scanning."
-        : "Enroll at least one member in this group to start scanning."
+        isAllGroups ? 'Enroll at least one member to start scanning.'
+        : 'Enroll at least one member in this group to start scanning.'
       : null
-    : hasGroups ? "Select a group to start scanning."
-    : "Create a group to start scanning."
+    : hasGroups ? 'Select a group to start scanning.'
+    : 'Create a group to start scanning.'
 
   return (
     <div
-      role="region"
-      aria-label="Live camera feed and face recognition canvas"
-      className="relative h-full min-h-65 w-full overflow-hidden rounded-lg border border-white/10 bg-[var(--bg-canvas)]">
+      role='region'
+      aria-label='Live camera feed and face recognition canvas'
+      className='relative h-full min-h-65 w-full overflow-hidden rounded-lg border border-white/10 bg-[var(--bg-canvas)]'>
       <video
         ref={videoRef}
-        aria-label="Local camera capture feed"
+        aria-label='Local camera capture feed'
         className={`absolute inset-0 h-full w-full bg-[var(--bg-canvas)] ${
-          quickSettings.cameraFitCover ? "object-cover" : "object-contain"
+          quickSettings.cameraFitCover ? 'object-cover' : 'object-contain'
         } transition-opacity duration-300 ${
-          isStreaming && !isVideoLoading ? "opacity-100" : "opacity-0"
-        } ${quickSettings.cameraMirrored ? "scale-x-[-1]" : ""}`}
+          isStreaming && !isVideoLoading ? 'opacity-100' : 'opacity-0'
+        } ${quickSettings.cameraMirrored ? 'scale-x-[-1]' : ''}`}
         playsInline
         muted
       />
       <canvas
         ref={overlayCanvasRef}
-        role="img"
-        aria-label="Face detection bounding box and liveness verification overlay"
-        className="pointer-events-none absolute top-0 left-0 z-10 h-full w-full"
+        role='img'
+        aria-label='Face detection bounding box and liveness verification overlay'
+        className='pointer-events-none absolute top-0 left-0 z-10 h-full w-full'
         style={{
-          mixBlendMode: "normal",
+          mixBlendMode: 'normal'
         }}
       />
       <canvas
         ref={canvasRef}
-        aria-hidden="true"
-        className="pointer-events-none absolute top-0 left-0 z-0 h-full w-full opacity-0"
+        aria-hidden='true'
+        className='pointer-events-none absolute top-0 left-0 z-0 h-full w-full opacity-0'
       />
 
       {/* 3D Head Turn Guidance Animation for Active Liveness Challenge */}
       <ActiveHeadTurnGuide active={isHeadTurnPromptActive} />
 
       {isStreaming && lateTrackingEnabled && (
-        <Tooltip content="Adjust scheduled start time" position="top">
+        <Tooltip content='Adjust scheduled start time' position='top'>
           <button
-            type="button"
-            onClick={() => requestOpenSettings("group", "settings")}
-            className="animate-in fade-in zoom-in-95 group absolute right-4 bottom-4 z-50 flex cursor-pointer items-center gap-3.5 rounded-lg border border-white/10 bg-[#0f1011]/85 px-3.5 py-1.5 shadow-2xl shadow-black/40 backdrop-blur-md transition-all hover:border-white/20 hover:bg-[#141518]/95 active:scale-95">
-            <div className="flex flex-col items-start text-left">
-              <span className="text-[9px] font-bold tracking-wider text-white/45 uppercase transition-colors group-hover:text-white/65">
+            type='button'
+            onClick={() => requestOpenSettings('group', 'settings')}
+            className='animate-in fade-in zoom-in-95 group absolute right-4 bottom-4 z-50 flex cursor-pointer items-center gap-3.5 rounded-lg border border-white/10 bg-[#0f1011]/85 px-3.5 py-1.5 shadow-2xl shadow-black/40 backdrop-blur-md transition-all hover:border-white/20 hover:bg-[#141518]/95 active:scale-95'>
+            <div className='flex flex-col items-start text-left'>
+              <span className='text-[9px] font-bold tracking-wider text-white/45 uppercase transition-colors group-hover:text-white/65'>
                 Start time
               </span>
               <span
-                className={`font-mono text-xs font-bold ${outdated ? "text-amber-400/90 group-hover:text-amber-300" : "text-cyan-400/90 group-hover:text-cyan-300"}`}>
+                className={`font-mono text-xs font-bold ${outdated ? 'text-amber-400/90 group-hover:text-amber-300' : 'text-cyan-400/90 group-hover:text-cyan-300'}`}>
                 {classStartTime ?
                   (() => {
-                    const [hours, minutes] = classStartTime.split(":").map(Number)
-                    const period = hours >= 12 ? "PM" : "AM"
+                    const [hours, minutes] = classStartTime.split(':').map(Number)
+                    const period = hours >= 12 ? 'PM' : 'AM'
                     const displayHours = hours % 12 || 12
-                    return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`
+                    return `${displayHours}:${String(minutes).padStart(2, '0')} ${period}`
                   })()
-                : "08:00 AM"}
+                : '08:00 AM'}
               </span>
             </div>
             {outdated && (
-              <div className="flex items-center">
-                <span className="rounded bg-amber-500/15 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-amber-400 uppercase transition-colors group-hover:bg-amber-500/25">
+              <div className='flex items-center'>
+                <span className='rounded bg-amber-500/15 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-amber-400 uppercase transition-colors group-hover:bg-amber-500/25'>
                   Outdated
                 </span>
               </div>
@@ -295,35 +289,35 @@ export const VideoCanvas = memo(function VideoCanvas({
       <AnimatePresence>
         {(!isStreaming || isVideoLoading) && (
           <motion.div
-            key="placeholder-overlay"
+            key='placeholder-overlay'
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="pointer-events-none absolute inset-0 z-15 flex items-center justify-center bg-[var(--bg-canvas)]">
-            <AnimatePresence mode="wait">
+            className='pointer-events-none absolute inset-0 z-15 flex items-center justify-center bg-[var(--bg-canvas)]'>
+            <AnimatePresence mode='wait'>
               {isVideoLoading ?
                 <motion.div
-                  key="canvas-loader"
+                  key='canvas-loader'
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.15 }}
-                  className="flex flex-col items-center justify-center">
-                  <Spinner size="lg" color="cyan" />
+                  className='flex flex-col items-center justify-center'>
+                  <Spinner size='lg' color='cyan' />
                 </motion.div>
               : <motion.div
-                  key="canvas-idle-state"
+                  key='canvas-idle-state'
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.15 }}
-                  className="relative flex flex-col items-center justify-center">
-                  <div className="flex h-16 w-16 items-center justify-center">
-                    <Video className="h-16 w-16 animate-pulse text-white/55" strokeWidth={1.5} />
+                  className='relative flex flex-col items-center justify-center'>
+                  <div className='flex h-16 w-16 items-center justify-center'>
+                    <Video className='h-16 w-16 animate-pulse text-white/55' strokeWidth={1.5} />
                   </div>
                   {emptyStateText && (
-                    <div className="absolute top-full left-1/2 mt-4 flex w-max max-w-xl -translate-x-1/2 flex-col items-center gap-3 px-6 text-center text-xs text-white/65">
-                      <p className="text-white/65">{emptyStateText}</p>
+                    <div className='absolute top-full left-1/2 mt-4 flex w-max max-w-xl -translate-x-1/2 flex-col items-center gap-3 px-6 text-center text-xs text-white/65'>
+                      <p className='text-white/65'>{emptyStateText}</p>
                     </div>
                   )}
                 </motion.div>
@@ -336,21 +330,21 @@ export const VideoCanvas = memo(function VideoCanvas({
       <AnimatePresence>
         {!isStreaming && currentGroup && tooltipContent && (
           <motion.div
-            key="settings-info-btn"
+            key='settings-info-btn'
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-4 right-4 z-50 h-7 w-7"
+            className='absolute top-4 right-4 z-50 h-7 w-7'
             onMouseEnter={() => setShowSettings(true)}
             onMouseLeave={() => setShowSettings(false)}>
             <div
               className={`flex h-full w-full cursor-help items-center justify-center rounded-lg transition-all duration-200 select-none ${
                 showSettings ?
-                  "bg-white/10 text-white backdrop-blur-md"
-                : "bg-black/25 text-white/40 backdrop-blur-sm hover:bg-white/10 hover:text-white/75"
+                  'bg-white/10 text-white backdrop-blur-md'
+                : 'bg-black/25 text-white/40 backdrop-blur-sm hover:bg-white/10 hover:text-white/75'
               }`}>
-              <SlidersHorizontal className="size-3.5" />
+              <SlidersHorizontal className='size-3.5' />
             </div>
 
             <AnimatePresence>
@@ -359,9 +353,9 @@ export const VideoCanvas = memo(function VideoCanvas({
                   initial={{ opacity: 0, y: 4, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 4, scale: 0.96 }}
-                  transition={{ duration: 0.12, ease: "easeOut" }}
-                  className="absolute top-full right-0 z-50 pt-2">
-                  <div className="rounded-xl border border-white/10 bg-[#121316]/95 p-3 shadow-2xl ring-1 ring-white/5 backdrop-blur-xl">
+                  transition={{ duration: 0.12, ease: 'easeOut' }}
+                  className='absolute top-full right-0 z-50 pt-2'>
+                  <div className='rounded-xl border border-white/10 bg-[#121316]/95 p-3 shadow-2xl ring-1 ring-white/5 backdrop-blur-xl'>
                     {tooltipContent}
                   </div>
                 </motion.div>
@@ -371,7 +365,7 @@ export const VideoCanvas = memo(function VideoCanvas({
         )}
       </AnimatePresence>
 
-      <canvas ref={canvasRef} className="hidden" />
+      <canvas ref={canvasRef} className='hidden' />
     </div>
   )
 })

@@ -1,5 +1,5 @@
-import { useRef, useCallback, useEffect } from "react"
-import { useDetectionStore } from "@/components/main/stores"
+import { useRef, useCallback, useEffect } from 'react'
+import { useDetectionStore } from '@/components/main/stores'
 
 export function useFaceTracking() {
   const { setTrackedFaces } = useDetectionStore()
@@ -10,7 +10,7 @@ export function useFaceTracking() {
         timestamp: number
         bbox: { x: number; y: number; width: number; height: number }
         confidence: number
-      }[],
+      }[]
     ) => number
   >(() => 1.0)
 
@@ -20,7 +20,7 @@ export function useFaceTracking() {
         timestamp: number
         bbox: { x: number; y: number; width: number; height: number }
         confidence: number
-      }[],
+      }[]
     ) => {
       if (history.length < 2) return 1.0
 
@@ -37,7 +37,7 @@ export function useFaceTracking() {
 
       return consistencyScore / (history.length - 1)
     },
-    [],
+    []
   )
 
   useEffect(() => {
@@ -73,6 +73,6 @@ export function useFaceTracking() {
 
   return {
     calculateAngleConsistencyRef,
-    calculateAngleConsistency,
+    calculateAngleConsistency
   }
 }

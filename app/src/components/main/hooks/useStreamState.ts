@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from "react"
-import { useCameraStore } from "@/components/main/stores"
+import { useCallback, useEffect } from 'react'
+import { useCameraStore } from '@/components/main/stores'
 
 interface UseStreamStateOptions {
   isProcessingRef: React.MutableRefObject<boolean>
@@ -21,7 +21,7 @@ export function useStreamState(options: UseStreamStateOptions) {
     isStartingRef,
     isStoppingRef,
     lastStartTimeRef,
-    lastStopTimeRef,
+    lastStopTimeRef
   } = options
   const { setIsStreaming } = useCameraStore()
 
@@ -50,7 +50,7 @@ export function useStreamState(options: UseStreamStateOptions) {
     isStartingRef,
     isStoppingRef,
     lastStartTimeRef,
-    lastStopTimeRef,
+    lastStopTimeRef
   ])
 
   useEffect(() => {

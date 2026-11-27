@@ -28,55 +28,55 @@
     </div>
 
     <script>
-      const logo = document.getElementById("logo")
+      const logo = document.getElementById('logo')
       if (logo) {
         logo.addEventListener(
-          "error",
+          'error',
           () => {
-            logo.src = "../../public/icons/logo-transparent.png"
+            logo.src = '../../public/icons/logo-transparent.png'
           },
-          { once: true },
+          { once: true }
         )
       }
 
-      const progressFill = document.getElementById("progress-fill")
-      const progressTrack = document.querySelector(".progress-track")
-      const container = document.querySelector(".splash-container")
-      const statusText = document.getElementById("status-text")
+      const progressFill = document.getElementById('progress-fill')
+      const progressTrack = document.querySelector('.progress-track')
+      const container = document.querySelector('.splash-container')
+      const statusText = document.getElementById('status-text')
 
       let currentProgress = 0
       let targetProgress = 0
       let animationFrameId = null
       let lastAnimationTime = performance.now()
       let hasShownProgress = false
-      let currentDetail = ""
+      let currentDetail = ''
 
       const fallbackStatus = (progress) => {
-        if (progress >= 100) return "Ready"
-        if (progress >= 85) return "Loading attendance data"
-        if (progress >= 60) return "Opening Facenox"
-        if (progress >= 20) return "Preparing face recognition"
-        if (progress > 0) return "Checking your data"
-        return "Starting"
+        if (progress >= 100) return 'Ready'
+        if (progress >= 85) return 'Loading attendance data'
+        if (progress >= 60) return 'Opening Facenox'
+        if (progress >= 20) return 'Preparing face recognition'
+        if (progress > 0) return 'Checking your data'
+        return 'Starting'
       }
 
       const updateStatusText = (progress) => {
         if (!statusText) return
 
         const isReady = progress >= 100
-        const text = isReady ? "Ready" : currentDetail || fallbackStatus(progress)
+        const text = isReady ? 'Ready' : currentDetail || fallbackStatus(progress)
         if (statusText.dataset.status !== text || statusText.dataset.ready !== String(isReady)) {
           statusText.dataset.status = text
           statusText.dataset.ready = String(isReady)
           statusText.replaceChildren(document.createTextNode(text))
 
           if (!isReady) {
-            const dots = document.createElement("span")
-            dots.className = "dots"
+            const dots = document.createElement('span')
+            dots.className = 'dots'
             for (let index = 0; index < 3; index += 1) {
-              const dot = document.createElement("span")
-              dot.className = "dot"
-              dot.textContent = "."
+              const dot = document.createElement('span')
+              dot.className = 'dot'
+              dot.textContent = '.'
               dots.appendChild(dot)
             }
             statusText.appendChild(dots)
@@ -127,17 +127,17 @@
       }
 
       const applyProgress = (progress, detail) => {
-        if (typeof detail === "string" && detail.trim()) {
+        if (typeof detail === 'string' && detail.trim()) {
           currentDetail = detail.trim()
-        } else if (typeof progress === "number") {
+        } else if (typeof progress === 'number') {
           currentDetail = fallbackStatus(progress)
         }
 
-        if (typeof progress === "number") {
+        if (typeof progress === 'number') {
           const clamped = Math.max(0, Math.min(100, progress))
           if (clamped > 0 && !hasShownProgress) {
             hasShownProgress = true
-            progressTrack?.classList.add("is-visible")
+            progressTrack?.classList.add('is-visible')
           }
           if (clamped === 100) {
             targetProgress = 100
@@ -149,7 +149,7 @@
             renderProgress()
 
             if (container) {
-              container.classList.add("is-success")
+              container.classList.add('is-success')
             }
 
             window.requestAnimationFrame(() => {
@@ -168,16 +168,16 @@
       renderProgress()
 
       setTimeout(() => {
-        const brandBlock = document.querySelector(".brand-block")
+        const brandBlock = document.querySelector('.brand-block')
         if (brandBlock) {
-          brandBlock.classList.add("is-visible")
+          brandBlock.classList.add('is-visible')
         }
       }, 180)
 
       if (!window.facenoxElectron) {
         window.facenoxElectron = {
           reportSplashRenderedProgress: (progress) => {
-            console.log("[Mock IPC] reportSplashRenderedProgress:", progress)
+            console.log('[Mock IPC] reportSplashRenderedProgress:', progress)
           },
           onSplashProgress: (callback) => {
             let current = 0
@@ -190,7 +190,7 @@
               }
             }, 180)
             return () => clearInterval(interval)
-          },
+          }
         }
       }
 

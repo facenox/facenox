@@ -1,19 +1,19 @@
-import { attendanceDateTimeToDate } from "@/utils/attendanceTime"
-import type { AttendanceSession } from "@/types/recognition"
+import { attendanceDateTimeToDate } from '@/utils/attendanceTime'
+import type { AttendanceSession } from '@/types/recognition'
 
-export type DepartureStatus = "early" | "on_schedule" | "after_schedule"
+export type DepartureStatus = 'early' | 'on_schedule' | 'after_schedule'
 
 export const DEPARTURE_LABELS: Record<DepartureStatus, string> = {
-  early: "Left early",
-  on_schedule: "On schedule",
-  after_schedule: "Left after schedule",
+  early: 'Left early',
+  on_schedule: 'On schedule',
+  after_schedule: 'Left after schedule'
 }
 
 // Both API exports (serialized instants) and report rows (Date objects) use
 // the same historical schedule calculation.
 export type DepartureSession = Pick<
   AttendanceSession,
-  "date" | "applied_schedule" | "check_in_time_timezone" | "check_out_time_timezone"
+  'date' | 'applied_schedule' | 'check_in_time_timezone' | 'check_out_time_timezone'
 > & {
   check_in_time?: Date | string | null
   check_out_time?: Date | string | null
@@ -21,7 +21,7 @@ export type DepartureSession = Pick<
 
 function timeMinutes(value: string | null | undefined): number | undefined {
   if (!value || !/^\d{2}:\d{2}$/.test(value)) return undefined
-  const [hours, minutes] = value.split(":").map(Number)
+  const [hours, minutes] = value.split(':').map(Number)
   return hours <= 23 && minutes <= 59 ? hours * 60 + minutes : undefined
 }
 
@@ -31,7 +31,7 @@ export function getDepartureStatus(
   checkOutTime: Date | string | undefined,
   scheduledEndTime: string | null | undefined,
   timeZone?: string | null,
-  scheduledStartTime?: string | null,
+  scheduledStartTime?: string | null
 ): DepartureStatus | undefined {
   if (!checkInTime || !checkOutTime || !scheduledEndTime) return undefined
 
@@ -56,11 +56,7 @@ export function getDepartureStatus(
     if (startMinutes !== undefined && endMinutes < startMinutes && checkIn > end) {
       const nextDate = new Date(`${date}T00:00:00Z`)
       nextDate.setUTCDate(nextDate.getUTCDate() + 1)
-      end = attendanceDateTimeToDate(
-        nextDate.toISOString().slice(0, 10),
-        scheduledEndTime,
-        timeZone,
-      )
+      end = attendanceDateTimeToDate(nextDate.toISOString().slice(0, 10), scheduledEndTime, timeZone)
     }
   } catch {
     return undefined
@@ -69,18 +65,18 @@ export function getDepartureStatus(
   const checkoutMinute = Math.floor(checkOut.getTime() / 60000)
   const endMinute = Math.floor(end.getTime() / 60000)
   return (
-    checkoutMinute < endMinute ? "early"
-    : checkoutMinute > endMinute ? "after_schedule"
-    : "on_schedule"
+    checkoutMinute < endMinute ? 'early'
+    : checkoutMinute > endMinute ? 'after_schedule'
+    : 'on_schedule'
   )
 }
 
 export function getSessionDepartureStatus(
   session: DepartureSession | null | undefined,
-  attendanceTimeZone?: string | null,
+  attendanceTimeZone?: string | null
 ): DepartureStatus | undefined {
   const schedule = session?.applied_schedule
-  if (!session || !schedule || schedule.attendance_mode !== "work_hours") return undefined
+  if (!session || !schedule || schedule.attendance_mode !== 'work_hours') return undefined
   if (timeMinutes(schedule.class_start_time) === undefined) return undefined
   return getDepartureStatus(
     session.date,
@@ -88,6 +84,6 @@ export function getSessionDepartureStatus(
     session.check_out_time ?? undefined,
     schedule.class_end_time,
     session.check_in_time_timezone || session.check_out_time_timezone || attendanceTimeZone,
-    schedule.class_start_time,
+    schedule.class_start_time
   )
 }

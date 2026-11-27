@@ -1,38 +1,38 @@
-import "@testing-library/jest-dom/vitest"
-import { cleanup } from "@testing-library/react"
-import { afterEach, beforeEach, vi } from "vitest"
-import { createElectronAPIMock, createFacenoxElectronMock } from "@/test/mocks/electron"
+import '@testing-library/jest-dom/vitest'
+import { cleanup } from '@testing-library/react'
+import { afterEach, beforeEach, vi } from 'vitest'
+import { createElectronAPIMock, createFacenoxElectronMock } from '@/test/mocks/electron'
 
 beforeEach(() => {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return
   }
 
-  Object.defineProperty(window, "electronAPI", {
+  Object.defineProperty(window, 'electronAPI', {
     configurable: true,
     writable: true,
-    value: createElectronAPIMock(),
+    value: createElectronAPIMock()
   })
 
-  Object.defineProperty(window, "facenoxElectron", {
+  Object.defineProperty(window, 'facenoxElectron', {
     configurable: true,
     writable: true,
-    value: createFacenoxElectronMock(),
+    value: createFacenoxElectronMock()
   })
 
-  Object.defineProperty(window, "scrollTo", {
+  Object.defineProperty(window, 'scrollTo', {
     configurable: true,
     writable: true,
-    value: vi.fn(),
+    value: vi.fn()
   })
 
-  Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+  Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
     configurable: true,
     writable: true,
-    value: vi.fn(() => null),
+    value: vi.fn(() => null)
   })
 
-  Object.defineProperty(window, "matchMedia", {
+  Object.defineProperty(window, 'matchMedia', {
     configurable: true,
     writable: true,
     value: vi.fn().mockImplementation((query: string) => ({
@@ -43,8 +43,8 @@ beforeEach(() => {
       removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
+      dispatchEvent: vi.fn()
+    }))
   })
 })
 

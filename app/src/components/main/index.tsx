@@ -1,7 +1,7 @@
-import { useEffect, useRef, useCallback } from "react"
-import { AnimatePresence } from "framer-motion"
-import { AlertTriangle } from "lucide-react"
-import { attendanceManager, WebSocketService } from "@/services"
+import { useEffect, useRef, useCallback } from 'react'
+import { AnimatePresence } from 'framer-motion'
+import { AlertTriangle } from 'lucide-react'
+import { attendanceManager, WebSocketService } from '@/services'
 import {
   useStreamState,
   useVideoStream,
@@ -11,32 +11,22 @@ import {
   useFaceTracking,
   useAttendanceGroups,
   useBackendService,
-  useCameraControl,
-} from "@/components/main/hooks"
-import {
-  cleanupStream,
-  cleanupVideo,
-  cleanupAnimationFrame,
-  resetLastDetectionRef,
-} from "@/components/main/utils"
-import {
-  useCameraStore,
-  useDetectionStore,
-  useAttendanceStore,
-  useUIStore,
-} from "@/components/main/stores"
-import { useGroupStore, useGroupUIStore } from "@/components/group/stores"
-import { FloatingAlert } from "@/components/common"
+  useCameraControl
+} from '@/components/main/hooks'
+import { cleanupStream, cleanupVideo, cleanupAnimationFrame, resetLastDetectionRef } from '@/components/main/utils'
+import { useCameraStore, useDetectionStore, useAttendanceStore, useUIStore } from '@/components/main/stores'
+import { useGroupStore, useGroupUIStore } from '@/components/group/stores'
+import { FloatingAlert } from '@/components/common'
 
-import { ControlBar } from "@/components/main/components/ControlBar"
-import { VideoCanvas } from "@/components/main/components/VideoCanvas"
-import { Sidebar } from "@/components/main/components/Sidebar"
-import { MainModals } from "@/components/main/components/MainModals"
-import { CooldownOverlay } from "@/components/main/components/CooldownOverlay"
-import type { DetectionResult } from "@/components/main/types"
-import { soundEffects } from "@/services/SoundEffectsService"
-import { consumeClockWarning, type ClockWarningDetail } from "@/services/clockWarnings"
-import { getScanReadiness } from "@/components/main/utils/scanReadiness"
+import { ControlBar } from '@/components/main/components/ControlBar'
+import { VideoCanvas } from '@/components/main/components/VideoCanvas'
+import { Sidebar } from '@/components/main/components/Sidebar'
+import { MainModals } from '@/components/main/components/MainModals'
+import { CooldownOverlay } from '@/components/main/components/CooldownOverlay'
+import type { DetectionResult } from '@/components/main/types'
+import { soundEffects } from '@/services/SoundEffectsService'
+import { consumeClockWarning, type ClockWarningDetail } from '@/services/clockWarnings'
+import { getScanReadiness } from '@/components/main/utils/scanReadiness'
 
 let globalStopCamera: ((forceCleanup: boolean) => void) | null = null
 
@@ -79,13 +69,13 @@ export default function Main() {
     setCameraActive,
     cameraDevices,
     selectedCamera,
-    setSelectedCamera,
+    setSelectedCamera
   } = useCameraStore()
 
   const {
     currentDetections,
     trackedFaces,
-    currentRecognitionResults: rawCurrentRecognitionResults,
+    currentRecognitionResults: rawCurrentRecognitionResults
   } = useDetectionStore()
 
   const {
@@ -105,7 +95,7 @@ export default function Main() {
     maxRecognitionFacesPerFrame,
     persistentCooldowns,
     timeHealth,
-    setTimeHealth,
+    setTimeHealth
   } = useAttendanceStore()
 
   const {
@@ -122,7 +112,7 @@ export default function Main() {
     audioSettings,
     setSidebarCollapsed,
     adminPinEnabled,
-    isHydrated,
+    isHydrated
   } = useUIStore()
   const showAddMemberModal = useGroupUIStore((state) => state.showAddMemberModal)
   const showEditMemberModal = useGroupUIStore((state) => state.showEditMemberModal)
@@ -145,16 +135,16 @@ export default function Main() {
       }, IDLE_MS)
     }
     resetTimer()
-    window.addEventListener("mousemove", resetTimer)
-    window.addEventListener("mousedown", resetTimer)
-    window.addEventListener("keydown", resetTimer)
-    window.addEventListener("touchstart", resetTimer)
+    window.addEventListener('mousemove', resetTimer)
+    window.addEventListener('mousedown', resetTimer)
+    window.addEventListener('keydown', resetTimer)
+    window.addEventListener('touchstart', resetTimer)
     return () => {
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current)
-      window.removeEventListener("mousemove", resetTimer)
-      window.removeEventListener("mousedown", resetTimer)
-      window.removeEventListener("keydown", resetTimer)
-      window.removeEventListener("touchstart", resetTimer)
+      window.removeEventListener('mousemove', resetTimer)
+      window.removeEventListener('mousedown', resetTimer)
+      window.removeEventListener('keydown', resetTimer)
+      window.removeEventListener('touchstart', resetTimer)
     }
   }, [showSettings, adminPinEnabled, setShowSettings])
 
@@ -196,7 +186,7 @@ export default function Main() {
     isStartingRef,
     isStoppingRef,
     lastStartTimeRef,
-    lastStopTimeRef,
+    lastStopTimeRef
   })
 
   const { calculateAngleConsistencyRef } = useFaceTracking()
@@ -208,7 +198,7 @@ export default function Main() {
     loadAttendanceDataRef,
     handleSelectGroup,
     confirmDeleteGroup,
-    cancelDeleteGroup,
+    cancelDeleteGroup
   } = useAttendanceGroups()
 
   const { captureFrame, getCameraDevices } = useVideoStream({
@@ -221,7 +211,7 @@ export default function Main() {
     isStartingRef,
     onDeviceDisconnected: useCallback(() => {
       globalStopCamera?.(false)
-    }, []),
+    }, [])
   })
 
   useFaceDetection({
@@ -236,13 +226,13 @@ export default function Main() {
     lastDetectionRef,
     processCurrentFrameRef,
     trackingSessionRef,
-    detectionInFlightRef,
+    detectionInFlightRef
   })
 
   const { performFaceRecognition } = useFaceRecognition({
     currentGroupRef,
     memberCacheRef,
-    calculateAngleConsistencyRef,
+    calculateAngleConsistencyRef
   })
 
   const { animate, resetOverlayRefs } = useOverlayRendering({
@@ -250,7 +240,7 @@ export default function Main() {
     overlayCanvasRef,
     animationFrameRef,
     videoRectRef,
-    lastVideoRectUpdateRef,
+    lastVideoRectUpdateRef
   })
 
   const stopCameraRef = useRef<((forceCleanup: boolean) => void) | null>(null)
@@ -274,7 +264,7 @@ export default function Main() {
     streamRef,
     videoRef,
     backendServiceReadyRef,
-    loadAttendanceDataRef,
+    loadAttendanceDataRef
   })
 
   const { startCamera, stopCamera } = useCameraControl({
@@ -307,7 +297,7 @@ export default function Main() {
     selectedCamera,
     cameraDevices,
     initializeWebSocket,
-    getCameraDevices,
+    getCameraDevices
   })
 
   useEffect(() => {
@@ -336,10 +326,10 @@ export default function Main() {
   const startCameraGuarded = useCallback(() => {
     const readiness = getScanReadiness(
       useAttendanceStore.getState(),
-      useCameraStore.getState().cameraDevices.length > 0,
+      useCameraStore.getState().cameraDevices.length > 0
     )
     if (!readiness.canStart) {
-      if (readiness.reason === "no_groups" || readiness.reason === "no_selection") {
+      if (readiness.reason === 'no_groups' || readiness.reason === 'no_selection') {
         requestGroupSelection()
       }
       return false
@@ -360,11 +350,11 @@ export default function Main() {
       setAttendanceGroups(
         exists ?
           attendanceGroups.map((group) => (group.id === updatedGroup.id ? updatedGroup : group))
-        : [...attendanceGroups, updatedGroup],
+        : [...attendanceGroups, updatedGroup]
       )
       useGroupStore.getState().setSelectedGroup(updatedGroup)
     },
-    [attendanceGroups, setAttendanceGroups, setCurrentGroup],
+    [attendanceGroups, setAttendanceGroups, setCurrentGroup]
   )
 
   // Handle start time changes from inline chip
@@ -375,20 +365,20 @@ export default function Main() {
       try {
         const updatedSettings = {
           ...currentGroup.settings,
-          class_start_time: newTime,
+          class_start_time: newTime
         }
         await attendanceManager.updateGroup(currentGroup.id, {
-          settings: updatedSettings,
+          settings: updatedSettings
         })
         syncUpdatedGroupLocally({
           ...currentGroup,
-          settings: updatedSettings,
+          settings: updatedSettings
         })
       } catch (error) {
-        console.error("Failed to update start time:", error)
+        console.error('Failed to update start time:', error)
       }
     },
-    [currentGroup, syncUpdatedGroupLocally],
+    [currentGroup, syncUpdatedGroupLocally]
   )
 
   const cleanupOnUnload = useCallback(() => {
@@ -400,7 +390,7 @@ export default function Main() {
       if (webSocketServiceRef.current) {
         try {
           const wsStatus = webSocketServiceRef.current.getWebSocketStatus()
-          if (wsStatus === "connected" || wsStatus === "connecting") {
+          if (wsStatus === 'connected' || wsStatus === 'connecting') {
             webSocketServiceRef.current.disconnect()
           }
         } catch {
@@ -467,16 +457,16 @@ export default function Main() {
       performCleanup()
     }
 
-    window.addEventListener("beforeunload", handleBeforeUnload, {
-      capture: true,
+    window.addEventListener('beforeunload', handleBeforeUnload, {
+      capture: true
     })
-    window.addEventListener("pagehide", handlePageHide, { capture: true })
+    window.addEventListener('pagehide', handlePageHide, { capture: true })
 
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload, {
-        capture: true,
+      window.removeEventListener('beforeunload', handleBeforeUnload, {
+        capture: true
       })
-      window.removeEventListener("pagehide", handlePageHide, { capture: true })
+      window.removeEventListener('pagehide', handlePageHide, { capture: true })
     }
   }, [cleanupOnUnload])
 
@@ -487,10 +477,10 @@ export default function Main() {
       requestOpenSettings(section)
     }
 
-    window.addEventListener("openSettings", handleOpenSettings as EventListener)
+    window.addEventListener('openSettings', handleOpenSettings as EventListener)
 
     return () => {
-      window.removeEventListener("openSettings", handleOpenSettings as EventListener)
+      window.removeEventListener('openSettings', handleOpenSettings as EventListener)
     }
   }, [requestOpenSettings])
 
@@ -503,13 +493,10 @@ export default function Main() {
       }
     }
 
-    window.addEventListener("facenox:clock-warning", handleClockWarning as unknown as EventListener)
+    window.addEventListener('facenox:clock-warning', handleClockWarning as unknown as EventListener)
 
     return () => {
-      window.removeEventListener(
-        "facenox:clock-warning",
-        handleClockWarning as unknown as EventListener,
-      )
+      window.removeEventListener('facenox:clock-warning', handleClockWarning as unknown as EventListener)
     }
   }, [setWarning])
 
@@ -548,11 +535,11 @@ export default function Main() {
       () => {
         void loadTimeHealth()
       },
-      5 * 60 * 1000,
+      5 * 60 * 1000
     )
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
+      if (document.visibilityState === 'visible') {
         debouncedLoadTimeHealth()
       }
     }
@@ -561,8 +548,8 @@ export default function Main() {
       debouncedLoadTimeHealth()
     }
 
-    window.addEventListener("visibilitychange", handleVisibilityChange)
-    window.addEventListener("online", handleOnline)
+    window.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('online', handleOnline)
 
     // Hook into pure Electron native OS wake detection
     let cleanupSystemResume: (() => void) | undefined
@@ -578,14 +565,14 @@ export default function Main() {
       if (debounceTimer !== null) {
         window.clearTimeout(debounceTimer)
       }
-      window.removeEventListener("visibilitychange", handleVisibilityChange)
-      window.removeEventListener("online", handleOnline)
+      window.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('online', handleOnline)
       if (cleanupSystemResume) cleanupSystemResume()
     }
   }, [isShellReady, setTimeHealth])
 
   const handleOpenTimeSettings = useCallback(() => {
-    requestOpenSettings("database")
+    requestOpenSettings('database')
   }, [requestOpenSettings])
 
   // Handle auto-pause on minimize
@@ -622,12 +609,7 @@ export default function Main() {
   // Auto-start scanning on launch when enabled in settings
   const hasAutoStartedOnLaunchRef = useRef(false)
   useEffect(() => {
-    if (
-      !scanReadiness.canStart ||
-      !isHydrated ||
-      hasAutoStartedOnLaunchRef.current ||
-      !quickSettings.autoStartScan
-    ) {
+    if (!scanReadiness.canStart || !isHydrated || hasAutoStartedOnLaunchRef.current || !quickSettings.autoStartScan) {
       return
     }
 
@@ -636,13 +618,7 @@ export default function Main() {
     if (!isStreamingRef.current) {
       if (startCameraGuarded()) hasAutoStartedOnLaunchRef.current = true
     }
-  }, [
-    scanReadiness.canStart,
-    isHydrated,
-    currentGroup,
-    quickSettings.autoStartScan,
-    startCameraGuarded,
-  ])
+  }, [scanReadiness.canStart, isHydrated, currentGroup, quickSettings.autoStartScan, startCameraGuarded])
 
   const hasBlockingGroupModalOpen =
     showAddMemberModal || showEditMemberModal || showCreateGroupModal || showEditGroupModal
@@ -673,16 +649,16 @@ export default function Main() {
       const activeEl = document.activeElement
       const isInput =
         activeEl &&
-        (activeEl.tagName === "INPUT" ||
-          activeEl.tagName === "TEXTAREA" ||
-          activeEl.tagName === "SELECT" ||
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.tagName === 'SELECT' ||
           (activeEl as HTMLElement).isContentEditable)
 
       if (isInput || showSettings || hasBlockingGroupModalOpen) {
         return
       }
 
-      if (e.code === "Space") {
+      if (e.code === 'Space') {
         e.preventDefault()
         if (isStreamingRef.current) {
           stopCamera(false)
@@ -692,45 +668,39 @@ export default function Main() {
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [hasBlockingGroupModalOpen, showSettings, startCameraGuarded, stopCamera])
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-[var(--bg-primary)] text-white">
-      {!showSettings && timeHealth?.online_verification_status === "drift_detected" && (
-        <div className="pointer-events-none absolute top-3 left-1/2 z-90 -translate-x-1/2">
+    <div className='flex h-full flex-col overflow-hidden bg-[var(--bg-primary)] text-white'>
+      {!showSettings && timeHealth?.online_verification_status === 'drift_detected' && (
+        <div className='pointer-events-none absolute top-3 left-1/2 z-90 -translate-x-1/2'>
           <button
-            type="button"
+            type='button'
             onClick={handleOpenTimeSettings}
-            className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-[11px] font-medium text-amber-300/90 shadow-lg transition-all hover:bg-amber-500/15 hover:text-amber-200"
-            aria-label="Open device time settings">
-            <AlertTriangle className="size-3 text-amber-400" />
+            className='pointer-events-auto inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-[11px] font-medium text-amber-300/90 shadow-lg transition-all hover:bg-amber-500/15 hover:text-amber-200'
+            aria-label='Open device time settings'>
+            <AlertTriangle className='size-3 text-amber-400' />
             Device time needs attention
           </button>
         </div>
       )}
 
       {/* Floating Alert System */}
-      <div className="pointer-events-none absolute bottom-12 left-1/2 z-100 flex w-full -translate-x-1/2 flex-col items-center px-4">
+      <div className='pointer-events-none absolute bottom-12 left-1/2 z-100 flex w-full -translate-x-1/2 flex-col items-center px-4'>
         <AnimatePresence>
-          {success && (
-            <FloatingAlert message={success} variant="success" onDismiss={() => setSuccess(null)} />
-          )}
+          {success && <FloatingAlert message={success} variant='success' onDismiss={() => setSuccess(null)} />}
 
-          {warning && (
-            <FloatingAlert message={warning} variant="warning" onDismiss={() => setWarning(null)} />
-          )}
+          {warning && <FloatingAlert message={warning} variant='warning' onDismiss={() => setWarning(null)} />}
 
-          {error && (
-            <FloatingAlert message={error} variant="error" onDismiss={() => setError(null)} />
-          )}
+          {error && <FloatingAlert message={error} variant='error' onDismiss={() => setError(null)} />}
         </AnimatePresence>
       </div>
 
-      <div className="flex min-h-0 flex-1">
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="relative flex min-h-0 flex-1 items-center justify-center p-3">
+      <div className='flex min-h-0 flex-1'>
+        <div className='flex min-h-0 flex-1 flex-col'>
+          <div className='relative flex min-h-0 flex-1 items-center justify-center p-3'>
             <VideoCanvas
               videoRef={videoRef}
               canvasRef={canvasRef}

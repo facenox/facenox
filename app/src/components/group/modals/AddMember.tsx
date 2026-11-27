@@ -1,23 +1,23 @@
-import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback, useId } from "react"
-import { flushSync } from "react-dom"
-import { AnimatePresence, motion } from "framer-motion"
-import { AlertCircle, AlertTriangle, Camera, CheckCircle2, Image, Upload, X } from "lucide-react"
-import { attendanceManager, backendService } from "@/services"
-import type { AttendanceGroup, AttendanceMember } from "@/types/recognition"
-import { ErrorMessage, FormInput, Modal, Spinner } from "@/components/common"
-import { useGroupUIStore, useGroupStore } from "@/components/group/stores"
-import { useAttendanceStore } from "@/components/main/stores"
-import { hasSavedCloudPairing, useCloudSyncConfig } from "@/services/cloudSyncState"
-import { useCamera } from "@/components/group/sections/enrollment/hooks/useCamera"
-import { Tooltip, InfoPopover } from "@/components/shared"
-import { validateAndGetBestFace } from "@/utils/faceValidation"
-import { dataUrlToBlob } from "@/utils/dataUrl"
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback, useId } from 'react'
+import { flushSync } from 'react-dom'
+import { AnimatePresence, motion } from 'framer-motion'
+import { AlertCircle, AlertTriangle, Camera, CheckCircle2, Image, Upload, X } from 'lucide-react'
+import { attendanceManager, backendService } from '@/services'
+import type { AttendanceGroup, AttendanceMember } from '@/types/recognition'
+import { ErrorMessage, FormInput, Modal, Spinner } from '@/components/common'
+import { useGroupUIStore, useGroupStore } from '@/components/group/stores'
+import { useAttendanceStore } from '@/components/main/stores'
+import { hasSavedCloudPairing, useCloudSyncConfig } from '@/services/cloudSyncState'
+import { useCamera } from '@/components/group/sections/enrollment/hooks/useCamera'
+import { Tooltip, InfoPopover } from '@/components/shared'
+import { validateAndGetBestFace } from '@/utils/faceValidation'
+import { dataUrlToBlob } from '@/utils/dataUrl'
 import {
   createBulkMemberCheckpoint,
   reconcileBulkMemberRows,
   checkpointBulkMemberResponse,
-  remainingBulkMemberText,
-} from "./utils/bulkMemberImport"
+  remainingBulkMemberText
+} from './utils/bulkMemberImport'
 
 /**
  * Properties for the AddMember component.
@@ -49,13 +49,13 @@ const waitForNextPaint = () =>
 
 const formatValidationError = (
   e: { type?: string; msg?: string; ctx?: { max_length?: number } },
-  multiple?: boolean,
+  multiple?: boolean
 ): string => {
-  if (e.type === "string_too_long") {
-    const prefix = multiple ? "Some names exceed" : "Name exceeds"
+  if (e.type === 'string_too_long') {
+    const prefix = multiple ? 'Some names exceed' : 'Name exceeds'
     return `${prefix} ${e.ctx?.max_length ?? 100} characters`
   }
-  return e.msg ?? "Invalid value"
+  return e.msg ?? 'Invalid value'
 }
 
 /**
@@ -63,24 +63,18 @@ const formatValidationError = (
  * or multiple new members in bulk via a comma-separated list or file import.
  * Includes duplicate warnings.
  */
-export function AddMember({
-  isOpen,
-  group,
-  existingMembers = [],
-  onClose,
-  onSuccess,
-}: AddMemberProps) {
+export function AddMember({ isOpen, group, existingMembers = [], onClose, onSuccess }: AddMemberProps) {
   const initialMode = useGroupUIStore((state) => state.addMemberInitialMode)
-  const [isBulkMode, setIsBulkMode] = useState(initialMode === "bulk")
+  const [isBulkMode, setIsBulkMode] = useState(initialMode === 'bulk')
   const { config: syncConfig } = useCloudSyncConfig()
   const systemStats = useAttendanceStore((state) => state.systemStats)
   const isPairedCloud = hasSavedCloudPairing(syncConfig)
   const cloudPeopleLimit = syncConfig?.policyOverrides?.peopleLimit
   const currentActiveMemberCount = Math.max(systemStats?.totalMembers ?? 0, existingMembers.length)
 
-  const [newMemberName, setNewMemberName] = useState("")
-  const [newMemberRole, setNewMemberRole] = useState("")
-  const [bulkMembersText, setBulkMembersText] = useState("")
+  const [newMemberName, setNewMemberName] = useState('')
+  const [newMemberRole, setNewMemberRole] = useState('')
+  const [bulkMembersText, setBulkMembersText] = useState('')
   const [isProcessingBulk, setIsProcessingBulk] = useState(false)
   const [bulkHasAttempted, setBulkHasAttempted] = useState(false)
   const bulkCheckpointRef = useRef(createBulkMemberCheckpoint())
@@ -102,7 +96,7 @@ export function AddMember({
   // Inline Face Enrollment states
   const [isFaceSectionOpen, setIsFaceSectionOpen] = useState(false)
   const [capturedFace, setCapturedFace] = useState<CapturedFaceData | null>(null)
-  const [faceInputMode, setFaceInputMode] = useState<"camera" | "upload">("camera")
+  const [faceInputMode, setFaceInputMode] = useState<'camera' | 'upload'>('camera')
   const [isProcessingFace, setIsProcessingFace] = useState(false)
   const [faceError, setFaceError] = useState<string | null>(null)
   const faceRequestRef = useRef(0)
@@ -110,25 +104,16 @@ export function AddMember({
   const [lastAddedSuccess, setLastAddedSuccess] = useState<string | null>(null)
   const lastAddedTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const {
-    videoRef,
-    isStreaming,
-    isVideoReady,
-    isRecovering,
-    cameraError,
-    startCamera,
-    stopCamera,
-  } = useCamera()
+  const { videoRef, isStreaming, isVideoReady, isRecovering, cameraError, startCamera, stopCamera } = useCamera()
   const [cameraVideo, setCameraVideo] = useState<HTMLVideoElement | null>(null)
   const attachCameraVideo = useCallback(
     (video: HTMLVideoElement | null) => {
       videoRef.current = video
       setCameraVideo(video)
     },
-    [videoRef],
+    [videoRef]
   )
-  const needsCamera =
-    isOpen && !isBulkMode && isFaceSectionOpen && faceInputMode === "camera" && !capturedFace
+  const needsCamera = isOpen && !isBulkMode && isFaceSectionOpen && faceInputMode === 'camera' && !capturedFace
   const needsFacePhoto = isFaceSectionOpen && !capturedFace
 
   const skipFaceEnrollment = useCallback(() => {
@@ -196,9 +181,9 @@ export function AddMember({
       lastAddedTimerRef.current = null
     }
     skipFaceEnrollment()
-    setNewMemberName("")
-    setNewMemberRole("")
-    setBulkMembersText("")
+    setNewMemberName('')
+    setNewMemberRole('')
+    setBulkMembersText('')
     setBulkResults(null)
     setBulkProgress(null)
     setIsBulkMode(false)
@@ -209,7 +194,7 @@ export function AddMember({
 
   useLayoutEffect(() => {
     resetForm()
-    if (isOpen) setIsBulkMode(initialMode === "bulk")
+    if (isOpen) setIsBulkMode(initialMode === 'bulk')
     return () => {
       formSessionRef.current += 1
     }
@@ -218,7 +203,7 @@ export function AddMember({
   const handleSnapPhoto = useCallback(async () => {
     const video = videoRef.current
     if (!video || !video.videoWidth || !video.videoHeight) {
-      setFaceError("Camera is not ready yet.")
+      setFaceError('Camera is not ready yet.')
       return
     }
 
@@ -227,22 +212,22 @@ export function AddMember({
       setIsProcessingFace(true)
       setFaceError(null)
 
-      const canvas = document.createElement("canvas")
+      const canvas = document.createElement('canvas')
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
-      const ctx = canvas.getContext("2d")
-      if (!ctx) throw new Error("Could not initialize image canvas.")
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('Could not initialize image canvas.')
 
       ctx.translate(canvas.width, 0)
       ctx.scale(-1, 1)
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.95)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95)
       const blob = dataUrlToBlob(dataUrl)
 
       const detection = await backendService.detectFaces(blob, {
-        model_type: "face_detector",
-        enableLiveness: false,
+        model_type: 'face_detector',
+        enableLiveness: false
       })
 
       if (requestId !== faceRequestRef.current) return
@@ -252,7 +237,7 @@ export function AddMember({
         dataUrl,
         bbox: bestFace.bbox,
         landmarks_5: bestFace.landmarks_5,
-        confidence: bestFace.confidence,
+        confidence: bestFace.confidence
       })
       stopCamera()
     } catch (err) {
@@ -260,7 +245,7 @@ export function AddMember({
       const msg =
         err instanceof Error ?
           err.message
-        : "Could not detect a clear face. Try a front-facing photo with even lighting."
+        : 'Could not detect a clear face. Try a front-facing photo with even lighting.'
       setFaceError(msg)
     } finally {
       if (requestId === faceRequestRef.current) setIsProcessingFace(false)
@@ -276,15 +261,15 @@ export function AddMember({
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = (e) => resolve(e.target?.result as string)
-        reader.onerror = () => reject(new Error("Failed to read image file."))
+        reader.onerror = () => reject(new Error('Failed to read image file.'))
         reader.readAsDataURL(file)
       })
 
       if (requestId !== faceRequestRef.current) return
       const blob = dataUrlToBlob(dataUrl)
       const detection = await backendService.detectFaces(blob, {
-        model_type: "face_detector",
-        enableLiveness: false,
+        model_type: 'face_detector',
+        enableLiveness: false
       })
 
       if (requestId !== faceRequestRef.current) return
@@ -294,14 +279,14 @@ export function AddMember({
         dataUrl,
         bbox: bestFace.bbox,
         landmarks_5: bestFace.landmarks_5,
-        confidence: bestFace.confidence,
+        confidence: bestFace.confidence
       })
     } catch (err) {
       if (requestId !== faceRequestRef.current) return
       const msg =
         err instanceof Error ?
           err.message
-        : "Could not detect a clear face. Try a front-facing photo with even lighting."
+        : 'Could not detect a clear face. Try a front-facing photo with even lighting.'
       setFaceError(msg)
     } finally {
       if (requestId === faceRequestRef.current) setIsProcessingFace(false)
@@ -336,7 +321,7 @@ export function AddMember({
       setBulkResults(null)
     } catch {
       if (formSessionRef.current !== session) return
-      setError("Unable to read file. Select a valid TXT or CSV file.")
+      setError('Unable to read file. Select a valid TXT or CSV file.')
     }
   }
 
@@ -347,10 +332,10 @@ export function AddMember({
   }, [newMemberName, existingMembers, savedMember])
 
   const typedCount = useMemo(() => {
-    return bulkMembersText.split("\n").filter((line) => line.trim()).length
+    return bulkMembersText.split('\n').filter((line) => line.trim()).length
   }, [bulkMembersText])
 
-  const modalSubtitle = isBulkMode ? "Add multiple members to" : "Add member to"
+  const modalSubtitle = isBulkMode ? 'Add multiple members to' : 'Add member to'
 
   // Reset confirmation when name changes
   useEffect(() => {
@@ -388,18 +373,13 @@ export function AddMember({
         const name = newMemberName.trim()
         const role = newMemberRole.trim() || undefined
         let request = creationRequestRef.current
-        if (
-          !request ||
-          request.groupId !== group.id ||
-          request.name !== name ||
-          request.role !== role
-        ) {
+        if (!request || request.groupId !== group.id || request.name !== name || request.role !== role) {
           request = { id: crypto.randomUUID(), groupId: group.id, name, role }
           creationRequestRef.current = request
         }
         newMember = await attendanceManager.addMember(group.id, name, {
           role,
-          creationId: request.id,
+          creationId: request.id
         })
         if (!isCurrentForm()) return
         setSavedMember(newMember)
@@ -412,7 +392,7 @@ export function AddMember({
           : [...members, member]
         useGroupStore.setState({ members: replaceOrAppend(useGroupStore.getState().members) })
         useAttendanceStore.setState({
-          groupMembers: replaceOrAppend(useAttendanceStore.getState().groupMembers),
+          groupMembers: replaceOrAppend(useAttendanceStore.getState().groupMembers)
         })
       }
       updateMemberStores(newMember)
@@ -426,22 +406,20 @@ export function AddMember({
             newMember.person_id,
             capturedFace.dataUrl,
             capturedFace.bbox,
-            capturedFace.landmarks_5,
+            capturedFace.landmarks_5
           )
           if (!isCurrentForm()) return
           if (res.success) {
             faceEnrolled = true
             newMember = { ...newMember, has_face_data: true }
-          } else
-            enrollmentError = res.error || res.message || "Face enrollment could not be completed."
+          } else enrollmentError = res.error || res.message || 'Face enrollment could not be completed.'
         } catch (faceErr) {
           if (!isCurrentForm()) return
-          enrollmentError =
-            faceErr instanceof Error ? faceErr.message : "Face enrollment could not be completed."
+          enrollmentError = faceErr instanceof Error ? faceErr.message : 'Face enrollment could not be completed.'
         }
         if (enrollmentError) {
           setError(
-            `Member added, but face enrollment failed. ${enrollmentError} Retry enrollment or finish without a face.`,
+            `Member added, but face enrollment failed. ${enrollmentError} Retry enrollment or finish without a face.`
           )
           if (wasCreated) onSuccess()
           return
@@ -453,15 +431,15 @@ export function AddMember({
       if (!isCurrentForm()) return
 
       if (addAnother) {
-        setNewMemberName("")
-        setNewMemberRole("")
+        setNewMemberName('')
+        setNewMemberRole('')
         setSavedMember(null)
         creationRequestRef.current = null
         setCapturedFace(null)
         setFaceError(null)
         setConfirmDuplicate(false)
         setError(null)
-        setLastAddedSuccess(`${newMember.name} added${faceEnrolled ? " (face enrolled)" : ""}`)
+        setLastAddedSuccess(`${newMember.name} added${faceEnrolled ? ' (face enrolled)' : ''}`)
         if (lastAddedTimerRef.current) clearTimeout(lastAddedTimerRef.current)
         lastAddedTimerRef.current = setTimeout(() => setLastAddedSuccess(null), 3500)
         requestAnimationFrame(() => {
@@ -473,18 +451,18 @@ export function AddMember({
       }
     } catch (err) {
       if (!isCurrentForm()) return
-      console.error("Error adding member:", err)
-      const rawMessage = err instanceof Error ? err.message : ""
+      console.error('Error adding member:', err)
+      const rawMessage = err instanceof Error ? err.message : ''
       try {
         const parsed = JSON.parse(rawMessage)
         if (Array.isArray(parsed)) {
           const msgs = [...new Set(parsed.map((e) => formatValidationError(e)))]
-          setError(msgs.join(". "))
+          setError(msgs.join('. '))
         } else {
-          setError(rawMessage || "Failed to add member")
+          setError(rawMessage || 'Failed to add member')
         }
       } catch {
-        setError(rawMessage || "Failed to add member")
+        setError(rawMessage || 'Failed to add member')
       }
     } finally {
       if (isCurrentForm()) {
@@ -520,7 +498,7 @@ export function AddMember({
     try {
       await waitForNextPaint()
       if (!isCurrentForm()) return
-      const lines = bulkMembersText.split("\n").filter((line: string) => line.trim())
+      const lines = bulkMembersText.split('\n').filter((line: string) => line.trim())
       const membersToCreate: Array<{
         name: string
         role?: string
@@ -529,23 +507,23 @@ export function AddMember({
 
       for (const line of lines) {
         const delimiter =
-          line.includes("\t") ? "\t"
-          : line.includes(";") ? ";"
-          : line.includes(",") ? ","
+          line.includes('\t') ? '\t'
+          : line.includes(';') ? ';'
+          : line.includes(',') ? ','
           : null
 
         const parts = delimiter ? line.split(delimiter).map((p: string) => p.trim()) : [line.trim()]
-        const rawName = parts[0]?.replace(/[\t\r\n]+/g, " ").trim() || ""
-        const rawRole = parts[1]?.replace(/[\t\r\n]+/g, " ").trim() || ""
+        const rawName = parts[0]?.replace(/[\t\r\n]+/g, ' ').trim() || ''
+        const rawRole = parts[1]?.replace(/[\t\r\n]+/g, ' ').trim() || ''
 
         // Skip header row if present
         if (
           lines.length > 1 &&
           membersToCreate.length === 0 &&
-          (rawName.toLowerCase() === "name" ||
-            rawName.toLowerCase() === "full name" ||
-            rawName.toLowerCase() === "student name" ||
-            rawName.toLowerCase() === "first name")
+          (rawName.toLowerCase() === 'name' ||
+            rawName.toLowerCase() === 'full name' ||
+            rawName.toLowerCase() === 'student name' ||
+            rawName.toLowerCase() === 'first name')
         ) {
           continue
         }
@@ -558,15 +536,11 @@ export function AddMember({
 
         membersToCreate.push({
           name: rawName,
-          role: rawRole || undefined,
+          role: rawRole || undefined
         })
       }
 
-      const pending = reconcileBulkMemberRows(
-        checkpoint,
-        membersToCreate,
-        bulkInputIncludesCompletedRef.current,
-      )
+      const pending = reconcileBulkMemberRows(checkpoint, membersToCreate, bulkInputIncludesCompletedRef.current)
       const total = checkpoint.completed.length + pending.length + invalidLines.length
       setBulkProgress({ current: checkpoint.completed.length, total })
 
@@ -594,15 +568,13 @@ export function AddMember({
                 merged.set(member.id, {
                   ...merged.get(member.id),
                   ...member,
-                  has_face_data: Boolean(
-                    merged.get(member.id)?.has_face_data || member.has_face_data,
-                  ),
+                  has_face_data: Boolean(merged.get(member.id)?.has_face_data || member.has_face_data)
                 })
               return [...merged.values()]
             }
             useGroupStore.setState({ members: mergeMembers(useGroupStore.getState().members) })
             useAttendanceStore.setState({
-              groupMembers: mergeMembers(useAttendanceStore.getState().groupMembers),
+              groupMembers: mergeMembers(useAttendanceStore.getState().groupMembers)
             })
           }
         }
@@ -619,20 +591,19 @@ export function AddMember({
       } else {
         bulkInputIncludesCompletedRef.current = false
         setBulkMembersText(remainingBulkMemberText(checkpoint, invalidLines))
-        if (errors.length === 0)
-          errors.push("Some entries were not confirmed. Retry the remaining entries.")
+        if (errors.length === 0) errors.push('Some entries were not confirmed. Retry the remaining entries.')
         setBulkResults({ success, failed, errors })
       }
     } catch (err) {
       if (!isCurrentForm()) return
-      console.warn("Validation error on bulk add:", err)
-      const rawMessage = err instanceof Error ? err.message : ""
-      let message = rawMessage || "Failed to bulk add members"
+      console.warn('Validation error on bulk add:', err)
+      const rawMessage = err instanceof Error ? err.message : ''
+      let message = rawMessage || 'Failed to bulk add members'
       try {
         const parsed = JSON.parse(rawMessage)
         if (Array.isArray(parsed)) {
           const msgs = [...new Set(parsed.map((e) => formatValidationError(e, parsed.length > 1)))]
-          message = msgs.join(". ")
+          message = msgs.join('. ')
         }
       } catch {
         // Keep non-JSON API errors unchanged.
@@ -642,7 +613,7 @@ export function AddMember({
       setBulkResults({
         success: checkpoint.completed.length,
         failed: Math.max(1, checkpoint.pending.length + invalidLines.length),
-        errors: [...errors, message],
+        errors: [...errors, message]
       })
       if (checkpoint.completed.length > previousSaved) onSuccess()
     } finally {
@@ -661,60 +632,60 @@ export function AddMember({
         onClose()
       }}
       title={
-        <div className="min-w-0">
-          <h3 className="mb-1 truncate text-xl font-semibold tracking-tight">Add members</h3>
-          <p className="flex items-center gap-1.5 text-xs font-normal text-white/65">
-            <span className="shrink-0">{modalSubtitle}</span>
-            <Tooltip content={group.name} position="bottom">
-              <span className="inline-block max-w-[260px] truncate align-bottom font-medium text-cyan-400/80 sm:max-w-[340px]">
+        <div className='min-w-0'>
+          <h3 className='mb-1 truncate text-xl font-semibold tracking-tight'>Add members</h3>
+          <p className='flex items-center gap-1.5 text-xs font-normal text-white/65'>
+            <span className='shrink-0'>{modalSubtitle}</span>
+            <Tooltip content={group.name} position='bottom'>
+              <span className='inline-block max-w-[260px] truncate align-bottom font-medium text-cyan-400/80 sm:max-w-[340px]'>
                 {group.name}
               </span>
             </Tooltip>
           </p>
         </div>
       }
-      maxWidth="lg">
-      <div className="custom-scroll -m-5 mt-2 max-h-[90vh] overflow-x-hidden overflow-y-auto p-5">
+      maxWidth='lg'>
+      <div className='custom-scroll -m-5 mt-2 max-h-[90vh] overflow-x-hidden overflow-y-auto p-5'>
         {/* Mode selector Tabs */}
-        <div className="mb-4 flex items-end justify-between border-b border-white/5">
-          <div className="flex gap-6">
+        <div className='mb-4 flex items-end justify-between border-b border-white/5'>
+          <div className='flex gap-6'>
             <button
-              type="button"
+              type='button'
               disabled={loading || isProcessingBulk || Boolean(savedMember)}
               onClick={() => {
                 setIsBulkMode(false)
                 setConfirmDuplicate(false)
               }}
               className={`relative rounded border-none bg-transparent pb-3 text-[12px] font-medium transition-colors outline-none focus-visible:text-white focus-visible:ring-2 focus-visible:ring-cyan-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none ${
-                !isBulkMode ? "text-cyan-400" : "text-white/55 hover:text-white/80"
+                !isBulkMode ? 'text-cyan-400' : 'text-white/55 hover:text-white/80'
               }`}>
               Single
               {!isBulkMode && (
                 <motion.div
-                  layoutId="addMemberTabIndicator"
+                  layoutId='addMemberTabIndicator'
                   transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  className="absolute bottom-0 left-0 h-[2px] w-full rounded-t-full bg-cyan-400"
+                  className='absolute bottom-0 left-0 h-[2px] w-full rounded-t-full bg-cyan-400'
                 />
               )}
             </button>
             <button
-              type="button"
+              type='button'
               disabled={loading || isProcessingBulk || Boolean(savedMember)}
               onClick={() => {
                 setIsBulkMode(true)
-                setNewMemberName("")
-                setNewMemberRole("")
+                setNewMemberName('')
+                setNewMemberRole('')
                 setConfirmDuplicate(false)
               }}
               className={`relative rounded border-none bg-transparent pb-3 text-[12px] font-medium transition-colors outline-none focus-visible:text-white focus-visible:ring-2 focus-visible:ring-cyan-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none ${
-                isBulkMode ? "text-cyan-400" : "text-white/55 hover:text-white/80"
+                isBulkMode ? 'text-cyan-400' : 'text-white/55 hover:text-white/80'
               }`}>
               Multiple
               {isBulkMode && (
                 <motion.div
-                  layoutId="addMemberTabIndicator"
+                  layoutId='addMemberTabIndicator'
                   transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  className="absolute bottom-0 left-0 h-[2px] w-full rounded-t-full bg-cyan-400"
+                  className='absolute bottom-0 left-0 h-[2px] w-full rounded-t-full bg-cyan-400'
                 />
               )}
             </button>
@@ -726,9 +697,9 @@ export function AddMember({
                 initial={{ opacity: 0, x: 15 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 15 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="pb-3 text-[11px] font-medium text-cyan-400/80">
-                {typedCount} {typedCount === 1 ? "member" : "members"}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className='pb-3 text-[11px] font-medium text-cyan-400/80'>
+                {typedCount} {typedCount === 1 ? 'member' : 'members'}
               </motion.div>
             )}
           </AnimatePresence>
@@ -739,255 +710,246 @@ export function AddMember({
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="mb-4 flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-[11px] font-medium text-cyan-300">
-            <CheckCircle2 className="size-3 text-cyan-300" />
+            className='mb-4 flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-[11px] font-medium text-cyan-300'>
+            <CheckCircle2 className='size-3 text-cyan-300' />
             {lastAddedSuccess}
           </motion.div>
         )}
 
-        {error && <ErrorMessage message={error} className="mb-4" />}
+        {error && <ErrorMessage message={error} className='mb-4' />}
 
         {isPairedCloud &&
-          typeof cloudPeopleLimit === "number" &&
+          typeof cloudPeopleLimit === 'number' &&
           cloudPeopleLimit > 0 &&
           cloudPeopleLimit < 1_000_000 &&
           (isBulkMode ?
             currentActiveMemberCount + Math.max(typedCount, 1) > cloudPeopleLimit
           : currentActiveMemberCount >= cloudPeopleLimit) && (
-            <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-[11px] leading-relaxed text-amber-200/90">
-              <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-amber-400" />
+            <div className='mb-4 flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-[11px] leading-relaxed text-amber-200/90'>
+              <AlertTriangle className='mt-0.5 size-3.5 shrink-0 text-amber-400' />
               <span>
-                Your Cloud plan includes {cloudPeopleLimit.toLocaleString()} active members.
-                Additions still save locally, but Cloud sync will pause once the 20% grace buffer is
-                exceeded until you upgrade or trim active members.
+                Your Cloud plan includes {cloudPeopleLimit.toLocaleString()} active members. Additions still save
+                locally, but Cloud sync will pause once the 20% grace buffer is exceeded until you upgrade or trim
+                active members.
               </span>
             </div>
           )}
 
-        <div className="relative">
-          <AnimatePresence mode="wait" initial={false}>
+        <div className='relative'>
+          <AnimatePresence mode='wait' initial={false}>
             {!isBulkMode ?
               <motion.div
-                key="single"
+                key='single'
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="grid gap-4">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
-                  <div className="flex flex-col sm:col-span-8">
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className='grid gap-4'>
+                <div className='grid grid-cols-1 gap-3 sm:grid-cols-12'>
+                  <div className='flex flex-col sm:col-span-8'>
                     <FormInput
                       ref={nameInputRef}
                       value={newMemberName}
                       disabled={loading || Boolean(savedMember)}
                       onChange={(event) => setNewMemberName(event.target.value)}
-                      placeholder="Name"
-                      aria-label="Name"
+                      placeholder='Name'
+                      aria-label='Name'
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") handleAddMember(false)
+                        if (e.key === 'Enter') handleAddMember(false)
                       }}
-                      focusColor={
-                        isDuplicate && !confirmDuplicate ? "border-amber-400" : "border-white/20"
-                      }
-                      className={`${isDuplicate && !confirmDuplicate ? "border-amber-500/50" : ""}`}
+                      focusColor={isDuplicate && !confirmDuplicate ? 'border-amber-400' : 'border-white/20'}
+                      className={`${isDuplicate && !confirmDuplicate ? 'border-amber-500/50' : ''}`}
                     />
                     {isDuplicate && !confirmDuplicate && (
-                      <div className="mt-1 flex items-center gap-2 text-[11px] text-amber-400/80">
-                        <AlertTriangle className="size-3 shrink-0" /> A member with this name
-                        already exists.
+                      <div className='mt-1 flex items-center gap-2 text-[11px] text-amber-400/80'>
+                        <AlertTriangle className='size-3 shrink-0' /> A member with this name already exists.
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col sm:col-span-4">
+                  <div className='flex flex-col sm:col-span-4'>
                     <FormInput
                       value={newMemberRole}
                       disabled={loading || Boolean(savedMember)}
                       onChange={(event) => setNewMemberRole(event.target.value)}
-                      placeholder="Role (optional)"
-                      aria-label="Role (optional)"
+                      placeholder='Role (optional)'
+                      aria-label='Role (optional)'
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") handleAddMember(false)
+                        if (e.key === 'Enter') handleAddMember(false)
                       }}
-                      focusColor="border-white/20"
+                      focusColor='border-white/20'
                     />
                   </div>
                 </div>
 
                 {/* Inline Face Enrollment Section */}
-                <div className="overflow-hidden">
-                  <AnimatePresence mode="wait" initial={false}>
+                <div className='overflow-hidden'>
+                  <AnimatePresence mode='wait' initial={false}>
                     {capturedFace ?
                       <motion.div
-                        key="captured"
+                        key='captured'
                         initial={{ opacity: 0, y: -6, height: 0 }}
-                        animate={{ opacity: 1, y: 0, height: "auto" }}
+                        animate={{ opacity: 1, y: 0, height: 'auto' }}
                         exit={{ opacity: 0, y: -6, height: 0 }}
                         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                        className="flex items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2.5">
+                        className='flex items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2.5'>
                         <img
                           src={capturedFace.dataUrl}
-                          alt="Captured face preview"
-                          className="h-9 w-9 rounded-full border border-cyan-500/30 object-cover"
+                          alt='Captured face preview'
+                          className='h-9 w-9 rounded-full border border-cyan-500/30 object-cover'
                         />
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[11px] font-medium text-cyan-300">Photo ready</div>
+                        <div className='min-w-0 flex-1'>
+                          <div className='text-[11px] font-medium text-cyan-300'>Photo ready</div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className='flex items-center gap-2'>
                           <button
-                            type="button"
+                            type='button'
                             disabled={loading}
                             onClick={() => {
                               setCapturedFace(null)
                               setFaceError(null)
                               setIsFaceSectionOpen(true)
-                              setFaceInputMode("camera")
+                              setFaceInputMode('camera')
                             }}
-                            className="rounded px-2.5 py-1 text-[11px] font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white">
+                            className='rounded px-2.5 py-1 text-[11px] font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white'>
                             Retake
                           </button>
                           <button
-                            type="button"
+                            type='button'
                             disabled={loading}
                             onClick={skipFaceEnrollment}
-                            className="rounded px-2.5 py-1 text-[11px] font-medium text-red-400/80 transition-colors hover:bg-red-500/10 hover:text-red-300">
+                            className='rounded px-2.5 py-1 text-[11px] font-medium text-red-400/80 transition-colors hover:bg-red-500/10 hover:text-red-300'>
                             Remove
                           </button>
                         </div>
                       </motion.div>
                     : !isFaceSectionOpen ?
                       <motion.div
-                        key="collapsed"
+                        key='collapsed'
                         initial={{ opacity: 0, y: 3 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -3 }}
-                        transition={{ duration: 0.18, ease: "easeOut" }}
-                        className="flex items-center justify-between py-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] font-medium text-white/80">
-                            Face enrollment
-                          </span>
+                        transition={{ duration: 0.18, ease: 'easeOut' }}
+                        className='flex items-center justify-between py-0.5'>
+                        <div className='flex items-center gap-1.5'>
+                          <span className='text-[11px] font-medium text-white/80'>Face enrollment</span>
                           <InfoPopover
-                            title="Face enrollment"
-                            description="Creates a face template on this computer to recognize the member during attendance."
+                            title='Face enrollment'
+                            description='Creates a face template on this computer to recognize the member during attendance.'
                             details={[
-                              "Face images are processed on this computer without saving or uploading them to Cloud.",
-                              "Use the camera or select a clear, front-facing photo.",
-                              "Paid Facenox Cloud plans sync encrypted face templates between paired computers.",
+                              'Face images are processed on this computer without saving or uploading them to Cloud.',
+                              'Use the camera or select a clear, front-facing photo.',
+                              'Paid Facenox Cloud plans sync encrypted face templates between paired computers.'
                             ]}
-                            side="right"
+                            side='right'
                           />
-                          <span className="text-[10px] text-white/35">(optional)</span>
+                          <span className='text-[10px] text-white/35'>(optional)</span>
                         </div>
                         <button
-                          type="button"
+                          type='button'
                           onClick={() => {
                             setIsFaceSectionOpen(true)
-                            setFaceInputMode("camera")
+                            setFaceInputMode('camera')
                           }}
-                          className="text-[11px] font-medium text-cyan-400 transition-colors hover:text-cyan-300">
+                          className='text-[11px] font-medium text-cyan-400 transition-colors hover:text-cyan-300'>
                           + Enroll now
                         </button>
                       </motion.div>
                     : <motion.div
-                        key="expanded"
+                        key='expanded'
                         initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
+                        animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                        className="space-y-2">
-                        <div className="flex items-center justify-between px-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] font-medium text-white/80">
-                              Face enrollment
-                            </span>
+                        className='space-y-2'>
+                        <div className='flex items-center justify-between px-0.5'>
+                          <div className='flex items-center gap-1.5'>
+                            <span className='text-[11px] font-medium text-white/80'>Face enrollment</span>
                             <InfoPopover
-                              title="Face enrollment"
-                              description="Creates a face template on this computer to recognize the member during attendance."
+                              title='Face enrollment'
+                              description='Creates a face template on this computer to recognize the member during attendance.'
                               details={[
-                                "Face images are processed on this computer without saving or uploading them to Cloud.",
-                                "Use the camera or select a clear, front-facing photo.",
-                                "Paid Facenox Cloud plans sync encrypted face templates between paired computers.",
+                                'Face images are processed on this computer without saving or uploading them to Cloud.',
+                                'Use the camera or select a clear, front-facing photo.',
+                                'Paid Facenox Cloud plans sync encrypted face templates between paired computers.'
                               ]}
-                              side="right"
+                              side='right'
                             />
-                            <span className="text-[10px] text-white/35">(optional)</span>
+                            <span className='text-[10px] text-white/35'>(optional)</span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className='flex items-center gap-2'>
                             {/* Segmented Mode Selector */}
-                            <div className="flex items-center rounded-lg border border-white/10 bg-white/[0.04] p-0.5">
+                            <div className='flex items-center rounded-lg border border-white/10 bg-white/[0.04] p-0.5'>
                               <button
-                                type="button"
+                                type='button'
                                 disabled={isProcessingFace || loading}
                                 onClick={() => {
-                                  if (faceInputMode !== "camera") {
-                                    setFaceInputMode("camera")
+                                  if (faceInputMode !== 'camera') {
+                                    setFaceInputMode('camera')
                                     setFaceError(null)
                                   }
                                 }}
                                 className={`flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-medium transition-all ${
-                                  faceInputMode === "camera" ?
-                                    "bg-white/15 text-white shadow-sm"
-                                  : "text-white/45 hover:text-white/75"
+                                  faceInputMode === 'camera' ?
+                                    'bg-white/15 text-white shadow-sm'
+                                  : 'text-white/45 hover:text-white/75'
                                 }`}>
-                                <Camera className="size-2.5 text-cyan-400" />
+                                <Camera className='size-2.5 text-cyan-400' />
                                 <span>Camera</span>
                               </button>
                               <button
-                                type="button"
+                                type='button'
                                 disabled={isProcessingFace || loading}
                                 onClick={() => {
-                                  if (faceInputMode !== "upload") {
-                                    setFaceInputMode("upload")
+                                  if (faceInputMode !== 'upload') {
+                                    setFaceInputMode('upload')
                                     setFaceError(null)
                                     stopCamera()
                                   }
                                 }}
                                 className={`flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-medium transition-all ${
-                                  faceInputMode === "upload" ?
-                                    "bg-white/15 text-white shadow-sm"
-                                  : "text-white/45 hover:text-white/75"
+                                  faceInputMode === 'upload' ?
+                                    'bg-white/15 text-white shadow-sm'
+                                  : 'text-white/45 hover:text-white/75'
                                 }`}>
-                                <Image className="size-2.5 text-white/60" />
+                                <Image className='size-2.5 text-white/60' />
                                 <span>Upload</span>
                               </button>
                             </div>
 
-                            <Tooltip content="Skip face enrollment">
+                            <Tooltip content='Skip face enrollment'>
                               <button
-                                type="button"
+                                type='button'
                                 disabled={loading}
                                 onClick={skipFaceEnrollment}
-                                className="flex h-5 w-5 items-center justify-center rounded-md text-white/40 transition-all hover:bg-white/10 hover:text-white/80"
-                                aria-label="Dismiss face enrollment">
-                                <X className="size-3.5" />
+                                className='flex h-5 w-5 items-center justify-center rounded-md text-white/40 transition-all hover:bg-white/10 hover:text-white/80'
+                                aria-label='Dismiss face enrollment'>
+                                <X className='size-3.5' />
                               </button>
                             </Tooltip>
                           </div>
                         </div>
 
-                        <div className="space-y-2">
-                          <AnimatePresence mode="wait">
-                            {faceInputMode === "camera" ?
+                        <div className='space-y-2'>
+                          <AnimatePresence mode='wait'>
+                            {faceInputMode === 'camera' ?
                               <motion.div
-                                key="face-camera-mode"
+                                key='face-camera-mode'
                                 initial={{ opacity: 0, scale: 0.98 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.98 }}
-                                transition={{ duration: 0.18, ease: "easeOut" }}
-                                className="relative flex h-52 w-full flex-col items-center justify-between overflow-hidden rounded-xl border border-white/10 bg-black/60 p-2.5">
+                                transition={{ duration: 0.18, ease: 'easeOut' }}
+                                className='relative flex h-52 w-full flex-col items-center justify-between overflow-hidden rounded-xl border border-white/10 bg-black/60 p-2.5'>
                                 <video
                                   ref={attachCameraVideo}
                                   className={`absolute inset-0 h-full w-full scale-x-[-1] object-cover transition-opacity duration-300 ${
-                                    isStreaming && isVideoReady ? "opacity-100" : (
-                                      "pointer-events-none opacity-0"
-                                    )
+                                    isStreaming && isVideoReady ? 'opacity-100' : 'pointer-events-none opacity-0'
                                   }`}
                                   playsInline
                                   muted
                                 />
 
                                 {/* Top spacer */}
-                                <div className="z-10 h-1 w-full" />
+                                <div className='z-10 h-1 w-full' />
 
                                 <AnimatePresence>
                                   {(!isStreaming || !isVideoReady) && (
@@ -995,28 +957,24 @@ export function AddMember({
                                       initial={{ opacity: 1 }}
                                       exit={{ opacity: 0 }}
                                       transition={{ duration: 0.2 }}
-                                      className="z-10 flex flex-col items-center justify-center gap-2 p-4 text-center">
+                                      className='z-10 flex flex-col items-center justify-center gap-2 p-4 text-center'>
                                       {cameraError ?
-                                        <div
-                                          role="alert"
-                                          className="flex flex-col items-center gap-2">
-                                          <AlertCircle className="size-5 text-red-400" />
-                                          <span className="max-w-[240px] text-[11px] font-medium text-red-200/80">
+                                        <div role='alert' className='flex flex-col items-center gap-2'>
+                                          <AlertCircle className='size-5 text-red-400' />
+                                          <span className='max-w-[240px] text-[11px] font-medium text-red-200/80'>
                                             {cameraError}
                                           </span>
                                           <button
-                                            type="button"
+                                            type='button'
                                             onClick={stopCamera}
-                                            className="rounded-md border border-white/15 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10">
+                                            className='rounded-md border border-white/15 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10'>
                                             Retry camera
                                           </button>
                                         </div>
-                                      : <div className="flex flex-col items-center gap-2.5">
-                                          <Spinner size="md" color="cyan" />
-                                          <span className="text-xs font-medium text-white/60">
-                                            {isRecovering ?
-                                              "Resuming camera…"
-                                            : "Connecting camera…"}
+                                      : <div className='flex flex-col items-center gap-2.5'>
+                                          <Spinner size='md' color='cyan' />
+                                          <span className='text-xs font-medium text-white/60'>
+                                            {isRecovering ? 'Resuming camera…' : 'Connecting camera…'}
                                           </span>
                                         </div>
                                       }
@@ -1025,45 +983,42 @@ export function AddMember({
                                 </AnimatePresence>
 
                                 {/* Bottom Control Bar */}
-                                <div className="relative z-10 flex w-full items-center justify-between px-1">
+                                <div className='relative z-10 flex w-full items-center justify-between px-1'>
                                   {/* Left: Quick Upload Button */}
-                                  <div className="w-20">
+                                  <div className='w-20'>
                                     <button
-                                      type="button"
+                                      type='button'
                                       onClick={() => {
-                                        setFaceInputMode("upload")
+                                        setFaceInputMode('upload')
                                         setFaceError(null)
                                         stopCamera()
                                       }}
-                                      className="group flex items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-[10px] font-medium text-white/70 backdrop-blur-md transition-all hover:border-white/25 hover:bg-black/70 hover:text-white"
-                                      aria-label="Upload photo">
-                                      <Image className="size-3 text-white/50 group-hover:text-white/80" />
+                                      className='group flex items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-[10px] font-medium text-white/70 backdrop-blur-md transition-all hover:border-white/25 hover:bg-black/70 hover:text-white'
+                                      aria-label='Upload photo'>
+                                      <Image className='size-3 text-white/50 group-hover:text-white/80' />
                                       <span>Upload</span>
                                     </button>
                                   </div>
 
                                   {/* Center: Circular Shutter Trigger */}
-                                  <div className="flex flex-1 justify-center">
+                                  <div className='flex flex-1 justify-center'>
                                     {isStreaming && isVideoReady && (
-                                      <Tooltip
-                                        content={
-                                          isProcessingFace ? "Checking photo…" : "Capture photo"
-                                        }>
-                                        <span className="inline-flex">
+                                      <Tooltip content={isProcessingFace ? 'Checking photo…' : 'Capture photo'}>
+                                        <span className='inline-flex'>
                                           <button
-                                            type="button"
+                                            type='button'
                                             onClick={handleSnapPhoto}
                                             disabled={isProcessingFace || loading}
-                                            className="group flex items-center justify-center rounded-full transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-                                            aria-label="Capture photo">
+                                            className='group flex items-center justify-center rounded-full transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-40'
+                                            aria-label='Capture photo'>
                                             <span
-                                              aria-hidden="true"
-                                              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 p-1 backdrop-blur-md transition-colors group-hover:bg-white/20">
+                                              aria-hidden='true'
+                                              className='flex h-11 w-11 items-center justify-center rounded-full bg-white/10 p-1 backdrop-blur-md transition-colors group-hover:bg-white/20'>
                                               {isProcessingFace ?
-                                                <span className="flex h-full w-full items-center justify-center rounded-full bg-white/10">
-                                                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                                                <span className='flex h-full w-full items-center justify-center rounded-full bg-white/10'>
+                                                  <span className='h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white' />
                                                 </span>
-                                              : <span className="h-full w-full rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.35)] transition-transform group-active:scale-90" />
+                                              : <span className='h-full w-full rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.35)] transition-transform group-active:scale-90' />
                                               }
                                             </span>
                                           </button>
@@ -1073,44 +1028,40 @@ export function AddMember({
                                   </div>
 
                                   {/* Right spacer for balance */}
-                                  <div className="w-20" />
+                                  <div className='w-20' />
                                 </div>
                               </motion.div>
                             : <motion.div
-                                key="face-upload-mode"
+                                key='face-upload-mode'
                                 initial={{ opacity: 0, scale: 0.98 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.98 }}
-                                transition={{ duration: 0.18, ease: "easeOut" }}
-                                className="space-y-2">
-                                <label className="group flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3.5 py-2.5 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/[0.02]">
-                                  <div className="flex min-w-0 items-center gap-2.5">
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 transition-colors group-hover:bg-cyan-500/10">
-                                      <Upload className="size-3.5 text-white/40 transition-colors group-hover:text-cyan-400" />
+                                transition={{ duration: 0.18, ease: 'easeOut' }}
+                                className='space-y-2'>
+                                <label className='group flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3.5 py-2.5 transition-all hover:border-cyan-500/40 hover:bg-cyan-500/[0.02]'>
+                                  <div className='flex min-w-0 items-center gap-2.5'>
+                                    <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 transition-colors group-hover:bg-cyan-500/10'>
+                                      <Upload className='size-3.5 text-white/40 transition-colors group-hover:text-cyan-400' />
                                     </div>
-                                    <div className="flex min-w-0 flex-col">
-                                      <span className="truncate text-[11px] font-medium text-white/80">
-                                        {isProcessingFace ?
-                                          "Analyzing face…"
-                                        : "Click or drop photo"}
+                                    <div className='flex min-w-0 flex-col'>
+                                      <span className='truncate text-[11px] font-medium text-white/80'>
+                                        {isProcessingFace ? 'Analyzing face…' : 'Click or drop photo'}
                                       </span>
-                                      <span className="text-[10px] text-white/40">
-                                        JPG, PNG up to 10MB
-                                      </span>
+                                      <span className='text-[10px] text-white/40'>JPG, PNG up to 10MB</span>
                                     </div>
                                   </div>
 
-                                  <span className="shrink-0 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-medium text-white/60 transition-colors group-hover:border-white/20 group-hover:bg-white/10 group-hover:text-white">
+                                  <span className='shrink-0 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-medium text-white/60 transition-colors group-hover:border-white/20 group-hover:bg-white/10 group-hover:text-white'>
                                     Browse
                                   </span>
                                   <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
+                                    type='file'
+                                    accept='image/*'
+                                    className='hidden'
                                     onChange={(e) => {
                                       const file = e.target.files?.[0]
                                       if (file) void handleProcessUploadedFile(file)
-                                      e.target.value = ""
+                                      e.target.value = ''
                                     }}
                                   />
                                 </label>
@@ -1118,17 +1069,17 @@ export function AddMember({
                             }
                           </AnimatePresence>
 
-                          <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
-                            <p id={faceHintId} className="text-[11px] text-white/50">
+                          <div className='flex flex-wrap items-center justify-between gap-2 px-0.5'>
+                            <p id={faceHintId} className='text-[11px] text-white/50'>
                               {isProcessingFace ?
-                                "Checking your photo before enrollment."
-                              : "Capture or upload a photo before adding this member."}
+                                'Checking your photo before enrollment.'
+                              : 'Capture or upload a photo before adding this member.'}
                             </p>
                             <button
-                              type="button"
+                              type='button'
                               disabled={loading}
                               onClick={skipFaceEnrollment}
-                              className="text-[11px] font-medium text-white/65 transition-colors hover:text-white disabled:opacity-40">
+                              className='text-[11px] font-medium text-white/65 transition-colors hover:text-white disabled:opacity-40'>
                               Skip face enrollment
                             </button>
                           </div>
@@ -1140,9 +1091,9 @@ export function AddMember({
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -4 }}
                                 transition={{ duration: 0.15 }}
-                                className="flex items-center gap-2 rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-[11px] font-medium text-red-300">
-                                <AlertCircle className="size-3.5 shrink-0 text-red-400" />
-                                <span className="flex-1">{faceError}</span>
+                                className='flex items-center gap-2 rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-[11px] font-medium text-red-300'>
+                                <AlertCircle className='size-3.5 shrink-0 text-red-400' />
+                                <span className='flex-1'>{faceError}</span>
                               </motion.div>
                             )}
                           </AnimatePresence>
@@ -1153,12 +1104,12 @@ export function AddMember({
                 </div>
               </motion.div>
             : <motion.div
-                key="bulk"
+                key='bulk'
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="space-y-4">
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className='space-y-4'>
                 <div>
                   <textarea
                     disabled={isProcessingBulk}
@@ -1169,33 +1120,30 @@ export function AddMember({
                         setBulkResults(null)
                       }
                     }}
-                    className="custom-scroll min-h-[132px] w-full resize-none rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 font-mono text-sm shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none placeholder:font-sans placeholder:text-sm placeholder:font-normal placeholder:text-white/35 focus:border-white/25 focus:bg-white/[0.06]"
-                    placeholder="Enter one member per line"
+                    className='custom-scroll min-h-[132px] w-full resize-none rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 font-mono text-sm shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 outline-none placeholder:font-sans placeholder:text-sm placeholder:font-normal placeholder:text-white/35 focus:border-white/25 focus:bg-white/[0.06]'
+                    placeholder='Enter one member per line'
                   />
                   {bulkProgress && bulkProgress.current > 0 && (
-                    <p role="status" className="mt-2 text-[11px] text-cyan-300/80">
-                      {bulkProgress.current} already added. Only remaining entries will be
-                      submitted.
+                    <p role='status' className='mt-2 text-[11px] text-cyan-300/80'>
+                      {bulkProgress.current} already added. Only remaining entries will be submitted.
                     </p>
                   )}
-                  <div className="mt-2 flex items-center justify-between">
-                    <div className="text-[11px] text-white/55">
-                      Format: <span className="font-mono text-white/65">Name, Role</span>
+                  <div className='mt-2 flex items-center justify-between'>
+                    <div className='text-[11px] text-white/55'>
+                      Format: <span className='font-mono text-white/65'>Name, Role</span>
                     </div>
-                    <label className="group flex cursor-pointer items-center gap-1.5 text-xs font-medium text-cyan-400/80 transition-colors hover:text-cyan-400">
-                      <Upload className="size-3.5 transition-transform group-hover:-translate-y-0.5" />
-                      {bulkProgress && bulkProgress.current > 0 ?
-                        "Reimport original CSV or TXT"
-                      : "Import CSV or TXT"}
+                    <label className='group flex cursor-pointer items-center gap-1.5 text-xs font-medium text-cyan-400/80 transition-colors hover:text-cyan-400'>
+                      <Upload className='size-3.5 transition-transform group-hover:-translate-y-0.5' />
+                      {bulkProgress && bulkProgress.current > 0 ? 'Reimport original CSV or TXT' : 'Import CSV or TXT'}
                       <input
-                        type="file"
-                        accept=".txt,.csv"
+                        type='file'
+                        accept='.txt,.csv'
                         disabled={isProcessingBulk}
-                        className="hidden"
+                        className='hidden'
                         onChange={(e) => {
                           const file = e.target.files?.[0]
                           if (file) void handleFileUpload(file)
-                          e.target.value = ""
+                          e.target.value = ''
                         }}
                       />
                     </label>
@@ -1204,39 +1152,35 @@ export function AddMember({
 
                 {/* Bulk Results */}
                 {bulkResults && (
-                  <div className="py-2.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                  <div className='py-2.5'>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-2'>
                         {bulkResults.failed === 0 ?
                           <>
-                            <CheckCircle2 className="size-3.5 text-cyan-400" />
-                            <span className="text-[13px] font-semibold text-cyan-400">
-                              Import complete
-                            </span>
+                            <CheckCircle2 className='size-3.5 text-cyan-400' />
+                            <span className='text-[13px] font-semibold text-cyan-400'>Import complete</span>
                           </>
                         : <>
-                            <AlertTriangle className="size-3.5 text-red-400" />
-                            <span className="text-[13px] font-semibold text-red-300">
-                              Import finished with errors
-                            </span>
+                            <AlertTriangle className='size-3.5 text-red-400' />
+                            <span className='text-[13px] font-semibold text-red-300'>Import finished with errors</span>
                           </>
                         }
                       </div>
-                      <span className="text-[11px] font-medium text-white/55">
+                      <span className='text-[11px] font-medium text-white/55'>
                         {bulkResults.success} added, {bulkResults.failed} failed
                       </span>
                     </div>
                     {bulkResults.errors.length > 0 && (
                       <>
-                        <p className="mt-2 text-[11px] leading-relaxed text-white/55">
+                        <p className='mt-2 text-[11px] leading-relaxed text-white/55'>
                           Review the errors below, then retry the failed entries.
                         </p>
-                        <div className="custom-scroll mt-3 max-h-32 space-y-1.5 overflow-y-auto pl-1">
+                        <div className='custom-scroll mt-3 max-h-32 space-y-1.5 overflow-y-auto pl-1'>
                           {bulkResults.errors.map((err: string, idx: number) => (
                             <div
                               key={idx}
-                              className="flex items-start gap-1.5 text-[11px] leading-relaxed text-red-400/90">
-                              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-red-400/60" />
+                              className='flex items-start gap-1.5 text-[11px] leading-relaxed text-red-400/90'>
+                              <span className='mt-1 h-1 w-1 shrink-0 rounded-full bg-red-400/60' />
                               <span>{err}</span>
                             </div>
                           ))}
@@ -1252,23 +1196,21 @@ export function AddMember({
 
         {/* Action Buttons */}
         {!(isBulkMode && bulkResults && bulkResults.failed === 0) && (
-          <div className="mt-6 flex justify-end gap-3">
+          <div className='mt-6 flex justify-end gap-3'>
             <button
-              type="button"
+              type='button'
               onClick={() => {
                 resetForm()
                 onClose()
               }}
               disabled={Boolean(savedMember) && loading}
-              className="rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-40">
-              {savedMember ? "Finish without face" : "Cancel"}
+              className='rounded-lg px-4 py-2 text-[11px] font-medium text-white/55 transition-all duration-200 hover:bg-white/5 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-40'>
+              {savedMember ? 'Finish without face' : 'Cancel'}
             </button>
             <button
-              type="button"
+              type='button'
               aria-describedby={!isBulkMode && needsFacePhoto ? faceHintId : undefined}
-              onClick={
-                isBulkMode ? () => void handleBulkAddMembers() : () => void handleAddMember(false)
-              }
+              onClick={isBulkMode ? () => void handleBulkAddMembers() : () => void handleAddMember(false)}
               disabled={
                 loading ||
                 isProcessingBulk ||
@@ -1279,28 +1221,28 @@ export function AddMember({
               }
               className={`min-w-[120px] rounded-lg px-6 py-2 text-[11px] font-bold tracking-wider transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg-secondary)] focus-visible:outline-none active:scale-[0.97] disabled:opacity-30 ${
                 confirmDuplicate && !isBulkMode ?
-                  "bg-gradient-to-b from-amber-400 to-amber-500 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] hover:from-amber-300 hover:to-amber-400 focus-visible:ring-amber-400"
-                : "bg-gradient-to-b from-cyan-400 to-cyan-500 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-cyan-400"
+                  'bg-gradient-to-b from-amber-400 to-amber-500 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] hover:from-amber-300 hover:to-amber-400 focus-visible:ring-amber-400'
+                : 'bg-gradient-to-b from-cyan-400 to-cyan-500 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.3)] hover:from-cyan-300 hover:to-cyan-400 focus-visible:ring-cyan-400'
               }`}>
               {loading || isProcessingBulk ?
                 bulkProgress ?
                   `Processing (${bulkProgress.current}/${bulkProgress.total})`
-                : "Processing…"
+                : 'Processing…'
               : !isBulkMode && savedMember ?
                 capturedFace ?
-                  "Retry face enrollment"
-                : "Done"
+                  'Retry face enrollment'
+                : 'Done'
               : confirmDuplicate && !isBulkMode ?
                 capturedFace ?
-                  "Add anyway & enroll face"
-                : "Add anyway"
+                  'Add anyway & enroll face'
+                : 'Add anyway'
               : isBulkMode ?
                 bulkHasAttempted ?
-                  "Retry remaining entries"
-                : "Add members"
+                  'Retry remaining entries'
+                : 'Add members'
               : capturedFace ?
-                "Add member & enroll face"
-              : "Add member"}
+                'Add member & enroll face'
+              : 'Add member'}
             </button>
           </div>
         )}

@@ -1,8 +1,8 @@
-import type { AttendanceGroup } from "@/types/recognition"
-import { AnimatePresence } from "framer-motion"
-import { useGroupStore } from "@/components/group/stores"
-import { useGroupModals } from "@/components/group/hooks"
-import { AddMember, CreateGroup, EditGroup, EditMember } from "@/components/group/modals"
+import type { AttendanceGroup } from '@/types/recognition'
+import { AnimatePresence } from 'framer-motion'
+import { useGroupStore } from '@/components/group/stores'
+import { useGroupModals } from '@/components/group/hooks'
+import { AddMember, CreateGroup, EditGroup, EditMember } from '@/components/group/modals'
 
 interface GroupModalsProps {
   isEmbedded?: boolean
@@ -10,11 +10,7 @@ interface GroupModalsProps {
   onGroupSuccess: (group?: AttendanceGroup) => void
 }
 
-export function GroupModals({
-  isEmbedded = false,
-  onMemberSuccess,
-  onGroupSuccess,
-}: GroupModalsProps) {
+export function GroupModals({ isEmbedded = false, onMemberSuccess, onGroupSuccess }: GroupModalsProps) {
   const { selectedGroup, groups, fetchGroups, setSelectedGroup, members } = useGroupStore()
   const {
     showAddMemberModal,
@@ -25,7 +21,7 @@ export function GroupModals({
     closeAddMember,
     closeEditMember,
     closeCreateGroup,
-    closeEditGroup,
+    closeEditGroup
   } = useGroupModals()
   return (
     <>

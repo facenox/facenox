@@ -3,10 +3,10 @@ import type {
   AttendanceMember,
   AttendanceSettings,
   BulkDetectResponse,
-  BulkEnrollResponse,
-} from "@/types/recognition"
-import type { HttpClient } from "./HttpClient"
-import { notifyDataChanged } from "@/utils/syncNotifier"
+  BulkEnrollResponse
+} from '@/types/recognition'
+import type { HttpClient } from './HttpClient'
+import { notifyDataChanged } from '@/utils/syncNotifier'
 
 export class GroupManager {
   private httpClient: HttpClient
@@ -19,49 +19,39 @@ export class GroupManager {
 
   async createGroup(
     name: string,
-    settings?: Partial<AttendanceGroup["settings"]> | AttendanceSettings | null,
+    settings?: Partial<AttendanceGroup['settings']> | AttendanceSettings | null
   ): Promise<AttendanceGroup> {
     try {
       const groupData = {
         name,
         settings: {
           late_threshold_minutes:
-            settings && "late_threshold_minutes" in settings ?
-              (settings.late_threshold_minutes ?? 15)
-            : 15,
+            settings && 'late_threshold_minutes' in settings ? (settings.late_threshold_minutes ?? 15) : 15,
           late_threshold_enabled:
-            settings && "late_threshold_enabled" in settings ?
-              Boolean(settings.late_threshold_enabled)
-            : false,
+            settings && 'late_threshold_enabled' in settings ? Boolean(settings.late_threshold_enabled) : false,
           class_start_time:
-            settings && "class_start_time" in settings ?
-              (settings.class_start_time ?? "08:00")
-            : "08:00",
-          class_end_time:
-            settings && "class_end_time" in settings ? (settings.class_end_time ?? null) : null,
+            settings && 'class_start_time' in settings ? (settings.class_start_time ?? '08:00') : '08:00',
+          class_end_time: settings && 'class_end_time' in settings ? (settings.class_end_time ?? null) : null,
           attendance_mode:
-            settings && "attendance_mode" in settings ? (settings.attendance_mode ?? "attendance")
-            : settings && "track_checkout" in settings && settings.track_checkout ? "work_hours"
-            : "attendance",
+            settings && 'attendance_mode' in settings ? (settings.attendance_mode ?? 'attendance')
+            : settings && 'track_checkout' in settings && settings.track_checkout ? 'work_hours'
+            : 'attendance',
           track_checkout:
-            settings && "attendance_mode" in settings ? settings.attendance_mode !== "attendance"
-            : settings && "track_checkout" in settings ? Boolean(settings.track_checkout)
+            settings && 'attendance_mode' in settings ? settings.attendance_mode !== 'attendance'
+            : settings && 'track_checkout' in settings ? Boolean(settings.track_checkout)
             : false,
-          scan_behavior:
-            settings && "scan_behavior" in settings ?
-              (settings.scan_behavior ?? "automatic")
-            : "automatic",
-        },
+          scan_behavior: settings && 'scan_behavior' in settings ? (settings.scan_behavior ?? 'automatic') : 'automatic'
+        }
       }
 
       const group = await this.httpClient.post<AttendanceGroup>(this.apiEndpoints.groups, groupData)
       notifyDataChanged()
       return {
         ...group,
-        created_at: new Date(group.created_at),
+        created_at: new Date(group.created_at)
       }
     } catch (error) {
-      console.error("Error creating group:", error)
+      console.error('Error creating group:', error)
       throw error
     }
   }
@@ -69,14 +59,14 @@ export class GroupManager {
   async getGroups(options?: { throwOnError?: boolean }): Promise<AttendanceGroup[]> {
     try {
       const groups = await this.httpClient.get<AttendanceGroup[]>(this.apiEndpoints.groups, {
-        active_only: "true",
+        active_only: 'true'
       })
       return groups.map((group) => ({
         ...group,
-        created_at: new Date(group.created_at),
+        created_at: new Date(group.created_at)
       }))
     } catch (error) {
-      console.error("Error getting groups:", error)
+      console.error('Error getting groups:', error)
       if (options?.throwOnError) throw error
       return []
     }
@@ -84,15 +74,13 @@ export class GroupManager {
 
   async getGroup(groupId: string): Promise<AttendanceGroup | undefined> {
     try {
-      const group = await this.httpClient.get<AttendanceGroup>(
-        `${this.apiEndpoints.groups}/${groupId}`,
-      )
+      const group = await this.httpClient.get<AttendanceGroup>(`${this.apiEndpoints.groups}/${groupId}`)
       return {
         ...group,
-        created_at: new Date(group.created_at),
+        created_at: new Date(group.created_at)
       }
     } catch (error) {
-      console.error("Error getting group:", error)
+      console.error('Error getting group:', error)
       return undefined
     }
   }
@@ -103,7 +91,7 @@ export class GroupManager {
       notifyDataChanged()
       return true
     } catch (error) {
-      console.error("Error updating group:", error)
+      console.error('Error updating group:', error)
       throw error
     }
   }
@@ -114,20 +102,14 @@ export class GroupManager {
       notifyDataChanged()
       return true
     } catch (error) {
-      console.error("Error deleting group:", error)
+      console.error('Error deleting group:', error)
       return false
     }
   }
 
-  async getGroupMembers(
-    groupId: string,
-    options?: { throwOnError?: boolean },
-  ): Promise<AttendanceMember[]> {
+  async getGroupMembers(groupId: string, options?: { throwOnError?: boolean }): Promise<AttendanceMember[]> {
     try {
-      const endpoint =
-        groupId === "all" ?
-          this.apiEndpoints.members
-        : `${this.apiEndpoints.groups}/${groupId}/persons`
+      const endpoint = groupId === 'all' ? this.apiEndpoints.members : `${this.apiEndpoints.groups}/${groupId}/persons`
       const members = await this.httpClient.get<
         {
           person_id: string
@@ -149,10 +131,10 @@ export class GroupManager {
         email: member.email,
         joined_at: new Date(member.joined_at),
         is_active: member.is_active,
-        has_face_data: member.has_face_data,
+        has_face_data: member.has_face_data
       }))
     } catch (error) {
-      console.error("Error getting group members:", error)
+      console.error('Error getting group members:', error)
       if (options?.throwOnError) throw error
       return []
     }
@@ -160,12 +142,9 @@ export class GroupManager {
 
   async bulkDetectFaces(groupId: string, images: File[]): Promise<BulkDetectResponse> {
     const formData = new FormData()
-    images.forEach((file) => formData.append("images", file))
+    images.forEach((file) => formData.append('images', file))
 
-    return this.httpClient.postMultipart(
-      `${this.apiEndpoints.groups}/${groupId}/bulk-detect-faces`,
-      formData,
-    )
+    return this.httpClient.postMultipart(`${this.apiEndpoints.groups}/${groupId}/bulk-detect-faces`, formData)
   }
 
   async bulkEnrollFaces(
@@ -177,15 +156,15 @@ export class GroupManager {
       filename?: string
       image_index?: number
     }[],
-    images: { file: File; filename: string }[],
+    images: { file: File; filename: string }[]
   ): Promise<BulkEnrollResponse> {
     const formData = new FormData()
-    images.forEach((item) => formData.append("images", item.file, item.filename))
-    formData.append("metadata", JSON.stringify(enrollments))
+    images.forEach((item) => formData.append('images', item.file, item.filename))
+    formData.append('metadata', JSON.stringify(enrollments))
 
     const result = await this.httpClient.postMultipart<BulkEnrollResponse>(
       `${this.apiEndpoints.groups}/${groupId}/bulk-enroll-faces`,
-      formData,
+      formData
     )
     notifyDataChanged()
     return result

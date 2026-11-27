@@ -40,11 +40,11 @@ export interface CapturedFrame {
   height: number
   bbox?: [number, number, number, number]
   landmarks_5?: number[][]
-  status: "processing" | "success" | "error" | "ready" | "enrolled"
+  status: 'processing' | 'success' | 'error' | 'ready' | 'enrolled'
   error?: string
   label?: string
   file?: File
   angle?: string
 }
 
-export type CaptureSource = "live" | "upload"
+export type CaptureSource = 'live' | 'upload'

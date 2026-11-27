@@ -1,6 +1,6 @@
-import { create } from "zustand"
-import type { DetectionResult, TrackedFace } from "@/components/main/types"
-import type { ExtendedFaceRecognitionResponse } from "@/components/main/utils"
+import { create } from 'zustand'
+import type { DetectionResult, TrackedFace } from '@/components/main/types'
+import type { ExtendedFaceRecognitionResponse } from '@/components/main/utils'
 
 interface DetectionState {
   // Detection state
@@ -17,13 +17,10 @@ interface DetectionState {
   setCurrentRecognitionResults: (
     results:
       | Map<number, ExtendedFaceRecognitionResponse>
-      | ((
-          prev: Map<number, ExtendedFaceRecognitionResponse>,
-        ) => Map<number, ExtendedFaceRecognitionResponse>),
+      | ((prev: Map<number, ExtendedFaceRecognitionResponse>) => Map<number, ExtendedFaceRecognitionResponse>)
   ) => void
   setTrackedFaces: (
-    faces:
-      Map<string, TrackedFace> | ((prev: Map<string, TrackedFace>) => Map<string, TrackedFace>),
+    faces: Map<string, TrackedFace> | ((prev: Map<string, TrackedFace>) => Map<string, TrackedFace>)
   ) => void
   resetDetectionState: () => void
 }
@@ -38,12 +35,12 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
   setCurrentDetections: (detections) => set({ currentDetections: detections }),
   setCurrentRecognitionResults: (results) => {
     const prevResults = get().currentRecognitionResults
-    const newResults = typeof results === "function" ? results(prevResults) : results
+    const newResults = typeof results === 'function' ? results(prevResults) : results
     const mapResults = newResults instanceof Map ? newResults : new Map()
     set({ currentRecognitionResults: mapResults })
   },
   setTrackedFaces: (faces) => {
-    const newFaces = typeof faces === "function" ? faces(get().trackedFaces) : faces
+    const newFaces = typeof faces === 'function' ? faces(get().trackedFaces) : faces
     const mapFaces = newFaces instanceof Map ? newFaces : new Map()
     set({ trackedFaces: mapFaces })
   },
@@ -51,6 +48,6 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
     set({
       currentDetections: null,
       currentRecognitionResults: new Map(),
-      trackedFaces: new Map(),
-    }),
+      trackedFaces: new Map()
+    })
 }))
