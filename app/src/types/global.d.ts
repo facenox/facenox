@@ -217,9 +217,10 @@ declare global {
         unsyncedSessionsCount?: number
       }
     }>
-    initiateReversePairing: (input?: { remoteBaseUrl?: string; deviceName?: string }) => Promise<{
+    initiateReversePairing: (input?: { remoteBaseUrl?: string; deviceName?: string; forceNew?: boolean }) => Promise<{
       success: boolean
       error?: string
+      retryAfterSeconds?: number
       data?: {
         deviceCode: string
         userCode: string
@@ -232,6 +233,7 @@ declare global {
     pollDeviceAuthorization: (input: { remoteBaseUrl?: string; deviceCode: string; deviceName?: string }) => Promise<{
       status: 'pending' | 'approved' | 'expired' | 'claimed' | 'denied' | 'error' | 'network_error'
       slowDown?: boolean
+      retryAfterSeconds?: number
       success?: boolean
       message?: string
       error?: string

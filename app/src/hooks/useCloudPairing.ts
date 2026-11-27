@@ -55,6 +55,7 @@ export function useCloudPairing({
   const [reversePairing, setReversePairing] = useState<ReversePairingData | null>(null)
   const [isInitiating, setIsInitiating] = useState(false)
   const [initiateError, setInitiateError] = useState<string | null>(null)
+  const [retryCooldownSeconds, setRetryCooldownSeconds] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState<number>(900)
   const [pairingCode, setPairingCode] = useState('')
 
@@ -89,7 +90,16 @@ export function useCloudPairing({
     setIsInitiating(false)
     setReversePairing(null)
     setInitiateError(null)
+    setRetryCooldownSeconds(0)
   }, [remoteBaseUrl, deviceName])
+
+  useEffect(() => {
+    if (retryCooldownSeconds <= 0) return
+    const timer = setInterval(() => {
+      setRetryCooldownSeconds((prev) => Math.max(0, prev - 1))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [retryCooldownSeconds])
 
   useEffect(() => {
     if (cloudConfigStatus !== 'ready' || connected || !enabled) {
@@ -109,10 +119,11 @@ export function useCloudPairing({
     setPairingCode('')
     setReversePairing(null)
     setInitiateError(null)
+    setRetryCooldownSeconds(0)
   }, [])
 
   const startReversePairing = useCallback(
-    async (overrideBaseUrl?: string) => {
+    async (overrideBaseUrl?: string, options?: { forceNew?: boolean }) => {
       if (
         !enabled ||
         !configReady ||
@@ -133,22 +144,33 @@ export function useCloudPairing({
       const targetDisplayName = isTargetCustom ? 'Custom server' : 'Facenox Cloud'
 
       try {
-        const res = await window.electronAPI.sync.initiateReversePairing({
+        const requestPayload: { remoteBaseUrl: string; deviceName: string; forceNew?: boolean } = {
           remoteBaseUrl: targetUrl,
           deviceName
-        })
+        }
+        if (options?.forceNew) {
+          requestPayload.forceNew = true
+        }
+        const res = await window.electronAPI.sync.initiateReversePairing(requestPayload)
         if (!mountedRef.current || pairingRequestRef.current !== request) return
         if (!res.success || !res.data) {
           setInitiateError(res.error || `Could not connect to ${targetDisplayName}.`)
+          setRetryCooldownSeconds(
+            typeof res.retryAfterSeconds === 'number' && res.retryAfterSeconds > 0 ?
+              Math.ceil(res.retryAfterSeconds)
+            : 0
+          )
           setReversePairing(null)
         } else {
           setReversePairing({ ...res.data, remoteBaseUrl: targetUrl, deviceName })
           setSecondsLeft(res.data.expiresIn || 900)
           setInitiateError(null)
+          setRetryCooldownSeconds(0)
         }
       } catch (err) {
         if (!mountedRef.current || pairingRequestRef.current !== request) return
         setInitiateError(err instanceof Error ? err.message : 'Connection error.')
+        setRetryCooldownSeconds(0)
         setReversePairing(null)
       } finally {
         if (mountedRef.current && pairingRequestRef.current === request) {
@@ -193,7 +215,7 @@ export function useCloudPairing({
       !connected &&
       cloudConfigStatus === 'ready'
     ) {
-      void startReversePairing()
+      void startReversePairing(undefined, { forceNew: true })
     }
   }, [secondsLeft, enabled, reversePairing, pairingConfigDirty, connected, cloudConfigStatus, startReversePairing])
 
@@ -243,7 +265,7 @@ export function useCloudPairing({
         if (isCancelled) return
 
         if (res.status === 'expired' || res.status === 'claimed') {
-          void startReversePairing()
+          void startReversePairing(undefined, { forceNew: true })
           return
         }
         if (res.status === 'denied') {
@@ -257,7 +279,8 @@ export function useCloudPairing({
           return
         }
         if (res.slowDown) {
-          currentIntervalMs = Math.min(15_000, currentIntervalMs + 3_000)
+          const retryMs = res.retryAfterSeconds ? res.retryAfterSeconds * 1000 : 0
+          currentIntervalMs = Math.min(60_000, Math.max(currentIntervalMs + 3_000, retryMs))
         }
       } catch {
         // Silent retry on transient network error
@@ -342,6 +365,7 @@ export function useCloudPairing({
     isInitiating,
     isInitiatingRef,
     initiateError,
+    retryCooldownSeconds,
     secondsLeft,
     pairingCode,
     setPairingCode,

@@ -53,6 +53,22 @@ describe('IntroModal', () => {
     expect(screen.getByRole('button', { name: /^Sign in$/i })).toBeDisabled()
   })
 
+  it('disables Retry connection with countdown when Cloud responds with retryAfterSeconds', async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
+    api.initiateReversePairing.mockResolvedValue({
+      success: false,
+      error: 'Too many pairing requests. Try again shortly.',
+      retryAfterSeconds: 42
+    })
+
+    render(<IntroModal initialStep={2} />)
+
+    expect(await screen.findByText('Too many pairing requests. Try again shortly.')).toBeInTheDocument()
+    const retryBtn = await screen.findByRole('button', { name: 'Retry in 42s' })
+    expect(retryBtn).toBeDisabled()
+  })
+
   it('loads a saved custom destination before starting device authorization', async () => {
     const api = getElectronAPIMock().sync
     api.getConfig.mockResolvedValue(

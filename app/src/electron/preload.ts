@@ -128,7 +128,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     pairDevice: (input: { remoteBaseUrl?: string; pairingCode: string; deviceName?: string }) => {
       return ipcRenderer.invoke('sync:pair-device', input)
     },
-    initiateReversePairing: (input?: { remoteBaseUrl?: string; deviceName?: string }) => {
+    initiateReversePairing: (input?: { remoteBaseUrl?: string; deviceName?: string; forceNew?: boolean }) => {
       return ipcRenderer.invoke('sync:initiate-reverse-pairing', input)
     },
     pollDeviceAuthorization: (input: { remoteBaseUrl?: string; deviceCode: string; deviceName?: string }) => {

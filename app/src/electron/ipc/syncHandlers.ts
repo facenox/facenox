@@ -5,6 +5,7 @@ import crypto from 'node:crypto'
 import { backendService } from '../backendService.js'
 import { withLocalBackendHeaders } from '../localBackendScope.js'
 import { syncManager } from '../managers/BackgroundSyncManager.js'
+import { parseRetryAfterSeconds, reversePairingSession } from '../managers/reversePairingSession.js'
 import { clearLocalSyncMetadata, clearRemoteConnection } from '../managers/syncConnectionState.js'
 import { persistentStore, requireSecretStorage } from '../persistentStore.js'
 import { getCurrentVersion } from '../updater.js'
@@ -222,6 +223,7 @@ async function finalizeDevicePairing(remoteBaseUrl: string, deviceName: string, 
     })
   } catch (err) {
     clearRemoteConnection()
+    reversePairingSession.invalidate()
     if (previousOrigin !== undefined) {
       persistentStore.set('sync.dataOrigin', previousOrigin)
     } else {
@@ -388,6 +390,9 @@ export function registerSyncHandlers() {
       } else {
         persistentStore.set('sync.remoteBaseUrl', normalizeRemoteBaseUrl(trimmed))
       }
+      if (resolveRemoteBaseUrl((persistentStore.get('sync.remoteBaseUrl') as string) || '') !== currentUrl) {
+        reversePairingSession.invalidate()
+      }
     }
 
     if (typeof updates.deviceName === 'string') {
@@ -481,6 +486,7 @@ export function registerSyncHandlers() {
 
         if (!payload) throw new Error('Invalid pairing response.')
         await finalizeDevicePairing(remoteBaseUrl, deviceName, payload)
+        reversePairingSession.invalidate({ clearCooldown: true, remoteBaseUrl })
 
         persistentStore.delete(DIRECT_PAIRING_ATTEMPT)
         syncManager.start({ skipCatchUp: true })
@@ -514,83 +520,104 @@ export function registerSyncHandlers() {
       input: {
         remoteBaseUrl?: string
         deviceName?: string
+        forceNew?: boolean
       } = {}
     ) => {
       const remoteBaseUrl = resolveRemoteBaseUrl(input.remoteBaseUrl || '')
       const deviceName = (input.deviceName || '').trim() || 'Facenox Desktop'
 
-      try {
-        if (getRemoteSyncStatus().connected) {
-          return { success: false, error: 'This device is already connected to Cloud.' }
-        }
-        requireSecretStorage()
-        const response = await fetch(`${remoteBaseUrl}/api/device/code`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Facenox-Version': getCurrentVersion(),
-            'User-Agent': 'Facenox-Desktop-ReversePair'
-          },
-          body: JSON.stringify({
-            device_name: deviceName,
-            app_version: getCurrentVersion(),
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-          }),
-          signal: AbortSignal.timeout(15000)
-        })
-
-        if (!response.ok) {
-          let errorDetail = `HTTP ${response.status}`
-          const contentType = response.headers.get('content-type') || ''
-          if (contentType.includes('application/json')) {
-            try {
-              const errJson = (await response.json()) as { message?: string; error?: string }
-              errorDetail = errJson.message || errJson.error || errorDetail
-            } catch {
-              // ignore
-            }
-          } else {
-            const text = await response.text().catch(() => '')
-            if (text && text.length < 120 && !text.includes('<') && !text.includes('{')) {
-              errorDetail = `${errorDetail}: ${text.trim()}`
-            } else if (response.status === 404) {
-              errorDetail = `Endpoint not found (HTTP 404 at ${remoteBaseUrl})`
-            } else {
-              errorDetail = `Server returned HTTP ${response.status} (${response.statusText || 'Error'})`
-            }
-          }
-          return {
-            success: false,
-            error: `Failed to initiate pairing: ${errorDetail}`
-          }
-        }
-
-        const data = (await response.json()) as {
-          device_code: string
-          user_code: string
-          verification_uri: string
-          verification_uri_complete: string
-          expires_in: number
-          interval?: number
-        }
-
-        return {
-          success: true,
-          data: {
-            deviceCode: data.device_code,
-            userCode: data.user_code,
-            verificationUri: data.verification_uri,
-            verificationUriComplete: data.verification_uri_complete,
-            expiresIn: data.expires_in,
-            interval: data.interval || 3
-          }
-        }
-      } catch (error) {
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Could not connect to Facenox Cloud.'
-        }
+      if (getRemoteSyncStatus().connected) {
+        reversePairingSession.invalidate()
+        return { success: false, error: 'This device is already connected to Cloud.' }
       }
+
+      return await reversePairingSession.getOrInitiate(
+        {
+          remoteBaseUrl,
+          deviceName,
+          forceNew: Boolean(input.forceNew)
+        },
+        async () => {
+          try {
+            if (getRemoteSyncStatus().connected) {
+              return { success: false, error: 'This device is already connected to Cloud.' }
+            }
+            requireSecretStorage()
+            const response = await fetch(`${remoteBaseUrl}/api/device/code`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Facenox-Version': getCurrentVersion(),
+                'User-Agent': 'Facenox-Desktop-ReversePair'
+              },
+              body: JSON.stringify({
+                device_name: deviceName,
+                app_version: getCurrentVersion(),
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+              }),
+              signal: AbortSignal.timeout(15000)
+            })
+
+            if (!response.ok) {
+              let errorDetail = `HTTP ${response.status}`
+              let errJson: { message?: string; error?: string; retryAfter?: unknown } | null = null
+              const contentType = response.headers.get('content-type') || ''
+              if (contentType.includes('application/json')) {
+                try {
+                  errJson = (await response.json()) as { message?: string; error?: string; retryAfter?: unknown }
+                  errorDetail = errJson.message || errJson.error || errorDetail
+                } catch {
+                  // ignore
+                }
+              } else {
+                const text = await response.text().catch(() => '')
+                if (text && text.length < 120 && !text.includes('<') && !text.includes('{')) {
+                  errorDetail = `${errorDetail}: ${text.trim()}`
+                } else if (response.status === 404) {
+                  errorDetail = `Endpoint not found (HTTP 404 at ${remoteBaseUrl})`
+                } else {
+                  errorDetail = `Server returned HTTP ${response.status} (${response.statusText || 'Error'})`
+                }
+              }
+
+              const retryAfterSeconds =
+                response.status === 429 ? (parseRetryAfterSeconds(response.headers, errJson) ?? 60) : undefined
+
+              return {
+                success: false,
+                error: response.status === 429 ? errorDetail : `Failed to initiate pairing: ${errorDetail}`,
+                retryAfterSeconds
+              }
+            }
+
+            const data = (await response.json()) as {
+              device_code: string
+              user_code: string
+              verification_uri: string
+              verification_uri_complete: string
+              expires_in: number
+              interval?: number
+            }
+
+            return {
+              success: true,
+              data: {
+                deviceCode: data.device_code,
+                userCode: data.user_code,
+                verificationUri: data.verification_uri,
+                verificationUriComplete: data.verification_uri_complete,
+                expiresIn: data.expires_in,
+                interval: data.interval || 3
+              }
+            }
+          } catch (error) {
+            return {
+              success: false,
+              error: error instanceof Error ? error.message : 'Could not connect to Facenox Cloud.'
+            }
+          }
+        }
+      )
     }
   )
 
@@ -598,6 +625,7 @@ export function registerSyncHandlers() {
     status?: 'pending' | 'approved' | 'expired' | 'denied' | 'error' | 'network_error'
     error?: string
     message?: string
+    retryAfter?: unknown
     deviceId?: string
     deviceToken?: string
     encryptionKey?: string
@@ -643,15 +671,22 @@ export function registerSyncHandlers() {
           if (payload?.error === 'authorization_pending') {
             return { status: 'pending' }
           }
-          if (payload?.error === 'slow_down') {
-            return { status: 'pending', slowDown: true }
+          if (payload?.error === 'slow_down' || response.status === 429) {
+            return {
+              status: 'pending',
+              slowDown: true,
+              retryAfterSeconds: parseRetryAfterSeconds(response.headers, payload)
+            }
           }
           if (payload?.error === 'expired_token') {
+            reversePairingSession.invalidate({ deviceCode })
             return { status: 'expired', error: 'Pairing code expired.' }
           }
           if (payload?.error === 'access_denied') {
+            reversePairingSession.invalidate({ deviceCode })
             return { status: 'denied', error: 'Device pairing was denied by admin.' }
           }
+          reversePairingSession.invalidate({ deviceCode })
           return {
             status: 'error',
             error: payload?.message || payload?.error || `HTTP ${response.status}`
@@ -663,6 +698,7 @@ export function registerSyncHandlers() {
         }
 
         if (payload?.status === 'approved' && payload.deviceToken) {
+          reversePairingSession.invalidate({ deviceCode, clearCooldown: true, remoteBaseUrl })
           try {
             await finalizeDevicePairing(remoteBaseUrl, deviceName, payload as Record<string, unknown>)
           } catch (finalizeError) {
@@ -769,6 +805,7 @@ export function registerSyncHandlers() {
     }
 
     clearRemoteConnection()
+    reversePairingSession.invalidate({ clearCooldown: true, remoteBaseUrl: status.remoteBaseUrl })
     if (clearLocalData) {
       clearLocalSyncMetadata()
     }
@@ -846,6 +883,7 @@ export function registerSyncHandlers() {
     }
 
     clearLocalSyncMetadata()
+    reversePairingSession.invalidate({ remoteBaseUrl: status.remoteBaseUrl })
     persistentStore.set('sync.lastSyncStatus', 'idle')
     persistentStore.set('sync.lastSyncMessage', null)
     syncManager.stop()
@@ -891,6 +929,7 @@ export function registerSyncHandlers() {
     }
 
     clearLocalSyncMetadata()
+    reversePairingSession.invalidate({ remoteBaseUrl: status.remoteBaseUrl })
     persistentStore.set('sync.lastSyncStatus', 'idle')
     persistentStore.set('sync.lastSyncMessage', null)
     syncManager.stop()

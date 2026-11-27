@@ -14,12 +14,6 @@ interface IntroModalProps {
   initialStep?: number
 }
 
-/**
- * First-launch onboarding & Cloud connection gate.
- *
- * Steps 1-2: On-device biometric architecture & template privacy
- * Step 3: Mandatory Cloud sign-in / pairing
- */
 export function IntroModal({ initialStep = 0 }: IntroModalProps) {
   const { setHasSeenIntro } = useUIStore()
   const { config: cloudConfig, status: cloudConfigStatus, error: cloudConfigError } = useCloudSyncConfig()
@@ -117,6 +111,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     isInitiating,
     isInitiatingRef,
     initiateError,
+    retryCooldownSeconds,
     secondsLeft,
     pairingCode,
     setPairingCode,
@@ -138,7 +133,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     if (!pendingRepairAfterReset || busyAction !== null) return
     setPendingRepairAfterReset(false)
     isInitiatingRef.current = false
-    void startReversePairing(effectiveRemoteBaseUrl)
+    void startReversePairing(effectiveRemoteBaseUrl, { forceNew: true })
   }, [pendingRepairAfterReset, busyAction, startReversePairing, effectiveRemoteBaseUrl, isInitiatingRef])
 
   const isDirectoryOriginMismatchError = (msg: string | null) =>
@@ -835,15 +830,20 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                     }
                     <button
                       type='button'
+                      disabled={isInitiating || retryCooldownSeconds > 0}
                       onClick={() => {
                         setMismatchAction('idle')
                         setMigrateConfirmed(false)
                         isInitiatingRef.current = false
                         void startReversePairing(effectiveRemoteBaseUrl)
                       }}
-                      className='flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10'>
-                      <RotateCw className='size-3' />
-                      Retry connection
+                      className='flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45'>
+                      <RotateCw className={`size-3 ${isInitiating ? 'animate-spin' : ''}`} />
+                      {retryCooldownSeconds > 0 ?
+                        `Retry in ${retryCooldownSeconds}s`
+                      : isInitiating ?
+                        'Retrying…'
+                      : 'Retry connection'}
                     </button>
                   </motion.div>
                 : null}
