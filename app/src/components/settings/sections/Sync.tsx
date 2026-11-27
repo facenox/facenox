@@ -326,7 +326,7 @@ export function Sync({ onNavigateToDB, onStatusChange }: SyncProps = {}) {
                         <div className='font-medium text-white/65'>Current sync status unavailable</div>
                       : <div className='flex items-center gap-1.5 font-medium text-emerald-400'>
                           <Check className='size-3' />
-                          <span>Last sync completed</span>
+                          <span>Up to date</span>
                         </div>
                       }
                       <div className='text-[11px] text-white/40'>

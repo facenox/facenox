@@ -330,15 +330,20 @@ export default function WindowBar() {
             let iconColor = 'text-emerald-400'
             let statusText =
               queueKnown && pendingCount > 0 ? 'Sync pending'
-              : syncConfig.lastSyncedAt ? 'Last sync completed'
+              : syncConfig.lastSyncedAt ? 'Synced'
               : 'Waiting for sync'
-            const lastSyncText =
-              syncConfig.lastSyncedAt ? `Last completed sync: ${relativeTime}.` : 'No completed sync yet.'
-            const queueText =
-              !queueKnown ? 'Queue status unavailable.'
-              : pendingCount > 0 ? `${pendingCount} attendance update${pendingCount === 1 ? '' : 's'} queued.`
-              : 'No attendance updates queued.'
-            let tooltipContent = `${lastSyncText} ${queueText} Open Cloud sync for details.`
+            const summaryPart =
+              !queueKnown ?
+                syncConfig.lastSyncedAt ?
+                  `Last synced ${relativeTime} · Queue status unavailable`
+                : 'Waiting for initial sync · Queue status unavailable'
+              : pendingCount > 0 ?
+                syncConfig.lastSyncedAt ?
+                  `${pendingCount} queued update${pendingCount === 1 ? '' : 's'} · Last synced ${relativeTime}`
+                : `${pendingCount} queued update${pendingCount === 1 ? '' : 's'} · Waiting for initial sync`
+              : syncConfig.lastSyncedAt ? `Last synced ${relativeTime}`
+              : 'Waiting for initial sync'
+            let tooltipContent = `${summaryPart}. Click to open Cloud sync.`
 
             if (syncConfig.lastSyncStatus === 'error' || syncConfig.credentialError) {
               const rawErr = syncConfig.credentialError || syncConfig.lastSyncMessage || ''

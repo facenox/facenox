@@ -23,7 +23,7 @@ describe('WindowBar', () => {
 
   it.each([
     [undefined, undefined, null, 'Waiting for sync'],
-    [0, 0, '2026-10-23T02:00:00Z', 'Last sync completed'],
+    [0, 0, '2026-10-23T02:00:00Z', 'Synced'],
     [2, 0, '2026-10-23T02:00:00Z', 'Sync pending']
   ] as const)('renders queue state %s / %s', async (records, sessions, timestamp, label) => {
     getElectronAPIMock().sync.getConfig.mockResolvedValue(
