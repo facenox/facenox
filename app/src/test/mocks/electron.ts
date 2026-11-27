@@ -74,6 +74,7 @@ export interface MockElectronAPI extends BackendServiceAPI {
     getLocalDirectorySummary: Mock
     migrateLocalDirectory: Mock
     resetLocalDirectory: Mock
+    cancelPendingPairing: Mock
     exportData: Mock
     pickImportFile: Mock
     importData: Mock
@@ -263,6 +264,7 @@ export function createElectronAPIMock(): MockElectronAPI {
         success: true,
         config: defaultSyncConfig
       }),
+      cancelPendingPairing: vi.fn().mockResolvedValue({ success: true }),
       exportData: vi.fn().mockResolvedValue({ success: true, filePath: 'backup.facenox' }),
       pickImportFile: vi.fn().mockResolvedValue({ canceled: true }),
       importData: vi.fn().mockResolvedValue({ success: true, message: 'Imported' }),

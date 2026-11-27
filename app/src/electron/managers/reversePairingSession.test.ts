@@ -136,6 +136,46 @@ describe('ReversePairingSessionManager', () => {
     expect(recovered.data?.deviceCode).toBe('recovered')
     expect(fetcher).toHaveBeenCalledTimes(3)
   })
+
+  it('tracks, consumes, and cleanly discards pending mismatch credentials', async () => {
+    const manager = new ReversePairingSessionManager(() => 1_000)
+
+    const prev1 = manager.replacePendingMismatch({
+      remoteBaseUrl: 'https://facenox.com',
+      deviceName: 'Kiosk 1',
+      payload: { deviceId: 'd1', deviceToken: 't1' }
+    })
+    expect(prev1).toBeNull()
+
+    // Mismatched server URL does not consume the held credential.
+    expect(manager.takePendingMismatch('http://localhost:3000')).toBeNull()
+    expect(manager.getPendingMismatch()?.payload.deviceId).toBe('d1')
+
+    // Replacing returns the older entry so it can be unpaired cleanly.
+    const prev2 = manager.replacePendingMismatch({
+      remoteBaseUrl: 'https://facenox.com',
+      deviceName: 'Kiosk 1',
+      payload: { deviceId: 'd2', deviceToken: 't2' }
+    })
+    expect(prev2?.payload.deviceId).toBe('d1')
+
+    // Discarding clears state before running unpair callback once.
+    const unpair = vi.fn().mockResolvedValue(undefined)
+    await manager.discardPendingMismatch(unpair)
+    await manager.discardPendingMismatch(unpair)
+    expect(unpair).toHaveBeenCalledTimes(1)
+    expect(unpair).toHaveBeenCalledWith(expect.objectContaining({ payload: { deviceId: 'd2', deviceToken: 't2' } }))
+    expect(manager.getPendingMismatch()).toBeNull()
+
+    // takePendingMismatch clears atomically on match.
+    manager.replacePendingMismatch({
+      remoteBaseUrl: 'https://facenox.com',
+      deviceName: 'Kiosk 1',
+      payload: { deviceId: 'd3', deviceToken: 't3' }
+    })
+    expect(manager.takePendingMismatch('https://facenox.com')?.payload.deviceId).toBe('d3')
+    expect(manager.takePendingMismatch('https://facenox.com')).toBeNull()
+  })
 })
 
 describe('parseRetryAfterSeconds', () => {

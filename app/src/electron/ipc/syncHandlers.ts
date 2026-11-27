@@ -5,7 +5,11 @@ import crypto from 'node:crypto'
 import { backendService } from '../backendService.js'
 import { withLocalBackendHeaders } from '../localBackendScope.js'
 import { syncManager } from '../managers/BackgroundSyncManager.js'
-import { parseRetryAfterSeconds, reversePairingSession } from '../managers/reversePairingSession.js'
+import {
+  DirectoryOriginMismatchError,
+  parseRetryAfterSeconds,
+  reversePairingSession
+} from '../managers/reversePairingSession.js'
 import { clearLocalSyncMetadata, clearRemoteConnection } from '../managers/syncConnectionState.js'
 import { persistentStore, requireSecretStorage } from '../persistentStore.js'
 import { getCurrentVersion } from '../updater.js'
@@ -143,15 +147,29 @@ async function readBackendErrorMessage(response: Response, fallback: string): Pr
   return fallback
 }
 
-async function validatePairingDestination(
+async function unpairRemoteCredential(
   remoteBaseUrl: string,
-  payload: {
-    organizationId?: unknown
-    siteId?: unknown
-    deviceToken?: unknown
-    deviceId?: unknown
-  }
-) {
+  payload: { deviceToken?: unknown; deviceId?: unknown }
+): Promise<void> {
+  if (!payload.deviceToken || !payload.deviceId) return
+  await fetch(`${remoteBaseUrl}/api/device/unpair`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${String(payload.deviceToken)}`
+    },
+    body: JSON.stringify({ device_id: String(payload.deviceId) }),
+    signal: AbortSignal.timeout(5000)
+  }).catch(() => undefined)
+}
+
+export async function discardPendingPairingMismatch(): Promise<void> {
+  await reversePairingSession.discardPendingMismatch(async (entry) => {
+    await unpairRemoteCredential(entry.remoteBaseUrl, entry.payload)
+  })
+}
+
+async function validatePairingDestination(remoteBaseUrl: string, deviceName: string, payload: Record<string, unknown>) {
   if (getRemoteSyncStatus().connected) throw new Error('Disconnect the current device before pairing again.')
   const origin = persistentStore.get('sync.dataOrigin') as
     { organizationId: string; siteId: string; remoteBaseUrl: string } | undefined
@@ -169,24 +187,21 @@ async function validatePairingDestination(
     if (!response.ok) throw new Error('Could not verify the local directory before pairing.')
     const data = (await response.json()) as Record<string, unknown[]>
     if (['groups', 'members', 'records', 'sessions'].some((key) => data[key]?.length)) {
-      await fetch(`${remoteBaseUrl}/api/device/unpair`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${payload.deviceToken}`
-        },
-        body: JSON.stringify({ device_id: payload.deviceId }),
-        signal: AbortSignal.timeout(10000)
-      }).catch(() => undefined)
-      throw new Error(
-        'This local directory belongs to another Cloud location. Reconnect to its original location or use a separate local data profile.'
-      )
+      const previous = reversePairingSession.replacePendingMismatch({
+        remoteBaseUrl,
+        deviceName,
+        payload
+      })
+      if (previous && previous.payload.deviceId !== payload.deviceId) {
+        void unpairRemoteCredential(previous.remoteBaseUrl, previous.payload)
+      }
+      throw new DirectoryOriginMismatchError()
     }
   }
 }
 
 async function finalizeDevicePairing(remoteBaseUrl: string, deviceName: string, payload: Record<string, unknown>) {
-  await validatePairingDestination(remoteBaseUrl, payload)
+  await validatePairingDestination(remoteBaseUrl, deviceName, payload)
   const previousOrigin = persistentStore.get('sync.dataOrigin')
 
   try {
@@ -229,18 +244,37 @@ async function finalizeDevicePairing(remoteBaseUrl: string, deviceName: string, 
     } else {
       persistentStore.delete('sync.dataOrigin')
     }
-    if (payload.deviceToken && payload.deviceId) {
-      await fetch(`${remoteBaseUrl}/api/device/unpair`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${String(payload.deviceToken)}`
-        },
-        body: JSON.stringify({ device_id: String(payload.deviceId) }),
-        signal: AbortSignal.timeout(10000)
-      }).catch(() => undefined)
+    if (!(err instanceof DirectoryOriginMismatchError)) {
+      await unpairRemoteCredential(remoteBaseUrl, payload)
     }
     throw err
+  }
+}
+
+async function completePendingMismatchPairing(expectedRemoteBaseUrl: string) {
+  const pending = reversePairingSession.takePendingMismatch(expectedRemoteBaseUrl)
+  if (!pending) return null
+
+  try {
+    await finalizeDevicePairing(pending.remoteBaseUrl, pending.deviceName, pending.payload)
+  } catch (err) {
+    await unpairRemoteCredential(pending.remoteBaseUrl, pending.payload)
+    throw err
+  }
+
+  reversePairingSession.invalidate({ clearCooldown: true, remoteBaseUrl: pending.remoteBaseUrl })
+  syncManager.start({ skipCatchUp: true })
+  const initialSyncResult = await syncManager.performSync()
+  if (!getRemoteSyncStatus().connected) {
+    return null
+  }
+  return {
+    paired: true as const,
+    initialSyncSucceeded: initialSyncResult.success,
+    message:
+      initialSyncResult.success ?
+        'Device connected and initial sync completed.'
+      : 'Device connected, but the initial sync failed. Check the sync log for details.'
   }
 }
 
@@ -391,6 +425,7 @@ export function registerSyncHandlers() {
         persistentStore.set('sync.remoteBaseUrl', normalizeRemoteBaseUrl(trimmed))
       }
       if (resolveRemoteBaseUrl((persistentStore.get('sync.remoteBaseUrl') as string) || '') !== currentUrl) {
+        await discardPendingPairingMismatch()
         reversePairingSession.invalidate()
       }
     }
@@ -449,6 +484,7 @@ export function registerSyncHandlers() {
 
       try {
         requireSecretStorage()
+        await discardPendingPairingMismatch()
         const recoveryKey = getDirectPairingRecoveryKey(remoteBaseUrl, pairingCode)
         const response = await fetch(`${remoteBaseUrl}/api/device/pair`, {
           method: 'POST',
@@ -527,8 +563,13 @@ export function registerSyncHandlers() {
       const deviceName = (input.deviceName || '').trim() || 'Facenox Desktop'
 
       if (getRemoteSyncStatus().connected) {
+        await discardPendingPairingMismatch()
         reversePairingSession.invalidate()
         return { success: false, error: 'This device is already connected to Cloud.' }
+      }
+
+      if (input.forceNew) {
+        await discardPendingPairingMismatch()
       }
 
       return await reversePairingSession.getOrInitiate(
@@ -736,6 +777,7 @@ export function registerSyncHandlers() {
   )
 
   ipcMain.handle('sync:disconnect-device', async (_event, options?: { clearLocalData?: boolean }) => {
+    await discardPendingPairingMismatch()
     const clearLocalData = Boolean(options?.clearLocalData)
     const status = getRemoteSyncStatus()
     let warning: string | null =
@@ -859,6 +901,29 @@ export function registerSyncHandlers() {
     }
   })
 
+  async function finishLocalDirectoryResolution(remoteBaseUrl: string, contextLabel: string) {
+    clearLocalSyncMetadata()
+    reversePairingSession.invalidate({ remoteBaseUrl })
+    persistentStore.set('sync.lastSyncStatus', 'idle')
+    persistentStore.set('sync.lastSyncMessage', null)
+    syncManager.stop()
+
+    const pendingCompletion = await completePendingMismatchPairing(remoteBaseUrl).catch((err) => {
+      console.warn(`[Sync] Failed to finalize pending mismatch after ${contextLabel}:`, err)
+      return null
+    })
+
+    state.mainWindow?.webContents.send('sync:data-changed')
+
+    return {
+      success: true,
+      paired: Boolean(pendingCompletion?.paired),
+      initialSyncSucceeded: pendingCompletion?.initialSyncSucceeded,
+      message: pendingCompletion?.message,
+      config: await getExtendedSyncStatus()
+    }
+  }
+
   ipcMain.handle('sync:migrate-local-directory', async () => {
     const status = getRemoteSyncStatus()
     if (status.connected) {
@@ -882,18 +947,7 @@ export function registerSyncHandlers() {
       clearRemoteConnection()
     }
 
-    clearLocalSyncMetadata()
-    reversePairingSession.invalidate({ remoteBaseUrl: status.remoteBaseUrl })
-    persistentStore.set('sync.lastSyncStatus', 'idle')
-    persistentStore.set('sync.lastSyncMessage', null)
-    syncManager.stop()
-
-    state.mainWindow?.webContents.send('sync:data-changed')
-
-    return {
-      success: true,
-      config: await getExtendedSyncStatus()
-    }
+    return await finishLocalDirectoryResolution(status.remoteBaseUrl, 'migration')
   })
 
   ipcMain.handle('sync:reset-local-directory', async () => {
@@ -928,18 +982,12 @@ export function registerSyncHandlers() {
       clearRemoteConnection()
     }
 
-    clearLocalSyncMetadata()
-    reversePairingSession.invalidate({ remoteBaseUrl: status.remoteBaseUrl })
-    persistentStore.set('sync.lastSyncStatus', 'idle')
-    persistentStore.set('sync.lastSyncMessage', null)
-    syncManager.stop()
+    return await finishLocalDirectoryResolution(status.remoteBaseUrl, 'local reset')
+  })
 
-    state.mainWindow?.webContents.send('sync:data-changed')
-
-    return {
-      success: true,
-      config: await getExtendedSyncStatus()
-    }
+  ipcMain.handle('sync:cancel-pending-pairing', async () => {
+    await discardPendingPairingMismatch()
+    return { success: true }
   })
 
   ipcMain.handle('sync:pick-import-file', async () => {

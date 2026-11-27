@@ -146,6 +146,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     resetLocalDirectory: () => {
       return ipcRenderer.invoke('sync:reset-local-directory')
     },
+    cancelPendingPairing: () => {
+      return ipcRenderer.invoke('sync:cancel-pending-pairing')
+    },
     restartManager: () => {
       return ipcRenderer.invoke('sync:restart-manager')
     },

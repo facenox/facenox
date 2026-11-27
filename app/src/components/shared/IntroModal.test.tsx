@@ -357,4 +357,76 @@ describe('IntroModal', () => {
     await waitFor(() => expect(api.migrateLocalDirectory).toHaveBeenCalledTimes(1))
     await waitFor(() => expect(api.initiateReversePairing).toHaveBeenCalledTimes(2))
   })
+
+  it('completes onboarding in one click after confirming migrate without re-authorizing', async () => {
+    const api = getElectronAPIMock().sync
+    const connectedConfig = createSyncConfig({ connected: true })
+    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
+    api.initiateReversePairing.mockResolvedValue({
+      success: true,
+      data: {
+        deviceCode: 'dev-1',
+        userCode: 'MISMATCH',
+        verificationUri: 'https://facenox.com/pair',
+        verificationUriComplete: 'https://facenox.com/pair?code=MISMATCH',
+        expiresIn: 900,
+        interval: 1
+      }
+    })
+    api.pollDeviceAuthorization.mockResolvedValueOnce({
+      status: 'error',
+      error:
+        'This local directory belongs to another Cloud location. Reconnect to its original location or use a separate local data profile.'
+    })
+    api.migrateLocalDirectory.mockImplementation(async () => {
+      api.getConfig.mockResolvedValue(connectedConfig)
+      return {
+        success: true,
+        paired: true,
+        initialSyncSucceeded: true,
+        config: connectedConfig
+      }
+    })
+
+    render(<IntroModal initialStep={2} />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Migrate local data' }, { timeout: 5000 }))
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: /I confirm these local members and logs belong to this new Cloud location/i
+      })
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Yes, migrate & pair/i }))
+
+    await waitFor(() => expect(useUIStore.getState().hasSeenIntro).toBe(true), { timeout: 2000 })
+    expect(api.initiateReversePairing).toHaveBeenCalledTimes(1)
+  })
+
+  it('discards held pending mismatch authorization when backing out of pairing', async () => {
+    const api = getElectronAPIMock().sync
+    api.getConfig.mockResolvedValue(createSyncConfig({ connected: false }))
+    api.initiateReversePairing.mockResolvedValue({
+      success: true,
+      data: {
+        deviceCode: 'dev-1',
+        userCode: 'MISMATCH',
+        verificationUri: 'https://facenox.com/pair',
+        verificationUriComplete: 'https://facenox.com/pair?code=MISMATCH',
+        expiresIn: 900,
+        interval: 1
+      }
+    })
+    api.pollDeviceAuthorization.mockResolvedValueOnce({
+      status: 'error',
+      error:
+        'This local directory belongs to another Cloud location. Reconnect to its original location or use a separate local data profile.'
+    })
+
+    render(<IntroModal initialStep={2} />)
+
+    await screen.findByRole('button', { name: 'Migrate local data' }, { timeout: 5000 })
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+
+    await waitFor(() => expect(api.cancelPendingPairing).toHaveBeenCalledTimes(1))
+  })
 })

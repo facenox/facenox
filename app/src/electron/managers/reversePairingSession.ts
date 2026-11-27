@@ -14,6 +14,21 @@ export interface ReversePairingResult {
   data?: ReversePairingPayload
 }
 
+export interface PendingMismatchPairing {
+  remoteBaseUrl: string
+  deviceName: string
+  payload: Record<string, unknown>
+}
+
+export class DirectoryOriginMismatchError extends Error {
+  constructor(
+    message = 'This local directory belongs to another Cloud location. Reconnect to its original location or use a separate local data profile.'
+  ) {
+    super(message)
+    this.name = 'DirectoryOriginMismatchError'
+  }
+}
+
 interface CachedReversePairingSession {
   key: string
   data: ReversePairingPayload
@@ -70,6 +85,7 @@ export function parseRetryAfterSeconds(
 export class ReversePairingSessionManager {
   private active: CachedReversePairingSession | null = null
   private inFlight: InFlightReversePairingRequest | null = null
+  private pendingMismatch: PendingMismatchPairing | null = null
   private cooldowns = new Map<string, RateLimitCooldown>()
   private generation = 0
   private readonly now: () => number
@@ -183,6 +199,37 @@ export class ReversePairingSessionManager {
         this.cooldowns.clear()
       }
     }
+  }
+
+  getPendingMismatch(): PendingMismatchPairing | null {
+    return this.pendingMismatch
+  }
+
+  /**
+   * Stores a Cloud-approved credential that paused on a local directory origin mismatch,
+   * returning any previously held mismatch entry so the caller can unpair it cleanly.
+   */
+  replacePendingMismatch(entry: PendingMismatchPairing): PendingMismatchPairing | null {
+    const previous = this.pendingMismatch
+    this.pendingMismatch = entry
+    return previous
+  }
+
+  takePendingMismatch(remoteBaseUrl?: string): PendingMismatchPairing | null {
+    const current = this.pendingMismatch
+    if (!current) return null
+    if (remoteBaseUrl && current.remoteBaseUrl !== remoteBaseUrl) {
+      return null
+    }
+    this.pendingMismatch = null
+    return current
+  }
+
+  async discardPendingMismatch(unpair: (entry: PendingMismatchPairing) => Promise<void>): Promise<void> {
+    const current = this.pendingMismatch
+    if (!current) return
+    this.pendingMismatch = null
+    await unpair(current)
   }
 }
 

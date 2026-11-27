@@ -290,6 +290,9 @@ declare global {
     migrateLocalDirectory: () => Promise<{
       success: boolean
       error?: string
+      paired?: boolean
+      initialSyncSucceeded?: boolean
+      message?: string
       config: {
         enabled: boolean
         remoteBaseUrl: string
@@ -311,6 +314,9 @@ declare global {
     resetLocalDirectory: () => Promise<{
       success: boolean
       error?: string
+      paired?: boolean
+      initialSyncSucceeded?: boolean
+      message?: string
       config: {
         enabled: boolean
         remoteBaseUrl: string
@@ -329,6 +335,7 @@ declare global {
         unsyncedSessionsCount?: number
       }
     }>
+    cancelPendingPairing: () => Promise<{ success: boolean }>
     exportData: (password: string) => Promise<{
       success: boolean
       canceled?: boolean

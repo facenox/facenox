@@ -183,22 +183,39 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     return parts.length > 0 ? parts.join(', ') : 'existing local directory data'
   }
 
+  const finishResolvedDirectory = async (
+    result: Awaited<ReturnType<typeof window.electronAPI.sync.resetLocalDirectory>>,
+    fallbackError: string
+  ) => {
+    if (!result.success) {
+      setPairError(result.error || fallbackError)
+      return
+    }
+    const refreshed = await refreshCloudSyncConfig()
+    setShowManualInput(false)
+    setPairingCode('')
+    setMismatchAction('idle')
+    setMigrateConfirmed(false)
+    setBackupFeedback(null)
+
+    if (result.paired || refreshed?.connected) {
+      setPairError(null)
+      if (result.initialSyncSucceeded === false) {
+        useUIStore.getState().setError(result.message || 'Device connected, but initial sync failed.')
+      }
+      completeOnboarding()
+      return
+    }
+
+    setPendingRepairAfterReset(true)
+  }
+
   const handleResetLocalDirectory = async () => {
     setPairError(null)
     setBusyAction('disconnecting')
     try {
       const result = await window.electronAPI.sync.resetLocalDirectory()
-      if (!result.success) {
-        setPairError(result.error || 'Could not clear local directory.')
-        return
-      }
-      await refreshCloudSyncConfig()
-      setShowManualInput(false)
-      setPairingCode('')
-      setMismatchAction('idle')
-      setMigrateConfirmed(false)
-      setBackupFeedback(null)
-      setPendingRepairAfterReset(true)
+      await finishResolvedDirectory(result, 'Could not clear local directory.')
     } catch (err) {
       setPairError(err instanceof Error ? err.message : 'Could not clear local directory.')
     } finally {
@@ -211,17 +228,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
     setBusyAction('disconnecting')
     try {
       const result = await window.electronAPI.sync.migrateLocalDirectory()
-      if (!result.success) {
-        setPairError(result.error || 'Could not prepare local directory for migration.')
-        return
-      }
-      await refreshCloudSyncConfig()
-      setShowManualInput(false)
-      setPairingCode('')
-      setMismatchAction('idle')
-      setMigrateConfirmed(false)
-      setBackupFeedback(null)
-      setPendingRepairAfterReset(true)
+      await finishResolvedDirectory(result, 'Could not prepare local directory for migration.')
     } catch (err) {
       setPairError(err instanceof Error ? err.message : 'Could not prepare local directory for migration.')
     } finally {
@@ -835,7 +842,7 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
                         setMismatchAction('idle')
                         setMigrateConfirmed(false)
                         isInitiatingRef.current = false
-                        void startReversePairing(effectiveRemoteBaseUrl)
+                        void startReversePairing(effectiveRemoteBaseUrl, { forceNew: isMismatchPromptVisible })
                       }}
                       className='flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45'>
                       <RotateCw className={`size-3 ${isInitiating ? 'animate-spin' : ''}`} />
@@ -865,6 +872,12 @@ export function IntroModal({ initialStep = 0 }: IntroModalProps) {
 
   const handleBack = () => {
     if (step > 0) {
+      if (isMismatchPromptVisible) {
+        void window.electronAPI.sync.cancelPendingPairing?.()
+        setPairError(null)
+        setMismatchAction('idle')
+        setMigrateConfirmed(false)
+      }
       setStep(step - 1)
     }
   }

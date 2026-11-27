@@ -3,6 +3,7 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { backendService } from './backendService.js'
+import { discardPendingPairingMismatch } from './ipc/syncHandlers.js'
 import { startBackgroundUpdateCheck } from './updater.js'
 import isDev from './util.js'
 import { state } from './State.js'
@@ -186,7 +187,12 @@ app.on('before-quit', (event) => {
   if (!state.isQuitting) {
     event.preventDefault()
     cleanup()
-    setImmediate(() => app.exit(0))
+    void Promise.race([
+      discardPendingPairingMismatch(),
+      new Promise<void>((resolve) => setTimeout(resolve, 2500))
+    ]).finally(() => {
+      app.exit(0)
+    })
   }
 })
 
