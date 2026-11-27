@@ -328,3 +328,40 @@ def test_auto_attendance_record_can_be_voided(test_client, set_api_token) -> Non
     audit_log = client.get("/attendance/settings/audit-log", headers=headers)
     assert audit_log.status_code == 200, audit_log.text
     assert "Attendance Record Voided" in audit_log.text
+
+
+def test_audit_log_csv_neutralizes_formula_injection(
+    test_client, set_api_token
+) -> None:
+    import asyncio
+    import csv
+    import io
+    from database.models import AuditLog
+
+    client, session_factory = test_client
+    set_api_token("smoke-token")
+    headers = _headers("org-csv-safe")
+
+    async def _seed_formula_audit() -> None:
+        async with session_factory() as session:
+            session.add(
+                AuditLog(
+                    id="audit-formula-1",
+                    organization_id="org-csv-safe",
+                    action="CUSTOM_EVENT",
+                    target_type="member",
+                    target_id="=SUM(1,2)",
+                    details='=HYPERLINK("http://evil","click")',
+                )
+            )
+            await session.commit()
+
+    asyncio.run(_seed_formula_audit())
+
+    audit_log = client.get("/attendance/settings/audit-log", headers=headers)
+    assert audit_log.status_code == 200, audit_log.text
+
+    rows = list(csv.reader(io.StringIO(audit_log.text)))
+    assert len(rows) >= 2
+    assert rows[1][3] == "'=SUM(1,2)"
+    assert rows[1][4] == '\'=HYPERLINK("http://evil","click")'

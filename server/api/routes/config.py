@@ -1,6 +1,7 @@
 import csv
 import io
 import logging
+import re
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
@@ -135,6 +136,17 @@ async def update_settings(
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
+_FORMULA_PREFIX_RE = re.compile(r"^(?:[\t\r\n]|[\s\ufeff]*[=+\-@＝＋－＠])")
+
+
+def _csv_safe_cell(value: Optional[str]) -> str:
+    """Neutralize leading spreadsheet formula triggers in CSV export cells."""
+    text = value or ""
+    if _FORMULA_PREFIX_RE.match(text):
+        return f"'{text}"
+    return text
+
+
 @router.get("/audit-log")
 async def export_audit_log(
     start_date: Optional[str] = None,
@@ -208,11 +220,11 @@ async def export_audit_log(
 
             writer.writerow(
                 [
-                    log.timestamp.isoformat() if log.timestamp else "",
-                    action_clean,
-                    target_type_clean,
-                    log.target_id or "",
-                    log.details or "",
+                    _csv_safe_cell(log.timestamp.isoformat() if log.timestamp else ""),
+                    _csv_safe_cell(action_clean),
+                    _csv_safe_cell(target_type_clean),
+                    _csv_safe_cell(log.target_id),
+                    _csv_safe_cell(log.details),
                 ]
             )
 

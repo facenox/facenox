@@ -476,7 +476,7 @@ export const AttendancePanel = memo(function AttendancePanel({
             </div>
             <Tooltip content='Create group' position='top'>
               <button
-                onClick={() => setShowGroupManagement(true)}
+                onClick={() => openPinPrompt(() => setShowGroupManagement(true))}
                 className={`${sidebarActionButtonClassName} rounded-none border-r-0`}
                 aria-label='Create group'>
                 <Plus className='size-3.5' />
@@ -523,7 +523,7 @@ export const AttendancePanel = memo(function AttendancePanel({
             <div className='flex flex-col items-center justify-center space-y-3'>
               <div className='text-center text-xs text-white/55'>No groups created</div>
               <button
-                onClick={() => setShowGroupManagement(true)}
+                onClick={() => openPinPrompt(() => setShowGroupManagement(true))}
                 className='flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white'>
                 <Plus className='size-3.5' />
                 Create group

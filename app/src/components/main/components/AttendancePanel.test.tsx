@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AttendancePanel } from '@/components/main/components/AttendancePanel'
 import { useAttendanceStore, useUIStore } from '@/components/main/stores'
@@ -107,6 +107,36 @@ describe('AttendancePanel', () => {
 
     act(() => useUIStore.getState().verifyPin('2468'))
     expect(screen.getByText('Manual attendance dialog')).toBeInTheDocument()
+  })
+
+  it('requires the configured admin PIN before creating a group from the toolbar or empty state', () => {
+    const group = createAttendanceGroup()
+    useAttendanceStore.setState({ attendanceGroups: [group], currentGroup: group })
+    useUIStore.setState({ adminPinEnabled: true, adminPin: '2468' })
+    renderWithProviders(<AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn()} />, {
+      withDialogProvider: false
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create group' }))
+    expect(useUIStore.getState().isPinPromptOpen).toBe(true)
+    expect(useAttendanceStore.getState().showGroupManagement).toBe(false)
+
+    act(() => useUIStore.getState().verifyPin('2468'))
+    expect(useAttendanceStore.getState().showGroupManagement).toBe(true)
+
+    cleanup()
+    resetStores()
+    useUIStore.setState({ adminPinEnabled: true, adminPin: '2468' })
+    renderWithProviders(<AttendancePanel handleSelectGroup={vi.fn()} refreshAttendanceData={vi.fn()} />, {
+      withDialogProvider: false
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Create group/i }))
+    expect(useUIStore.getState().isPinPromptOpen).toBe(true)
+    expect(useAttendanceStore.getState().showGroupManagement).toBe(false)
+
+    act(() => useUIStore.getState().verifyPin('2468'))
+    expect(useAttendanceStore.getState().showGroupManagement).toBe(true)
   })
 
   it('renders the shell skeleton when the shell is not ready', () => {
