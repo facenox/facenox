@@ -87,8 +87,10 @@ describe('Data & storage initial configuration', () => {
   })
 
   it('locks daily auto-export when Cloud plan is Free or unpaired', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
     getElectronAPIMock().sync.getConfig.mockResolvedValue({
       ...createSyncConfig({ connected: true }),
+      organizationSlug: 'acme-corp',
       allowAutoExport: false,
       policyReady: true
     })
@@ -107,5 +109,9 @@ describe('Data & storage initial configuration', () => {
     expect(toggle).not.toBeChecked()
     expect(screen.getByText('Starter+')).toBeInTheDocument()
     expect(screen.queryByLabelText('Auto export time')).not.toBeInTheDocument()
+
+    screen.getByRole('button', { name: 'Upgrade plan' }).click()
+    expect(openSpy).toHaveBeenCalledWith('https://facenox.com/app/acme-corp/billing', '_blank', 'noopener,noreferrer')
+    openSpy.mockRestore()
   })
 })

@@ -208,6 +208,12 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     (!isPaired || syncConfig?.allowKioskDirectoryManagement !== false)
   const allowAutoExport = Boolean(isPaired && syncConfig?.allowAutoExport === true)
   const auditLogLimit = isPaired && syncConfig?.auditLogExportLimit !== undefined ? syncConfig.auditLogExportLimit : 100
+  const cloudBaseUrl = (syncConfig?.remoteBaseUrl || 'https://facenox.com').replace(/\/+$/, '')
+  const billingUrl =
+    isPaired && syncConfig?.organizationSlug ?
+      `${cloudBaseUrl}/app/${encodeURIComponent(syncConfig.organizationSlug)}/billing`
+    : isPaired ? `${cloudBaseUrl}/app`
+    : `${cloudBaseUrl}/pricing`
   const showCreateGroupModal = useGroupUIStore((state) => state.showCreateGroupModal)
   const openCreateGroup = useGroupUIStore((state) => state.openCreateGroup)
   const closeCreateGroup = useGroupUIStore((state) => state.closeCreateGroup)
@@ -755,6 +761,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         onExport={handleExportAuditLog}
         onLoadRecent={handleLoadRecentAuditLogs}
         auditLogLimit={auditLogLimit}
+        billingUrl={billingUrl}
       />
     </>
   )

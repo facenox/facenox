@@ -63,7 +63,7 @@ export function Reports({ group, onDaysTrackedChange, onExportHandlersReady, onA
   const defaultColumnPresets = useMemo(() => [DEFAULT_COLUMNS, CHECKOUT_DEFAULT_COLUMNS], [])
 
   const configuredTimeZone = useAttendanceStore((state) => state.attendanceTimezone)
-  const { allowAutoExport, maxReportDays } = useCloudSyncStatus()
+  const { allowAutoExport, maxReportDays, billingUrl } = useCloudSyncStatus()
   const [reportStartDate, setReportStartDate] = useState<string>(() =>
     getAttendanceDateString(new Date(), configuredTimeZone)
   )
@@ -201,6 +201,7 @@ export function Reports({ group, onDaysTrackedChange, onExportHandlersReady, onA
               onStartDateChange={handleStartDateChange}
               onEndDateChange={handleEndDateChange}
               maxReportDays={maxReportDays}
+              billingUrl={billingUrl}
               visibleColumns={modeVisibleColumns}
               setVisibleColumns={setVisibleColumns}
               groupBy={groupBy}

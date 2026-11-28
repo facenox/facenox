@@ -392,7 +392,7 @@ export class BackgroundSyncManager {
       persistentStore.set('sync.policy.forceLiveness', policy.forceLiveness)
     }
 
-    const syncPolicyFieldMap: Array<[string, 'boolean' | 'number']> = [
+    const syncPolicyFieldMap: Array<[string, 'boolean' | 'number' | 'string']> = [
       ['trackCheckout', 'boolean'],
       ['lateThresholdEnabled', 'boolean'],
       ['lateThresholdMinutes', 'number'],
@@ -402,7 +402,8 @@ export class BackgroundSyncManager {
       ['peopleLimit', 'number'],
       ['allowKioskDirectoryManagement', 'boolean'],
       ['allowAutoExport', 'boolean'],
-      ['auditLogExportLimit', 'number']
+      ['auditLogExportLimit', 'number'],
+      ['organizationSlug', 'string']
     ]
     for (const [field, expectedType] of syncPolicyFieldMap) {
       const value = policy[field]

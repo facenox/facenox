@@ -160,6 +160,7 @@ declare global {
       allowKioskDirectoryManagement?: boolean
       allowAutoExport?: boolean
       auditLogExportLimit?: number | null
+      organizationSlug?: string | null
       credentialError?: string | null
       forceLiveness?: boolean
       policyReady?: boolean

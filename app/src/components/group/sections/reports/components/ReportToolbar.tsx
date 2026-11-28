@@ -25,6 +25,7 @@ interface ReportToolbarProps {
   unavailableColumns: readonly { key: ColumnKey; label: string; reason: string }[]
   attendanceTimeZone?: string | null
   maxReportDays?: number
+  billingUrl?: string
 }
 
 const STATUS_OPTIONS = [
@@ -121,7 +122,8 @@ export function ReportToolbar({
   allColumns,
   unavailableColumns,
   attendanceTimeZone,
-  maxReportDays = -1
+  maxReportDays = -1,
+  billingUrl
 }: ReportToolbarProps) {
   const [showOptions, setShowOptions] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
@@ -350,7 +352,16 @@ export function ReportToolbar({
                     </div>
                     {isLimitedWindow && (
                       <p className='mt-2 text-[10px] leading-relaxed text-white/50'>
-                        Kiosk shows the last {maxReportDays} days on this plan. Open Facenox Cloud for extended history.
+                        Kiosk shows the last {maxReportDays} days on this plan.{' '}
+                        {billingUrl ?
+                          <button
+                            type='button'
+                            onClick={() => window.open(billingUrl, '_blank', 'noopener,noreferrer')}
+                            className='font-semibold text-amber-300 underline underline-offset-2 hover:text-amber-200'>
+                            Upgrade in Cloud
+                          </button>
+                        : 'Open Facenox Cloud'}
+                        {' '}for extended history.
                       </p>
                     )}
                     <button

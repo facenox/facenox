@@ -61,6 +61,7 @@ export function DataStorage({
     isPaired,
     allowKioskDirectoryManagement,
     allowAutoExport,
+    billingUrl,
     status: cloudStatus,
     refresh
   } = useCloudSyncStatus()
@@ -386,14 +387,25 @@ export function DataStorage({
                   : 'Export daily attendance reports to a local or network folder at the scheduled time while Facenox is running.'
                   }
                 </p>
-                {isReady && !allowAutoExport && onNavigateToSync && (
-                  <button
-                    type='button'
-                    onClick={onNavigateToSync}
-                    className='mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-cyan-400 transition-colors hover:text-cyan-300'>
-                    <span>{isPaired ? 'View plan in Cloud sync' : 'Open Cloud sync'}</span>
-                    <ArrowRight className='size-3' />
-                  </button>
+                {isReady && !allowAutoExport && (
+                  <div className='mt-2.5 flex flex-wrap items-center gap-4'>
+                    <button
+                      type='button'
+                      onClick={() => window.open(billingUrl, '_blank', 'noopener,noreferrer')}
+                      className='inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-amber-300 transition-colors hover:text-amber-200'>
+                      <span>{isPaired ? 'Upgrade plan' : 'View Cloud plans'}</span>
+                      <ArrowRight className='size-3' />
+                    </button>
+                    {onNavigateToSync && (
+                      <button
+                        type='button'
+                        onClick={onNavigateToSync}
+                        className='inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-cyan-400 transition-colors hover:text-cyan-300'>
+                        <span>{isPaired ? 'View plan in Cloud sync' : 'Open Cloud sync'}</span>
+                        <ArrowRight className='size-3' />
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
               {!isReady ?

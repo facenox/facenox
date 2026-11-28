@@ -12,7 +12,8 @@ const SYNC_POLICY_KEYS = [
   'sync.policy.allowKioskDirectoryManagement',
   'sync.policy.faceTemplateSync',
   'sync.policy.allowAutoExport',
-  'sync.policy.auditLogExportLimit'
+  'sync.policy.auditLogExportLimit',
+  'sync.policy.organizationSlug'
 ] as const
 
 export function deleteStoreKey(key: string) {

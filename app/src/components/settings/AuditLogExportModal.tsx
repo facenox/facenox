@@ -10,6 +10,7 @@ interface AuditLogExportModalProps {
   onExport: (startDate?: string, endDate?: string, limit?: number | null) => Promise<void>
   onLoadRecent: () => Promise<DesktopAuditLog[]>
   auditLogLimit?: number | null
+  billingUrl?: string
 }
 
 type PresetId = 'all' | 'today' | '7days' | '30days' | 'custom'
@@ -74,7 +75,8 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
   onClose,
   onExport,
   onLoadRecent,
-  auditLogLimit = null
+  auditLogLimit = null,
+  billingUrl
 }) => {
   const [activePreset, setActivePreset] = useState<PresetId>('all')
   const [startDate, setStartDate] = useState(formatDateLocal(new Date()))
@@ -170,6 +172,17 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
           {typeof auditLogLimit === 'number' && (
             <span className='mt-1 block text-[11px] text-amber-300/80'>
               CSV export includes up to the {auditLogLimit} most recent local entries on your current plan.
+              {billingUrl && (
+                <>
+                  {' '}
+                  <button
+                    type='button'
+                    onClick={() => window.open(billingUrl, '_blank', 'noopener,noreferrer')}
+                    className='font-semibold text-amber-200 underline underline-offset-2 hover:text-white'>
+                    Upgrade plan
+                  </button>
+                </>
+              )}
             </span>
           )}
         </p>

@@ -99,11 +99,13 @@ function getRemoteSyncStatus() {
   const paired = Boolean(organizationId && siteId && deviceId)
   const forceLiveness = persistentStore.get('sync.policy.forceLiveness')
   const storedAuditLimit = persistentStore.get('sync.policy.auditLogExportLimit')
+  const storedOrgSlug = persistentStore.get('sync.policy.organizationSlug')
 
   return {
     credentialError,
     forceLiveness: paired && forceLiveness === true,
     policyReady: !paired || typeof forceLiveness === 'boolean',
+    organizationSlug: paired && typeof storedOrgSlug === 'string' && storedOrgSlug ? storedOrgSlug : null,
     allowAutoExport: paired && persistentStore.get('sync.policy.allowAutoExport') === true,
     auditLogExportLimit:
       paired && typeof storedAuditLimit === 'number' ?
