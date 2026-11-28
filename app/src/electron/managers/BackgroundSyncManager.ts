@@ -585,6 +585,22 @@ export class BackgroundSyncManager {
 
     const { enabled, remoteBaseUrl, siteId, deviceId, deviceToken, intervalMinutes, lastSyncedAt } =
       this.getSyncConfig()
+    const hasPendingWipeAck = Boolean(persistentStore.get('sync.pendingWipeAck'))
+
+    if (hasPendingWipeAck) {
+      // A confirmed or in-progress wipe must never be followed by a catch-up sync.
+      persistentStore.set('sync.enabled', false)
+      if (remoteBaseUrl && deviceToken) {
+        void this.pollCommands()
+        this.commandTimer = setInterval(
+          () => {
+            void this.pollCommands()
+          },
+          15 * 60 * 1000
+        )
+      }
+      return
+    }
 
     if (!enabled || !remoteBaseUrl || !siteId || !deviceId || !deviceToken) {
       console.log('[Sync] Background Auto-Sync is disabled or device pairing is incomplete.')
@@ -651,17 +667,34 @@ export class BackgroundSyncManager {
   private finalizeWipedCredentials() {
     clearDeviceCredentials()
     deleteStoreKey('sync.pendingWipeAck')
+    if (this.commandTimer) {
+      clearInterval(this.commandTimer)
+      this.commandTimer = null
+    }
     state.mainWindow?.webContents.send('sync:data-changed')
   }
 
   private async pollCommands() {
     const { enabled, remoteBaseUrl, deviceToken } = this.getSyncConfig()
-    const hasPendingWipeAck = Boolean(persistentStore.get('sync.pendingWipeAck'))
+    const pendingWipeAck = persistentStore.get('sync.pendingWipeAck')
+    const hasPendingWipeAck = Boolean(pendingWipeAck)
     if (this.suspended || (!enabled && !hasPendingWipeAck) || !remoteBaseUrl || !deviceToken) return
     if (this.isPollingCommands) return
     this.isPollingCommands = true
 
     try {
+      if (typeof pendingWipeAck === 'string' && pendingWipeAck) {
+        const receipt = persistentStore.get(`sync.commandReceipts.${pendingWipeAck}`) as
+          { status: string; result: CommandResult } | undefined
+        if (receipt?.status === 'completed') {
+          const ackResult = await this.acknowledgeCommand(pendingWipeAck, receipt.status, receipt.result)
+          if (ackResult !== 'retryable') {
+            this.finalizeWipedCredentials()
+            return
+          }
+        }
+      }
+
       const response = await fetch(`${remoteBaseUrl.replace(/\/+$/, '')}/api/devices/commands`, {
         method: 'GET',
         headers: {
@@ -693,21 +726,38 @@ export class BackgroundSyncManager {
     console.log(`[RemoteMgmt] Executing command: ${cmd.command} (${cmd.id})`)
     const receiptKey = `sync.commandReceipts.${cmd.id}`
     const previous = persistentStore.get(receiptKey) as { status: string; result: CommandResult } | undefined
-    if (previous) {
+    const retryableWipe = cmd.command === 'WIPE' && previous?.status !== 'completed'
+    if (previous && !retryableWipe) {
       const ackResult = await this.acknowledgeCommand(cmd.id, previous.status, previous.result)
-      if (cmd.command === 'WIPE' && previous.status === 'completed' && ackResult !== 'retryable') {
-        this.finalizeWipedCredentials()
+      if (cmd.command === 'WIPE' && previous.status === 'completed') {
+        if (ackResult !== 'retryable') {
+          this.finalizeWipedCredentials()
+        } else {
+          this.start({ skipCatchUp: true })
+        }
       }
       return
     }
-    // Persist intent before any side effect. If the process dies mid-command,
-    // report an indeterminate outcome rather than repeating a destructive wipe.
+    let localBackendHeaders: Record<string, string> | null = null
+    if (cmd.command === 'WIPE') {
+      localBackendHeaders = authHeaders()
+      // Persist the wipe marker before disabling sync so startup cannot run a
+      // catch-up sync if the process exits between these writes.
+      persistentStore.set('sync.pendingWipeAck', cmd.id)
+      persistentStore.set('sync.enabled', false)
+      this.stop()
+    }
+
+    // Persist intent before any side effect. A WIPE left in processing is safe
+    // to retry because hard reset is idempotent; other interrupted commands
+    // remain failed for operator review.
     persistentStore.set(receiptKey, {
-      status: 'failed',
+      status: cmd.command === 'WIPE' ? 'processing' : 'failed',
       result: { error: 'Command interrupted; outcome unknown. Operator review required.' }
     })
     let status = 'completed'
-    let result: CommandResult
+    let result: CommandResult = {}
+    let wipeConfirmed = false
 
     try {
       switch (cmd.command) {
@@ -719,7 +769,7 @@ export class BackgroundSyncManager {
             await this.idlePromise
             const wipeResponse = await fetch(`${backendService.getUrl()}/attendance/wipe?hard=true`, {
               method: 'POST',
-              headers: authHeaders({ 'Content-Type': 'application/json' }),
+              headers: { ...localBackendHeaders!, 'Content-Type': 'application/json' },
               signal: AbortSignal.timeout(60000)
             })
             if (!wipeResponse.ok) {
@@ -733,27 +783,46 @@ export class BackgroundSyncManager {
                   'The local service did not confirm that the wipe completed. Review this computer before using it again.'
               )
             }
-            const unpairResponse = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
-              method: 'POST',
-              headers: authHeaders(),
-              signal: AbortSignal.timeout(10000)
-            })
-            if (!unpairResponse.ok) {
-              throw new Error(await readCommandError(unpairResponse, 'Could not disconnect local pairing after wipe'))
-            }
+            wipeConfirmed = true
+            result = wipeBody
             // Sever org/site/key + sync timers immediately so background sync can
             // never re-pull wiped directory or face templates back onto the kiosk.
             // Device auth stays only until Cloud confirms the WIPE receipt.
             clearRemoteConnection({ preserveDeviceAuth: true })
             clearLocalSyncMetadata()
-            persistentStore.set('sync.pendingWipeAck', cmd.id)
             this.stop()
             this.setLastSyncState({
               lastSyncedAt: null,
               lastSyncStatus: 'idle',
               lastSyncMessage: null
             })
-            result = wipeBody
+
+            let localCleanupWarning: string | null = null
+            try {
+              const unpairResponse = await fetch(`${backendService.getUrl()}/attendance/unpair`, {
+                method: 'POST',
+                headers: localBackendHeaders!,
+                signal: AbortSignal.timeout(10000)
+              })
+              if (!unpairResponse.ok) {
+                localCleanupWarning = await readCommandError(
+                  unpairResponse,
+                  'Could not disconnect the local directory after wipe'
+                )
+              }
+            } catch (error) {
+              localCleanupWarning = error instanceof Error ? error.message : String(error)
+            }
+
+            if (localCleanupWarning) {
+              console.error('[RemoteMgmt] Local directory cleanup failed after confirmed wipe:', localCleanupWarning)
+              result = {
+                ...wipeBody,
+                warning: `Local data was wiped and Cloud sync was stopped, but local directory cleanup failed: ${localCleanupWarning}`
+              }
+            } else {
+              result = wipeBody
+            }
           } finally {
             this.isWiping = false
           }
@@ -766,7 +835,9 @@ export class BackgroundSyncManager {
             title: 'Data wiped',
             message: 'A remote wipe has been executed on this device.',
             detail:
-              "Local attendance records and enrolled face templates were removed at the organization administrator's request.",
+              result.warning ?
+                `Local attendance records and enrolled face templates were removed at the organization administrator's request. ${String(result.warning)}`
+              : "Local attendance records and enrolled face templates were removed at the organization administrator's request.",
             buttons: ['OK']
           }
           if (parentWindow) {
@@ -838,14 +909,28 @@ export class BackgroundSyncManager {
       }
     } catch (error) {
       console.error(`[RemoteMgmt] Command ${cmd.command} failed:`, error)
-      status = 'failed'
-      result = { error: error instanceof Error ? error.message : String(error) }
+      if (cmd.command === 'WIPE' && wipeConfirmed) {
+        status = 'completed'
+        result = {
+          ...result,
+          warning: `Local data was wiped and Cloud sync was stopped, but post-wipe cleanup failed: ${error instanceof Error ? error.message : String(error)}`
+        }
+      } else {
+        status = 'failed'
+        result = { error: error instanceof Error ? error.message : String(error) }
+      }
     }
 
     persistentStore.set(receiptKey, { status, result })
     const ackResult = await this.acknowledgeCommand(cmd.id, status, result)
-    if (cmd.command === 'WIPE' && status === 'completed' && ackResult !== 'retryable') {
-      this.finalizeWipedCredentials()
+    if (cmd.command === 'WIPE') {
+      if (status === 'completed' && ackResult !== 'retryable') {
+        this.finalizeWipedCredentials()
+      } else {
+        // Keep Cloud sync disabled after any failed or unacknowledged wipe.
+        // The command-only poller lets an admin retry without restoring wiped data.
+        this.start({ skipCatchUp: true })
+      }
     }
   }
 

@@ -360,8 +360,8 @@ export function ReportToolbar({
                             className='font-semibold text-amber-300 underline underline-offset-2 hover:text-amber-200'>
                             Upgrade in Cloud
                           </button>
-                        : 'Open Facenox Cloud'}
-                        {' '}for extended history.
+                        : 'Open Facenox Cloud'}{' '}
+                        for extended history.
                       </p>
                     )}
                     <button

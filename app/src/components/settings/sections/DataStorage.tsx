@@ -384,12 +384,11 @@ export function DataStorage({
                       autoExportLoaded && autoExportConfig.enabled ?
                         'Your saved schedule is paused. Upgrade to Starter+ to resume it; your time and folder are saved. Manual CSV export remains available in Reports.'
                       : 'Starter+ unlocks daily CSV exports to a local or network folder while Facenox is running. Manual CSV export remains available in Reports.'
+
                     : autoExportLoaded && autoExportConfig.enabled ?
                       'Your saved schedule is paused. Connect this Desktop to a Starter+ Cloud workspace to resume it; your time and folder are saved.'
                     : 'Connect this Desktop to a Starter+ Cloud workspace to unlock scheduled CSV exports.'
-
-                  : 'Save a daily CSV to a local or network folder. Facenox must be running at the scheduled time.'
-                  }
+                  : 'Save a daily CSV to a local or network folder. Facenox must be running at the scheduled time.'}
                 </p>
                 {isReady && !allowAutoExport && (
                   <div className='mt-2.5 flex flex-wrap items-center gap-4'>
@@ -422,7 +421,9 @@ export function DataStorage({
                     <Loader2 aria-hidden='true' className='size-3 animate-spin' /> Loading schedule…
                   </span>
                 : autoExportConfig.enabled ?
-                  <span role='status' className='rounded border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold tracking-wide text-white/55 uppercase'>
+                  <span
+                    role='status'
+                    className='rounded border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold tracking-wide text-white/55 uppercase'>
                     Paused
                   </span>
                 : <Switch checked={false} onChange={() => {}} disabled ariaLabel='Enable daily auto-export' />
