@@ -29,6 +29,10 @@
   }
 }
 
+.settings-nav-item:active:not(.dropdown-trigger) {
+  transform: none !important;
+}
+
 /* Base UI components */
 
 .btn-premium {

@@ -128,7 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       setEnrollmentState(null, null)
                       setTriggerCreateGroup(0)
                     }}
-                    className={`group/item relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-all duration-150 ${
+                    className={`settings-nav-item group/item relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-all duration-150 ${
                       isActive ?
                         'bg-gradient-to-r from-cyan-500/25 to-transparent font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)]'
                       : 'font-medium text-white/70 hover:bg-white/5 hover:text-white'
@@ -173,7 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button
                       key={section.id}
                       onClick={() => setActiveSection(section.id)}
-                      className={`group/item relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-all duration-150 ${
+                      className={`settings-nav-item group/item relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-all duration-150 ${
                         isActive ?
                           'bg-gradient-to-r from-cyan-500/25 to-transparent font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.15)]'
                         : 'font-medium text-white/70 hover:bg-white/5 hover:text-white'

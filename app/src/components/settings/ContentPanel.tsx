@@ -429,6 +429,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     syncConfig,
     cloudConfigStatus,
     isPaired,
+    allowAutoExport,
     hasCachedPolicy,
     isDirectoryLocked,
     canManageGroups,
