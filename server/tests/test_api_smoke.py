@@ -365,3 +365,37 @@ def test_audit_log_csv_neutralizes_formula_injection(
     assert len(rows) >= 2
     assert rows[1][3] == "'=SUM(1,2)"
     assert rows[1][4] == '\'=HYPERLINK("http://evil","click")'
+
+
+def test_audit_log_csv_respects_limit_query_param(test_client, set_api_token) -> None:
+    import asyncio
+    import csv
+    import io
+    from database.models import AuditLog
+
+    client, session_factory = test_client
+    set_api_token("smoke-token")
+    headers = _headers("org-audit-limit")
+
+    async def _seed_multiple_audits() -> None:
+        async with session_factory() as session:
+            for idx in range(3):
+                session.add(
+                    AuditLog(
+                        id=f"audit-limit-{idx}",
+                        organization_id="org-audit-limit",
+                        action="CUSTOM_EVENT",
+                        target_type="member",
+                        target_id=f"person-{idx}",
+                        details=f"event-{idx}",
+                    )
+                )
+            await session.commit()
+
+    asyncio.run(_seed_multiple_audits())
+
+    limited = client.get("/attendance/settings/audit-log?limit=2", headers=headers)
+    assert limited.status_code == 200, limited.text
+    rows = list(csv.reader(io.StringIO(limited.text)))
+    # Header row + 2 capped entries
+    assert len(rows) == 3

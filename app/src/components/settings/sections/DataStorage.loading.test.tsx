@@ -61,6 +61,11 @@ describe('Data & storage initial configuration', () => {
       lastExportedDate: null
     }
     let resolve!: (value: Config) => void
+    getElectronAPIMock().sync.getConfig.mockResolvedValue({
+      ...createSyncConfig({ connected: true }),
+      allowAutoExport: true,
+      policyReady: true
+    })
     getElectronAPIMock().autoExport.getConfig.mockReturnValue(
       new Promise<Config>((complete) => {
         resolve = complete
@@ -79,5 +84,28 @@ describe('Data & storage initial configuration', () => {
       })
     })
     expect(await screen.findByRole('switch', { name: 'Enable daily auto-export' })).toBeChecked()
+  })
+
+  it('locks daily auto-export when Cloud plan is Free or unpaired', async () => {
+    getElectronAPIMock().sync.getConfig.mockResolvedValue({
+      ...createSyncConfig({ connected: true }),
+      allowAutoExport: false,
+      policyReady: true
+    })
+    getElectronAPIMock().autoExport.getConfig.mockResolvedValue({
+      enabled: true,
+      time: '18:00',
+      directory: '/reports',
+      format: 'combined_csv',
+      lastExportedDate: null
+    })
+
+    renderWithProviders(<DataStorage {...props} />)
+
+    const toggle = await screen.findByRole('switch', { name: 'Enable daily auto-export' })
+    expect(toggle).toBeDisabled()
+    expect(toggle).not.toBeChecked()
+    expect(screen.getByText('Starter+')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Auto export time')).not.toBeInTheDocument()
   })
 })

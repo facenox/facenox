@@ -74,7 +74,10 @@ function mockBackend(
   )
 }
 beforeEach(() => {
-  state.disk = {}
+  state.disk = {
+    'sync.organizationId': 'org-1',
+    'sync.policy.allowAutoExport': true
+  }
   vi.spyOn(fs, 'mkdir').mockResolvedValue(undefined)
   vi.spyOn(fs, 'writeFile').mockResolvedValue(undefined)
 })

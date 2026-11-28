@@ -6,6 +6,9 @@ export function useCloudSyncStatus() {
   const hasCachedPolicy = isPaired && Boolean(config?.credentialError)
   const isReady = (status === 'ready' || hasCachedPolicy) && config?.policyReady !== false
   const allowKioskDirectoryManagement = config?.allowKioskDirectoryManagement !== false
+  const allowAutoExport = Boolean(isPaired && config?.allowAutoExport === true)
+  const auditLogExportLimit = isPaired && config?.auditLogExportLimit !== undefined ? config.auditLogExportLimit : 100
+  const maxReportDays = isPaired ? (config?.policyOverrides?.dataRetentionDays ?? 7) : 7
   return {
     isPaired,
     isReady,
@@ -17,6 +20,9 @@ export function useCloudSyncStatus() {
     organizationName: config?.organizationName || '',
     siteName: config?.siteName || '',
     allowKioskDirectoryManagement,
+    allowAutoExport,
+    auditLogExportLimit,
+    maxReportDays,
     peopleLimit: config?.policyOverrides?.peopleLimit,
     canManageDirectory: isReady && (!isPaired || allowKioskDirectoryManagement)
   }

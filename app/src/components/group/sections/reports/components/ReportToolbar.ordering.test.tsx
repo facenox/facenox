@@ -38,3 +38,39 @@ it.each([
   expect(screen.getByText(orderDescription + (visits ? ' Visits follow visit number.' : ''))).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /sort/i })).not.toBeInTheDocument()
 })
+
+it('disables date presets older than maxReportDays and marks them Starter+', () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2026-04-20T12:00:00Z'))
+  try {
+    render(
+      <ReportToolbar
+        startDate='2026-04-20'
+        endDate='2026-04-20'
+        onStartDateChange={vi.fn()}
+        onEndDateChange={vi.fn()}
+        visibleColumns={['name', 'date']}
+        setVisibleColumns={vi.fn()}
+        groupBy='none'
+        setGroupBy={vi.fn()}
+        statusFilter='all'
+        setStatusFilter={vi.fn()}
+        search=''
+        setSearch={vi.fn()}
+        allColumns={[
+          { key: 'name', label: 'Name' },
+          { key: 'date', label: 'Date' }
+        ]}
+        unavailableColumns={[]}
+        attendanceTimeZone='UTC'
+        maxReportDays={7}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Today/i }))
+    expect(screen.getByRole('button', { name: 'Last 7 Days' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /This Month/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Last 30 Days/i })).toBeDisabled()
+  } finally {
+    vi.useRealTimers()
+  }
+})

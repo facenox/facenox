@@ -56,7 +56,14 @@ export function DataStorage({
     false
   )
 
-  const { isReady, isPaired, allowKioskDirectoryManagement, status: cloudStatus, refresh } = useCloudSyncStatus()
+  const {
+    isReady,
+    isPaired,
+    allowKioskDirectoryManagement,
+    allowAutoExport,
+    status: cloudStatus,
+    refresh
+  } = useCloudSyncStatus()
 
   const { setError, setSuccess } = useUIStore()
 
@@ -125,7 +132,7 @@ export function DataStorage({
       setAutoExportConfig(updated)
     } catch (err) {
       console.error('Failed to update auto export config:', err)
-      setError("Facenox couldn't save the auto-export setting. Try again.")
+      setError(err instanceof Error ? err.message : "Facenox couldn't save the auto-export setting. Try again.")
     }
   }
 
@@ -362,13 +369,40 @@ export function DataStorage({
           <div className='flex flex-col'>
             <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
               <div className='min-w-0 flex-1'>
-                <h4 className='text-[15px] font-semibold text-white/90'>Daily auto-export</h4>
+                <div className='flex items-center gap-2'>
+                  <h4 className='text-[15px] font-semibold text-white/90'>Daily auto-export</h4>
+                  {isReady && !allowAutoExport && (
+                    <span className='rounded border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-extrabold tracking-widest text-amber-300 uppercase'>
+                      Starter+
+                    </span>
+                  )}
+                </div>
                 <p className='mt-1.5 text-[13px] leading-relaxed text-white/65'>
-                  Export daily attendance reports to a local or network folder at the scheduled time while Facenox is
-                  running.
+                  {isReady && !allowAutoExport ?
+                    isPaired ?
+                      'Scheduled daily CSV exports to a local or network folder require Facenox Cloud Starter or higher. Manual recent CSV export remains available in Reports.'
+                    : 'Link a Facenox Cloud Starter+ workspace to enable scheduled daily CSV exports to a local or network folder.'
+
+                  : 'Export daily attendance reports to a local or network folder at the scheduled time while Facenox is running.'
+                  }
                 </p>
+                {isReady && !allowAutoExport && onNavigateToSync && (
+                  <button
+                    type='button'
+                    onClick={onNavigateToSync}
+                    className='mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-cyan-400 transition-colors hover:text-cyan-300'>
+                    <span>{isPaired ? 'View plan in Cloud sync' : 'Open Cloud sync'}</span>
+                    <ArrowRight className='size-3' />
+                  </button>
+                )}
               </div>
-              {autoExportLoaded ?
+              {!isReady ?
+                <span role='status' className='flex items-center gap-2 text-xs text-white/55'>
+                  <Loader2 aria-hidden='true' className='size-3 animate-spin' /> Loading schedule…
+                </span>
+              : !allowAutoExport ?
+                <Switch checked={false} onChange={() => {}} disabled ariaLabel='Enable daily auto-export' />
+              : autoExportLoaded ?
                 <Switch
                   checked={autoExportConfig.enabled}
                   onChange={(enabled) => handleUpdateAutoExport({ enabled })}
@@ -394,7 +428,7 @@ export function DataStorage({
             </div>
 
             <AnimatePresence>
-              {autoExportLoaded && autoExportConfig.enabled && (
+              {isReady && allowAutoExport && autoExportLoaded && autoExportConfig.enabled && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}

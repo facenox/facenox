@@ -24,6 +24,7 @@ interface ReportToolbarProps {
   allColumns: readonly { key: ColumnKey; label: string }[]
   unavailableColumns: readonly { key: ColumnKey; label: string; reason: string }[]
   attendanceTimeZone?: string | null
+  maxReportDays?: number
 }
 
 const STATUS_OPTIONS = [
@@ -119,7 +120,8 @@ export function ReportToolbar({
   setSearch,
   allColumns,
   unavailableColumns,
-  attendanceTimeZone
+  attendanceTimeZone,
+  maxReportDays = -1
 }: ReportToolbarProps) {
   const [showOptions, setShowOptions] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
@@ -207,6 +209,18 @@ export function ReportToolbar({
     [startDate, endDate, attendanceTimeZone]
   )
 
+  const isLimitedWindow = typeof maxReportDays === 'number' && maxReportDays > 0
+  const minAllowedDate = useMemo(() => {
+    if (!isLimitedWindow) return undefined
+    const today = getAttendanceDateString(new Date(), attendanceTimeZone)
+    return addAttendanceDays(today, -(maxReportDays - 1))
+  }, [isLimitedWindow, maxReportDays, attendanceTimeZone])
+  const customRangeInvalid =
+    !customStart ||
+    !customEnd ||
+    customStart > customEnd ||
+    Boolean(minAllowedDate && (customStart < minAllowedDate || customEnd < minAllowedDate))
+
   const activePreset = useMemo(() => {
     for (const p of DATE_PRESETS) {
       const r = getPresetRange(p.id, attendanceTimeZone)
@@ -276,24 +290,31 @@ export function ReportToolbar({
                   <div className='grid grid-cols-2 gap-1'>
                     {DATE_PRESETS.map(({ id, label }) => {
                       const isSelected = activePreset === id
+                      const presetRange = getPresetRange(id, attendanceTimeZone)
+                      const isLockedByWindow = Boolean(minAllowedDate && presetRange.start < minAllowedDate)
                       return (
                         <button
                           key={id}
                           type='button'
+                          disabled={isLockedByWindow}
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => {
-                            const range = getPresetRange(id, attendanceTimeZone)
-                            onStartDateChange(range.start)
-                            onEndDateChange(range.end)
+                            if (isLockedByWindow) return
+                            onStartDateChange(presetRange.start)
+                            onEndDateChange(presetRange.end)
                             setDateDropdownOpen(false)
                           }}
                           className={`flex items-center justify-between rounded px-2.5 py-1.5 text-left text-[11px] font-semibold transition-all duration-150 ${
-                            isSelected ?
-                              'bg-cyan-500/10 font-bold text-cyan-400'
+                            isLockedByWindow ? 'cursor-not-allowed text-white/30 opacity-60'
+                            : isSelected ? 'bg-cyan-500/10 font-bold text-cyan-400'
                             : 'text-white/70 hover:bg-white/5 hover:text-white'
                           }`}>
                           <span>{label}</span>
-                          {isSelected && <Check className='size-3 text-cyan-400' />}
+                          {isLockedByWindow ?
+                            <span className='text-[9px] font-extrabold tracking-wider text-amber-300/80 uppercase'>
+                              Starter+
+                            </span>
+                          : isSelected && <Check className='size-3 text-cyan-400' />}
                         </button>
                       )
                     })}
@@ -310,7 +331,7 @@ export function ReportToolbar({
                       <input
                         type='date'
                         value={customStart}
-                        min='2000-01-01'
+                        min={minAllowedDate || '2000-01-01'}
                         max='2099-12-31'
                         onChange={(e) => setCustomStart(e.target.value)}
                         className='h-7 w-full rounded border border-white/10 bg-white/5 px-2 text-[11px] font-medium text-white outline-none focus:border-white/25 focus:bg-white/[0.08]'
@@ -320,18 +341,23 @@ export function ReportToolbar({
                       <input
                         type='date'
                         value={customEnd}
-                        min='2000-01-01'
+                        min={minAllowedDate || '2000-01-01'}
                         max='2099-12-31'
                         onChange={(e) => setCustomEnd(e.target.value)}
                         className='h-7 w-full rounded border border-white/10 bg-white/5 px-2 text-[11px] font-medium text-white outline-none focus:border-white/25 focus:bg-white/[0.08]'
                         style={{ colorScheme: 'dark' } as React.CSSProperties}
                       />
                     </div>
+                    {isLimitedWindow && (
+                      <p className='mt-2 text-[10px] leading-relaxed text-white/50'>
+                        Kiosk shows the last {maxReportDays} days on this plan. Open Facenox Cloud for extended history.
+                      </p>
+                    )}
                     <button
                       type='button'
-                      disabled={!customStart || !customEnd || customStart > customEnd}
+                      disabled={customRangeInvalid}
                       onClick={() => {
-                        if (customStart && customEnd && customStart <= customEnd) {
+                        if (!customRangeInvalid) {
                           onStartDateChange(customStart)
                           onEndDateChange(customEnd)
                           setDateDropdownOpen(false)

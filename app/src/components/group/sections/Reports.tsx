@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { UserPlus, X } from 'lucide-react'
 import { useGroupStore } from '@/components/group/stores'
 import { useAttendanceStore } from '@/components/main/stores'
-import { getAttendanceDateString } from '@/utils/attendanceTime'
+import { useCloudSyncStatus } from '@/components/common/useCloudSyncStatus'
+import { addAttendanceDays, getAttendanceDateString } from '@/utils/attendanceTime'
 import type { AttendanceGroup } from '@/types/recognition'
 
 import { useReportData } from '@/components/group/sections/reports/hooks/useReportData'
@@ -62,11 +63,37 @@ export function Reports({ group, onDaysTrackedChange, onExportHandlersReady, onA
   const defaultColumnPresets = useMemo(() => [DEFAULT_COLUMNS, CHECKOUT_DEFAULT_COLUMNS], [])
 
   const configuredTimeZone = useAttendanceStore((state) => state.attendanceTimezone)
+  const { allowAutoExport, maxReportDays } = useCloudSyncStatus()
   const [reportStartDate, setReportStartDate] = useState<string>(() =>
     getAttendanceDateString(new Date(), configuredTimeZone)
   )
   const [reportEndDate, setReportEndDate] = useState<string>(() =>
     getAttendanceDateString(new Date(), configuredTimeZone)
+  )
+  const minAllowedDate = useMemo(() => {
+    if (!(typeof maxReportDays === 'number' && maxReportDays > 0)) return undefined
+    const today = getAttendanceDateString(new Date(), configuredTimeZone)
+    return addAttendanceDays(today, -(maxReportDays - 1))
+  }, [maxReportDays, configuredTimeZone])
+
+  useEffect(() => {
+    if (!minAllowedDate) return
+    setReportStartDate((prev) => (prev < minAllowedDate ? minAllowedDate : prev))
+    setReportEndDate((prev) => (prev < minAllowedDate ? minAllowedDate : prev))
+  }, [minAllowedDate])
+
+  const handleStartDateChange = useCallback(
+    (next: string) => {
+      setReportStartDate(minAllowedDate && next < minAllowedDate ? minAllowedDate : next)
+    },
+    [minAllowedDate]
+  )
+
+  const handleEndDateChange = useCallback(
+    (next: string) => {
+      setReportEndDate(minAllowedDate && next < minAllowedDate ? minAllowedDate : next)
+    },
+    [minAllowedDate]
   )
 
   const { report, sessions, members, loading, error, generateReport } = useReportData(
@@ -145,8 +172,7 @@ export function Reports({ group, onDaysTrackedChange, onExportHandlersReady, onA
   const handleExecuteExportAll = useCallback(
     async (format: ExportAllGroupsFormat) => {
       const allGroups = useGroupStore.getState().groups
-      const exportReport =
-        format === 'individual' ? exportAllGroupsReportToIndividualCSVs : exportAllGroupsReportToCSV
+      const exportReport = format === 'individual' ? exportAllGroupsReportToIndividualCSVs : exportAllGroupsReportToCSV
       const result = await exportReport(allGroups, reportStartDate, reportEndDate, attendanceTimeZone)
       if (!result.success) {
         throw new Error('Could not export the report. Check the local service and try again.')
@@ -159,10 +185,10 @@ export function Reports({ group, onDaysTrackedChange, onExportHandlersReady, onA
     if (onExportHandlersReady && members.length > 0 && !loading) {
       onExportHandlersReady({
         exportCSV: handleExportCSV,
-        exportAllGroupsCSV: handleOpenExportAllModal
+        exportAllGroupsCSV: allowAutoExport ? handleOpenExportAllModal : undefined
       })
     }
-  }, [onExportHandlersReady, handleExportCSV, handleOpenExportAllModal, members.length, loading])
+  }, [onExportHandlersReady, handleExportCSV, handleOpenExportAllModal, allowAutoExport, members.length, loading])
 
   return (
     <section className='flex h-full w-full flex-col overflow-hidden bg-transparent'>
@@ -172,8 +198,9 @@ export function Reports({ group, onDaysTrackedChange, onExportHandlersReady, onA
             <ReportToolbar
               startDate={reportStartDate}
               endDate={reportEndDate}
-              onStartDateChange={setReportStartDate}
-              onEndDateChange={setReportEndDate}
+              onStartDateChange={handleStartDateChange}
+              onEndDateChange={handleEndDateChange}
+              maxReportDays={maxReportDays}
               visibleColumns={modeVisibleColumns}
               setVisibleColumns={setVisibleColumns}
               groupBy={groupBy}

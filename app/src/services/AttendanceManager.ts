@@ -294,10 +294,13 @@ export class AttendanceManager {
     return JSON.stringify(data, null, 2)
   }
 
-  async downloadAuditLog(startDate?: string, endDate?: string): Promise<void> {
+  async downloadAuditLog(startDate?: string, endDate?: string, limit?: number | null): Promise<void> {
     const params = new URLSearchParams()
     if (startDate) params.append('start_date', startDate)
     if (endDate) params.append('end_date', endDate)
+    if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
+      params.append('limit', String(Math.floor(limit)))
+    }
     const queryString = params.toString()
     const urlPath = queryString ? `/attendance/settings/audit-log?${queryString}` : '/attendance/settings/audit-log'
 

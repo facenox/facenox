@@ -18,6 +18,8 @@ export interface MockSyncConfig {
   connected: boolean
   wasEverPaired?: boolean
   allowKioskDirectoryManagement?: boolean
+  allowAutoExport?: boolean
+  auditLogExportLimit?: number | null
   credentialError?: string | null
   forceLiveness?: boolean
   policyReady?: boolean

@@ -400,7 +400,9 @@ export class BackgroundSyncManager {
       ['minCheckoutDelayMinutes', 'number'],
       ['dataRetentionDays', 'number'],
       ['peopleLimit', 'number'],
-      ['allowKioskDirectoryManagement', 'boolean']
+      ['allowKioskDirectoryManagement', 'boolean'],
+      ['allowAutoExport', 'boolean'],
+      ['auditLogExportLimit', 'number']
     ]
     for (const [field, expectedType] of syncPolicyFieldMap) {
       const value = policy[field]

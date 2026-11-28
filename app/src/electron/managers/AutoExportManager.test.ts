@@ -47,6 +47,8 @@ describe('AutoExportManager', () => {
     for (const key of Object.keys(mockStore)) {
       delete mockStore[key]
     }
+    mockStore['sync.organizationId'] = 'org-1'
+    mockStore['sync.policy.allowAutoExport'] = true
     manager = new AutoExportManager()
   })
 
@@ -147,5 +149,14 @@ describe('AutoExportManager', () => {
     expect(writtenCall[1]).toContain('Alice Johnson')
 
     expect(manager.getConfig().lastExportedDate).toBe('2026-10-09')
+  })
+
+  it('blocks enabling and running auto-export when Cloud Starter+ policy is missing', async () => {
+    delete mockStore['sync.policy.allowAutoExport']
+    expect(() => manager.updateConfig({ enabled: true })).toThrow(/Starter/i)
+    await expect(manager.triggerExport('2026-10-09')).rejects.toThrow(/Starter/i)
+
+    mockStore.autoExport = { enabled: true, time: '17:00', format: 'combined_csv', directory: 'C:\\TestReports' }
+    await expect(manager.checkAndRunExport()).resolves.toBe(false)
   })
 })

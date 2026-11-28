@@ -1,9 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import {
-  exportReportToCSV,
-  exportAllGroupsReportToCSV,
-  exportAllGroupsReportToIndividualCSVs
-} from './exportUtils'
+import { exportReportToCSV, exportAllGroupsReportToCSV, exportAllGroupsReportToIndividualCSVs } from './exportUtils'
 import { attendanceManager } from '@/services/AttendanceManager'
 import type { AttendanceGroup, AttendanceMember, AttendanceSession } from '@/types/recognition'
 import type { RowData } from '../types'

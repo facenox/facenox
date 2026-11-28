@@ -7,6 +7,7 @@ import { useAttendanceStore } from '@/components/main/stores'
 import { createAttendanceGroup, createAttendanceMember, createAttendanceSession } from '@/test/fixtures'
 import { renderWithProviders } from '@/test/utils/renderWithProviders'
 import { attendanceManager } from '@/services/AttendanceManager'
+import { createSyncConfig } from '@/test/mocks/electron'
 import type { RowData } from './reports/types'
 
 const mockUseReportData = vi.fn()
@@ -122,6 +123,7 @@ function defaultViewsState() {
 
 describe('Reports', () => {
   beforeEach(() => {
+    vi.mocked(window.electronAPI.sync.getConfig).mockResolvedValue(createSyncConfig({ connected: false }))
     mockExportReportToCSV.mockReturnValue({ success: true })
     mockExportAllGroupsReportToCSV.mockResolvedValue({ success: true })
     mockExportAllGroupsReportToIndividualCSVs.mockResolvedValue({ success: true })
@@ -264,7 +266,12 @@ describe('Reports', () => {
     expect(screen.getByTestId('report-timezone')).toHaveTextContent('America/New_York')
   })
 
-  it('emits days tracked and export handlers when report data is ready', () => {
+  it('emits days tracked and export handlers when report data is ready', async () => {
+    vi.mocked(window.electronAPI.sync.getConfig).mockResolvedValue({
+      ...createSyncConfig({ connected: true }),
+      allowAutoExport: true,
+      policyReady: true
+    })
     const onDaysTrackedChange = vi.fn()
     const onExportHandlersReady = vi.fn()
     const members = [createAttendanceMember({ person_id: 'member-1', name: 'Alice' })]
@@ -292,7 +299,9 @@ describe('Reports', () => {
     )
 
     expect(onDaysTrackedChange).toHaveBeenCalledWith(7, false)
-    expect(onExportHandlersReady).toHaveBeenCalled()
+    await waitFor(() =>
+      expect(onExportHandlersReady.mock.calls.at(-1)?.[0]?.exportAllGroupsCSV).toEqual(expect.any(Function))
+    )
 
     const handlers = onExportHandlersReady.mock.calls.at(-1)?.[0] as {
       exportCSV: () => void
@@ -311,10 +320,44 @@ describe('Reports', () => {
     expect(mockExportAllGroupsReportToCSV).toHaveBeenCalled()
   })
 
+  it('omits exportAllGroupsCSV for unpaired or Free plans while preserving current-group CSV export', async () => {
+    vi.mocked(window.electronAPI.sync.getConfig).mockResolvedValue({
+      ...createSyncConfig({ connected: true }),
+      allowAutoExport: false,
+      policyReady: true
+    })
+    const onExportHandlersReady = vi.fn()
+    const members = [createAttendanceMember({ person_id: 'member-1', name: 'Alice' })]
+    useGroupStore.setState({ members })
+    mockUseReportData.mockReturnValue({
+      report: null,
+      sessions: [],
+      members,
+      loading: false,
+      error: null,
+      generateReport: vi.fn()
+    })
+
+    renderWithProviders(<Reports group={createAttendanceGroup()} onExportHandlersReady={onExportHandlersReady} />)
+
+    await waitFor(() => expect(onExportHandlersReady).toHaveBeenCalled())
+    const handlers = onExportHandlersReady.mock.calls.at(-1)?.[0] as {
+      exportCSV: () => void
+      exportAllGroupsCSV?: () => void
+    }
+    expect(handlers.exportCSV).toEqual(expect.any(Function))
+    expect(handlers.exportAllGroupsCSV).toBeUndefined()
+  })
+
   it.each([
     ['Single combined CSV', mockExportAllGroupsReportToCSV],
     ['Individual CSV files per group', mockExportAllGroupsReportToIndividualCSVs]
   ] as const)('keeps %s failures visible and allows retry', async (format, exporter) => {
+    vi.mocked(window.electronAPI.sync.getConfig).mockResolvedValue({
+      ...createSyncConfig({ connected: true }),
+      allowAutoExport: true,
+      policyReady: true
+    })
     exporter.mockResolvedValueOnce({ success: false, error: new Error('Offline') })
     const members = [createAttendanceMember()]
     useGroupStore.setState({ members, groups: [createAttendanceGroup()] })
@@ -328,6 +371,7 @@ describe('Reports', () => {
     })
     const ready = vi.fn()
     renderWithProviders(<Reports group={createAttendanceGroup()} onExportHandlersReady={ready} />)
+    await waitFor(() => expect(ready.mock.calls.at(-1)?.[0]?.exportAllGroupsCSV).toEqual(expect.any(Function)))
     act(() => {
       ready.mock.calls.at(-1)![0].exportAllGroupsCSV()
     })

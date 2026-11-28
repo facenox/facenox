@@ -7,8 +7,9 @@ import type { DesktopAuditLog } from '@/services/AttendanceManager'
 interface AuditLogExportModalProps {
   isOpen: boolean
   onClose: () => void
-  onExport: (startDate?: string, endDate?: string) => Promise<void>
+  onExport: (startDate?: string, endDate?: string, limit?: number | null) => Promise<void>
   onLoadRecent: () => Promise<DesktopAuditLog[]>
+  auditLogLimit?: number | null
 }
 
 type PresetId = 'all' | 'today' | '7days' | '30days' | 'custom'
@@ -72,7 +73,8 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
   isOpen,
   onClose,
   onExport,
-  onLoadRecent
+  onLoadRecent,
+  auditLogLimit = null
 }) => {
   const [activePreset, setActivePreset] = useState<PresetId>('all')
   const [startDate, setStartDate] = useState(formatDateLocal(new Date()))
@@ -138,7 +140,7 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
         if (endDate) finalEnd = `${endDate}T23:59:59`
       }
 
-      await onExport(finalStart, finalEnd)
+      await onExport(finalStart, finalEnd, auditLogLimit)
       handleClose()
     } catch (error) {
       console.error('Export failed:', error)
@@ -165,6 +167,11 @@ export const AuditLogExportModal: React.FC<AuditLogExportModalProps> = ({
       <div className='custom-scroll max-h-[calc(100vh-5rem)] space-y-6 overflow-y-auto pr-1'>
         <p className='text-[12px] leading-relaxed text-white/55'>
           Activity is stored locally on this device. Organization-wide activity is available in Facenox Cloud.
+          {typeof auditLogLimit === 'number' && (
+            <span className='mt-1 block text-[11px] text-amber-300/80'>
+              CSV export includes up to the {auditLogLimit} most recent local entries on your current plan.
+            </span>
+          )}
         </p>
 
         <div className='space-y-2'>

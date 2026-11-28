@@ -94,7 +94,16 @@ export class AutoExportManager {
     }
   }
 
+  public isAllowedByCloudPolicy(): boolean {
+    return (
+      Boolean(persistentStore.get('sync.organizationId')) && persistentStore.get('sync.policy.allowAutoExport') === true
+    )
+  }
+
   public updateConfig(updates: Partial<AutoExportConfig>): AutoExportConfig {
+    if (updates.enabled === true && !this.isAllowedByCloudPolicy()) {
+      throw new Error('Scheduled daily CSV auto-export requires Facenox Cloud Starter or higher.')
+    }
     const current = this.getConfig()
     const updated = { ...current, ...updates }
     persistentStore.set('autoExport', updated)
@@ -127,11 +136,14 @@ export class AutoExportManager {
   }
 
   public async checkAndRunExport(): Promise<boolean> {
-    if (!this.getConfig().enabled) return false
+    if (!this.isAllowedByCloudPolicy() || !this.getConfig().enabled) return false
     return this.runExport(undefined, true)
   }
 
   public async triggerExport(targetDate?: string): Promise<boolean> {
+    if (!this.isAllowedByCloudPolicy()) {
+      throw new Error('Scheduled daily CSV auto-export requires Facenox Cloud Starter or higher.')
+    }
     return this.runExport(targetDate, false)
   }
 

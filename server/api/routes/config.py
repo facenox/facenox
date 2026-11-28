@@ -4,7 +4,7 @@ import logging
 import re
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
@@ -152,6 +152,7 @@ async def export_audit_log(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     format: Optional[str] = None,
+    limit: Optional[int] = Query(default=None, ge=1, le=50000),
     repo: AttendanceRepository = Depends(get_repository),
 ):
     """Export audit log as CSV for compliance review."""
@@ -192,6 +193,7 @@ async def export_audit_log(
 
         logs = await repo.get_audit_logs(start_date=start_dt, end_date=end_dt)
         if format == "json":
+            json_limit = min(100, limit) if limit is not None else 100
             return JSONResponse(
                 [
                     {
@@ -203,14 +205,15 @@ async def export_audit_log(
                         "target_id": log.target_id,
                         "details": log.details,
                     }
-                    for log in logs[:100]
+                    for log in logs[:json_limit]
                 ]
             )
 
+        export_logs = logs[:limit] if limit is not None else logs
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(["Timestamp", "Action", "Target Type", "Target ID", "Details"])
-        for log in logs:
+        for log in export_logs:
             action_raw = log.action or ""
             action_clean = action_raw.replace("_", " ").title() if action_raw else ""
             if action_raw == "ATTENDANCE_HISTORY_PURGED":

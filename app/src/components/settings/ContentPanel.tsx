@@ -206,21 +206,23 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
     syncConfig?.policyReady !== false &&
     Boolean(syncConfig) &&
     (!isPaired || syncConfig?.allowKioskDirectoryManagement !== false)
+  const allowAutoExport = Boolean(isPaired && syncConfig?.allowAutoExport === true)
+  const auditLogLimit = isPaired && syncConfig?.auditLogExportLimit !== undefined ? syncConfig.auditLogExportLimit : 100
   const showCreateGroupModal = useGroupUIStore((state) => state.showCreateGroupModal)
   const openCreateGroup = useGroupUIStore((state) => state.openCreateGroup)
   const closeCreateGroup = useGroupUIStore((state) => state.closeCreateGroup)
 
   /** Audit log export: owned here so the page header can surface the action. */
   const handleExportAuditLog = useCallback(
-    async (startDate?: string, endDate?: string) => {
+    async (startDate?: string, endDate?: string, limit?: number | null) => {
       try {
-        await attendanceManager.downloadAuditLog(startDate, endDate)
+        await attendanceManager.downloadAuditLog(startDate, endDate, limit ?? auditLogLimit)
         setSuccess('Audit log downloaded.')
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to export audit log.')
       }
     },
-    [setSuccess, setError]
+    [auditLogLimit, setSuccess, setError]
   )
 
   const handleLoadRecentAuditLogs = useCallback(() => attendanceManager.getAuditLogs(), [])
@@ -279,22 +281,23 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                 },
                 {
                   value: 'all',
-                  label: 'Export all groups',
-                  icon: <Layers className='size-3.5' />
+                  label: allowAutoExport ? 'Export all groups' : 'Export all groups (Starter+)',
+                  icon: <Layers className='size-3.5' />,
+                  disabled: !allowAutoExport || !reportsExportHandlers?.exportAllGroupsCSV
                 }
               ]}
               value={null}
               onChange={(val) => {
                 if (val === 'current') {
                   reportsExportHandlers?.exportCSV()
-                } else if (val === 'all') {
+                } else if (val === 'all' && allowAutoExport) {
                   reportsExportHandlers?.exportAllGroupsCSV?.()
                 }
               }}
               showPlaceholderOption={false}
               allowClear={false}
               align='right'
-              menuWidth={180}
+              menuWidth={allowAutoExport ? 180 : 225}
               fit
               disabled={!reportsExportHandlers}
               className='inline-flex items-center'
@@ -751,6 +754,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         onClose={() => setIsAuditLogModalOpen(false)}
         onExport={handleExportAuditLog}
         onLoadRecent={handleLoadRecentAuditLogs}
+        auditLogLimit={auditLogLimit}
       />
     </>
   )
