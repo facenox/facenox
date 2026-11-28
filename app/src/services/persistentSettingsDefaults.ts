@@ -63,6 +63,7 @@ export interface PersistentSettingsSchema {
   security: {
     adminPinEnabled: boolean
     adminPin: string
+    requirePinToStopScan: boolean
     recoveryKey?: string
     lockoutUntil?: number
     failedAttempts?: number
@@ -134,6 +135,7 @@ export const defaultSettings: PersistentSettingsSchema = {
   security: {
     adminPinEnabled: false,
     adminPin: '1234',
+    requirePinToStopScan: false,
     recoveryKey: 'FNX2-9843',
     lockoutUntil: 0,
     failedAttempts: 0

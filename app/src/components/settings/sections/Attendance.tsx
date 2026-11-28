@@ -26,6 +26,7 @@ export function Attendance({
   isPaired = false
 }: AttendanceProps) {
   const adminPinEnabled = useUIStore((state) => state.adminPinEnabled)
+  const requirePinToStopScan = useUIStore((state) => state.requirePinToStopScan)
   const setAdminPinSettings = useUIStore((state) => state.setAdminPinSettings)
   const recoveryKey = useUIStore((state) => state.recoveryKey)
   const regenerateRecoveryKey = useUIStore((state) => state.regenerateRecoveryKey)
@@ -550,6 +551,20 @@ export function Attendance({
                   transition={{ duration: SETTINGS_PANEL_ANIMATION_DURATION, ease: 'easeOut' }}
                   className='overflow-hidden'>
                   <div className='flex flex-col pb-1'>
+                    <div className='relative flex items-center justify-between gap-4 py-3 pl-4'>
+                      <div className='pointer-events-none absolute inset-y-0 left-0 border-l border-white/10' />
+                      <div className='pointer-events-none absolute top-1/2 left-0 w-3 border-b border-white/10' />
+                      <div className='min-w-0 flex-1'>
+                        <div className='text-xs font-medium text-white/80'>Require PIN to stop scan</div>
+                        <div className='mt-1 text-[11px] text-white/55'>Start remains available without a PIN.</div>
+                      </div>
+                      <Switch
+                        checked={requirePinToStopScan}
+                        onChange={(checked) => setAdminPinSettings({ requirePinToStopScan: checked })}
+                        ariaLabel='Require PIN to stop scan'
+                      />
+                    </div>
+
                     {/* Single 2-Step PIN Row ├─ connector */}
                     <div className='relative flex flex-wrap items-center justify-between gap-3 py-2 pl-4'>
                       <div className='pointer-events-none absolute inset-y-0 left-0 border-l border-white/10' />

@@ -892,6 +892,7 @@ export class BackgroundSyncManager {
             ...security,
             adminPin: '1234',
             adminPinEnabled: false,
+            requirePinToStopScan: false,
             lockoutUntil: 0,
             failedAttempts: 0
           })

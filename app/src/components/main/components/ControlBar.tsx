@@ -8,7 +8,7 @@ interface ControlBarProps {
   setSelectedCamera: (deviceId: string) => void
   isStreaming: boolean
   startCamera: () => void
-  stopCamera: (forceCleanup?: boolean) => void
+  requestStopScan: () => void
   readiness: ScanReadiness
 }
 
@@ -18,12 +18,12 @@ export function ControlBar({
   setSelectedCamera,
   isStreaming,
   startCamera,
-  stopCamera,
+  requestStopScan,
   readiness
 }: ControlBarProps) {
   const handlePrimaryAction = () => {
     if (isStreaming) {
-      stopCamera()
+      requestStopScan()
     } else {
       startCamera()
     }

@@ -13,6 +13,7 @@ export function PinPromptModal() {
   const verifyRecoveryKey = useUIStore((state) => state.verifyRecoveryKey)
   const pinLockoutUntil = useUIStore((state) => state.pinLockoutUntil)
   const pinFailedAttempts = useUIStore((state) => state.pinFailedAttempts)
+  const pinPromptPurpose = useUIStore((state) => state.pinPromptPurpose)
 
   const { isReady, isPaired } = useCloudSyncStatus()
 
@@ -315,7 +316,9 @@ export function PinPromptModal() {
                       onMouseUp={handleLockTouchEnd}>
                       Administrator lock
                     </h3>
-                    <p className='mt-1 text-xs text-white/50'>Enter PIN to access settings</p>
+                    <p className='mt-1 text-xs text-white/50'>
+                      {pinPromptPurpose === 'stop-scan' ? 'Enter PIN to stop scanning' : 'Enter PIN to access settings'}
+                    </p>
                   </div>
                   <ModalCloseButton onClick={closePinPrompt} />
                 </div>

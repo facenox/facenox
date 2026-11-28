@@ -18,10 +18,12 @@ interface UIState {
   // Security / Admin Lock
   adminPinEnabled: boolean
   adminPin: string
+  requirePinToStopScan: boolean
   recoveryKey: string
   pinLockoutUntil: number
   pinFailedAttempts: number
   isPinPromptOpen: boolean
+  pinPromptPurpose: 'settings' | 'stop-scan'
   pendingSettingsSection: string | undefined
   pendingGroupSection: GroupSection | undefined
   pendingPinCallback: (() => void) | null
@@ -54,14 +56,19 @@ interface UIState {
   setWarning: (warning: string | null) => void
   setShowSettings: (show: boolean) => void
   requestOpenSettings: (section?: string, groupSection?: GroupSection) => void
-  openPinPrompt: (onSuccess: () => void) => void
+  openPinPrompt: (onSuccess: () => void, purpose?: 'settings' | 'stop-scan') => void
   closePinPrompt: () => void
   verifyPin: (enteredPin: string) => boolean
   recordFailedPinAttempt: () => { attempts: number; lockoutSeconds: number; lockoutUntil: number }
   resetPinLockout: () => void
   verifyRecoveryKey: (enteredKey: string) => boolean
   regenerateRecoveryKey: () => string
-  setAdminPinSettings: (settings: { adminPinEnabled?: boolean; adminPin?: string; recoveryKey?: string }) => void
+  setAdminPinSettings: (settings: {
+    adminPinEnabled?: boolean
+    adminPin?: string
+    requirePinToStopScan?: boolean
+    recoveryKey?: string
+  }) => void
   setGroupInitialSection: (section: GroupSection | undefined) => void
   setSettingsInitialSection: (section: string | undefined) => void
   setLastSettingsSection: (section: string) => void
@@ -92,6 +99,7 @@ const loadInitialSettings = async () => {
     audioSettings,
     adminPinEnabled: security.adminPinEnabled ?? false,
     adminPin: security.adminPin ?? '1234',
+    requirePinToStopScan: security.adminPinEnabled === true && security.requirePinToStopScan === true,
     recoveryKey: security.recoveryKey || generateRecoveryKey(),
     pinLockoutUntil: security.lockoutUntil ?? 0,
     pinFailedAttempts: security.failedAttempts ?? 0,
@@ -115,10 +123,12 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   adminPinEnabled: false,
   adminPin: '1234',
+  requirePinToStopScan: false,
   recoveryKey: '',
   pinLockoutUntil: 0,
   pinFailedAttempts: 0,
   isPinPromptOpen: false,
+  pinPromptPurpose: 'settings',
   pendingSettingsSection: undefined,
   pendingGroupSection: undefined,
   pendingPinCallback: null,
@@ -181,6 +191,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (adminPinEnabled) {
       set({
         isPinPromptOpen: true,
+        pinPromptPurpose: 'settings',
         pendingSettingsSection: section || (groupSection ? 'group' : undefined),
         pendingGroupSection: groupSection,
         pendingPinCallback: null
@@ -194,11 +205,12 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
 
-  openPinPrompt: (onSuccess) => {
+  openPinPrompt: (onSuccess, purpose = 'settings') => {
     const { adminPinEnabled } = get()
     if (adminPinEnabled) {
       set({
         isPinPromptOpen: true,
+        pinPromptPurpose: purpose,
         pendingPinCallback: onSuccess,
         pendingSettingsSection: undefined,
         pendingGroupSection: undefined
@@ -211,6 +223,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   closePinPrompt: () => {
     set({
       isPinPromptOpen: false,
+      pinPromptPurpose: 'settings',
       pendingSettingsSection: undefined,
       pendingGroupSection: undefined,
       pendingPinCallback: null
@@ -241,6 +254,7 @@ export const useUIStore = create<UIState>((set, get) => ({
       }
       set({
         isPinPromptOpen: false,
+        pinPromptPurpose: 'settings',
         pendingSettingsSection: undefined,
         pendingGroupSection: undefined,
         pendingPinCallback: null
@@ -284,9 +298,14 @@ export const useUIStore = create<UIState>((set, get) => ({
       set({
         adminPin: '1234',
         adminPinEnabled: false,
+        requirePinToStopScan: false,
         pinLockoutUntil: 0,
         pinFailedAttempts: 0,
         isPinPromptOpen: false,
+        pinPromptPurpose: 'settings',
+        pendingSettingsSection: undefined,
+        pendingGroupSection: undefined,
+        pendingPinCallback: null,
         showSettings: true
       })
       return true
@@ -301,11 +320,15 @@ export const useUIStore = create<UIState>((set, get) => ({
   },
 
   setAdminPinSettings: (settings) => {
-    set((state) => ({
-      adminPinEnabled: settings.adminPinEnabled ?? state.adminPinEnabled,
-      adminPin: settings.adminPin ?? state.adminPin,
-      recoveryKey: settings.recoveryKey ?? state.recoveryKey
-    }))
+    set((state) => {
+      const adminPinEnabled = settings.adminPinEnabled ?? state.adminPinEnabled
+      return {
+        adminPinEnabled,
+        adminPin: settings.adminPin ?? state.adminPin,
+        requirePinToStopScan: adminPinEnabled ? (settings.requirePinToStopScan ?? state.requirePinToStopScan) : false,
+        recoveryKey: settings.recoveryKey ?? state.recoveryKey
+      }
+    })
   },
 
   setGroupInitialSection: (section) => set({ groupInitialSection: section }),
@@ -380,6 +403,7 @@ useUIStore.subscribe((state, prevState) => {
   if (
     state.adminPinEnabled !== prevState.adminPinEnabled ||
     state.adminPin !== prevState.adminPin ||
+    state.requirePinToStopScan !== prevState.requirePinToStopScan ||
     state.recoveryKey !== prevState.recoveryKey ||
     state.pinLockoutUntil !== prevState.pinLockoutUntil ||
     state.pinFailedAttempts !== prevState.pinFailedAttempts
@@ -388,6 +412,7 @@ useUIStore.subscribe((state, prevState) => {
       .setSecuritySettings({
         adminPinEnabled: state.adminPinEnabled,
         adminPin: state.adminPin,
+        requirePinToStopScan: state.requirePinToStopScan,
         recoveryKey: state.recoveryKey,
         lockoutUntil: state.pinLockoutUntil,
         failedAttempts: state.pinFailedAttempts
@@ -405,6 +430,7 @@ if (typeof window !== 'undefined') {
         audioSettings,
         adminPinEnabled,
         adminPin,
+        requirePinToStopScan,
         recoveryKey,
         pinLockoutUntil,
         pinFailedAttempts,
@@ -419,6 +445,7 @@ if (typeof window !== 'undefined') {
           audioSettings,
           adminPinEnabled: adminPinEnabled ?? false,
           adminPin: adminPin ?? '1234',
+          requirePinToStopScan: adminPinEnabled === true && requirePinToStopScan === true,
           recoveryKey: recoveryKey || generateRecoveryKey(),
           pinLockoutUntil: pinLockoutUntil ?? 0,
           pinFailedAttempts: pinFailedAttempts ?? 0,
@@ -440,9 +467,11 @@ if (typeof window !== 'undefined') {
       useUIStore.setState({
         adminPin: data?.adminPin ?? '1234',
         adminPinEnabled: data?.adminPinEnabled ?? false,
+        requirePinToStopScan: false,
         pinLockoutUntil: 0,
         pinFailedAttempts: 0,
         isPinPromptOpen: false,
+        pinPromptPurpose: 'settings',
         pendingSettingsSection: undefined,
         pendingGroupSection: undefined,
         pendingPinCallback: null,

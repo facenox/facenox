@@ -108,10 +108,13 @@ export default function Main() {
     showSettings,
     setShowSettings,
     requestOpenSettings,
+    openPinPrompt,
     quickSettings,
     audioSettings,
     setSidebarCollapsed,
     adminPinEnabled,
+    requirePinToStopScan,
+    isPinPromptOpen,
     isHydrated
   } = useUIStore()
   const showAddMemberModal = useGroupUIStore((state) => state.showAddMemberModal)
@@ -337,6 +340,15 @@ export default function Main() {
     void startCamera()
     return true
   }, [requestGroupSelection, startCamera])
+
+  const requestStopScan = useCallback(() => {
+    if (adminPinEnabled && requirePinToStopScan) {
+      openPinPrompt(() => stopCamera(false), 'stop-scan')
+      return
+    }
+
+    stopCamera(false)
+  }, [adminPinEnabled, requirePinToStopScan, openPinPrompt, stopCamera])
 
   const syncUpdatedGroupLocally = useCallback(
     (updatedGroup: typeof currentGroup) => {
@@ -654,14 +666,14 @@ export default function Main() {
           activeEl.tagName === 'SELECT' ||
           (activeEl as HTMLElement).isContentEditable)
 
-      if (isInput || showSettings || hasBlockingGroupModalOpen) {
+      if (isInput || showSettings || isPinPromptOpen || hasBlockingGroupModalOpen) {
         return
       }
 
       if (e.code === 'Space') {
         e.preventDefault()
         if (isStreamingRef.current) {
-          stopCamera(false)
+          requestStopScan()
         } else {
           startCameraGuarded()
         }
@@ -670,7 +682,7 @@ export default function Main() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [hasBlockingGroupModalOpen, showSettings, startCameraGuarded, stopCamera])
+  }, [hasBlockingGroupModalOpen, showSettings, isPinPromptOpen, startCameraGuarded, requestStopScan])
 
   return (
     <div className='flex h-full flex-col overflow-hidden bg-[var(--bg-primary)] text-white'>
@@ -736,7 +748,7 @@ export default function Main() {
             setSelectedCamera={setSelectedCamera}
             isStreaming={isStreaming}
             startCamera={startCameraGuarded}
-            stopCamera={stopCamera}
+            requestStopScan={requestStopScan}
             readiness={scanReadiness}
           />
         </div>
