@@ -945,8 +945,12 @@ export function registerSyncHandlers() {
         method: 'POST',
         headers: authHeaders(),
         signal: AbortSignal.timeout(10000)
-      }).catch(() => null)
-      if (unpairRes && !unpairRes.ok) {
+      }).catch((error) => {
+        throw new Error(
+          `Could not reach the local attendance service to prepare the directory for migration: ${error instanceof Error ? error.message : String(error)}`
+        )
+      })
+      if (!unpairRes.ok) {
         throw new Error(
           await readBackendErrorMessage(
             unpairRes,
@@ -980,8 +984,12 @@ export function registerSyncHandlers() {
         method: 'POST',
         headers: authHeaders(),
         signal: AbortSignal.timeout(10000)
-      }).catch(() => null)
-      if (unpairRes && !unpairRes.ok) {
+      }).catch((error) => {
+        throw new Error(
+          `Could not reach the local attendance service to finish clearing the directory: ${error instanceof Error ? error.message : String(error)}`
+        )
+      })
+      if (!unpairRes.ok) {
         throw new Error(
           await readBackendErrorMessage(
             unpairRes,
