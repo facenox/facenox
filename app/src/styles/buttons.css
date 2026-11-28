@@ -29,7 +29,7 @@
   }
 }
 
-.settings-nav-item:active:not(.dropdown-trigger) {
+.stable-nav-item:active:not(.dropdown-trigger) {
   transform: none !important;
 }
 
