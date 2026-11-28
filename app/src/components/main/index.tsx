@@ -194,6 +194,17 @@ export default function Main() {
 
   const { calculateAngleConsistencyRef } = useFaceTracking()
 
+  const authorizeGroupChange = useCallback(
+    (onAuthorized: () => void) => {
+      if (isStreamingRef.current && adminPinEnabled && requirePinToStopScan) {
+        openPinPrompt(onAuthorized, 'stop-scan')
+        return false
+      }
+      return true
+    },
+    [adminPinEnabled, openPinPrompt, requirePinToStopScan]
+  )
+
   const {
     currentGroupRef,
     memberCacheRef,
@@ -202,7 +213,7 @@ export default function Main() {
     handleSelectGroup,
     confirmDeleteGroup,
     cancelDeleteGroup
-  } = useAttendanceGroups()
+  } = useAttendanceGroups({ authorizeGroupChange })
 
   const { captureFrame, getCameraDevices } = useVideoStream({
     videoRef,

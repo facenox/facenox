@@ -204,7 +204,12 @@ async function loadSelectedGroupData(
   }
 }
 
-export function useAttendanceGroups() {
+export function useAttendanceGroups(
+  options: {
+    authorizeGroupChange?: (onAuthorized: () => void) => boolean
+  } = {}
+) {
+  const { authorizeGroupChange } = options
   const {
     currentGroup,
     setCurrentGroup,
@@ -354,22 +359,36 @@ export function useAttendanceGroups() {
 
   const handleSelectGroup = useCallback(
     async (group: AttendanceGroup) => {
-      refreshRequestRef.current += 1
-      setCurrentGroupWithCache(group)
+      const selectGroup = async () => {
+        refreshRequestRef.current += 1
+        setCurrentGroupWithCache(group)
 
-      try {
-        const usedCachedData = applyCachedPanelData(group.id)
+        try {
+          const usedCachedData = applyCachedPanelData(group.id)
 
-        await loadSelectedGroupData(group.id, {
-          preserveExisting: usedCachedData,
-          delaySkeleton: !usedCachedData,
-          onResolvedData: (members, records) => cachePanelData(group.id, members, records)
-        })
-      } catch (error) {
-        console.error('Failed to load data for selected group:', error)
+          await loadSelectedGroupData(group.id, {
+            preserveExisting: usedCachedData,
+            delaySkeleton: !usedCachedData,
+            onResolvedData: (members, records) => cachePanelData(group.id, members, records)
+          })
+        } catch (error) {
+          console.error('Failed to load data for selected group:', error)
+        }
       }
+
+      if (
+        currentGroupRef.current?.id !== group.id &&
+        authorizeGroupChange &&
+        !authorizeGroupChange(() => {
+          void selectGroup()
+        })
+      ) {
+        return
+      }
+
+      await selectGroup()
     },
-    [applyCachedPanelData, cachePanelData, setCurrentGroupWithCache]
+    [applyCachedPanelData, authorizeGroupChange, cachePanelData, setCurrentGroupWithCache]
   )
 
   const handleCreateGroup = useCallback(async () => {
@@ -453,28 +472,36 @@ export function useAttendanceGroups() {
       const { group } = customEvent.detail
 
       if (group === null) {
-        refreshRequestRef.current += 1
-        setCurrentGroupWithCache(null)
-        useAttendanceStore.setState({
-          groupMembers: [],
-          recentAttendance: [],
-          isPanelLoading: false,
-          isPanelRefreshing: false,
-          isPanelSwitchPending: false,
-          panelDataError: null
-        })
+        const clearGroup = () => {
+          refreshRequestRef.current += 1
+          setCurrentGroupWithCache(null)
+          useAttendanceStore.setState({
+            groupMembers: [],
+            recentAttendance: [],
+            isPanelLoading: false,
+            isPanelRefreshing: false,
+            isPanelSwitchPending: false,
+            panelDataError: null
+          })
 
-        attendanceManager
-          .getGroups({ throwOnError: true })
-          .then((groups) => {
-            setAttendanceGroups(groups)
-          })
-          .catch((error) => {
-            console.error('[useAttendanceGroups] Error refreshing groups:', error)
-            if (!useAttendanceStore.getState().currentGroup) {
-              useAttendanceStore.setState({ panelDataError: PANEL_DATA_ERROR })
-            }
-          })
+          attendanceManager
+            .getGroups({ throwOnError: true })
+            .then((groups) => {
+              setAttendanceGroups(groups)
+            })
+            .catch((error) => {
+              console.error('[useAttendanceGroups] Error refreshing groups:', error)
+              if (!useAttendanceStore.getState().currentGroup) {
+                useAttendanceStore.setState({ panelDataError: PANEL_DATA_ERROR })
+              }
+            })
+        }
+
+        if (currentGroupRef.current && authorizeGroupChange && !authorizeGroupChange(clearGroup)) {
+          return
+        }
+
+        clearGroup()
         return
       }
 
@@ -485,7 +512,7 @@ export function useAttendanceGroups() {
     return () => {
       window.removeEventListener('selectGroup', handleSelectGroupEvent as EventListener)
     }
-  }, [handleSelectGroup, setAttendanceGroups, setCurrentGroupWithCache])
+  }, [authorizeGroupChange, handleSelectGroup, setAttendanceGroups, setCurrentGroupWithCache])
 
   useEffect(() => {
     if (!isShellReady || hasInitializedPanelDataRef.current) return
