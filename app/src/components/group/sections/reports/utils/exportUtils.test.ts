@@ -392,7 +392,8 @@ describe('report export regression coverage', () => {
     vi.restoreAllMocks()
   })
 
-  async function exportedRows(_format: string) {
+  async function exportedRows(format: string) {
+    expect(format).toMatch(/CSV$/)
     const text = await downloads[0].text()
     const rows = text
       .split('\n')
