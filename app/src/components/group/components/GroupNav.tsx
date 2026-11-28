@@ -76,7 +76,7 @@ export function GroupNav({ activeSection, onSectionChange, selectedGroup, isColl
                 <button
                   onClick={() => !isDisabled && onSectionChange(section.id)}
                   disabled={isDisabled}
-                  className={`stable-nav-item group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 ${
+                  className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 ${
                     isActive ? 'bg-white/10 text-white'
                     : isDisabled ? 'cursor-not-allowed text-white/20'
                     : 'text-white/70 hover:bg-white/8 hover:text-white'
