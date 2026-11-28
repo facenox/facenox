@@ -86,7 +86,7 @@ describe('Data & storage initial configuration', () => {
     expect(await screen.findByRole('switch', { name: 'Enable daily auto-export' })).toBeChecked()
   })
 
-  it('locks daily auto-export when Cloud plan is Free or unpaired', async () => {
+  it('shows a saved daily auto-export as paused on the Free Cloud plan', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
     getElectronAPIMock().sync.getConfig.mockResolvedValue({
       ...createSyncConfig({ connected: true }),
@@ -104,9 +104,8 @@ describe('Data & storage initial configuration', () => {
 
     renderWithProviders(<DataStorage {...props} />)
 
-    const toggle = await screen.findByRole('switch', { name: 'Enable daily auto-export' })
-    expect(toggle).toBeDisabled()
-    expect(toggle).not.toBeChecked()
+    expect(await screen.findByText('Paused')).toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: 'Enable daily auto-export' })).not.toBeInTheDocument()
     expect(screen.getByText('Starter+')).toBeInTheDocument()
     expect(screen.queryByLabelText('Auto export time')).not.toBeInTheDocument()
 
