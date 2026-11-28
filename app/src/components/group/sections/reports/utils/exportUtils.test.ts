@@ -392,20 +392,11 @@ describe('report export regression coverage', () => {
     vi.restoreAllMocks()
   })
 
-  async function exportedRows(format: string) {
+  async function exportedRows(_format: string) {
     const text = await downloads[0].text()
-    let rows: string[][]
-    if (format === 'Excel') {
-      const xml = new DOMParser().parseFromString(text, 'application/xml')
-      expect(xml.getElementsByTagName('parsererror')).toHaveLength(0)
-      rows = [...xml.getElementsByTagName('Worksheet')[0].getElementsByTagName('Row')].map((row) =>
-        [...row.getElementsByTagName('Data')].map((cell) => cell.textContent || '')
-      )
-    } else {
-      rows = text
-        .split('\n')
-        .map((line) => [...line.matchAll(/"((?:[^"]|"")*)"/g)].map((match) => match[1].replaceAll('""', '"')))
-    }
+    const rows = text
+      .split('\n')
+      .map((line) => [...line.matchAll(/"((?:[^"]|"")*)"/g)].map((match) => match[1].replaceAll('""', '"')))
     const [header, ...data] = rows
     for (const row of data) expect(row).toHaveLength(header.length)
     return data.map((row) => Object.fromEntries(header.map((label, i) => [label, row[i]])))

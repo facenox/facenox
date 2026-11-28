@@ -17,7 +17,7 @@ This page covers the shipped desktop feature set and the scope of the current Fa
 - Create, edit, and remove members (when local directory management is enabled by organization policy).
 - Record attendance events and attendance sessions.
 - Configure attendance timing behavior in settings.
-- Review historical attendance data and export reports.
+- Inspect recent 7-day attendance records and export single-group raw CSV logs locally on the kiosk (Cloud Starter+ unlocks extended report windows, multi-group CSV export, and scheduled daily folder auto-exports).
 
 ### Privacy-first biometric architecture
 

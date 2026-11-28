@@ -82,7 +82,7 @@ describe('AutoExportManager', () => {
     expect(ran).toBe(false)
   })
 
-  it('successfully performs export and writes Excel XML file', async () => {
+  it('successfully performs export and writes combined CSV file', async () => {
     const mkdirSpy = vi.spyOn(fs, 'mkdir').mockResolvedValue(undefined)
     const writeFileSpy = vi.spyOn(fs, 'writeFile').mockResolvedValue(undefined)
 
