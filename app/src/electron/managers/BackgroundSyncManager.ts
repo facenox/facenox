@@ -714,6 +714,9 @@ export class BackgroundSyncManager {
       for (const cmd of commands) {
         if (this.suspended) break
         await this.executeCommand(cmd)
+        // WIPE disconnects and revokes this device. Do not execute commands
+        // from the already-fetched batch after that terminal action.
+        if (cmd.command === 'WIPE') break
       }
     } catch (error) {
       console.warn('[RemoteMgmt] Command polling failed:', error)
