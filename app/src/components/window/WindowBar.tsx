@@ -254,7 +254,7 @@ export default function WindowBar() {
                     exit={{ opacity: 0, scale: 0.95, y: -4 }}
                     transition={{ duration: 0.12, ease: 'easeOut' }}
                     style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-                    className='absolute top-[22px] left-0 z-90 w-[168px] rounded-lg border border-white/10 bg-[#141518]/95 p-1 shadow-xl backdrop-blur-md'>
+                    className='absolute top-[22px] left-0 z-90 w-48 rounded-lg border border-white/10 bg-[#141518]/95 p-1 shadow-xl backdrop-blur-md'>
                     {syncConfig?.connected && (
                       <a
                         href={cloudDashboardUrl}
@@ -310,8 +310,10 @@ export default function WindowBar() {
                   disabled={isPinPromptOpen}
                   style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                   className='pointer-events-auto flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] text-white/45 disabled:pointer-events-none disabled:opacity-30'>
-                  <Cloud className='size-2.5 opacity-60' />
-                  <span>{cloudConfigStatus === 'error' ? 'Cloud status unavailable' : 'Loading Cloud status…'}</span>
+                  <Cloud className='size-3 shrink-0 opacity-60' />
+                  <span className='flex h-3 items-center leading-3'>
+                    {cloudConfigStatus === 'error' ? 'Cloud status unavailable' : 'Loading Cloud status…'}
+                  </span>
                 </button>
               )
             }
@@ -386,8 +388,8 @@ export default function WindowBar() {
                   disabled={isPinPromptOpen}
                   style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                   className={`pointer-events-auto flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide transition-all duration-150 select-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 ${badgeBorderClass}`}>
-                  <StatusIcon className={`size-2.5 ${iconColor}`} />
-                  <span>{statusText}</span>
+                  <StatusIcon className={`size-3 shrink-0 ${iconColor}`} />
+                  <span className='flex h-3 items-center leading-3'>{statusText}</span>
                 </button>
               </Tooltip>
             )
